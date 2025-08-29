@@ -13,6 +13,12 @@ class AccountingPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if accounting permissions already exist
+        if (Permission::where('name', 'like', 'accounting.%')->exists()) {
+            $this->command->info('Accounting permissions already exist. Skipping accounting permissions seeding.');
+            return;
+        }
+
         // Create accounting permissions
         $accountingPermissions = [
             'accounting.view',

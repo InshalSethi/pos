@@ -13,6 +13,12 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if roles and permissions already exist
+        if (Role::count() > 0 || Permission::count() > 0) {
+            $this->command->info('Roles and permissions already exist. Skipping role/permission seeding.');
+            return;
+        }
+
         // Create permissions
         $permissions = [
             // POS permissions

@@ -12,6 +12,12 @@ class SystemAccountsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if system accounts already exist
+        if (Account::where('is_system_account', true)->count() > 0) {
+            $this->command->info('System accounts already exist. Skipping system accounts seeding.');
+            return;
+        }
+
         // System accounts required for POS operations
         $systemAccounts = [
             // Assets

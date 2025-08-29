@@ -13,6 +13,12 @@ class DepartmentPositionSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if departments and positions already exist
+        if (Department::count() > 0 || Position::count() > 0) {
+            $this->command->info('Departments and positions already exist. Skipping department/position seeding.');
+            return;
+        }
+
         // Create Departments
         $departments = [
             [

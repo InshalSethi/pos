@@ -12,6 +12,12 @@ class ChartOfAccountsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if chart of accounts already exists
+        if (DB::table('chart_of_accounts')->count() > 0) {
+            $this->command->info('Chart of accounts already exists. Skipping chart of accounts seeding.');
+            return;
+        }
+
         $accounts = [
             // ASSETS
             ['account_code' => '1000', 'account_name' => 'Current Assets', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => true],

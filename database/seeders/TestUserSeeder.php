@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\UserSettings;
@@ -16,6 +15,12 @@ class TestUserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if test users already exist
+        if (User::whereIn('email', ['admin@test.com', 'manager@test.com'])->exists()) {
+            $this->command->info('Test users already exist. Skipping test user seeding.');
+            return;
+        }
+
         // Create a test admin user
         $adminUser = User::firstOrCreate([
             'email' => 'admin@test.com'

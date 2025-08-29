@@ -13,6 +13,12 @@ class PaymentPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if payment permissions already exist
+        if (Permission::where('name', 'like', 'payments.%')->exists()) {
+            $this->command->info('Payment permissions already exist. Skipping payment permissions seeding.');
+            return;
+        }
+
         // Create payment permissions
         $permissions = [
             'payments.view' => 'View payments',

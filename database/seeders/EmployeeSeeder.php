@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Employee;
 use App\Models\Department;
@@ -18,6 +17,12 @@ class EmployeeSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if employees already exist
+        if (Employee::count() > 0) {
+            $this->command->info('Employees already exist. Skipping employee seeding.');
+            return;
+        }
+
         // Create some sample departments if they don't exist
         $hrDept = Department::firstOrCreate([
             'code' => 'HR'

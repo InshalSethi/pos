@@ -16,6 +16,12 @@ class PayrollSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if payroll data already exists
+        if (PayrollRecord::count() > 0) {
+            $this->command->info('Payroll data already exists. Skipping payroll seeding.');
+            return;
+        }
+
         $employees = Employee::with('salaries')->get();
 
         if ($employees->isEmpty()) {

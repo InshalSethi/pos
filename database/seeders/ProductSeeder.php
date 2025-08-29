@@ -13,45 +13,73 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create categories
-        $electronics = Category::create([
-            'name' => 'Electronics',
-            'description' => 'Electronic devices and accessories',
-            'is_active' => true,
-        ]);
+        // Check if products already exist
+        if (Product::count() > 0) {
+            $this->command->info('Products already exist. Skipping product seeding.');
+            return;
+        }
 
-        $clothing = Category::create([
-            'name' => 'Clothing',
-            'description' => 'Apparel and fashion items',
-            'is_active' => true,
-        ]);
+        // Get existing categories (should be created by CategorySeeder)
+        $electronics = Category::where('name', 'Electronics')->first();
+        $clothing = Category::where('name', 'Clothing')->first();
+        $books = Category::where('name', 'Books & Media')->first();
+        $food = Category::where('name', 'Food & Beverages')->first();
 
-        $books = Category::create([
-            'name' => 'Books',
-            'description' => 'Books and educational materials',
-            'is_active' => true,
-        ]);
+        // Get subcategories
+        $smartphones = Category::where('name', 'Smartphones')->first();
+        $laptops = Category::where('name', 'Laptops')->first();
 
-        $food = Category::create([
-            'name' => 'Food & Beverages',
-            'description' => 'Food items and drinks',
-            'is_active' => true,
-        ]);
+        // Check if required categories exist, if not create them
+        if (!$electronics) {
+            $electronics = Category::create([
+                'name' => 'Electronics',
+                'description' => 'Electronic devices and accessories',
+                'is_active' => true,
+            ]);
+        }
 
-        // Create subcategories
-        $smartphones = Category::create([
-            'name' => 'Smartphones',
-            'description' => 'Mobile phones and accessories',
-            'parent_id' => $electronics->id,
-            'is_active' => true,
-        ]);
+        if (!$clothing) {
+            $clothing = Category::create([
+                'name' => 'Clothing',
+                'description' => 'Apparel and fashion items',
+                'is_active' => true,
+            ]);
+        }
 
-        $laptops = Category::create([
-            'name' => 'Laptops',
-            'description' => 'Laptop computers',
-            'parent_id' => $electronics->id,
-            'is_active' => true,
-        ]);
+        if (!$books) {
+            $books = Category::create([
+                'name' => 'Books & Media',
+                'description' => 'Books and educational materials',
+                'is_active' => true,
+            ]);
+        }
+
+        if (!$food) {
+            $food = Category::create([
+                'name' => 'Food & Beverages',
+                'description' => 'Food items and drinks',
+                'is_active' => true,
+            ]);
+        }
+
+        // Create subcategories if they don't exist
+        if (!$smartphones) {
+            $smartphones = Category::create([
+                'name' => 'Smartphones',
+                'description' => 'Mobile phones and accessories',
+                'parent_id' => $electronics->id,
+                'is_active' => true,
+            ]);
+        }
+
+        if (!$laptops) {
+            $laptops = Category::create([
+                'name' => 'Laptops',
+                'description' => 'Laptop computers',
+                'parent_id' => $electronics->id,
+                'is_active' => true,
+            ]);
+        }
 
         // Create sample products
         $products = [

@@ -13,6 +13,12 @@ class PaymentReceiptPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if payment receipt permissions already exist
+        if (Permission::where('name', 'like', 'payment_receipts.%')->exists()) {
+            $this->command->info('Payment receipt permissions already exist. Skipping payment receipt permissions seeding.');
+            return;
+        }
+
         // Create payment receipt permissions
         $permissions = [
             'payment_receipts.view' => 'View payment receipts',

@@ -12,6 +12,12 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if categories already exist
+        if (Category::count() > 0) {
+            $this->command->info('Categories already exist. Skipping category seeding.');
+            return;
+        }
+
         $categories = [
             [
                 'name' => 'Electronics',
