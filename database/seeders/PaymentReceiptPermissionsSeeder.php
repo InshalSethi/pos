@@ -34,25 +34,31 @@ class PaymentReceiptPermissionsSeeder extends Seeder
         // Assign permissions to admin role
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
-            $adminRole->givePermissionTo(array_keys($permissions));
+            $existingPermissions = $adminRole->permissions->pluck('name')->toArray();
+            $newPermissions = array_merge($existingPermissions, array_keys($permissions));
+            $adminRole->syncPermissions(array_unique($newPermissions));
         }
 
         // Assign permissions to manager role
         $managerRole = Role::where('name', 'manager')->first();
         if ($managerRole) {
-            $managerRole->givePermissionTo([
+            $existingPermissions = $managerRole->permissions->pluck('name')->toArray();
+            $newPermissions = array_merge($existingPermissions, [
                 'payment_receipts.view',
                 'payment_receipts.create',
                 'payment_receipts.edit',
                 'payment_receipts.verify',
                 'payment_receipts.deposit'
             ]);
+            $managerRole->syncPermissions(array_unique($newPermissions));
         }
 
         // Assign view permission to employee role
         $employeeRole = Role::where('name', 'employee')->first();
         if ($employeeRole) {
-            $employeeRole->givePermissionTo(['payment_receipts.view']);
+            $existingPermissions = $employeeRole->permissions->pluck('name')->toArray();
+            $newPermissions = array_merge($existingPermissions, ['payment_receipts.view']);
+            $employeeRole->syncPermissions(array_unique($newPermissions));
         }
 
         $this->command->info('Payment receipt permissions created and assigned successfully.');

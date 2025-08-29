@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Customer;
 
@@ -120,7 +119,13 @@ class CustomerSeeder extends Seeder
         ];
 
         foreach ($customers as $customerData) {
-            Customer::create($customerData);
+            // Use email for unique check, but handle null emails by using name
+            $uniqueField = $customerData['email'] ? ['email' => $customerData['email']] : ['name' => $customerData['name']];
+
+            Customer::firstOrCreate(
+                $uniqueField,
+                $customerData
+            );
         }
     }
 }

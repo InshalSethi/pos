@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -144,10 +143,10 @@ class RolePermissionSeeder extends Seeder
         $employeeRole = Role::firstOrCreate(['name' => 'employee']);
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
-        // Assign permissions to roles
-        $adminRole->givePermissionTo(Permission::all());
+        // Assign permissions to roles (sync to avoid duplicates)
+        $adminRole->syncPermissions(Permission::all());
 
-        $managerRole->givePermissionTo([
+        $managerRole->syncPermissions([
             // POS & Sales
             'pos.access', 'pos.create_sale', 'pos.refund',
             'sales.view', 'sales.create', 'sales.edit', 'sales.refund',
@@ -180,7 +179,7 @@ class RolePermissionSeeder extends Seeder
             'settings.view',
         ]);
 
-        $cashierRole->givePermissionTo([
+        $cashierRole->syncPermissions([
             // POS & Sales
             'pos.access', 'pos.create_sale', 'pos.refund',
             'sales.view', 'sales.create',
@@ -199,7 +198,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Employee role - basic employee access
-        $employeeRole->givePermissionTo([
+        $employeeRole->syncPermissions([
             // Expense management
             'expenses.view', 'expenses.create',
 
@@ -213,7 +212,7 @@ class RolePermissionSeeder extends Seeder
             'reports.view',
         ]);
 
-        $userRole->givePermissionTo([
+        $userRole->syncPermissions([
             // Basic POS access
             'pos.access',
 

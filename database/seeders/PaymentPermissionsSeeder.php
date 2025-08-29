@@ -33,7 +33,9 @@ class PaymentPermissionsSeeder extends Seeder
         // Assign permissions to admin role
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
-            $adminRole->givePermissionTo(array_keys($permissions));
+            $existingPermissions = $adminRole->permissions->pluck('name')->toArray();
+            $newPermissions = array_merge($existingPermissions, array_keys($permissions));
+            $adminRole->syncPermissions(array_unique($newPermissions));
         }
 
         // Assign basic permissions to manager role

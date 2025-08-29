@@ -16,6 +16,12 @@ class ExpenseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if expense data already exists
+        if (Expense::count() > 0) {
+            $this->command->info('Expense data already exists. Skipping expense seeding.');
+            return;
+        }
+
         // Get required data
         $categories = ExpenseCategory::all();
         $employees = Employee::all();

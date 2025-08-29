@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Category;
 use App\Models\Product;
@@ -185,7 +184,10 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $productData) {
-            Product::create($productData);
+            Product::firstOrCreate(
+                ['sku' => $productData['sku']], // Check by SKU
+                $productData
+            );
         }
     }
 }

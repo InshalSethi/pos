@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -62,14 +61,21 @@ class ChartOfAccountsSeeder extends Seeder
         ];
 
         foreach ($accounts as $account) {
-            DB::table('chart_of_accounts')->insert(array_merge($account, [
-                'description' => $account['account_name'],
-                'is_active' => true,
-                'opening_balance' => 0,
-                'current_balance' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            // Check if account already exists by account_code
+            $existingAccount = DB::table('chart_of_accounts')
+                ->where('account_code', $account['account_code'])
+                ->first();
+
+            if (!$existingAccount) {
+                DB::table('chart_of_accounts')->insert(array_merge($account, [
+                    'description' => $account['account_name'],
+                    'is_active' => true,
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
         }
     }
 }

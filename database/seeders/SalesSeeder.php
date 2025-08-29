@@ -17,6 +17,12 @@ class SalesSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if sales data already exists
+        if (Sale::count() > 0) {
+            $this->command->info('Sales data already exists. Skipping sales seeding.');
+            return;
+        }
+
         $customers = Customer::where('name', '!=', 'Walk-in Customer')->get();
         $products = Product::where('is_active', true)->get();
         $users = User::all();

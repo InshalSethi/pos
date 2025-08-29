@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -41,29 +40,31 @@ class AccountingPermissionsSeeder extends Seeder
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
             $allPermissions = array_merge($accountingPermissions, $reportsPermissions);
-            foreach ($allPermissions as $permission) {
-                $adminRole->givePermissionTo($permission);
-            }
+            $adminRole->syncPermissions($allPermissions);
         }
 
         // Assign view permissions to manager role
         $managerRole = Role::where('name', 'manager')->first();
         if ($managerRole) {
-            $managerRole->givePermissionTo([
+            $existingPermissions = $managerRole->permissions->pluck('name')->toArray();
+            $newPermissions = array_merge($existingPermissions, [
                 'accounting.view',
                 'accounting.create',
                 'accounting.edit',
                 'reports.view',
                 'reports.export',
             ]);
+            $managerRole->syncPermissions(array_unique($newPermissions));
         }
 
         // Assign limited permissions to cashier role
         $cashierRole = Role::where('name', 'cashier')->first();
         if ($cashierRole) {
-            $cashierRole->givePermissionTo([
+            $existingPermissions = $cashierRole->permissions->pluck('name')->toArray();
+            $newPermissions = array_merge($existingPermissions, [
                 'reports.view',
             ]);
+            $cashierRole->syncPermissions(array_unique($newPermissions));
         }
     }
 }
