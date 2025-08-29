@@ -2,384 +2,155 @@
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="mb-6">
           <h1 class="text-3xl font-bold text-gray-900">Products</h1>
-          <div class="flex space-x-3">
-            <button
-              v-if="authStore.hasPermission('products.import')"
-              @click="showImportModal = true"
-              class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-            >
-              Import Products
-            </button>
-            <button
-              v-if="authStore.hasPermission('products.export')"
-              @click="exportProducts"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-            >
-              Export Products
-            </button>
-            <button
-              @click="openCategoryModal"
-              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-            >
-              Manage Categories
-            </button>
-            <button
-              v-if="authStore.hasPermission('products.create')"
-              @click="showCreateModal = true"
-              class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-            >
-              Add Product
-            </button>
-          </div>
         </div>
 
-        <!-- View Toggle -->
-        <div class="flex justify-between items-center mb-6">
-          <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              @click="activeView = 'grid'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeView === 'grid'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              ]"
-            >
-              <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-              </svg>
-              Grid
-            </button>
-            <button
-              @click="activeView = 'table'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeView === 'table'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              ]"
-            >
-              <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-              </svg>
-              Table
-            </button>
-          </div>
-          <div class="text-sm text-gray-500">
-            {{ products.length }} products total
-          </div>
-        </div>
 
-        <!-- Search and Filters -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search products..."
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                @input="debouncedSearch"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-              <select
-                v-model="selectedCategory"
-                @change="fetchProducts"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">All Categories</option>
-                <option v-for="category in categories" :key="category.id" :value="category.id">
-                  {{ category.full_name }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                v-model="selectedStatus"
-                @change="fetchProducts"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">All Status</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            </div>
-            <div class="flex items-end space-x-2">
-              <button
-                @click="toggleLowStock"
-                :class="[
-                  'px-4 py-2 rounded-md text-sm font-medium',
-                  showLowStock
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-gray-500 hover:bg-gray-600 text-white'
-                ]"
-              >
-                {{ showLowStock ? 'All Products' : 'Low Stock' }}
-              </button>
-              <button
-                @click="clearFilters"
-                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Products Grid -->
-        <div v-if="loading" class="bg-white shadow rounded-lg p-6 text-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-2 text-gray-600">Loading products...</p>
-        </div>
-
-        <div v-else-if="products.length === 0" class="bg-white shadow rounded-lg p-6 text-center text-gray-500">
-          No products found.
-        </div>
-
-        <!-- Products Grid -->
-        <div v-if="activeView === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div
-            v-for="product in products"
-            :key="product.id"
-            class="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <!-- Product Image -->
-            <div class="h-48 bg-gray-200 flex items-center justify-center">
-              <img
-                v-if="product.image"
-                :src="product.image"
-                :alt="product.name"
-                class="h-full w-full object-cover"
-              />
-              <div v-else class="text-gray-400">
-                <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
+        <!-- Products Table -->
+        <DataTable
+          title="Products"
+          subtitle="Manage your product inventory and details"
+          :columns="tableColumns"
+          :data="products"
+          :loading="loading"
+          :pagination="tablePagination"
+          storage-key="products-table-state"
+          empty-message="No products found"
+          empty-sub-message="Get started by adding your first product."
+          @search="handleTableSearch"
+          @sort="handleSort"
+          @page-change="handlePageChange"
+          @per-page-change="handlePerPageChange"
+        >
+            <!-- Custom column content -->
+            <template #column-product="{ item }">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-12 w-12">
+                  <img
+                    v-if="item.image"
+                    :src="item.image"
+                    :alt="item.name"
+                    class="h-12 w-12 rounded-lg object-cover"
+                  />
+                  <div v-else class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ item.name }}</div>
+                  <div class="text-sm text-gray-500">{{ item.sku || 'No SKU' }}</div>
+                </div>
               </div>
-            </div>
+            </template>
 
-            <!-- Product Info -->
-            <div class="p-4">
-              <div class="flex justify-between items-start mb-2">
-                <h3 class="text-lg font-medium text-gray-900 truncate">{{ product.name }}</h3>
+            <template #column-category="{ item }">
+              <span v-if="item.category" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                {{ item.category.name }}
+              </span>
+              <span v-else class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                No Category
+              </span>
+            </template>
+
+            <template #column-stock="{ item }">
+              <div>
+                <div class="text-sm text-gray-900">{{ item.stock_quantity }}</div>
+                <div class="text-sm text-gray-500">Min: {{ item.low_stock_threshold }}</div>
+              </div>
+            </template>
+
+            <template #column-status="{ item }">
+              <div class="flex flex-col space-y-1">
                 <span
                   :class="[
                     'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                    product.is_active
+                    item.is_active
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   ]"
                 >
-                  {{ product.is_active ? 'Active' : 'Inactive' }}
+                  {{ item.is_active ? 'Active' : 'Inactive' }}
                 </span>
-              </div>
-
-              <p class="text-sm text-gray-600 mb-2">SKU: {{ product.sku }}</p>
-
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-lg font-bold text-green-600">{{ product.formatted_price }}</span>
-                <span v-if="product.category" class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {{ product.category.name }}
-                </span>
-              </div>
-
-              <!-- Stock Info -->
-              <div class="flex justify-between items-center mb-3">
-                <span class="text-sm text-gray-600">Stock: {{ product.stock_quantity }}</span>
                 <span
-                  v-if="product.is_low_stock"
-                  class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded"
+                  v-if="item.is_low_stock"
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
                 >
                   Low Stock
                 </span>
               </div>
+            </template>
 
-              <!-- Actions -->
-              <div class="flex justify-between">
+            <template #column-actions="{ item }">
+              <div class="flex space-x-3">
                 <button
-                  @click="editProduct(product)"
-                  class="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="viewProduct(product)"
-                  class="text-green-600 hover:text-green-900 text-sm font-medium"
+                  @click="viewProduct(item)"
+                  class="text-indigo-600 hover:text-indigo-900"
                 >
                   View
                 </button>
                 <button
-                  @click="deleteProduct(product)"
-                  class="text-red-600 hover:text-red-900 text-sm font-medium"
+                  @click="editProduct(item)"
+                  class="text-green-600 hover:text-green-900"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="deleteProduct(item)"
+                  class="text-red-600 hover:text-red-900"
                 >
                   Delete
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
+            </template>
 
-        <!-- Products Table -->
-        <div v-if="activeView === 'table'" class="bg-white shadow overflow-hidden sm:rounded-md">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="product in products" :key="product.id" class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-12 w-12">
-                        <img
-                          v-if="product.image"
-                          :src="product.image"
-                          :alt="product.name"
-                          class="h-12 w-12 rounded-lg object-cover"
-                        />
-                        <div v-else class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                          <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                      </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
-                        <div class="text-sm text-gray-500">{{ product.sku || 'No SKU' }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span v-if="product.category" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {{ product.category.name }}
-                    </span>
-                    <span v-else class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                      No Category
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ product.formatted_price }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ product.stock_quantity }}</div>
-                    <div class="text-sm text-gray-500">Min: {{ product.low_stock_threshold }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span
-                      :class="[
-                        'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                        product.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      ]"
-                    >
-                      {{ product.is_active ? 'Active' : 'Inactive' }}
-                    </span>
-                    <span
-                      v-if="product.is_low_stock"
-                      class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                    >
-                      Low Stock
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-3">
-                      <button
-                        @click="viewProduct(product)"
-                        class="text-indigo-600 hover:text-indigo-900"
-                      >
-                        View
-                      </button>
-                      <button
-                        @click="editProduct(product)"
-                        class="text-green-600 hover:text-green-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        @click="deleteProduct(product)"
-                        class="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="pagination.last_page > 1" class="mt-6 bg-white shadow rounded-lg px-4 py-3">
-          <div class="flex items-center justify-between">
-            <div class="flex-1 flex justify-between sm:hidden">
-              <button
-                @click="changePage(pagination.current_page - 1)"
-                :disabled="pagination.current_page === 1"
-                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                @click="changePage(pagination.current_page + 1)"
-                :disabled="pagination.current_page === pagination.last_page"
-                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p class="text-sm text-gray-700">
-                  Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} results
-                </p>
+            <!-- Action buttons in header -->
+            <template #actions>
+              <div class="flex space-x-3">
+                <button
+                  v-if="authStore.hasPermission('products.import')"
+                  @click="showImportModal = true"
+                  class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  Import
+                </button>
+                <button
+                  v-if="authStore.hasPermission('products.export')"
+                  @click="exportProducts"
+                  class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Export
+                </button>
+                <button
+                  @click="openCategoryModal"
+                  class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Categories
+                </button>
+                <button
+                  v-if="authStore.hasPermission('products.create')"
+                  @click="showCreateModal = true"
+                  class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Product
+                </button>
               </div>
-              <div>
-                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    v-for="page in visiblePages"
-                    :key="page"
-                    @click="changePage(page)"
-                    :class="[
-                      'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                      page === pagination.current_page
-                        ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                    ]"
-                  >
-                    {{ page }}
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        </div>
+            </template>
+        </DataTable>
       </div>
     </div>
 
@@ -897,8 +668,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -908,10 +680,7 @@ const products = ref([]);
 const categories = ref([]);
 const loading = ref(false);
 const submitting = ref(false);
-const searchQuery = ref('');
-const selectedCategory = ref('');
-const selectedStatus = ref('');
-const showLowStock = ref(false);
+
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showViewModal = ref(false);
@@ -928,7 +697,6 @@ const importResults = ref(null);
 const fileInput = ref(null);
 
 // Category management
-const activeView = ref('grid');
 const loadingCategories = ref(false);
 const creatingCategory = ref(false);
 const editingCategory = ref(false);
@@ -939,14 +707,61 @@ const categoryForm = ref({
   parent_id: ''
 });
 
-// Pagination
-const pagination = ref({
+// Table pagination
+const tablePagination = ref({
   current_page: 1,
   last_page: 1,
-  per_page: 12,
+  per_page: 25,
   total: 0,
   from: 0,
   to: 0
+});
+
+// Table columns configuration
+const tableColumns = ref([
+  {
+    key: 'product',
+    label: 'Product',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'category',
+    label: 'Category',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'formatted_price',
+    label: 'Price',
+    sortable: true,
+    align: 'right'
+  },
+  {
+    key: 'stock',
+    label: 'Stock',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: true,
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    align: 'left'
+  }
+]);
+
+// Table filters
+const tableFilters = ref({
+  search: '',
+  sort_field: '',
+  sort_order: ''
 });
 
 // Product form
@@ -970,63 +785,9 @@ const productForm = ref({
   tax_rate: ''
 });
 
-// Computed
-const visiblePages = computed(() => {
-  const pages = [];
-  const current = pagination.value.current_page;
-  const last = pagination.value.last_page;
 
-  const start = Math.max(1, current - 2);
-  const end = Math.min(last, current + 2);
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
-  return pages;
-});
 
 // Methods
-const fetchProducts = async (page = 1) => {
-  loading.value = true;
-  try {
-    const params = {
-      page,
-      per_page: pagination.value.per_page
-    };
-
-    if (searchQuery.value) {
-      params.search = searchQuery.value;
-    }
-
-    if (selectedCategory.value) {
-      params.category_id = selectedCategory.value;
-    }
-
-    if (selectedStatus.value !== '') {
-      params.is_active = selectedStatus.value;
-    }
-
-    if (showLowStock.value) {
-      params.low_stock = true;
-    }
-
-    const response = await axios.get('/api/products', { params });
-    products.value = response.data.data;
-    pagination.value = {
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-      from: response.data.from,
-      to: response.data.to
-    };
-  } catch (error) {
-    console.error('Error fetching products:', error);
-  } finally {
-    loading.value = false;
-  }
-};
 
 const fetchCategories = async () => {
   try {
@@ -1073,48 +834,75 @@ const deleteProduct = async (product) => {
 
   try {
     await axios.delete(`/api/products/${product.id}`);
-    fetchProducts();
+    fetchProductsForTable();
   } catch (error) {
     alert(error.response?.data?.message || 'An error occurred');
   }
 };
 
-const changePage = (page) => {
-  if (page >= 1 && page <= pagination.value.last_page) {
-    fetchProducts(page);
-  }
+
+
+// DataTable event handlers
+const handleTableSearch = (searchQuery) => {
+  tableFilters.value.search = searchQuery;
+  fetchProductsForTable(1);
 };
 
-const clearFilters = () => {
-  searchQuery.value = '';
-  selectedCategory.value = '';
-  selectedStatus.value = '';
-  showLowStock.value = false;
-  fetchProducts();
+const handleSort = (sortData) => {
+  tableFilters.value.sort_field = sortData.field;
+  tableFilters.value.sort_order = sortData.order;
+  fetchProductsForTable(1);
 };
 
-const toggleLowStock = () => {
-  showLowStock.value = !showLowStock.value;
-  fetchProducts();
+const handlePageChange = (page) => {
+  fetchProductsForTable(page);
 };
 
-const createProduct = async () => {
-  submitting.value = true;
-  formErrors.value = [];
+const handlePerPageChange = (perPage) => {
+  tablePagination.value.per_page = perPage;
+  fetchProductsForTable(1);
+};
 
+// Separate fetch method for table view
+const fetchProductsForTable = async (page = 1) => {
+  loading.value = true;
   try {
-    await axios.post('/api/products', productForm.value);
-    closeProductModal();
-    fetchProducts();
+    const params = {
+      page,
+      per_page: tablePagination.value.per_page,
+      ...tableFilters.value
+    };
+
+    // Remove empty parameters
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null) {
+        delete params[key];
+      }
+    });
+
+    const response = await axios.get('/api/products', { params });
+    products.value = response.data.data;
+
+    // Update table pagination
+    tablePagination.value = {
+      current_page: response.data.current_page,
+      last_page: response.data.last_page,
+      per_page: response.data.per_page,
+      total: response.data.total,
+      from: response.data.from,
+      to: response.data.to
+    };
   } catch (error) {
-    if (error.response?.data?.errors) {
-      formErrors.value = Object.values(error.response.data.errors).flat();
-    } else {
-      formErrors.value = [error.response?.data?.message || 'An error occurred'];
-    }
+    console.error('Error fetching products for table:', error);
   } finally {
-    submitting.value = false;
+    loading.value = false;
   }
+};
+
+
+
+const createProduct = () => {
+  showCreateModal.value = true;
 };
 
 const updateProduct = async () => {
@@ -1124,7 +912,7 @@ const updateProduct = async () => {
   try {
     await axios.put(`/api/products/${editingProduct.value.id}`, productForm.value);
     closeProductModal();
-    fetchProducts();
+    fetchProductsForTable();
   } catch (error) {
     if (error.response?.data?.errors) {
       formErrors.value = Object.values(error.response.data.errors).flat();
@@ -1162,14 +950,7 @@ const closeProductModal = () => {
   formErrors.value = [];
 };
 
-// Debounced search
-let searchTimeout;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    fetchProducts();
-  }, 500);
-};
+
 
 
 
@@ -1313,7 +1094,7 @@ const importProducts = async () => {
     importResults.value = response.data;
 
     // Refresh products list
-    await fetchProducts();
+    await fetchProductsForTable();
 
     // Clear file selection
     selectedFile.value = null;
@@ -1330,18 +1111,8 @@ const importProducts = async () => {
 
 const exportProducts = async () => {
   try {
-    const params = new URLSearchParams();
-
-    if (searchQuery.value) {
-      params.append('search', searchQuery.value);
-    }
-
-    if (selectedCategory.value) {
-      params.append('category_id', selectedCategory.value);
-    }
-
+    // Export all products (DataTable search filters are not applied to export)
     const response = await axios.get('/api/products/export', {
-      params: params,
       responseType: 'blob'
     });
 
@@ -1387,9 +1158,11 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+
+
 // Lifecycle
 onMounted(() => {
-  fetchProducts();
+  fetchProductsForTable();
   fetchCategories();
 });
 </script>

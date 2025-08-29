@@ -4,27 +4,20 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Purchase Orders</h1>
-        <button
-          @click="showCreateModal = true"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+        <router-link
+          to="/purchase/orders/create"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium inline-flex items-center"
         >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           Create Purchase Order
-        </button>
+        </router-link>
       </div>
 
       <!-- Filters -->
       <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search purchase orders..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              @input="debouncedSearch"
-            />
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
             <select
@@ -63,130 +56,87 @@
       </div>
 
       <!-- Purchase Orders Table -->
-      <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO #</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expected Delivery</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="order in purchaseOrders" :key="order.id">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ order.po_number }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ order.supplier?.name }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(order.order_date) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'N/A' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ${{ order.total_amount }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStatusClass(order.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
-                    {{ formatStatus(order.status) }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="viewOrder(order)" class="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
-                  <button @click="editOrder(order)" class="text-green-600 hover:text-green-900 mr-3">Edit</button>
-                  <button v-if="order.status === 'confirmed'" @click="receiveOrder(order)" class="text-blue-600 hover:text-blue-900 mr-3">Receive</button>
-                  <button @click="deleteOrder(order.id)" class="text-red-600 hover:text-red-900">Delete</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <DataTable
+        title="Purchase Orders"
+        subtitle="Manage and track all purchase orders"
+        :columns="tableColumns"
+        :data="purchaseOrders"
+        :loading="loading"
+        :pagination="pagination"
+        :initial-search="searchQuery"
+        :initial-per-page="perPage"
+        :default-per-page="15"
+        storage-key="purchase-orders-table-state"
+        empty-message="No purchase orders found"
+        empty-sub-message="Get started by creating your first purchase order."
+        @search="handleTableSearch"
+        @sort="handleSort"
+        @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
+      >
+        <!-- Custom column content -->
+        <template #column-expected_delivery="{ item }">
+          {{ item.expected_delivery_date ? formatDate(item.expected_delivery_date) : 'N/A' }}
+        </template>
 
-        <!-- Pagination -->
-        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div class="flex-1 flex justify-between sm:hidden">
-            <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
+        <template #column-status="{ item }">
+          <span :class="getStatusClass(item.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+            {{ formatStatus(item.status) }}
+          </span>
+        </template>
+
+        <template #column-actions="{ item }">
+          <div class="flex space-x-2">
+            <button @click="viewOrder(item)" class="text-indigo-600 hover:text-indigo-900" title="View Order">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
             </button>
-            <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
+            <button @click="editOrder(item)" class="text-green-600 hover:text-green-900" title="Edit Order">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button v-if="item.status === 'confirmed'" @click="receiveOrder(item)" class="text-blue-600 hover:text-blue-900" title="Receive Order">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </button>
+            <button @click="deleteOrder(item.id)" class="text-red-600 hover:text-red-900" title="Delete Order">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-gray-700">
-                Showing {{ ((currentPage - 1) * perPage) + 1 }} to {{ Math.min(currentPage * perPage, totalItems) }} of {{ totalItems }} results
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button
-                  @click="previousPage"
-                  :disabled="currentPage === 1"
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                    page === currentPage
-                      ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                  ]"
-                >
-                  {{ page }}
-                </button>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
+        </template>
+
+        <!-- Action buttons in header -->
+        <template #actions>
+          <router-link
+            to="/purchase/orders/create"
+            class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Create Purchase Order
+          </router-link>
+        </template>
+      </DataTable>
       </div>
     </div>
-
-    <!-- Purchase Order Modal -->
-    <PurchaseOrderModal
-      :show="showCreateModal || showEditModal"
-      :order="selectedOrder"
-      :is-edit="showEditModal"
-      @close="closeModal"
-      @saved="handleOrderSaved"
-    />
-  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import PurchaseOrderModal from './PurchaseOrderModal.vue';
+import { debounce } from '@/utils/debounce';
+import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
+const router = useRouter();
 const authStore = useAuthStore();
 
 // Reactive data
@@ -195,9 +145,6 @@ const searchQuery = ref('');
 const selectedStatus = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
-const selectedOrder = ref(null);
 const loading = ref(false);
 
 // Pagination
@@ -206,35 +153,119 @@ const perPage = ref(15);
 const totalItems = ref(0);
 const totalPages = computed(() => Math.ceil(totalItems.value / perPage.value));
 
+// DataTable pagination
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  per_page: 15,
+  total: 0,
+  from: 0,
+  to: 0
+});
+
+// Table columns configuration
+const tableColumns = ref([
+  {
+    key: 'po_number',
+    label: 'PO #',
+    sortable: true,
+    align: 'left',
+    class: 'text-gray-500 font-mono text-xs'
+  },
+  {
+    key: 'supplier.name',
+    label: 'Supplier',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'order_date',
+    label: 'Order Date',
+    sortable: true,
+    type: 'date',
+    align: 'left'
+  },
+  {
+    key: 'expected_delivery',
+    label: 'Expected Delivery',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'total_amount',
+    label: 'Total Amount',
+    sortable: true,
+    type: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: true,
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    align: 'left'
+  }
+]);
+
+// Table filters
+const filters = ref({
+  search: '',
+  sort_field: '',
+  sort_order: ''
+});
+
 // Computed
 const visiblePages = computed(() => {
   const pages = [];
   const start = Math.max(1, currentPage.value - 2);
   const end = Math.min(totalPages.value, currentPage.value + 2);
-  
+
   for (let i = start; i <= end; i++) {
     pages.push(i);
   }
-  
+
   return pages;
 });
 
 // Methods
-const fetchPurchaseOrders = async () => {
+const fetchPurchaseOrders = async (page = 1) => {
   loading.value = true;
   try {
     const params = {
-      page: currentPage.value,
-      per_page: perPage.value,
+      page,
+      per_page: pagination.value.per_page,
       search: searchQuery.value,
       status: selectedStatus.value,
       date_from: dateFrom.value,
       date_to: dateTo.value,
+      ...filters.value
     };
+
+    // Remove empty parameters
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null) {
+        delete params[key];
+      }
+    });
 
     const response = await axios.get('/api/purchase-orders', { params });
     purchaseOrders.value = response.data.data;
     totalItems.value = response.data.total;
+
+    // Update pagination
+    pagination.value = {
+      current_page: response.data.current_page,
+      last_page: response.data.last_page,
+      per_page: response.data.per_page,
+      total: response.data.total,
+      from: response.data.from,
+      to: response.data.to
+    };
   } catch (error) {
     console.error('Error fetching purchase orders:', error);
   } finally {
@@ -246,6 +277,27 @@ const debouncedSearch = debounce(() => {
   currentPage.value = 1;
   fetchPurchaseOrders();
 }, 300);
+
+// DataTable event handlers
+const handleTableSearch = (searchQuery) => {
+  filters.value.search = searchQuery;
+  fetchPurchaseOrders(1);
+};
+
+const handleSort = (sortData) => {
+  filters.value.sort_field = sortData.field;
+  filters.value.sort_order = sortData.order;
+  fetchPurchaseOrders(1);
+};
+
+const handlePageChange = (page) => {
+  fetchPurchaseOrders(page);
+};
+
+const handlePerPageChange = (perPage) => {
+  pagination.value.per_page = perPage;
+  fetchPurchaseOrders(1);
+};
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString();
@@ -268,13 +320,11 @@ const getStatusClass = (status) => {
 };
 
 const viewOrder = (order) => {
-  // Navigate to order view
-  window.open(`/purchase/orders/${order.id}`, '_blank');
+  router.push(`/purchase/orders/${order.id}`);
 };
 
 const editOrder = (order) => {
-  selectedOrder.value = order;
-  showEditModal.value = true;
+  router.push(`/purchase/orders/${order.id}/edit`);
 };
 
 const receiveOrder = (order) => {
@@ -313,30 +363,9 @@ const goToPage = (page) => {
   fetchPurchaseOrders();
 };
 
-// Modal functions
-const closeModal = () => {
-  showCreateModal.value = false;
-  showEditModal.value = false;
-  selectedOrder.value = null;
-};
 
-const handleOrderSaved = () => {
-  closeModal();
-  fetchPurchaseOrders();
-};
 
-// Utility function
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
+
 
 // Lifecycle
 onMounted(() => {

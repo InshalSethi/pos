@@ -60,117 +60,89 @@
       </div>
 
       <!-- Returns Table -->
-      <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return #</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Original PO</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Amount</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="returnItem in returns" :key="returnItem.id">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ returnItem.return_number }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ returnItem.original_purchase_order?.po_number || 'N/A' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ returnItem.supplier?.name }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(returnItem.return_date) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ${{ returnItem.total_amount }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStatusClass(returnItem.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
-                    {{ formatStatus(returnItem.status) }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="viewReturn(returnItem)" class="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
-                  <button @click="editReturn(returnItem)" class="text-green-600 hover:text-green-900 mr-3">Edit</button>
-                  <button @click="deleteReturn(returnItem.id)" class="text-red-600 hover:text-red-900">Delete</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <DataTable
+        title="Purchase Returns"
+        subtitle="Manage and track all purchase returns"
+        :columns="tableColumns"
+        :data="returns"
+        :loading="loading"
+        :pagination="pagination"
+        :initial-search="searchQuery"
+        :initial-per-page="perPage"
+        :default-per-page="15"
+        storage-key="purchase-returns-table-state"
+        empty-message="No purchase returns found"
+        empty-sub-message="Try adjusting your search or filter criteria."
+        @search="handleTableSearch"
+        @sort="handleSort"
+        @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
+      >
+        <!-- Custom column content -->
+        <template #column-original_po="{ item }">
+          {{ item.original_purchase_order?.po_number || 'N/A' }}
+        </template>
 
-        <!-- Pagination -->
-        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div class="flex-1 flex justify-between sm:hidden">
-            <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
+        <template #column-status="{ item }">
+          <span :class="getStatusClass(item.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+            {{ formatStatus(item.status) }}
+          </span>
+        </template>
+
+        <template #column-actions="{ item }">
+          <div class="flex space-x-2">
+            <button @click="viewReturn(item)" class="text-indigo-600 hover:text-indigo-900" title="View Return">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
             </button>
-            <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
+            <button @click="editReturn(item)" class="text-green-600 hover:text-green-900" title="Edit Return">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button @click="deleteReturn(item.id)" class="text-red-600 hover:text-red-900" title="Delete Return">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-gray-700">
-                Showing {{ ((currentPage - 1) * perPage) + 1 }} to {{ Math.min(currentPage * perPage, totalItems) }} of {{ totalItems }} results
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button
-                  @click="previousPage"
-                  :disabled="currentPage === 1"
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                    page === currentPage
-                      ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                  ]"
-                >
-                  {{ page }}
-                </button>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+
+        <!-- Action buttons in header -->
+        <template #actions>
+          <button
+            @click="createReturn"
+            class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            Create Return
+          </button>
+        </template>
+      </DataTable>
     </div>
+
+    <!-- Purchase Return Modal -->
+    <PurchaseReturnModal
+      :show="showCreateModal || showEditModal"
+      :return-item="selectedReturn"
+      :is-edit="showEditModal"
+      :original-purchase-order-id="selectedOriginalPurchaseOrderId"
+      @close="closeModal"
+      @saved="handleReturnSaved"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { debounce } from '@/utils/debounce';
+import PurchaseReturnModal from './PurchaseReturnModal.vue';
+import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -183,6 +155,9 @@ const selectedSupplier = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
 const showCreateModal = ref(false);
+const showEditModal = ref(false);
+const selectedReturn = ref(null);
+const selectedOriginalPurchaseOrderId = ref(null);
 const loading = ref(false);
 
 // Pagination
@@ -191,35 +166,119 @@ const perPage = ref(15);
 const totalItems = ref(0);
 const totalPages = computed(() => Math.ceil(totalItems.value / perPage.value));
 
+// DataTable pagination
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  per_page: 15,
+  total: 0,
+  from: 0,
+  to: 0
+});
+
+// Table columns configuration
+const tableColumns = ref([
+  {
+    key: 'return_number',
+    label: 'Return #',
+    sortable: true,
+    align: 'left',
+    class: 'text-gray-500 font-mono text-xs'
+  },
+  {
+    key: 'original_po',
+    label: 'Original PO',
+    sortable: false,
+    align: 'left'
+  },
+  {
+    key: 'supplier.name',
+    label: 'Supplier',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'return_date',
+    label: 'Return Date',
+    sortable: true,
+    type: 'date',
+    align: 'left'
+  },
+  {
+    key: 'total_amount',
+    label: 'Return Amount',
+    sortable: true,
+    type: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: true,
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    align: 'left'
+  }
+]);
+
+// Table filters
+const filters = ref({
+  search: '',
+  sort_field: '',
+  sort_order: ''
+});
+
 // Computed
 const visiblePages = computed(() => {
   const pages = [];
   const start = Math.max(1, currentPage.value - 2);
   const end = Math.min(totalPages.value, currentPage.value + 2);
-  
+
   for (let i = start; i <= end; i++) {
     pages.push(i);
   }
-  
+
   return pages;
 });
 
 // Methods
-const fetchReturns = async () => {
+const fetchReturns = async (page = 1) => {
   loading.value = true;
   try {
     const params = {
-      page: currentPage.value,
-      per_page: perPage.value,
+      page,
+      per_page: pagination.value.per_page,
       search: searchQuery.value,
       supplier_id: selectedSupplier.value,
       date_from: dateFrom.value,
       date_to: dateTo.value,
+      ...filters.value
     };
+
+    // Remove empty parameters
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null) {
+        delete params[key];
+      }
+    });
 
     const response = await axios.get('/api/purchase-returns', { params });
     returns.value = response.data.data;
     totalItems.value = response.data.total;
+
+    // Update pagination
+    pagination.value = {
+      current_page: response.data.current_page,
+      last_page: response.data.last_page,
+      per_page: response.data.per_page,
+      total: response.data.total,
+      from: response.data.from,
+      to: response.data.to
+    };
   } catch (error) {
     console.error('Error fetching purchase returns:', error);
   } finally {
@@ -240,6 +299,27 @@ const debouncedSearch = debounce(() => {
   currentPage.value = 1;
   fetchReturns();
 }, 300);
+
+// DataTable event handlers
+const handleTableSearch = (searchQuery) => {
+  filters.value.search = searchQuery;
+  fetchReturns(1);
+};
+
+const handleSort = (sortData) => {
+  filters.value.sort_field = sortData.field;
+  filters.value.sort_order = sortData.order;
+  fetchReturns(1);
+};
+
+const handlePageChange = (page) => {
+  fetchReturns(page);
+};
+
+const handlePerPageChange = (perPage) => {
+  pagination.value.per_page = perPage;
+  fetchReturns(1);
+};
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString();
@@ -265,8 +345,20 @@ const viewReturn = (returnItem) => {
 };
 
 const editReturn = (returnItem) => {
-  // Navigate to return edit
-  window.location.href = `/purchase/returns/${returnItem.id}/edit`;
+  selectedReturn.value = returnItem;
+  showEditModal.value = true;
+};
+
+const closeModal = () => {
+  showCreateModal.value = false;
+  showEditModal.value = false;
+  selectedReturn.value = null;
+  selectedOriginalPurchaseOrderId.value = null;
+};
+
+const handleReturnSaved = () => {
+  closeModal();
+  fetchReturns();
 };
 
 const deleteReturn = async (returnId) => {
@@ -300,18 +392,10 @@ const goToPage = (page) => {
   fetchReturns();
 };
 
-// Utility function
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
+// Modal methods
+const createReturn = () => {
+  showCreateModal.value = true;
+};
 
 // Lifecycle
 onMounted(() => {

@@ -12,24 +12,23 @@ class BankTransaction extends Model
 
     protected $fillable = [
         'bank_account_id',
-        'journal_entry_line_id',
         'transaction_date',
+        'reference_number',
+        'description',
         'transaction_type',
         'amount',
-        'description',
-        'reference',
-        'check_number',
-        'is_reconciled',
-        'reconciled_date',
-        'bank_reference',
-        'category',
+        'running_balance',
+        'status',
+        'journal_entry_id',
+        'partner_type',
+        'partner_id',
+        'notes',
     ];
 
     protected $casts = [
         'transaction_date' => 'date',
-        'reconciled_date' => 'date',
         'amount' => 'decimal:2',
-        'is_reconciled' => 'boolean',
+        'running_balance' => 'decimal:2',
     ];
 
     // Relationships
@@ -38,20 +37,35 @@ class BankTransaction extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
-    public function journalEntryLine(): BelongsTo
+    public function journalEntry(): BelongsTo
     {
-        return $this->belongsTo(JournalEntryLine::class);
+        return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function partner()
+    {
+        return $this->morphTo();
     }
 
     // Scopes
     public function scopeReconciled($query)
     {
-        return $query->where('is_reconciled', true);
+        return $query->where('status', 'reconciled');
     }
 
     public function scopeUnreconciled($query)
     {
-        return $query->where('is_reconciled', false);
+        return $query->whereIn('status', ['pending', 'cleared']);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeCleared($query)
+    {
+        return $query->where('status', 'cleared');
     }
 
     public function scopeDebits($query)
@@ -113,34 +127,35 @@ class BankTransaction extends Model
     }
 
     // Methods
-    public function markAsReconciled($reconciledDate = null): void
+    public function markAsReconciled(): void
     {
-        $this->update([
-            'is_reconciled' => true,
-            'reconciled_date' => $reconciledDate ?? now()
-        ]);
+        $this->update(['status' => 'reconciled']);
     }
 
-    public function markAsUnreconciled(): void
+    public function markAsCleared(): void
     {
-        $this->update([
-            'is_reconciled' => false,
-            'reconciled_date' => null
-        ]);
+        $this->update(['status' => 'cleared']);
     }
 
-    public function getRunningBalance(): float
+    public function markAsPending(): void
+    {
+        $this->update(['status' => 'pending']);
+    }
+
+    public function calculateRunningBalance(): float
     {
         // Calculate running balance up to this transaction
         $previousTransactions = BankTransaction::where('bank_account_id', $this->bank_account_id)
                                               ->where('transaction_date', '<=', $this->transaction_date)
                                               ->where('id', '<=', $this->id)
+                                              ->orderBy('transaction_date')
+                                              ->orderBy('id')
                                               ->get();
 
         $balance = $this->bankAccount->opening_balance;
 
         foreach ($previousTransactions as $transaction) {
-            if ($transaction->is_credit) {
+            if ($transaction->transaction_type === 'credit') {
                 $balance += $transaction->amount;
             } else {
                 $balance -= $transaction->amount;
@@ -148,5 +163,11 @@ class BankTransaction extends Model
         }
 
         return $balance;
+    }
+
+    // Accessor for running balance
+    public function getRunningBalanceAttribute(): float
+    {
+        return $this->attributes['running_balance'] ?? $this->calculateRunningBalance();
     }
 }

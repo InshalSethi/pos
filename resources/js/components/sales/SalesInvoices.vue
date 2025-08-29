@@ -5,7 +5,7 @@
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Sales Invoices</h1>
         <button
-          @click="showCreateModal = true"
+          @click="createInvoice"
           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
         >
           Create Invoice
@@ -61,111 +61,75 @@
       </div>
 
       <!-- Invoices Table -->
-      <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="invoice in invoices" :key="invoice.id">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ invoice.sale_number }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ invoice.customer?.name || 'Walk-in Customer' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(invoice.sale_date) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ${{ invoice.total_amount }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="getStatusClass(invoice.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
-                    {{ invoice.status }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="viewInvoice(invoice)" class="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
-                  <button @click="editInvoice(invoice)" class="text-green-600 hover:text-green-900 mr-3">Edit</button>
-                  <button @click="deleteInvoice(invoice.id)" class="text-red-600 hover:text-red-900">Delete</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <DataTable
+        title="Sales Invoices"
+        subtitle="Manage and track all sales invoices"
+        :columns="tableColumns"
+        :data="invoices"
+        :loading="loading"
+        :pagination="pagination"
+        :initial-search="searchQuery"
+        :initial-per-page="perPage"
+        :default-per-page="15"
+        storage-key="sales-invoices-table-state"
+        empty-message="No invoices found"
+        empty-sub-message="Get started by creating your first sales invoice."
+        @search="handleTableSearch"
+        @sort="handleSort"
+        @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
+      >
+        <!-- Custom column content -->
+        <template #column-status="{ item }">
+          <span :class="getStatusClass(item.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+            {{ item.status }}
+          </span>
+        </template>
 
-        <!-- Pagination -->
-        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div class="flex-1 flex justify-between sm:hidden">
-            <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
+        <template #column-actions="{ item }">
+          <div class="flex space-x-2">
+            <button @click="viewInvoice(item)" class="text-indigo-600 hover:text-indigo-900" title="View Invoice">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
             </button>
-            <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
+            <button @click="printInvoice(item)" class="text-blue-600 hover:text-blue-900" title="Print Invoice">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+            </button>
+            <button @click="editInvoice(item)" class="text-green-600 hover:text-green-900" title="Edit Invoice">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button @click="deleteInvoice(item.id)" class="text-red-600 hover:text-red-900" title="Delete Invoice">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-gray-700">
-                Showing {{ ((currentPage - 1) * perPage) + 1 }} to {{ Math.min(currentPage * perPage, totalItems) }} of {{ totalItems }} results
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button
-                  @click="previousPage"
-                  :disabled="currentPage === 1"
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                    page === currentPage
-                      ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                  ]"
-                >
-                  {{ page }}
-                </button>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+
+        <!-- Action buttons in header -->
+        <template #actions>
+          <button
+            @click="createInvoice"
+            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            New Invoice
+          </button>
+        </template>
+      </DataTable>
     </div>
 
-    <!-- Sales Invoice Modal -->
+    <!-- Sales Invoice Modal (for editing only) -->
     <SalesInvoiceModal
-      :show="showCreateModal || showEditModal"
+      :show="showEditModal"
       :invoice="selectedInvoice"
       :is-edit="showEditModal"
       @close="closeModal"
@@ -176,11 +140,15 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { debounce } from '@/utils/debounce';
 import SalesInvoiceModal from './SalesInvoiceModal.vue';
+import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
+const router = useRouter();
 
 // Reactive data
 const invoices = ref([]);
@@ -188,7 +156,6 @@ const searchQuery = ref('');
 const selectedStatus = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
-const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const selectedInvoice = ref(null);
 const loading = ref(false);
@@ -199,35 +166,113 @@ const perPage = ref(15);
 const totalItems = ref(0);
 const totalPages = computed(() => Math.ceil(totalItems.value / perPage.value));
 
+// DataTable pagination
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  per_page: 15,
+  total: 0,
+  from: 0,
+  to: 0
+});
+
+// Table columns configuration
+const tableColumns = ref([
+  {
+    key: 'sale_number',
+    label: 'Invoice #',
+    sortable: true,
+    align: 'left',
+    class: 'text-gray-500 font-mono text-xs'
+  },
+  {
+    key: 'customer.name',
+    label: 'Customer',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'sale_date',
+    label: 'Date',
+    sortable: true,
+    type: 'date',
+    align: 'left'
+  },
+  {
+    key: 'total_amount',
+    label: 'Amount',
+    sortable: true,
+    type: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: true,
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    align: 'left'
+  }
+]);
+
+// Table filters
+const filters = ref({
+  search: '',
+  sort_field: '',
+  sort_order: ''
+});
+
 // Computed
 const visiblePages = computed(() => {
   const pages = [];
   const start = Math.max(1, currentPage.value - 2);
   const end = Math.min(totalPages.value, currentPage.value + 2);
-  
+
   for (let i = start; i <= end; i++) {
     pages.push(i);
   }
-  
+
   return pages;
 });
 
 // Methods
-const fetchInvoices = async () => {
+const fetchInvoices = async (page = 1) => {
   loading.value = true;
   try {
     const params = {
-      page: currentPage.value,
-      per_page: perPage.value,
+      page,
+      per_page: pagination.value.per_page,
       search: searchQuery.value,
       status: selectedStatus.value,
       date_from: dateFrom.value,
       date_to: dateTo.value,
+      ...filters.value
     };
+
+    // Remove empty parameters
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null) {
+        delete params[key];
+      }
+    });
 
     const response = await axios.get('/api/sales', { params });
     invoices.value = response.data.data;
     totalItems.value = response.data.total;
+
+    // Update pagination
+    pagination.value = {
+      current_page: response.data.current_page,
+      last_page: response.data.last_page,
+      per_page: response.data.per_page,
+      total: response.data.total,
+      from: response.data.from,
+      to: response.data.to
+    };
   } catch (error) {
     console.error('Error fetching invoices:', error);
   } finally {
@@ -239,6 +284,27 @@ const debouncedSearch = debounce(() => {
   currentPage.value = 1;
   fetchInvoices();
 }, 300);
+
+// DataTable event handlers
+const handleTableSearch = (searchQuery) => {
+  filters.value.search = searchQuery;
+  fetchInvoices(1);
+};
+
+const handleSort = (sortData) => {
+  filters.value.sort_field = sortData.field;
+  filters.value.sort_order = sortData.order;
+  fetchInvoices(1);
+};
+
+const handlePageChange = (page) => {
+  fetchInvoices(page);
+};
+
+const handlePerPageChange = (perPage) => {
+  pagination.value.per_page = perPage;
+  fetchInvoices(1);
+};
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString();
@@ -254,9 +320,17 @@ const getStatusClass = (status) => {
   return classes[status] || 'bg-gray-100 text-gray-800';
 };
 
+const createInvoice = () => {
+  router.push('/sales/invoices/create');
+};
+
 const viewInvoice = (invoice) => {
-  // Navigate to invoice view
-  window.open(`/sales/invoices/${invoice.id}`, '_blank');
+  router.push(`/sales/invoices/${invoice.id}`);
+};
+
+const printInvoice = (invoice) => {
+  const printUrl = router.resolve(`/sales/invoices/${invoice.id}/print`).href;
+  window.open(printUrl, '_blank');
 };
 
 const editInvoice = (invoice) => {
@@ -297,7 +371,6 @@ const goToPage = (page) => {
 
 // Modal functions
 const closeModal = () => {
-  showCreateModal.value = false;
   showEditModal.value = false;
   selectedInvoice.value = null;
 };
@@ -306,19 +379,6 @@ const handleInvoiceSaved = () => {
   closeModal();
   fetchInvoices();
 };
-
-// Utility function
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
 
 // Lifecycle
 onMounted(() => {

@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/auth';
 
 // Import components
 import Login from '@/components/auth/Login.vue';
+import ForgotPassword from '@/components/auth/ForgotPassword.vue';
+import ResetPassword from '@/components/auth/ResetPassword.vue';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import Dashboard from '@/components/Dashboard.vue';
 import POS from '@/components/pos/POS.vue';
@@ -11,23 +13,44 @@ import Users from '@/components/users/Users.vue';
 import Roles from '@/components/roles/Roles.vue';
 import Inventory from '@/components/inventory/Inventory.vue';
 import Accounting from '@/components/accounting/Accounting.vue';
+import Transactions from '@/components/transactions/Transactions.vue';
 import Reports from '@/components/reports/Reports.vue';
 import UserProfile from '@/components/profile/UserProfile.vue';
 import Settings from '@/components/settings/Settings.vue';
 import SalesInvoices from '@/components/sales/SalesInvoices.vue';
+import CreateInvoice from '@/components/sales/CreateInvoice.vue';
+import SalesInvoiceView from '@/components/sales/SalesInvoiceView.vue';
+import SalesInvoicePrint from '@/components/sales/SalesInvoicePrint.vue';
 import SalesReturns from '@/components/sales/SalesReturns.vue';
 import PurchaseOrders from '@/components/purchase/PurchaseOrders.vue';
+import CreatePurchaseOrder from '@/components/purchase/CreatePurchaseOrder.vue';
+import EditPurchaseOrder from '@/components/purchase/EditPurchaseOrder.vue';
+import PurchaseOrderView from '@/components/purchase/PurchaseOrderView.vue';
 import PurchaseReturns from '@/components/purchase/PurchaseReturns.vue';
 import Expenses from '@/components/expenses/Expenses.vue';
 import Employees from '@/components/employees/Employees.vue';
 import Customers from '@/components/customers/Customers.vue';
 import Suppliers from '@/components/suppliers/Suppliers.vue';
+import Payments from '@/components/payments/Payments.vue';
+import PaymentReceipts from '@/components/payment-receipts/PaymentReceipts.vue';
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
     component: Login,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPassword,
     meta: { requiresGuest: true }
   },
   {
@@ -77,6 +100,12 @@ const routes = [
         meta: { permission: 'accounting.view' }
       },
       {
+        path: 'transactions',
+        name: 'Transactions',
+        component: Transactions,
+        meta: { permission: 'accounting.view' }
+      },
+      {
         path: 'reports',
         name: 'Reports',
         component: Reports,
@@ -99,6 +128,24 @@ const routes = [
         meta: { permission: 'sales.view' }
       },
       {
+        path: 'sales/invoices/create',
+        name: 'CreateInvoice',
+        component: CreateInvoice,
+        meta: { permission: 'sales.create' }
+      },
+      {
+        path: 'sales/invoices/:id',
+        name: 'SalesInvoiceView',
+        component: SalesInvoiceView,
+        meta: { permission: 'sales.view' }
+      },
+      {
+        path: 'sales/invoices/:id/print',
+        name: 'SalesInvoicePrint',
+        component: SalesInvoicePrint,
+        meta: { permission: 'sales.view' }
+      },
+      {
         path: 'sales/returns',
         name: 'SalesReturns',
         component: SalesReturns,
@@ -109,6 +156,24 @@ const routes = [
         name: 'PurchaseOrders',
         component: PurchaseOrders,
         meta: { permission: 'purchases.view' }
+      },
+      {
+        path: 'purchase/orders/create',
+        name: 'CreatePurchaseOrder',
+        component: CreatePurchaseOrder,
+        meta: { permission: 'purchases.create' }
+      },
+      {
+        path: 'purchase/orders/:id',
+        name: 'PurchaseOrderView',
+        component: PurchaseOrderView,
+        meta: { permission: 'purchases.view' }
+      },
+      {
+        path: 'purchase/orders/:id/edit',
+        name: 'EditPurchaseOrder',
+        component: EditPurchaseOrder,
+        meta: { permission: 'purchases.edit' }
       },
       {
         path: 'purchase/returns',
@@ -139,6 +204,18 @@ const routes = [
         name: 'Suppliers',
         component: Suppliers,
         meta: { permission: 'suppliers.view' }
+      },
+      {
+        path: 'payments',
+        name: 'Payments',
+        component: Payments,
+        meta: { permission: 'payments.view' }
+      },
+      {
+        path: 'payment-receipts',
+        name: 'PaymentReceipts',
+        component: PaymentReceipts,
+        meta: { permission: 'payment_receipts.view' }
       }
     ]
   },

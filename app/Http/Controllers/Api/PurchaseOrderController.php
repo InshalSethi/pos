@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Product;
+use App\Services\DoubleEntryAccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -372,6 +373,10 @@ class PurchaseOrderController extends Controller
                     'status' => 'received',
                     'actual_delivery_date' => now()
                 ]);
+
+                // Create accounting entries when fully received
+                $accountingService = new DoubleEntryAccountingService();
+                $accountingService->createPurchaseInvoiceEntry($purchaseOrder);
             } elseif ($partiallyReceived) {
                 $purchaseOrder->update(['status' => 'partially_received']);
             }

@@ -1,15 +1,15 @@
 <template>
-  <div class="expenses-container">
+  <div class="expenses-container p-4 sm:p-6">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Expense Management</h1>
         <p class="text-gray-600">Manage and track company expenses</p>
       </div>
-      <div class="flex space-x-3">
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
         <button
           @click="showCategoryModal = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -18,7 +18,7 @@
         </button>
         <button
           @click="showExpenseModal = true"
-          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -30,11 +30,11 @@
 
     <!-- Tabs -->
     <div class="border-b border-gray-200 mb-6">
-      <nav class="-mb-px flex space-x-8">
+      <nav class="-mb-px flex flex-wrap space-x-4 sm:space-x-8">
         <button
           @click="activeTab = 'expenses'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
             activeTab === 'expenses'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -45,7 +45,7 @@
         <button
           @click="activeTab = 'categories'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
             activeTab === 'categories'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -56,7 +56,7 @@
         <button
           @click="activeTab = 'reports'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
             activeTab === 'reports'
               ? 'border-blue-500 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -69,7 +69,8 @@
 
     <!-- Tab Content -->
     <div v-if="activeTab === 'expenses'">
-      <ExpenseList 
+      <ExpenseList
+        ref="expenseListRef"
         @edit-expense="editExpense"
         @view-expense="viewExpense"
         @refresh="fetchExpenses"
@@ -112,6 +113,7 @@
       @approve="handleExpenseApprove"
       @reject="handleExpenseReject"
       @pay="handleExpensePay"
+      @create-payment="handleCreatePayment"
     />
   </div>
 </template>
@@ -132,6 +134,7 @@ const showCategoryModal = ref(false);
 const showExpenseViewModal = ref(false);
 const selectedExpense = ref(null);
 const selectedCategory = ref(null);
+const expenseListRef = ref(null);
 
 // Methods
 const editExpense = (expense) => {
@@ -189,8 +192,17 @@ const handleExpensePay = () => {
   fetchExpenses();
 };
 
+const handleCreatePayment = (expense) => {
+  showExpenseViewModal.value = false;
+  // Navigate to payments page with pre-filled data
+  window.open(`/payments?create=true&type=expense_payment&reference_id=${expense.id}&amount=${expense.amount}&payee_name=${encodeURIComponent(expense.vendor_name || 'Expense Payment')}&description=${encodeURIComponent('Payment for expense: ' + expense.title)}`, '_blank');
+};
+
 const fetchExpenses = () => {
-  // This will be handled by the ExpenseList component
+  // Refresh the expense list component
+  if (expenseListRef.value) {
+    expenseListRef.value.fetchExpenses();
+  }
 };
 
 const fetchCategories = () => {

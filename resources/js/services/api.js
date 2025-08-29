@@ -133,6 +133,8 @@ const apiMethods = {
     create: (data) => api.post('/sales', data),
     update: (id, data) => api.put(`/sales/${id}`, data),
     delete: (id) => api.delete(`/sales/${id}`),
+    refund: (id, data) => api.post(`/sales/${id}/refund`, data),
+    processReturn: (data) => api.post('/sales/returns', data),
     statistics: () => api.get('/sales/statistics'),
   },
 

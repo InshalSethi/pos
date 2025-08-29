@@ -4,13 +4,10 @@ namespace App\Listeners;
 
 use App\Events\ExpensePaid;
 use App\Services\ExpenseAccountingService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class CreateExpensePaymentJournalEntry implements ShouldQueue
+class CreateExpensePaymentJournalEntry
 {
-    use InteractsWithQueue;
 
     private ExpenseAccountingService $accountingService;
 
@@ -28,13 +25,14 @@ class CreateExpensePaymentJournalEntry implements ShouldQueue
     public function handle(ExpensePaid $event): void
     {
         try {
-            $journalEntry = $this->accountingService->createExpensePaymentJournalEntry($event->expense);
+            $journalEntry = $this->accountingService->createExpensePaymentJournalEntry($event->expense, $event->bankAccountId);
 
             if ($journalEntry) {
                 Log::info('Payment journal entry created for expense', [
                     'expense_id' => $event->expense->id,
                     'expense_number' => $event->expense->expense_number,
                     'amount' => $event->expense->amount,
+                    'bank_account_id' => $event->bankAccountId,
                     'journal_entry_id' => $journalEntry->id
                 ]);
             }

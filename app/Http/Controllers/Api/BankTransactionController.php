@@ -58,9 +58,7 @@ class BankTransactionController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('reference', 'like', "%{$search}%")
-                  ->orWhere('check_number', 'like', "%{$search}%")
-                  ->orWhere('bank_reference', 'like', "%{$search}%");
+                  ->orWhere('reference_number', 'like', "%{$search}%");
             });
         }
 
@@ -81,9 +79,8 @@ class BankTransactionController extends Controller
             'transaction_type' => 'required|in:debit,credit',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string',
-            'reference' => 'nullable|string|max:255',
-            'check_number' => 'nullable|string|max:20',
-            'category' => 'nullable|in:deposit,withdrawal,transfer,fee,interest,check,ach,wire,card,other',
+            'reference_number' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
             'create_journal_entry' => 'boolean',
             'contra_account_id' => 'required_if:create_journal_entry,true|exists:chart_of_accounts,id',
         ]);
@@ -98,16 +95,28 @@ class BankTransactionController extends Controller
         try {
             DB::beginTransaction();
 
+            // Calculate running balance
+            $bankAccount = BankAccount::findOrFail($request->bank_account_id);
+            $lastTransaction = BankTransaction::where('bank_account_id', $request->bank_account_id)
+                ->orderBy('transaction_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $currentBalance = $lastTransaction ? $lastTransaction->running_balance : $bankAccount->opening_balance;
+            $newBalance = $request->transaction_type === 'credit'
+                ? $currentBalance + $request->amount
+                : $currentBalance - $request->amount;
+
             $bankTransaction = BankTransaction::create([
                 'bank_account_id' => $request->bank_account_id,
                 'transaction_date' => $request->transaction_date,
                 'transaction_type' => $request->transaction_type,
                 'amount' => $request->amount,
                 'description' => $request->description,
-                'reference' => $request->reference,
-                'check_number' => $request->check_number,
-                'category' => $request->category ?? 'other',
-                'is_reconciled' => false,
+                'reference_number' => $request->reference_number,
+                'running_balance' => $newBalance,
+                'status' => 'pending',
+                'notes' => $request->notes,
             ]);
 
             // Create journal entry if requested
@@ -225,9 +234,8 @@ class BankTransactionController extends Controller
             'transaction_type' => 'required|in:debit,credit',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string',
-            'reference' => 'nullable|string|max:255',
-            'check_number' => 'nullable|string|max:20',
-            'category' => 'nullable|in:deposit,withdrawal,transfer,fee,interest,check,ach,wire,card,other',
+            'reference_number' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -331,15 +339,27 @@ class BankTransactionController extends Controller
                     continue;
                 }
 
+                // Calculate running balance for import
+                $bankAccount = BankAccount::findOrFail($request->bank_account_id);
+                $lastTransaction = BankTransaction::where('bank_account_id', $request->bank_account_id)
+                    ->orderBy('transaction_date', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                $currentBalance = $lastTransaction ? $lastTransaction->running_balance : $bankAccount->opening_balance;
+                $newBalance = $transactionData['type'] === 'credit'
+                    ? $currentBalance + $transactionData['amount']
+                    : $currentBalance - $transactionData['amount'];
+
                 BankTransaction::create([
                     'bank_account_id' => $request->bank_account_id,
                     'transaction_date' => $transactionData['date'],
                     'transaction_type' => $transactionData['type'],
                     'amount' => $transactionData['amount'],
                     'description' => $transactionData['description'],
-                    'reference' => $transactionData['reference'] ?? null,
-                    'category' => 'other',
-                    'is_reconciled' => false,
+                    'reference_number' => $transactionData['reference'] ?? null,
+                    'running_balance' => $newBalance,
+                    'status' => 'pending',
                 ]);
 
                 $imported++;

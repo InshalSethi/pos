@@ -7,8 +7,10 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Services\DoubleEntryAccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -147,7 +149,7 @@ class SaleController extends Controller
             $sale = Sale::create([
                 'sale_number' => $saleNumber,
                 'customer_id' => $request->customer_id,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'sale_date' => now(),
                 'status' => 'completed',
                 'subtotal' => $subtotal,
@@ -190,6 +192,10 @@ class SaleController extends Controller
                 $customer = Customer::find($request->customer_id);
                 $customer->increment('total_purchases', $totalAmount);
             }
+
+            // Create accounting entries
+            $accountingService = new DoubleEntryAccountingService();
+            $accountingService->createSalesInvoiceEntry($sale);
 
             DB::commit();
 
@@ -287,7 +293,7 @@ class SaleController extends Controller
             $refundSale = Sale::create([
                 'sale_number' => $refundSaleNumber,
                 'customer_id' => $sale->customer_id,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'sale_date' => now(),
                 'status' => 'completed',
                 'subtotal' => -$refundAmount,
@@ -325,6 +331,136 @@ class SaleController extends Controller
 
             return response()->json([
                 'message' => 'Failed to process refund',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Process a sales return
+     */
+    public function processReturn(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'original_sale_id' => 'required|exists:sales,id',
+            'return_date' => 'required|date',
+            'return_reason' => 'required|string',
+            'refund_method' => 'required|in:cash,card,store_credit,exchange',
+            'return_items' => 'required|array|min:1',
+            'return_items.*.original_item_id' => 'required|exists:sale_items,id',
+            'return_items.*.quantity' => 'required|integer|min:1',
+            'return_items.*.return_amount' => 'required|numeric|min:0',
+            'return_notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $originalSale = Sale::with('saleItems.product')->find($request->original_sale_id);
+
+        if ($originalSale->status !== 'completed') {
+            return response()->json([
+                'message' => 'Can only process returns for completed sales'
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $totalReturnAmount = 0;
+            $returnItems = [];
+
+            // Validate and prepare return items
+            foreach ($request->return_items as $returnItem) {
+                $originalItem = SaleItem::find($returnItem['original_item_id']);
+
+                if ($originalItem->sale_id !== $originalSale->id) {
+                    throw new \Exception('Sale item does not belong to the original sale');
+                }
+
+                if ($returnItem['quantity'] > $originalItem->quantity) {
+                    throw new \Exception('Return quantity cannot exceed original quantity');
+                }
+
+                $totalReturnAmount += $returnItem['return_amount'];
+
+                $returnItems[] = [
+                    'product_id' => $originalItem->product_id,
+                    'quantity' => -$returnItem['quantity'], // Negative for returns
+                    'unit_price' => $originalItem->unit_price,
+                    'discount_amount' => 0,
+                    'tax_amount' => 0,
+                    'total_amount' => -$returnItem['return_amount'], // Negative for returns
+                ];
+
+                // Update inventory
+                $product = Product::find($originalItem->product_id);
+                if ($product && $product->track_inventory) {
+                    $product->increment('stock_quantity', $returnItem['quantity']);
+                }
+            }
+
+            // Create return sale
+            $returnSaleNumber = 'RETURN-' . date('Ymd') . '-' . str_pad(
+                Sale::whereDate('created_at', today())->where('is_refund', true)->count() + 1,
+                4,
+                '0',
+                STR_PAD_LEFT
+            );
+
+            $returnSale = Sale::create([
+                'sale_number' => $returnSaleNumber,
+                'customer_id' => $originalSale->customer_id,
+                'user_id' => Auth::id(),
+                'sale_date' => $request->return_date,
+                'status' => 'completed',
+                'subtotal' => -$totalReturnAmount,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'total_amount' => -$totalReturnAmount,
+                'paid_amount' => -$totalReturnAmount,
+                'change_amount' => 0,
+                'payment_method' => $request->refund_method,
+                'notes' => $request->return_notes,
+                'is_refund' => true,
+                'original_sale_id' => $originalSale->id,
+            ]);
+
+            // Create return sale items
+            foreach ($returnItems as $returnItem) {
+                SaleItem::create(array_merge($returnItem, [
+                    'sale_id' => $returnSale->id,
+                ]));
+            }
+
+            // Update customer total purchases
+            if ($originalSale->customer_id) {
+                $customer = Customer::find($originalSale->customer_id);
+                $customer->decrement('total_purchases', $totalReturnAmount);
+            }
+
+            // Create accounting entries for return
+            $accountingService = new DoubleEntryAccountingService();
+            $accountingService->createSalesReturnEntry($returnSale);
+
+            DB::commit();
+
+            $returnSale->load(['customer', 'user', 'saleItems.product', 'originalSale']);
+
+            return response()->json([
+                'message' => 'Return processed successfully',
+                'return_sale' => $returnSale
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Failed to process return',
                 'error' => $e->getMessage()
             ], 500);
         }

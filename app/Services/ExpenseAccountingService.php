@@ -6,7 +6,10 @@ use App\Models\Expense;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\Account;
+use App\Models\BankAccount;
+use App\Models\BankTransaction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ExpenseAccountingService
@@ -19,9 +22,17 @@ class ExpenseAccountingService
         return DB::transaction(function () use ($expense) {
             // Get the expense account based on category
             $expenseAccount = $this->getExpenseAccount($expense);
-            
+
+            if (!$expenseAccount) {
+                throw new \Exception('Expense account not found. Please configure accounting settings.');
+            }
+
             // Get the accounts payable or cash account based on payment status
             $creditAccount = $this->getCreditAccount($expense);
+
+            if (!$creditAccount) {
+                throw new \Exception('Credit account not found. Please configure accounting settings.');
+            }
 
             // Create journal entry
             $journalEntry = JournalEntry::create([
@@ -71,19 +82,19 @@ class ExpenseAccountingService
     /**
      * Create journal entry when expense is paid
      */
-    public function createExpensePaymentJournalEntry(Expense $expense): ?JournalEntry
+    public function createExpensePaymentJournalEntry(Expense $expense, $bankAccountId = null): ?JournalEntry
     {
         // Only create payment entry if expense was previously approved and has accounts payable
         if (!$expense->journal_entry_id || $expense->status !== 'paid') {
             return null;
         }
 
-        return DB::transaction(function () use ($expense) {
+        return DB::transaction(function () use ($expense, $bankAccountId) {
             // Get accounts payable account
             $accountsPayableAccount = $this->getAccountsPayableAccount();
-            
-            // Get the cash/bank account based on payment method
-            $cashAccount = $this->getCashAccount($expense);
+
+            // Get the cash/bank account - use specific bank account if provided
+            $cashAccount = $bankAccountId ? $this->getBankChartAccount($bankAccountId) : $this->getCashAccount($expense);
 
             // Create payment journal entry
             $journalEntry = JournalEntry::create([
@@ -124,6 +135,75 @@ class ExpenseAccountingService
             $this->postJournalEntry($journalEntry);
 
             return $journalEntry;
+        });
+    }
+
+    /**
+     * Completely remove journal entries and bank transactions for an expense
+     */
+    public function removeExpenseAccounting(Expense $expense): bool
+    {
+        return DB::transaction(function () use ($expense) {
+            $removed = false;
+            $removedItems = [];
+
+            try {
+                // Remove bank transactions
+                $bankTransactions = BankTransaction::where('reference_number', $expense->expense_number)
+                    ->orWhere('reference_number', 'like', $expense->expense_number . '%')
+                    ->get();
+
+                foreach ($bankTransactions as $transaction) {
+                    $removedItems[] = "Bank Transaction ID: {$transaction->id}";
+                    $transaction->delete();
+                    $removed = true;
+                }
+
+                // Remove journal entries
+                if ($expense->journal_entry_id) {
+                    $journalEntry = JournalEntry::find($expense->journal_entry_id);
+                    if ($journalEntry) {
+                        $removedItems[] = "Journal Entry ID: {$journalEntry->id}";
+                        $journalEntry->journalEntryLines()->delete();
+                        $journalEntry->delete();
+                        $removed = true;
+                    }
+                }
+
+                // Remove any other related journal entries
+                $relatedEntries = JournalEntry::where('reference', 'like', $expense->expense_number . '%')->get();
+                foreach ($relatedEntries as $entry) {
+                    $removedItems[] = "Related Journal Entry ID: {$entry->id}";
+                    $entry->journalEntryLines()->delete();
+                    $entry->delete();
+                    $removed = true;
+                }
+
+                // Clear journal entry reference from expense
+                if ($removed) {
+                    $expense->update(['journal_entry_id' => null]);
+                }
+
+                // Log the cleanup for audit purposes
+                if (!empty($removedItems)) {
+                    Log::info('Expense accounting cleanup completed', [
+                        'expense_id' => $expense->id,
+                        'expense_number' => $expense->expense_number,
+                        'removed_items' => $removedItems
+                    ]);
+                }
+
+                return $removed;
+
+            } catch (\Exception $e) {
+                Log::error('Failed to remove expense accounting', [
+                    'expense_id' => $expense->id,
+                    'expense_number' => $expense->expense_number,
+                    'error' => $e->getMessage(),
+                    'partially_removed' => $removedItems
+                ]);
+                throw $e;
+            }
         });
     }
 
@@ -230,6 +310,15 @@ class ExpenseAccountingService
             'description' => 'Amounts owed to suppliers and vendors',
             'is_system_account' => true,
         ]);
+    }
+
+    /**
+     * Get bank account's chart account
+     */
+    private function getBankChartAccount(int $bankAccountId): Account
+    {
+        $bankAccount = BankAccount::findOrFail($bankAccountId);
+        return $bankAccount->chartAccount;
     }
 
     /**

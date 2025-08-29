@@ -129,7 +129,7 @@ class Expense extends Model
     // Methods
     public function canBeEdited(): bool
     {
-        return in_array($this->status, ['draft', 'rejected']);
+        return true; // Allow editing of expenses in any status
     }
 
     public function canBeSubmitted(): bool

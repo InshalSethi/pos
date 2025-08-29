@@ -14,14 +14,14 @@
             <p>{{ isEdit ? 'Update invoice information' : 'Create a new sales invoice' }}</p>
           </div>
         </div>
-        <button @click="closeModal" class="btn-close">
+        <button @click="closeModal" class="btn-close" type="button">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <form @submit.prevent="saveSalesInvoice">
+      <form @submit.prevent="saveSalesInvoice" novalidate>
         <div class="modal-body">
           <!-- Basic Information -->
           <div class="form-section">
@@ -288,14 +288,24 @@
         </div>
 
         <div class="modal-footer">
+          <div class="footer-summary">
+            <div class="summary-item">
+              <span class="summary-label">Total Amount:</span>
+              <span class="summary-value">{{ formatCurrency(form.total_amount) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Items:</span>
+              <span class="summary-value">{{ form.items.length }}</span>
+            </div>
+          </div>
           <div class="footer-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
+            <button type="button" @click="closeModal" class="btn btn-secondary" :disabled="saving">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
               Cancel
             </button>
-            <button type="submit" :disabled="saving" class="btn btn-primary">
+            <button type="submit" :disabled="saving || form.items.length === 0" class="btn btn-primary">
               <svg v-if="saving" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -476,27 +486,70 @@ export default {
       }).format(amount || 0);
     };
 
+    const validateForm = () => {
+      const newErrors = {};
+
+      // Validate items
+      if (!form.items || form.items.length === 0) {
+        newErrors.items = ['At least one item is required'];
+      } else {
+        form.items.forEach((item, index) => {
+          if (!item.product_id) {
+            newErrors[`items.${index}.product_id`] = ['Product is required'];
+          }
+          if (!item.quantity || item.quantity <= 0) {
+            newErrors[`items.${index}.quantity`] = ['Quantity must be greater than 0'];
+          }
+          if (!item.unit_price || item.unit_price <= 0) {
+            newErrors[`items.${index}.unit_price`] = ['Unit price must be greater than 0'];
+          }
+        });
+      }
+
+      // Validate payment
+      if (!form.paid_amount || form.paid_amount < 0) {
+        newErrors.paid_amount = ['Paid amount is required and must be non-negative'];
+      }
+
+      errors.value = newErrors;
+      return Object.keys(newErrors).length === 0;
+    };
+
     const saveSalesInvoice = async () => {
+      if (!validateForm()) {
+        showToast('Please fix the validation errors', 'error');
+        return;
+      }
+
       saving.value = true;
       errors.value = {};
 
       try {
+        // Calculate totals before saving
+        calculateTotal();
+
         const url = props.isEdit ? `/sales/${props.invoice.id}` : '/sales';
         const method = props.isEdit ? 'put' : 'post';
-        
-        await api[method](url, form);
-        
+
+        const response = await api[method](url, form);
+
         showToast(
           props.isEdit ? 'Invoice updated successfully' : 'Invoice created successfully',
           'success'
         );
-        
-        emit('saved');
+
+        emit('saved', response.data);
+        closeModal();
       } catch (error) {
+        console.error('Error saving invoice:', error);
         if (error.response?.status === 422) {
-          errors.value = error.response.data.errors;
+          errors.value = error.response.data.errors || {};
+          showToast('Please fix the validation errors', 'error');
         } else {
-          showToast(error.response?.data?.message || 'Error saving invoice', 'error');
+          showToast(
+            error.response?.data?.message || 'Error saving invoice. Please try again.',
+            'error'
+          );
         }
       } finally {
         saving.value = false;
@@ -535,6 +588,7 @@ export default {
       calculateSubtotal,
       calculateTotal,
       formatCurrency,
+      validateForm,
       saveSalesInvoice,
       closeModal
     };
@@ -555,18 +609,22 @@ export default {
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-content {
   background: white;
   border-radius: 16px;
   width: 95%;
-  max-width: 1200px;
-  max-height: 95vh;
+  max-width: 1000px;
+  max-height: calc(100vh - 40px);
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
+  margin: auto;
+  min-height: 400px;
 }
 
 .modal-header {
@@ -627,15 +685,53 @@ export default {
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 20px;
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
+  max-height: calc(100vh - 200px);
 }
 
 .modal-footer {
-  padding: 24px;
+  padding: 20px;
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.footer-summary {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
 }
 
 .footer-actions {
@@ -646,8 +742,8 @@ export default {
 
 /* Form Sections */
 .form-section {
-  margin-bottom: 32px;
-  padding: 24px;
+  margin-bottom: 24px;
+  padding: 20px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #fafbfc;
@@ -671,8 +767,8 @@ export default {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .form-group {
@@ -735,8 +831,8 @@ export default {
 }
 
 .item-row {
-  margin-bottom: 16px;
-  padding: 16px;
+  margin-bottom: 12px;
+  padding: 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #f9fafb;
@@ -847,10 +943,17 @@ export default {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
   .modal-content {
-    width: 98%;
-    max-height: 98vh;
-    margin: 1vh;
+    width: 100%;
+    max-width: none;
+    max-height: calc(100vh - 20px);
+    margin: 0;
+    border-radius: 12px;
   }
 
   .modal-header {
@@ -858,7 +961,11 @@ export default {
   }
 
   .header-text h3 {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .header-text p {
+    font-size: 12px;
   }
 
   .modal-body {
@@ -879,6 +986,18 @@ export default {
     grid-template-columns: 1fr;
   }
 
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .footer-summary {
+    justify-content: center;
+    gap: 32px;
+  }
+
   .footer-actions {
     flex-direction: column-reverse;
     gap: 8px;
@@ -887,6 +1006,79 @@ export default {
   .btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 5px;
+    align-items: flex-start;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100vh - 10px);
+    border-radius: 8px;
+    margin: 0;
+  }
+
+  .modal-header {
+    padding: 12px;
+  }
+
+  .header-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-text h3 {
+    font-size: 16px;
+  }
+
+  .modal-body {
+    padding: 12px;
+    max-height: calc(100vh - 150px);
+  }
+
+  .form-section {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .modal-footer {
+    padding: 12px;
+  }
+
+  .footer-summary {
+    gap: 20px;
+  }
+
+  .summary-item {
+    gap: 2px;
+  }
+
+  .summary-label {
+    font-size: 10px;
+  }
+
+  .summary-value {
+    font-size: 14px;
+  }
+
+  .form-control {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 14px;
   }
 }
 </style>

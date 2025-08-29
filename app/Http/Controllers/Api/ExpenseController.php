@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
-use App\Models\Employee;
+use App\Models\ExpenseAuditLog;
+use App\Models\BankAccount;
+use App\Models\BankTransaction;
+use App\Services\ExpenseAccountingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +17,11 @@ use Carbon\Carbon;
 
 class ExpenseController extends Controller
 {
-    public function __construct()
+    private ExpenseAccountingService $accountingService;
+
+    public function __construct(ExpenseAccountingService $accountingService)
     {
+        $this->accountingService = $accountingService;
         $this->middleware('auth:sanctum');
         $this->middleware('permission:expenses.view')->only(['index', 'show', 'statistics']);
         $this->middleware('permission:expenses.create')->only(['store']);
@@ -150,6 +155,15 @@ class ExpenseController extends Controller
             $expense = Expense::create($expenseData);
             $expense->load(['category', 'employee', 'user']);
 
+            // Log the creation
+            ExpenseAuditLog::logExpenseChange(
+                $expense,
+                'created',
+                [],
+                $expenseData,
+                'Expense created'
+            );
+
             DB::commit();
 
             return response()->json([
@@ -191,12 +205,9 @@ class ExpenseController extends Controller
      */
     public function update(Request $request, Expense $expense): JsonResponse
     {
-        // Check if expense can be edited
-        if (!$expense->canBeEdited()) {
-            return response()->json([
-                'message' => 'Expense cannot be edited in its current status'
-            ], 422);
-        }
+        // Store original expense data for accounting reversal if needed
+        $originalExpense = $expense->replicate();
+        $wasApprovedOrPaid = in_array($expense->status, ['approved', 'paid']);
 
         $validator = Validator::make($request->all(), [
             'category_id' => 'required|exists:expense_categories,id',
@@ -249,7 +260,27 @@ class ExpenseController extends Controller
                 $expenseData['receipt_images'] = $receiptImages;
             }
 
+            // If expense was approved or paid, reverse accounting entries before updating
+            if ($wasApprovedOrPaid) {
+                $this->reverseExpenseAccounting($originalExpense);
+            }
+
             $expense->update($expenseData);
+
+            // If the updated expense should be approved or paid, recreate accounting entries
+            if (in_array($expense->status, ['approved', 'paid'])) {
+                $this->recreateExpenseAccounting($expense);
+            }
+
+            // Log the update
+            ExpenseAuditLog::logExpenseChange(
+                $expense,
+                'updated',
+                $originalExpense->toArray(),
+                $expenseData,
+                $wasApprovedOrPaid ? 'Expense updated with accounting reversal' : 'Expense updated'
+            );
+
             $expense->load(['category', 'employee', 'user']);
 
             DB::commit();
@@ -274,15 +305,26 @@ class ExpenseController extends Controller
      */
     public function destroy(Expense $expense): JsonResponse
     {
-        // Check if expense can be deleted
-        if (!$expense->canBeEdited()) {
-            return response()->json([
-                'message' => 'Expense cannot be deleted in its current status'
-            ], 422);
-        }
-
         try {
             DB::beginTransaction();
+
+            // Store expense data for audit log before deletion
+            $expenseData = $expense->toArray();
+            $affectedAccounting = in_array($expense->status, ['approved', 'paid']);
+
+            // Clean up accounting records if expense was approved or paid
+            if ($affectedAccounting) {
+                $this->cleanupExpenseAccounting($expense);
+            }
+
+            // Log the deletion before actually deleting
+            ExpenseAuditLog::logExpenseChange(
+                $expense,
+                'deleted',
+                $expenseData,
+                [],
+                $affectedAccounting ? 'Expense deleted with accounting cleanup' : 'Expense deleted'
+            );
 
             // Delete receipt images
             if ($expense->receipt_image) {
@@ -354,7 +396,18 @@ class ExpenseController extends Controller
             ], 422);
         }
 
+        $oldStatus = $expense->status;
         $expense->approve(auth()->id(), $request->get('approval_notes'));
+
+        // Log the approval
+        ExpenseAuditLog::logExpenseChange(
+            $expense,
+            'approved',
+            ['status' => $oldStatus],
+            ['status' => 'approved'],
+            'Expense approved: ' . ($request->get('approval_notes') ?: 'No notes provided')
+        );
+
         $expense->load(['category', 'employee', 'user', 'approvedBy']);
 
         return response()->json([
@@ -385,7 +438,18 @@ class ExpenseController extends Controller
             ], 422);
         }
 
+        $oldStatus = $expense->status;
         $expense->reject(auth()->id(), $request->get('rejection_reason'));
+
+        // Log the rejection
+        ExpenseAuditLog::logExpenseChange(
+            $expense,
+            'rejected',
+            ['status' => $oldStatus],
+            ['status' => 'rejected'],
+            'Expense rejected: ' . ($request->get('rejection_reason') ?: 'No reason provided')
+        );
+
         $expense->load(['category', 'employee', 'user', 'rejectedBy']);
 
         return response()->json([
@@ -406,6 +470,7 @@ class ExpenseController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'bank_account_id' => 'required|exists:bank_accounts,id',
             'payment_reference' => 'nullable|string|max:255',
         ]);
 
@@ -416,13 +481,50 @@ class ExpenseController extends Controller
             ], 422);
         }
 
-        $expense->markAsPaid(auth()->id(), $request->get('payment_reference'));
-        $expense->load(['category', 'employee', 'user', 'paidBy']);
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'message' => 'Expense marked as paid successfully',
-            'expense' => $expense
-        ]);
+            // Mark expense as paid (without firing event yet)
+            $oldStatus = $expense->status;
+            $expense->update([
+                'status' => 'paid',
+                'paid_by' => auth()->id(),
+                'paid_at' => now(),
+                'payment_reference' => $request->get('payment_reference'),
+            ]);
+
+            // Create bank transaction
+            $this->createBankTransaction($expense, $request->get('bank_account_id'), $request->get('payment_reference'));
+
+            // Log the payment
+            ExpenseAuditLog::logExpenseChange(
+                $expense,
+                'paid',
+                ['status' => $oldStatus],
+                ['status' => 'paid', 'bank_account_id' => $request->get('bank_account_id')],
+                'Expense marked as paid with bank account ID: ' . $request->get('bank_account_id')
+            );
+
+            // Fire event with bank account information
+            event(new \App\Events\ExpensePaid($expense, $request->get('bank_account_id')));
+
+            DB::commit();
+
+            $expense->load(['category', 'employee', 'user', 'paidBy']);
+
+            return response()->json([
+                'message' => 'Expense marked as paid successfully',
+                'expense' => $expense
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Failed to mark expense as paid',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -451,5 +553,66 @@ class ExpenseController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Create bank transaction for expense payment
+     */
+    private function createBankTransaction(Expense $expense, int $bankAccountId, ?string $paymentReference): BankTransaction
+    {
+        $bankAccount = BankAccount::findOrFail($bankAccountId);
+
+        // Calculate running balance
+        $lastTransaction = BankTransaction::where('bank_account_id', $bankAccountId)
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $currentBalance = $lastTransaction ? $lastTransaction->running_balance : $bankAccount->opening_balance;
+        $newBalance = $currentBalance - $expense->amount; // Debit reduces balance
+
+        return BankTransaction::create([
+            'bank_account_id' => $bankAccountId,
+            'transaction_date' => $expense->paid_at ? $expense->paid_at->toDateString() : now()->toDateString(),
+            'transaction_type' => 'debit', // Money going out of bank account
+            'amount' => $expense->amount,
+            'description' => "Payment for expense: {$expense->title}",
+            'reference_number' => $paymentReference ?: $expense->expense_number,
+            'running_balance' => $newBalance,
+            'status' => 'cleared',
+            'partner_type' => 'App\Models\Expense',
+            'partner_id' => $expense->id,
+        ]);
+    }
+
+    /**
+     * Reverse accounting entries for an expense
+     */
+    private function reverseExpenseAccounting(Expense $expense): void
+    {
+        $this->accountingService->removeExpenseAccounting($expense);
+    }
+
+    /**
+     * Recreate accounting entries for an updated expense
+     */
+    private function recreateExpenseAccounting(Expense $expense): void
+    {
+        if ($expense->status === 'approved') {
+            // Fire approval event to recreate journal entry
+            event(new \App\Events\ExpenseApproved($expense));
+        } elseif ($expense->status === 'paid') {
+            // Fire approval event first, then paid event
+            event(new \App\Events\ExpenseApproved($expense));
+            event(new \App\Events\ExpensePaid($expense));
+        }
+    }
+
+    /**
+     * Clean up all accounting records for an expense being deleted
+     */
+    private function cleanupExpenseAccounting(Expense $expense): void
+    {
+        $this->accountingService->removeExpenseAccounting($expense);
     }
 }

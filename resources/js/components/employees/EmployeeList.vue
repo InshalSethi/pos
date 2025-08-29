@@ -60,186 +60,111 @@
 
 
     <!-- Employee Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Employee
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Employee #
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Department
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Position
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Hire Date
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Salary
-              </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="employee in (employees.data || employees)" :key="employee.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10">
-                    <img 
-                      v-if="employee.profile_image" 
-                      :src="`/storage/${employee.profile_image}`" 
-                      :alt="employee.full_name"
-                      class="h-10 w-10 rounded-full object-cover"
-                    />
-                    <div v-else class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span class="text-sm font-medium text-gray-700">
-                        {{ getInitials(employee.first_name, employee.last_name) }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">{{ employee.full_name }}</div>
-                    <div class="text-sm text-gray-500">{{ employee.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.employee_number }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.department?.name || '-' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ employee.position?.title || '-' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ formatDate(employee.hire_date) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getStatusClass(employee.employment_status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                  {{ getStatusText(employee.employment_status) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${{ parseFloat(employee.basic_salary).toFixed(2) }}
-                <span class="text-gray-500">/ {{ employee.salary_type }}</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex justify-end space-x-2">
-                  <button
-                    @click="$emit('view-employee', employee)"
-                    class="text-blue-600 hover:text-blue-900"
-                    title="View"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                  </button>
-                  <button
-                    v-if="canEdit"
-                    @click="$emit('edit-employee', employee)"
-                    class="text-indigo-600 hover:text-indigo-900"
-                    title="Edit"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                  </button>
-                  <button
-                    v-if="canDelete"
-                    @click="deleteEmployee(employee)"
-                    class="text-red-600 hover:text-red-900"
-                    title="Delete"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="hasEmployees && employees.total" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-        <div class="flex-1 flex justify-between sm:hidden">
-          <button
-            @click="changePage(employees.current_page - 1)"
-            :disabled="!employees.prev_page_url"
-            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            @click="changePage(employees.current_page + 1)"
-            :disabled="!employees.next_page_url"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm text-gray-700">
-              Showing {{ employees.from }} to {{ employees.to }} of {{ employees.total }} results
-            </p>
+    <DataTable
+      title="Employees"
+      subtitle="Manage your workforce and employee information"
+      :columns="tableColumns"
+      :data="employees.data || employees"
+      :loading="loading"
+      :pagination="pagination"
+      :initial-search="filters.search"
+      :initial-per-page="25"
+      :default-per-page="25"
+      storage-key="employees-table-state"
+      empty-message="No employees found"
+      empty-sub-message="Get started by adding your first employee."
+      @search="handleTableSearch"
+      @sort="handleSort"
+      @page-change="handlePageChange"
+      @per-page-change="handlePerPageChange"
+    >
+      <!-- Custom column content -->
+      <template #column-employee="{ item }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10">
+            <img
+              v-if="item.profile_image"
+              :src="`/storage/${item.profile_image}`"
+              :alt="item.full_name"
+              class="h-10 w-10 rounded-full object-cover"
+            />
+            <div v-else class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+              <span class="text-sm font-medium text-gray-700">
+                {{ getInitials(item.first_name, item.last_name) }}
+              </span>
+            </div>
           </div>
-          <div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button
-                @click="changePage(employees.current_page - 1)"
-                :disabled="!employees.prev_page_url"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                @click="changePage(employees.current_page + 1)"
-                :disabled="!employees.next_page_url"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </nav>
+          <div class="ml-4">
+            <div class="text-sm font-medium text-gray-900">{{ item.full_name }}</div>
+            <div class="text-sm text-gray-500">{{ item.email }}</div>
           </div>
         </div>
-      </div>
+      </template>
 
-      <!-- Empty State -->
-      <div v-if="!loading && !hasEmployees" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No employees found</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by adding a new employee.</p>
-      </div>
+      <template #column-department="{ item }">
+        {{ item.department?.name || '-' }}
+      </template>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p class="mt-2 text-sm text-gray-500">Loading employees...</p>
-      </div>
-    </div>
+      <template #column-position="{ item }">
+        {{ item.position?.title || '-' }}
+      </template>
+
+      <template #column-status="{ item }">
+        <span :class="getStatusClass(item.employment_status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+          {{ getStatusText(item.employment_status) }}
+        </span>
+      </template>
+
+      <template #column-salary="{ item }">
+        <div>
+          <div class="text-sm font-medium text-gray-900">${{ parseFloat(item.basic_salary).toFixed(2) }}</div>
+          <div class="text-sm text-gray-500">{{ item.salary_type }}</div>
+        </div>
+      </template>
+
+      <template #column-actions="{ item }">
+        <div class="flex justify-end space-x-2">
+          <button
+            @click="$emit('view-employee', item)"
+            class="text-blue-600 hover:text-blue-900"
+            title="View"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+          </button>
+          <button
+            v-if="canEdit"
+            @click="$emit('edit-employee', item)"
+            class="text-indigo-600 hover:text-indigo-900"
+            title="Edit"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+          </button>
+          <button
+            v-if="canDelete"
+            @click="deleteEmployee(item)"
+            class="text-red-600 hover:text-red-900"
+            title="Delete"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
+      </template>
+    </DataTable>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { debounce } from '@/utils/debounce';
+import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -256,8 +181,74 @@ const filters = ref({
   employment_status: '',
   department_id: '',
   employment_type: '',
-  page: 1
+  page: 1,
+  sort_field: '',
+  sort_order: ''
 });
+
+// DataTable pagination
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  per_page: 25,
+  total: 0,
+  from: 0,
+  to: 0
+});
+
+// Table columns configuration
+const tableColumns = ref([
+  {
+    key: 'employee',
+    label: 'Employee',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'employee_number',
+    label: 'Employee #',
+    sortable: true,
+    align: 'left',
+    class: 'text-gray-500 font-mono text-xs'
+  },
+  {
+    key: 'department',
+    label: 'Department',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'position',
+    label: 'Position',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'hire_date',
+    label: 'Hire Date',
+    sortable: true,
+    type: 'date',
+    align: 'left'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: true,
+    align: 'center'
+  },
+  {
+    key: 'salary',
+    label: 'Salary',
+    sortable: true,
+    align: 'left'
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    align: 'right'
+  }
+]);
 
 // Computed
 const canEdit = computed(() => authStore.hasPermission('employees.edit'));
@@ -270,21 +261,33 @@ const hasEmployees = computed(() => {
 });
 
 // Methods
-const fetchEmployees = async () => {
+const fetchEmployees = async (page = 1) => {
   loading.value = true;
   try {
-    const params = { ...filters.value };
+    const params = {
+      page,
+      per_page: pagination.value.per_page,
+      ...filters.value
+    };
+
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null) {
         delete params[key];
       }
     });
 
-    // Always include per_page to ensure consistent pagination response
-    params.per_page = params.per_page || 15;
-
     const response = await axios.get('/api/employees', { params });
     employees.value = response.data;
+
+    // Update pagination
+    pagination.value = {
+      current_page: response.data.current_page,
+      last_page: response.data.last_page,
+      per_page: response.data.per_page,
+      total: response.data.total,
+      from: response.data.from,
+      to: response.data.to
+    };
   } catch (error) {
     console.error('Error fetching employees:', error);
 
@@ -354,6 +357,27 @@ const debouncedSearch = debounce(() => {
   fetchEmployees();
 }, 300);
 
+// DataTable event handlers
+const handleTableSearch = (searchQuery) => {
+  filters.value.search = searchQuery;
+  fetchEmployees(1);
+};
+
+const handleSort = (sortData) => {
+  filters.value.sort_field = sortData.field;
+  filters.value.sort_order = sortData.order;
+  fetchEmployees(1);
+};
+
+const handlePageChange = (page) => {
+  fetchEmployees(page);
+};
+
+const handlePerPageChange = (perPage) => {
+  pagination.value.per_page = perPage;
+  fetchEmployees(1);
+};
+
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString();
 };
@@ -382,18 +406,7 @@ const getInitials = (firstName, lastName) => {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 };
 
-// Utility function for debouncing
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
+
 
 // Lifecycle
 onMounted(async () => {

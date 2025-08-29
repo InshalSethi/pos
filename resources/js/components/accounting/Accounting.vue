@@ -926,6 +926,194 @@
       </div>
     </div>
 
+    <!-- Bank Account View Modal -->
+    <div v-if="showBankAccountViewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Bank Account Details</h3>
+            <button
+              @click="closeBankAccountViewModal"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div v-if="selectedBankAccount" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Account Name</label>
+                <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.account_name }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Bank Name</label>
+                <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.bank_name }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Account Number</label>
+                <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.account_number }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Account Type</label>
+                <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.account_type }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Current Balance</label>
+                <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.formatted_balance }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Opening Date</label>
+                <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.opening_date || 'Not set' }}</p>
+              </div>
+            </div>
+
+            <div v-if="selectedBankAccount.description">
+              <label class="block text-sm font-medium text-gray-700">Description</label>
+              <p class="mt-1 text-sm text-gray-900">{{ selectedBankAccount.description }}</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Status</label>
+              <span
+                :class="[
+                  'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
+                  selectedBankAccount.is_active
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                ]"
+              >
+                {{ selectedBankAccount.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reconcile Modal -->
+    <div v-if="showReconcileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">
+              Reconcile {{ selectedBankAccount?.account_name }}
+            </h3>
+            <button
+              @click="closeReconcileModal"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Statement Date</label>
+                <input
+                  v-model="reconcileForm.statement_date"
+                  type="date"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Statement Balance</label>
+                <input
+                  v-model="reconcileForm.statement_balance"
+                  type="number"
+                  step="0.01"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <h4 class="text-md font-medium text-gray-900 mb-2">Select Transactions to Reconcile</h4>
+
+              <div v-if="loadingTransactions" class="text-center py-4">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="mt-2 text-sm text-gray-600">Loading transactions...</p>
+              </div>
+
+              <div v-else-if="bankTransactions.length === 0" class="text-center py-4 text-gray-500">
+                No unreconciled transactions found.
+              </div>
+
+              <div v-else class="max-h-64 overflow-y-auto border border-gray-200 rounded">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                        <input
+                          type="checkbox"
+                          @change="toggleAllTransactions"
+                          class="rounded border-gray-300"
+                        />
+                      </th>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                      <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr v-for="transaction in bankTransactions.filter(t => !t.is_reconciled)" :key="transaction.id">
+                      <td class="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          :value="transaction.id"
+                          v-model="reconcileForm.selected_transactions"
+                          class="rounded border-gray-300"
+                        />
+                      </td>
+                      <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.transaction_date }}</td>
+                      <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.description }}</td>
+                      <td class="px-3 py-2 text-sm text-gray-900">
+                        <span :class="transaction.transaction_type === 'credit' ? 'text-green-600' : 'text-red-600'">
+                          {{ transaction.transaction_type === 'credit' ? '+' : '-' }}${{ Number(transaction.amount).toFixed(2) }}
+                        </span>
+                      </td>
+                      <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.transaction_type }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+              <button
+                @click="closeReconcileModal"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                @click="submitReconciliation"
+                :disabled="!reconcileForm.statement_date || !reconcileForm.statement_balance || reconcileForm.selected_transactions.length === 0"
+                class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reconcile
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Journal Entry Modal -->
     <div v-if="showJournalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
@@ -1133,11 +1321,21 @@ const journalSearchQuery = ref('');
 const bankAccounts = ref([]);
 const loadingBankAccounts = ref(false);
 const showBankAccountModal = ref(false);
+const showBankAccountViewModal = ref(false);
+const showReconcileModal = ref(false);
 const editingBankAccount = ref(null);
+const selectedBankAccount = ref(null);
 const savingBankAccount = ref(false);
 const editingJournalEntry = ref(null);
 const savingJournalEntry = ref(false);
 const assetAccounts = ref([]); // Contains both asset and liability accounts for bank account linking
+const bankTransactions = ref([]);
+const loadingTransactions = ref(false);
+const reconcileForm = ref({
+  statement_date: '',
+  statement_balance: '',
+  selected_transactions: []
+});
 
 // Form data
 const accountForm = ref({
@@ -1591,12 +1789,39 @@ const formatStatus = (status) => {
 };
 
 const viewBankAccount = (account) => {
-  // TODO: Implement view bank account functionality
-  console.log('View bank account:', account);
+  showBankAccountViewModal.value = true;
+  selectedBankAccount.value = account;
 };
 
 const editBankAccount = async (account) => {
   editingBankAccount.value = account;
+
+  console.log('Edit bank account called with:', account);
+  console.log('Opening date from account:', account.opening_date);
+
+  // Format opening_date for HTML date input (YYYY-MM-DD)
+  let formattedOpeningDate = '';
+  if (account.opening_date && account.opening_date !== null && account.opening_date !== '') {
+    // Handle different date formats that might come from the API
+    try {
+      // If it's already in YYYY-MM-DD format, use it directly
+      if (typeof account.opening_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(account.opening_date)) {
+        formattedOpeningDate = account.opening_date;
+      } else {
+        // Otherwise, try to parse and format it
+        const date = new Date(account.opening_date);
+        if (!isNaN(date.getTime())) {
+          formattedOpeningDate = date.toISOString().split('T')[0];
+        }
+      }
+    } catch (error) {
+      console.warn('Error formatting opening date:', error);
+      formattedOpeningDate = '';
+    }
+  }
+
+  console.log('Formatted opening date:', formattedOpeningDate);
+
   bankAccountForm.value = {
     account_name: account.account_name,
     bank_name: account.bank_name,
@@ -1607,10 +1832,14 @@ const editBankAccount = async (account) => {
     swift_code: account.swift_code || '',
     iban: account.iban || '',
     opening_balance: account.opening_balance,
-    opening_date: account.opening_date,
+    opening_date: formattedOpeningDate,
     description: account.description || '',
     is_active: account.is_active
   };
+
+  console.log('Bank account form set to:', bankAccountForm.value);
+  console.log('Opening date in form:', bankAccountForm.value.opening_date);
+
   showBankAccountModal.value = true;
 };
 
@@ -1626,9 +1855,56 @@ const deleteBankAccount = async (account) => {
   }
 };
 
+const fetchBankTransactions = async (bankAccountId) => {
+  loadingTransactions.value = true;
+  try {
+    const response = await axios.get(`/api/bank-accounts/${bankAccountId}/transactions`);
+    bankTransactions.value = response.data.data || response.data;
+  } catch (error) {
+    console.error('Error fetching bank transactions:', error);
+    bankTransactions.value = [];
+  } finally {
+    loadingTransactions.value = false;
+  }
+};
+
 const reconcileBankAccount = (account) => {
-  // TODO: Implement reconcile bank account functionality
-  console.log('Reconcile bank account:', account);
+  showReconcileModal.value = true;
+  selectedBankAccount.value = account;
+  reconcileForm.value = {
+    statement_date: '',
+    statement_balance: '',
+    selected_transactions: []
+  };
+  fetchBankTransactions(account.id);
+};
+
+const submitReconciliation = async () => {
+  if (!selectedBankAccount.value) return;
+
+  try {
+    const response = await axios.post(`/api/bank-accounts/${selectedBankAccount.value.id}/reconcile`, {
+      statement_date: reconcileForm.value.statement_date,
+      statement_balance: reconcileForm.value.statement_balance,
+      transaction_ids: reconcileForm.value.selected_transactions
+    });
+
+    alert('Bank account reconciled successfully!');
+    showReconcileModal.value = false;
+    fetchBankAccounts(); // Refresh the bank accounts list
+  } catch (error) {
+    console.error('Error reconciling bank account:', error);
+    alert(error.response?.data?.message || 'Failed to reconcile bank account');
+  }
+};
+
+const toggleAllTransactions = (event) => {
+  const unreconciledTransactions = bankTransactions.value.filter(t => !t.is_reconciled);
+  if (event.target.checked) {
+    reconcileForm.value.selected_transactions = unreconciledTransactions.map(t => t.id);
+  } else {
+    reconcileForm.value.selected_transactions = [];
+  }
 };
 
 const getBankAccountTypeColor = (type) => {
@@ -1732,6 +2008,22 @@ const closeJournalModal = () => {
     description: '',
     entry_type: 'manual',
     lines: []
+  };
+};
+
+const closeBankAccountViewModal = () => {
+  showBankAccountViewModal.value = false;
+  selectedBankAccount.value = null;
+};
+
+const closeReconcileModal = () => {
+  showReconcileModal.value = false;
+  selectedBankAccount.value = null;
+  bankTransactions.value = [];
+  reconcileForm.value = {
+    statement_date: '',
+    statement_balance: '',
+    selected_transactions: []
   };
 };
 

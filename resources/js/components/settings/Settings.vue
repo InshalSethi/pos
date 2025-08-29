@@ -53,6 +53,17 @@
           >
             Payment Gateways
           </button>
+          <button
+            @click="activeTab = 'accounting'"
+            :class="[
+              'py-2 px-1 border-b-2 font-medium text-sm',
+              activeTab === 'accounting'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Accounting
+          </button>
         </nav>
       </div>
 
@@ -531,6 +542,280 @@
             </div>
           </div>
         </div>
+
+        <!-- Accounting Tab -->
+        <div v-else-if="activeTab === 'accounting'" class="p-6">
+          <div class="space-y-8">
+            <div class="border-b border-gray-200 pb-4">
+              <h3 class="text-lg font-medium text-gray-900">Accounting Settings</h3>
+              <p class="text-sm text-gray-600">Configure chart of accounts for double entry accounting</p>
+              <p class="text-xs text-blue-600 mt-2">Debug: Tab is active, loading={{ loadingAccounting }}</p>
+            </div>
+
+            <div v-if="loadingAccounting" class="text-center py-8">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              <p class="mt-2 text-gray-600">Loading accounting settings...</p>
+            </div>
+
+            <div v-else class="space-y-8">
+              <!-- Sales Invoice Accounts -->
+              <div class="bg-green-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-green-900 mb-4">Sales Invoice Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Revenue Account</label>
+                    <select
+                      v-model="accountingSettings.sales_invoice_revenue_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Receivable</label>
+                    <select
+                      v-model="accountingSettings.sales_invoice_receivable_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
+                    <select
+                      v-model="accountingSettings.sales_invoice_tax_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sales Return Accounts -->
+              <div class="bg-red-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-red-900 mb-4">Sales Return Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Revenue Return Account</label>
+                    <select
+                      v-model="accountingSettings.sales_return_revenue_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Receivable</label>
+                    <select
+                      v-model="accountingSettings.sales_return_receivable_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
+                    <select
+                      v-model="accountingSettings.sales_return_tax_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Purchase Invoice Accounts -->
+              <div class="bg-orange-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-orange-900 mb-4">Purchase Invoice Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Expense Account</label>
+                    <select
+                      v-model="accountingSettings.purchase_invoice_expense_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Payable</label>
+                    <select
+                      v-model="accountingSettings.purchase_invoice_payable_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
+                    <select
+                      v-model="accountingSettings.purchase_invoice_tax_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Purchase Return Accounts -->
+              <div class="bg-purple-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-purple-900 mb-4">Purchase Return Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Expense Return Account</label>
+                    <select
+                      v-model="accountingSettings.purchase_return_expense_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Payable</label>
+                    <select
+                      v-model="accountingSettings.purchase_return_payable_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
+                    <select
+                      v-model="accountingSettings.purchase_return_tax_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Expense Accounts -->
+              <div class="bg-yellow-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-yellow-900 mb-4">Expense Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Expense Account</label>
+                    <select
+                      v-model="accountingSettings.expense_default_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Expense Payable Account</label>
+                    <select
+                      v-model="accountingSettings.expense_payable_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end">
+                <button
+                  @click="saveAccountingSettings"
+                  :disabled="savingAccounting"
+                  class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {{ savingAccounting ? 'Saving...' : 'Save Accounting Settings' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -578,6 +863,12 @@ const paymentSettings = ref({
   googlepay_enabled: false,
   googlepay_merchant_id: ''
 });
+
+// Accounting settings
+const loadingAccounting = ref(false);
+const savingAccounting = ref(false);
+const accountingSettings = ref({});
+const accountsForDropdown = ref({});
 
 // Methods
 const loadSettings = async () => {
@@ -649,6 +940,13 @@ watch(() => settings.value.theme, (newTheme) => {
   applyTheme(newTheme);
 });
 
+// Watch for accounting tab activation
+watch(() => activeTab.value, (newTab) => {
+  if (newTab === 'accounting') {
+    loadAccountingSettings();
+  }
+});
+
 // Lifecycle
 onMounted(() => {
   loadSettings();
@@ -703,6 +1001,53 @@ const updatePaymentSetting = async (key, value) => {
     });
   } catch (error) {
     console.error('Error updating payment setting:', error);
+  }
+};
+
+// Accounting settings methods
+const loadAccountingSettings = async () => {
+  loadingAccounting.value = true;
+  try {
+    console.log('Loading accounting settings...');
+
+    // Load settings first
+    const settingsResponse = await axios.get('/api/accounting-settings');
+    console.log('Settings response:', settingsResponse.data);
+    accountingSettings.value = settingsResponse.data || {};
+
+    // Then load accounts
+    const accountsResponse = await axios.get('/api/accounting-settings/accounts-for-dropdowns');
+    console.log('Accounts response:', accountsResponse.data);
+    accountsForDropdown.value = accountsResponse.data || {};
+
+  } catch (error) {
+    console.error('Error loading accounting settings:', error);
+    console.error('Error details:', error.response?.data);
+
+    // Initialize with empty objects if there's an error
+    accountingSettings.value = {};
+    accountsForDropdown.value = {};
+  } finally {
+    loadingAccounting.value = false;
+  }
+};
+
+const updateAccountingSetting = () => {
+  // Auto-save when dropdown changes
+  saveAccountingSettings();
+};
+
+const saveAccountingSettings = async () => {
+  savingAccounting.value = true;
+  try {
+    const response = await axios.put('/api/accounting-settings', accountingSettings.value);
+    accountingSettings.value = response.data.settings;
+    // Show success message
+    console.log('Accounting settings saved successfully');
+  } catch (error) {
+    console.error('Error saving accounting settings:', error);
+  } finally {
+    savingAccounting.value = false;
   }
 };
 

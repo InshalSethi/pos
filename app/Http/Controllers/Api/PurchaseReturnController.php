@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseOrder;
+use App\Services\DoubleEntryAccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -109,6 +110,10 @@ class PurchaseReturnController extends Controller
                     'total_cost' => $item['quantity'] * $item['unit_cost'],
                 ]);
             }
+
+            // Create accounting entries
+            $accountingService = new DoubleEntryAccountingService();
+            $accountingService->createPurchaseReturnEntry($purchaseReturn);
 
             DB::commit();
 

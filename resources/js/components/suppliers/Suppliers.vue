@@ -175,93 +175,119 @@
 
         <!-- Desktop Table View -->
         <div v-else class="hidden lg:block">
-          <div class="overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terms</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="supplier in suppliers.data" :key="supplier.id" class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10">
-                        <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                          <span class="text-sm font-medium text-green-600">{{ getInitials(supplier.name) }}</span>
-                        </div>
-                      </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ supplier.name }}</div>
-                        <div class="text-sm text-gray-500">{{ supplier.company_name || 'No company' }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ supplier.email || '-' }}</div>
-                    <div class="text-sm text-gray-500">{{ supplier.phone || '-' }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ supplier.city || '-' }}</div>
-                    <div class="text-sm text-gray-500">{{ supplier.state || '-' }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">
-                      {{ supplier.payment_terms_days ? supplier.payment_terms_days + ' days' : '-' }}
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${{ formatNumber(supplier.credit_limit) }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="supplier.is_active
-                      ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
-                      : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
-                      {{ supplier.is_active ? 'Active' : 'Inactive' }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex items-center justify-end space-x-2">
-                      <button
-                        @click="viewSupplier(supplier)"
-                        class="text-green-600 hover:text-green-900 p-1 rounded-md hover:bg-green-50"
-                        title="View Details"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      </button>
-                      <button
-                        @click="editSupplier(supplier)"
-                        class="text-yellow-600 hover:text-yellow-900 p-1 rounded-md hover:bg-yellow-50"
-                        title="Edit Supplier"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        @click="deleteSupplier(supplier)"
-                        class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
-                        title="Delete Supplier"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            title="Suppliers"
+            subtitle="Manage your supplier network and partnerships"
+            :columns="tableColumns"
+            :data="suppliers.data || []"
+            :loading="loading"
+            :pagination="pagination"
+            :initial-search="searchQuery"
+            :initial-per-page="perPage"
+            :default-per-page="15"
+            storage-key="suppliers-table-state"
+            empty-message="No suppliers found"
+            empty-sub-message="Get started by creating your first supplier."
+            @search="handleTableSearch"
+            @sort="handleSort"
+            @page-change="handlePageChange"
+            @per-page-change="handlePerPageChange"
+          >
+            <!-- Custom column content -->
+            <template #column-supplier="{ item }">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10">
+                  <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <span class="text-sm font-medium text-green-600">{{ getInitials(item.name) }}</span>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium">
+                    <button
+                      @click="viewLedger(item)"
+                      class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer"
+                      title="View Supplier Ledger"
+                    >
+                      {{ item.name }}
+                    </button>
+                  </div>
+                  <div class="text-sm text-gray-500">{{ item.company_name || 'No company' }}</div>
+                </div>
+              </div>
+            </template>
+
+            <template #column-contact="{ item }">
+              <div>
+                <div class="text-sm text-gray-900">{{ item.email || '-' }}</div>
+                <div class="text-sm text-gray-500">{{ item.phone || '-' }}</div>
+              </div>
+            </template>
+
+            <template #column-location="{ item }">
+              <div>
+                <div class="text-sm text-gray-900">{{ item.city || '-' }}</div>
+                <div class="text-sm text-gray-500">{{ item.state || '-' }}</div>
+              </div>
+            </template>
+
+            <template #column-terms="{ item }">
+              {{ item.payment_terms_days ? item.payment_terms_days + ' days' : '-' }}
+            </template>
+
+            <template #column-status="{ item }">
+              <span :class="item.is_active
+                ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
+                : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
+                {{ item.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </template>
+
+            <template #column-actions="{ item }">
+              <div class="flex items-center justify-end space-x-2">
+                <button
+                  @click="viewSupplier(item)"
+                  class="text-green-600 hover:text-green-900 p-1 rounded-md hover:bg-green-50"
+                  title="View Details"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  @click="editSupplier(item)"
+                  class="text-yellow-600 hover:text-yellow-900 p-1 rounded-md hover:bg-yellow-50"
+                  title="Edit Supplier"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  @click="deleteSupplier(item)"
+                  class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
+                  title="Delete Supplier"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </template>
+
+            <!-- Action buttons in header -->
+            <template #actions>
+              <button
+                @click="showCreateModal = true"
+                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+              >
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Supplier
+              </button>
+            </template>
+          </DataTable>
         </div>
 
         <!-- Mobile Card View -->
@@ -280,7 +306,15 @@
                     </div>
                   </div>
                   <div>
-                    <h3 class="text-sm font-medium text-gray-900">{{ supplier.name }}</h3>
+                    <h3 class="text-sm font-medium">
+                      <button
+                        @click="viewLedger(supplier)"
+                        class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer"
+                        title="View Supplier Ledger"
+                      >
+                        {{ supplier.name }}
+                      </button>
+                    </h3>
                     <p class="text-sm text-gray-500">{{ supplier.company_name || 'No company' }}</p>
                   </div>
                 </div>
@@ -425,6 +459,13 @@
       :supplier="selectedSupplier"
       @close="closeViewModal"
     />
+
+    <!-- Supplier Ledger Modal -->
+    <SupplierLedger
+      :show="showLedgerModal"
+      :supplier="selectedSupplier"
+      @close="closeModal"
+    />
   </div>
 </template>
 
@@ -433,6 +474,8 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { debounce } from '@/utils/debounce';
 import SupplierModal from './SupplierModal.vue';
 import SupplierViewModal from './SupplierViewModal.vue';
+import SupplierLedger from './SupplierLedger.vue';
+import DataTable from '@/components/common/DataTable.vue';
 import { useToast } from '@/composables/useToast';
 import api from '@/services/api';
 
@@ -440,7 +483,9 @@ export default {
   name: 'Suppliers',
   components: {
     SupplierModal,
-    SupplierViewModal
+    SupplierViewModal,
+    SupplierLedger,
+    DataTable
   },
   setup() {
     const { showToast } = useToast();
@@ -451,10 +496,75 @@ export default {
     const searchQuery = ref('');
     const statusFilter = ref('');
     const perPage = ref(15);
-    
+
+    // DataTable pagination
+    const pagination = ref({
+      current_page: 1,
+      last_page: 1,
+      per_page: 15,
+      total: 0,
+      from: 0,
+      to: 0
+    });
+
+    // Table columns configuration
+    const tableColumns = ref([
+      {
+        key: 'supplier',
+        label: 'Supplier',
+        sortable: true,
+        align: 'left'
+      },
+      {
+        key: 'contact',
+        label: 'Contact',
+        sortable: false,
+        align: 'left'
+      },
+      {
+        key: 'location',
+        label: 'Location',
+        sortable: true,
+        align: 'left'
+      },
+      {
+        key: 'terms',
+        label: 'Terms',
+        sortable: true,
+        align: 'left'
+      },
+      {
+        key: 'credit_limit',
+        label: 'Credit',
+        sortable: true,
+        type: 'currency',
+        align: 'right'
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        align: 'center'
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+        sortable: false,
+        align: 'right'
+      }
+    ]);
+
+    // Table filters
+    const filters = ref({
+      search: '',
+      sort_field: '',
+      sort_order: ''
+    });
+
     const showCreateModal = ref(false);
     const showEditModal = ref(false);
     const showViewModal = ref(false);
+    const showLedgerModal = ref(false);
     const selectedSupplier = ref(null);
 
     const loadSuppliers = async (page = 1) => {
@@ -462,13 +572,31 @@ export default {
       try {
         const params = {
           page,
-          per_page: perPage.value,
+          per_page: pagination.value.per_page,
           search: searchQuery.value,
-          is_active: statusFilter.value
+          is_active: statusFilter.value,
+          ...filters.value
         };
+
+        // Remove empty parameters
+        Object.keys(params).forEach(key => {
+          if (params[key] === '' || params[key] === null) {
+            delete params[key];
+          }
+        });
 
         const response = await api.get('/suppliers', { params });
         suppliers.value = response.data;
+
+        // Update pagination
+        pagination.value = {
+          current_page: response.data.current_page,
+          last_page: response.data.last_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+          from: response.data.from,
+          to: response.data.to
+        };
       } catch (error) {
         showToast('Error loading suppliers', 'error');
       } finally {
@@ -488,6 +616,27 @@ export default {
     const debouncedSearch = debounce(() => {
       loadSuppliers(1);
     }, 300);
+
+    // DataTable event handlers
+    const handleTableSearch = (searchQuery) => {
+      filters.value.search = searchQuery;
+      loadSuppliers(1);
+    };
+
+    const handleSort = (sortData) => {
+      filters.value.sort_field = sortData.field;
+      filters.value.sort_order = sortData.order;
+      loadSuppliers(1);
+    };
+
+    const handlePageChange = (page) => {
+      loadSuppliers(page);
+    };
+
+    const handlePerPageChange = (perPage) => {
+      pagination.value.per_page = perPage;
+      loadSuppliers(1);
+    };
 
     const changePage = (page) => {
       if (page >= 1 && page <= suppliers.value.last_page) {
@@ -510,6 +659,11 @@ export default {
     const viewSupplier = (supplier) => {
       selectedSupplier.value = supplier;
       showViewModal.value = true;
+    };
+
+    const viewLedger = (supplier) => {
+      selectedSupplier.value = supplier;
+      showLedgerModal.value = true;
     };
 
     const editSupplier = (supplier) => {
@@ -549,11 +703,13 @@ export default {
     const closeModal = () => {
       showCreateModal.value = false;
       showEditModal.value = false;
+      showLedgerModal.value = false;
       selectedSupplier.value = null;
     };
 
     const closeViewModal = () => {
       showViewModal.value = false;
+      showLedgerModal.value = false;
       selectedSupplier.value = null;
     };
 
@@ -588,6 +744,9 @@ export default {
       searchQuery,
       statusFilter,
       perPage,
+      pagination,
+      tableColumns,
+      filters,
       showCreateModal,
       showEditModal,
       showViewModal,
@@ -596,14 +755,20 @@ export default {
       loadSuppliers,
       debouncedSearch,
       changePage,
+      handleTableSearch,
+      handleSort,
+      handlePageChange,
+      handlePerPageChange,
       viewSupplier,
+      viewLedger,
       editSupplier,
       deleteSupplier,
       closeModal,
       closeViewModal,
       handleSupplierSaved,
       formatNumber,
-      getInitials
+      getInitials,
+      showLedgerModal
     };
   }
 };

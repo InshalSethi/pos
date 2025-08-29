@@ -25,24 +25,40 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       // Get CSRF cookie first
       await axios.get('/sanctum/csrf-cookie');
-      
+
       // Attempt login
       const response = await axios.post('/api/login', credentials);
-      
+
       if (response.data.token) {
         token.value = response.data.token;
         user.value = response.data.user;
         permissions.value = response.data.permissions || [];
         roles.value = response.data.roles || [];
-        
+
+        // Store token with remember me preference
         localStorage.setItem('auth_token', token.value);
-        
+
+        // Store remember me preference
+        if (credentials.rememberMe) {
+          localStorage.setItem('remember_me', 'true');
+          // Set a longer expiration for remember me (30 days)
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          localStorage.setItem('token_expiration', expirationDate.toISOString());
+        } else {
+          localStorage.removeItem('remember_me');
+          // Set shorter expiration for regular login (1 day)
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 1);
+          localStorage.setItem('token_expiration', expirationDate.toISOString());
+        }
+
         return { success: true };
       }
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
       };
     }
   };
@@ -60,6 +76,8 @@ export const useAuthStore = defineStore('auth', () => {
       permissions.value = [];
       roles.value = [];
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('remember_me');
+      localStorage.removeItem('token_expiration');
     }
   };
 
@@ -84,8 +102,24 @@ export const useAuthStore = defineStore('auth', () => {
 
   const initializeAuth = async () => {
     const storedToken = localStorage.getItem('auth_token');
+    const tokenExpiration = localStorage.getItem('token_expiration');
+    const rememberMe = localStorage.getItem('remember_me') === 'true';
+
     console.log('Initializing auth, stored token:', storedToken ? 'exists' : 'none');
+
     if (storedToken) {
+      // Check if token has expired
+      if (tokenExpiration) {
+        const expirationDate = new Date(tokenExpiration);
+        const now = new Date();
+
+        if (now > expirationDate && !rememberMe) {
+          console.log('Token expired and remember me not set, logging out');
+          await logout();
+          return;
+        }
+      }
+
       token.value = storedToken;
       const success = await fetchUser();
       if (!success) {
@@ -124,6 +158,39 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      const response = await axios.post('/api/forgot-password', { email });
+
+      return {
+        success: true,
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to send reset email'
+      };
+    }
+  };
+
+  const resetPassword = async (data) => {
+    try {
+      const response = await axios.post('/api/reset-password', data);
+
+      return {
+        success: true,
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to reset password',
+        errors: error.response?.data?.errors || {}
+      };
+    }
+  };
+
   return {
     // State
     user,
@@ -141,6 +208,8 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     fetchUser,
     initializeAuth,
-    register
+    register,
+    forgotPassword,
+    resetPassword
   };
 });

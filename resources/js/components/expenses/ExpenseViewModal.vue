@@ -186,6 +186,13 @@
             Mark as Paid
           </button>
           <button
+            v-if="canCreatePayment"
+            @click="createPayment"
+            class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+          >
+            Create Payment
+          </button>
+          <button
             @click="$emit('close')"
             class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
           >
@@ -261,6 +268,24 @@
     <div v-if="showPaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-60">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Mark as Paid</h3>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Bank Account *</label>
+          <select
+            v-model="selectedBankAccount"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select Bank Account</option>
+            <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
+              {{ account.account_name }} - {{ account.bank_name }} ({{ account.formatted_account_number }})
+            </option>
+          </select>
+          <p v-if="!selectedBankAccount && paymentError" class="text-red-500 text-sm mt-1">
+            Please select a bank account
+          </p>
+        </div>
+
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">Payment Reference (Optional)</label>
           <input
@@ -270,16 +295,18 @@
             placeholder="Transaction ID, check number, etc."
           />
         </div>
+
         <div class="flex justify-end space-x-3">
           <button
-            @click="showPaymentModal = false"
+            @click="cancelPayment"
             class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             @click="markAsPaid"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            :disabled="!selectedBankAccount"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Mark as Paid
           </button>
@@ -290,7 +317,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
@@ -304,7 +331,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'edit', 'approve', 'reject', 'pay']);
+const emit = defineEmits(['close', 'edit', 'approve', 'reject', 'pay', 'create-payment']);
 
 // Reactive data
 const showApprovalModal = ref(false);
@@ -313,6 +340,9 @@ const showPaymentModal = ref(false);
 const approvalNotes = ref('');
 const rejectionReason = ref('');
 const paymentReference = ref('');
+const selectedBankAccount = ref('');
+const bankAccounts = ref([]);
+const paymentError = ref(false);
 
 // Computed
 const canEdit = computed(() => {
@@ -333,6 +363,10 @@ const canReject = computed(() => {
 
 const canPay = computed(() => {
   return authStore.hasPermission('expenses.pay') && props.expense.status === 'approved';
+});
+
+const canCreatePayment = computed(() => {
+  return authStore.hasPermission('payments.create') && props.expense.status === 'approved';
 });
 
 // Methods
@@ -410,15 +444,53 @@ const rejectExpense = async () => {
   }
 };
 
+const fetchBankAccounts = async () => {
+  try {
+    const response = await axios.get('/api/bank-accounts', {
+      params: { is_active: true }
+    });
+    bankAccounts.value = response.data;
+  } catch (error) {
+    console.error('Error fetching bank accounts:', error);
+  }
+};
+
+const cancelPayment = () => {
+  showPaymentModal.value = false;
+  selectedBankAccount.value = '';
+  paymentReference.value = '';
+  paymentError.value = false;
+};
+
 const markAsPaid = async () => {
+  if (!selectedBankAccount.value) {
+    paymentError.value = true;
+    return;
+  }
+
   try {
     await axios.post(`/api/expenses/${props.expense.id}/mark-as-paid`, {
+      bank_account_id: selectedBankAccount.value,
       payment_reference: paymentReference.value
     });
     showPaymentModal.value = false;
+    selectedBankAccount.value = '';
+    paymentReference.value = '';
+    paymentError.value = false;
     emit('pay');
   } catch (error) {
     console.error('Error marking expense as paid:', error);
   }
 };
+
+const createPayment = () => {
+  emit('create-payment', props.expense);
+};
+
+// Watch for payment modal opening to fetch bank accounts
+watch(showPaymentModal, (newValue) => {
+  if (newValue) {
+    fetchBankAccounts();
+  }
+});
 </script>

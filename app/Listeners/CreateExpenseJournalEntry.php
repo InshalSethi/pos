@@ -4,13 +4,10 @@ namespace App\Listeners;
 
 use App\Events\ExpenseApproved;
 use App\Services\ExpenseAccountingService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class CreateExpenseJournalEntry implements ShouldQueue
+class CreateExpenseJournalEntry
 {
-    use InteractsWithQueue;
 
     private ExpenseAccountingService $accountingService;
 

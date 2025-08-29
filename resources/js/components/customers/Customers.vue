@@ -145,122 +145,124 @@
 
       <!-- Customer Cards/Table -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <!-- Loading State -->
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <div class="flex items-center space-x-2">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span class="text-gray-600">Loading customers...</span>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="customers.data && customers.data.length === 0" class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No customers found</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by creating your first customer.</p>
-          <div class="mt-6">
-            <button
-              @click="handleCreateCustomer"
-              class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-            >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Customer
-            </button>
-          </div>
-        </div>
-
         <!-- Desktop Table View -->
-        <div v-else class="hidden lg:block">
-          <div class="overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchases</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="customer in customers.data" :key="customer.id" class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10">
-                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span class="text-sm font-medium text-blue-600">{{ getInitials(customer.name) }}</span>
-                        </div>
-                      </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ customer.name }}</div>
-                        <div class="text-sm text-gray-500">ID: #{{ customer.id }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ customer.email || '-' }}</div>
-                    <div class="text-sm text-gray-500">{{ customer.phone || '-' }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ customer.city || '-' }}</div>
-                    <div class="text-sm text-gray-500">{{ customer.state || '-' }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">${{ formatNumber(customer.total_purchases) }}</div>
-                    <div class="text-sm text-gray-500">{{ formatNumber(customer.loyalty_points) }} points</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${{ formatNumber(customer.credit_limit) }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="customer.is_active
-                      ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
-                      : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
-                      {{ customer.is_active ? 'Active' : 'Inactive' }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex items-center justify-end space-x-2">
-                      <button
-                        @click="viewCustomer(customer)"
-                        class="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50"
-                        title="View Details"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      </button>
-                      <button
-                        @click="editCustomer(customer)"
-                        class="text-yellow-600 hover:text-yellow-900 p-1 rounded-md hover:bg-yellow-50"
-                        title="Edit Customer"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        @click="deleteCustomer(customer)"
-                        class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
-                        title="Delete Customer"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="hidden lg:block">
+          <DataTable
+            title="Customers"
+            subtitle="Manage your customer database and relationships"
+            :columns="tableColumns"
+            :data="customers.data || []"
+            :loading="loading"
+            :pagination="pagination"
+            :initial-search="searchQuery"
+            :initial-per-page="perPage"
+            :default-per-page="25"
+            storage-key="customers-table-state"
+            empty-message="No customers found"
+            empty-sub-message="Get started by creating your first customer."
+            @search="handleTableSearch"
+            @sort="handleSort"
+            @page-change="handlePageChange"
+            @per-page-change="handlePerPageChange"
+          >
+            <!-- Custom column content -->
+            <template #column-customer="{ item }">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10">
+                  <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span class="text-sm font-medium text-blue-600">{{ getInitials(item.name) }}</span>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium">
+                    <button
+                      @click="viewLedger(item)"
+                      class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer"
+                      title="View Customer Ledger"
+                    >
+                      {{ item.name }}
+                    </button>
+                  </div>
+                  <div class="text-sm text-gray-500">ID: #{{ item.id }}</div>
+                </div>
+              </div>
+            </template>
+
+            <template #column-contact="{ item }">
+              <div>
+                <div class="text-sm text-gray-900">{{ item.email || '-' }}</div>
+                <div class="text-sm text-gray-500">{{ item.phone || '-' }}</div>
+              </div>
+            </template>
+
+            <template #column-location="{ item }">
+              <div>
+                <div class="text-sm text-gray-900">{{ item.city || '-' }}</div>
+                <div class="text-sm text-gray-500">{{ item.state || '-' }}</div>
+              </div>
+            </template>
+
+            <template #column-purchases="{ item }">
+              <div>
+                <div class="text-sm font-medium text-gray-900">${{ formatNumber(item.total_purchases) }}</div>
+                <div class="text-sm text-gray-500">{{ formatNumber(item.loyalty_points) }} points</div>
+              </div>
+            </template>
+
+            <template #column-status="{ item }">
+              <span :class="item.is_active
+                ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
+                : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
+                {{ item.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </template>
+
+            <template #column-actions="{ item }">
+              <div class="flex items-center justify-end space-x-2">
+                <button
+                  @click="viewCustomer(item)"
+                  class="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50"
+                  title="View Details"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  @click="editCustomer(item)"
+                  class="text-yellow-600 hover:text-yellow-900 p-1 rounded-md hover:bg-yellow-50"
+                  title="Edit Customer"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  @click="deleteCustomer(item)"
+                  class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
+                  title="Delete Customer"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </template>
+
+            <!-- Action buttons in header -->
+            <template #actions>
+              <button
+                @click="handleCreateCustomer"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+              >
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Customer
+              </button>
+            </template>
+          </DataTable>
         </div>
 
         <!-- Mobile Card View -->
@@ -279,7 +281,15 @@
                     </div>
                   </div>
                   <div>
-                    <h3 class="text-sm font-medium text-gray-900">{{ customer.name }}</h3>
+                    <h3 class="text-sm font-medium">
+                      <button
+                        @click="viewLedger(customer)"
+                        class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer"
+                        title="View Customer Ledger"
+                      >
+                        {{ customer.name }}
+                      </button>
+                    </h3>
                     <p class="text-sm text-gray-500">{{ customer.email || 'No email' }}</p>
                   </div>
                 </div>
@@ -421,6 +431,12 @@
       :customer="selectedCustomer"
       @close="closeModal"
     />
+
+    <CustomerLedger
+      :show="showLedgerModal"
+      :customer="selectedCustomer"
+      @close="closeModal"
+    />
   </div>
 </template>
 
@@ -429,6 +445,8 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { debounce } from '@/utils/debounce';
 import CustomerModalSimple from './CustomerModalSimple.vue';
 import CustomerViewModalSimple from './CustomerViewModalSimple.vue';
+import CustomerLedger from './CustomerLedger.vue';
+import DataTable from '@/components/common/DataTable.vue';
 import { useToast } from '@/composables/useToast';
 import api from '@/services/api';
 
@@ -436,7 +454,9 @@ export default {
   name: 'Customers',
   components: {
     CustomerModalSimple,
-    CustomerViewModalSimple
+    CustomerViewModalSimple,
+    CustomerLedger,
+    DataTable
   },
   setup() {
     const { showToast } = useToast();
@@ -448,23 +468,106 @@ export default {
     const statusFilter = ref('');
     const perPage = ref(15);
 
+    // Pagination for DataTable
+    const pagination = ref({
+      current_page: 1,
+      last_page: 1,
+      per_page: 25,
+      total: 0,
+      from: 0,
+      to: 0
+    });
+
+    // Table columns configuration
+    const tableColumns = ref([
+      {
+        key: 'customer',
+        label: 'Customer',
+        sortable: true,
+        align: 'left'
+      },
+      {
+        key: 'contact',
+        label: 'Contact',
+        sortable: false,
+        align: 'left'
+      },
+      {
+        key: 'location',
+        label: 'Location',
+        sortable: true,
+        align: 'left'
+      },
+      {
+        key: 'purchases',
+        label: 'Purchases',
+        sortable: true,
+        align: 'left'
+      },
+      {
+        key: 'credit_limit',
+        label: 'Credit',
+        sortable: true,
+        type: 'currency',
+        align: 'right'
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        align: 'center'
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+        sortable: false,
+        align: 'right'
+      }
+    ]);
+
+    // DataTable filters
+    const filters = ref({
+      search: '',
+      sort_field: '',
+      sort_order: ''
+    });
+
     const selectedCustomer = ref(null);
     const showCreateModal = ref(false);
     const showEditModal = ref(false);
     const showViewModal = ref(false);
+    const showLedgerModal = ref(false);
 
     const loadCustomers = async (page = 1) => {
       loading.value = true;
       try {
         const params = {
           page,
-          per_page: perPage.value,
+          per_page: pagination.value.per_page,
           search: searchQuery.value,
-          is_active: statusFilter.value
+          is_active: statusFilter.value,
+          ...filters.value
         };
+
+        // Remove empty parameters
+        Object.keys(params).forEach(key => {
+          if (params[key] === '' || params[key] === null) {
+            delete params[key];
+          }
+        });
 
         const response = await api.get('/customers', { params });
         customers.value = response.data;
+
+        // Update pagination
+        pagination.value = {
+          current_page: response.data.current_page,
+          last_page: response.data.last_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+          from: response.data.from,
+          to: response.data.to
+        };
       } catch (error) {
         showToast('Error loading customers: ' + (error.response?.data?.message || error.message), 'error');
       } finally {
@@ -484,6 +587,27 @@ export default {
     const debouncedSearch = debounce(() => {
       loadCustomers(1);
     }, 300);
+
+    // DataTable event handlers
+    const handleTableSearch = (searchQuery) => {
+      filters.value.search = searchQuery;
+      loadCustomers(1);
+    };
+
+    const handleSort = (sortData) => {
+      filters.value.sort_field = sortData.field;
+      filters.value.sort_order = sortData.order;
+      loadCustomers(1);
+    };
+
+    const handlePageChange = (page) => {
+      loadCustomers(page);
+    };
+
+    const handlePerPageChange = (perPage) => {
+      pagination.value.per_page = perPage;
+      loadCustomers(1);
+    };
 
     const changePage = (page) => {
       if (page >= 1 && page <= customers.value.last_page) {
@@ -518,10 +642,16 @@ export default {
       showEditModal.value = true;
     };
 
+    const viewLedger = (customer) => {
+      selectedCustomer.value = customer;
+      showLedgerModal.value = true;
+    };
+
     const closeModal = () => {
       showCreateModal.value = false;
       showEditModal.value = false;
       showViewModal.value = false;
+      showLedgerModal.value = false;
       selectedCustomer.value = null;
     };
 
@@ -570,17 +700,26 @@ export default {
       searchQuery,
       statusFilter,
       perPage,
+      pagination,
+      tableColumns,
+      filters,
       selectedCustomer,
       showCreateModal,
       showEditModal,
       showViewModal,
+      showLedgerModal,
       visiblePages,
       loadCustomers,
       debouncedSearch,
       changePage,
+      handleTableSearch,
+      handleSort,
+      handlePageChange,
+      handlePerPageChange,
       handleCreateCustomer,
       viewCustomer,
       editCustomer,
+      viewLedger,
       deleteCustomer,
       closeModal,
       handleCustomerSaved,

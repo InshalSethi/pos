@@ -1,14 +1,15 @@
 <template>
-  <div class="expense-reports">
+  <div class="expense-reports p-4 sm:p-0">
     <!-- Date Range Filter -->
     <div class="bg-white p-4 rounded-lg shadow mb-6">
-      <div class="flex items-center space-x-4">
+      <!-- Date Inputs -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
           <input
             v-model="dateRange.start_date"
             type="date"
-            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             @change="fetchStatistics"
           />
         </div>
@@ -17,30 +18,32 @@
           <input
             v-model="dateRange.end_date"
             type="date"
-            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             @change="fetchStatistics"
           />
         </div>
-        <div class="pt-6">
-          <button
-            @click="setQuickRange('thisMonth')"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 mr-2"
-          >
-            This Month
-          </button>
-          <button
-            @click="setQuickRange('lastMonth')"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 mr-2"
-          >
-            Last Month
-          </button>
-          <button
-            @click="setQuickRange('thisYear')"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            This Year
-          </button>
-        </div>
+      </div>
+
+      <!-- Quick Range Buttons -->
+      <div class="flex flex-wrap gap-2">
+        <button
+          @click="setQuickRange('thisMonth')"
+          class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex-shrink-0"
+        >
+          This Month
+        </button>
+        <button
+          @click="setQuickRange('lastMonth')"
+          class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex-shrink-0"
+        >
+          Last Month
+        </button>
+        <button
+          @click="setQuickRange('thisYear')"
+          class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex-shrink-0"
+        >
+          This Year
+        </button>
       </div>
     </div>
 

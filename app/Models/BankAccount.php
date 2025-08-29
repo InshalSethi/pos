@@ -24,16 +24,19 @@ class BankAccount extends Model
         'opening_date',
         'description',
         'is_active',
+        'is_default',
         'last_reconciled_date',
         'last_statement_balance',
+        'notes',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
         'opening_balance' => 'decimal:2',
         'last_statement_balance' => 'decimal:2',
-        'opening_date' => 'date',
-        'last_reconciled_date' => 'date',
+        'opening_date' => 'date:Y-m-d',
+        'last_reconciled_date' => 'date:Y-m-d',
     ];
 
     // Relationships
@@ -114,12 +117,12 @@ class BankAccount extends Model
     {
         $totalDebits = $this->bankTransactions()
                            ->where('transaction_type', 'debit')
-                           ->where('is_reconciled', true)
+                           ->where('status', 'reconciled')
                            ->sum('amount');
 
         $totalCredits = $this->bankTransactions()
                             ->where('transaction_type', 'credit')
-                            ->where('is_reconciled', true)
+                            ->where('status', 'reconciled')
                             ->sum('amount');
 
         if (in_array($this->account_type, ['checking', 'savings'])) {
@@ -131,7 +134,7 @@ class BankAccount extends Model
 
     public function getUnreconciledTransactionsCount(): int
     {
-        return $this->bankTransactions()->where('is_reconciled', false)->count();
+        return $this->bankTransactions()->whereIn('status', ['pending', 'cleared'])->count();
     }
 
     public function getFormattedBalanceAttribute(): string

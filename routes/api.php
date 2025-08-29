@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\BankTransactionController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\AccountingSettingsController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\Api\PurchaseReturnController;
@@ -26,21 +28,28 @@ use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\PositionController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentReceiptController;
 use App\Http\Controllers\Api\EmployeeUserController;
 use App\Http\Controllers\Api\EmployeeSalaryController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\SalaryAdjustmentController;
 use App\Http\Controllers\Api\CustomerLedgerController;
 use App\Http\Controllers\Api\SupplierLedgerController;
+use App\Http\Controllers\Api\TransactionController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Test route for debugging
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working', 'time' => now()]);
 });
+
+
 
 // Test dropdown route (temporary fallback - remove in production)
 Route::get('/test-dropdown', function() {
@@ -114,6 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Sales/POS routes
     Route::apiResource('sales', SaleController::class);
     Route::post('/sales/{sale}/refund', [SaleController::class, 'refund']);
+    Route::post('/sales/returns', [SaleController::class, 'processReturn']);
     Route::get('/sales/statistics/summary', [SaleController::class, 'statistics']);
 
     // Inventory management routes
@@ -144,9 +154,55 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/accounts/tree/structure', [AccountController::class, 'tree']);
     Route::get('/accounts/balances/summary', [AccountController::class, 'balances']);
 
+    // Accounting Settings routes
+    Route::get('/accounting-settings', [AccountingSettingsController::class, 'index']);
+    Route::put('/accounting-settings', [AccountingSettingsController::class, 'update']);
+    Route::get('/accounting-settings/accounts-for-dropdowns', [AccountingSettingsController::class, 'getAccountsForDropdowns']);
+    Route::get('/accounting-settings/default-mappings', [AccountingSettingsController::class, 'getDefaultMappings']);
+
+    // Dashboard routes
+    Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics']);
+
+    // Test route for accounting settings
+    Route::get('/test-accounting', function() {
+        try {
+            $settings = App\Models\AccountingSetting::getSettings();
+            $accounts = App\Models\Account::where('is_active', true)->orderBy('account_code')->get();
+            return response()->json([
+                'settings' => $settings,
+                'accounts_count' => $accounts->count(),
+                'sample_accounts' => $accounts->take(5)
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    });
+
     Route::apiResource('journal-entries', JournalEntryController::class);
     Route::post('/journal-entries/{journalEntry}/post', [JournalEntryController::class, 'post']);
+
+    // Payment routes
+    Route::get('/payment-options', [PaymentController::class, 'getPaymentOptions'])->name('payment-options');
+    Route::get('/payments-statistics', [PaymentController::class, 'statistics'])->name('payments-statistics');
+    Route::apiResource('payments', PaymentController::class);
+    Route::post('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
+    Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-as-paid');
+    Route::post('/payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
+
+    // Payment Receipt routes
+    Route::get('/payment-receipt-options', [PaymentReceiptController::class, 'getReceiptOptions'])->name('payment-receipt-options');
+    Route::get('/payment-receipts-statistics', [PaymentReceiptController::class, 'statistics'])->name('payment-receipts-statistics');
+    Route::get('/customer-invoices', [PaymentReceiptController::class, 'getCustomerInvoices'])->name('customer-invoices');
+    Route::apiResource('payment-receipts', PaymentReceiptController::class);
+    Route::post('/payment-receipts/{paymentReceipt}/verify', [PaymentReceiptController::class, 'verify'])->name('payment-receipts.verify');
+    Route::post('/payment-receipts/{paymentReceipt}/mark-as-deposited', [PaymentReceiptController::class, 'markAsDeposited'])->name('payment-receipts.mark-as-deposited');
+    Route::post('/payment-receipts/{paymentReceipt}/cancel', [PaymentReceiptController::class, 'cancel'])->name('payment-receipts.cancel');
     Route::post('/journal-entries/{journalEntry}/reverse', [JournalEntryController::class, 'reverse']);
+
+    // Transaction routes
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::get('/transactions/export-pdf', [TransactionController::class, 'exportPDF']);
+    Route::get('/transactions/summary', [TransactionController::class, 'summary']);
 
     // Banking routes
     Route::apiResource('bank-accounts', BankAccountController::class);
