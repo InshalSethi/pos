@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
@@ -55,28 +56,46 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        return DB::transaction(function () use ($request) {
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        // Assign default role (you can customize this)
-        $user->assignRole('user');
+            // Assign default role
+            $user->assignRole('user');
 
-        // Create token
-        $token = $user->createToken('auth-token')->plainTextToken;
+            // Create default user settings
+            UserSettings::create([
+                'user_id' => $user->id,
+                'email_notifications' => true,
+                'sales_alerts' => false,
+                'low_stock_alerts' => false,
+                'theme' => 'light',
+                'items_per_page' => 15,
+                'default_payment_method' => 'cash',
+                'auto_print_receipts' => false,
+                'sound_effects' => true,
+                'session_timeout' => 60,
+                'two_factor_auth' => false,
+            ]);
 
-        // Get user permissions and roles
-        $permissions = $user->getAllPermissions()->pluck('name')->toArray();
-        $roles = $user->getRoleNames()->toArray();
+            // Create token
+            $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
-            'token' => $token,
-            'user' => $user,
-            'permissions' => $permissions,
-            'roles' => $roles,
-        ], 201);
+            // Get user permissions and roles
+            $permissions = $user->getAllPermissions()->pluck('name')->toArray();
+            $roles = $user->getRoleNames()->toArray();
+
+            return response()->json([
+                'token' => $token,
+                'user' => $user,
+                'permissions' => $permissions,
+                'roles' => $roles,
+            ], 201);
+        });
     }
 
     public function user(Request $request)
