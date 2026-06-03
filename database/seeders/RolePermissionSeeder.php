@@ -21,11 +21,6 @@ class RolePermissionSeeder extends Seeder
 
         // Create permissions
         $permissions = [
-            // POS permissions
-            'pos.access',
-            'pos.create_sale',
-            'pos.refund',
-
             // Product permissions
             'products.view',
             'products.create',
@@ -144,6 +139,7 @@ class RolePermissionSeeder extends Seeder
 
         // Create roles
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $subAdminRole = Role::firstOrCreate(['name' => 'sub-admin']);
         $managerRole = Role::firstOrCreate(['name' => 'manager']);
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
         $employeeRole = Role::firstOrCreate(['name' => 'employee']);
@@ -152,9 +148,41 @@ class RolePermissionSeeder extends Seeder
         // Assign permissions to roles (sync to avoid duplicates)
         $adminRole->syncPermissions(Permission::all());
 
+        // Sub-admin has same permissions as manager for now
+        $subAdminRole->syncPermissions([
+            // Sales
+            'sales.view', 'sales.create', 'sales.edit', 'sales.refund',
+
+            // Products & Inventory
+            'products.view', 'products.create', 'products.edit', 'products.import', 'products.export',
+            'inventory.view', 'inventory.create', 'inventory.edit', 'inventory.adjust',
+
+            // Purchases
+            'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.approve',
+
+            // Customers & Suppliers
+            'customers.view', 'customers.create', 'customers.edit',
+            'suppliers.view', 'suppliers.create', 'suppliers.edit',
+
+            // Accounting (limited)
+            'accounting.view', 'chart_accounts.view', 'journal_entries.view',
+            'banking.view',
+
+            // Expenses
+            'expenses.view', 'expenses.create', 'expenses.edit', 'expenses.approve', 'expenses.pay',
+
+            // Employees
+            'employees.view', 'employees.create', 'employees.edit',
+
+            // Reports
+            'reports.view', 'reports.sales', 'reports.inventory', 'reports.financial', 'reports.export',
+
+            // Settings (limited)
+            'settings.view',
+        ]);
+
         $managerRole->syncPermissions([
-            // POS & Sales
-            'pos.access', 'pos.create_sale', 'pos.refund',
+            // Sales
             'sales.view', 'sales.create', 'sales.edit', 'sales.refund',
 
             // Products & Inventory
@@ -186,8 +214,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         $cashierRole->syncPermissions([
-            // POS & Sales
-            'pos.access', 'pos.create_sale', 'pos.refund',
+            // Sales
             'sales.view', 'sales.create',
 
             // Products (view only)
@@ -219,9 +246,6 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         $userRole->syncPermissions([
-            // Basic POS access
-            'pos.access',
-
             // View only permissions
             'products.view',
             'inventory.view',

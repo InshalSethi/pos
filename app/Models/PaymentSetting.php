@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasUtcDatabaseTimezones;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PaymentSetting extends Model
 {
+    use HasUtcDatabaseTimezones;
     use HasFactory;
 
     protected $fillable = [

@@ -37,16 +37,19 @@ class DashboardController extends Controller
             'expenses' => $this->getAccountingBasedExpensesStatistics($fromDate, $toDate),
             'payments' => $this->getPaymentStatistics($fromDate, $toDate),
             'low_stock' => $this->getLowStockStatistics(),
-            'sales_trend' => $this->getSalesTrend($fromDate, $toDate),
-            'sales_purchases_chart' => $this->getSalesPurchasesChartData($fromDate, $toDate),
+            'sales_trend' => $this->getSalesTrend($fromDate),
+            'sales_purchases_chart' => $this->getSalesPurchasesChartData($fromDate),
             'devices_breakdown' => $this->getDevicesBreakdown(),
-            'recent_invoices' => $this->getRecentInvoices($fromDate, $toDate),
-            'stock_history' => $this->getStockHistory($fromDate, $toDate),
-            'payment_trends' => $this->getPaymentTrends($fromDate, $toDate),
+            'recent_invoices' => $this->getRecentInvoices($fromDate),
+            'stock_history' => $this->getStockHistory($fromDate),
+            'payment_trends' => $this->getPaymentTrends($fromDate),
             'stock_alerts' => $this->getStockAlerts(),
-            'expense_categories' => $this->getExpenseCategories($fromDate, $toDate),
-            'recent_transactions' => $this->getRecentTransactions($fromDate, $toDate),
-            'accounting_summary' => $this->getAccountingSummary($fromDate, $toDate)
+            'expense_categories' => $this->getExpenseCategories($fromDate),
+            'recent_transactions' => $this->getRecentTransactions($fromDate),
+            'accounting_summary' => $this->getAccountingSummary($fromDate, $toDate),
+            'inventory_valuation' => $this->getInventoryValuation(),
+            'product_intelligence' => $this->getProductIntelligence($fromDate, $toDate),
+            'expiry_alerts' => $this->getExpiryAlerts(),
         ];
 
         return response()->json($statistics);
@@ -117,8 +120,8 @@ class DashboardController extends Controller
     private function getLowStockStatistics(): array
     {
         $lowStockCount = Product::where('track_inventory', true)
-                               ->where('is_active', true)
-                               ->whereRaw('stock_quantity <= low_stock_threshold')
+                               ->active()
+                               ->lowStock()
                                ->count();
 
         return [
@@ -402,44 +405,44 @@ class DashboardController extends Controller
         $totalSalesItems = Sale::whereDate('sale_date', $date)
                               ->where('status', 'completed')
                               ->where('is_refund', false)
-                              ->withCount('items')
+                              ->withCount('saleItems')
                               ->get()
-                              ->sum('items_count');
+                              ->sum('sale_items_count');
 
         $prevSalesItems = Sale::whereDate('sale_date', $date->copy()->subDay())
                              ->where('status', 'completed')
                              ->where('is_refund', false)
-                             ->withCount('items')
+                             ->withCount('saleItems')
                              ->get()
-                             ->sum('items_count');
+                             ->sum('sale_items_count');
 
         // Total Purchase Items
         $totalPurchaseItems = PurchaseOrder::whereDate('order_date', $date)
                                           ->whereIn('status', ['received', 'partially_received'])
-                                          ->withCount('items')
+                                          ->withCount('purchaseOrderItems')
                                           ->get()
-                                          ->sum('items_count');
+                                          ->sum('purchase_order_items_count');
 
         $prevPurchaseItems = PurchaseOrder::whereDate('order_date', $date->copy()->subDay())
                                          ->whereIn('status', ['received', 'partially_received'])
-                                         ->withCount('items')
+                                         ->withCount('purchaseOrderItems')
                                          ->get()
-                                         ->sum('items_count');
+                                         ->sum('purchase_order_items_count');
 
         // Total Return Items
         $totalReturnItems = Sale::whereDate('sale_date', $date)
                                ->where('status', 'completed')
                                ->where('is_refund', true)
-                               ->withCount('items')
+                               ->withCount('saleItems')
                                ->get()
-                               ->sum('items_count');
+                               ->sum('sale_items_count');
 
         $prevReturnItems = Sale::whereDate('sale_date', $date->copy()->subDay())
                               ->where('status', 'completed')
                               ->where('is_refund', true)
-                              ->withCount('items')
+                              ->withCount('saleItems')
                               ->get()
-                              ->sum('items_count');
+                              ->sum('sale_items_count');
 
         return [
             'total_sales_items' => [
@@ -499,16 +502,17 @@ class DashboardController extends Controller
      */
     private function getStockAlerts(): array
     {
-        $lowStockProducts = Product::where('quantity', '<=', DB::raw('minimum_stock_level'))
-                                  ->orWhere('quantity', '<=', 50) // Default threshold
-                                  ->orderBy('quantity', 'asc')
+        $lowStockProducts = Product::where('track_inventory', true)
+                                  ->active()
+                                  ->lowStock()
+                                  ->orderBy('stock_quantity', 'asc')
                                   ->limit(10)
                                   ->get()
                                   ->map(function ($product) {
                                       return [
                                           'product' => $product->name,
-                                          'quantity' => $product->quantity,
-                                          'minimum_level' => $product->minimum_stock_level ?? 50
+                                          'quantity' => $product->stock_quantity,
+                                          'minimum_level' => $product->min_stock_level ?? 5
                                       ];
                                   });
 
@@ -652,6 +656,89 @@ class DashboardController extends Controller
             'total_credits' => (float) $totalCredits,
             'total_entries' => $totalEntries,
             'is_balanced' => abs($totalDebits - $totalCredits) < 0.01
+        ];
+    }
+
+    /**
+     * Get smart inventory valuation
+     */
+    private function getInventoryValuation(): array
+    {
+        $valuation = Product::active()
+            ->selectRaw('SUM(stock_quantity * cost_price) as total_cost_value, SUM(stock_quantity * selling_price) as total_retail_value')
+            ->first();
+
+        return [
+            'total_cost_value' => (float) ($valuation->total_cost_value ?? 0),
+            'total_retail_value' => (float) ($valuation->total_retail_value ?? 0),
+            'potential_profit' => (float) (($valuation->total_retail_value ?? 0) - ($valuation->total_cost_value ?? 0))
+        ];
+    }
+
+    /**
+     * Get product intelligence (Fast/Slow moving)
+     */
+    private function getProductIntelligence(Carbon $fromDate, Carbon $toDate): array
+    {
+        // Fast Moving Items (highest volume sold in date range)
+        $fastMoving = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->where('sales.status', 'completed')
+            ->where('sales.is_refund', false)
+            ->whereBetween('sales.sale_date', [$fromDate, $toDate])
+            ->select('products.name', DB::raw('SUM(sale_items.quantity) as total_sold'))
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_sold')
+            ->limit(5)
+            ->get();
+
+        // Slow Moving Items (active products with stock but low sales)
+        $slowMoving = Product::active()
+            ->where('stock_quantity', '>', 0)
+            ->whereNotExists(function ($query) use ($fromDate, $toDate) {
+                $query->select(DB::raw(1))
+                    ->from('sale_items')
+                    ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                    ->whereRaw('sale_items.product_id = products.id')
+                    ->where('sales.status', 'completed')
+                    ->whereBetween('sales.sale_date', [$fromDate, $toDate]);
+            })
+            ->select('name', 'stock_quantity')
+            ->orderBy('stock_quantity', 'desc')
+            ->limit(5)
+            ->get();
+
+        return [
+            'fast_moving' => $fastMoving,
+            'slow_moving' => $slowMoving
+        ];
+    }
+
+    /**
+     * Get expiry alerts
+     */
+    private function getExpiryAlerts(): array
+    {
+        $expiringSoon = Product::active()
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<=', now()->addDays(30))
+            ->orderBy('expiry_date', 'asc')
+            ->limit(10)
+            ->get()
+            ->map(function ($product) {
+                $daysToExpiry = now()->diffInDays($product->expiry_date, false);
+                return [
+                    'name' => $product->name,
+                    'expiry_date' => $product->expiry_date->toDateString(),
+                    'days_to_expire' => $daysToExpiry,
+                    'status' => $daysToExpiry < 0 ? 'Expired' : ($daysToExpiry <= 7 ? 'Critical' : 'Warning')
+                ];
+            });
+
+        return [
+            'count' => $expiringSoon->count(),
+            'items' => $expiringSoon
         ];
     }
 }

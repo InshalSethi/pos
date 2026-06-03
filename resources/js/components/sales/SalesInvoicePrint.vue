@@ -147,11 +147,13 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
 const { showToast } = useToast();
+const currencyStore = useCurrencyStore();
 
 const invoice = ref(null);
 const loading = ref(true);
@@ -178,10 +180,7 @@ const formatDate = (dateString) => {
 };
 
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount || 0);
+  return currencyStore.formatPrice(amount || 0);
 };
 
 const formatPaymentMethod = (method) => {

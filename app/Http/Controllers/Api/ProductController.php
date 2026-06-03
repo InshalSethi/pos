@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -88,6 +89,10 @@ class ProductController extends Controller
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'batch_number' => 'nullable|string|max:100',
+            'expiry_date' => 'nullable|date',
+            'image' => 'nullable|image|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -97,7 +102,15 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product = Product::create($request->all());
+        $data = $request->all();
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('product-images', 'public');
+            $data['image'] = '/storage/' . $path;
+        } else {
+            $data['image'] = null;
+        }
+
+        $product = Product::create($data);
         $product->load('category');
 
         return response()->json([
@@ -133,6 +146,10 @@ class ProductController extends Controller
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'batch_number' => 'nullable|string|max:100',
+            'expiry_date' => 'nullable|date',
+            'image' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -142,7 +159,26 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product->update($request->all());
+        $data = $request->all();
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                $oldPath = str_replace('/storage/', '', $product->image);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('image')->store('product-images', 'public');
+            $data['image'] = '/storage/' . $path;
+        } elseif ($request->input('image') === '') {
+            if ($product->image) {
+                $oldPath = str_replace('/storage/', '', $product->image);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $data['image'] = null;
+        } else {
+            // Keep the existing image if no new image was uploaded and it was not explicitly cleared
+            unset($data['image']);
+        }
+
+        $product->update($data);
         $product->load('category');
 
         return response()->json([

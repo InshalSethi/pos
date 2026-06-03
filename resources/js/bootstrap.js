@@ -7,7 +7,7 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.headers.common['Accept'] = 'application/json';
 
 // Set base URL
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+axios.defaults.baseURL = window.location.origin;
 
 // Add request interceptor to include auth token
 axios.interceptors.request.use(

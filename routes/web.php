@@ -1,18 +1,23 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\GoogleAuthController;
 
-// Password reset routes (required by Laravel's password reset functionality)
+// 1. Google Auth Routes (Inhein uupar hona chahiye)
+Route::get('/auth/google/redirect', [GoogleAuthController::class , 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleAuthController::class , 'handleGoogleCallback']);
+
+// 2. Password reset routes
 Route::get('/reset-password/{token}', function (string $token) {
     return view('app', ['token' => $token]);
 })->middleware('guest')->name('password.reset');
 
-// Redirect root to login
+// 3. Root route
 Route::get('/', function () {
     return view('app');
 });
 
-// Serve the Vue.js SPA for all routes
+// 4. Vue.js SPA Catch-all (Ye hamesha LAST mein hona chahiye)
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '.*');

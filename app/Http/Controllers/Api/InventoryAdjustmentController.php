@@ -66,6 +66,8 @@ class InventoryAdjustmentController extends Controller
             'quantity_adjusted' => 'required|integer',
             'reason' => 'required|string|max:255',
             'notes' => 'nullable|string',
+            'batch_number' => 'nullable|string|max:100',
+            'expiry_date' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
@@ -116,6 +118,8 @@ class InventoryAdjustmentController extends Controller
                 'adjustment_date' => now(),
                 'cost_impact' => $costImpact,
                 'notes' => $request->notes,
+                'batch_number' => $request->batch_number,
+                'expiry_date' => $request->expiry_date,
             ]);
 
             // Update product stock

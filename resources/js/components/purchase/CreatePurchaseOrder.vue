@@ -107,8 +107,8 @@
             <!-- Product Image -->
             <div class="h-32 bg-gray-100 rounded-t-lg flex items-center justify-center">
               <img
-                v-if="product.image"
-                :src="product.image"
+                v-if="product.image && !product.image.includes('Temp') && !product.image.includes('.tmp')"
+                :src="product.image.startsWith('/') ? product.image : '/' + product.image"
                 :alt="product.name"
                 class="h-full w-full object-cover rounded-t-lg"
               />

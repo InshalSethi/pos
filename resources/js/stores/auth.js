@@ -11,11 +11,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Getters
   const isAuthenticated = computed(() => !!token.value && !!user.value);
-  
+
   const hasPermission = computed(() => (permission) => {
     return permissions.value.includes(permission);
   });
-  
+
   const hasRole = computed(() => (role) => {
     return roles.value.includes(role);
   });
@@ -136,26 +136,39 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (userData) => {
     try {
       await axios.get('/sanctum/csrf-cookie');
-      
+
       const response = await axios.post('/api/register', userData);
-      
+
       if (response.data.token) {
         token.value = response.data.token;
         user.value = response.data.user;
         permissions.value = response.data.permissions || [];
         roles.value = response.data.roles || [];
-        
+
         localStorage.setItem('auth_token', token.value);
-        
+
         return { success: true };
       }
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: error.response?.data?.message || 'Registration failed',
         errors: error.response?.data?.errors || {}
       };
     }
+  };
+
+  const setToken = async (newToken) => {
+    token.value = newToken;
+    localStorage.setItem('auth_token', newToken);
+    // Set a default expiration (1 day)
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 1);
+    localStorage.setItem('token_expiration', expirationDate.toISOString());
+
+    // Fetch user data for this token
+    const success = await fetchUser();
+    return success;
   };
 
   const forgotPassword = async (email) => {
@@ -197,17 +210,18 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     permissions,
     roles,
-    
+
     // Getters
     isAuthenticated,
     hasPermission,
     hasRole,
-    
+
     // Actions
     login,
     logout,
     fetchUser,
     initializeAuth,
+    setToken,
     register,
     forgotPassword,
     resetPassword

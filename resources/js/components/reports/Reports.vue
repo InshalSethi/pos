@@ -148,7 +148,7 @@
               </div>
               <div class="ml-4">
                 <p class="text-sm font-medium text-gray-500">Today's Sales</p>
-                <p class="text-2xl font-semibold text-gray-900">$0.00</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ formatCurrency(0) }}</p>
               </div>
             </div>
           </div>
@@ -277,15 +277,15 @@
                     </div>
                     <div class="bg-green-50 p-4 rounded-lg">
                       <div class="text-sm font-medium text-green-600">Total Revenue</div>
-                      <div class="text-2xl font-bold text-green-900">${{ formatCurrency(reportData.total_revenue) }}</div>
+                      <div class="text-2xl font-bold text-green-900">{{ formatCurrency(reportData.total_revenue) }}</div>
                     </div>
                     <div class="bg-purple-50 p-4 rounded-lg">
                       <div class="text-sm font-medium text-purple-600">Total Paid</div>
-                      <div class="text-2xl font-bold text-purple-900">${{ formatCurrency(reportData.total_paid) }}</div>
+                      <div class="text-2xl font-bold text-purple-900">{{ formatCurrency(reportData.total_paid) }}</div>
                     </div>
                     <div class="bg-orange-50 p-4 rounded-lg">
                       <div class="text-sm font-medium text-orange-600">Average Sale</div>
-                      <div class="text-2xl font-bold text-orange-900">${{ formatCurrency(reportData.average_sale) }}</div>
+                      <div class="text-2xl font-bold text-orange-900">{{ formatCurrency(reportData.average_sale) }}</div>
                     </div>
                   </div>
                 </div>
@@ -306,7 +306,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ product.name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.sku }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ product.total_quantity }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ formatCurrency(product.total_revenue) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatCurrency(product.total_revenue) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ product.times_sold }}</td>
                       </tr>
                     </tbody>
@@ -332,7 +332,7 @@
                     </div>
                     <div class="bg-green-50 p-4 rounded-lg">
                       <div class="text-sm font-medium text-green-600">Inventory Value</div>
-                      <div class="text-2xl font-bold text-green-900">${{ formatCurrency(reportData.total_inventory_value) }}</div>
+                      <div class="text-2xl font-bold text-green-900">{{ formatCurrency(reportData.total_inventory_value) }}</div>
                     </div>
                   </div>
                 </div>
@@ -374,11 +374,11 @@
                     <div class="space-y-2">
                       <div v-for="item in reportData.revenue" :key="item.account_name" class="flex justify-between">
                         <span class="text-gray-700">{{ item.account_name }}</span>
-                        <span class="font-medium">${{ formatCurrency(item.amount) }}</span>
+                        <span class="font-medium">{{ formatCurrency(item.amount) }}</span>
                       </div>
                       <div class="border-t border-gray-200 pt-2 flex justify-between font-semibold">
                         <span>Total Revenue</span>
-                        <span>${{ formatCurrency(reportData.total_revenue) }}</span>
+                        <span>{{ formatCurrency(reportData.total_revenue) }}</span>
                       </div>
                     </div>
                   </div>
@@ -388,11 +388,11 @@
                     <div class="space-y-2">
                       <div v-for="item in reportData.expenses" :key="item.account_name" class="flex justify-between">
                         <span class="text-gray-700">{{ item.account_name }}</span>
-                        <span class="font-medium">${{ formatCurrency(item.amount) }}</span>
+                        <span class="font-medium">{{ formatCurrency(item.amount) }}</span>
                       </div>
                       <div class="border-t border-gray-200 pt-2 flex justify-between font-semibold">
                         <span>Total Expenses</span>
-                        <span>${{ formatCurrency(reportData.total_expenses) }}</span>
+                        <span>{{ formatCurrency(reportData.total_expenses) }}</span>
                       </div>
                     </div>
                   </div>
@@ -404,7 +404,7 @@
                         'text-xl font-bold',
                         reportData.net_income >= 0 ? 'text-green-600' : 'text-red-600'
                       ]">
-                        ${{ formatCurrency(reportData.net_income) }}
+                        {{ formatCurrency(reportData.net_income) }}
                       </span>
                     </div>
                   </div>
@@ -422,12 +422,12 @@
                         <div class="space-y-1 ml-4">
                           <div v-for="asset in reportData.current_assets" :key="asset.account_name" class="flex justify-between text-sm">
                             <span class="text-gray-600">{{ asset.account_name }}</span>
-                            <span>${{ formatCurrency(asset.amount) }}</span>
+                            <span>{{ formatCurrency(asset.amount) }}</span>
                           </div>
                         </div>
                         <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
                           <span>Total Current Assets</span>
-                          <span>${{ formatCurrency(reportData.total_current_assets) }}</span>
+                          <span>{{ formatCurrency(reportData.total_current_assets) }}</span>
                         </div>
                       </div>
 
@@ -436,18 +436,18 @@
                         <div class="space-y-1 ml-4">
                           <div v-for="asset in reportData.fixed_assets" :key="asset.account_name" class="flex justify-between text-sm">
                             <span class="text-gray-600">{{ asset.account_name }}</span>
-                            <span>${{ formatCurrency(asset.amount) }}</span>
+                            <span>{{ formatCurrency(asset.amount) }}</span>
                           </div>
                         </div>
                         <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
                           <span>Total Fixed Assets</span>
-                          <span>${{ formatCurrency(reportData.total_fixed_assets) }}</span>
+                          <span>{{ formatCurrency(reportData.total_fixed_assets) }}</span>
                         </div>
                       </div>
 
                       <div class="border-t border-gray-300 pt-4 flex justify-between font-bold text-lg">
                         <span>Total Assets</span>
-                        <span>${{ formatCurrency(reportData.total_assets) }}</span>
+                        <span>{{ formatCurrency(reportData.total_assets) }}</span>
                       </div>
                     </div>
                   </div>
@@ -462,12 +462,12 @@
                         <div class="space-y-1 ml-4">
                           <div v-for="liability in reportData.current_liabilities" :key="liability.account_name" class="flex justify-between text-sm">
                             <span class="text-gray-600">{{ liability.account_name }}</span>
-                            <span>${{ formatCurrency(liability.amount) }}</span>
+                            <span>{{ formatCurrency(liability.amount) }}</span>
                           </div>
                         </div>
                         <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
                           <span>Total Current Liabilities</span>
-                          <span>${{ formatCurrency(reportData.total_current_liabilities) }}</span>
+                          <span>{{ formatCurrency(reportData.total_current_liabilities) }}</span>
                         </div>
                       </div>
 
@@ -476,12 +476,12 @@
                         <div class="space-y-1 ml-4">
                           <div v-for="liability in reportData.long_term_liabilities" :key="liability.account_name" class="flex justify-between text-sm">
                             <span class="text-gray-600">{{ liability.account_name }}</span>
-                            <span>${{ formatCurrency(liability.amount) }}</span>
+                            <span>{{ formatCurrency(liability.amount) }}</span>
                           </div>
                         </div>
                         <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
                           <span>Total Long-term Liabilities</span>
-                          <span>${{ formatCurrency(reportData.total_long_term_liabilities) }}</span>
+                          <span>{{ formatCurrency(reportData.total_long_term_liabilities) }}</span>
                         </div>
                       </div>
 
@@ -490,18 +490,18 @@
                         <div class="space-y-1 ml-4">
                           <div v-for="equity in reportData.equity" :key="equity.account_name" class="flex justify-between text-sm">
                             <span class="text-gray-600">{{ equity.account_name }}</span>
-                            <span>${{ formatCurrency(equity.amount) }}</span>
+                            <span>{{ formatCurrency(equity.amount) }}</span>
                           </div>
                         </div>
                         <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
                           <span>Total Equity</span>
-                          <span>${{ formatCurrency(reportData.total_equity) }}</span>
+                          <span>{{ formatCurrency(reportData.total_equity) }}</span>
                         </div>
                       </div>
 
                       <div class="border-t border-gray-300 pt-4 flex justify-between font-bold text-lg">
                         <span>Total Liabilities & Equity</span>
-                        <span>${{ formatCurrency(reportData.total_liabilities_equity) }}</span>
+                        <span>{{ formatCurrency(reportData.total_liabilities_equity) }}</span>
                       </div>
                     </div>
                   </div>
@@ -535,10 +535,10 @@
                       <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Total</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                          ${{ formatCurrency(reportData.total_debits) }}
+                          {{ formatCurrency(reportData.total_debits) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                          ${{ formatCurrency(reportData.total_credits) }}
+                          {{ formatCurrency(reportData.total_credits) }}
                         </td>
                       </tr>
                     </tfoot>
@@ -552,11 +552,11 @@
                     <div class="space-y-2">
                       <div v-for="item in reportData.operating_activities" :key="item.description" class="flex justify-between">
                         <span class="text-gray-700">{{ item.description }}</span>
-                        <span class="font-medium">${{ formatCurrency(item.amount) }}</span>
+                        <span class="font-medium">{{ formatCurrency(item.amount) }}</span>
                       </div>
                       <div class="border-t border-gray-200 pt-2 flex justify-between font-semibold">
                         <span>Net Cash from Operating Activities</span>
-                        <span>${{ formatCurrency(reportData.net_operating_cash) }}</span>
+                        <span>{{ formatCurrency(reportData.net_operating_cash) }}</span>
                       </div>
                     </div>
                   </div>
@@ -566,11 +566,11 @@
                     <div class="space-y-2">
                       <div v-for="item in reportData.investing_activities" :key="item.description" class="flex justify-between">
                         <span class="text-gray-700">{{ item.description }}</span>
-                        <span class="font-medium">${{ formatCurrency(item.amount) }}</span>
+                        <span class="font-medium">{{ formatCurrency(item.amount) }}</span>
                       </div>
                       <div class="border-t border-gray-200 pt-2 flex justify-between font-semibold">
                         <span>Net Cash from Investing Activities</span>
-                        <span>${{ formatCurrency(reportData.net_investing_cash) }}</span>
+                        <span>{{ formatCurrency(reportData.net_investing_cash) }}</span>
                       </div>
                     </div>
                   </div>
@@ -580,11 +580,11 @@
                     <div class="space-y-2">
                       <div v-for="item in reportData.financing_activities" :key="item.description" class="flex justify-between">
                         <span class="text-gray-700">{{ item.description }}</span>
-                        <span class="font-medium">${{ formatCurrency(item.amount) }}</span>
+                        <span class="font-medium">{{ formatCurrency(item.amount) }}</span>
                       </div>
                       <div class="border-t border-gray-200 pt-2 flex justify-between font-semibold">
                         <span>Net Cash from Financing Activities</span>
-                        <span>${{ formatCurrency(reportData.net_financing_cash) }}</span>
+                        <span>{{ formatCurrency(reportData.net_financing_cash) }}</span>
                       </div>
                     </div>
                   </div>
@@ -593,15 +593,15 @@
                     <div class="space-y-2">
                       <div class="flex justify-between">
                         <span class="font-medium">Net Change in Cash</span>
-                        <span class="font-medium">${{ formatCurrency(reportData.net_change_in_cash) }}</span>
+                        <span class="font-medium">{{ formatCurrency(reportData.net_change_in_cash) }}</span>
                       </div>
                       <div class="flex justify-between">
                         <span class="text-gray-700">Cash at Beginning of Period</span>
-                        <span>${{ formatCurrency(reportData.beginning_cash) }}</span>
+                        <span>{{ formatCurrency(reportData.beginning_cash) }}</span>
                       </div>
                       <div class="border-t border-gray-200 pt-2 flex justify-between font-bold text-lg">
                         <span>Cash at End of Period</span>
-                        <span>${{ formatCurrency(reportData.ending_cash) }}</span>
+                        <span>{{ formatCurrency(reportData.ending_cash) }}</span>
                       </div>
                     </div>
                   </div>
@@ -637,7 +637,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
+
+const currencyStore = useCurrencyStore();
 
 // Reactive data
 const totalProducts = ref(0);
@@ -803,8 +806,7 @@ const getReportTitle = (reportType) => {
 };
 
 const formatCurrency = (amount) => {
-  if (!amount) return '0.00';
-  return parseFloat(amount).toFixed(2);
+  return currencyStore.formatPrice(amount || 0);
 };
 
 const getStockStatus = (quantity) => {

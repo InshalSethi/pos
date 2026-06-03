@@ -8,8 +8,10 @@ import ForgotPassword from '@/components/auth/ForgotPassword.vue';
 import ResetPassword from '@/components/auth/ResetPassword.vue';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import Dashboard from '@/components/Dashboard.vue';
-import POS from '@/components/pos/POS.vue';
+
 import Products from '@/components/products/Products.vue';
+import CreateProduct from '@/components/products/CreateProduct.vue';
+import EditProduct from '@/components/products/EditProduct.vue';
 import Users from '@/components/users/Users.vue';
 import Roles from '@/components/roles/Roles.vue';
 import Inventory from '@/components/inventory/Inventory.vue';
@@ -34,6 +36,7 @@ import Customers from '@/components/customers/Customers.vue';
 import Suppliers from '@/components/suppliers/Suppliers.vue';
 import Payments from '@/components/payments/Payments.vue';
 import PaymentReceipts from '@/components/payment-receipts/PaymentReceipts.vue';
+import SubAdmins from '@/components/sub-admins/SubAdmins.vue';
 
 const routes = [
   {
@@ -70,17 +73,24 @@ const routes = [
         name: 'Dashboard',
         component: Dashboard
       },
-      {
-        path: 'pos',
-        name: 'POS',
-        component: POS,
-        meta: { permission: 'pos.access' }
-      },
+
       {
         path: 'products',
         name: 'Products',
         component: Products,
         meta: { permission: 'products.view' }
+      },
+      {
+        path: 'products/create',
+        name: 'CreateProduct',
+        component: CreateProduct,
+        meta: { permission: 'products.create' }
+      },
+      {
+        path: 'products/:id/edit',
+        name: 'EditProduct',
+        component: EditProduct,
+        meta: { permission: 'products.edit' }
       },
       {
         path: 'users',
@@ -223,6 +233,12 @@ const routes = [
         name: 'PaymentReceipts',
         component: PaymentReceipts,
         meta: { permission: 'payment_receipts.view' }
+      },
+      {
+        path: 'sub-admins',
+        name: 'SubAdmins',
+        component: SubAdmins,
+        meta: { requiresAuth: true }
       }
     ]
   },

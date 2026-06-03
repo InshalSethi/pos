@@ -40,13 +40,15 @@ class DoubleEntryAccountingService
                 'entry_date' => $sale->sale_date,
                 'reference' => "Sales Invoice #{$sale->sale_number}",
                 'description' => "Sale to " . ($sale->customer->name ?? 'Walk-in Customer'),
-                'entry_type' => 'sales_invoice',
+                'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $sale->total_amount,
                 'total_credit' => $sale->total_amount,
                 'created_by' => $sale->user_id,
                 'posted_by' => $sale->user_id,
                 'posted_at' => now(),
+                'source_type' => 'sale',
+                'source_id' => $sale->id,
             ]);
 
             // Debit: Accounts Receivable (or Cash if paid)
@@ -109,13 +111,15 @@ class DoubleEntryAccountingService
                 'entry_date' => $saleReturn->sale_date,
                 'reference' => "Sales Return #{$saleReturn->sale_number}",
                 'description' => "Return from " . ($saleReturn->customer->name ?? 'Walk-in Customer'),
-                'entry_type' => 'sales_return',
+                'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $saleReturn->total_amount,
                 'total_credit' => $saleReturn->total_amount,
                 'created_by' => $saleReturn->user_id,
                 'posted_by' => $saleReturn->user_id,
                 'posted_at' => now(),
+                'source_type' => 'sale_return',
+                'source_id' => $saleReturn->id,
             ]);
 
             // Debit: Sales Returns (contra-revenue account)
@@ -178,13 +182,15 @@ class DoubleEntryAccountingService
                 'entry_date' => $purchaseOrder->order_date,
                 'reference' => "Purchase Order #{$purchaseOrder->po_number}",
                 'description' => "Purchase from {$purchaseOrder->supplier->name}",
-                'entry_type' => 'purchase_invoice',
+                'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $purchaseOrder->total_amount,
                 'total_credit' => $purchaseOrder->total_amount,
                 'created_by' => $purchaseOrder->user_id,
                 'posted_by' => $purchaseOrder->user_id,
                 'posted_at' => now(),
+                'source_type' => 'purchase_order',
+                'source_id' => $purchaseOrder->id,
             ]);
 
             // Debit: Expense/Inventory Account
@@ -294,13 +300,15 @@ class DoubleEntryAccountingService
                 'entry_date' => $purchaseReturn->return_date,
                 'reference' => "Purchase Return #{$purchaseReturn->return_number}",
                 'description' => "Return to {$purchaseReturn->supplier->name}",
-                'entry_type' => 'purchase_return',
+                'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $purchaseReturn->total_amount,
                 'total_credit' => $purchaseReturn->total_amount,
                 'created_by' => $purchaseReturn->user_id,
                 'posted_by' => $purchaseReturn->user_id,
                 'posted_at' => now(),
+                'source_type' => 'purchase_return',
+                'source_id' => $purchaseReturn->id,
             ]);
 
             // Debit: Accounts Payable (reducing liability)

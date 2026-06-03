@@ -26,18 +26,23 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              v-model="selectedStatus"
-              @change="fetchInvoices"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="refunded">Refunded</option>
-            </select>
+            <label class="block text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 ml-1">Archive Status</label>
+            <div class="relative group">
+              <select
+                v-model="selectedStatus"
+                @change="fetchInvoices"
+                class="w-full pl-5 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-black text-[11px] text-gray-700 shadow-inner appearance-none cursor-pointer uppercase tracking-tight"
+              >
+                <option value="">All Status</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="completed">✅ Completed</option>
+                <option value="cancelled">❌ Cancelled</option>
+                <option value="refunded">⏪ Refunded</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+              </div>
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>

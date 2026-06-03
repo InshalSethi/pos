@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasUtcDatabaseTimezones;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserSettings extends Model
 {
+    use HasUtcDatabaseTimezones;
     protected $fillable = [
         'user_id',
         'email_notifications',

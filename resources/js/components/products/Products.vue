@@ -28,8 +28,8 @@
               <div class="flex items-center">
                 <div class="flex-shrink-0 h-12 w-12">
                   <img
-                    v-if="item.image"
-                    :src="item.image"
+                    v-if="item.image && !item.image.includes('Temp') && !item.image.includes('.tmp')"
+                    :src="item.image.startsWith('/') ? item.image : '/' + item.image"
                     :alt="item.name"
                     class="h-12 w-12 rounded-lg object-cover"
                   />
@@ -98,6 +98,13 @@
                   Edit
                 </button>
                 <button
+                  @click="printBarcode(item)"
+                  class="text-amber-600 hover:text-amber-900 group relative flex items-center justify-center p-2 rounded-lg bg-amber-50 border border-amber-200 transition-all active:scale-95 shadow-sm"
+                  title="Print Barcode"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                </button>
+                <button
                   @click="deleteProduct(item)"
                   class="text-red-600 hover:text-red-900"
                 >
@@ -138,16 +145,16 @@
                   </svg>
                   Categories
                 </button>
-                <button
+                <router-link
                   v-if="authStore.hasPermission('products.create')"
-                  @click="showCreateModal = true"
+                  :to="{ name: 'CreateProduct' }"
                   class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
                 >
                   <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add Product
-                </button>
+                </router-link>
               </div>
             </template>
         </DataTable>
@@ -243,237 +250,9 @@
       </div>
     </div>
 
-    <!-- Create/Edit Product Modal -->
-    <div v-if="showCreateModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">
-            {{ showCreateModal ? 'Create Product' : 'Edit Product' }}
-          </h3>
 
-          <form @submit.prevent="showCreateModal ? createProduct() : updateProduct()">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Basic Information -->
-              <div class="md:col-span-2">
-                <h4 class="text-md font-medium text-gray-800 mb-3">Basic Information</h4>
-              </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                <input
-                  v-model="productForm.name"
-                  type="text"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select
-                  v-model="productForm.category_id"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">Select Category</option>
-                  <option v-for="category in categories" :key="category.id" :value="category.id">
-                    {{ category.full_name }}
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">SKU *</label>
-                <input
-                  v-model="productForm.sku"
-                  type="text"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Barcode</label>
-                <input
-                  v-model="productForm.barcode"
-                  type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  v-model="productForm.description"
-                  rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                ></textarea>
-              </div>
-
-              <!-- Pricing -->
-              <div class="md:col-span-2">
-                <h4 class="text-md font-medium text-gray-800 mb-3 mt-4">Pricing</h4>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Cost Price</label>
-                <input
-                  v-model="productForm.cost_price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price *</label>
-                <input
-                  v-model="productForm.selling_price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tax Rate (%)</label>
-                <input
-                  v-model="productForm.tax_rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <!-- Inventory -->
-              <div class="md:col-span-2">
-                <h4 class="text-md font-medium text-gray-800 mb-3 mt-4">Inventory</h4>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
-                <input
-                  v-model="productForm.stock_quantity"
-                  type="number"
-                  min="0"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Unit of Measure</label>
-                <select
-                  v-model="productForm.unit_of_measure"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="pcs">Pieces</option>
-                  <option value="kg">Kilograms</option>
-                  <option value="lbs">Pounds</option>
-                  <option value="liters">Liters</option>
-                  <option value="meters">Meters</option>
-                  <option value="boxes">Boxes</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Min Stock Level</label>
-                <input
-                  v-model="productForm.min_stock_level"
-                  type="number"
-                  min="0"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Max Stock Level</label>
-                <input
-                  v-model="productForm.max_stock_level"
-                  type="number"
-                  min="0"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <!-- Additional Info -->
-              <div class="md:col-span-2">
-                <h4 class="text-md font-medium text-gray-800 mb-3 mt-4">Additional Information</h4>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
-                <input
-                  v-model="productForm.weight"
-                  type="number"
-                  step="0.001"
-                  min="0"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Dimensions</label>
-                <input
-                  v-model="productForm.dimensions"
-                  type="text"
-                  placeholder="L x W x H"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div class="md:col-span-2 flex space-x-4">
-                <label class="flex items-center">
-                  <input
-                    v-model="productForm.track_inventory"
-                    type="checkbox"
-                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">Track Inventory</span>
-                </label>
-
-                <label class="flex items-center">
-                  <input
-                    v-model="productForm.is_active"
-                    type="checkbox"
-                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">Active</span>
-                </label>
-              </div>
-            </div>
-
-            <div v-if="formErrors.length > 0" class="mt-4">
-              <div class="bg-red-50 border border-red-200 rounded-md p-3">
-                <ul class="text-sm text-red-600">
-                  <li v-for="error in formErrors" :key="error">{{ error }}</li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="flex justify-end space-x-3 mt-6">
-              <button
-                type="button"
-                @click="closeProductModal"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="submitting"
-                class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {{ submitting ? 'Saving...' : (showCreateModal ? 'Create' : 'Update') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
 
     <!-- View Product Modal -->
     <div v-if="showViewModal && viewingProduct" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -664,14 +443,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Barcode Printer Modal -->
+    <BarcodePrinter v-if="showBarcodeModal" :product="printingProduct" @close="showBarcodeModal = false" />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import DataTable from '@/components/common/DataTable.vue';
+import BarcodePrinter from '@/components/common/BarcodePrinter.vue';
 import axios from 'axios';
+
+const router = useRouter();
 
 const authStore = useAuthStore();
 
@@ -679,16 +465,12 @@ const authStore = useAuthStore();
 const products = ref([]);
 const categories = ref([]);
 const loading = ref(false);
-const submitting = ref(false);
-
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
 const showViewModal = ref(false);
 const showCategoryModal = ref(false);
 const showImportModal = ref(false);
-const editingProduct = ref(null);
 const viewingProduct = ref(null);
-const formErrors = ref([]);
+const printingProduct = ref(null);
+const showBarcodeModal = ref(false);
 
 // Import/Export related
 const importing = ref(false);
@@ -764,27 +546,6 @@ const tableFilters = ref({
   sort_order: ''
 });
 
-// Product form
-const productForm = ref({
-  name: '',
-  description: '',
-  sku: '',
-  barcode: '',
-  cost_price: '',
-  selling_price: '',
-  markup_percentage: '',
-  stock_quantity: '',
-  min_stock_level: '',
-  max_stock_level: '',
-  unit_of_measure: 'pcs',
-  track_inventory: true,
-  is_active: true,
-  category_id: '',
-  weight: '',
-  dimensions: '',
-  tax_rate: ''
-});
-
 
 
 // Methods
@@ -799,32 +560,17 @@ const fetchCategories = async () => {
 };
 
 const editProduct = (product) => {
-  editingProduct.value = product;
-  productForm.value = {
-    name: product.name,
-    description: product.description || '',
-    sku: product.sku,
-    barcode: product.barcode || '',
-    cost_price: product.cost_price,
-    selling_price: product.selling_price,
-    markup_percentage: product.markup_percentage,
-    stock_quantity: product.stock_quantity,
-    min_stock_level: product.min_stock_level,
-    max_stock_level: product.max_stock_level || '',
-    unit_of_measure: product.unit_of_measure,
-    track_inventory: product.track_inventory,
-    is_active: product.is_active,
-    category_id: product.category_id || '',
-    weight: product.weight || '',
-    dimensions: product.dimensions || '',
-    tax_rate: product.tax_rate
-  };
-  showEditModal.value = true;
+  router.push({ name: 'EditProduct', params: { id: product.id } });
 };
 
 const viewProduct = (product) => {
   viewingProduct.value = product;
   showViewModal.value = true;
+};
+
+const printBarcode = (product) => {
+  printingProduct.value = product;
+  showBarcodeModal.value = true;
 };
 
 const deleteProduct = async (product) => {
@@ -901,54 +647,7 @@ const fetchProductsForTable = async (page = 1) => {
 
 
 
-const createProduct = () => {
-  showCreateModal.value = true;
-};
 
-const updateProduct = async () => {
-  submitting.value = true;
-  formErrors.value = [];
-
-  try {
-    await axios.put(`/api/products/${editingProduct.value.id}`, productForm.value);
-    closeProductModal();
-    fetchProductsForTable();
-  } catch (error) {
-    if (error.response?.data?.errors) {
-      formErrors.value = Object.values(error.response.data.errors).flat();
-    } else {
-      formErrors.value = [error.response?.data?.message || 'An error occurred'];
-    }
-  } finally {
-    submitting.value = false;
-  }
-};
-
-const closeProductModal = () => {
-  showCreateModal.value = false;
-  showEditModal.value = false;
-  editingProduct.value = null;
-  productForm.value = {
-    name: '',
-    description: '',
-    sku: '',
-    barcode: '',
-    cost_price: '',
-    selling_price: '',
-    markup_percentage: '',
-    stock_quantity: '',
-    min_stock_level: '',
-    max_stock_level: '',
-    unit_of_measure: 'pcs',
-    track_inventory: true,
-    is_active: true,
-    category_id: '',
-    weight: '',
-    dimensions: '',
-    tax_rate: ''
-  };
-  formErrors.value = [];
-};
 
 
 

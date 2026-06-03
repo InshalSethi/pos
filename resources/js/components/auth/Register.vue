@@ -182,6 +182,24 @@
             <span v-if="loading">Creating account...</span>
             <span v-else>Create account</span>
           </button>
+          
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <button 
+            type="button"
+            @click="loginWithGoogle"
+            class="w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <img class="h-5 w-5 mr-2" src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
+            Sign in with Google
+          </button>
 
           <!-- Sign In Link -->
           <div class="text-center">
@@ -202,11 +220,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const form = ref({
@@ -224,6 +243,33 @@ const success = ref(false);
 const successMessage = ref('');
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+
+// Google Callback Handling
+onMounted(async () => {
+  const token = route.query.token;
+  const errorParam = route.query.error;
+
+  if (token) {
+    loading.value = true;
+    try {
+      await authStore.setToken(token); // Store mein token save karega
+      router.push('/'); // Dashboard bhej dega
+    } catch (err) {
+      error.value = 'Failed to sync Google session';
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  if (errorParam) {
+    error.value = errorParam;
+  }
+});
+
+const loginWithGoogle = () => {
+  // Laravel Backend Redirect
+  window.location.href = "http://127.0.0.1:8001/api/auth/google/redirect";
+};
 
 const handleRegister = async () => {
   loading.value = true;

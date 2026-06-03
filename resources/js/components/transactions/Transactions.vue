@@ -166,19 +166,19 @@
 
       <template #column-debit_amount="{ item }">
         <span v-if="item.debit_amount > 0" class="text-red-600">
-          ${{ formatCurrency(item.debit_amount) }}
+          {{ formatCurrency(item.debit_amount) }}
         </span>
       </template>
 
       <template #column-credit_amount="{ item }">
         <span v-if="item.credit_amount > 0" class="text-green-600">
-          ${{ formatCurrency(item.credit_amount) }}
+          {{ formatCurrency(item.credit_amount) }}
         </span>
       </template>
 
       <template #column-running_balance="{ item }">
         <span :class="item.running_balance >= 0 ? 'text-green-600' : 'text-red-600'">
-          ${{ formatCurrency(Math.abs(item.running_balance)) }}
+          {{ formatCurrency(Math.abs(item.running_balance)) }}
         </span>
       </template>
     </DataTable>
@@ -189,7 +189,10 @@
 import { ref, onMounted, computed } from 'vue';
 import DateRangePicker from '@/components/common/DateRangePicker.vue';
 import DataTable from '@/components/common/DataTable.vue';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
+
+const currencyStore = useCurrencyStore();
 
 // Reactive data
 const loading = ref(false);
@@ -338,7 +341,7 @@ const formatDate = (date) => {
 };
 
 const formatCurrency = (amount) => {
-  return parseFloat(amount).toFixed(2);
+  return currencyStore.formatPrice(amount || 0);
 };
 
 const getAccountName = (accountId) => {

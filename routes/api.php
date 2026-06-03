@@ -37,12 +37,22 @@ use App\Http\Controllers\Api\SalaryAdjustmentController;
 use App\Http\Controllers\Api\CustomerLedgerController;
 use App\Http\Controllers\Api\SupplierLedgerController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\SubAdminController;
+use App\Http\Controllers\Api\GoogleAuthController;
+use App\Http\Controllers\Api\CurrencyController;
+use App\Http\Controllers\Api\TimezoneController;
+
 
 // Public routes
-Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
+Route::post('/login', [AuthController::class , 'login'])->name('login');
+Route::post('/register', [AuthController::class , 'register']);
+Route::post('/forgot-password', [AuthController::class , 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class , 'resetPassword']);
+
+// Google OAuth routes
+Route::get('/auth/google/redirect', [GoogleAuthController::class , 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleAuthController::class , 'handleGoogleCallback']);
 
 // Test route for debugging
 Route::get('/test', function () {
@@ -52,7 +62,7 @@ Route::get('/test', function () {
 
 
 // Test dropdown route (temporary fallback - remove in production)
-Route::get('/test-dropdown', function() {
+Route::get('/test-dropdown', function () {
     $employees = \App\Models\Employee::active()
         ->select('id', 'first_name', 'last_name', 'middle_name', 'employee_number')
         ->orderBy('first_name')
@@ -60,17 +70,18 @@ Route::get('/test-dropdown', function() {
         ->get()
         ->map(function ($employee) {
             return [
-                'id' => $employee->id,
-                'full_name' => $employee->full_name,
-                'employee_number' => $employee->employee_number,
+            'id' => $employee->id,
+            'full_name' => $employee->full_name,
+            'employee_number' => $employee->employee_number,
             ];
-        });
+        }
+        );
 
-    return response()->json($employees);
-});
+        return response()->json($employees);
+    });
 
 // Test employee list route (temporary - remove in production)
-Route::get('/test-employee-list', function() {
+Route::get('/test-employee-list', function () {
     $employees = \App\Models\Employee::with(['department', 'position', 'manager'])
         ->paginate(15);
 
@@ -78,7 +89,7 @@ Route::get('/test-employee-list', function() {
 });
 
 // Test departments route (temporary - remove in production)
-Route::get('/test-departments', function() {
+Route::get('/test-departments', function () {
     $departments = \App\Models\Department::with(['manager', 'parent', 'children', 'employees'])
         ->orderBy('name')
         ->get();
@@ -88,232 +99,247 @@ Route::get('/test-departments', function() {
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class , 'user']);
+    Route::post('/logout', [AuthController::class , 'logout']);
 
     // User profile routes
-    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/user/profile-image', [AuthController::class, 'uploadProfileImage']);
-    Route::get('/user/settings', [AuthController::class, 'getSettings']);
-    Route::put('/user/settings', [AuthController::class, 'updateSettings']);
+    Route::put('/user/profile', [AuthController::class , 'updateProfile']);
+    Route::post('/user/profile-image', [AuthController::class , 'uploadProfileImage']);
+    Route::get('/user/settings', [AuthController::class , 'getSettings']);
+    Route::put('/user/settings', [AuthController::class , 'updateSettings']);
 
     // Product management routes
     Route::apiResource('products', ProductController::class);
-    Route::post('/products/import', [ProductController::class, 'import']);
-    Route::get('/products/export', [ProductController::class, 'export']);
-    Route::get('/products/download-template', [ProductController::class, 'downloadTemplate']);
+    Route::post('/products/import', [ProductController::class , 'import']);
+    Route::get('/products/export', [ProductController::class , 'export']);
+    Route::get('/products/download-template', [ProductController::class , 'downloadTemplate']);
     Route::apiResource('categories', CategoryController::class);
 
     // Customer management routes
-    Route::get('/customers/statistics', [CustomerController::class, 'getStatistics']);
-    Route::get('/customers/search/quick', [CustomerController::class, 'quickSearch']);
-    Route::get('/customers/{customer}/purchase-history', [CustomerController::class, 'getPurchaseHistory']);
-    Route::post('/customers/{customer}/credit-limit', [CustomerController::class, 'updateCreditLimit']);
-    Route::post('/customers/{customer}/loyalty-points', [CustomerController::class, 'addLoyaltyPoints']);
-    Route::post('/customers/{customer}/deactivate', [CustomerController::class, 'deactivate']);
-    Route::post('/customers/{customer}/reactivate', [CustomerController::class, 'reactivate']);
+    Route::get('/customers/statistics', [CustomerController::class , 'getStatistics']);
+    Route::get('/customers/search/quick', [CustomerController::class , 'quickSearch']);
+    Route::get('/customers/{customer}/purchase-history', [CustomerController::class , 'getPurchaseHistory']);
+    Route::post('/customers/{customer}/credit-limit', [CustomerController::class , 'updateCreditLimit']);
+    Route::post('/customers/{customer}/loyalty-points', [CustomerController::class , 'addLoyaltyPoints']);
+    Route::post('/customers/{customer}/deactivate', [CustomerController::class , 'deactivate']);
+    Route::post('/customers/{customer}/reactivate', [CustomerController::class , 'reactivate']);
     Route::apiResource('customers', CustomerController::class);
 
     // Customer Ledger and Accounting routes
-    Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class, 'getLedger']);
-    Route::get('/customers/{customer}/aging-report', [CustomerLedgerController::class, 'getAgingReport']);
-    Route::get('/customers/{customer}/statement', [CustomerLedgerController::class, 'getStatement']);
-    Route::get('/customers/{customer}/transaction-summary', [CustomerLedgerController::class, 'getTransactionSummary']);
+    Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class , 'getLedger']);
+    Route::get('/customers/{customer}/aging-report', [CustomerLedgerController::class , 'getAgingReport']);
+    Route::get('/customers/{customer}/statement', [CustomerLedgerController::class , 'getStatement']);
+    Route::get('/customers/{customer}/transaction-summary', [CustomerLedgerController::class , 'getTransactionSummary']);
 
     // Sales/POS routes
     Route::apiResource('sales', SaleController::class);
-    Route::post('/sales/{sale}/refund', [SaleController::class, 'refund']);
-    Route::post('/sales/returns', [SaleController::class, 'processReturn']);
-    Route::get('/sales/statistics/summary', [SaleController::class, 'statistics']);
+    Route::post('/sales/{sale}/refund', [SaleController::class , 'refund']);
+    Route::post('/sales/returns', [SaleController::class , 'processReturn']);
+    Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);
 
     // Inventory management routes
-    Route::get('/suppliers/statistics', [SupplierController::class, 'getStatistics']);
-    Route::get('/suppliers/search/quick', [SupplierController::class, 'quickSearch']);
-    Route::get('/suppliers/{supplier}/purchase-history', [SupplierController::class, 'getPurchaseHistory']);
-    Route::post('/suppliers/{supplier}/credit-limit', [SupplierController::class, 'updateCreditLimit']);
-    Route::post('/suppliers/{supplier}/payment-terms', [SupplierController::class, 'updatePaymentTerms']);
-    Route::post('/suppliers/{supplier}/deactivate', [SupplierController::class, 'deactivate']);
-    Route::post('/suppliers/{supplier}/reactivate', [SupplierController::class, 'reactivate']);
+    Route::get('/suppliers/statistics', [SupplierController::class , 'getStatistics']);
+    Route::get('/suppliers/search/quick', [SupplierController::class , 'quickSearch']);
+    Route::get('/suppliers/{supplier}/purchase-history', [SupplierController::class , 'getPurchaseHistory']);
+    Route::post('/suppliers/{supplier}/credit-limit', [SupplierController::class , 'updateCreditLimit']);
+    Route::post('/suppliers/{supplier}/payment-terms', [SupplierController::class , 'updatePaymentTerms']);
+    Route::post('/suppliers/{supplier}/deactivate', [SupplierController::class , 'deactivate']);
+    Route::post('/suppliers/{supplier}/reactivate', [SupplierController::class , 'reactivate']);
     Route::apiResource('suppliers', SupplierController::class);
 
     // Supplier Ledger and Accounting routes
-    Route::get('/suppliers/{supplier}/ledger', [SupplierLedgerController::class, 'getLedger']);
-    Route::get('/suppliers/{supplier}/aging-report', [SupplierLedgerController::class, 'getAgingReport']);
-    Route::get('/suppliers/{supplier}/statement', [SupplierLedgerController::class, 'getStatement']);
-    Route::get('/suppliers/{supplier}/transaction-summary', [SupplierLedgerController::class, 'getTransactionSummary']);
+    Route::get('/suppliers/{supplier}/ledger', [SupplierLedgerController::class , 'getLedger']);
+    Route::get('/suppliers/{supplier}/aging-report', [SupplierLedgerController::class , 'getAgingReport']);
+    Route::get('/suppliers/{supplier}/statement', [SupplierLedgerController::class , 'getStatement']);
+    Route::get('/suppliers/{supplier}/transaction-summary', [SupplierLedgerController::class , 'getTransactionSummary']);
 
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
-    Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive']);
+    Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class , 'receive']);
 
     Route::apiResource('inventory-adjustments', InventoryAdjustmentController::class)->only(['index', 'store', 'show']);
-    Route::get('/inventory/summary', [InventoryAdjustmentController::class, 'summary']);
-    Route::get('/inventory/low-stock', [InventoryAdjustmentController::class, 'lowStock']);
+    Route::get('/inventory/summary', [InventoryAdjustmentController::class , 'summary']);
+    Route::get('/inventory/low-stock', [InventoryAdjustmentController::class , 'lowStock']);
 
     // Accounting routes
     Route::apiResource('accounts', AccountController::class);
-    Route::get('/accounts/tree/structure', [AccountController::class, 'tree']);
-    Route::get('/accounts/balances/summary', [AccountController::class, 'balances']);
+    Route::get('/accounts/tree/structure', [AccountController::class , 'tree']);
+    Route::get('/accounts/balances/summary', [AccountController::class , 'balances']);
 
     // Accounting Settings routes
-    Route::get('/accounting-settings', [AccountingSettingsController::class, 'index']);
-    Route::put('/accounting-settings', [AccountingSettingsController::class, 'update']);
-    Route::get('/accounting-settings/accounts-for-dropdowns', [AccountingSettingsController::class, 'getAccountsForDropdowns']);
-    Route::get('/accounting-settings/default-mappings', [AccountingSettingsController::class, 'getDefaultMappings']);
+    Route::get('/accounting-settings', [AccountingSettingsController::class , 'index']);
+    Route::put('/accounting-settings', [AccountingSettingsController::class , 'update']);
+    Route::get('/accounting-settings/accounts-for-dropdowns', [AccountingSettingsController::class , 'getAccountsForDropdowns']);
+    Route::get('/accounting-settings/default-mappings', [AccountingSettingsController::class , 'getDefaultMappings']);
 
     // Dashboard routes
-    Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics']);
+    Route::get('/dashboard/statistics', [DashboardController::class , 'getStatistics']);
 
     // Test route for accounting settings
-    Route::get('/test-accounting', function() {
-        try {
-            $settings = App\Models\AccountingSetting::getSettings();
-            $accounts = App\Models\Account::where('is_active', true)->orderBy('account_code')->get();
-            return response()->json([
+    Route::get('/test-accounting', function () {
+            try {
+                $settings = App\Models\AccountingSetting::getSettings();
+                $accounts = App\Models\Account::where('is_active', true)->orderBy('account_code')->get();
+                return response()->json([
                 'settings' => $settings,
                 'accounts_count' => $accounts->count(),
                 'sample_accounts' => $accounts->take(5)
-            ]);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+                ]);
+            }
+            catch (Exception $e) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
         }
+        );
+
+        Route::apiResource('journal-entries', JournalEntryController::class);
+        Route::post('/journal-entries/{journalEntry}/post', [JournalEntryController::class , 'post']);
+
+        // Payment routes
+        Route::get('/payment-options', [PaymentController::class , 'getPaymentOptions'])->name('payment-options');
+        Route::get('/payments-statistics', [PaymentController::class , 'statistics'])->name('payments-statistics');
+        Route::apiResource('payments', PaymentController::class);
+        Route::post('/payments/{payment}/approve', [PaymentController::class , 'approve'])->name('payments.approve');
+        Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class , 'markAsPaid'])->name('payments.mark-as-paid');
+        Route::post('/payments/{payment}/cancel', [PaymentController::class , 'cancel'])->name('payments.cancel');
+
+        // Payment Receipt routes
+        Route::get('/payment-receipt-options', [PaymentReceiptController::class , 'getReceiptOptions'])->name('payment-receipt-options');
+        Route::get('/payment-receipts-statistics', [PaymentReceiptController::class , 'statistics'])->name('payment-receipts-statistics');
+        Route::get('/customer-invoices', [PaymentReceiptController::class , 'getCustomerInvoices'])->name('customer-invoices');
+        Route::apiResource('payment-receipts', PaymentReceiptController::class);
+        Route::post('/payment-receipts/{paymentReceipt}/verify', [PaymentReceiptController::class , 'verify'])->name('payment-receipts.verify');
+        Route::post('/payment-receipts/{paymentReceipt}/mark-as-deposited', [PaymentReceiptController::class , 'markAsDeposited'])->name('payment-receipts.mark-as-deposited');
+        Route::post('/payment-receipts/{paymentReceipt}/cancel', [PaymentReceiptController::class , 'cancel'])->name('payment-receipts.cancel');
+        Route::post('/journal-entries/{journalEntry}/reverse', [JournalEntryController::class , 'reverse']);
+
+        // Transaction routes
+        Route::get('/transactions', [TransactionController::class , 'index']);
+        Route::get('/transactions/export-pdf', [TransactionController::class , 'exportPDF']);
+        Route::get('/transactions/summary', [TransactionController::class , 'summary']);
+
+        // Banking routes
+        Route::apiResource('bank-accounts', BankAccountController::class);
+        Route::get('/bank-accounts/{bankAccount}/transactions', [BankAccountController::class , 'transactions']);
+        Route::post('/bank-accounts/{bankAccount}/reconcile', [BankAccountController::class , 'reconcile']);
+        Route::get('/bank-accounts/{bankAccount}/reconciliation-summary', [BankAccountController::class , 'reconciliationSummary']);
+
+        Route::apiResource('bank-transactions', BankTransactionController::class);
+        Route::post('/bank-transactions/{bankTransaction}/match', [BankTransactionController::class , 'match']);
+        Route::post('/bank-transactions/import', [BankTransactionController::class , 'import']);
+
+        // User management routes
+        Route::apiResource('users', UserController::class);
+        Route::get('/roles', [UserController::class , 'roles']);
+
+        // Sub-admin management routes
+        Route::get('/sub-admins/statistics', [SubAdminController::class , 'statistics']);
+        Route::apiResource('sub-admins', SubAdminController::class);
+
+        // Role management routes
+        Route::apiResource('roles', RoleController::class);
+
+        // Notification routes
+        Route::get('/notifications', [NotificationController::class , 'index']);
+        Route::post('/notifications/{id}/read', [NotificationController::class , 'markAsRead']);
+        Route::post('/notifications/mark-all-read', [NotificationController::class , 'markAllAsRead']);
+        Route::get('/notifications/unread-count', [NotificationController::class , 'unreadCount']);
+
+        // Payment settings routes
+        Route::get('/payment-settings', [PaymentSettingsController::class , 'index']);
+        Route::put('/payment-settings', [PaymentSettingsController::class , 'update']);
+        Route::post('/payment-settings/test-connection', [PaymentSettingsController::class , 'testConnection']);
+
+        // Currency management routes
+        Route::get('/currencies', [CurrencyController::class, 'index']);
+        Route::post('/currencies/set-active', [CurrencyController::class, 'setActive']);
+
+        // Timezone management routes
+        Route::get('/system-timezone', [TimezoneController::class, 'getTimezone']);
+        Route::post('/system-timezone', [TimezoneController::class, 'setTimezone']);
+
+        // Purchase return routes
+        Route::apiResource('purchase-returns', PurchaseReturnController::class);
+        Route::post('/purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class , 'approve']);
+        Route::post('/purchase-returns/{purchaseReturn}/reject', [PurchaseReturnController::class , 'reject']);
+
+        // Financial report routes
+        Route::get('/reports/financial/profit-loss', [FinancialReportController::class , 'profitLoss']);
+        Route::get('/reports/financial/balance-sheet', [FinancialReportController::class , 'balanceSheet']);
+        Route::get('/reports/financial/trial-balance', [FinancialReportController::class , 'trialBalance']);
+        Route::get('/reports/financial/cash-flow', [FinancialReportController::class , 'cashFlow']);
+        Route::get('/permissions', [RoleController::class , 'permissions']);
+
+        // Report routes
+        Route::prefix('reports')->group(function () {
+            Route::get('/sales/summary', [ReportController::class , 'salesSummary']);
+            Route::get('/sales/monthly-revenue', [ReportController::class , 'monthlyRevenue']);
+            Route::get('/sales/top-products', [ReportController::class , 'topSellingProducts']);
+            Route::get('/sales/customer-analysis', [ReportController::class , 'customerSalesAnalysis']);
+            Route::get('/inventory/summary', [ReportController::class , 'inventoryReport']);
+            Route::get('/inventory/low-stock', [ReportController::class , 'lowStockAlert']);
+            Route::get('/inventory/valuation', [ReportController::class , 'inventoryValuation']);
+            Route::get('/inventory/stock-movement', [ReportController::class , 'stockMovementHistory']);
+        }
+        );
+
+        // Expense management routes
+        Route::apiResource('expense-categories', ExpenseCategoryController::class);
+        Route::get('/expense-categories/tree/structure', [ExpenseCategoryController::class , 'tree']);
+
+        Route::apiResource('expenses', ExpenseController::class);
+        Route::post('/expenses/{expense}/submit', [ExpenseController::class , 'submit']);
+        Route::post('/expenses/{expense}/approve', [ExpenseController::class , 'approve']);
+        Route::post('/expenses/{expense}/reject', [ExpenseController::class , 'reject']);
+        Route::post('/expenses/{expense}/mark-as-paid', [ExpenseController::class , 'markAsPaid']);
+        Route::get('/expenses/statistics/summary', [ExpenseController::class , 'statistics']);
+
+        // Employee management routes
+        Route::apiResource('departments', DepartmentController::class);
+        Route::get('/departments/tree/structure', [DepartmentController::class , 'tree']);
+
+        Route::apiResource('positions', PositionController::class);
+
+        // Employee specific routes (must come before resource routes)
+        Route::get('/employees/statistics/summary', [EmployeeController::class , 'statistics']);
+        Route::get('/employees/for-dropdown', [EmployeeController::class , 'forDropdown']);
+        Route::get('/employees/without-accounts', [EmployeeUserController::class , 'employeesWithoutAccounts']);
+        Route::get('/employees/audit-user-relationships', [EmployeeUserController::class , 'auditRelationships']);
+        Route::post('/employees/bulk-create-user-accounts', [EmployeeUserController::class , 'bulkCreateUserAccounts']);
+        Route::post('/employees/{employee}/terminate', [EmployeeController::class , 'terminate']);
+        Route::post('/employees/{employee}/reactivate', [EmployeeController::class , 'reactivate']);
+        Route::post('/employees/{employee}/create-user-account', [EmployeeUserController::class , 'createUserAccount']);
+        Route::post('/employees/{employee}/sync-user-account', [EmployeeUserController::class , 'syncUserAccount']);
+        Route::post('/employees/{employee}/reset-password', [EmployeeUserController::class , 'resetPassword']);
+        Route::post('/employees/{employee}/deactivate-user-account', [EmployeeUserController::class , 'deactivateUserAccount']);
+        Route::post('/employees/{employee}/reactivate-user-account', [EmployeeUserController::class , 'reactivateUserAccount']);
+
+        Route::apiResource('employees', EmployeeController::class);
+
+        // Employee Salary Management routes
+        Route::get('/employee-salaries/statistics', [EmployeeSalaryController::class , 'getStatistics']);
+        Route::get('/employees/{employee}/salary/current', [EmployeeSalaryController::class , 'getCurrentSalary']);
+        Route::get('/employees/{employee}/salary/history', [EmployeeSalaryController::class , 'getSalaryHistory']);
+        Route::post('/employees/{employee}/salary/adjustment', [EmployeeSalaryController::class , 'createAdjustment']);
+        Route::post('/employee-salaries/{employeeSalary}/approve', [EmployeeSalaryController::class , 'approve']);
+        Route::apiResource('employee-salaries', EmployeeSalaryController::class);
+
+        // Payroll Management routes
+        Route::get('/payroll/statistics', [PayrollController::class , 'getStatistics']);
+        Route::post('/payroll/generate-all', [PayrollController::class , 'generateForAllEmployees']);
+        Route::post('/employees/{employee}/payroll/generate', [PayrollController::class , 'generateForEmployee']);
+        Route::post('/payroll/{payroll}/approve', [PayrollController::class , 'approve']);
+        Route::post('/payroll/{payroll}/mark-as-paid', [PayrollController::class , 'markAsPaid']);
+        Route::post('/payroll/{payroll}/cancel', [PayrollController::class , 'cancel']);
+        Route::apiResource('payroll', PayrollController::class);
+
+        // Salary Adjustment routes
+        Route::get('/salary-adjustments/statistics', [SalaryAdjustmentController::class , 'getStatistics']);
+        Route::get('/salary-adjustments/pending-approvals', [SalaryAdjustmentController::class , 'getPendingApprovals']);
+        Route::get('/salary-adjustments/ready-for-implementation', [SalaryAdjustmentController::class , 'getReadyForImplementation']);
+        Route::post('/salary-adjustments/{salaryAdjustment}/approve', [SalaryAdjustmentController::class , 'approve']);
+        Route::post('/salary-adjustments/{salaryAdjustment}/reject', [SalaryAdjustmentController::class , 'reject']);
+        Route::post('/salary-adjustments/{salaryAdjustment}/implement', [SalaryAdjustmentController::class , 'implement']);
+        Route::apiResource('salary-adjustments', SalaryAdjustmentController::class);
+
+
     });
-
-    Route::apiResource('journal-entries', JournalEntryController::class);
-    Route::post('/journal-entries/{journalEntry}/post', [JournalEntryController::class, 'post']);
-
-    // Payment routes
-    Route::get('/payment-options', [PaymentController::class, 'getPaymentOptions'])->name('payment-options');
-    Route::get('/payments-statistics', [PaymentController::class, 'statistics'])->name('payments-statistics');
-    Route::apiResource('payments', PaymentController::class);
-    Route::post('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
-    Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.mark-as-paid');
-    Route::post('/payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
-
-    // Payment Receipt routes
-    Route::get('/payment-receipt-options', [PaymentReceiptController::class, 'getReceiptOptions'])->name('payment-receipt-options');
-    Route::get('/payment-receipts-statistics', [PaymentReceiptController::class, 'statistics'])->name('payment-receipts-statistics');
-    Route::get('/customer-invoices', [PaymentReceiptController::class, 'getCustomerInvoices'])->name('customer-invoices');
-    Route::apiResource('payment-receipts', PaymentReceiptController::class);
-    Route::post('/payment-receipts/{paymentReceipt}/verify', [PaymentReceiptController::class, 'verify'])->name('payment-receipts.verify');
-    Route::post('/payment-receipts/{paymentReceipt}/mark-as-deposited', [PaymentReceiptController::class, 'markAsDeposited'])->name('payment-receipts.mark-as-deposited');
-    Route::post('/payment-receipts/{paymentReceipt}/cancel', [PaymentReceiptController::class, 'cancel'])->name('payment-receipts.cancel');
-    Route::post('/journal-entries/{journalEntry}/reverse', [JournalEntryController::class, 'reverse']);
-
-    // Transaction routes
-    Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::get('/transactions/export-pdf', [TransactionController::class, 'exportPDF']);
-    Route::get('/transactions/summary', [TransactionController::class, 'summary']);
-
-    // Banking routes
-    Route::apiResource('bank-accounts', BankAccountController::class);
-    Route::get('/bank-accounts/{bankAccount}/transactions', [BankAccountController::class, 'transactions']);
-    Route::post('/bank-accounts/{bankAccount}/reconcile', [BankAccountController::class, 'reconcile']);
-    Route::get('/bank-accounts/{bankAccount}/reconciliation-summary', [BankAccountController::class, 'reconciliationSummary']);
-
-    Route::apiResource('bank-transactions', BankTransactionController::class);
-    Route::post('/bank-transactions/{bankTransaction}/match', [BankTransactionController::class, 'match']);
-    Route::post('/bank-transactions/import', [BankTransactionController::class, 'import']);
-
-    // User management routes
-    Route::apiResource('users', UserController::class);
-    Route::get('/roles', [UserController::class, 'roles']);
-
-    // Role management routes
-    Route::apiResource('roles', RoleController::class);
-
-    // Notification routes
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
-
-    // Payment settings routes
-    Route::get('/payment-settings', [PaymentSettingsController::class, 'index']);
-    Route::put('/payment-settings', [PaymentSettingsController::class, 'update']);
-    Route::post('/payment-settings/test-connection', [PaymentSettingsController::class, 'testConnection']);
-
-    // Purchase return routes
-    Route::apiResource('purchase-returns', PurchaseReturnController::class);
-    Route::post('/purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve']);
-    Route::post('/purchase-returns/{purchaseReturn}/reject', [PurchaseReturnController::class, 'reject']);
-
-    // Financial report routes
-    Route::get('/reports/financial/profit-loss', [FinancialReportController::class, 'profitLoss']);
-    Route::get('/reports/financial/balance-sheet', [FinancialReportController::class, 'balanceSheet']);
-    Route::get('/reports/financial/trial-balance', [FinancialReportController::class, 'trialBalance']);
-    Route::get('/reports/financial/cash-flow', [FinancialReportController::class, 'cashFlow']);
-    Route::get('/permissions', [RoleController::class, 'permissions']);
-
-    // Report routes
-    Route::prefix('reports')->group(function () {
-        Route::get('/sales/summary', [ReportController::class, 'salesSummary']);
-        Route::get('/sales/monthly-revenue', [ReportController::class, 'monthlyRevenue']);
-        Route::get('/sales/top-products', [ReportController::class, 'topSellingProducts']);
-        Route::get('/sales/customer-analysis', [ReportController::class, 'customerSalesAnalysis']);
-        Route::get('/inventory/summary', [ReportController::class, 'inventoryReport']);
-        Route::get('/inventory/low-stock', [ReportController::class, 'lowStockAlert']);
-        Route::get('/inventory/valuation', [ReportController::class, 'inventoryValuation']);
-        Route::get('/inventory/stock-movement', [ReportController::class, 'stockMovementHistory']);
-    });
-
-    // Expense management routes
-    Route::apiResource('expense-categories', ExpenseCategoryController::class);
-    Route::get('/expense-categories/tree/structure', [ExpenseCategoryController::class, 'tree']);
-
-    Route::apiResource('expenses', ExpenseController::class);
-    Route::post('/expenses/{expense}/submit', [ExpenseController::class, 'submit']);
-    Route::post('/expenses/{expense}/approve', [ExpenseController::class, 'approve']);
-    Route::post('/expenses/{expense}/reject', [ExpenseController::class, 'reject']);
-    Route::post('/expenses/{expense}/mark-as-paid', [ExpenseController::class, 'markAsPaid']);
-    Route::get('/expenses/statistics/summary', [ExpenseController::class, 'statistics']);
-
-    // Employee management routes
-    Route::apiResource('departments', DepartmentController::class);
-    Route::get('/departments/tree/structure', [DepartmentController::class, 'tree']);
-
-    Route::apiResource('positions', PositionController::class);
-
-    // Employee specific routes (must come before resource routes)
-    Route::get('/employees/statistics/summary', [EmployeeController::class, 'statistics']);
-    Route::get('/employees/for-dropdown', [EmployeeController::class, 'forDropdown']);
-    Route::get('/employees/without-accounts', [EmployeeUserController::class, 'employeesWithoutAccounts']);
-    Route::get('/employees/audit-user-relationships', [EmployeeUserController::class, 'auditRelationships']);
-    Route::post('/employees/bulk-create-user-accounts', [EmployeeUserController::class, 'bulkCreateUserAccounts']);
-    Route::post('/employees/{employee}/terminate', [EmployeeController::class, 'terminate']);
-    Route::post('/employees/{employee}/reactivate', [EmployeeController::class, 'reactivate']);
-    Route::post('/employees/{employee}/create-user-account', [EmployeeUserController::class, 'createUserAccount']);
-    Route::post('/employees/{employee}/sync-user-account', [EmployeeUserController::class, 'syncUserAccount']);
-    Route::post('/employees/{employee}/reset-password', [EmployeeUserController::class, 'resetPassword']);
-    Route::post('/employees/{employee}/deactivate-user-account', [EmployeeUserController::class, 'deactivateUserAccount']);
-    Route::post('/employees/{employee}/reactivate-user-account', [EmployeeUserController::class, 'reactivateUserAccount']);
-
-    Route::apiResource('employees', EmployeeController::class);
-
-    // Employee Salary Management routes
-    Route::get('/employee-salaries/statistics', [EmployeeSalaryController::class, 'getStatistics']);
-    Route::get('/employees/{employee}/salary/current', [EmployeeSalaryController::class, 'getCurrentSalary']);
-    Route::get('/employees/{employee}/salary/history', [EmployeeSalaryController::class, 'getSalaryHistory']);
-    Route::post('/employees/{employee}/salary/adjustment', [EmployeeSalaryController::class, 'createAdjustment']);
-    Route::post('/employee-salaries/{employeeSalary}/approve', [EmployeeSalaryController::class, 'approve']);
-    Route::apiResource('employee-salaries', EmployeeSalaryController::class);
-
-    // Payroll Management routes
-    Route::get('/payroll/statistics', [PayrollController::class, 'getStatistics']);
-    Route::post('/payroll/generate-all', [PayrollController::class, 'generateForAllEmployees']);
-    Route::post('/employees/{employee}/payroll/generate', [PayrollController::class, 'generateForEmployee']);
-    Route::post('/payroll/{payroll}/approve', [PayrollController::class, 'approve']);
-    Route::post('/payroll/{payroll}/mark-as-paid', [PayrollController::class, 'markAsPaid']);
-    Route::post('/payroll/{payroll}/cancel', [PayrollController::class, 'cancel']);
-    Route::apiResource('payroll', PayrollController::class);
-
-    // Salary Adjustment routes
-    Route::get('/salary-adjustments/statistics', [SalaryAdjustmentController::class, 'getStatistics']);
-    Route::get('/salary-adjustments/pending-approvals', [SalaryAdjustmentController::class, 'getPendingApprovals']);
-    Route::get('/salary-adjustments/ready-for-implementation', [SalaryAdjustmentController::class, 'getReadyForImplementation']);
-    Route::post('/salary-adjustments/{salaryAdjustment}/approve', [SalaryAdjustmentController::class, 'approve']);
-    Route::post('/salary-adjustments/{salaryAdjustment}/reject', [SalaryAdjustmentController::class, 'reject']);
-    Route::post('/salary-adjustments/{salaryAdjustment}/implement', [SalaryAdjustmentController::class, 'implement']);
-    Route::apiResource('salary-adjustments', SalaryAdjustmentController::class);
-
-    // Additional API routes will be added here
-});

@@ -12,11 +12,11 @@ class AccountController extends Controller
 {
     public function __construct()
     {
-        // Temporarily disabled for debugging
-        // $this->middleware('permission:accounting.view')->only(['index', 'show', 'tree']);
-        // $this->middleware('permission:accounting.create')->only(['store']);
-        // $this->middleware('permission:accounting.edit')->only(['update']);
-        // $this->middleware('permission:accounting.delete')->only(['destroy']);
+    // Temporarily disabled for debugging
+    // $this->middleware('permission:accounting.view')->only(['index', 'show', 'tree']);
+    // $this->middleware('permission:accounting.create')->only(['store']);
+    // $this->middleware('permission:accounting.edit')->only(['update']);
+    // $this->middleware('permission:accounting.delete')->only(['destroy']);
     }
 
     /**
@@ -24,7 +24,7 @@ class AccountController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Account::with(['parent', 'children']);
+        $query = Account::query()->with(['parent', 'children']);
 
         // Filter by account type
         if ($request->has('account_type')) {
@@ -41,19 +41,20 @@ class AccountController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('account_name', 'like', "%{$search}%")
-                  ->orWhere('account_code', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('account_code', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
         // Get flat list or hierarchical
         if ($request->boolean('flat')) {
             $accounts = $query->orderBy('account_code')->paginate($request->get('per_page', 50));
-        } else {
+        }
+        else {
             // Get root accounts with children
             $accounts = $query->whereNull('parent_account_id')
-                             ->orderBy('account_code')
-                             ->get();
+                ->orderBy('account_code')
+                ->get();
         }
 
         return response()->json($accounts);
@@ -208,7 +209,7 @@ class AccountController extends Controller
     {
         $accountType = $request->get('account_type');
 
-        $query = Account::with(['children' => function ($query) {
+        $query = Account::query()->with(['children' => function ($query) {
             $query->orderBy('account_code');
         }])->whereNull('parent_account_id');
 
@@ -306,9 +307,9 @@ class AccountController extends Controller
      */
     private function getAccountTypeBalance($accountType, $asOfDate): float
     {
-        $accounts = Account::where('account_type', $accountType)
-                          ->where('is_active', true)
-                          ->get();
+        $accounts = Account::query()->where('account_type', $accountType)
+            ->where('is_active', true)
+            ->get();
 
         return $accounts->sum(function ($account) use ($asOfDate) {
             return $account->calculateBalance($asOfDate);

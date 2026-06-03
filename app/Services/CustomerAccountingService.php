@@ -29,7 +29,7 @@ class CustomerAccountingService
                 'entry_number' => $this->generateJournalEntryNumber(),
                 'entry_date' => $sale->sale_date,
                 'reference' => $sale->sale_number,
-                'description' => "Sale to {$sale->customer->name ?? 'Walk-in Customer'}",
+                'description' => 'Sale to ' . ($sale->customer ? $sale->customer->name : 'Walk-in Customer'),
                 'entry_type' => 'automatic',
                 'status' => 'draft',
                 'total_debit' => $sale->total_amount,
@@ -40,7 +40,7 @@ class CustomerAccountingService
             // If customer sale (on credit)
             if ($sale->customer_id && $sale->paid_amount < $sale->total_amount) {
                 $creditAmount = $sale->total_amount - $sale->paid_amount;
-                
+
                 // Debit: Accounts Receivable
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
@@ -156,13 +156,13 @@ class CustomerAccountingService
     public function getCustomerBalance(Customer $customer, $asOfDate = null): float
     {
         $query = JournalEntryLine::where('partner_type', 'App\Models\Customer')
-                                ->where('partner_id', $customer->id)
-                                ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                                    $q->where('status', 'posted');
-                                    if ($asOfDate) {
-                                        $q->where('entry_date', '<=', $asOfDate);
-                                    }
-                                });
+            ->where('partner_id', $customer->id)
+            ->whereHas('journalEntry', function ($q) use ($asOfDate) {
+            $q->where('status', 'posted');
+            if ($asOfDate) {
+                $q->where('entry_date', '<=', $asOfDate);
+            }
+        });
 
         $totalDebits = $query->sum('debit_amount');
         $totalCredits = $query->sum('credit_amount');
@@ -177,18 +177,18 @@ class CustomerAccountingService
     public function getCustomerTransactionHistory(Customer $customer, $startDate = null, $endDate = null): array
     {
         $query = JournalEntryLine::where('partner_type', 'App\Models\Customer')
-                                ->where('partner_id', $customer->id)
-                                ->with(['journalEntry', 'account'])
-                                ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
-                                    $q->where('status', 'posted');
-                                    if ($startDate) {
-                                        $q->where('entry_date', '>=', $startDate);
-                                    }
-                                    if ($endDate) {
-                                        $q->where('entry_date', '<=', $endDate);
-                                    }
-                                })
-                                ->orderBy('created_at');
+            ->where('partner_id', $customer->id)
+            ->with(['journalEntry', 'account'])
+            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
+            $q->where('status', 'posted');
+            if ($startDate) {
+                $q->where('entry_date', '>=', $startDate);
+            }
+            if ($endDate) {
+                $q->where('entry_date', '<=', $endDate);
+            }
+        })
+            ->orderBy('created_at');
 
         $lines = $query->get();
         $transactions = [];
@@ -196,7 +196,7 @@ class CustomerAccountingService
 
         foreach ($lines as $line) {
             $runningBalance += $line->debit_amount - $line->credit_amount;
-            
+
             $transactions[] = [
                 'date' => $line->journalEntry->entry_date->format('Y-m-d'),
                 'reference' => $line->journalEntry->reference,
@@ -218,12 +218,12 @@ class CustomerAccountingService
     public function getCustomerAging(Customer $customer, $asOfDate = null): array
     {
         $asOfDate = $asOfDate ?? now();
-        
+
         // Get unpaid sales
         $unpaidSales = Sale::where('customer_id', $customer->id)
-                          ->where('status', 'pending')
-                          ->where('sale_date', '<=', $asOfDate)
-                          ->get();
+            ->where('status', 'pending')
+            ->where('sale_date', '<=', $asOfDate)
+            ->get();
 
         $aging = [
             'current' => 0,
@@ -238,11 +238,14 @@ class CustomerAccountingService
 
             if ($daysOverdue <= 30) {
                 $aging['current'] += $outstandingAmount;
-            } elseif ($daysOverdue <= 60) {
+            }
+            elseif ($daysOverdue <= 60) {
                 $aging['days_31_60'] += $outstandingAmount;
-            } elseif ($daysOverdue <= 90) {
+            }
+            elseif ($daysOverdue <= 90) {
                 $aging['days_61_90'] += $outstandingAmount;
-            } else {
+            }
+            else {
                 $aging['over_90'] += $outstandingAmount;
             }
         }
@@ -256,17 +259,17 @@ class CustomerAccountingService
     private function getAccountsReceivableAccount(): Account
     {
         return Account::firstOrCreate(
-            ['account_code' => '1200'],
-            [
-                'account_name' => 'Accounts Receivable',
-                'account_type' => 'asset',
-                'account_subtype' => 'current_asset',
-                'description' => 'Customer accounts receivable',
-                'is_active' => true,
-                'is_system_account' => true,
-                'opening_balance' => 0,
-                'current_balance' => 0,
-            ]
+        ['account_code' => '1200'],
+        [
+            'account_name' => 'Accounts Receivable',
+            'account_type' => 'asset',
+            'account_subtype' => 'current_asset',
+            'description' => 'Customer accounts receivable',
+            'is_active' => true,
+            'is_system_account' => true,
+            'opening_balance' => 0,
+            'current_balance' => 0,
+        ]
         );
     }
 
@@ -276,17 +279,17 @@ class CustomerAccountingService
     private function getSalesRevenueAccount(): Account
     {
         return Account::firstOrCreate(
-            ['account_code' => '4000'],
-            [
-                'account_name' => 'Sales Revenue',
-                'account_type' => 'revenue',
-                'account_subtype' => 'operating_revenue',
-                'description' => 'Revenue from sales',
-                'is_active' => true,
-                'is_system_account' => true,
-                'opening_balance' => 0,
-                'current_balance' => 0,
-            ]
+        ['account_code' => '4000'],
+        [
+            'account_name' => 'Sales Revenue',
+            'account_type' => 'revenue',
+            'account_subtype' => 'operating_revenue',
+            'description' => 'Revenue from sales',
+            'is_active' => true,
+            'is_system_account' => true,
+            'opening_balance' => 0,
+            'current_balance' => 0,
+        ]
         );
     }
 
@@ -296,17 +299,17 @@ class CustomerAccountingService
     private function getCashAccount(): Account
     {
         return Account::firstOrCreate(
-            ['account_code' => '1000'],
-            [
-                'account_name' => 'Cash',
-                'account_type' => 'asset',
-                'account_subtype' => 'current_asset',
-                'description' => 'Cash on hand',
-                'is_active' => true,
-                'is_system_account' => true,
-                'opening_balance' => 0,
-                'current_balance' => 0,
-            ]
+        ['account_code' => '1000'],
+        [
+            'account_name' => 'Cash',
+            'account_type' => 'asset',
+            'account_subtype' => 'current_asset',
+            'description' => 'Cash on hand',
+            'is_active' => true,
+            'is_system_account' => true,
+            'opening_balance' => 0,
+            'current_balance' => 0,
+        ]
         );
     }
 
@@ -316,17 +319,17 @@ class CustomerAccountingService
     private function getTaxPayableAccount(): Account
     {
         return Account::firstOrCreate(
-            ['account_code' => '2100'],
-            [
-                'account_name' => 'Sales Tax Payable',
-                'account_type' => 'liability',
-                'account_subtype' => 'current_liability',
-                'description' => 'Sales tax collected',
-                'is_active' => true,
-                'is_system_account' => true,
-                'opening_balance' => 0,
-                'current_balance' => 0,
-            ]
+        ['account_code' => '2100'],
+        [
+            'account_name' => 'Sales Tax Payable',
+            'account_type' => 'liability',
+            'account_subtype' => 'current_liability',
+            'description' => 'Sales tax collected',
+            'is_active' => true,
+            'is_system_account' => true,
+            'opening_balance' => 0,
+            'current_balance' => 0,
+        ]
         );
     }
 
@@ -339,10 +342,10 @@ class CustomerAccountingService
         $year = Carbon::now()->year;
 
         $lastEntry = JournalEntry::whereYear('created_at', $year)
-                                ->orderBy('id', 'desc')
-                                ->first();
+            ->orderBy('id', 'desc')
+            ->first();
 
-        $sequence = $lastEntry ? (int) substr($lastEntry->entry_number, -6) + 1 : 1;
+        $sequence = $lastEntry ? (int)substr($lastEntry->entry_number, -6) + 1 : 1;
 
         return sprintf('%s%s%06d', $prefix, $year, $sequence);
     }

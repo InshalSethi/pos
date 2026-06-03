@@ -126,7 +126,7 @@
               >
                 <!-- Default content -->
                 <template v-if="column.type === 'currency'">
-                  ${{ formatCurrency(getNestedValue(item, column.key)) }}
+                  {{ formatCurrency(getNestedValue(item, column.key)) }}
                 </template>
                 <template v-else-if="column.type === 'date'">
                   {{ formatDate(getNestedValue(item, column.key)) }}
@@ -155,15 +155,20 @@
         </div>
 
         <!-- Items per page -->
-        <div class="flex items-center space-x-2">
-          <label class="text-sm text-gray-700">Items per page:</label>
-          <select
-            v-model="perPage"
-            @change="handlePerPageChange"
-            class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
+        <div class="flex items-center space-x-3">
+          <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rows:</label>
+          <div class="relative group">
+            <select
+              v-model="perPage"
+              @change="handlePerPageChange"
+              class="pl-4 pr-10 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-all font-black text-[11px] text-gray-700 shadow-sm appearance-none cursor-pointer uppercase tracking-tight"
+            >
+              <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-gray-400 group-hover:text-green-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+            </div>
+          </div>
         </div>
 
         <!-- Pagination Controls -->
@@ -220,6 +225,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { debounce } from '@/utils/debounce';
+import { useCurrencyStore } from '@/stores/currency';
 
 // Props
 const props = defineProps({
@@ -273,6 +279,7 @@ const props = defineProps({
 const emit = defineEmits(['search', 'sort', 'page-change', 'per-page-change']);
 
 // Reactive data
+const currencyStore = useCurrencyStore();
 const searchQuery = ref(props.initialSearch || '');
 const sortField = ref(props.defaultSort.field);
 const sortOrder = ref(props.defaultSort.order);
@@ -336,7 +343,7 @@ const getNestedValue = (obj, path) => {
 
 const formatCurrency = (value) => {
   if (value == null) return '0.00';
-  return parseFloat(value).toFixed(2);
+  return currencyStore.formatPrice(value);
 };
 
 const formatDate = (date) => {

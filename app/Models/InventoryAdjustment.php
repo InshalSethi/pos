@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasUtcDatabaseTimezones;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InventoryAdjustment extends Model
 {
+    use HasUtcDatabaseTimezones;
     use HasFactory;
 
     protected $fillable = [
@@ -21,11 +24,14 @@ class InventoryAdjustment extends Model
         'user_id',
         'adjustment_date',
         'cost_impact',
+        'batch_number',
+        'expiry_date',
         'notes',
     ];
 
     protected $casts = [
         'adjustment_date' => 'date',
+        'expiry_date' => 'date',
         'cost_impact' => 'decimal:2',
     ];
 
@@ -59,7 +65,7 @@ class InventoryAdjustment extends Model
     // Accessors
     public function getFormattedCostImpactAttribute(): string
     {
-        return '$' . number_format(abs($this->cost_impact), 2);
+        return '$' . number_format(abs((float) ($this->cost_impact ?? 0)), 2);
     }
 
     public function getAdjustmentTypeDisplayAttribute(): string

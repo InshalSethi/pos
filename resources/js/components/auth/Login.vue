@@ -1,7 +1,6 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full">
-      <!-- Background Pattern -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-0 left-0 w-full h-full opacity-5">
           <div class="grid grid-cols-12 gap-4 h-full">
@@ -10,9 +9,7 @@
         </div>
       </div>
 
-      <!-- Login Card -->
       <div class="relative bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <!-- Logo and Branding -->
         <div class="text-center">
           <div class="flex items-center justify-center mb-4">
             <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
@@ -26,9 +23,6 @@
           <p class="text-gray-600 text-sm">Please enter your details to sign in</p>
         </div>
 
-
-
-        <!-- Login Form -->
         <form class="space-y-4" @submit.prevent="handleLogin">
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
@@ -37,11 +31,10 @@
             <input
               id="email"
               v-model="form.email"
-              name="email"
               type="email"
               autocomplete="email"
               required
-              class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="Your Email Address"
             />
           </div>
@@ -54,11 +47,10 @@
               <input
                 id="password"
                 v-model="form.password"
-                name="password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
                 required
-                class="w-full px-3 py-3 pr-10 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3 py-3 pr-10 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 placeholder="••••••••••"
               />
               <button
@@ -77,66 +69,56 @@
             </div>
           </div>
 
-          <!-- Remember Me and Forgot Password -->
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input
                 id="remember-me"
                 v-model="form.rememberMe"
-                name="remember-me"
                 type="checkbox"
-                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                class="h-4 w-4 text-blue-600 border-gray-300 rounded"
               />
-              <label for="remember-me" class="ml-2 block text-sm text-gray-700">
-                Remember me
-              </label>
+              <label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
             </div>
             <div class="text-sm">
-              <router-link
-                to="/forgot-password"
-                class="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                Forgot password?
-              </router-link>
+              <router-link to="/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">Forgot password?</router-link>
             </div>
           </div>
 
-          <!-- Error Message -->
           <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div class="flex">
-              <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-              </svg>
-              <div class="ml-3">
-                <p class="text-sm text-red-800">{{ error }}</p>
-              </div>
-            </div>
+            <p class="text-sm text-red-800 text-center">{{ error }}</p>
           </div>
 
-          <!-- Sign In Button -->
           <button
             type="submit"
             :disabled="loading"
-            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
-            <svg v-if="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
             <span v-if="loading">Signing in...</span>
             <span v-else>Sign in</span>
           </button>
 
-          <!-- Sign Up Link -->
-          <div class="text-center">
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <button 
+            type="button"
+            @click="loginWithGoogle"
+            class="w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <img class="h-5 w-5 mr-2" src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
+            Sign in with Google
+          </button>
+
+          <div class="text-center mt-4">
             <p class="text-sm text-gray-600">
               Don't have an account?
-              <router-link
-                to="/register"
-                class="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                Sign up
-              </router-link>
+              <router-link to="/register" class="font-medium text-blue-600 hover:text-blue-500">Sign up</router-link>
             </p>
           </div>
         </form>
@@ -146,11 +128,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const form = ref({
@@ -163,13 +146,38 @@ const loading = ref(false);
 const error = ref('');
 const showPassword = ref(false);
 
+// Google Callback Handling
+onMounted(async () => {
+  const token = route.query.token;
+  const errorParam = route.query.error;
+
+  if (token) {
+    loading.value = true;
+    try {
+      await authStore.setToken(token); // Store mein token save karega
+      router.push('/'); // Dashboard bhej dega
+    } catch (err) {
+      error.value = 'Failed to sync Google session';
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  if (errorParam) {
+    error.value = errorParam;
+  }
+});
+
+const loginWithGoogle = () => {
+  // Laravel Backend Redirect
+  window.location.href = "http://127.0.0.1:8001/api/auth/google/redirect";
+};
+
 const handleLogin = async () => {
   loading.value = true;
   error.value = '';
-
   try {
     const result = await authStore.login(form.value);
-
     if (result.success) {
       router.push('/');
     } else {
@@ -181,6 +189,4 @@ const handleLogin = async () => {
     loading.value = false;
   }
 };
-
-
 </script>

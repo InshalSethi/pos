@@ -282,112 +282,225 @@
     </div>
 
     <!-- Stock Adjustment Modal -->
-    <div v-if="showAdjustmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Stock Adjustment</h3>
+    <transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showAdjustmentModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+        <!-- Backdrop with Blur -->
+        <div 
+          class="fixed inset-0 bg-white/40 backdrop-blur-[12px] transition-opacity" 
+          @click="closeAdjustmentModal"
+        ></div>
 
-          <form @submit.prevent="createAdjustment">
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Product *</label>
-              <select
-                v-model="adjustmentForm.product_id"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        <!-- Modal Container -->
+        <div class="relative bg-white/95 backdrop-blur-md w-full max-w-lg shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[32px] overflow-hidden border border-white/20 transform transition-all p-2">
+          <!-- Glass Header -->
+          <div class="px-8 py-6 flex items-center justify-between">
+            <div>
+              <h3 class="text-2xl font-black text-gray-900 tracking-tight uppercase">Stock Adjustment</h3>
+              <p class="text-indigo-600 text-[10px] font-bold uppercase tracking-widest mt-1">Inventory Management Suite</p>
+            </div>
+            <button @click="closeAdjustmentModal" class="p-2 hover:bg-gray-100 rounded-full transition-colors group">
+              <svg class="w-6 h-6 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <div class="px-8 pb-10">
+            <form @submit.prevent="createAdjustment" class="flex flex-col space-y-[28px]">
+              
+              <!-- 1. Product Selection -->
+              <div class="relative group z-[60]">
+                <label :class="[ (adjustmentForm.product_id || focusedField === 'product_id') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-1/2 -translate-y-1/2 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                  Product *
+                </label>
+                <div class="relative flex items-center">
+                  <span v-if="selectedProduct" class="absolute left-4 z-20 w-8 h-8 rounded-lg overflow-hidden border border-gray-100 shadow-sm bg-white">
+                    <img :src="selectedProduct.image || '/placeholder.png'" class="w-full h-full object-cover">
+                  </span>
+                  <select
+                    v-model="adjustmentForm.product_id"
+                    required
+                    @focus="focusedField = 'product_id'"
+                    @blur="focusedField = null"
+                    :class="[selectedProduct ? 'pl-14' : 'pl-5']"
+                    class="w-full pr-12 py-[20px] bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-bold text-gray-800 shadow-sm appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled></option>
+                    <option v-for="product in products" :key="product.id" :value="product.id">
+                      {{ product.name }} (Stock: {{ product.stock_quantity }})
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cascading Fields -->
+              <transition-group 
+                name="cascade" 
+                tag="div" 
+                class="flex flex-col space-y-[28px]"
               >
-                <option value="">Select Product</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
-                  {{ product.name }} (Current: {{ product.stock_quantity }})
-                </option>
-              </select>
-            </div>
+                <template v-if="adjustmentForm.product_id">
+                  <!-- 2. Adjustment Type -->
+                  <div key="type" class="relative group transition-all duration-300 z-[50]">
+                    <label :class="[ (adjustmentForm.adjustment_type || focusedField === 'adjustment_type') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-1/2 -translate-y-1/2 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                      Adjustment Type *
+                    </label>
+                    <div class="relative flex items-center">
+                      <div v-if="adjustmentForm.adjustment_type" class="absolute left-5 z-20 w-3 h-3 rounded-full shadow-sm" :class="[adjustmentForm.adjustment_type === 'increase' ? 'bg-green-500' : adjustmentForm.adjustment_type === 'decrease' ? 'bg-red-500' : 'bg-blue-400']"></div>
+                      <select
+                        v-model="adjustmentForm.adjustment_type"
+                        required
+                        @focus="focusedField = 'adjustment_type'"
+                        @blur="focusedField = null"
+                        :class="[adjustmentForm.adjustment_type ? 'pl-11' : 'pl-5']"
+                        class="w-full pr-12 py-[20px] bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-bold text-gray-800 shadow-sm appearance-none cursor-pointer"
+                      >
+                        <option value="" disabled></option>
+                        <option value="increase">Stock Increase</option>
+                        <option value="decrease">Stock Decrease</option>
+                        <option value="recount">Stock Recount</option>
+                      </select>
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                      </div>
+                    </div>
+                  </div>
 
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Adjustment Type *</label>
-              <select
-                v-model="adjustmentForm.adjustment_type"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Select Type</option>
-                <option value="increase">Stock Increase</option>
-                <option value="decrease">Stock Decrease</option>
-                <option value="recount">Stock Recount</option>
-              </select>
-            </div>
+                  <!-- 3. Quantity -->
+                  <div key="quantity" class="relative group transition-all duration-300 z-[40]">
+                    <label :class="[ (adjustmentForm.quantity_adjusted !== '' || focusedField === 'quantity_adjusted') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-1/2 -translate-y-1/2 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                      {{ adjustmentForm.adjustment_type === 'recount' ? 'New Quantity *' : 'Quantity *' }}
+                    </label>
+                    <input
+                      v-model.number="adjustmentForm.quantity_adjusted"
+                      type="number"
+                      min="0"
+                      required
+                      @focus="focusedField = 'quantity_adjusted'"
+                      @blur="focusedField = null"
+                      class="w-full px-5 py-[20px] bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-black text-gray-800 shadow-sm"
+                    />
+                  </div>
 
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                {{ adjustmentForm.adjustment_type === 'recount' ? 'New Quantity *' : 'Quantity *' }}
-              </label>
-              <input
-                v-model.number="adjustmentForm.quantity_adjusted"
-                type="number"
-                min="0"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+                  <!-- 4. Reason -->
+                  <div key="reason" class="relative group transition-all duration-300 z-[30]">
+                    <label :class="[ (adjustmentForm.reason || focusedField === 'reason') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-1/2 -translate-y-1/2 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                      Reason *
+                    </label>
+                    <select
+                      v-model="adjustmentForm.reason"
+                      required
+                      @focus="focusedField = 'reason'"
+                      @blur="focusedField = null"
+                      class="w-full px-5 pr-12 py-[20px] bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-bold text-gray-800 shadow-sm appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled></option>
+                      <option value="Damaged goods">Damaged goods</option>
+                      <option value="Expired products">Expired products</option>
+                      <option value="Theft/Loss">Theft/Loss</option>
+                      <option value="Supplier return">Supplier return</option>
+                      <option value="Physical count correction">Physical count correction</option>
+                      <option value="System error correction">System error correction</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-gray-400">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
+                  </div>
 
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
-              <select
-                v-model="adjustmentForm.reason"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Select Reason</option>
-                <option value="Damaged goods">Damaged goods</option>
-                <option value="Expired products">Expired products</option>
-                <option value="Theft/Loss">Theft/Loss</option>
-                <option value="Supplier return">Supplier return</option>
-                <option value="Physical count correction">Physical count correction</option>
-                <option value="System error correction">System error correction</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+                  <!-- Smart Fields Grid -->
+                  <div key="grid" class="grid grid-cols-2 gap-6 z-[20]">
+                    <div class="relative group transition-all duration-300">
+                      <label :class="[ (adjustmentForm.batch_number || focusedField === 'batch_number') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-1/2 -translate-y-1/2 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                        Batch No
+                      </label>
+                      <input
+                        v-model="adjustmentForm.batch_number"
+                        type="text"
+                        @focus="focusedField = 'batch_number'"
+                        @blur="focusedField = null"
+                        class="w-full px-5 py-[20px] bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-bold text-gray-800 shadow-sm"
+                      />
+                    </div>
+                    <div class="relative group transition-all duration-300">
+                      <label :class="[ (adjustmentForm.expiry_date || focusedField === 'expiry_date') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-1/2 -translate-y-1/2 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                        Expiry
+                      </label>
+                      <input
+                        v-model="adjustmentForm.expiry_date"
+                        :type="focusedField === 'expiry_date' || adjustmentForm.expiry_date ? 'date' : 'text'"
+                        @focus="focusedField = 'expiry_date'"
+                        @blur="focusedField = null"
+                        class="w-full px-5 py-[20px] bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-bold text-gray-800 shadow-sm"
+                      />
+                    </div>
+                  </div>
 
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-              <textarea
-                v-model="adjustmentForm.notes"
-                rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              ></textarea>
-            </div>
+                  <!-- Notes -->
+                  <div key="notes" class="relative group transition-all duration-300 z-[10]">
+                    <label :class="[ (adjustmentForm.notes || focusedField === 'notes') ? '-top-2.5 left-4 text-indigo-600 scale-90 translate-y-0 opacity-100 bg-white' : 'top-4 left-5 text-gray-400 opacity-60' ]" class="absolute pointer-events-none transition-all duration-300 z-10 px-2 text-xs font-black uppercase tracking-widest text-left">
+                      Internal Notes
+                    </label>
+                    <textarea
+                      v-model="adjustmentForm.notes"
+                      rows="2"
+                      @focus="focusedField = 'notes'"
+                      @blur="focusedField = null"
+                      class="w-full px-5 py-5 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-medium text-gray-800 shadow-sm"
+                    ></textarea>
+                  </div>
+                </template>
+              </transition-group>
 
-            <div v-if="adjustmentFormErrors.length > 0" class="mb-4">
-              <div class="bg-red-50 border border-red-200 rounded-md p-3">
-                <ul class="text-sm text-red-600">
-                  <li v-for="error in adjustmentFormErrors" :key="error">{{ error }}</li>
+              <div v-if="adjustmentFormErrors.length > 0" class="p-4 bg-red-50 rounded-2xl border border-red-100">
+                <ul class="text-[11px] font-bold text-red-600 uppercase tracking-tight">
+                  <li v-for="error in adjustmentFormErrors" :key="error" class="flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v10z"/></svg>
+                    {{ error }}
+                  </li>
                 </ul>
               </div>
-            </div>
 
-            <div class="flex justify-end space-x-3">
-              <button
-                type="button"
-                @click="closeAdjustmentModal"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="creatingAdjustment"
-                class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {{ creatingAdjustment ? 'Creating...' : 'Create Adjustment' }}
-              </button>
-            </div>
-          </form>
+              <!-- ERP Pill Buttons -->
+              <div class="flex items-center space-x-4 pt-4">
+                <button
+                  type="button"
+                  @click="closeAdjustmentModal"
+                  class="flex-1 py-4 text-gray-400 font-black rounded-full hover:bg-gray-100 hover:text-gray-600 transition-all text-xs tracking-widest uppercase"
+                >
+                  Discard
+                </button>
+                <button
+                  type="submit"
+                  :disabled="creatingAdjustment"
+                  class="flex-[2] py-4 bg-indigo-600 text-white font-black rounded-full shadow-[0_12px_25px_-5px_rgba(79,70,229,0.4)] hover:shadow-none hover:translate-y-0.5 transition-all disabled:opacity-50 text-xs tracking-widest uppercase group"
+                >
+                  <span v-if="creatingAdjustment" class="flex items-center justify-center">
+                    <svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Processing...
+                  </span>
+                  <span v-else class="flex items-center justify-center">
+                    Confirm Adjustment
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 
 // Reactive data
@@ -401,6 +514,7 @@ const loadingLowStock = ref(false);
 const showAdjustmentModal = ref(false);
 const creatingAdjustment = ref(false);
 const adjustmentFormErrors = ref([]);
+const focusedField = ref(null);
 
 // Adjustment form
 const adjustmentForm = ref({
@@ -408,7 +522,13 @@ const adjustmentForm = ref({
   adjustment_type: '',
   quantity_adjusted: '',
   reason: '',
-  notes: ''
+  notes: '',
+  batch_number: '',
+  expiry_date: ''
+});
+
+const selectedProduct = computed(() => {
+  return products.value.find(p => p.id === adjustmentForm.value.product_id);
 });
 
 // Methods
@@ -489,7 +609,9 @@ const closeAdjustmentModal = () => {
     adjustment_type: '',
     quantity_adjusted: '',
     reason: '',
-    notes: ''
+    notes: '',
+    batch_number: '',
+    expiry_date: ''
   };
   adjustmentFormErrors.value = [];
 };
@@ -517,3 +639,42 @@ onMounted(() => {
   fetchProducts();
 });
 </script>
+
+<style scoped>
+.cascade-enter-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cascade-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+}
+.cascade-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cascade-item {
+  transition: all 0.4s ease;
+}
+
+/* Stagger indices for cascade effect */
+.cascade-enter-active:nth-child(2) { delay: 0.1s; }
+.cascade-enter-active:nth-child(3) { delay: 0.2s; }
+.cascade-enter-active:nth-child(4) { delay: 0.3s; }
+.cascade-enter-active:nth-child(5) { delay: 0.4s; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+</style>

@@ -284,16 +284,140 @@
             </div>
           </div>
 
+          <!-- Currency Settings -->
+          <div class="border-t border-gray-200 pt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-1">System Currency</h3>
+            <p class="text-sm text-gray-500 mb-4">Set the display currency for all prices across the platform. Exchange rates are relative to USD.</p>
+
+            <div v-if="currencyStore.loading" class="flex items-center space-x-2 text-gray-500 text-sm">
+              <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              <span>Loading currencies...</span>
+            </div>
+
+            <div v-else class="space-y-4">
+              <!-- Currency Selector Card -->
+              <div class="max-w-sm">
+                <div class="relative">
+                  <select
+                    id="system-currency-select"
+                    v-model="selectedCurrencyId"
+                    @change="handleCurrencyChange"
+                    class="w-full pl-4 pr-10 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-800 appearance-none cursor-pointer shadow-sm transition-all hover:border-indigo-300"
+                  >
+                    <option value="" disabled>Select a currency...</option>
+                    <option
+                      v-for="currency in currencyStore.currencies"
+                      :key="currency.id"
+                      :value="currency.id"
+                    >
+                      {{ currency.symbol }} {{ currency.code }} — {{ currency.name }}
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Active Currency Preview Card -->
+              <div v-if="currencyStore.activeCurrency" class="max-w-sm bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white shadow-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-indigo-200 text-xs font-bold uppercase tracking-widest">Active Currency</span>
+                  <span class="bg-white/20 text-white text-xs font-bold px-2 py-1 rounded-full">LIVE</span>
+                </div>
+                <div class="flex items-end space-x-3">
+                  <div class="text-5xl font-black tracking-tight">{{ currencyStore.activeCurrency.symbol }}</div>
+                  <div>
+                    <div class="text-xl font-bold">{{ currencyStore.activeCurrency.code }}</div>
+                    <div class="text-indigo-200 text-sm">{{ currencyStore.activeCurrency.name }}</div>
+                  </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/20 text-sm text-indigo-200">
+                  <span class="font-medium">Exchange Rate:</span>
+                  1 USD = {{ currencyStore.activeCurrency.exchange_rate }} {{ currencyStore.activeCurrency.code }}
+                </div>
+                <!-- Live preview -->
+                <div class="mt-3 text-xs text-indigo-300">
+                  Preview: $100 USD → {{ currencyStore.formatPrice(100) }}
+                </div>
+              </div>
+
+              <!-- Save feedback -->
+              <div v-if="currencySaveStatus === 'saving'" class="flex items-center space-x-2 text-indigo-600 text-sm">
+                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <span>Saving...</span>
+              </div>
+              <div v-else-if="currencySaveStatus === 'saved'" class="flex items-center space-x-2 text-green-600 text-sm font-medium">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Currency updated globally!</span>
+              </div>
+              <div v-else-if="currencySaveStatus === 'error'" class="flex items-center space-x-2 text-red-600 text-sm font-medium">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <span>Failed to update currency. Please try again.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timezone Settings -->
+          <div class="border-t border-gray-200 pt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-1">System Timezone</h3>
+            <p class="text-sm text-gray-500 mb-4">Set the global system timezone configuration for all dynamic date and time displays.</p>
+
+            <div class="space-y-4">
+              <!-- Timezone Selector Card -->
+              <div class="max-w-sm">
+                <div class="relative">
+                  <select
+                    id="system-timezone-select"
+                    v-model="selectedTimezone"
+                    @change="handleTimezoneChange"
+                    class="w-full pl-4 pr-10 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-800 appearance-none cursor-pointer shadow-sm transition-all hover:border-indigo-300"
+                  >
+                    <option value="" disabled>Select a timezone...</option>
+                    <option
+                      v-for="tz in timezones"
+                      :key="tz"
+                      :value="tz"
+                    >
+                      {{ tz }}
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save feedback -->
+              <div v-if="timezoneSaveStatus === 'saving'" class="flex items-center space-x-2 text-indigo-600 text-sm">
+                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <span>Saving timezone...</span>
+              </div>
+              <div v-else-if="timezoneSaveStatus === 'saved'" class="flex items-center space-x-2 text-green-600 text-sm font-medium">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Timezone updated globally!</span>
+              </div>
+              <div v-else-if="timezoneSaveStatus === 'error'" class="flex items-center space-x-2 text-red-600 text-sm font-medium">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <span>Failed to update timezone. Please try again.</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Save Button -->
           <div class="border-t border-gray-200 pt-8">
             <div class="flex justify-end">
               <button
+                id="save-settings-btn"
                 @click="saveAllSettings"
                 :disabled="saving"
-                class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center space-x-2"
               >
-                <span v-if="saving">Saving...</span>
-                <span v-else>Save Settings</span>
+                <svg v-if="saving" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span>{{ saving ? 'Saving...' : 'Save Settings' }}</span>
               </button>
             </div>
           </div>
@@ -824,13 +948,26 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
+import { useToast } from '@/composables/useToast';
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+const { showToast } = useToast();
 
 // Reactive data
 const activeTab = ref('general');
 const saving = ref(false);
+
+// Currency selector state
+const selectedCurrencyId = ref(currencyStore.activeCurrencyId);
+const currencySaveStatus = ref(''); // 'saving' | 'saved' | 'error' | ''
+
+// Timezone selector state
+const timezones = ref(window.systemTimezones || []);
+const selectedTimezone = ref('Asia/Karachi');
+const timezoneSaveStatus = ref(''); // 'saving' | 'saved' | 'error' | ''
 const settings = ref({
   email_notifications: true,
   sales_alerts: true,
@@ -927,9 +1064,10 @@ const saveAllSettings = async () => {
   saving.value = true;
   try {
     await axios.put('/api/user/settings', settings.value);
-    // Show success message or notification
+    showToast('Settings saved successfully!', 'success');
   } catch (error) {
     console.error('Error saving settings:', error);
+    showToast('Failed to save settings. Please try again.', 'error');
   } finally {
     saving.value = false;
   }
@@ -947,12 +1085,24 @@ watch(() => activeTab.value, (newTab) => {
   }
 });
 
+// Keep currency selector in sync with store
+watch(() => currencyStore.activeCurrencyId, (newId) => {
+  selectedCurrencyId.value = newId;
+});
+
 // Lifecycle
 onMounted(() => {
   loadSettings();
+  loadTimezone();
 
   // Apply initial theme
   applyTheme(settings.value.theme);
+
+  // Ensure currencies are loaded
+  if (!currencyStore.currencies.length) {
+    currencyStore.fetchCurrencies();
+  }
+  selectedCurrencyId.value = currencyStore.activeCurrencyId;
 
   // Load users and roles if user has permission
   if (authStore.hasPermission('users.view')) {
@@ -973,6 +1123,55 @@ const loadUsers = async () => {
     users.value = response.data.data || response.data;
   } catch (error) {
     console.error('Error loading users:', error);
+  }
+};
+
+// Currency change handler
+const handleCurrencyChange = async () => {
+  if (!selectedCurrencyId.value) return;
+  currencySaveStatus.value = 'saving';
+  try {
+    await currencyStore.setActiveCurrency(selectedCurrencyId.value);
+    currencySaveStatus.value = 'saved';
+    // Auto-clear success status after 3 seconds
+    setTimeout(() => {
+      currencySaveStatus.value = '';
+    }, 3000);
+  } catch (error) {
+    console.error('Error saving currency:', error);
+    currencySaveStatus.value = 'error';
+    setTimeout(() => {
+      currencySaveStatus.value = '';
+    }, 5000);
+  }
+};
+
+// Timezone change handler
+const loadTimezone = async () => {
+  try {
+    const response = await axios.get('/api/system-timezone');
+    selectedTimezone.value = response.data.timezone;
+  } catch (error) {
+    console.error('Error loading timezone:', error);
+  }
+};
+
+const handleTimezoneChange = async () => {
+  if (!selectedTimezone.value) return;
+  timezoneSaveStatus.value = 'saving';
+  try {
+    const response = await axios.post('/api/system-timezone', { timezone: selectedTimezone.value });
+    selectedTimezone.value = response.data.timezone;
+    timezoneSaveStatus.value = 'saved';
+    setTimeout(() => {
+      timezoneSaveStatus.value = '';
+    }, 3000);
+  } catch (error) {
+    console.error('Error saving timezone:', error);
+    timezoneSaveStatus.value = 'error';
+    setTimeout(() => {
+      timezoneSaveStatus.value = '';
+    }, 5000);
   }
 };
 

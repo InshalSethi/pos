@@ -22,8 +22,8 @@ class CustomerController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -151,10 +151,10 @@ class CustomerController extends Controller
 
         $customers = Customer::active()
             ->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
-            })
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%");
+        })
             ->select('id', 'name', 'email', 'phone', 'total_purchases')
             ->limit($limit)
             ->get();
@@ -174,9 +174,9 @@ class CustomerController extends Controller
             'total_customer_value' => Customer::sum('total_purchases'),
             'average_customer_value' => Customer::avg('total_purchases'),
             'top_customers' => Customer::orderBy('total_purchases', 'desc')
-                                    ->limit(5)
-                                    ->select('id', 'name', 'total_purchases')
-                                    ->get(),
+            ->limit(5)
+            ->select('id', 'name', 'total_purchases')
+            ->get(),
         ];
 
         return response()->json($stats);
@@ -188,9 +188,9 @@ class CustomerController extends Controller
     public function getPurchaseHistory(Customer $customer): JsonResponse
     {
         $sales = $customer->sales()
-                         ->with(['user', 'saleItems.product'])
-                         ->orderBy('sale_date', 'desc')
-                         ->paginate(15);
+            ->with(['user', 'saleItems.product'])
+            ->orderBy('sale_date', 'desc')
+            ->paginate(15);
 
         return response()->json($sales);
     }

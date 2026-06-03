@@ -244,45 +244,47 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($transactions as $transaction)
-            <tr>
-                <td>{{ $transaction['id'] }}</td>
-                <td>{{ \Carbon\Carbon::parse($transaction['entry_date'])->format('M d, Y') }}</td>
-                <td>{{ $transaction['reference'] ?? '' }}</td>
-                <td>{{ $transaction['description'] ?? '' }}</td>
-                <td>{{ $transaction['account_name'] ?? '' }}</td>
-                <td class="text-center">
-                    @if($transaction['debit_amount'] > 0)
-                        <span class="badge badge-debit">Debit</span>
-                    @else
-                        <span class="badge badge-credit">Credit</span>
-                    @endif
-                </td>
-                <td class="text-right">
-                    @if($transaction['debit_amount'] > 0)
-                        <span class="amount-debit">${{ number_format($transaction['debit_amount'], 2) }}</span>
-                    @endif
-                </td>
-                <td class="text-right">
-                    @if($transaction['credit_amount'] > 0)
-                        <span class="amount-credit">${{ number_format($transaction['credit_amount'], 2) }}</span>
-                    @endif
-                </td>
-                <td class="text-right">
-                    @if($transaction['running_balance'] >= 0)
-                        <span class="amount-credit">${{ number_format($transaction['running_balance'], 2) }}</span>
-                    @else
-                        <span class="amount-debit">${{ number_format(abs($transaction['running_balance']), 2) }}</span>
-                    @endif
-                </td>
-            </tr>
-            @empty
+            @if(count($transactions) > 0)
+                @foreach($transactions as $transaction)
+                <tr>
+                    <td>{{ $transaction['id'] }}</td>
+                    <td>{{ \Carbon\Carbon::parse($transaction['entry_date'])->format('M d, Y') }}</td>
+                    <td>{{ $transaction['reference'] ?? '' }}</td>
+                    <td>{{ $transaction['description'] ?? '' }}</td>
+                    <td>{{ $transaction['account_name'] ?? '' }}</td>
+                    <td class="text-center">
+                        @if($transaction['debit_amount'] > 0)
+                            <span class="badge badge-debit">Debit</span>
+                        @else
+                            <span class="badge badge-credit">Credit</span>
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if($transaction['debit_amount'] > 0)
+                            <span class="amount-debit">${{ number_format($transaction['debit_amount'], 2) }}</span>
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if($transaction['credit_amount'] > 0)
+                            <span class="amount-credit">${{ number_format($transaction['credit_amount'], 2) }}</span>
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if($transaction['running_balance'] >= 0)
+                            <span class="amount-credit">${{ number_format($transaction['running_balance'], 2) }}</span>
+                        @else
+                            <span class="amount-debit">${{ number_format(abs($transaction['running_balance']), 2) }}</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            @else
             <tr>
                 <td colspan="9" class="text-center" style="padding: 40px; color: #666;">
                     No transactions found matching the selected criteria.
                 </td>
             </tr>
-            @endforelse
+            @endif
         </tbody>
     </table>
 

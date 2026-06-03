@@ -56,24 +56,7 @@
           </span>
         </router-link>
 
-        <!-- POS -->
-        <router-link
-          to="/pos"
-          :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-            $route.path === '/pos'
-              ? 'bg-indigo-100 text-indigo-900'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-          ]"
-          :title="sidebarCollapsed ? 'POS' : ''"
-        >
-          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
-            POS
-          </span>
-        </router-link>
+
 
         <!-- Products -->
         <router-link
@@ -112,18 +95,18 @@
             <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
               Sales
             </span>
-            <svg
-              v-if="!sidebarCollapsed"
-              :class="[
-                'ml-auto h-4 w-4 transition-transform duration-200',
-                showSidebarSalesMenu ? 'rotate-90' : ''
-              ]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+            <div class="relative group ml-auto">
+              <svg
+                v-if="!sidebarCollapsed"
+                :class="[
+                  'h-4 w-4 transition-all duration-300 transform',
+                  showSidebarSalesMenu ? 'rotate-180 text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
+                ]"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+              </svg>
+            </div>
           </button>
 
           <div
@@ -173,18 +156,18 @@
             <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
               Purchase
             </span>
-            <svg
-              v-if="!sidebarCollapsed"
-              :class="[
-                'ml-auto h-4 w-4 transition-transform duration-200',
-                showSidebarPurchaseMenu ? 'rotate-90' : ''
-              ]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+            <div class="relative group ml-auto">
+              <svg
+                v-if="!sidebarCollapsed"
+                :class="[
+                  'h-4 w-4 transition-all duration-300 transform',
+                  showSidebarPurchaseMenu ? 'rotate-180 text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
+                ]"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+              </svg>
+            </div>
           </button>
 
           <div
@@ -386,7 +369,24 @@
             Customers
           </span>
         </router-link>
-
+<router-link
+v-if="authStore.hasPermission('users.view')"
+  to="/sub-admins"
+  :class="[
+    'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+    $route.path === '/sub-admins'
+      ? 'bg-indigo-100 text-indigo-900'
+      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+  ]"
+  :title="sidebarCollapsed ? 'Sub Admins' : ''"
+>
+  <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+  <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+    Sub Admins
+  </span>
+</router-link>
         <!-- Suppliers -->
         <router-link
           v-if="authStore.hasPermission('suppliers.view')"
@@ -575,14 +575,14 @@
               <div
                 v-if="showQuickAdd"
                 ref="quickAddRef"
-                class="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                class="origin-top-right absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl bg-white/95 backdrop-blur-xl border border-white/20 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
-                <div class="py-1">
-                  <div class="px-4 py-2 text-sm font-medium text-gray-900 border-b border-gray-200">
-                    Quick Actions
+                <div class="py-0">
+                  <div class="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Quick Access Panel</h3>
                   </div>
-                  <div class="p-4">
-                    <div class="grid grid-cols-3 gap-3">
+                  <div class="p-4 bg-white/50">
+                    <div class="grid grid-cols-3 gap-2">
                       <!-- Sale Invoice -->
                       <router-link
                         v-if="authStore.hasPermission('sales.create')"
@@ -699,16 +699,23 @@
               <div
                 v-if="showNotifications"
                 ref="notificationsRef"
-                class="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                class="origin-top-right absolute right-0 mt-3 w-96 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white/95 backdrop-blur-xl border border-white/40 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
-                <div class="py-1">
-                  <div class="px-4 py-2 text-sm font-medium text-gray-900 border-b border-gray-200">
-                    Notifications
+                <div class="py-0">
+                  <div class="px-6 py-5 bg-gradient-to-br from-gray-50/80 to-white/80 border-b border-gray-100/50 flex justify-between items-center">
+                    <div>
+                      <h3 class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.25em]">Intelligence Center</h3>
+                      <p class="text-[11px] text-gray-400 font-medium">Real-time system activities and alerts</p>
+                    </div>
+                    <button @click="markAllAsRead" class="text-[9px] font-black text-gray-400 hover:text-indigo-600 uppercase tracking-widest bg-gray-100 hover:bg-indigo-50 px-2 py-1 rounded-full transition-all">
+                      Clear All
+                    </button>
                   </div>
-                  <div v-if="notifications.length === 0" class="px-4 py-3 text-sm text-gray-500 text-center">
-                    No notifications
+                  <div v-if="notifications.length === 0" class="px-6 py-10 flex flex-col items-center justify-center space-y-3 opacity-40">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 0 1 6 6v2.25l2.25 2.25v2.25H2.25v-2.25L4.5 12V9.75a6 6 0 0 1 6-6z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No active alerts</p>
                   </div>
-                  <div v-else class="max-h-64 overflow-y-auto">
+                  <div v-else class="max-h-80 overflow-y-auto custom-scrollbar">
                     <div
                       v-for="notification in notifications"
                       :key="notification.id"
@@ -769,33 +776,50 @@
               <div
                 v-if="showUserMenu"
                 ref="userMenuRef"
-                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                class="origin-top-right absolute right-0 mt-3 w-64 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white/95 backdrop-blur-xl border border-white/40 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
-                <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-                  <div class="font-medium">{{ authStore.user?.name }}</div>
-                  <div class="text-gray-500">{{ authStore.user?.email }}</div>
+                <div class="px-6 py-6 bg-gradient-to-br from-indigo-50/50 to-white/50 border-b border-gray-100/50 flex items-center space-x-4">
+                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg ring-4 ring-white transition-transform hover:scale-105 duration-300">
+                    {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-0.5">Operator</p>
+                    <div class="font-black text-gray-900 truncate tracking-tight text-sm leading-none mb-1">{{ authStore.user?.name }}</div>
+                    <div class="text-[10px] text-gray-400 font-bold truncate tracking-tight">{{ authStore.user?.email }}</div>
+                  </div>
                 </div>
                 
-                <router-link
-                  to="/profile"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  @click="showUserMenu = false"
-                >
-                  Your Profile
-                </router-link>
-                <router-link
-                  to="/settings"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  @click="showUserMenu = false"
-                >
-                  Settings
-                </router-link>
-                <button
-                  @click="handleLogout"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Sign out
-                </button>
+                <div class="p-2 space-y-1 bg-white/30 backdrop-blur-sm">
+                  <router-link
+                    to="/profile"
+                    class="group flex items-center px-4 py-3 text-sm font-black text-gray-600 rounded-2xl hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-200"
+                    @click="showUserMenu = false"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-indigo-50 flex items-center justify-center mr-3 transition-colors">
+                      <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
+                    <span>Account Profile</span>
+                  </router-link>
+                  <router-link
+                    to="/settings"
+                    class="group flex items-center px-4 py-3 text-sm font-black text-gray-600 rounded-2xl hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-200"
+                    @click="showUserMenu = false"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-indigo-50 flex items-center justify-center mr-3 transition-colors">
+                      <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
+                    <span>System Settings</span>
+                  </router-link>
+                  <button
+                    @click="handleLogout"
+                    class="group w-full flex items-center px-4 py-3 text-sm font-black text-red-500 rounded-2xl hover:bg-red-50 transition-all duration-200"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center mr-3 transition-colors">
+                      <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
+                    <span>Secure Sign Out</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -810,20 +834,68 @@
       sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
     ]">
       <div class="p-4">
-        <router-view />
+        <div v-if="renderError" class="bg-red-50 border-l-4 border-red-500 p-6 rounded-2xl shadow-md my-4 max-w-4xl mx-auto">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 mt-1">
+              <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="ml-4 flex-1">
+              <h3 class="text-sm font-bold text-red-800 uppercase tracking-widest">Frontend Component Error Captured</h3>
+              <div class="mt-2 text-xs font-semibold text-red-700">
+                <p>The application encountered an error while rendering this page. The stack trace was logged to the console.</p>
+                <div class="mt-3 bg-red-100/50 p-4 rounded-xl border border-red-200/50 font-mono text-[11px] overflow-x-auto text-red-900 select-all leading-relaxed whitespace-pre-wrap">
+                  {{ renderErrorMessage }}
+                </div>
+              </div>
+              <div class="mt-4 flex items-center space-x-3">
+                <button @click="resetError" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-200 active:scale-95 shadow-sm">
+                  Retry View
+                </button>
+                <button @click="$router.back()" class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-200 active:scale-95 shadow-sm">
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <router-view v-else />
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, onErrorCaptured } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
 const router = useRouter();
 const authStore = useAuthStore();
+
+const renderError = ref(false);
+const renderErrorMessage = ref('');
+
+onErrorCaptured((err, instance, info) => {
+  console.error('[Error Boundary] Captured error in layout:', err);
+  console.error('Component Instance:', instance);
+  console.error('Error Info:', info);
+  console.error('Stack trace:\n', err?.stack || err);
+  renderError.value = true;
+  renderErrorMessage.value = err?.stack || err?.message || String(err);
+  return false;
+});
+
+const resetError = () => {
+  renderError.value = false;
+  renderErrorMessage.value = '';
+};
+
+router.afterEach(() => {
+  resetError();
+});
 
 // Reactive data
 const showUserMenu = ref(false);

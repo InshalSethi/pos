@@ -27,12 +27,14 @@ class UserController extends Controller
     {
         $query = User::with('roles');
 
+
         // Search functionality
         if ($request->has('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
+
             });
         }
 
@@ -49,7 +51,8 @@ class UserController extends Controller
         $allowedSortFields = ['name', 'email', 'created_at'];
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
-        } else {
+        }
+        else {
             $query->orderBy('name', 'asc');
         }
 

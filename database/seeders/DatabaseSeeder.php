@@ -24,6 +24,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeding chart of accounts...');
         $this->call(ChartOfAccountsSeeder::class);
 
+        // Seed global currencies
+        $this->command->info('Seeding currencies...');
+        $this->call(CurrencySeeder::class);
+
         // Seed categories first (required for products)
         $this->command->info('Seeding categories...');
         $this->call(CategorySeeder::class);

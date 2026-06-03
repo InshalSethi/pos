@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasUtcDatabaseTimezones;
+
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -13,6 +15,7 @@ use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
+    use HasUtcDatabaseTimezones;
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
@@ -26,6 +29,11 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_image',
+        'phone',
+        'address',
+        'notes',
+        'is_active',
+        'google_id',
     ];
 
     /**
@@ -49,6 +57,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['role_name'];
+
+    /**
+     * Get the name of the primary role.
+     */
+    public function getRoleNameAttribute()
+    {
+        return $this->roles->first() ? $this->roles->first()->name : '';
     }
 
     public function settings(): HasOne

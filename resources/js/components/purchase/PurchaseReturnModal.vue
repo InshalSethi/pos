@@ -186,6 +186,7 @@
 <script>
 import { ref, reactive, watch, onMounted, computed } from 'vue';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
 
 export default {
@@ -211,6 +212,7 @@ export default {
   emits: ['close', 'saved'],
   setup(props, { emit }) {
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
     
     const saving = ref(false);
     const errors = ref({});
@@ -351,10 +353,7 @@ export default {
     };
 
     const formatCurrency = (amount) => {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-      }).format(amount || 0);
+      return currencyStore.formatPrice(amount || 0);
     };
 
     const savePurchaseReturn = async () => {

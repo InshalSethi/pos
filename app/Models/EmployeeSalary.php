@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasUtcDatabaseTimezones;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +12,7 @@ use Carbon\Carbon;
 
 class EmployeeSalary extends Model
 {
+    use HasUtcDatabaseTimezones;
     use HasFactory;
 
     protected $fillable = [
