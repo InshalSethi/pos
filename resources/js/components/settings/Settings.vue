@@ -179,7 +179,7 @@
                       >
                         <ListboxOption
                           v-slot="{ active, selected }"
-                          v-for="themeOption in ['light', 'dark', 'auto']"
+                          v-for="themeOption in ['light', 'dark', 'match system']"
                           :key="themeOption"
                           :value="themeOption"
                           as="template"
@@ -1488,7 +1488,7 @@ const applyTheme = (theme) => {
     html.classList.add('dark');
   } else if (theme === 'light') {
     html.classList.remove('dark');
-  } else if (theme === 'auto') {
+  } else if (theme === 'match system') {
     // Auto theme based on system preference
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (prefersDark) {

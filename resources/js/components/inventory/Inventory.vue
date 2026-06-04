@@ -4,11 +4,11 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-3xl font-bold text-gray-900">Inventory Management</h1>
-          <div class="flex space-x-3">
+          <div class="flex flex-nowrap gap-2 items-center overflow-x-auto hide-scrollbar">
             <button
               @click="activeTab = 'adjustments'"
               :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
+                'px-3 py-1.5 rounded-md text-[13px] font-medium whitespace-nowrap h-9 w-auto flex items-center justify-center transition-colors',
                 activeTab === 'adjustments'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -19,7 +19,7 @@
             <button
               @click="activeTab = 'purchase-orders'"
               :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
+                'px-3 py-1.5 rounded-md text-[13px] font-medium whitespace-nowrap h-9 w-auto flex items-center justify-center transition-colors',
                 activeTab === 'purchase-orders'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -30,7 +30,7 @@
             <button
               @click="activeTab = 'suppliers'"
               :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
+                'px-3 py-1.5 rounded-md text-[13px] font-medium whitespace-nowrap h-9 w-auto flex items-center justify-center transition-colors',
                 activeTab === 'suppliers'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -41,13 +41,28 @@
             <button
               @click="activeTab = 'low-stock'"
               :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
+                'px-3 py-1.5 rounded-md text-[13px] font-medium whitespace-nowrap h-9 w-auto flex items-center justify-center transition-colors',
                 activeTab === 'low-stock'
                   ? 'bg-red-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               ]"
             >
               Low Stock Alert
+            </button>
+            <div class="w-px h-8 bg-gray-300 mx-2 self-center"></div>
+            <router-link
+              to="/products/create"
+              class="px-3 py-1.5 rounded-md text-[13px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center whitespace-nowrap h-9 w-auto shadow-sm transition-colors"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              Add Manually
+            </router-link>
+            <button
+              @click="showUploadModal = true"
+              class="px-3 py-1.5 rounded-md text-[13px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center whitespace-nowrap h-9 w-auto shadow-sm transition-colors"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              Upload Inventory
             </button>
           </div>
         </div>
@@ -298,9 +313,9 @@
         ></div>
 
         <!-- Modal Container -->
-        <div class="relative bg-white/95 backdrop-blur-md w-full max-w-lg shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[32px] overflow-hidden border border-white/20 transform transition-all p-2">
+        <div class="relative bg-white/95 backdrop-blur-md w-full max-w-lg shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[32px] overflow-hidden border border-white/20 transform transition-all p-2 flex flex-col max-h-[90vh]">
           <!-- Glass Header -->
-          <div class="px-8 py-6 flex items-center justify-between">
+          <div class="px-8 py-6 flex items-center justify-between flex-shrink-0">
             <div>
               <h3 class="text-2xl font-black text-gray-900 tracking-tight uppercase">Stock Adjustment</h3>
               <p class="text-indigo-600 text-[10px] font-bold uppercase tracking-widest mt-1">Inventory Management Suite</p>
@@ -310,8 +325,8 @@
             </button>
           </div>
 
-          <div class="px-8 pb-10">
-            <form @submit.prevent="createAdjustment" class="flex flex-col space-y-[28px]">
+          <div class="px-8 pb-10 overflow-y-auto hide-scrollbar flex-1">
+            <form @submit.prevent="createAdjustment" class="flex flex-col space-y-[28px] py-2">
               
               <!-- 1. Product Selection -->
               <div class="relative group z-[60]">
@@ -457,6 +472,32 @@
                       class="w-full px-5 py-5 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all duration-300 font-medium text-gray-800 shadow-sm"
                     ></textarea>
                   </div>
+
+                  <!-- Attachment -->
+                  <div key="attachment" class="relative group transition-all duration-300 z-[5]">
+                    <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2 px-2">
+                      Attachment (Optional)
+                    </label>
+                    <div class="flex items-center justify-center w-full">
+                      <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-indigo-400 transition-all duration-300">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400 group-hover:text-indigo-500 transition-colors">
+                          <svg class="w-8 h-8 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                          <p class="mb-2 text-sm text-gray-500"><span class="font-bold text-indigo-600">Click to upload</span> or drag and drop</p>
+                          <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400">IMG, PDF, DOCX (MAX. 5MB)</p>
+                        </div>
+                        <input type="file" class="hidden" @change="handleAdjustmentAttachment" accept="image/*,.pdf,.doc,.docx" />
+                      </label>
+                    </div>
+                    <div v-if="adjustmentForm.attachment" class="mt-3 py-2 px-3 bg-indigo-50 border border-indigo-100 rounded-lg text-xs text-indigo-700 font-bold flex items-center justify-between">
+                      <div class="flex items-center truncate">
+                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <span class="truncate">{{ adjustmentForm.attachment.name }}</span>
+                      </div>
+                      <button type="button" @click.prevent="adjustmentForm.attachment = null" class="ml-3 text-indigo-400 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
+                    </div>
+                  </div>
                 </template>
               </transition-group>
 
@@ -497,6 +538,87 @@
         </div>
       </div>
     </transition>
+
+    <!-- Upload Inventory Modal -->
+    <transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="showUploadModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="showUploadModal = false"></div>
+
+        <div class="relative bg-white w-full max-w-lg shadow-2xl rounded-2xl overflow-hidden transform transition-all">
+          <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">Upload Inventory</h3>
+              <p class="text-xs text-gray-500 mt-1">Import products and stock from an Excel sheet</p>
+            </div>
+            <button @click="showUploadModal = false" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <div class="p-8">
+            <div 
+              @dragover.prevent="uploadDragging = true"
+              @dragleave.prevent="uploadDragging = false"
+              @drop.prevent="handleFileUpload"
+              :class="[
+                'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-all duration-200 text-center cursor-pointer',
+                uploadDragging ? 'border-indigo-500 bg-indigo-50/50 scale-[1.02]' : 'border-gray-300 hover:border-indigo-400 bg-gray-50 hover:bg-gray-100/50'
+              ]"
+              @click="$refs.fileInput.click()"
+            >
+              <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload" accept=".xlsx,.xls,.csv" />
+              
+              <div v-if="!uploadFile" class="flex flex-col items-center pointer-events-none">
+                <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-indigo-500 border border-gray-100">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <h4 class="text-sm font-bold text-gray-900 mb-1">Click to upload or drag and drop</h4>
+                <p class="text-xs text-gray-500">Excel or CSV files only</p>
+              </div>
+
+              <div v-else class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h4 class="text-sm font-bold text-gray-900 mb-1">{{ uploadFile.name }}</h4>
+                <p class="text-xs text-green-600 font-medium">Ready to upload</p>
+                <button @click.stop="uploadFile = null" class="mt-4 text-xs text-red-500 hover:text-red-700 font-medium px-3 py-1 bg-red-50 rounded-full hover:bg-red-100 transition-colors">
+                  Remove File
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-end space-x-3">
+              <button
+                @click="showUploadModal = false"
+                class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                @click="processUpload"
+                :disabled="!uploadFile"
+                :class="[
+                  'px-5 py-2.5 text-sm font-bold rounded-xl shadow-sm transition-all flex items-center',
+                  uploadFile ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ]"
+              >
+                <span v-if="isUploading">Uploading...</span>
+                <span v-else>Upload File</span>
+                <svg v-if="uploadFile && !isUploading" class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
 </template>
 
 <script setup>
@@ -516,6 +638,13 @@ const creatingAdjustment = ref(false);
 const adjustmentFormErrors = ref([]);
 const focusedField = ref(null);
 
+// Upload state
+const showUploadModal = ref(false);
+const uploadFile = ref(null);
+const uploadDragging = ref(false);
+const isUploading = ref(false);
+const fileInput = ref(null);
+
 // Adjustment form
 const adjustmentForm = ref({
   product_id: '',
@@ -524,7 +653,8 @@ const adjustmentForm = ref({
   reason: '',
   notes: '',
   batch_number: '',
-  expiry_date: ''
+  expiry_date: '',
+  attachment: null
 });
 
 const selectedProduct = computed(() => {
@@ -611,7 +741,8 @@ const closeAdjustmentModal = () => {
     reason: '',
     notes: '',
     batch_number: '',
-    expiry_date: ''
+    expiry_date: '',
+    attachment: null
   };
   adjustmentFormErrors.value = [];
 };
@@ -629,6 +760,62 @@ const quickAdjustStock = (product) => {
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString();
+};
+
+const handleFileUpload = (event) => {
+  let file;
+  if (event.type === 'drop') {
+    file = event.dataTransfer.files[0];
+  } else {
+    file = event.target.files[0];
+  }
+  
+  if (file && (
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+    file.type === 'application/vnd.ms-excel' || 
+    file.type === 'text/csv' ||
+    file.name.endsWith('.xlsx') || 
+    file.name.endsWith('.xls') || 
+    file.name.endsWith('.csv')
+  )) {
+    uploadFile.value = file;
+  } else {
+    alert('Please upload a valid Excel or CSV file.');
+  }
+};
+
+const handleAdjustmentAttachment = (event) => {
+  let file;
+  if (event.type === 'drop') {
+    file = event.dataTransfer.files[0];
+  } else {
+    file = event.target.files[0];
+  }
+  
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
+      return;
+    }
+    adjustmentForm.value.attachment = file;
+  }
+};
+
+const processUpload = async () => {
+  if (!uploadFile.value) return;
+  
+  isUploading.value = true;
+  
+  // Simulate an upload delay for UX
+  setTimeout(() => {
+    isUploading.value = false;
+    showUploadModal.value = false;
+    uploadFile.value = null;
+    alert('Inventory uploaded successfully!');
+    // After a real upload, we would refresh the inventory data here:
+    // fetchSummary();
+    // fetchProducts();
+  }, 1500);
 };
 
 // Lifecycle

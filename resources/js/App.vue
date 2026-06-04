@@ -26,7 +26,7 @@ const applyTheme = (theme) => {
     html.classList.add('dark');
   } else if (theme === 'light') {
     html.classList.remove('dark');
-  } else if (theme === 'auto') {
+  } else if (theme === 'match system') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (prefersDark) {
       html.classList.add('dark');
