@@ -38,11 +38,12 @@ import {
   Chart,
   ArcElement,
   Tooltip,
-  Legend
+  Legend,
+  DoughnutController
 } from 'chart.js';
 
 // Register Chart.js components
-Chart.register(ArcElement, Tooltip, Legend);
+Chart.register(ArcElement, DoughnutController, Tooltip, Legend);
 
 // Props
 const props = defineProps({

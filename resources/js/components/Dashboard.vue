@@ -524,11 +524,12 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  LineController
 } from 'chart.js';
 
 // Register Chart.js components
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+Chart.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, Title, Tooltip, Legend);
 
 // Reactive data
 const loading = ref(false);
