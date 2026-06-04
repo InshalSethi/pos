@@ -189,11 +189,15 @@
                 </div>
                 <div class="space-y-6">
                    <div>
-                    <label class="block text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 ml-1">Cost Price ($)</label>
+                    <label class="block text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 ml-1">Purchase Price ({{ currencyStore.symbol }})</label>
                     <input v-model="form.cost_price" type="number" step="0.01" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-bold text-gray-700 shadow-inner">
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 ml-1">Selling Price ($) *</label>
+                    <label class="block text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 ml-1">Wholesale Price ({{ currencyStore.symbol }}) *</label>
+                    <input v-model="form.wholesale_price" type="number" step="0.01" required class="w-full px-5 py-4 bg-gray-50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-bold text-emerald-800 shadow-inner text-xl">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 ml-1">Retail Price ({{ currencyStore.symbol }}) *</label>
                     <input v-model="form.selling_price" type="number" step="0.01" required class="w-full px-5 py-4 bg-gray-50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-bold text-emerald-800 shadow-inner text-xl">
                   </div>
                    <div>
@@ -220,7 +224,7 @@
                         <input v-model="form.discount_value" type="number" step="0.01" class="w-full pl-5 pr-10 py-4 bg-gray-50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-black text-emerald-700 shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0.00">
                         <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
                           <span class="text-sm font-black text-emerald-500 opacity-60">
-                            {{ form.discount_type === 'percentage' ? '%' : '$' }}
+                            {{ form.discount_type === 'percentage' ? '%' : currencyStore.symbol }}
                           </span>
                         </div>
                       </div>
@@ -326,7 +330,10 @@
 import { ref, onMounted, computed } from 'vue';
 import BarcodeScanner from '@/components/common/BarcodeScanner.vue';
 import SystemSelect from '@/components/common/SystemSelect.vue';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
+
+const currencyStore = useCurrencyStore();
 
 const props = defineProps({
   initialData: { type: Object, default: () => ({}) },
@@ -345,6 +352,7 @@ const sanitizeInitialData = (data) => {
     sku: '',
     barcode: '',
     cost_price: '',
+    wholesale_price: '',
     selling_price: '',
     stock_quantity: '',
     min_stock_level: '',
@@ -405,11 +413,11 @@ const supplierOptions = computed(() => {
   ];
 });
 
-const discountOptions = [
+const discountOptions = computed(() => [
   { label: 'No Discount', value: '' },
-  { label: 'Fixed Amount ($)', value: 'fixed' },
+  { label: `Fixed Amount (${currencyStore.symbol})`, value: 'fixed' },
   { label: 'Percentage (%)', value: 'percentage' }
-];
+]);
 
 const unitOptions = [
   { label: 'PCS', value: 'pcs' },

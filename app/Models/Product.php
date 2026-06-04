@@ -71,6 +71,7 @@ class Product extends Model
         'barcode',
         'cost_price',
         'selling_price',
+        'wholesale_price',
         'markup_percentage',
         'stock_quantity',
         'min_stock_level',
@@ -94,6 +95,7 @@ class Product extends Model
     protected $casts = [
         'cost_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
+        'wholesale_price' => 'decimal:2',
         'markup_percentage' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'discount_value' => 'decimal:2',

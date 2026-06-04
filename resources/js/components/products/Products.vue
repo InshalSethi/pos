@@ -55,6 +55,17 @@
               </span>
             </template>
 
+            <template #column-prices="{ item }">
+              <div class="flex flex-col items-end space-y-1">
+                <div class="text-[13px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                  W: {{ currencyStore.formatPrice(item.wholesale_price) }}
+                </div>
+                <div class="text-[13px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                  R: {{ currencyStore.formatPrice(item.selling_price) }}
+                </div>
+              </div>
+            </template>
+
             <template #column-stock="{ item }">
               <div>
                 <div class="text-sm text-gray-900">{{ item.stock_quantity }}</div>
@@ -455,11 +466,13 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import DataTable from '@/components/common/DataTable.vue';
 import BarcodePrinter from '@/components/common/BarcodePrinter.vue';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
 
 const router = useRouter();
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
 
 // Reactive data
 const products = ref([]);
@@ -514,9 +527,9 @@ const tableColumns = ref([
     align: 'left'
   },
   {
-    key: 'formatted_price',
-    label: 'Price',
-    sortable: true,
+    key: 'prices',
+    label: 'Prices (W / R)',
+    sortable: false,
     align: 'right'
   },
   {
