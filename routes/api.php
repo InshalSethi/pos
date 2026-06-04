@@ -156,6 +156,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class , 'receive']);
 
+    Route::post('/inventory-adjustments/import', [InventoryAdjustmentController::class, 'import']);
     Route::apiResource('inventory-adjustments', InventoryAdjustmentController::class)->only(['index', 'store', 'show']);
     Route::get('/inventory/summary', [InventoryAdjustmentController::class , 'summary']);
     Route::get('/inventory/low-stock', [InventoryAdjustmentController::class , 'lowStock']);

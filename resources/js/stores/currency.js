@@ -62,8 +62,7 @@ export const useCurrencyStore = defineStore('currency', () => {
      */
     function formatPrice(baseAmount, decimals = 2) {
         const amount = parseFloat(baseAmount) || 0;
-        const converted = amount * exchangeRate.value;
-        return `${symbol.value} ${converted.toLocaleString('en-US', {
+        return `${symbol.value} ${amount.toLocaleString('en-US', {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals,
         })}`;

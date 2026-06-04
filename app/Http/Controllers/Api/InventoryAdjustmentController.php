@@ -68,6 +68,7 @@ class InventoryAdjustmentController extends Controller
             'notes' => 'nullable|string',
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
+            'attachment' => 'nullable|file|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -99,11 +100,24 @@ class InventoryAdjustmentController extends Controller
                     break;
             }
 
-            // Generate adjustment number
-            $adjustmentNumber = 'ADJ-' . date('Ymd') . '-' . str_pad(InventoryAdjustment::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
+            // Generate adjustment number securely
+            $datePrefix = 'ADJ-' . date('Ymd') . '-';
+            $lastAdjustment = InventoryAdjustment::where('adjustment_number', 'like', $datePrefix . '%')
+                ->orderBy('adjustment_number', 'desc')
+                ->lockForUpdate()
+                ->first();
+
+            $newNumber = $lastAdjustment ? ((int) substr($lastAdjustment->adjustment_number, -4)) + 1 : 1;
+            $adjustmentNumber = $datePrefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
             // Calculate cost impact
             $costImpact = $quantityAdjusted * $product->cost_price;
+
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $path = $request->file('attachment')->store('inventory-adjustments', 'public');
+                $attachmentPath = '/storage/' . $path;
+            }
 
             // Create adjustment record
             $adjustment = InventoryAdjustment::create([
@@ -114,12 +128,13 @@ class InventoryAdjustmentController extends Controller
                 'quantity_adjusted' => $quantityAdjusted,
                 'quantity_after' => $quantityAfter,
                 'reason' => $request->reason,
-                'user_id' => auth()->id(),
+                'user_id' => $request->user()?->id ?? auth()->id() ?? 1,
                 'adjustment_date' => now(),
                 'cost_impact' => $costImpact,
                 'notes' => $request->notes,
                 'batch_number' => $request->batch_number,
                 'expiry_date' => $request->expiry_date,
+                'attachment' => $attachmentPath,
             ]);
 
             // Update product stock
@@ -136,6 +151,7 @@ class InventoryAdjustmentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Adjustment Error: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'message' => 'Failed to create inventory adjustment',
@@ -193,5 +209,112 @@ class InventoryAdjustmentController extends Controller
             ->paginate($request->get('per_page', 15));
 
         return response()->json($products);
+    }
+
+    /**
+     * Import inventory adjustments from CSV/Excel
+     */
+    public function import(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:csv,xlsx,xls,txt|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $file = $request->file('file');
+            $handle = fopen($file->getPathname(), 'r');
+            fgetcsv($handle); // Skip header
+
+            DB::beginTransaction();
+            $imported = 0;
+            $errors = [];
+
+            while (($data = fgetcsv($handle)) !== false) {
+                if (count($data) >= 2) {
+                    $sku = trim($data[0]);
+                    $quantity = (int) trim($data[1]);
+                    $adjustmentType = isset($data[2]) && in_array(strtolower(trim($data[2])), ['increase', 'decrease', 'recount']) 
+                        ? strtolower(trim($data[2])) 
+                        : 'increase';
+                    $reason = !empty($data[3]) ? trim($data[3]) : 'Bulk Import';
+
+                    $product = Product::where('sku', $sku)->orWhere('barcode', $sku)->first();
+
+                    if (!$product) {
+                        $errors[] = "Product with SKU/Barcode {$sku} not found.";
+                        continue;
+                    }
+
+                    $quantityBefore = $product->stock_quantity;
+                    $quantityAdjusted = $quantity;
+
+                    switch ($adjustmentType) {
+                        case 'increase':
+                            $quantityAfter = $quantityBefore + $quantityAdjusted;
+                            break;
+                        case 'decrease':
+                            $quantityAfter = max(0, $quantityBefore - $quantityAdjusted);
+                            $quantityAdjusted = $quantityBefore - $quantityAfter;
+                            break;
+                        case 'recount':
+                            $quantityAfter = $quantityAdjusted;
+                            $quantityAdjusted = abs($quantityAfter - $quantityBefore);
+                            break;
+                        default:
+                            $quantityAfter = $quantityBefore + $quantityAdjusted;
+                            $adjustmentType = 'increase';
+                    }
+
+                    $datePrefix = 'ADJ-' . date('Ymd') . '-';
+                    $lastAdjustment = InventoryAdjustment::where('adjustment_number', 'like', $datePrefix . '%')
+                        ->orderBy('adjustment_number', 'desc')
+                        ->lockForUpdate()
+                        ->first();
+                        
+                    $newNumber = $lastAdjustment ? ((int) substr($lastAdjustment->adjustment_number, -4)) + 1 : 1;
+                    $adjustmentNumber = $datePrefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+                    
+                    $costImpact = $quantityAdjusted * $product->cost_price;
+
+                    InventoryAdjustment::create([
+                        'adjustment_number' => $adjustmentNumber,
+                        'product_id' => $product->id,
+                        'adjustment_type' => $adjustmentType,
+                        'quantity_before' => $quantityBefore,
+                        'quantity_adjusted' => $quantityAdjusted,
+                        'quantity_after' => $quantityAfter,
+                        'reason' => $reason,
+                        'user_id' => auth()->id() ?? 1,
+                        'adjustment_date' => now(),
+                        'cost_impact' => $costImpact,
+                    ]);
+
+                    $product->update(['stock_quantity' => $quantityAfter]);
+                    $imported++;
+                }
+            }
+
+            fclose($handle);
+            DB::commit();
+
+            return response()->json([
+                'message' => "Successfully imported {$imported} inventory records.",
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Import failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

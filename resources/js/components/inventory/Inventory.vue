@@ -711,7 +711,18 @@ const createAdjustment = async () => {
   adjustmentFormErrors.value = [];
 
   try {
-    await axios.post('/api/inventory-adjustments', adjustmentForm.value);
+    const formData = new FormData();
+    Object.keys(adjustmentForm.value).forEach(key => {
+      if (adjustmentForm.value[key] !== null && adjustmentForm.value[key] !== '') {
+        formData.append(key, adjustmentForm.value[key]);
+      }
+    });
+
+    await axios.post('/api/inventory-adjustments', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
 
     closeAdjustmentModal();
     fetchAdjustments();
@@ -806,16 +817,30 @@ const processUpload = async () => {
   
   isUploading.value = true;
   
-  // Simulate an upload delay for UX
-  setTimeout(() => {
-    isUploading.value = false;
+  try {
+    const formData = new FormData();
+    formData.append('file', uploadFile.value);
+
+    const response = await axios.post('/api/inventory-adjustments/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    alert(response.data.message || 'Inventory uploaded successfully!');
     showUploadModal.value = false;
     uploadFile.value = null;
-    alert('Inventory uploaded successfully!');
-    // After a real upload, we would refresh the inventory data here:
-    // fetchSummary();
-    // fetchProducts();
-  }, 1500);
+
+    fetchSummary();
+    fetchAdjustments();
+    fetchLowStockProducts();
+    fetchProducts();
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert(error.response?.data?.message || 'Error uploading file');
+  } finally {
+    isUploading.value = false;
+  }
 };
 
 // Lifecycle

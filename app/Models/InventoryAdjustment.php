@@ -27,6 +27,7 @@ class InventoryAdjustment extends Model
         'batch_number',
         'expiry_date',
         'notes',
+        'attachment',
     ];
 
     protected $casts = [
