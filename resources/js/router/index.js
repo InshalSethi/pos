@@ -12,8 +12,8 @@ import Dashboard from '@/components/Dashboard.vue';
 import Products from '@/components/products/Products.vue';
 import CreateProduct from '@/components/products/CreateProduct.vue';
 import EditProduct from '@/components/products/EditProduct.vue';
-import Users from '@/components/users/Users.vue';
-import Roles from '@/components/roles/Roles.vue';
+
+
 import Inventory from '@/components/inventory/Inventory.vue';
 import Accounting from '@/components/accounting/Accounting.vue';
 import Transactions from '@/components/transactions/Transactions.vue';
@@ -36,7 +36,7 @@ import Customers from '@/components/customers/Customers.vue';
 import Suppliers from '@/components/suppliers/Suppliers.vue';
 import Payments from '@/components/payments/Payments.vue';
 import PaymentReceipts from '@/components/payment-receipts/PaymentReceipts.vue';
-import SubAdmins from '@/components/sub-admins/SubAdmins.vue';
+
 
 const routes = [
   {
@@ -92,18 +92,8 @@ const routes = [
         component: EditProduct,
         meta: { permission: 'products.edit' }
       },
-      {
-        path: 'users',
-        name: 'Users',
-        component: Users,
-        meta: { permission: 'users.view' }
-      },
-      {
-        path: 'roles',
-        name: 'Roles',
-        component: Roles,
-        meta: { permission: 'users.view' }
-      },
+
+
       {
         path: 'inventory',
         name: 'Inventory',
@@ -234,12 +224,7 @@ const routes = [
         component: PaymentReceipts,
         meta: { permission: 'payment_receipts.view' }
       },
-      {
-        path: 'sub-admins',
-        name: 'SubAdmins',
-        component: SubAdmins,
-        meta: { requiresAuth: true }
-      }
+
     ]
   },
   {

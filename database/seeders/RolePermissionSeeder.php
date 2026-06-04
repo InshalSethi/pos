@@ -13,11 +13,8 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Check if roles and permissions already exist
-        if (Role::count() > 0 || Permission::count() > 0) {
-            $this->command->info('Roles and permissions already exist. Skipping role/permission seeding.');
-            return;
-        }
+        // Clear cached permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create permissions
         $permissions = [
@@ -131,6 +128,23 @@ class RolePermissionSeeder extends Seeder
             'system.settings',
             'system.backup',
             'system.notifications',
+
+            // Payment permissions
+            'payments.view',
+            'payments.create',
+            'payments.edit',
+            'payments.delete',
+            'payments.approve',
+            'payments.pay',
+
+            // Payment Receipt permissions
+            'payment_receipts.view',
+            'payment_receipts.create',
+            'payment_receipts.edit',
+            'payment_receipts.verify',
+            'payment_receipts.deposit',
+            'payment_receipts.delete',
+            'payment_receipts.cancel',
         ];
 
         foreach ($permissions as $permission) {
@@ -148,7 +162,7 @@ class RolePermissionSeeder extends Seeder
         // Assign permissions to roles (sync to avoid duplicates)
         $adminRole->syncPermissions(Permission::all());
 
-        // Sub-admin has same permissions as manager for now
+        // Sub-admin has same permissions as manager
         $subAdminRole->syncPermissions([
             // Sales
             'sales.view', 'sales.create', 'sales.edit', 'sales.refund',
@@ -179,6 +193,10 @@ class RolePermissionSeeder extends Seeder
 
             // Settings (limited)
             'settings.view',
+
+            // Payments
+            'payments.view', 'payments.create', 'payments.edit', 'payments.approve', 'payments.pay',
+            'payment_receipts.view', 'payment_receipts.create', 'payment_receipts.edit', 'payment_receipts.verify', 'payment_receipts.deposit',
         ]);
 
         $managerRole->syncPermissions([
@@ -211,6 +229,10 @@ class RolePermissionSeeder extends Seeder
 
             // Settings (limited)
             'settings.view',
+
+            // Payments
+            'payments.view', 'payments.create', 'payments.edit', 'payments.approve', 'payments.pay',
+            'payment_receipts.view', 'payment_receipts.create', 'payment_receipts.edit', 'payment_receipts.verify', 'payment_receipts.deposit',
         ]);
 
         $cashierRole->syncPermissions([
@@ -243,6 +265,10 @@ class RolePermissionSeeder extends Seeder
 
             // Basic reports
             'reports.view',
+
+            // Payments
+            'payments.view',
+            'payment_receipts.view',
         ]);
 
         $userRole->syncPermissions([

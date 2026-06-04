@@ -14,10 +14,24 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:users.view')->only(['index', 'show']);
+        $this->middleware('permission:users.view')->only(['index', 'show', 'statistics']);
         $this->middleware('permission:users.create')->only(['store']);
         $this->middleware('permission:users.edit')->only(['update']);
         $this->middleware('permission:users.delete')->only(['destroy']);
+    }
+
+    /**
+     * Get statistics count for users.
+     */
+    public function statistics(): JsonResponse
+    {
+        $total = User::count();
+        $active = User::where('is_active', true)->count();
+
+        return response()->json([
+            'total_users' => $total,
+            'active_users' => $active,
+        ]);
     }
 
     /**
@@ -29,7 +43,7 @@ class UserController extends Controller
 
 
         // Search functionality
-        if ($request->has('search')) {
+        if ($request->has('search') && $request->search != '') {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -43,12 +57,17 @@ class UserController extends Controller
             $query->role($request->get('role'));
         }
 
+        // Filter by status (is_active)
+        if ($request->has('is_active') && $request->is_active !== '') {
+            $query->where('is_active', filter_var($request->get('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
         // Sorting
-        $sortBy = $request->get('sort_by', 'name');
+        $sortBy = $request->get('sort_by') ?? $request->get('sort_field', 'name');
         $sortOrder = $request->get('sort_order', 'asc');
 
         // Validate sort fields
-        $allowedSortFields = ['name', 'email', 'created_at'];
+        $allowedSortFields = ['id', 'name', 'email', 'created_at', 'is_active'];
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
         }
@@ -73,6 +92,10 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|exists:roles,name',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:500',
+            'is_active' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -86,6 +109,10 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'notes' => $request->notes,
+            'is_active' => $request->get('is_active', true),
         ]);
 
         $user->assignRole($request->role);
@@ -117,6 +144,10 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|string|exists:roles,name',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:500',
+            'is_active' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -129,6 +160,10 @@ class UserController extends Controller
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'notes' => $request->notes,
+            'is_active' => $request->get('is_active', true),
         ];
 
         if ($request->filled('password')) {

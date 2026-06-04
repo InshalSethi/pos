@@ -193,16 +193,6 @@ const apiMethods = {
     }),
   },
 
-  // User management methods
-  users: {
-    list: (params = {}) => api.get('/users', { params }),
-    get: (id) => api.get(`/users/${id}`),
-    create: (data) => api.post('/users', data),
-    update: (id, data) => api.put(`/users/${id}`, data),
-    delete: (id) => api.delete(`/users/${id}`),
-    roles: () => api.get('/users/roles'),
-    permissions: () => api.get('/users/permissions'),
-  },
 
   // Settings methods
   settings: {

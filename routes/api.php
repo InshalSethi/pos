@@ -228,6 +228,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/bank-transactions/import', [BankTransactionController::class , 'import']);
 
         // User management routes
+        Route::get('/users/statistics', [UserController::class, 'statistics']);
         Route::apiResource('users', UserController::class);
         Route::get('/roles', [UserController::class , 'roles']);
 
