@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
+
 use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BankTransaction extends Model
 {
+    use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
 

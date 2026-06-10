@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
+
 use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +13,7 @@ use Carbon\Carbon;
 
 class SalaryAdjustment extends Model
 {
+    use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
 

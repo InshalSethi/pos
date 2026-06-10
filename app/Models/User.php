@@ -34,7 +34,17 @@ class User extends Authenticatable
         'notes',
         'is_active',
         'google_id',
+        'current_company_id',
+        'onboarding_completed',
     ];
+
+    /**
+     * Relationships to always eager-load.
+     * Prevents N+1 queries in middleware and API controllers.
+     *
+     * @var array
+     */
+    protected $with = ['currentCompany'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -82,6 +92,16 @@ class User extends Authenticatable
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    public function currentCompany(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'current_company_id');
+    }
+
+    public function companies(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Company::class)->withPivot('role')->withTimestamps();
     }
 
     /**

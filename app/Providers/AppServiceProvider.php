@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use App\Events\ExpenseApproved;
 use App\Events\ExpensePaid;
 use App\Events\ExpenseRejected;
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Implicitly grant "admin" and "owner" roles all permissions
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole(['admin', 'owner']) ? true : null;
+        });
+
         // Register event listeners for expense accounting
         Event::listen(ExpenseApproved::class, CreateExpenseJournalEntry::class);
         Event::listen(ExpensePaid::class, CreateExpensePaymentJournalEntry::class);

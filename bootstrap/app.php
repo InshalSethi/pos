@@ -13,6 +13,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SetSystemTimezone::class);
+        $middleware->append(\App\Http\Middleware\PreventBackHistory::class);
+        
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\SetUserLocalizationContext::class,
+            \App\Http\Middleware\SetTenantLocalization::class,
+            \App\Http\Middleware\EnsureOnboardingIsCompleted::class,
+        ]);
         $middleware->alias([
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

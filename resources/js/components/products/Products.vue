@@ -304,12 +304,12 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700">Cost Price</label>
-              <p class="mt-1 text-sm text-gray-900">${{ viewingProduct.cost_price }}</p>
+              <p class="mt-1 text-sm text-gray-900">{{ $baseCurrency }} {{ viewingProduct.cost_price }}</p>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700">Selling Price</label>
-              <p class="mt-1 text-sm text-gray-900">${{ viewingProduct.selling_price }}</p>
+              <p class="mt-1 text-sm text-gray-900">{{ $baseCurrency }} {{ viewingProduct.selling_price }}</p>
             </div>
 
             <div>

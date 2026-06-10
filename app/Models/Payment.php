@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
+
 use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +14,7 @@ use Carbon\Carbon;
 
 class Payment extends Model
 {
+    use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
 

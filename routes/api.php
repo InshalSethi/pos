@@ -41,12 +41,13 @@ use App\Http\Controllers\Api\SubAdminController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\TimezoneController;
-
-
+use App\Http\Controllers\Api\CompanySwitcherController;
 // Public routes
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
-Route::post('/login', [AuthController::class , 'login'])->name('login');
-Route::post('/register', [AuthController::class , 'register']);
+Route::middleware('web')->group(function() {
+    Route::post('/login', [AuthController::class , 'login'])->name('api.login');
+    Route::post('/register', [AuthController::class , 'register']);
+});
 Route::post('/forgot-password', [AuthController::class , 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class , 'resetPassword']);
 
@@ -108,6 +109,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/settings', [AuthController::class , 'getSettings']);
     Route::put('/user/settings', [AuthController::class , 'updateSettings']);
 
+    // Company Switcher routes
+    Route::get('/companies/active', [CompanySwitcherController::class, 'getActiveCompany']);
+    Route::put('/companies/active', [CompanySwitcherController::class, 'updateActiveCompany']);
+    Route::get('/companies/my-companies', [CompanySwitcherController::class, 'index']);
+    Route::post('/companies/switch', [CompanySwitcherController::class, 'switchCompany']);
     // Product management routes
     Route::apiResource('products', ProductController::class);
     Route::post('/products/import', [ProductController::class , 'import']);
@@ -133,6 +139,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Sales/POS routes
     Route::apiResource('sales', SaleController::class);
+
+    // Companies routes
+    Route::get('/companies', [\App\Http\Controllers\Api\CompanyController::class, 'index']);
+    Route::post('/companies/switch/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'switch']);
+    Route::post('/companies/create-new', [\App\Http\Controllers\Api\CompanyController::class, 'createNewCompany']);
     Route::post('/sales/{sale}/refund', [SaleController::class , 'refund']);
     Route::post('/sales/returns', [SaleController::class , 'processReturn']);
     Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);

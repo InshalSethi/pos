@@ -17,6 +17,7 @@
           >
             General Settings
           </button>
+
           <button
             v-if="authStore.hasPermission('users.view')"
             @click="activeTab = 'users'"
@@ -69,6 +70,8 @@
 
       <!-- Tab Content -->
       <div class="bg-white shadow rounded-lg">
+
+
         <!-- General Settings Tab -->
         <div v-if="activeTab === 'general'" class="p-6">
 
@@ -152,83 +155,18 @@
           <div class="border-t border-gray-200 pt-8">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Display</h3>
             <div class="space-y-4">
-              <div class="relative max-w-xs">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-                <Listbox
-                  v-model="settings.theme"
-                  @update:modelValue="updateSetting('theme', settings.theme)"
-                >
-                  <div class="relative mt-1">
-                    <ListboxButton
-                      class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
-                    >
-                      <span class="block truncate capitalize">{{ settings.theme }}</span>
-                      <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                      </span>
-                    </ListboxButton>
-                    <transition
-                      leave-active-class="transition duration-100 ease-in"
-                      leave-from-class="opacity-100"
-                      leave-to-class="opacity-0"
-                    >
-                      <ListboxOptions
-                        class="absolute bottom-full mb-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-50"
-                      >
-                        <ListboxOption
-                          v-slot="{ active, selected }"
-                          v-for="themeOption in ['light', 'dark', 'match system']"
-                          :key="themeOption"
-                          :value="themeOption"
-                          as="template"
-                        >
-                          <li
-                            :class="[
-                              active ? 'bg-indigo-100 text-indigo-900' : 'text-gray-900',
-                              'relative cursor-default select-none py-2 pl-10 pr-4'
-                            ]"
-                          >
-                            <span
-                              :class="[
-                                selected ? 'font-medium' : 'font-normal',
-                                'block truncate capitalize'
-                              ]"
-                            >
-                              {{ themeOption }}
-                            </span>
-                            <span
-                              v-if="selected"
-                              :class="[
-                                active ? 'text-indigo-600' : 'text-indigo-600',
-                                'absolute inset-y-0 left-0 flex items-center pl-3'
-                              ]"
-                            >
-                              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                              </svg>
-                            </span>
-                          </li>
-                        </ListboxOption>
-                      </ListboxOptions>
-                    </transition>
-                  </div>
-                </Listbox>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Items per page</label>
-                <select
+              <div class="max-w-md w-full">
+                <SystemSelect
+                  label="Items per page"
                   v-model="settings.items_per_page"
-                  @change="updateSetting('items_per_page', settings.items_per_page)"
-                  class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                </select>
+                  :options="[
+                    { value: '10', label: '10' },
+                    { value: '15', label: '15' },
+                    { value: '25', label: '25' },
+                    { value: '50', label: '50' }
+                  ]"
+                  @update:modelValue="updateSetting('items_per_page', $event)"
+                />
               </div>
             </div>
           </div>
@@ -237,17 +175,17 @@
           <div class="border-t border-gray-200 pt-8">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Point of Sale</h3>
             <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Default Payment Method</label>
-                <select
+              <div class="max-w-md w-full">
+                <SystemSelect
+                  label="Default Payment Method"
                   v-model="settings.default_payment_method"
-                  @change="updateSetting('default_payment_method', settings.default_payment_method)"
-                  class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="digital">Digital Wallet</option>
-                </select>
+                  :options="[
+                    { value: 'cash', label: 'Cash' },
+                    { value: 'card', label: 'Card' },
+                    { value: 'digital', label: 'Digital Wallet' }
+                  ]"
+                  @update:modelValue="updateSetting('default_payment_method', $event)"
+                />
               </div>
 
               <div class="flex items-center justify-between">
@@ -298,19 +236,19 @@
           <div class="border-t border-gray-200 pt-8">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Security</h3>
             <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
-                <select
+              <div class="max-w-md w-full">
+                <SystemSelect
+                  label="Session Timeout (minutes)"
                   v-model="settings.session_timeout"
-                  @change="updateSetting('session_timeout', settings.session_timeout)"
-                  class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="15">15 minutes</option>
-                  <option value="30">30 minutes</option>
-                  <option value="60">1 hour</option>
-                  <option value="120">2 hours</option>
-                  <option value="480">8 hours</option>
-                </select>
+                  :options="[
+                    { value: '15', label: '15 minutes' },
+                    { value: '30', label: '30 minutes' },
+                    { value: '60', label: '1 hour' },
+                    { value: '120', label: '2 hours' },
+                    { value: '480', label: '8 hours' }
+                  ]"
+                  @update:modelValue="updateSetting('session_timeout', $event)"
+                />
               </div>
 
               <div class="flex items-center justify-between">
@@ -336,125 +274,6 @@
             </div>
           </div>
 
-          <!-- Currency Settings -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-1">System Currency</h3>
-            <p class="text-sm text-gray-500 mb-4">Set the display currency for all prices across the platform. Exchange rates are relative to USD.</p>
-
-            <div v-if="currencyStore.loading" class="flex items-center space-x-2 text-gray-500 text-sm">
-              <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              <span>Loading currencies...</span>
-            </div>
-
-            <div v-else class="space-y-4">
-              <!-- Currency Selector Card -->
-              <div class="max-w-sm">
-                <div class="relative">
-                  <select
-                    id="system-currency-select"
-                    v-model="selectedCurrencyId"
-                    @change="handleCurrencyChange"
-                    class="w-full pl-4 pr-10 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-800 appearance-none cursor-pointer shadow-sm transition-all hover:border-indigo-300"
-                  >
-                    <option value="" disabled>Select a currency...</option>
-                    <option
-                      v-for="currency in currencyStore.currencies"
-                      :key="currency.id"
-                      :value="currency.id"
-                    >
-                      {{ currency.symbol }} {{ currency.code }} — {{ currency.name }}
-                    </option>
-                  </select>
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Active Currency Preview Card -->
-              <div v-if="currencyStore.activeCurrency" class="max-w-sm bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white shadow-lg">
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-indigo-200 text-xs font-bold uppercase tracking-widest">Active Currency</span>
-                  <span class="bg-white/20 text-white text-xs font-bold px-2 py-1 rounded-full">LIVE</span>
-                </div>
-                <div class="flex items-end space-x-3">
-                  <div class="text-5xl font-black tracking-tight">{{ currencyStore.activeCurrency.symbol }}</div>
-                  <div>
-                    <div class="text-xl font-bold">{{ currencyStore.activeCurrency.code }}</div>
-                    <div class="text-indigo-200 text-sm">{{ currencyStore.activeCurrency.name }}</div>
-                  </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-white/20 text-sm text-indigo-200">
-                  <span class="font-medium">Exchange Rate:</span>
-                  1 USD = {{ currencyStore.activeCurrency.exchange_rate }} {{ currencyStore.activeCurrency.code }}
-                </div>
-                <!-- Live preview -->
-                <div class="mt-3 text-xs text-indigo-300">
-                  Preview: $100 USD → {{ currencyStore.formatPrice(100) }}
-                </div>
-              </div>
-
-              <!-- Save feedback -->
-              <div v-if="currencySaveStatus === 'saving'" class="flex items-center space-x-2 text-indigo-600 text-sm">
-                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                <span>Saving...</span>
-              </div>
-              <div v-else-if="currencySaveStatus === 'saved'" class="flex items-center space-x-2 text-green-600 text-sm font-medium">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <span>Currency updated globally!</span>
-              </div>
-              <div v-else-if="currencySaveStatus === 'error'" class="flex items-center space-x-2 text-red-600 text-sm font-medium">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                <span>Failed to update currency. Please try again.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Timezone Settings -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-1">System Timezone</h3>
-            <p class="text-sm text-gray-500 mb-4">Set the global system timezone configuration for all dynamic date and time displays.</p>
-
-            <div class="space-y-4">
-              <!-- Timezone Selector Card -->
-              <div class="max-w-sm">
-                <div class="relative">
-                  <select
-                    id="system-timezone-select"
-                    v-model="selectedTimezone"
-                    @change="handleTimezoneChange"
-                    class="w-full pl-4 pr-10 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-800 appearance-none cursor-pointer shadow-sm transition-all hover:border-indigo-300"
-                  >
-                    <option value="" disabled>Select a timezone...</option>
-                    <option
-                      v-for="tz in timezones"
-                      :key="tz"
-                      :value="tz"
-                    >
-                      {{ tz }}
-                    </option>
-                  </select>
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Save feedback -->
-              <div v-if="timezoneSaveStatus === 'saving'" class="flex items-center space-x-2 text-indigo-600 text-sm">
-                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                <span>Saving timezone...</span>
-              </div>
-              <div v-else-if="timezoneSaveStatus === 'saved'" class="flex items-center space-x-2 text-green-600 text-sm font-medium">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <span>Timezone updated globally!</span>
-              </div>
-              <div v-else-if="timezoneSaveStatus === 'error'" class="flex items-center space-x-2 text-red-600 text-sm font-medium">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                <span>Failed to update timezone. Please try again.</span>
-              </div>
-            </div>
-          </div>
 
           <!-- Save Button -->
           <div class="border-t border-gray-200 pt-8">
@@ -1307,31 +1126,50 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/vue';
 import { useAuthStore } from '@/stores/auth';
-import { useCurrencyStore } from '@/stores/currency';
+
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
 import { debounce } from '@/utils/debounce';
 import DataTable from '@/components/common/DataTable.vue';
+import SystemSelect from '@/components/common/SystemSelect.vue';
 import UserCreateForm from './UserCreateForm.vue';
 import UserViewModal from './UserViewModal.vue';
 import RoleCreateForm from './RoleCreateForm.vue';
 
 const authStore = useAuthStore();
-const currencyStore = useCurrencyStore();
+
 const { showToast } = useToast();
 
 // Reactive data
 const activeTab = ref('general');
 const saving = ref(false);
 
-// Currency selector state
-const selectedCurrencyId = ref(currencyStore.activeCurrencyId);
-const currencySaveStatus = ref(''); // 'saving' | 'saved' | 'error' | ''
+const companyData = ref({});
+const loadingCompany = ref(false);
+const savingCompany = ref(false);
 
-// Timezone selector state
-const timezones = ref(window.systemTimezones || []);
-const selectedTimezone = ref('Asia/Karachi');
-const timezoneSaveStatus = ref(''); // 'saving' | 'saved' | 'error' | ''
+const businessTypes = [
+  { value: 'agriculture', label: 'Agriculture' },
+  { value: 'art_design', label: 'Art and Design' },
+  { value: 'construction_trades', label: 'Construction, Trades and Home Services' },
+  { value: 'development_programming', label: 'Development & Programming' },
+  { value: 'education_training', label: 'Education and Training' },
+  { value: 'financial_insurance', label: 'Financial services & insurance' },
+  { value: 'food_services', label: 'Food Services' },
+  { value: 'health_wellness', label: 'Health and Wellness' },
+  { value: 'hospitality_tourism', label: 'Hospitality, Travel and Tourism' },
+  { value: 'hr_staffing', label: 'Human Resources and Staffing' },
+  { value: 'it', label: 'Information Technology' },
+  { value: 'manufacturing', label: 'Manufacturing' },
+  { value: 'non_profit', label: 'Non-Profit' },
+  { value: 'professional_services', label: 'Professional Services (e.g. Legal, Accounting, Marketing, Consulting)' },
+  { value: 'real_estate', label: 'Real Estate and Property Management' },
+  { value: 'retail', label: 'Retail (E-Commerce and Offline)' },
+  { value: 'software_development', label: 'Software Development' },
+  { value: 'wholesale_trade', label: 'Wholesale Trade' },
+  { value: 'other', label: 'Other' }
+];
+
 const settings = ref({
   email_notifications: true,
   sales_alerts: true,
@@ -1524,24 +1362,14 @@ watch(() => activeTab.value, (newTab) => {
   }
 });
 
-// Keep currency selector in sync with store
-watch(() => currencyStore.activeCurrencyId, (newId) => {
-  selectedCurrencyId.value = newId;
-});
-
 // Lifecycle
 onMounted(() => {
   loadSettings();
-  loadTimezone();
 
   // Apply initial theme
   applyTheme(settings.value.theme);
 
-  // Ensure currencies are loaded
-  if (!currencyStore.currencies.length) {
-    currencyStore.fetchCurrencies();
-  }
-  selectedCurrencyId.value = currencyStore.activeCurrencyId;
+  // Ensure currencies are loaded for other components that may need it
 
   // Load users and roles if user has permission
   if (authStore.hasPermission('users.view')) {
@@ -1551,10 +1379,12 @@ onMounted(() => {
   }
 
   // Load payment settings if user has permission
-  if (authStore.hasPermission('settings.manage')) {
+  if (authStore.hasPermission('settings.payment_gateways')) {
     loadPaymentSettings();
   }
+  loadCompanyDetails();
 });
+
 
 // Users management methods
 const loadUserStatistics = async () => {
@@ -1671,54 +1501,12 @@ const handleUserSaved = async () => {
   closeUserModal();
 };
 
-// Currency change handler
-const handleCurrencyChange = async () => {
-  if (!selectedCurrencyId.value) return;
-  currencySaveStatus.value = 'saving';
-  try {
-    await currencyStore.setActiveCurrency(selectedCurrencyId.value);
-    currencySaveStatus.value = 'saved';
-    // Auto-clear success status after 3 seconds
-    setTimeout(() => {
-      currencySaveStatus.value = '';
-    }, 3000);
-  } catch (error) {
-    console.error('Error saving currency:', error);
-    currencySaveStatus.value = 'error';
-    setTimeout(() => {
-      currencySaveStatus.value = '';
-    }, 5000);
-  }
-};
 
-// Timezone change handler
-const loadTimezone = async () => {
-  try {
-    const response = await axios.get('/api/system-timezone');
-    selectedTimezone.value = response.data.timezone;
-  } catch (error) {
-    console.error('Error loading timezone:', error);
-  }
-};
+// Timezone is now managed during company setup (Step 4).
+// These stubs are kept to avoid any accidental reference errors.
+const loadTimezone = async () => {};
+const handleTimezoneChange = async () => {};
 
-const handleTimezoneChange = async () => {
-  if (!selectedTimezone.value) return;
-  timezoneSaveStatus.value = 'saving';
-  try {
-    const response = await axios.post('/api/system-timezone', { timezone: selectedTimezone.value });
-    selectedTimezone.value = response.data.timezone;
-    timezoneSaveStatus.value = 'saved';
-    setTimeout(() => {
-      timezoneSaveStatus.value = '';
-    }, 3000);
-  } catch (error) {
-    console.error('Error saving timezone:', error);
-    timezoneSaveStatus.value = 'error';
-    setTimeout(() => {
-      timezoneSaveStatus.value = '';
-    }, 5000);
-  }
-};
 
 const loadRoles = async () => {
   try {
@@ -1779,6 +1567,43 @@ const loadAccountingSettings = async () => {
 const updateAccountingSetting = () => {
   // Auto-save when dropdown changes
   saveAccountingSettings();
+};
+
+const loadCompanyDetails = async () => {
+  loadingCompany.value = true;
+  try {
+    const response = await axios.get('/api/companies/active');
+    companyData.value = response.data.company;
+    if (authStore.user) {
+      companyData.value.company_email = authStore.user.email;
+    }
+  } catch (error) {
+    showToast('Failed to load company details', 'error');
+  } finally {
+    loadingCompany.value = false;
+  }
+};
+
+const saveCompanyDetails = async () => {
+  savingCompany.value = true;
+  try {
+    const payload = { ...companyData.value };
+    if (authStore.user?.email) {
+      payload.company_email = authStore.user.email;
+    }
+    await axios.put('/api/companies/active', payload);
+    showToast('Company details updated successfully', 'success');
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Failed to update company details';
+    const errors = error.response?.data?.errors;
+    let fullMsg = errorMsg;
+    if (errors) {
+        fullMsg += ': ' + Object.values(errors).flat().join(', ');
+    }
+    showToast(fullMsg, 'error');
+  } finally {
+    savingCompany.value = false;
+  }
 };
 
 const saveAccountingSettings = async () => {

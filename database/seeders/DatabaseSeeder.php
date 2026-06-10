@@ -43,10 +43,11 @@ class DatabaseSeeder extends Seeder
         // Create admin user first (required for other seeders)
         $this->command->info('Creating admin user...');
         $admin = User::firstOrCreate([
-            'email' => 'admin@example.com'
+            'email' => 'admin@gmail.com'
         ], [
-            'name' => 'Admin User',
+            'name' => 'Admin Core',
             'password' => Hash::make('password123'),
+            'onboarding_completed' => true,
         ]);
 
         if (!$admin->hasRole('admin')) {
@@ -92,7 +93,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Database seeding completed successfully!');
         $this->command->info('');
         $this->command->info('Login credentials:');
-        $this->command->info('Admin: admin@example.com / password123');
+        $this->command->info('Admin: admin@gmail.com / password123');
         $this->command->info('Test User: test@example.com / password123');
         $this->command->info('Manager: manager@test.com / password123');
         $this->command->info('Admin Test: admin@test.com / password123');

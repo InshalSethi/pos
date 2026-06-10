@@ -3,469 +3,519 @@
     <!-- Sidebar -->
     <div
       :class="[
-        'fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-transform duration-300 ease-in-out',
-        sidebarCollapsed ? 'w-16' : 'w-64',
+        'fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out flex flex-col',
+        sidebarCollapsed ? 'w-20' : 'w-[260px]',
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
       ]"
     >
       <!-- Sidebar Header -->
-      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-        <router-link
-          to="/"
-          :class="[
-            'text-xl font-bold text-indigo-600 transition-opacity duration-300',
-            sidebarCollapsed ? 'opacity-0' : 'opacity-100'
-          ]"
-        >
-          <span v-show="!sidebarCollapsed">POS System</span>
-        </router-link>
+      <div class="relative flex items-center justify-between h-16 px-4 border-b border-gray-200">
+        <!-- Company Switcher -->
+        <div class="relative flex-1 w-full min-w-0" v-if="activeCompany">
+          <button
+            @click="showCompanySwitcher = !showCompanySwitcher"
+            data-company-switcher-button
+            :class="[
+              'flex items-center w-full focus:outline-none transition-opacity duration-300',
+              sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
+            ]"
+          >
+            <div class="flex-shrink-0 h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
+              {{ activeCompany.company_name.charAt(0) }}
+            </div>
+            <div class="ml-3 flex-1 text-left overflow-hidden">
+              <span class="block text-[13px] tracking-wide font-bold text-gray-900 truncate">{{ activeCompany.company_name }}</span>
+            </div>
+            <svg class="ml-1 flex-shrink-0 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+            </svg>
+          </button>
+
+          <!-- Dropdown menu -->
+          <div
+            v-if="showCompanySwitcher && !sidebarCollapsed"
+            ref="companySwitcherRef"
+            class="absolute left-0 right-0 w-full mt-3 bg-white border border-gray-200 rounded-xl shadow-2xl divide-y divide-gray-100 focus:outline-none z-50 overflow-hidden"
+          >
+            <div class="py-1 max-h-64 overflow-y-auto custom-scrollbar">
+              <a
+                v-for="company in companies"
+                :key="company.id"
+                :href="`/company/switch/${company.id}`"
+                class="w-full text-left px-4 py-3 text-[13px] font-medium transition-colors flex items-center justify-between"
+                :class="company.id === activeCompany.id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+              >
+                <div class="flex items-center overflow-hidden">
+                  <svg class="mr-3 flex-shrink-0 h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <span class="truncate">{{ company.company_name }}</span>
+                </div>
+                <svg v-if="company.id === activeCompany.id" class="ml-2 flex-shrink-0 h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </a>
+            </div>
+            <div class="py-1">
+              <router-link to="/companies" class="flex items-center px-4 py-3 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full text-left" @click="showCompanySwitcher = false">
+                <svg class="mr-3 flex-shrink-0 h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Manage Company
+              </router-link>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapse Trigger -->
         <button
           @click="toggleSidebar"
-          class="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="absolute -right-3.5 top-6 w-7 h-7 bg-gray-900 text-white border border-gray-700 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-50 group shadow-md"
         >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              :d="sidebarCollapsed ? 'M13 5l7 7-7 7M5 5l7 7-7 7' : 'M11 19l-7-7 7-7M5 12h14'"
-            />
+          <svg :class="['w-3.5 h-3.5 transition-transform duration-300', sidebarCollapsed ? 'rotate-180 group-hover:translate-x-0.5' : 'group-hover:-translate-x-0.5']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
       </div>
 
       <!-- Sidebar Navigation -->
-      <nav class="mt-4 px-2 space-y-1 overflow-y-auto h-full pb-20">
-        <!-- Dashboard -->
+      <nav class="mt-6 px-4 space-y-1 overflow-y-auto flex-1 custom-scrollbar pb-20">
         <router-link
           to="/"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Dashboard' : ''"
         >
+          <div v-if="$route.path === '/'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Dashboard
           </span>
         </router-link>
-
-
-
-        <!-- Products -->
         <router-link
           to="/products"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/products'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Products' : ''"
         >
+          <div v-if="$route.path === '/products'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Products
           </span>
         </router-link>
-
-        <!-- Sales Dropdown -->
-        <div class="space-y-1">
+        <div class="space-y-1 mt-1 relative">
           <button
             @click="showSidebarSalesMenu = !showSidebarSalesMenu"
             :class="[
-              'group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+              'group w-full flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
               $route.path.startsWith('/sales')
-                ? 'bg-indigo-100 text-indigo-900'
+                ? 'text-indigo-700 bg-indigo-50'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             ]"
             :title="sidebarCollapsed ? 'Sales' : ''"
           >
+            <div v-if="$route.path.startsWith('/sales')" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
             <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+            <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
               Sales
             </span>
             <div class="relative group ml-auto">
               <svg
                 v-if="!sidebarCollapsed"
                 :class="[
-                  'h-4 w-4 transition-all duration-300 transform',
-                  showSidebarSalesMenu ? 'rotate-180 text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
+                  'h-4 w-4 transition-transform duration-300 transform',
+                  showSidebarSalesMenu ? 'rotate-180 text-gray-900' : 'text-gray-400 group-hover:text-gray-600'
                 ]"
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
               >
-                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
               </svg>
             </div>
           </button>
 
-          <div
-            v-if="showSidebarSalesMenu && !sidebarCollapsed"
-            class="ml-6 space-y-1"
+          <transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2 max-h-0"
+            enter-to-class="opacity-100 translate-y-0 max-h-60"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 max-h-60"
+            leave-to-class="opacity-0 -translate-y-2 max-h-0"
           >
-            <router-link
-              to="/sales/invoices"
-              :class="[
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                $route.path === '/sales/invoices'
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-              ]"
+            <div
+              v-show="showSidebarSalesMenu && !sidebarCollapsed"
+              class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
             >
-              Sales Invoices
-            </router-link>
-            <router-link
-              to="/sales/returns"
-              :class="[
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                $route.path === '/sales/returns'
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-              ]"
-            >
-              Sales Returns
-            </router-link>
-          </div>
+              <!-- Timeline accent line -->
+              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200"></div>
+              <router-link
+                to="/sales/invoices"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/sales/invoices'
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ]"
+              >
+                <div v-if="$route.path === '/sales/invoices'" class="absolute -left-[18.5px] top-1/2 -translate-y-1/2 w-[1.5px] h-4 bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                Sales Invoices
+              </router-link>
+              <router-link
+                to="/sales/returns"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/sales/returns'
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ]"
+              >
+                <div v-if="$route.path === '/sales/returns'" class="absolute -left-[18.5px] top-1/2 -translate-y-1/2 w-[1.5px] h-4 bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                Sales Returns
+              </router-link>
+            </div>
+          </transition>
         </div>
-
-        <!-- Purchase Dropdown -->
-        <div class="space-y-1">
+        <div class="space-y-1 mt-1 relative">
           <button
             @click="showSidebarPurchaseMenu = !showSidebarPurchaseMenu"
             :class="[
-              'group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+              'group w-full flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
               $route.path.startsWith('/purchase')
-                ? 'bg-indigo-100 text-indigo-900'
+                ? 'text-indigo-700 bg-indigo-50'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             ]"
             :title="sidebarCollapsed ? 'Purchase' : ''"
           >
+            <div v-if="$route.path.startsWith('/purchase')" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
             <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+            <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
               Purchase
             </span>
             <div class="relative group ml-auto">
               <svg
                 v-if="!sidebarCollapsed"
                 :class="[
-                  'h-4 w-4 transition-all duration-300 transform',
-                  showSidebarPurchaseMenu ? 'rotate-180 text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
+                  'h-4 w-4 transition-transform duration-300 transform',
+                  showSidebarPurchaseMenu ? 'rotate-180 text-gray-900' : 'text-gray-400 group-hover:text-gray-600'
                 ]"
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
               >
-                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
               </svg>
             </div>
           </button>
 
-          <div
-            v-if="showSidebarPurchaseMenu && !sidebarCollapsed"
-            class="ml-6 space-y-1"
+          <transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2 max-h-0"
+            enter-to-class="opacity-100 translate-y-0 max-h-60"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 max-h-60"
+            leave-to-class="opacity-0 -translate-y-2 max-h-0"
           >
-            <router-link
-              to="/purchase/orders"
-              :class="[
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                $route.path.startsWith('/purchase/orders')
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-              ]"
+            <div
+              v-show="showSidebarPurchaseMenu && !sidebarCollapsed"
+              class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
             >
-              Purchase Orders
-            </router-link>
-            <router-link
-              to="/purchase/returns"
-              :class="[
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-                $route.path === '/purchase/returns'
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-              ]"
-            >
-              Purchase Returns
-            </router-link>
-          </div>
+              <!-- Timeline accent line -->
+              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200"></div>
+              <router-link
+                to="/purchase/orders"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/purchase/orders'
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ]"
+              >
+                <div v-if="$route.path === '/purchase/orders'" class="absolute -left-[18.5px] top-1/2 -translate-y-1/2 w-[1.5px] h-4 bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                Purchase Orders
+              </router-link>
+              <router-link
+                to="/purchase/returns"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/purchase/returns'
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ]"
+              >
+                <div v-if="$route.path === '/purchase/returns'" class="absolute -left-[18.5px] top-1/2 -translate-y-1/2 w-[1.5px] h-4 bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                Purchase Returns
+              </router-link>
+            </div>
+          </transition>
         </div>
-
-        <!-- Continue with more navigation items -->
-        <!-- Inventory -->
         <router-link
           to="/inventory"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/inventory'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Inventory' : ''"
         >
+          <div v-if="$route.path === '/inventory'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Inventory
           </span>
         </router-link>
-
-        <!-- Accounting -->
         <router-link
           to="/accounting"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/accounting'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Accounting' : ''"
         >
+          <div v-if="$route.path === '/accounting'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Accounting
           </span>
         </router-link>
-
-        <!-- Transactions -->
         <router-link
           to="/transactions"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/transactions'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Transactions' : ''"
         >
+          <div v-if="$route.path === '/transactions'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Transactions
           </span>
         </router-link>
-
-        <!-- Expenses -->
-        <router-link
-          v-if="authStore.hasPermission('expenses.view')"
+        <router-link v-if="authStore.hasPermission('expenses.view')"
           to="/expenses"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/expenses'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Expenses' : ''"
         >
+          <div v-if="$route.path === '/expenses'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Expenses
           </span>
         </router-link>
-
         <!-- Payments Section -->
-        <div v-if="authStore.hasPermission('payments.view') || authStore.hasPermission('payment_receipts.view')" class="space-y-1">
-          <!-- Section Header -->
-          <div v-if="!sidebarCollapsed" class="px-2 py-2">
-            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Payments
-            </h3>
-          </div>
-
-          <!-- Payments Out -->
-          <router-link
-            v-if="authStore.hasPermission('payments.view')"
-            to="/payments"
-            :class="[
-              'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-              $route.path === '/payments'
-                ? 'bg-indigo-100 text-indigo-900'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            ]"
-            :title="sidebarCollapsed ? 'Payments Out' : ''"
-          >
-            <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
-              Payments Out
-            </span>
-          </router-link>
-
-          <!-- Payment Receipts -->
-          <router-link
-            v-if="authStore.hasPermission('payment_receipts.view')"
-            to="/payment-receipts"
-            :class="[
-              'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-              $route.path === '/payment-receipts'
-                ? 'bg-indigo-100 text-indigo-900'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            ]"
-            :title="sidebarCollapsed ? 'Payment Receipts' : ''"
-          >
-            <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-            <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
-              Payment Receipts
-            </span>
-          </router-link>
+        <div v-if="(authStore.hasPermission('payments.view') || authStore.hasPermission('payment_receipts.view')) && !sidebarCollapsed" class="px-3 pt-4 pb-1">
+          <h3 class="text-[10px] tracking-widest text-gray-400 font-bold uppercase">
+            Payments
+          </h3>
         </div>
-
-        <!-- Divider -->
-        <div v-if="!sidebarCollapsed && (authStore.hasPermission('payments.view') || authStore.hasPermission('payment_receipts.view'))" class="border-t border-gray-200 my-4"></div>
-
-        <!-- Employees -->
-        <router-link
-          v-if="authStore.hasPermission('employees.view')"
+        <router-link v-if="authStore.hasPermission('payments.view')"
+          to="/payments"
+          :class="[
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
+            $route.path === '/payments'
+              ? 'text-indigo-700 bg-indigo-50'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ]"
+          :title="sidebarCollapsed ? 'Payments Out' : ''"
+        >
+          <div v-if="$route.path === '/payments'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+            Payments Out
+          </span>
+        </router-link>
+        <router-link v-if="authStore.hasPermission('payment_receipts.view')"
+          to="/payment-receipts"
+          :class="[
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
+            $route.path === '/payment-receipts'
+              ? 'text-indigo-700 bg-indigo-50'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ]"
+          :title="sidebarCollapsed ? 'Payment Receipts' : ''"
+        >
+          <div v-if="$route.path === '/payment-receipts'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+            Payment Receipts
+          </span>
+        </router-link>
+        <!-- People & Entities Section -->
+        <div v-if="(authStore.hasPermission('employees.view') || authStore.hasPermission('customers.view') || authStore.hasPermission('suppliers.view')) && !sidebarCollapsed" class="px-3 pt-4 pb-1">
+          <h3 class="text-[10px] tracking-widest text-gray-400 font-bold uppercase">
+            People & Entities
+          </h3>
+        </div>
+        <router-link v-if="authStore.hasPermission('employees.view')"
           to="/employees"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/employees'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Employees' : ''"
         >
+          <div v-if="$route.path === '/employees'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Employees
           </span>
         </router-link>
-
-        <!-- Customers -->
-        <router-link
-          v-if="authStore.hasPermission('customers.view')"
+        <router-link v-if="authStore.hasPermission('customers.view')"
           to="/customers"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/customers'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Customers' : ''"
         >
+          <div v-if="$route.path === '/customers'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Customers
           </span>
         </router-link>
-
-        <!-- Suppliers -->
-        <router-link
-          v-if="authStore.hasPermission('suppliers.view')"
+        <router-link v-if="authStore.hasPermission('suppliers.view')"
           to="/suppliers"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/suppliers'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Suppliers' : ''"
         >
+          <div v-if="$route.path === '/suppliers'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Suppliers
           </span>
         </router-link>
-
-        <!-- Reports -->
+        <!-- Analytics Section -->
+        <div v-if="!sidebarCollapsed" class="px-3 pt-4 pb-1">
+          <h3 class="text-[10px] tracking-widest text-gray-400 font-bold uppercase">
+            Analytics
+          </h3>
+        </div>
         <router-link
           to="/reports"
           :class="[
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200',
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/reports'
-              ? 'bg-indigo-100 text-indigo-900'
+              ? 'text-indigo-700 bg-indigo-50'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
           :title="sidebarCollapsed ? 'Reports' : ''"
         >
+          <div v-if="$route.path === '/reports'" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span :class="['ml-3 transition-opacity duration-300', sidebarCollapsed ? 'opacity-0 w-0' : 'opacity-100']">
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Reports
           </span>
         </router-link>
 
-
-
-
         <!-- Mobile User Profile Section (visible only on mobile when sidebar is open) -->
         <div class="sm:hidden mt-8 pt-4 border-t border-gray-200">
-          <div class="flex items-center px-2 py-2">
+          <div class="flex items-center px-3 py-2">
             <div class="flex-shrink-0">
-              <div class="h-8 w-8 rounded-full overflow-hidden bg-indigo-500 flex items-center justify-center">
+              <div class="h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <img
                   v-if="authStore.user?.profile_image"
                   :src="getProfileImageUrl(authStore.user.profile_image)"
                   :alt="authStore.user?.name"
                   class="h-full w-full object-cover"
                 />
-                <span v-else class="text-white font-medium text-sm">
+                <span v-else class="text-white font-bold text-sm">
                   {{ authStore.user?.name?.charAt(0).toUpperCase() }}
                 </span>
               </div>
             </div>
             <div class="ml-3">
-              <div class="text-sm font-medium text-gray-800">{{ authStore.user?.name }}</div>
-              <div class="text-xs text-gray-500">{{ authStore.user?.email }}</div>
+              <div class="text-[13px] font-bold text-gray-900">{{ authStore.user?.name }}</div>
+              <div class="text-[11px] text-gray-500">{{ authStore.user?.email }}</div>
             </div>
           </div>
 
-          <div class="mt-2 space-y-1">
+          <div class="mt-2 space-y-1 px-1">
             <router-link
               to="/profile"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              class="group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
               @click="showMobileSidebar = false"
             >
               <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span class="ml-3">Your Profile</span>
+              <span class="ml-3.5 tracking-wide">Your Profile</span>
             </router-link>
 
             <router-link
               to="/settings"
-              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              class="group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
               @click="showMobileSidebar = false"
             >
               <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span class="ml-3">Settings</span>
+              <span class="ml-3.5 tracking-wide">Settings</span>
             </router-link>
 
             <button
               @click="handleLogout"
-              class="group w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              class="group w-full flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
             >
               <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              <span class="ml-3">Sign out</span>
+              <span class="ml-3.5 tracking-wide">Sign out</span>
             </button>
           </div>
         </div>
@@ -481,11 +531,11 @@
 
     <!-- Navigation -->
     <nav :class="[
-      'bg-white shadow-sm border-b border-gray-200 transition-all duration-300 relative z-10',
+      'bg-white shadow-sm border-b border-gray-200 transition-all duration-300 relative z-10 h-16 flex flex-col justify-center',
       sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
     ]">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+      <div class="w-full">
+        <div class="flex items-center justify-between px-6 w-full">
           <!-- Left side - Mobile menu button and logo -->
           <div class="flex items-center">
             <!-- Mobile menu button -->
@@ -502,17 +552,17 @@
 
           <!-- Right side - User menu -->
           <!-- Right side - User menu -->
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center gap-4 ml-auto">
             <!-- Quick Add Dropdown -->
             <div class="relative">
               <button
                 @click="showQuickAdd = !showQuickAdd"
                 data-quick-add-button
-                class="bg-green-500 hover:bg-green-600 p-2 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 relative transition-colors duration-200"
+                class="bg-green-500 hover:bg-green-600 p-1.5 rounded-full text-white focus:outline-none focus-visible:outline-none focus:ring-0 relative transition-colors duration-200"
                 title="Quick Add"
               >
                 <span class="sr-only">Quick Add</span>
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
               </button>
@@ -624,12 +674,54 @@
               </div>
             </div>
 
+            <!-- Theme Toggle Dropdown -->
+            <div class="relative inline-block">
+              <button
+                @click="showThemeMenu = !showThemeMenu"
+                data-theme-menu-button
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-transparent border border-transparent focus:outline-none focus-visible:outline-none focus:ring-0 relative transition-all duration-300 hover:scale-105"
+                title="Theme Settings"
+              >
+                <span class="sr-only">Theme Settings</span>
+                <!-- Sun Icon for Light Mode (shown when NOT dark) -->
+                <svg v-if="!isDarkMode" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-yellow-400">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <!-- Moon Icon for Dark Mode (shown when dark) -->
+                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5 text-indigo-200">
+                  <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              </button>
+
+              <!-- Theme Dropdown -->
+              <div
+                v-if="showThemeMenu"
+                ref="themeMenuRef"
+                class="origin-top-right absolute right-0 top-full mt-3 w-40 rounded-2xl shadow-2xl bg-white/95 backdrop-blur-xl border border-white/40 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
+              >
+                <div class="py-1">
+                  <button @click="setTheme('light')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'light' ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50']">
+                    <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    Light
+                  </button>
+                  <button @click="setTheme('dark')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'dark' ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50']">
+                    <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    Dark
+                  </button>
+                  <button @click="setTheme('system')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'system' ? 'text-indigo-600 bg-indigo-50' : 'text-gray-700 hover:bg-gray-50']">
+                    <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Match system
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Notifications -->
             <div class="relative">
               <button
                 @click="showNotifications = !showNotifications"
                 data-notification-button
-                class="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 relative"
+                class="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus-visible:outline-none focus:ring-0 relative"
               >
                 <span class="sr-only">View notifications</span>
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -701,7 +793,7 @@
                 <button
                   @click="showUserMenu = !showUserMenu"
                   data-user-menu-button
-                  class="bg-white flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  class="bg-white flex text-sm rounded-full focus:outline-none focus-visible:outline-none focus:ring-0"
                 >
                   <span class="sr-only">Open user menu</span>
                   <div class="h-8 w-8 rounded-full overflow-hidden bg-indigo-500 flex items-center justify-center">
@@ -722,47 +814,47 @@
               <div
                 v-if="showUserMenu"
                 ref="userMenuRef"
-                class="origin-top-right absolute right-0 mt-3 w-64 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white/95 backdrop-blur-xl border border-white/40 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
+                class="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-2xl bg-white border border-gray-200 focus:outline-none z-50 overflow-hidden"
               >
-                <div class="px-6 py-6 bg-gradient-to-br from-indigo-50/50 to-white/50 border-b border-gray-100/50 flex items-center space-x-4">
-                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg ring-4 ring-white transition-transform hover:scale-105 duration-300">
+                <!-- User Header -->
+                <div class="px-4 py-4 border-b border-gray-200 flex items-center space-x-3">
+                  <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
                     {{ authStore.user?.name?.charAt(0).toUpperCase() }}
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-0.5">Operator</p>
-                    <div class="font-black text-gray-900 truncate tracking-tight text-sm leading-none mb-1">{{ authStore.user?.name }}</div>
-                    <div class="text-[10px] text-gray-400 font-bold truncate tracking-tight">{{ authStore.user?.email }}</div>
+                    <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-0.5">Operator</p>
+                    <div class="text-[13px] font-bold text-gray-900 truncate tracking-wide leading-tight">{{ authStore.user?.name }}</div>
+                    <div class="text-[11px] text-gray-400 font-medium truncate">{{ authStore.user?.email }}</div>
                   </div>
                 </div>
-                
-                <div class="p-2 space-y-1 bg-white/30 backdrop-blur-sm">
+
+                <!-- Menu Items -->
+                <div class="py-1">
                   <router-link
                     to="/profile"
-                    class="group flex items-center px-4 py-3 text-sm font-black text-gray-600 rounded-2xl hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-200"
+                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
                     @click="showUserMenu = false"
                   >
-                    <div class="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-indigo-50 flex items-center justify-center mr-3 transition-colors">
-                      <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                    </div>
+                    <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
                     <span>Account Profile</span>
                   </router-link>
                   <router-link
                     to="/settings"
-                    class="group flex items-center px-4 py-3 text-sm font-black text-gray-600 rounded-2xl hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-200"
+                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
                     @click="showUserMenu = false"
                   >
-                    <div class="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-indigo-50 flex items-center justify-center mr-3 transition-colors">
-                      <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                    </div>
+                    <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
                     <span>System Settings</span>
                   </router-link>
+                </div>
+
+                <!-- Sign Out -->
+                <div class="border-t border-gray-200 py-1">
                   <button
                     @click="handleLogout"
-                    class="group w-full flex items-center px-4 py-3 text-sm font-black text-red-500 rounded-2xl hover:bg-red-50 transition-all duration-200"
+                    class="group w-full flex items-center px-3 py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
                   >
-                    <div class="w-8 h-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center mr-3 transition-colors">
-                      <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                    </div>
+                    <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
                     <span>Secure Sign Out</span>
                   </button>
                 </div>
@@ -843,7 +935,41 @@ router.afterEach(() => {
   resetError();
 });
 
+// Theme Management
+const currentThemeSetting = ref(localStorage.getItem('theme') || 'system');
+const isDarkMode = ref(false);
+
+const applyTheme = (setting) => {
+  if (setting === 'dark') {
+    isDarkMode.value = true;
+    document.documentElement.classList.add('dark');
+  } else if (setting === 'light') {
+    isDarkMode.value = false;
+    document.documentElement.classList.remove('dark');
+  } else {
+    // system
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      isDarkMode.value = true;
+      document.documentElement.classList.add('dark');
+    } else {
+      isDarkMode.value = false;
+      document.documentElement.classList.remove('dark');
+    }
+  }
+};
+
+const setTheme = (setting) => {
+  currentThemeSetting.value = setting;
+  if (setting === 'system') {
+    localStorage.removeItem('theme');
+  } else {
+    localStorage.setItem('theme', setting);
+  }
+  applyTheme(setting);
+  showThemeMenu.value = false;
+};
 // Reactive data
+const showThemeMenu = ref(false);
 const showUserMenu = ref(false);
 const showMobileMenu = ref(false);
 const showNotifications = ref(false);
@@ -854,12 +980,17 @@ const sidebarCollapsed = ref(false);
 const showMobileSidebar = ref(false);
 const showSidebarSalesMenu = ref(false);
 const showSidebarPurchaseMenu = ref(false);
+const themeMenuRef = ref(null);
 const userMenuRef = ref(null);
 const notificationsRef = ref(null);
 const quickAddRef = ref(null);
 const salesMenuRef = ref(null);
 const purchaseMenuRef = ref(null);
 const notifications = ref([]);
+const companies = ref([]);
+const activeCompany = ref(null);
+const showCompanySwitcher = ref(false);
+const companySwitcherRef = ref(null);
 
 // Computed
 const unreadNotifications = computed(() => {
@@ -870,6 +1001,27 @@ const unreadNotifications = computed(() => {
 const handleLogout = async () => {
   await authStore.logout();
   router.push('/login');
+};
+
+const fetchCompanies = async () => {
+  try {
+    const response = await axios.get('/api/companies/my-companies');
+    companies.value = response.data.companies;
+    if (companies.value.length > 0) {
+      activeCompany.value = companies.value.find(c => c.id == response.data.active_company_id) || companies.value[0];
+    }
+  } catch (error) {
+    console.error('Failed to load companies', error);
+  }
+};
+
+const switchCompany = async (companyId) => {
+  try {
+    await axios.post('/api/companies/switch', { company_id: companyId });
+    window.location.reload();
+  } catch (error) {
+    console.error('Failed to switch company', error);
+  }
 };
 
 const getProfileImageUrl = (imagePath) => {
@@ -897,7 +1049,29 @@ const handleClickOutside = (event) => {
     }
   }
 
+  // Check if click is outside theme menu
+  if (showThemeMenu.value && themeMenuRef.value && !themeMenuRef.value.contains(event.target)) {
+    const themeBtn = document.querySelector('[data-theme-menu-button]');
+    if (!themeBtn || !themeBtn.contains(event.target)) {
+      showThemeMenu.value = false;
+    }
+  }
+
   // Check if click is outside notifications
+  if (showNotifications.value && notificationsRef.value && !notificationsRef.value.contains(event.target)) {
+    const notifButton = document.querySelector('[data-notifications-button]');
+    if (!notifButton || !notifButton.contains(event.target)) {
+      showNotifications.value = false;
+    }
+  }
+
+  // Check if click is outside company switcher
+  if (showCompanySwitcher.value && companySwitcherRef.value && !companySwitcherRef.value.contains(event.target)) {
+    const switcherBtn = document.querySelector('[data-company-switcher-button]');
+    if (!switcherBtn || !switcherBtn.contains(event.target)) {
+      showCompanySwitcher.value = false;
+    }
+  }
   if (showNotifications.value && notificationsRef.value && !notificationsRef.value.contains(event.target)) {
     // Also check if the click is not on the notifications button
     const notificationButton = document.querySelector('[data-notification-button]');
@@ -979,6 +1153,17 @@ const formatDate = (dateString) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   fetchNotifications();
+  fetchCompanies();
+
+  // Initialize Theme
+  applyTheme(currentThemeSetting.value);
+  
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (currentThemeSetting.value === 'system') {
+      applyTheme('system');
+    }
+  });
 
   // Poll for new notifications every 30 seconds
   setInterval(fetchNotifications, 30000);

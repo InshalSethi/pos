@@ -1,219 +1,167 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-      <!-- Background decoration -->
-      <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full opacity-50"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-100 rounded-full opacity-50"></div>
+  <div class="h-screen w-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-gray-50">
+    <!-- Left Panel (Branding) -->
+    <div class="hidden lg:flex w-full h-full relative bg-[#232526] text-white flex-col justify-between p-12 overflow-hidden">
+      <!-- Top Bar -->
+      <div class="flex justify-between items-center relative z-10">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+            <svg class="w-6 h-6 text-[#544CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <span class="text-2xl font-black tracking-tight">Aura</span>
+        </div>
+        <!-- Login button relocated to the right form container -->
+      </div>
+
+      <!-- Center Content -->
+      <div class="relative z-10 max-w-lg mt-12">
+        <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center mb-6 border border-white/20">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <h1 class="text-4xl font-bold mb-4 tracking-tight leading-tight">Let's setup your business identity</h1>
+        <p class="text-white/80 text-[15px] leading-relaxed pr-8">
+          Provide your primary enterprise registration metrics, brand assets, and operational role parameters to structure your unique isolated root tenant profile safely.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class="relative z-10 flex items-center space-x-2 text-white/60 text-[11px] font-bold uppercase tracking-wider mt-auto">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Secured by Aura Multi-Tenant Cloud Architecture Layer</span>
       </div>
       
-      <!-- Register Card -->
-      <div class="relative bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <!-- Logo and Branding -->
-        <div class="text-center">
-          <div class="flex items-center justify-center mb-4">
-            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <span class="ml-2 text-xl font-bold text-gray-900">Aura</span>
+      <!-- 3D Card Asset Background -->
+      <div class="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden pointer-events-none z-0">
+        <spline-viewer 
+          url="https://prod.spline.design/0P82uUM5-3-4R85v/scene.splinecode" 
+          loading-type="eager"
+          hint="false"
+          class="absolute -bottom-12 w-full h-[108%] scale-95 lg:scale-100 origin-center"
+          background-color="#232526"
+        ></spline-viewer>
+      </div>
+    </div>
+
+    <!-- Right Panel (Form) -->
+    <div class="w-full h-full flex flex-col justify-between bg-[#F8FAFC] relative overflow-hidden">
+      
+
+
+      <!-- Mobile Header (Visible only on small screens) -->
+      <div class="lg:hidden flex items-center justify-between p-6 mb-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-[#544CF6] rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
-          <h1 class="text-2xl font-bold text-gray-900 mb-2">Create your account</h1>
-          <p class="text-gray-600 text-sm">Please fill in your details to sign up</p>
+          <span class="text-xl font-bold text-gray-900">Aura</span>
+        </div>
+        <router-link to="/login" class="text-sm font-medium text-[#544CF6]">Sign in</router-link>
+      </div>
+
+      <div class="max-w-md w-full mx-auto px-6 lg:px-12 my-auto py-12">
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Create Account</h2>
+          <p class="text-gray-500 mt-1 text-[14px]">Please enter your accurate details to sign up.</p>
         </div>
 
         <!-- Success Message -->
-        <div v-if="success" class="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div class="flex">
-            <svg class="w-5 h-5 text-green-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            <div>
-              <h3 class="text-sm font-medium text-green-800">Registration successful!</h3>
-              <p class="text-sm text-green-700 mt-1">{{ successMessage }}</p>
-            </div>
+        <div v-if="success" class="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-start shadow-sm">
+          <svg class="w-5 h-5 text-green-500 mr-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div>
+            <h3 class="text-[13px] font-semibold text-green-800">Registration successful!</h3>
+            <p class="text-[13px] text-green-700 mt-0.5">{{ successMessage }}</p>
           </div>
         </div>
 
         <!-- Error Message -->
-        <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div class="flex">
-            <svg class="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-            </svg>
-            <div>
-              <h3 class="text-sm font-medium text-red-800">Registration failed</h3>
-              <p class="text-sm text-red-700 mt-1">{{ error }}</p>
-            </div>
+        <div v-if="error" class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start shadow-sm">
+          <svg class="w-5 h-5 text-red-500 mr-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div>
+            <h3 class="text-[13px] font-semibold text-red-800">Registration failed</h3>
+            <p class="text-[13px] text-red-700 mt-0.5">{{ error }}</p>
           </div>
         </div>
 
-        <!-- Registration Form -->
-        <form @submit.prevent="handleRegister" class="space-y-4">
-          <!-- Name Field -->
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              id="name"
-              v-model="form.name"
-              name="name"
-              type="text"
-              autocomplete="name"
-              required
-              class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              :class="{ 'border-red-300 focus:ring-red-500': errors.name }"
-              placeholder="Enter your full name"
-            />
-            <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name[0] }}</p>
-          </div>
-
-          <!-- Email Field -->
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              id="email"
-              v-model="form.email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              required
-              class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              :class="{ 'border-red-300 focus:ring-red-500': errors.email }"
-              placeholder="Enter your email"
-            />
-            <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email[0] }}</p>
-          </div>
-
-          <!-- Password Field -->
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div class="relative">
-              <input
-                id="password"
-                v-model="form.password"
-                name="password"
-                :type="showPassword ? 'text' : 'password'"
-                autocomplete="new-password"
-                required
-                class="w-full px-3 py-3 pr-10 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                :class="{ 'border-red-300 focus:ring-red-500': errors.password }"
-                placeholder="Create a password"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <svg v-if="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              </button>
+        <!-- Form -->
+        <form @submit.prevent="handleRegister" class="max-w-md w-full mx-auto flex flex-col">
+          <div class="w-full space-y-3.5">
+            <!-- Name -->
+            <div>
+              <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Full Name</label>
+              <input v-model="form.name" type="text" required class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600/20 layout-field transition-all shadow-sm outline-none placeholder-gray-400 bg-white" :class="{ 'border-red-300': errors.name }" placeholder="e.g. Azlan Hassan" />
+              <p v-if="errors.name" class="mt-1.5 text-xs text-red-600">{{ errors.name[0] }}</p>
             </div>
-            <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password[0] }}</p>
-            <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters long</p>
-          </div>
-
-          <!-- Confirm Password Field -->
-          <div>
-            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <div class="relative">
-              <input
-                id="password_confirmation"
-                v-model="form.password_confirmation"
-                name="password_confirmation"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                autocomplete="new-password"
-                required
-                class="w-full px-3 py-3 pr-10 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Confirm your password"
-              />
-              <button
-                type="button"
-                @click="showConfirmPassword = !showConfirmPassword"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <svg v-if="showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              </button>
+            
+            <!-- Email -->
+            <div>
+              <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Company Email</label>
+              <input v-model="form.email" type="email" required class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600/20 layout-field transition-all shadow-sm outline-none placeholder-gray-400 bg-white" :class="{ 'border-red-300': errors.email }" placeholder="azlanhassan@gmail.com" />
+              <p v-if="errors.email" class="mt-1.5 text-xs text-red-600">{{ errors.email[0] }}</p>
+            </div>
+            
+            <!-- Password -->
+            <div>
+              <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Password</label>
+              <div class="relative">
+                <input v-model="form.password" :type="showPassword ? 'text' : 'password'" required class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600/20 layout-field transition-all shadow-sm outline-none placeholder-gray-400 bg-white" :class="{ 'border-red-300': errors.password }" placeholder="••••••••" />
+                <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg v-if="showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" /></svg>
+                </button>
+              </div>
+              <p v-if="errors.password" class="mt-1.5 text-xs text-red-600">{{ errors.password[0] }}</p>
+            </div>
+            
+            <!-- Confirm Password -->
+            <div>
+              <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Confirm Password</label>
+              <div class="relative">
+                <input v-model="form.password_confirmation" :type="showConfirmPassword ? 'text' : 'password'" required class="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600/20 layout-field transition-all shadow-sm outline-none placeholder-gray-400 bg-white" placeholder="••••••••" />
+                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg v-if="showConfirmPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" /></svg>
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Terms and Conditions -->
-          <div class="flex items-start">
-            <input
-              id="terms"
-              v-model="form.terms"
-              type="checkbox"
-              required
-              class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label for="terms" class="ml-2 text-sm text-gray-600">
-              I agree to the 
-              <a href="#" class="text-blue-600 hover:text-blue-500 font-medium">Terms of Service</a>
-              and 
-              <a href="#" class="text-blue-600 hover:text-blue-500 font-medium">Privacy Policy</a>
+          <!-- Terms -->
+          <div class="flex items-start pt-3 pb-1 w-full">
+            <input id="terms" v-model="form.terms" type="checkbox" required class="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600" />
+            <label for="terms" class="ml-2 text-[13px] text-gray-600">
+              I agree to the <a href="#" class="text-blue-600 hover:underline font-medium">Terms of Service</a> and <a href="#" class="text-blue-600 hover:underline font-medium">Privacy Policy</a>
             </label>
           </div>
 
-          <!-- Submit Button -->
-          <button
-            type="submit"
-            :disabled="loading"
-            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="loading">Creating account...</span>
-            <span v-else>Create account</span>
+          <!-- Primary Action -->
+          <button type="submit" :disabled="loading" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl shadow-sm transition-all mt-2 disabled:opacity-70 disabled:cursor-not-allowed">
+            <span v-if="loading" class="flex items-center justify-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              Creating...
+            </span>
+            <span v-else class="flex items-center justify-center">
+              Create Account
+            </span>
           </button>
           
-          <div class="relative my-6">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-300"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <button 
-            type="button"
-            @click="loginWithGoogle"
-            class="w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <img class="h-5 w-5 mr-2" src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
-            Sign in with Google
+          <!-- Google button below Create Account -->
+          <button type="button" @click="loginWithGoogle" class="w-full flex items-center justify-center py-2.5 mt-3 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all">
+            <img class="h-4 w-4 mr-2" src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
+            Google Sign Up
           </button>
-
-          <!-- Sign In Link -->
-          <div class="text-center">
-            <p class="text-sm text-gray-600">
-              Already have an account?
-              <router-link
-                to="/login"
-                class="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                Sign in
-              </router-link>
-            </p>
-          </div>
         </form>
+
+        <p class="text-sm text-slate-500 text-center mt-6">
+          Already have an account? <router-link to="/login" class="text-blue-600 hover:underline font-medium">Sign in</router-link>
+        </p>
       </div>
     </div>
   </div>
@@ -253,7 +201,7 @@ onMounted(async () => {
     loading.value = true;
     try {
       await authStore.setToken(token); // Store mein token save karega
-      router.push('/'); // Dashboard bhej dega
+      window.location.href = '/'; // Trigger backend middleware check
     } catch (err) {
       error.value = 'Failed to sync Google session';
     } finally {
@@ -294,12 +242,12 @@ const handleRegister = async () => {
 
     if (result.success) {
       success.value = true;
-      successMessage.value = 'Account created successfully! Redirecting to dashboard...';
+      successMessage.value = 'Account created successfully! Redirecting to setup...';
       
-      // Redirect to dashboard after 2 seconds
+      // Redirect to welcome gate
       setTimeout(() => {
-        router.push('/');
-      }, 2000);
+        window.location.href = result.redirect_url || '/';
+      }, 1000);
     } else {
       error.value = result.message;
       errors.value = result.errors || {};

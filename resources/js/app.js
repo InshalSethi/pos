@@ -23,4 +23,5 @@ app.use(router);
 app.use(vfm);
 
 // Mount app
+app.config.globalProperties.$baseCurrency = window.baseCurrency;
 app.mount('#app');

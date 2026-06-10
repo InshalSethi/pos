@@ -6,7 +6,7 @@
     
     <div class="relative group">
       <ListboxButton
-        class="relative w-full pl-5 pr-12 py-4 text-left bg-gray-50/50 border border-gray-100 rounded-2xl cursor-pointer focus:outline-none focus:ring-2 transition-all duration-300 font-medium text-[14px] text-gray-700 shadow-inner group-hover:bg-white"
+        class="relative w-full pl-3 pr-10 py-2 text-left bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer focus:outline-none focus:ring-2 transition-all duration-300 font-medium text-sm text-gray-700 shadow-inner group-hover:bg-white"
         :class="[
           focusColor || 'focus:ring-indigo-500', 
           error ? 'border-red-300 ring-red-500' : '',
@@ -36,7 +36,7 @@
         enter-to-class="opacity-100 scale-100 translate-y-0"
       >
         <ListboxOptions
-          class="absolute z-[100] mt-3 min-w-full w-max max-h-64 overflow-auto rounded-[24px] bg-white/95 backdrop-blur-xl py-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-black/5 focus:outline-none custom-scrollbar border border-white/40"
+          class="absolute left-0 mt-1 z-30 w-full min-w-full max-h-64 overflow-auto bg-white border border-slate-200/80 shadow-lg rounded-xl p-1 focus:outline-none custom-scrollbar"
         >
           <ListboxOption
             v-slot="{ active, selected: isSelected }"
@@ -47,8 +47,8 @@
           >
             <li
               :class="[
-                active ? 'bg-indigo-50/80 text-indigo-900 border-l-4 border-indigo-600' : 'text-gray-700 border-l-4 border-transparent',
-                'relative cursor-pointer select-none py-3 px-6 transition-all duration-200 font-medium text-[14px]'
+                active ? 'bg-indigo-50 text-indigo-900' : 'text-gray-700',
+                'relative cursor-pointer select-none px-3 py-1.5 text-sm rounded-lg transition-all duration-200 font-medium'
               ]"
             >
               <div class="flex items-center justify-between gap-4">

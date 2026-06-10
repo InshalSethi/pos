@@ -36,15 +36,45 @@ class AuthController extends Controller
         // Create token
         $token = $user->createToken('auth-token')->plainTextToken;
 
+        // Invalidate stale session before establishing new one if session exists
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        // Establish Web Session for Blade/Livewire integration
+        Auth::guard('web')->login($user, $request->boolean('rememberMe'));
+        
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         // Get user permissions and roles
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
         $roles = $user->getRoleNames()->toArray();
+        if ($user->current_company_id) {
+            $companyPivot = $user->companies()->where('company_id', $user->current_company_id)->first();
+            if ($companyPivot && $companyPivot->pivot->role === 'owner') {
+                $roles[] = 'owner';
+            }
+        }
+
+        // Eagerly resolve the active company for localization context
+        $company = $user->current_company_id
+            ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
+            : null;
 
         return response()->json([
-            'token' => $token,
-            'user' => $user,
-            'permissions' => $permissions,
-            'roles' => $roles,
+            'token'           => $token,
+            'user'            => $user,
+            'permissions'     => $permissions,
+            'roles'           => $roles,
+            'redirect_url'    => $user->onboarding_completed ? '/' : '/company-setup',
+            'company_context' => $company ? [
+                'base_currency'   => $company->base_currency   ?? 'USD',
+                'system_language' => $company->system_language ?? 'en',
+                'timezone_offset' => $company->timezone_offset ?? 'UTC',
+            ] : null,
         ]);
     }
 
@@ -62,6 +92,7 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'onboarding_completed' => false,
             ]);
 
             // Assign default role
@@ -85,15 +116,35 @@ class AuthController extends Controller
             // Create token
             $token = $user->createToken('auth-token')->plainTextToken;
 
+            // Invalidate stale session before establishing new one if session exists
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
+            // Establish Web Session for Blade/Livewire integration
+            Auth::guard('web')->login($user);
+            
+            if ($request->hasSession()) {
+                $request->session()->regenerate();
+            }
+
             // Get user permissions and roles
             $permissions = $user->getAllPermissions()->pluck('name')->toArray();
             $roles = $user->getRoleNames()->toArray();
+            if ($user->current_company_id) {
+                $companyPivot = $user->companies()->where('company_id', $user->current_company_id)->first();
+                if ($companyPivot && $companyPivot->pivot->role === 'owner') {
+                    $roles[] = 'owner';
+                }
+            }
 
             return response()->json([
                 'token' => $token,
                 'user' => $user,
                 'permissions' => $permissions,
                 'roles' => $roles,
+                'redirect_url' => '/company-setup',
             ], 201);
         });
     }
@@ -105,11 +156,27 @@ class AuthController extends Controller
         // Get user permissions and roles
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
         $roles = $user->getRoleNames()->toArray();
+        if ($user->current_company_id) {
+            $companyPivot = $user->companies()->where('company_id', $user->current_company_id)->first();
+            if ($companyPivot && $companyPivot->pivot->role === 'owner') {
+                $roles[] = 'owner';
+            }
+        }
+
+        // Eagerly resolve the active company for localization context
+        $company = $user->current_company_id
+            ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
+            : null;
 
         return response()->json([
-            'user' => $user,
-            'permissions' => $permissions,
-            'roles' => $roles,
+            'user'            => $user,
+            'permissions'     => $permissions,
+            'roles'           => $roles,
+            'company_context' => $company ? [
+                'base_currency'   => $company->base_currency   ?? 'USD',
+                'system_language' => $company->system_language ?? 'en',
+                'timezone_offset' => $company->timezone_offset ?? 'UTC',
+            ] : null,
         ]);
     }
 

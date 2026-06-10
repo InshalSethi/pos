@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
+
 use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentSetting extends Model
 {
+    use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
 

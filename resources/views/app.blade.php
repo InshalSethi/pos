@@ -29,6 +29,7 @@
 
     <script>
         window.systemTimezones = @json(\DateTimeZone::listIdentifiers());
+        window.baseCurrency = @json(auth()->check() && auth()->user()->company ? auth()->user()->company->base_currency : 'USD');
     </script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -36,8 +37,9 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.0.91/build/spline-viewer.js"></script>
 </head>
-<body class="font-sans antialiased">
+<body class="font-sans antialiased text-[13px] font-medium text-gray-600 tracking-wide">
     <div id="app"></div>
 </body>
 </html>

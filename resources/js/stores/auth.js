@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
+import { useCurrencyStore } from '@/stores/currency';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -13,6 +14,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value && !!user.value);
 
   const hasPermission = computed(() => (permission) => {
+    if (roles.value.includes('admin') || roles.value.includes('owner')) {
+      return true;
+    }
     return permissions.value.includes(permission);
   });
 
@@ -35,6 +39,11 @@ export const useAuthStore = defineStore('auth', () => {
         permissions.value = response.data.permissions || [];
         roles.value = response.data.roles || [];
 
+        // Seed currency store from company context (instant, no extra API call)
+        if (response.data.company_context?.base_currency) {
+          useCurrencyStore().seedFromCompany(response.data.company_context.base_currency);
+        }
+
         // Store token with remember me preference
         localStorage.setItem('auth_token', token.value);
 
@@ -53,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
           localStorage.setItem('token_expiration', expirationDate.toISOString());
         }
 
-        return { success: true };
+        return { success: true, redirect_url: response.data.redirect_url };
       }
     } catch (error) {
       return {
@@ -89,6 +98,12 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.data.user;
       permissions.value = response.data.permissions || [];
       roles.value = response.data.roles || [];
+
+      // Seed currency store from company context (instant, no extra API call)
+      if (response.data.company_context?.base_currency) {
+        useCurrencyStore().seedFromCompany(response.data.company_context.base_currency);
+      }
+
       return true;
     } catch (error) {
       console.error('Fetch user error:', error);
@@ -147,7 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         localStorage.setItem('auth_token', token.value);
 
-        return { success: true };
+        return { success: true, redirect_url: response.data.redirect_url };
       }
     } catch (error) {
       return {

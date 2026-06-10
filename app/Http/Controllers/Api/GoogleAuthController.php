@@ -41,7 +41,8 @@ class GoogleAuthController extends Controller
                     'google_id' => $googleUser->getId(),
                     'password' => bcrypt(Str::random(16)), // Fixed: use Str::random
                     'email_verified_at' => now(),
-                    'is_active' => true
+                    'is_active' => true,
+                    'onboarding_completed' => false
                 ]);
 
                 // Assign default 'user' role

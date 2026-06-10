@@ -20,6 +20,7 @@ import Transactions from '@/components/transactions/Transactions.vue';
 import Reports from '@/components/reports/Reports.vue';
 import UserProfile from '@/components/profile/UserProfile.vue';
 import Settings from '@/components/settings/Settings.vue';
+import ManageCompanies from '@/components/companies/ManageCompanies.vue';
 import SalesInvoices from '@/components/sales/SalesInvoices.vue';
 import CreateInvoice from '@/components/sales/CreateInvoice.vue';
 import SalesInvoiceView from '@/components/sales/SalesInvoiceView.vue';
@@ -73,7 +74,11 @@ const routes = [
         name: 'Dashboard',
         component: Dashboard
       },
-
+      {
+        path: 'companies',
+        name: 'ManageCompanies',
+        component: ManageCompanies
+      },
       {
         path: 'products',
         name: 'Products',
