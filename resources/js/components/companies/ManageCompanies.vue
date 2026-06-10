@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Header Section -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between pl-6 pt-2">
       <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Companies</h1>
       <div class="flex items-center gap-3">
         <!-- Drafts Trigger Button -->
