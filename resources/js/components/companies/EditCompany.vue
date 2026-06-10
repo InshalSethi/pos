@@ -98,6 +98,16 @@
               placeholder="Enter registration number"
             >
           </div>
+
+          <!-- Address -->
+          <div class="space-y-1">
+            <label class="text-sm font-semibold text-slate-700">Address</label>
+            <textarea 
+              v-model="form.business_address" 
+              placeholder="Address"
+              class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow resize-none h-[100px]"
+            ></textarea>
+          </div>
         </div>
       </div>
 
@@ -140,6 +150,7 @@ const form = ref({
   company_email: '',
   company_phone: '',
   registration_number: '',
+  business_address: '',
   company_logo_url: null,
 });
 
@@ -163,6 +174,7 @@ const fetchCompany = async () => {
       company_email: data.company_email || '',
       company_phone: data.company_phone || '',
       registration_number: data.registration_number || '',
+      business_address: data.business_address || '',
       company_logo_url: data.company_logo ? `/storage/${data.company_logo}` : null,
     };
   } catch (error) {
@@ -189,6 +201,7 @@ const updateCompany = async () => {
   formData.append('company_name', form.value.company_name);
   formData.append('company_phone', form.value.company_phone || '');
   formData.append('registration_number', form.value.registration_number || '');
+  formData.append('business_address', form.value.business_address || '');
   
   if (logoFile.value) {
     formData.append('company_logo', logoFile.value);

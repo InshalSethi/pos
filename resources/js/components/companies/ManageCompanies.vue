@@ -83,13 +83,14 @@
                 </div>
               </th>
               <th scope="col" class="px-6 py-4">Contact</th>
+              <th scope="col" class="px-6 py-4 text-left">Address</th>
               <th scope="col" class="px-6 py-4 text-left">Region</th>
               <th scope="col" class="px-6 py-4 w-32 text-center">Actions</th> <!-- Actions Placeholder -->
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
             <tr v-if="companies.length === 0 && !loading" class="hover:bg-slate-50 transition-colors duration-150">
-              <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+              <td colspan="7" class="px-6 py-12 text-center text-slate-500">
                 <svg class="mx-auto h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
@@ -127,6 +128,11 @@
                   <span class="text-slate-900 font-medium">{{ company.company_email || 'N/A' }}</span>
                   <span class="text-slate-500 text-xs mt-0.5">{{ company.company_phone || 'N/A' }}</span>
                 </div>
+              </td>
+              <td class="px-6 py-4 align-middle">
+                <span class="text-slate-500 text-xs truncate max-w-[180px] inline-block" :title="company.business_address">
+                  {{ company.business_address || 'N/A' }}
+                </span>
               </td>
               <td class="text-left px-6 py-4 align-middle">
                 <div class="flex flex-col items-start">

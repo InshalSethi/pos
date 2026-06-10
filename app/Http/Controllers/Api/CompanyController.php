@@ -82,6 +82,7 @@ class CompanyController extends Controller
             'company_name' => 'required|string|max:255',
             'company_phone' => 'nullable|string|max:255',
             'registration_number' => 'nullable|string|max:255',
+            'business_address' => 'nullable|string|max:1000',
             'company_logo' => 'nullable|image|max:2048',
         ]);
 
