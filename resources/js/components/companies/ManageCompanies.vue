@@ -249,8 +249,9 @@
           <!-- Premium Header -->
           <div class="px-8 py-6 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-10">
             <div class="flex items-center gap-5">
-              <div class="flex-shrink-0 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-indigo-500/30">
-                {{ selectedCompany.company_name ? selectedCompany.company_name.charAt(0) : '?' }}
+              <div class="flex-shrink-0 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-indigo-500/30 overflow-hidden relative">
+                <img v-if="selectedCompany.company_logo" :src="`/storage/${selectedCompany.company_logo}`" class="w-full h-full object-cover absolute inset-0 z-10" />
+                <span :class="{'z-0': selectedCompany.company_logo}">{{ selectedCompany.company_name ? selectedCompany.company_name.charAt(0).toUpperCase() : '?' }}</span>
               </div>
               <div>
                 <h3 class="text-xl font-bold text-gray-900 tracking-tight">{{ selectedCompany.company_name }}</h3>

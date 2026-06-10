@@ -12,24 +12,61 @@
       <div class="relative flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <!-- Company Switcher -->
         <div class="relative flex-1 w-full min-w-0" v-if="activeCompany">
-          <button
-            @click="showCompanySwitcher = !showCompanySwitcher"
-            data-company-switcher-button
-            :class="[
-              'flex items-center w-full focus:outline-none transition-opacity duration-300',
-              sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
-            ]"
-          >
-            <div class="flex-shrink-0 h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
-              {{ activeCompany.company_name.charAt(0) }}
-            </div>
-            <div class="ml-3 flex-1 text-left overflow-hidden">
-              <span class="block text-[13px] tracking-wide font-bold text-gray-900 truncate">{{ activeCompany.company_name }}</span>
-            </div>
-            <svg class="ml-1 flex-shrink-0 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-            </svg>
-          </button>
+          <div class="flex items-center gap-3.5 p-1 min-w-0">
+            <!-- AVATAR TRIGGER BUTTON -->
+            <button
+              type="button"
+              @click="showLogoLightbox = true"
+              :class="[
+                'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold text-lg shadow-md border border-white/10 hover:scale-105 active:scale-95 transition-all duration-150 cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 group',
+                sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
+              ]"
+              :title="'Preview ' + activeCompany.company_name + ' logo'"
+              :aria-label="'Preview ' + activeCompany.company_name + ' logo'"
+            >
+              <!-- Logo image if available -->
+              <img
+                v-if="activeCompany.company_logo"
+                :src="`/storage/${activeCompany.company_logo}`"
+                :alt="activeCompany.company_name + ' logo'"
+                class="h-full w-full object-cover group-hover:brightness-90 transition-all duration-150"
+              >
+              <!-- Initial letter fallback -->
+              <span v-else class="select-none" aria-hidden="true">
+                {{ activeCompany.company_name.charAt(0).toUpperCase() }}
+              </span>
+
+              <!-- Zoom hover overlay -->
+              <div class="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-white drop-shadow-sm">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z" />
+                </svg>
+              </div>
+            </button>
+
+            <!-- COMPANY NAME & WORKSPACE LABEL (Dropdown Trigger) -->
+            <button
+              type="button"
+              @click="showCompanySwitcher = !showCompanySwitcher"
+              data-company-switcher-button
+              :class="[
+                'flex-1 flex items-center min-w-0 text-left focus:outline-none transition-opacity duration-300',
+                sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
+              ]"
+            >
+              <div class="flex flex-col min-w-0 text-left w-full">
+                <h2 class="text-sm font-bold text-gray-900 truncate tracking-wide leading-tight">
+                  {{ activeCompany.company_name }}
+                </h2>
+                <span class="text-[10px] text-gray-500 font-medium truncate">
+                  Enterprise Workspace
+                </span>
+              </div>
+              <svg class="ml-1 flex-shrink-0 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+              </svg>
+            </button>
+          </div>
 
           <!-- Dropdown menu -->
           <div
@@ -46,9 +83,10 @@
                 :class="company.id === activeCompany.id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
               >
                 <div class="flex items-center overflow-hidden">
-                  <svg class="mr-3 flex-shrink-0 h-4 w-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
+                  <div class="mr-3 flex-shrink-0 h-5 w-5 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm overflow-hidden">
+                    <img v-if="company.company_logo" :src="`/storage/${company.company_logo}`" class="w-full h-full object-cover" />
+                    <span v-else>{{ company.company_name.charAt(0).toUpperCase() }}</span>
+                  </div>
                   <span class="truncate">{{ company.company_name }}</span>
                 </div>
                 <svg v-if="company.id === activeCompany.id" class="ml-2 flex-shrink-0 h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -901,6 +939,61 @@
         <router-view v-else />
       </div>
     </main>
+
+    <!-- LOGO LIGHTBOX OVERLAY -->
+    <transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-show="showLogoLightbox"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/80 backdrop-blur-md"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="activeCompany?.company_name + ' logo preview'"
+        @keydown.esc.window="showLogoLightbox = false"
+      >
+        <!-- Backdrop click-to-dismiss -->
+        <div class="absolute inset-0 cursor-zoom-out" @click="showLogoLightbox = false" aria-hidden="true"></div>
+
+        <!-- Lightbox Card -->
+        <div class="relative z-10 max-w-xl max-h-[80vh] p-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-2xl scale-100">
+          <!-- Close Button -->
+          <button
+            @click="showLogoLightbox = false"
+            type="button"
+            class="absolute -top-3 -right-3 p-1.5 rounded-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-md active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            aria-label="Close logo preview"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <!-- Logo Preview Content -->
+          <img
+            v-if="activeCompany?.company_logo"
+            :src="`/storage/${activeCompany.company_logo}`"
+            :alt="activeCompany?.company_name + ' full logo preview'"
+            class="max-w-full max-h-[70vh] rounded-xl object-contain shadow-inner"
+          >
+          <!-- Fallback state in lightbox -->
+          <div v-else class="h-48 w-48 flex flex-col items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl text-white">
+            <span class="font-extrabold text-5xl select-none">{{ activeCompany?.company_name?.charAt(0).toUpperCase() }}</span>
+            <p class="text-[11px] font-medium tracking-wide text-indigo-200 mt-2">No logo configured</p>
+          </div>
+
+          <!-- Company name caption below image -->
+          <p class="mt-2.5 text-center text-xs font-semibold text-gray-500 dark:text-zinc-400 truncate">
+            {{ activeCompany?.company_name }}
+          </p>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -969,6 +1062,7 @@ const setTheme = (setting) => {
   showThemeMenu.value = false;
 };
 // Reactive data
+const showLogoLightbox = ref(false);
 const showThemeMenu = ref(false);
 const showUserMenu = ref(false);
 const showMobileMenu = ref(false);
