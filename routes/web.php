@@ -112,7 +112,7 @@ Route::get('/initiate-new-company', function () {
     return redirect()->to('/company-setup?start_fresh_flow=true');
 })->name('company.initiate-new');
 
-// 4. Vue.js SPA Catch-all — excludes livewire assets and server-rendered Livewire/server pages
-Route::get('/{any}', function () {
+// 4. Vue.js SPA Catch-all
+Route::fallback(function () {
     return view('app');
-})->where('any', '^(?!livewire|company-setup|initiate-new-company).*$');
+});

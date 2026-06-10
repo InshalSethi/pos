@@ -32,13 +32,15 @@
       </div>
     </div>
 
-    <!-- Success Message -->
-    <div v-if="successMessage" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 shadow-sm flex items-start">
-      <svg class="h-5 w-5 text-emerald-500 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span class="text-sm font-medium">{{ successMessage }}</span>
-    </div>
+    <!-- Success Message Toast -->
+    <transition enter-active-class="transform ease-out duration-300 transition" enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2" enter-to-class="translate-y-0 opacity-100 sm:translate-x-0" leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="successMessage" class="fixed bottom-4 right-4 z-50 p-4 rounded-lg bg-slate-900 border border-slate-700 text-white shadow-2xl flex items-center gap-3 w-80">
+        <svg class="h-6 w-6 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm font-semibold">{{ successMessage }}</span>
+      </div>
+    </transition>
 
     <!-- Card Container -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -135,10 +137,13 @@
               <td class="text-center px-6 py-4 whitespace-nowrap w-32 align-middle">
                 <!-- Actions Bar -->
                 <div class="flex items-center justify-center gap-3 opacity-100 relative">
-                  <button class="p-1.5 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="View">
+                  <button @click="switchCompany(company.id)" class="p-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Switch Workspace">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                  </button>
+                  <button @click="viewCompany(company)" class="p-1.5 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="View">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   </button>
-                  <button class="p-1.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Edit">
+                  <button @click="goToEditCompany(company.id)" class="p-1.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Edit">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                   </button>
                   <button class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">
@@ -226,23 +231,153 @@
         </div>
       </div>
     </div>
+
+    <!-- View Company Premium Modal -->
+    <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to-class="opacity-100 translate-y-0 sm:scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 translate-y-0 sm:scale-100" leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+      <div v-if="selectedCompany" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="selectedCompany = null"></div>
+
+        <!-- Modal Panel -->
+        <div class="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-2xl w-full transform transition-all border border-slate-100 flex flex-col max-h-[90vh]">
+          <!-- Premium Header -->
+          <div class="px-8 py-6 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100 flex items-center justify-between sticky top-0 z-10">
+            <div class="flex items-center gap-5">
+              <div class="flex-shrink-0 h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-indigo-500/30">
+                {{ selectedCompany.company_name ? selectedCompany.company_name.charAt(0) : '?' }}
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 tracking-tight">{{ selectedCompany.company_name }}</h3>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 tracking-wider uppercase">
+                    ID: #{{ selectedCompany.id }}
+                  </span>
+                  <span v-if="currentCompanyId == selectedCompany.id" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-600 tracking-wider uppercase">
+                    Active Workspace
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button @click="selectedCompany = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all active:scale-95">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="px-8 py-8 overflow-y-auto custom-scrollbar flex-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              
+              <!-- Contact Details Group -->
+              <div class="space-y-6">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Contact & Identification</h4>
+                
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email Address</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.company_email || 'Not Provided' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Phone Number</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.company_phone || 'Not Provided' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tax Number (TRN/VAT)</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.tax_number || 'Not Provided' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registration Number</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.registration_number || 'Not Provided' }}</p>
+                </div>
+              </div>
+
+              <!-- Localization Group -->
+              <div class="space-y-6">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Localization Settings</h4>
+                
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Country/Region</p>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.country || 'Not Set' }}</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-1">
+                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Base Currency</p>
+                    <p class="text-sm font-bold text-indigo-600 bg-indigo-50 inline-block px-2 py-0.5 rounded">{{ selectedCompany.base_currency || 'Not Set' }}</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Timezone</p>
+                    <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.timezone_offset || 'UTC' }}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">System Language</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedCompany.system_language === 'en' ? 'English' : (selectedCompany.system_language || 'English') }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Full Width Address Group -->
+            <div class="mt-8 space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Business Address</p>
+              <p class="text-sm font-medium text-slate-800 leading-relaxed">{{ selectedCompany.business_address || 'No physical address provided.' }}</p>
+            </div>
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 z-10">
+            <button @click="selectedCompany = null" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all shadow-sm">
+              Close
+            </button>
+            <button @click="goToEditCompany(selectedCompany.id)" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 rounded-xl transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+              Edit Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 
 const companies = ref([]);
 const drafts = ref([]);
 const showDraftsModal = ref(false);
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+const authStore = useAuthStore();
+const router = useRouter();
 
 const currentCompanyId = ref(null);
 const search = ref('');
 const loading = ref(false);
 const switchingId = ref(null);
 const successMessage = ref('');
+const selectedCompany = ref(null);
+
+const viewCompany = (company) => {
+  selectedCompany.value = company;
+};
+
+const goToEditCompany = (id) => {
+  if (selectedCompany.value) {
+    selectedCompany.value = null; // Close modal gracefully before navigating
+  }
+  router.push(`/companies/edit?id=${id}`);
+};
 
 const confirmPurge = (e) => {
   if (!confirm('Permanently remove this draft? This cannot be undone.')) {
@@ -311,10 +446,14 @@ const switchCompany = async (id) => {
     successMessage.value = response.data.message;
     currentCompanyId.value = id;
     
-    // Small delay to show the success message, then hard refresh to apply new session globally
+    // Refresh global user/company context in Pinia store
+    await authStore.fetchUser();
+    window.dispatchEvent(new CustomEvent('company-switched-globally'));
+    
+    // Clear success message after 3 seconds
     setTimeout(() => {
-      window.location.href = '/';
-    }, 1000);
+      successMessage.value = '';
+    }, 3000);
   } catch (error) {
     console.error('Error switching company:', error);
   } finally {

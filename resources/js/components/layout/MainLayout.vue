@@ -1018,7 +1018,9 @@ const fetchCompanies = async () => {
 const switchCompany = async (companyId) => {
   try {
     await axios.post('/api/companies/switch', { company_id: companyId });
-    window.location.reload();
+    await fetchCompanies();
+    await authStore.fetchUser();
+    window.dispatchEvent(new CustomEvent('company-switched-globally'));
   } catch (error) {
     console.error('Failed to switch company', error);
   }
@@ -1152,6 +1154,7 @@ const formatDate = (dateString) => {
 // Lifecycle hooks
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('company-switched-globally', fetchCompanies);
   fetchNotifications();
   fetchCompanies();
 
@@ -1171,5 +1174,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('company-switched-globally', fetchCompanies);
 });
 </script>

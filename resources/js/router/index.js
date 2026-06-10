@@ -21,6 +21,7 @@ import Reports from '@/components/reports/Reports.vue';
 import UserProfile from '@/components/profile/UserProfile.vue';
 import Settings from '@/components/settings/Settings.vue';
 import ManageCompanies from '@/components/companies/ManageCompanies.vue';
+import EditCompany from '@/components/companies/EditCompany.vue';
 import SalesInvoices from '@/components/sales/SalesInvoices.vue';
 import CreateInvoice from '@/components/sales/CreateInvoice.vue';
 import SalesInvoiceView from '@/components/sales/SalesInvoiceView.vue';
@@ -78,6 +79,11 @@ const routes = [
         path: 'companies',
         name: 'ManageCompanies',
         component: ManageCompanies
+      },
+      {
+        path: 'companies/edit',
+        name: 'EditCompany',
+        component: EditCompany
       },
       {
         path: 'products',

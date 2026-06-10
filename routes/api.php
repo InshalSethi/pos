@@ -144,6 +144,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies', [\App\Http\Controllers\Api\CompanyController::class, 'index']);
     Route::post('/companies/switch/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'switch']);
     Route::post('/companies/create-new', [\App\Http\Controllers\Api\CompanyController::class, 'createNewCompany']);
+    Route::get('/companies/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'show']);
+    Route::post('/companies/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'update']);
     Route::post('/sales/{sale}/refund', [SaleController::class , 'refund']);
     Route::post('/sales/returns', [SaleController::class , 'processReturn']);
     Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);

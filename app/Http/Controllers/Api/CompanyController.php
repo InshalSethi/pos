@@ -47,6 +47,13 @@ class CompanyController extends Controller
         $user->current_company_id = $id;
         $user->save();
 
+        $company = $user->companies()->where('company_id', $id)->first();
+        if ($company) {
+            session(['app_currency' => $company->base_currency]);
+            \Illuminate\Support\Facades\Cache::forever('system_timezone', $company->timezone_offset);
+            \Illuminate\Support\Facades\Config::set('app.timezone', $company->timezone_offset);
+        }
+
         return response()->json(['message' => 'Active workspace switched successfully.']);
     }
 
@@ -57,5 +64,34 @@ class CompanyController extends Controller
         $user->save();
 
         return response()->json(['message' => 'Redirecting to onboarding...']);
+    }
+
+    public function show($id)
+    {
+        $user = Auth::user();
+        $company = $user->companies()->findOrFail($id);
+        return response()->json($company);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+        $company = $user->companies()->findOrFail($id);
+
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'company_phone' => 'nullable|string|max:255',
+            'registration_number' => 'nullable|string|max:255',
+            'company_logo' => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('company_logo')) {
+            $path = $request->file('company_logo')->store('company_logos', 'public');
+            $validated['company_logo'] = $path;
+        }
+
+        $company->update($validated);
+
+        return response()->json(['message' => 'Company updated successfully', 'company' => $company]);
     }
 }
