@@ -531,7 +531,7 @@
 
     <!-- Navigation -->
     <nav :class="[
-      'bg-white shadow-sm border-b border-gray-200 transition-all duration-300 relative z-10 h-16 flex flex-col justify-center',
+      'bg-white shadow-sm border-b border-gray-200 transition-all duration-300 sticky top-0 z-40 h-16 flex flex-col justify-center',
       sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
     ]">
       <div class="w-full">
