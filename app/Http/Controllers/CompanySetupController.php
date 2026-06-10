@@ -68,6 +68,43 @@ class CompanySetupController extends Controller
             ]);
         }
 
+        // ── CONTEXT D: First-time onboarding (No query parameters) ───────
+        if (!$user->onboarding_completed) {
+            $draft = Company::where('user_id', $user->id)->where('status', 'draft')->first();
+            
+            if ($draft) {
+                return view('company-setup', [
+                    'company'     => $draft,
+                    'currentStep' => $draft->draft_step ?? 1,
+                ]);
+            }
+            
+            $company = Company::create([
+                'user_id'    => $user->id,
+                'company_name' => 'Untitled Draft Workspace',
+                'company_email' => $user->email ?? '',
+                'company_phone' => '',
+                'registration_number' => '',
+                'owner_role' => 'Owner/CEO',
+                'team_size' => 'Just Me',
+                'intended_tasks' => [],
+                'business_type' => '',
+                'business_scale' => 'Single Outlet',
+                'country' => 'United States',
+                'system_language' => 'en',
+                'base_currency' => 'USD',
+                'timezone_offset' => 'UTC',
+                'fiscal_year_start' => date('Y-01-01'),
+                'status'     => 'draft',
+                'draft_step' => 1,
+            ]);
+
+            return view('company-setup', [
+                'company'     => $company,
+                'currentStep' => 1,
+            ]);
+        }
+
         // ── CONTEXT C: Fallback — block unparameterized direct access ────
         return redirect('/');
     }
