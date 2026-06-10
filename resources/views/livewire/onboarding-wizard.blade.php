@@ -4,16 +4,26 @@
 
     {{-- ═══ WIZARD HEADER BAR & EXIT MODAL ═══ --}}
     <div x-data="{
-        showExitModal: false,
-        isAuthenticated: {{ Auth::check() ? 'true' : 'false' }},
+        hasActiveCompany:      {{ $hasExistingActiveCompany ? 'true' : 'false' }},
+        showFreshUserModal:    false,
+        showExistingUserModal: false,
+        activeCompanyId:       {{ $company_id ?? 'null' }},
+        currentStep:           {{ $step ?? 1 }}
     }" class="absolute top-0 w-full z-50">
 
+        {{-- ═══ WIZARD HEADER BAR ═══ --}}
         <div class="flex items-center justify-between p-4 bg-transparent pointer-events-none">
-            <div></div> <!-- Spacer -->
+
+            {{-- Brand Logo Slot --}}
+            <div class="flex items-center gap-2 pointer-events-auto">
+                {{-- <x-application-logo /> --}}
+            </div>
+
+            {{-- Home Button — forks to correct modal based on user lifecycle path --}}
             <button
                 type="button"
-                @click="isAuthenticated ? (showExitModal = true) : (window.location.href = '/login')"
-                class="pointer-events-auto flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl
+                @click="hasActiveCompany ? (showExistingUserModal = true) : (showFreshUserModal = true)"
+                class="pointer-events-auto flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl
                        text-slate-700 dark:text-zinc-300
                        bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
                        hover:bg-white dark:hover:bg-zinc-800
@@ -34,9 +44,13 @@
             </button>
         </div>
 
-        {{-- ═══ EXIT INTENT MODAL ═══ --}}
+
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        {{-- MODAL A — Path A: Fresh Registrant (Zero active companies)    --}}
+        {{-- Cancel triggers full atomic account teardown                  --}}
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
         <div
-            x-show="showExitModal"
+            x-show="showFreshUserModal"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
@@ -46,60 +60,161 @@
             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm pointer-events-auto"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="exit-modal-title"
+            aria-labelledby="fresh-modal-title"
+            @keydown.escape.window="showFreshUserModal = false"
             style="display: none;"
         >
             <div
-                @click.outside="showExitModal = false"
-                @keydown.escape.window="showExitModal = false"
+                @click.outside="showFreshUserModal = false"
                 class="w-full max-w-md mx-4 p-6 bg-white dark:bg-zinc-900
                        border border-slate-200 dark:border-zinc-800
-                       rounded-2xl shadow-xl"
+                       rounded-2xl shadow-2xl text-center"
             >
-                <h3 id="exit-modal-title"
-                    class="text-lg font-semibold text-slate-900 dark:text-white">
-                    Save or Discard Your Progress?
+                {{-- Warning Icon --}}
+                <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center
+                            rounded-full bg-amber-50 dark:bg-amber-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                         stroke-width="1.75" stroke="currentColor"
+                         class="w-6 h-6 text-amber-500" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71
+                                 c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378
+                                 c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                </div>
+
+                <h3 id="fresh-modal-title"
+                    class="text-lg font-bold text-slate-900 dark:text-white">
+                    Exit Account Onboarding?
                 </h3>
-                <p class="mt-2 text-sm text-slate-500 dark:text-zinc-400">
-                    You are mid-way through your company registration. Choose how to handle
-                    your current progress before returning to the dashboard.
+                <p class="mt-2 text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    Your organization setup is not yet complete. Cancelling will
+                    <strong class="text-rose-500">permanently delete</strong>
+                    your account and all entered data. This cannot be undone.
                 </p>
 
-                <div class="mt-6 flex flex-col gap-2.5">
-                    {{-- ACTION 1: Discard --}}
-                    <button wire:click="discardSetup"
+                <div class="mt-6 flex items-center gap-3">
+
+                    {{-- A1: Stay on wizard --}}
+                    <button
+                        @click="showFreshUserModal = false"
+                        type="button"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold
+                               text-slate-700 dark:text-zinc-200
+                               bg-slate-100 hover:bg-slate-200
+                               dark:bg-zinc-800 dark:hover:bg-zinc-700/80
+                               rounded-xl transition-colors duration-150
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+                        Continue Setup
+                    </button>
+
+                    {{-- A2: Full account teardown via secure POST --}}
+                    <form
+                        action="{{ route('onboarding.abort-registration') }}"
+                        method="POST"
+                        class="flex-1"
+                        onsubmit="return confirm('This will permanently delete your account and all data. This cannot be undone.')"
+                    >
+                        @csrf
+                        <button
+                            type="submit"
                             class="w-full px-4 py-2.5 text-sm font-semibold text-white
                                    bg-rose-500 hover:bg-rose-600 active:bg-rose-700
                                    rounded-xl shadow-sm transition-colors duration-150
                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
-                        🗑 Discard Setup &amp; Exit
-                    </button>
+                            Cancel Setup
+                        </button>
+                    </form>
 
-                    {{-- ACTION 2: Save as Draft --}}
-                    <button wire:click="saveDraft"
+                </div>
+            </div>
+        </div>
+
+
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        {{-- MODAL B — Path B: Existing Tenant (Has active companies)      --}}
+        {{-- Discard or save the sub-company draft being built             --}}
+        {{-- ═══════════════════════════════════════════════════════════════ --}}
+        <div
+            x-show="showExistingUserModal"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm pointer-events-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tenant-modal-title"
+            @keydown.escape.window="showExistingUserModal = false"
+            style="display: none;"
+        >
+            <div
+                @click.outside="showExistingUserModal = false"
+                class="w-full max-w-md mx-4 p-6 bg-white dark:bg-zinc-900
+                       border border-slate-200 dark:border-zinc-800
+                       rounded-2xl shadow-2xl"
+            >
+                <h3 id="tenant-modal-title"
+                    class="text-lg font-bold text-slate-900 dark:text-white">
+                    Save Sub-Company Progress?
+                </h3>
+                <p class="mt-2 text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    You are registering an additional business workspace. Choose how to
+                    handle this draft before returning to your main dashboard.
+                    Your active companies are never affected.
+                </p>
+
+                <div class="mt-6 flex flex-col gap-2.5">
+
+                    {{-- B1: Discard this sub-company draft only --}}
+                    <form action="{{ route('onboarding.abort-registration') }}" method="POST" class="w-full">
+                        @csrf
+                        <input type="hidden" name="company_id" value="{{ $company_id }}">
+                        <button
+                            type="submit"
+                            class="w-full px-4 py-2.5 text-sm font-semibold text-white
+                                   bg-rose-500 hover:bg-rose-600 active:bg-rose-700
+                                   rounded-xl shadow-sm transition-colors duration-150
+                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
+                            🗑 Discard Current Setup
+                        </button>
+                    </form>
+
+                    {{-- B2: Save as resumable draft --}}
+                    <form action="{{ route('onboarding.save-draft') }}" method="POST" class="w-full">
+                        @csrf
+                        <input type="hidden" name="company_id" value="{{ $company_id }}">
+                        <input type="hidden" name="current_step" value="{{ $step }}">
+                        <button
+                            type="submit"
                             class="w-full px-4 py-2.5 text-sm font-semibold
                                    text-slate-700 dark:text-zinc-200
                                    bg-slate-100 hover:bg-slate-200
                                    dark:bg-zinc-800 dark:hover:bg-zinc-700/80
                                    rounded-xl transition-colors duration-150
                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
-                        💾 Save as Draft &amp; Exit
-                    </button>
+                            💾 Save as Draft &amp; Exit
+                        </button>
+                    </form>
 
-                    {{-- ACTION 3: Cancel / Keep Editing --}}
+                    {{-- B3: Dismiss and keep editing --}}
                     <button
-                        @click="showExitModal = false"
+                        @click="showExistingUserModal = false"
                         type="button"
                         class="w-full px-4 py-2.5 text-sm font-medium
-                               text-slate-500 hover:text-slate-800
-                               dark:text-zinc-400 dark:hover:text-zinc-200
+                               text-slate-400 hover:text-slate-700
+                               dark:text-zinc-500 dark:hover:text-zinc-300
                                transition-colors duration-150
                                focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300">
                         ← Keep Editing
                     </button>
+
                 </div>
             </div>
         </div>
+
     </div>
 
 <div

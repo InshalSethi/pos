@@ -16,7 +16,7 @@
 </head>
 <body class="font-sans antialiased bg-slate-50 text-slate-900">
     <!-- Embed the Livewire Component -->
-    <livewire:onboarding-wizard :draftCompanyId="$company->id ?? null" :resumeStep="$currentStep ?? 1" />
+    <livewire:onboarding-wizard :company="$company ?? null" :currentStep="$currentStep ?? 1" :hasExistingActiveCompany="$hasExistingActiveCompany ?? false" />
     
     @livewireScripts
 </body>

@@ -85,22 +85,21 @@ Route::get('/company/switch/{id}', function ($id) {
     return redirect()->to('/');
 });
 
-// Logout Route - Absolute Bypass
-Route::get('/abort-onboarding', function () {
-    // Log the user out of the application session context cleanly
-    if (Auth::check()) {
-        Auth::logout();
-    }
-    
-    // 2. Invalidate the existing session data payload completely
-    Session::invalidate();
-    
-    // 3. Regenerate the CSRF token to prevent token mismatch issues
-    Session::regenerateToken();
-    
-    // 4. Force a hard, absolute redirect straight to the login terminal
-    return redirect()->to('/login')->header('Cache-Control', 'no-store, max-age=0');
-})->name('abort-onboarding');
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/company-setup',
+        [\App\Http\Controllers\CompanySetupController::class, 'index'])
+        ->name('company.setup');
+
+    Route::post('/onboarding/abort-registration',
+        [\App\Http\Controllers\CompanySetupController::class, 'abortRegistration'])
+        ->name('onboarding.abort-registration');
+
+    Route::post('/onboarding/save-draft',
+        [\App\Http\Controllers\CompanySetupController::class, 'saveSetupAsDraft'])
+        ->name('onboarding.save-draft');
+
+});
 
 // New Company Initiation — stamps a session flag then sends the user into the wizard.
 // Using a dedicated route (vs. a query param) means the flag survives browser-level

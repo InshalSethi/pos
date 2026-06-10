@@ -17,13 +17,21 @@ class CompanySetupController extends Controller
      *   B) start_fresh_flow   → Immediately scaffold a new blank draft record
      *   C) Fallback           → Block arbitrary manual URL access
      */
+    /**
+     * Wizard Entry Point
+     * Routes to the correct context: resume draft, start fresh, or block access.
+     */
     public function index(Request $request): View|RedirectResponse
     {
         abort_unless(auth()->check(), 302, redirect('/login'));
 
         $user = auth()->user();
 
-        // ── CONTEXT A: Resume a specific draft ──────────────────────────
+        $hasExistingActiveCompany = Company::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->exists();
+
+        // ── Context A: Resume a specific saved draft ──────────────────
         if ($request->filled('continue_draft_id')) {
             $company = Company::where('id', $request->query('continue_draft_id'))
                 ->where('user_id', $user->id)
@@ -33,80 +41,119 @@ class CompanySetupController extends Controller
             session(['creating_subsequent_company' => true]);
 
             return view('company-setup', [
-                'company'     => $company,
-                'currentStep' => $company->draft_step ?? 1,
+                'company'                  => $company,
+                'currentStep'              => $company->draft_step ?? 1,
+                'hasExistingActiveCompany' => $hasExistingActiveCompany,
             ]);
         }
 
-        // ── CONTEXT B: Start a completely fresh setup ────────────────────
-        if ($request->filled('start_fresh_flow')) {
+        // ── Context B: Start fresh (explicit flag OR no active company) ─
+        if ($request->filled('start_fresh_flow') || !$hasExistingActiveCompany) {
             $company = Company::create([
-                'user_id'    => $user->id,
-                'company_name' => 'Untitled Draft Workspace',
-                'company_email' => $user->email ?? '',
-                'company_phone' => '',
-                'registration_number' => '',
-                'owner_role' => 'Owner/CEO',
-                'team_size' => 'Just Me',
-                'intended_tasks' => [],
-                'business_type' => '',
-                'business_scale' => 'Single Outlet',
-                'country' => 'United States',
-                'system_language' => 'en',
-                'base_currency' => 'USD',
-                'timezone_offset' => 'UTC',
-                'fiscal_year_start' => date('Y-01-01'),
-                'status'     => 'draft',
-                'draft_step' => 1,
+                'user_id'       => $user->id,
+                'company_name'  => 'Untitled Draft Workspace',
+                'company_email' => $user->email,
+                'status'        => 'draft',
+                'draft_step'    => 1,
             ]);
 
             session(['creating_subsequent_company' => true]);
 
             return view('company-setup', [
-                'company'     => $company,
-                'currentStep' => 1,
+                'company'                  => $company,
+                'currentStep'              => 1,
+                'hasExistingActiveCompany' => $hasExistingActiveCompany,
             ]);
         }
 
-        // ── CONTEXT D: First-time onboarding (No query parameters) ───────
-        if (!$user->onboarding_completed) {
-            $draft = Company::where('user_id', $user->id)->where('status', 'draft')->first();
-            
-            if ($draft) {
-                return view('company-setup', [
-                    'company'     => $draft,
-                    'currentStep' => $draft->draft_step ?? 1,
+        // ── Fallback: Block unparameterized direct access ─────────────
+        return redirect('/');
+    }
+
+    /**
+     * Abort Registration Handler
+     *
+     * Path A (Fresh User):   Full atomic teardown — session, drafts, user record wiped.
+     * Path B (Existing Tenant): Single draft purged — active companies untouched.
+     */
+    public function abortRegistration(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->check(), 302, redirect('/register'));
+
+        $user = auth()->user();
+
+        $hasActiveCompany = Company::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->exists();
+
+        // ── PATH A: Fresh User — Full Account Teardown ────────────────
+        if (!$hasActiveCompany) {
+            try {
+                \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request) {
+                    auth()->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    Company::where('user_id', $user->id)->delete(); // Wipe all drafts
+                    $user->delete();                                  // Drop user record
+                });
+
+            } catch (\Throwable $e) {
+                \Log::error('abortRegistration teardown failed', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+
+                return redirect('/register')->withErrors([
+                    'abort' => 'Teardown failed. Please try again or contact support.'
                 ]);
             }
-            
-            $company = Company::create([
-                'user_id'    => $user->id,
-                'company_name' => 'Untitled Draft Workspace',
-                'company_email' => $user->email ?? '',
-                'company_phone' => '',
-                'registration_number' => '',
-                'owner_role' => 'Owner/CEO',
-                'team_size' => 'Just Me',
-                'intended_tasks' => [],
-                'business_type' => '',
-                'business_scale' => 'Single Outlet',
-                'country' => 'United States',
-                'system_language' => 'en',
-                'base_currency' => 'USD',
-                'timezone_offset' => 'UTC',
-                'fiscal_year_start' => date('Y-01-01'),
-                'status'     => 'draft',
-                'draft_step' => 1,
-            ]);
 
-            return view('company-setup', [
-                'company'     => $company,
-                'currentStep' => 1,
-            ]);
+            return redirect('/register')->with(
+                'status', 'Registration cancelled. All your data has been permanently removed.'
+            );
         }
 
-        // ── CONTEXT C: Fallback — block unparameterized direct access ────
-        return redirect('/');
+        // ── PATH B: Existing Tenant — Purge Single Draft Only ─────────
+        $validated = $request->validate([
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+        ]);
+
+        if (!empty($validated['company_id'])) {
+            Company::where('id', $validated['company_id'])
+                ->where('user_id', $user->id)
+                ->where('status', 'draft')  // Hard guard: active records are immutable
+                ->delete();
+        }
+
+        session()->forget('creating_subsequent_company');
+
+        return redirect('/')->with('info', 'Sub-company setup discarded safely.');
+    }
+
+    /**
+     * Save Setup Progress as Draft
+     * Persists current step index and marks record as resumable.
+     */
+    public function saveSetupAsDraft(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->check(), 403);
+
+        $validated = $request->validate([
+            'company_id'   => ['required', 'integer', 'exists:companies,id'],
+            'current_step' => ['required', 'integer', 'between:1,4'],
+        ]);
+
+        Company::where('id', $validated['company_id'])
+            ->where('user_id', auth()->id())
+            ->update([
+                'status'     => 'draft',
+                'draft_step' => $validated['current_step'],
+            ]);
+
+        session()->forget('creating_subsequent_company');
+
+        return redirect('/')->with('status', 'Progress saved as draft.');
     }
 
     /**
@@ -139,26 +186,5 @@ class CompanySetupController extends Controller
         session()->forget('creating_subsequent_company');
 
         return redirect('/')->with('status', 'Company setup discarded.');
-    }
-
-    public function saveSetupAsDraft(Request $request): RedirectResponse
-    {
-        abort_unless(auth()->check(), 403);
-
-        $validated = $request->validate([
-            'company_id'   => ['required', 'integer', 'exists:companies,id'],
-            'current_step' => ['required', 'integer', 'between:1,4'],
-        ]);
-
-        Company::where('id', $validated['company_id'])
-            ->where('user_id', auth()->id())
-            ->update([
-                'status'     => 'draft',
-                'draft_step' => $validated['current_step'],
-            ]);
-
-        session()->forget('creating_subsequent_company');
-
-        return redirect('/')->with('status', 'Progress saved as draft.');
     }
 }

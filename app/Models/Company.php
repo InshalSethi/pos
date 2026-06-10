@@ -17,6 +17,8 @@ class Company extends Model
         'company_phone',
         'company_logo',
         'registration_number',
+        'tax_number',
+        'business_address',
         'owner_role',
         'team_size',
         'intended_tasks',

@@ -74,64 +74,52 @@ class OnboardingWizard extends Component
         ]
     ];
 
-    public $draftCompanyId = null;
-    public $resumeStep = 1;
+    public $company_id = null;
+    public $currentStep = 1;
+    public $hasExistingActiveCompany = false;
 
-    public function mount($draftCompanyId = null, $resumeStep = 1)
+    public function mount(?Company $company = null, int $currentStep = 1, bool $hasExistingActiveCompany = false): void
     {
         // Guard: redirect guests to login
         if (!Auth::check()) {
-            return redirect()->to('/login');
+            redirect()->to('/login');
+            return;
         }
 
-        $this->new_company_flow = session()->has('creating_subsequent_company');
+        $this->hasExistingActiveCompany = $hasExistingActiveCompany;
+        $this->currentStep = $currentStep;
+        $this->step = $currentStep; // keep backward compatibility for internal step tracking
 
-        $this->draftCompanyId = $draftCompanyId;
-        $this->resumeStep = $resumeStep;
-        
-        $user = Auth::user();
-        
-        // If a draft is injected by the controller, instantly rehydrate the component state
-        if ($this->draftCompanyId) {
-            $this->rehydrateDraft();
+        if ($company && $company->status === 'draft') {
+            $this->company_id           = $company->id;
+            $this->company_id       = $company->id; // backward compat
+            $this->company_name         = $company->company_name       ?? '';
+            $this->company_email        = $company->company_email      ?: Auth::user()->email ?? '';
+            $this->company_phone        = $company->company_phone      ?? '';
+            $this->base_currency        = $company->base_currency      ?? '';
+            $this->system_language      = $company->system_language    ?? '';
+            $this->timezone_offset      = $company->timezone_offset    ?? '';
+            $this->business_type        = $company->business_type      ?? '';
+            $this->country              = $company->country            ?? '';
+            $this->business_address     = $company->business_address   ?? '';
+            $this->registration_number  = $company->registration_number ?? '';
+            $this->tax_number           = $company->tax_number         ?? '';
+            $this->owner_role           = $company->owner_role         ?? 'Owner/CEO';
+            $this->team_size            = $company->team_size          ?? 'Just Me';
+            $this->intended_tasks       = is_string($company->intended_tasks) ? json_decode($company->intended_tasks, true) : ($company->intended_tasks ?? []);
+            $this->business_scale       = $company->business_scale     ?? 'Single Outlet';
+            $this->fiscal_year_start    = $company->fiscal_year_start  ?? date('Y-01-01');
         } else {
-            // Pre-fill form defaults for a fresh setup
-            $this->company_email    = $user->email ?? '';
-            $this->company_name     = 'Untitled Draft Workspace';
-            $this->fiscal_year_start = date('Y-01-01');
-        }
-    }
-
-    private function rehydrateDraft()
-    {
-        $draft = Company::find($this->draftCompanyId);
-        if ($draft) {
-            $this->company_name = $draft->company_name;
-            $this->company_email = $draft->company_email;
-            $this->company_phone = $draft->company_phone;
-            $this->registration_number = $draft->registration_number;
-            $this->owner_role = $draft->owner_role ?? 'Owner/CEO';
-            $this->team_size = $draft->team_size ?? 'Just Me';
-            $this->tax_number = $draft->tax_number;
-            $this->business_address = $draft->business_address;
-            
-            $this->intended_tasks = is_string($draft->intended_tasks) ? json_decode($draft->intended_tasks, true) : ($draft->intended_tasks ?? []);
-            
-            $this->business_type = $draft->business_type ?? '';
-            $this->business_scale = $draft->business_scale ?? 'Single Outlet';
-            $this->country = $draft->country ?? 'United States';
-            $this->system_language = $draft->system_language ?? 'en';
-            $this->base_currency = $draft->base_currency ?? 'USD';
-            $this->timezone_offset = $draft->timezone_offset ?? 'UTC';
-            $this->fiscal_year_start = $draft->fiscal_year_start;
-
-            $this->step = $this->resumeStep;
+            $user = Auth::user();
+            $this->company_email        = $user->email ?? '';
+            $this->company_name         = 'Untitled Draft Workspace';
+            $this->fiscal_year_start    = date('Y-01-01');
         }
     }
 
     public function resumeDraft()
     {
-        $draft = Company::find($this->draftCompanyId);
+        $draft = Company::find($this->company_id);
         if ($draft) {
             $this->company_name = $draft->company_name;
             $this->company_email = $draft->company_email;
@@ -161,9 +149,9 @@ class OnboardingWizard extends Component
     public function startFresh()
     {
         // Discard the old draft to start completely fresh
-        if ($this->draftCompanyId) {
-            Company::where('id', $this->draftCompanyId)->delete();
-            $this->draftCompanyId = null;
+        if ($this->company_id) {
+            Company::where('id', $this->company_id)->delete();
+            $this->company_id = null;
         }
         $this->promptResume = false;
     }
@@ -174,7 +162,7 @@ class OnboardingWizard extends Component
 
         // Update or create draft company record
         $company = Company::updateOrCreate(
-            ['id' => $this->draftCompanyId, 'user_id' => $user->id],
+            ['id' => $this->company_id, 'user_id' => $user->id],
             [
                 'company_name' => $this->company_name ?? 'Draft Company',
                 'company_email' => $this->company_email ?? '',
@@ -204,8 +192,8 @@ class OnboardingWizard extends Component
 
     public function discardSetup()
     {
-        if ($this->draftCompanyId) {
-            Company::where('id', $this->draftCompanyId)->where('status', 'draft')->delete();
+        if ($this->company_id) {
+            Company::where('id', $this->company_id)->where('status', 'draft')->delete();
         }
         session()->forget('creating_subsequent_company');
         return redirect('/')->with('status', 'Company setup discarded.');
@@ -214,12 +202,53 @@ class OnboardingWizard extends Component
     public function nextStep()
     {
         $this->validate($this->rules[$this->step]);
+        $this->persistDraft();
         $this->step++;
+        $this->currentStep = $this->step;
     }
 
     public function previousStep()
     {
+        $this->persistDraft();
         $this->step--;
+        $this->currentStep = $this->step;
+    }
+
+    private function persistDraft()
+    {
+        if (!$this->company_id) return;
+
+        $logoPath = $this->company_logo instanceof \Illuminate\Http\UploadedFile 
+            ? $this->company_logo->store('company_logos', 'public') 
+            : null;
+
+        $updateData = [
+            'company_name' => $this->company_name ?? 'Untitled Draft Workspace',
+            'company_email' => $this->company_email,
+            'company_phone' => $this->company_phone,
+            'registration_number' => $this->registration_number,
+            'owner_role' => $this->owner_role ?? 'Owner/CEO',
+            'team_size' => $this->team_size ?? 'Just Me',
+            'tax_number' => $this->tax_number,
+            'business_address' => $this->business_address,
+            'intended_tasks' => json_encode($this->intended_tasks ?? []),
+            'business_type' => $this->business_type,
+            'business_scale' => $this->business_scale ?? 'Single Outlet',
+            'country' => $this->country ?? 'United States',
+            'system_language' => $this->system_language ?? 'en',
+            'base_currency' => $this->base_currency ?? 'USD',
+            'timezone_offset' => $this->timezone_offset ?? 'UTC',
+            'fiscal_year_start' => $this->fiscal_year_start ?? date('Y-01-01'),
+            'draft_step' => $this->step,
+        ];
+
+        if ($logoPath) {
+            $updateData['company_logo'] = $logoPath;
+        }
+
+        Company::where('id', $this->company_id)
+            ->where('user_id', Auth::id())
+            ->update($updateData);
     }
 
     public function skipStep()
@@ -241,7 +270,7 @@ class OnboardingWizard extends Component
             $user = Auth::user();
 
             $company = Company::updateOrCreate(
-                ['id' => $this->draftCompanyId, 'user_id' => $user->id],
+                ['id' => $this->company_id, 'user_id' => $user->id],
                 [
                     'company_name' => $this->company_name ?? 'Draft Company',
                     'company_email' => $this->company_email ?? '',
@@ -269,7 +298,7 @@ class OnboardingWizard extends Component
 
             // Only flip onboarding_completed for first-time setup.
             // For new_company_flow (second+ company), the flag is already true.
-            if (!$this->new_company_flow) {
+            if (!$this->hasExistingActiveCompany) {
                 $user->onboarding_completed = true;
             }
 
