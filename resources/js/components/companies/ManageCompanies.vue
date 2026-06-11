@@ -382,7 +382,7 @@
 
                 <div class="space-y-1">
                   <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">System Language</p>
-                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.system_language === 'en' ? 'English' : (selectedCompany.system_language || 'English') }}</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.system_language ? systemLanguages[selectedCompany.system_language] : 'English' }}</p>
                 </div>
               </div>
             </div>
@@ -391,6 +391,37 @@
             <div class="mt-8 space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
               <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Business Address</p>
               <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ selectedCompany.business_address || 'No physical address provided.' }}</p>
+            </div>
+
+            <!-- Framework Configuration -->
+            <div class="mt-8 space-y-6">
+              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">Framework Configuration</h4>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Business Type</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.business_type ? businessTypes[selectedCompany.business_type] : 'Not Set' }}</p>
+                </div>
+                
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Business Scale</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.business_scale ? businessScales[selectedCompany.business_scale] : 'Not Set' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Fiscal Year Start</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.fiscal_year_start || 'Not Set' }}</p>
+                </div>
+                
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Owner Role</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.owner_role ? ownerRoles[selectedCompany.owner_role] : 'Not Set' }}</p>
+                </div>
+                
+                <div class="space-y-1">
+                  <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Team Size</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ selectedCompany.team_size ? teamSizes[selectedCompany.team_size] : 'Not Set' }}</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -500,6 +531,72 @@ const selectedDrafts = ref([]);
 const showConfirmModal = ref(false);
 const confirmMessage = ref('');
 const confirmAction = ref(null);
+
+const ownerRoles = {
+    'Owner/CEO': 'Owner/CEO',
+    'Managing Director': 'Managing Director',
+    'Store Manager': 'Store Manager',
+    'Accountant/Financial Officer': 'Accountant/Financial Officer',
+};
+
+const teamSizes = {
+    'Just Me': 'Just Me',
+    '2-5 People': '2-5 People',
+    '6-20 People': '6-20 People',
+    '21-50 People': '21-50 People',
+    '51+ People': '51+ People',
+};
+
+const businessTypes = {
+    'agriculture': 'Agriculture',
+    'art_design': 'Art and Design',
+    'construction_trades': 'Construction, Trades and Home Services',
+    'development_programming': 'Development & Programming',
+    'education_training': 'Education and Training',
+    'financial_insurance': 'Financial services & insurance',
+    'food_services': 'Food Services',
+    'health_wellness': 'Health and Wellness',
+    'hospitality_tourism': 'Hospitality, Travel and Tourism',
+    'hr_staffing': 'Human Resources and Staffing',
+    'it': 'Information Technology',
+    'manufacturing': 'Manufacturing',
+    'non_profit': 'Non-Profit',
+    'professional_services': 'Professional Services',
+    'real_estate': 'Real Estate',
+    'retail': 'Retail',
+    'software_development': 'Software Development',
+    'wholesale_trade': 'Wholesale Trade',
+    'other': 'Other',
+};
+
+const businessScales = {
+    'Single Outlet': 'Single Outlet',
+    'Multi-Branch/Chain': 'Multi-Branch/Chain',
+    'Wholesale Only': 'Wholesale Only',
+};
+
+const systemLanguages = {
+    'en': 'English',
+    'ur': 'Urdu (اُردو)',
+    'ar': 'Arabic (العربية)',
+    'es': 'Spanish (Español)',
+    'fr': 'French (Français)',
+    'de': 'German (Deutsch)',
+    'zh': 'Chinese (中文)',
+    'hi': 'Hindi (हिन्दी)',
+    'tr': 'Turkish (Türkçe)',
+    'fa': 'Persian (فارسی)',
+    'pt': 'Portuguese (Português)',
+    'ru': 'Russian (Русский)',
+    'ja': 'Japanese (日本語)',
+    'id': 'Indonesian (Bahasa Indonesia)',
+    'bn': 'Bengali (বাংলা)',
+    'pa': 'Punjabi (پنجابی)',
+    'it': 'Italian (Italiano)',
+    'nl': 'Dutch (Nederlands)',
+    'vi': 'Vietnamese (Tiếng Việt)',
+    'sw': 'Swahili (Kiswahili)',
+};
 
 const toggleSelectAll = () => {
   if (selectedDrafts.value.length === drafts.value.length) {
