@@ -82,17 +82,37 @@ class CompanyController extends Controller
             'company_name' => 'required|string|max:255',
             'company_phone' => 'nullable|string|max:255',
             'registration_number' => 'nullable|string|max:255',
+            'tax_number' => 'nullable|string|max:255',
             'business_address' => 'nullable|string|max:1000',
+            'business_scale' => 'nullable|string|max:255',
+            'owner_role' => 'nullable|string|max:255',
+            'team_size' => 'nullable|string|max:255',
+            'business_type' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'system_language' => 'nullable|string|max:50',
+            'base_currency' => 'nullable|string|max:50',
+            'timezone_offset' => 'nullable|string|max:100',
+            'fiscal_year_start' => 'nullable|date',
             'company_logo' => 'nullable|image|max:2048',
         ]);
 
+        if ($request->has('remove_logo') && $request->input('remove_logo') == '1') {
+            if ($company->company_logo) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($company->company_logo);
+            }
+            $validated['company_logo'] = null;
+        }
+
         if ($request->hasFile('company_logo')) {
+            if ($company->company_logo) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($company->company_logo);
+            }
             $path = $request->file('company_logo')->store('company_logos', 'public');
             $validated['company_logo'] = $path;
         }
 
         $company->update($validated);
 
-        return response()->json(['message' => 'Company updated successfully', 'company' => $company]);
+        return response()->json(['message' => 'Workspace settings updated successfully', 'company' => $company]);
     }
 }
