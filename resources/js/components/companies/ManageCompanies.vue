@@ -210,40 +210,78 @@
       <div class="w-full max-w-xl mx-4 p-6 bg-white rounded-2xl shadow-2xl">
         <!-- Modal Header -->
         <div class="flex items-center justify-between pb-4 border-b border-gray-100">
-            <div>
-                <h3 class="text-base font-bold text-gray-900">Saved Draft Workspaces</h3>
-                <p class="text-xs text-gray-400 mt-0.5">
-                    {{ drafts.length }} incomplete pending
-                </p>
+            <div class="flex items-center gap-3">
+                <input type="checkbox" 
+                       @click="toggleSelectAll()"
+                       :checked="selectedDrafts.length === drafts.length && drafts.length > 0"
+                       class="h-4.5 w-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer">
+                
+                <div>
+                    <h3 class="text-md font-bold text-gray-900">Saved Draft Workspaces</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                        <span class="font-semibold">{{ selectedDrafts.length }}</span> selected of {{ drafts.length }} pending
+                    </p>
+                </div>
             </div>
-            <button @click="showDraftsModal = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+
+            <div class="flex items-center gap-2">
+                <form action="/onboarding/drafts/bulk-purge" method="POST" 
+                      v-if="selectedDrafts.length > 0"
+                      @submit="confirmBulkPurge">
+                    <input type="hidden" name="_token" :value="csrfToken">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="hidden" name="draft_ids" :value="JSON.stringify(selectedDrafts)">
+                    
+                    <button type="submit" 
+                            class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-rose-200/40 focus:outline-none flex items-center gap-1 text-xs font-semibold"
+                            title="Delete Selected Items">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                        <span>Delete Selected</span>
+                    </button>
+                </form>
+
+                <button @click="showDraftsModal = false" type="button" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
         </div>
 
         <!-- Draft Rows -->
         <div class="mt-4 max-h-[360px] overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
-            <div v-for="draft in drafts" :key="draft.id" class="flex items-center justify-between gap-3 p-3.5 bg-gray-50 border border-gray-100 hover:border-gray-200 rounded-xl transition-all">
-                <div class="flex-1 min-w-0">
-                    <h4 class="text-sm font-semibold text-gray-800 truncate">
-                        {{ draft.company_name || 'Untitled Draft Workspace' }}
-                    </h4>
-                    <p class="text-[11px] text-gray-400 mt-0.5">
-                        Paused at <span class="text-amber-500 font-semibold">Step {{ draft.draft_step || 1 }} of 4</span>
-                    </p>
+            <div v-for="draft in drafts" :key="draft.id" 
+                 class="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-100 hover:border-gray-200 rounded-2xl transition-all relative"
+                 :class="{ 'border-indigo-500/40 bg-indigo-50/10': selectedDrafts.includes(draft.id) }">
+                
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <input type="checkbox" 
+                           :value="draft.id" 
+                           v-model="selectedDrafts"
+                           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer">
+                    
+                    <div class="min-w-0">
+                        <h4 class="text-sm font-bold text-gray-800 truncate">
+                            {{ draft.company_name || 'Untitled Draft Workspace' }}
+                        </h4>
+                        <p class="text-[11px] text-gray-400 font-medium mt-0.5">
+                            Paused at <span class="text-amber-500 font-semibold">Step {{ draft.draft_step || 1 }} of 4</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <a :href="`/company-setup?continue_draft_id=${draft.id}`" class="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors">
+
+                <div class="flex items-center gap-2">
+                    <a :href="`/company-setup?continue_draft_id=${draft.id}`" 
+                       class="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl shadow-sm transition-colors focus:outline-none">
                         Continue
                     </a>
+                    
                     <form :action="`/onboarding/draft/purge/${draft.id}`" method="POST" @submit="confirmPurge">
-                        <input type="hidden" name="_token" :value="csrfToken" />
-                        <input type="hidden" name="_method" value="DELETE" />
-                        <button type="submit" class="p-1.5 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors">
+                        <input type="hidden" name="_token" :value="csrfToken">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="p-1.5 text-gray-400 hover:text-rose-500 rounded-xl hover:bg-rose-50 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                             </svg>
                         </button>
                     </form>
@@ -410,6 +448,28 @@
         </div>
       </div>
     </transition>
+    <!-- Custom Confirmation Modal -->
+    <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+      <div v-if="showConfirmModal" class="fixed inset-0 z-[150] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
+        <div class="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all">
+          <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-rose-50 dark:bg-rose-500/10 mb-5 border border-rose-100 dark:border-rose-500/20">
+            <svg class="h-7 w-7 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-2">Confirm Action</h3>
+          <p class="text-sm text-gray-500 dark:text-zinc-400 mb-6 px-2">{{ confirmMessage }}</p>
+          <div class="flex gap-3">
+            <button @click="showConfirmModal = false" type="button" class="flex-1 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 font-bold text-sm rounded-xl transition-colors focus:outline-none border border-gray-200/60 dark:border-zinc-700">
+              Cancel
+            </button>
+            <button @click="executeConfirm" type="button" class="flex-1 px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm rounded-xl shadow-sm transition-colors focus:outline-none">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -435,6 +495,42 @@ const selectedCompany = ref(null);
 const previewLogoCompany = ref(null);
 const uploadingTableLogo = ref(false);
 const tableLogoInput = ref(null);
+const selectedDrafts = ref([]);
+
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+const confirmAction = ref(null);
+
+const toggleSelectAll = () => {
+  if (selectedDrafts.value.length === drafts.value.length) {
+    selectedDrafts.value = [];
+  } else {
+    selectedDrafts.value = drafts.value.map(d => d.id);
+  }
+};
+
+const confirmBulkPurge = (e) => {
+  e.preventDefault();
+  confirmMessage.value = 'Completely remove all selected draft workspaces?';
+  const form = e.target;
+  confirmAction.value = () => form.submit();
+  showConfirmModal.value = true;
+};
+
+const confirmPurge = (e) => {
+  e.preventDefault();
+  confirmMessage.value = 'Completely remove this draft workspace?';
+  const form = e.target;
+  confirmAction.value = () => form.submit();
+  showConfirmModal.value = true;
+};
+
+const executeConfirm = () => {
+  if (confirmAction.value) {
+    confirmAction.value();
+  }
+  showConfirmModal.value = false;
+};
 
 const viewCompany = (company) => {
   selectedCompany.value = company;
@@ -483,11 +579,6 @@ const handleTableLogoUpload = async (e) => {
   }
 };
 
-const confirmPurge = (e) => {
-  if (!confirm('Permanently remove this draft? This cannot be undone.')) {
-    e.preventDefault();
-  }
-};
 
 // Pagination state
 const currentPage = ref(1);

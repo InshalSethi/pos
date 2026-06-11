@@ -34,6 +34,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/onboarding/draft/purge/{id}', [\App\Http\Controllers\CompanySetupController::class, 'purgeIndividualDraft'])
         ->name('onboarding.purge-individual-draft');
 
+    // Permanently bulk delete selected draft workspaces
+    Route::delete('/onboarding/drafts/bulk-purge', [\App\Http\Controllers\CompanySetupController::class, 'purgeBulkDrafts'])
+        ->name('onboarding.purge-bulk-drafts');
+
     // Permanently delete a draft-only company record
     Route::post('/onboarding/discard', [\App\Http\Controllers\CompanySetupController::class, 'discardActiveSetup'])
         ->name('onboarding.discard');

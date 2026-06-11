@@ -172,6 +172,34 @@ class CompanySetupController extends Controller
         return redirect()->back()->with('success', 'Draft workspace permanently removed.');
     }
 
+    /**
+     * Safely processes array matrices to wipe multiple selected draft workspaces synchronously.
+     * Guarantees zero leakage into authenticated production active database records.
+     */
+    public function purgeBulkDrafts(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'draft_ids' => 'required|string' // Validates the passed JSON matrix payload string
+        ]);
+
+        if (auth()->check()) {
+            // Parse the payload back to standard integer arrays
+            $idsArray = json_decode($request->input('draft_ids'), true);
+
+            if (is_array($idsArray) && count($idsArray) > 0) {
+                // Run selective massive erasure inside rigid ownership context constraints
+                Company::whereIn('id', $idsArray)
+                    ->where('user_id', auth()->id())
+                    ->where('status', 'draft') // Double security layer insulation
+                    ->delete();
+
+                return redirect()->back()->with('success', 'Selected custom workspace drafts cleared out successfully.');
+            }
+        }
+
+        return redirect('/login');
+    }
+
     public function discardActiveSetup(Request $request): RedirectResponse
     {
         abort_unless(auth()->check(), 403);
