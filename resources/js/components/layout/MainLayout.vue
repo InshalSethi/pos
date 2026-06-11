@@ -975,17 +975,44 @@
           </button>
 
           <!-- Logo Preview Content -->
-          <img
-            v-if="activeCompany?.company_logo"
-            :src="`/storage/${activeCompany.company_logo}`"
-            :alt="activeCompany?.company_name + ' full logo preview'"
-            class="max-w-full max-h-[70vh] rounded-xl object-contain shadow-inner"
-          >
-          <!-- Fallback state in lightbox -->
-          <div v-else class="h-48 w-48 flex flex-col items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl text-white">
-            <span class="font-extrabold text-5xl select-none">{{ activeCompany?.company_name?.charAt(0).toUpperCase() }}</span>
-            <p class="text-[11px] font-medium tracking-wide text-indigo-200 mt-2">No logo configured</p>
+          <div class="relative group mt-2 mx-auto inline-block text-center flex justify-center">
+            <img
+              v-if="activeCompany?.company_logo"
+              :src="`/storage/${activeCompany.company_logo}`"
+              :alt="activeCompany?.company_name + ' full logo preview'"
+              class="max-w-full max-h-[70vh] rounded-xl object-contain shadow-inner transition duration-300 group-hover:brightness-75"
+            >
+            <!-- Fallback state in lightbox -->
+            <div v-else class="h-48 w-48 flex flex-col items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl text-white group-hover:brightness-75 transition duration-300">
+              <span class="font-extrabold text-5xl select-none">{{ activeCompany?.company_name?.charAt(0).toUpperCase() }}</span>
+              <p class="text-[11px] font-medium tracking-wide text-indigo-200 mt-2">No logo configured</p>
+            </div>
+
+            <!-- Quick Upload Overlay Button -->
+            <button 
+              type="button"
+              @click="$refs.lightboxLogoInput.click()"
+              class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white font-medium drop-shadow-md z-20 cursor-pointer w-full h-full rounded-xl"
+            >
+              <div class="bg-black/60 p-3 rounded-full mb-2 backdrop-blur-sm border border-white/20 hover:scale-105 active:scale-95 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+              </div>
+              <span class="text-sm tracking-wide font-semibold text-white/90 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Change Logo</span>
+            </button>
+
+            <!-- Loading Spinner Overlay -->
+            <div v-if="uploadingLogo" class="absolute inset-0 z-30 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl">
+              <svg class="animate-spin h-8 w-8 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span class="text-sm font-semibold text-white">Uploading...</span>
+            </div>
           </div>
+          
+          <input type="file" ref="lightboxLogoInput" class="hidden" accept="image/*" @change="handleLightboxLogoUpload">
 
           <!-- Company name caption below image -->
           <p class="mt-2.5 text-center text-xs font-semibold text-gray-500 dark:text-zinc-400 truncate">
@@ -1085,6 +1112,8 @@ const companies = ref([]);
 const activeCompany = ref(null);
 const showCompanySwitcher = ref(false);
 const companySwitcherRef = ref(null);
+const uploadingLogo = ref(false);
+const lightboxLogoInput = ref(null);
 
 // Computed
 const unreadNotifications = computed(() => {
@@ -1117,6 +1146,43 @@ const switchCompany = async (companyId) => {
     window.dispatchEvent(new CustomEvent('company-switched-globally'));
   } catch (error) {
     console.error('Failed to switch company', error);
+  }
+};
+
+const handleLightboxLogoUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !activeCompany.value) return;
+
+  uploadingLogo.value = true;
+  
+  const formData = new FormData();
+  formData.append('company_logo', file);
+  formData.append('company_name', activeCompany.value.company_name);
+
+  try {
+    const response = await axios.post(`/api/companies/${activeCompany.value.id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    if (response.data && response.data.company) {
+      activeCompany.value = response.data.company;
+      const index = companies.value.findIndex(c => c.id === activeCompany.value.id);
+      if (index !== -1) {
+        companies.value[index] = response.data.company;
+      }
+      // Re-fetch slightly delayed to ensure state matches across app
+      setTimeout(fetchCompanies, 500);
+    }
+  } catch (err) {
+    console.error('Failed to update logo', err);
+    alert('Failed to upload logo. Please try again.');
+  } finally {
+    uploadingLogo.value = false;
+    if (lightboxLogoInput.value) {
+      lightboxLogoInput.value.value = '';
+    }
   }
 };
 

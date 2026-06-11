@@ -105,12 +105,21 @@
               </td>
               <td class="px-4 py-4 text-gray-500 font-medium">#{{ company.id }}</td>
               <td class="px-3 py-4 whitespace-nowrap">
-                <div class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-gray-100 to-gray-200/60 dark:from-zinc-800 dark:to-zinc-700/50 text-gray-700 dark:text-zinc-300 font-bold text-xs shadow-sm border border-gray-200/40 dark:border-zinc-700/30 overflow-hidden group">
+                <button 
+                  type="button" 
+                  @click="previewLogoCompany = company"
+                  class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-gray-100 to-gray-200/60 dark:from-zinc-800 dark:to-zinc-700/50 text-gray-700 dark:text-zinc-300 font-bold text-sm shadow-sm border border-gray-200/40 dark:border-zinc-700/30 overflow-hidden group focus:outline-none cursor-zoom-in" 
+                  title="Click to view or change logo"
+                >
                   <img v-if="company.company_logo" :src="`/storage/${company.company_logo}`" :alt="company.company_name + ' Logo'" class="h-full w-full object-cover transition-transform group-hover:scale-105 duration-150">
                   <span v-else class="text-gray-600 dark:text-zinc-300 uppercase">
                     {{ company.company_name ? company.company_name.charAt(0).toUpperCase() : 'C' }}
                   </span>
-                </div>
+                  
+                  <div class="absolute inset-0 bg-black/5 dark:bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-700 dark:text-zinc-200"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z" /></svg>
+                  </div>
+                </button>
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-col">
@@ -361,6 +370,46 @@
       </div>
     </transition>
 
+    <!-- Logo Preview/Upload Modal -->
+    <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="previewLogoCompany" class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gray-950/70 backdrop-blur-md" @keydown.esc.window="previewLogoCompany = null">
+        
+        <div class="absolute inset-0 cursor-zoom-out" @click="previewLogoCompany = null"></div>
+
+        <div class="relative w-full max-w-sm p-5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-10 text-center animate-in fade-in zoom-in-95 duration-150">
+            
+            <button @click="previewLogoCompany = null" type="button" class="absolute -top-2.5 -right-2.5 p-1.5 rounded-full bg-rose-500 text-white hover:bg-rose-600 shadow-md transition-all active:scale-95 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <div class="flex justify-center mb-4">
+                <img v-if="previewLogoCompany.company_logo" :src="`/storage/${previewLogoCompany.company_logo}`" alt="Expanded Profile View" class="max-h-40 max-w-full rounded-xl object-contain shadow-sm border border-gray-100 dark:border-zinc-800">
+                <div v-else class="h-32 w-32 flex flex-col items-center justify-center bg-gray-100 dark:bg-zinc-800 rounded-xl text-gray-700 dark:text-zinc-300 font-extrabold text-3xl">
+                    <span>{{ previewLogoCompany.company_name ? previewLogoCompany.company_name.charAt(0).toUpperCase() : 'C' }}</span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h4 class="text-sm font-bold text-gray-800 dark:text-zinc-100">{{ previewLogoCompany.company_name }}</h4>
+                <p class="text-xs text-gray-400 mt-0.5">Modify workspace logo identifier asset</p>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <input type="file" ref="tableLogoInput" class="hidden" accept="image/png, image/jpeg, image/gif" @change="handleTableLogoUpload">
+                
+                <button type="button" @click="$refs.tableLogoInput.click()" :disabled="uploadingTableLogo" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 rounded-xl border border-indigo-200/40 dark:border-indigo-500/20 transition-all focus:outline-none disabled:opacity-50">
+                    <svg v-if="uploadingTableLogo" class="animate-spin h-3.5 w-3.5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
+                    <span>{{ uploadingTableLogo ? 'Uploading File...' : 'Upload New Image' }}</span>
+                </button>
+            </div>
+
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -383,6 +432,9 @@ const loading = ref(false);
 const switchingId = ref(null);
 const successMessage = ref('');
 const selectedCompany = ref(null);
+const previewLogoCompany = ref(null);
+const uploadingTableLogo = ref(false);
+const tableLogoInput = ref(null);
 
 const viewCompany = (company) => {
   selectedCompany.value = company;
@@ -393,6 +445,42 @@ const goToEditCompany = (id) => {
     selectedCompany.value = null; // Close modal gracefully before navigating
   }
   router.push(`/companies/edit?id=${id}`);
+};
+
+const handleTableLogoUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !previewLogoCompany.value) return;
+
+  uploadingTableLogo.value = true;
+  
+  const formData = new FormData();
+  formData.append('company_logo', file);
+  formData.append('company_name', previewLogoCompany.value.company_name);
+
+  try {
+    const response = await axios.post(`/api/companies/${previewLogoCompany.value.id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    if (response.data && response.data.company) {
+      previewLogoCompany.value = response.data.company;
+      const index = companies.value.findIndex(c => c.id === previewLogoCompany.value.id);
+      if (index !== -1) {
+        companies.value[index] = response.data.company;
+      }
+      window.dispatchEvent(new CustomEvent('company-updated', { detail: response.data.company }));
+    }
+  } catch (err) {
+    console.error('Failed to update logo', err);
+    alert('Failed to upload logo. Please try again.');
+  } finally {
+    uploadingTableLogo.value = false;
+    if (tableLogoInput.value) {
+      tableLogoInput.value.value = '';
+    }
+  }
 };
 
 const confirmPurge = (e) => {
