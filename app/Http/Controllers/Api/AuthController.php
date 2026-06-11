@@ -389,4 +389,17 @@ class AuthController extends Controller
             'errors' => ['email' => [__($status)]]
         ], 400);
     }
+
+    public function syncSession(Request $request)
+    {
+        $user = $request->user();
+        if ($user) {
+            Auth::guard('web')->login($user, true);
+            if ($request->hasSession()) {
+                $request->session()->regenerate();
+            }
+            return response()->json(['message' => 'Web session synchronized successfully']);
+        }
+        return response()->json(['message' => 'Unauthenticated'], 401);
+    }
 }

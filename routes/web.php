@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\GoogleAuthController;
 Route::get('/auth/google/redirect', [GoogleAuthController::class , 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleAuthController::class , 'handleGoogleCallback']);
 
+// Magic Sync Route to bridge SPA Token -> Web Session
+Route::get('/sync-session', [\App\Http\Controllers\Api\AuthController::class, 'syncSession'])
+    ->middleware(['web', 'auth:sanctum']);
+
 // 2. Password reset routes
 Route::get('/reset-password/{token}', function (string $token) {
     return view('app', ['token' => $token]);

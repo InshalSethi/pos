@@ -20,15 +20,20 @@
             </span>
         </button>
 
-        <a 
-          href="/company-setup?start_fresh_flow=true"
-          class="inline-flex items-center px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        <button 
+          @click="startNewCompanyFlow"
+          class="inline-flex items-center px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-70"
+          :disabled="syncing"
         >
-          <svg class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg v-if="syncing" class="animate-spin h-5 w-5 mr-2 -ml-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          <span>New Company</span>
-        </a>
+          <span>{{ syncing ? 'Loading...' : 'New Company' }}</span>
+        </button>
       </div>
     </div>
 
@@ -519,6 +524,7 @@ const router = useRouter();
 const currentCompanyId = ref(null);
 const search = ref('');
 const loading = ref(false);
+const syncing = ref(false);
 const switchingId = ref(null);
 const successMessage = ref('');
 const selectedCompany = ref(null);
@@ -752,7 +758,19 @@ const switchCompany = async (id) => {
   }
 };
 
-
+const startNewCompanyFlow = async () => {
+    syncing.value = true;
+    try {
+        // Force sync the web session using our API token
+        await axios.get('/sync-session');
+        window.location.href = '/company-setup?start_fresh_flow=true';
+    } catch (error) {
+        console.error('Failed to sync session, proceeding anyway...', error);
+        window.location.href = '/company-setup?start_fresh_flow=true';
+    } finally {
+        syncing.value = false;
+    }
+};
 
 onMounted(() => {
   fetchCompanies();
