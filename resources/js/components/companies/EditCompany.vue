@@ -6,9 +6,6 @@
         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Edit Workspace</h1>
         <p class="text-sm text-gray-500 mt-1">Manage your active production assets and corporate settings metadata.</p>
       </div>
-      <router-link to="/companies" class="px-4 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
-        Cancel & Return
-      </router-link>
     </div>
 
     <!-- Success Toast -->
@@ -239,6 +236,9 @@
 
       <!-- Footer Actions -->
       <div class="px-10 py-5 bg-white border-t border-gray-100 flex items-center justify-end gap-3">
+        <router-link to="/companies" class="px-8 py-2.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg shadow-sm transition-all flex items-center justify-center">
+          Back
+        </router-link>
         <button type="submit" :disabled="saving" class="px-8 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-70 rounded-lg shadow-sm transition-all flex items-center gap-2">
           <svg v-if="saving" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
