@@ -90,7 +90,7 @@ class CompanySetupController extends Controller
         if (!$hasActiveCompany) {
             try {
                 \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request) {
-                    auth()->logout();
+                    \Illuminate\Support\Facades\Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
 
