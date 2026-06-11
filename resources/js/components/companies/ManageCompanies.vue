@@ -132,7 +132,7 @@
                     <span v-if="switchingId === company.id" class="inline-flex ml-2 items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 animate-pulse">
                       Switching...
                     </span>
-                    <span v-else-if="currentCompanyId == company.id" class="inline-flex ml-2 items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                    <span v-else-if="currentCompanyId == company.id" class="inline-flex ml-2 items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/40">
                       Active
                     </span>
                   </button>
