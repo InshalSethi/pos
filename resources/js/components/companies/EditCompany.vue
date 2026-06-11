@@ -255,9 +255,11 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 const loading = ref(true);
 const saving = ref(false);
@@ -513,6 +515,11 @@ const updateCompany = async () => {
     });
     
     successMessage.value = response.data.message;
+    
+    // Update global user context immediately for currency, language, etc.
+    if (authStore.user?.current_company_id == companyId.value) {
+      await authStore.fetchUser();
+    }
     
     // Dispatch event to quickly update the sidebar panel without a refresh
     window.dispatchEvent(new CustomEvent('company-switched-globally'));
