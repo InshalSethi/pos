@@ -113,7 +113,6 @@
                         action="{{ route('onboarding.abort-registration') }}"
                         method="POST"
                         class="flex-1"
-                        onsubmit="return confirm('This will permanently delete your account and all data. This cannot be undone.')"
                     >
                         @csrf
                         <button

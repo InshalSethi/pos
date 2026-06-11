@@ -215,4 +215,70 @@ class CompanySetupController extends Controller
 
         return redirect('/')->with('status', 'Company setup discarded.');
     }
+
+    /**
+     * SOFT DELETE COMPANY WORKSPACE
+     *
+     * Archives a company record by writing a deleted_at timestamp.
+     * The row is excluded from all standard Eloquent queries but
+     * remains fully recoverable via withTrashed() or restore().
+     *
+     * Security enforcements:
+     *   1. Authentication check — unauthenticated calls return 401
+     *   2. Active workspace guard — cannot soft-delete your own current context
+     *   3. Ownership check — only the tenant owner can archive their own companies
+     *   4. Record existence check — 404 if not found or not owned
+     *
+     * Returns JSON for AJAX table row removal without full page reload.
+     */
+    public function destroyCompany(int $id): \Illuminate\Http\JsonResponse
+    {
+        // ── Guard 1: Authentication ───────────────────────────────────
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session expired. Please log in again.',
+            ], 401);
+        }
+
+        $user = auth()->user();
+
+        // ── Guard 2: Active Workspace Self-Destruction Block ──────────
+        // A user cannot soft-delete the company they are currently operating inside
+        if ((int) $user->current_company_id === (int) $id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot archive your currently active workspace. Switch to a different workspace first, then retry.',
+            ], 422);
+        }
+
+        // ── Guard 3 & 4: Ownership Verification ───────────────────────
+        $company = Company::where('id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$company) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Workspace not found or you do not have permission to archive it.',
+            ], 404);
+        }
+
+        // ── Soft Delete Execution ─────────────────────────────────────
+        // Sets deleted_at = now(). Row is preserved in DB but hidden from queries.
+        $company->delete();
+
+        // ── Audit Log ─────────────────────────────────────────────────
+        \Illuminate\Support\Facades\Log::info('Company soft-deleted', [
+            'company_id'   => $company->id,
+            'company_name' => $company->company_name,
+            'deleted_by'   => $user->id,
+            'deleted_at'   => now()->toDateTimeString(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Workspace '{$company->company_name}' has been archived successfully. It can be restored if needed.",
+        ], 200);
+    }
 }

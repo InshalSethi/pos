@@ -20,20 +20,15 @@
             </span>
         </button>
 
-        <button 
-          @click="startNewCompanyFlow"
-          class="inline-flex items-center px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-70"
-          :disabled="syncing"
+        <a 
+          href="/company-setup?start_fresh_flow=true"
+          class="inline-flex items-center px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
-          <svg v-if="syncing" class="animate-spin h-5 w-5 mr-2 -ml-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <svg v-else class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          <span>{{ syncing ? 'Loading...' : 'New Company' }}</span>
-        </button>
+          <span>New Company</span>
+        </a>
       </div>
     </div>
 
@@ -174,7 +169,11 @@
                   <button @click="goToEditCompany(company.id)" class="p-1.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Edit">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                   </button>
-                  <button class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">
+                  <button 
+                    @click="confirmDelete(company)"
+                    class="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400" 
+                    title="Archive Workspace"
+                  >
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </div>
@@ -505,6 +504,51 @@
         </div>
       </div>
     </transition>
+
+    <!-- Delete Confirmation Modal -->
+    <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+      <div v-if="companyToDelete" class="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="companyToDelete = null"></div>
+
+        <!-- Modal Panel -->
+        <div class="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md w-full transform transition-all border border-gray-100">
+          <div class="px-6 py-6 sm:p-8">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                <h3 class="text-lg font-semibold leading-6 text-gray-900">Archive Workspace</h3>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500">
+                    Are you sure you want to archive <strong>{{ companyToDelete.company_name }}</strong>? This workspace will be hidden from the system but its data is preserved and can be restored later.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-8 sm:mt-6 sm:flex sm:flex-row-reverse gap-3">
+              <button 
+                type="button" 
+                @click="executeSoftDelete"
+                class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 active:bg-red-700 transition-colors sm:w-auto"
+              >
+                Archive Workspace
+              </button>
+              <button 
+                type="button" 
+                @click="companyToDelete = null"
+                class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors sm:mt-0 sm:w-auto"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -524,10 +568,10 @@ const router = useRouter();
 const currentCompanyId = ref(null);
 const search = ref('');
 const loading = ref(false);
-const syncing = ref(false);
 const switchingId = ref(null);
 const successMessage = ref('');
 const selectedCompany = ref(null);
+const companyToDelete = ref(null);
 const previewLogoCompany = ref(null);
 const uploadingTableLogo = ref(false);
 const tableLogoInput = ref(null);
@@ -758,17 +802,31 @@ const switchCompany = async (id) => {
   }
 };
 
-const startNewCompanyFlow = async () => {
-    syncing.value = true;
+const confirmDelete = (company) => {
+    companyToDelete.value = company;
+};
+
+const executeSoftDelete = async () => {
+    if (!companyToDelete.value) return;
+    
+    const company = companyToDelete.value;
+    
     try {
-        // Force sync the web session using our API token
-        await axios.get('/sync-session');
-        window.location.href = '/company-setup?start_fresh_flow=true';
+        const response = await axios.delete(`/company/${company.id}/destroy`);
+        
+        if (response.data.success) {
+            companies.value = companies.value.filter(c => c.id !== company.id);
+            companyToDelete.value = null;
+        } else {
+            alert(response.data.message);
+        }
     } catch (error) {
-        console.error('Failed to sync session, proceeding anyway...', error);
-        window.location.href = '/company-setup?start_fresh_flow=true';
-    } finally {
-        syncing.value = false;
+        console.error('Soft delete failed:', error);
+        if (error.response && error.response.data && error.response.data.message) {
+            alert(error.response.data.message);
+        } else {
+            alert('Something went wrong. Please try again.');
+        }
     }
 };
 

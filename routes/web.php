@@ -49,6 +49,10 @@ Route::middleware(['auth'])->group(function () {
     // Persist current wizard progress as a resumable draft
     Route::post('/onboarding/save-draft', [\App\Http\Controllers\CompanySetupController::class, 'saveSetupAsDraft'])
         ->name('onboarding.save-draft');
+
+    // Soft delete a company workspace (AJAX-compatible)
+    Route::delete('/company/{id}/destroy', [\App\Http\Controllers\CompanySetupController::class, 'destroyCompany'])
+        ->name('company.destroy');
 });
 
 // 3. Root route
