@@ -216,6 +216,9 @@ const updateCompany = async () => {
     
     successMessage.value = response.data.message;
     
+    // Dispatch event to quickly update the sidebar panel without a refresh
+    window.dispatchEvent(new CustomEvent('company-switched-globally'));
+    
     setTimeout(() => {
       successMessage.value = '';
       router.push('/companies');
