@@ -75,11 +75,11 @@
             class="absolute left-0 right-0 w-full mt-3 bg-white border border-gray-200 rounded-xl shadow-2xl divide-y divide-gray-100 focus:outline-none z-50 overflow-hidden"
           >
             <div class="py-1 max-h-64 overflow-y-auto custom-scrollbar">
-              <a
+              <button
                 v-for="company in companies"
                 :key="company.id"
-                :href="`/company/switch/${company.id}`"
-                class="w-full text-left px-4 py-3 text-[13px] font-medium transition-colors flex items-center justify-between"
+                @click="switchCompany(company.id); showCompanySwitcher = false"
+                class="w-full text-left px-4 py-3 text-[13px] font-medium transition-colors flex items-center justify-between cursor-pointer"
                 :class="company.id === activeCompany.id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
               >
                 <div class="flex items-center overflow-hidden">
@@ -92,7 +92,7 @@
                 <svg v-if="company.id === activeCompany.id" class="ml-2 flex-shrink-0 h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-              </a>
+              </button>
             </div>
             <div class="py-1">
               <router-link to="/companies" class="flex items-center px-4 py-3 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full text-left" @click="showCompanySwitcher = false">
@@ -1141,9 +1141,7 @@ const fetchCompanies = async () => {
 const switchCompany = async (companyId) => {
   try {
     await axios.post('/api/companies/switch', { company_id: companyId });
-    await fetchCompanies();
-    await authStore.fetchUser();
-    window.dispatchEvent(new CustomEvent('company-switched-globally'));
+    window.location.href = '/';
   } catch (error) {
     console.error('Failed to switch company', error);
   }

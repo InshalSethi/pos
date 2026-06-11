@@ -40,14 +40,14 @@ class CompanyController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->companies()->where('company_id', $id)->exists()) {
+        if (!$user->companies()->where('companies.id', $id)->exists()) {
             return response()->json(['message' => 'Unauthorized action.'], 403);
         }
 
         $user->current_company_id = $id;
         $user->save();
 
-        $company = $user->companies()->where('company_id', $id)->first();
+        $company = $user->companies()->where('companies.id', $id)->first();
         if ($company) {
             session(['app_currency' => $company->base_currency]);
             \Illuminate\Support\Facades\Cache::forever('system_timezone', $company->timezone_offset);

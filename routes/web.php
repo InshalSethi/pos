@@ -72,7 +72,7 @@ Route::get('/company/switch/{id}', function ($id) {
     $user = Auth::user();
 
     // Verify user belongs to requested company
-    if (!$user->companies()->where('company_id', $id)->exists()) {
+    if (!$user->companies()->where('companies.id', $id)->exists()) {
         abort(403, 'Unauthorized action.');
     }
 
@@ -80,7 +80,7 @@ Route::get('/company/switch/{id}', function ($id) {
     $user->save();
 
     // Re-fetch company to update session settings
-    $company = $user->companies()->where('company_id', $id)->first();
+    $company = $user->companies()->where('companies.id', $id)->first();
     Session::put('app_currency', $company->base_currency);
 
     // Flash success using standard session flash
