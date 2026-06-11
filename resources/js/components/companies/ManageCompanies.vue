@@ -76,6 +76,7 @@
                 <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer">
               </th>
               <th scope="col" class="px-4 py-4 w-20">ID</th>
+              <th scope="col" class="px-3 py-4 w-12 text-left">Logo</th>
               <th scope="col" class="px-6 py-4">
                 <div class="flex items-center space-x-1 cursor-pointer hover:text-gray-700">
                   <span>Name</span>
@@ -90,7 +91,7 @@
           </thead>
           <tbody class="divide-y divide-gray-100 bg-white">
             <tr v-if="companies.length === 0 && !loading" class="hover:bg-gray-50 transition-colors duration-150">
-              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                 <svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
@@ -103,6 +104,14 @@
                 <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer">
               </td>
               <td class="px-4 py-4 text-gray-500 font-medium">#{{ company.id }}</td>
+              <td class="px-3 py-4 whitespace-nowrap">
+                <div class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-gray-100 to-gray-200/60 dark:from-zinc-800 dark:to-zinc-700/50 text-gray-700 dark:text-zinc-300 font-bold text-xs shadow-sm border border-gray-200/40 dark:border-zinc-700/30 overflow-hidden group">
+                  <img v-if="company.company_logo" :src="`/storage/${company.company_logo}`" :alt="company.company_name + ' Logo'" class="h-full w-full object-cover transition-transform group-hover:scale-105 duration-150">
+                  <span v-else class="text-gray-600 dark:text-zinc-300 uppercase">
+                    {{ company.company_name ? company.company_name.charAt(0).toUpperCase() : 'C' }}
+                  </span>
+                </div>
+              </td>
               <td class="px-6 py-4">
                 <div class="flex flex-col">
                   <button 
