@@ -16,7 +16,7 @@
               <div class="h-24 w-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
                 <img 
                   v-if="profileImage" 
-                  :src="profileImage" 
+                  :src="getProfileImageUrl(profileImage)" 
                   alt="Profile" 
                   class="h-full w-full object-cover"
                 />
@@ -122,7 +122,7 @@
             <!-- Password Change Section -->
             <div class="border-t border-gray-200 pt-6">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
                     Current Password
@@ -147,9 +147,9 @@
                   />
                 </div>
 
-                <div class="md:col-span-2">
+                <div>
                   <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm New Password
+                    Confirm Password
                   </label>
                   <input
                     id="new_password_confirmation"
@@ -207,6 +207,12 @@ const initializeForm = () => {
   profileForm.value.name = authStore.user?.name || '';
   profileForm.value.email = authStore.user?.email || '';
   profileImage.value = authStore.user?.profile_image || null;
+};
+
+const getProfileImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http')) return imagePath;
+  return `/storage/${imagePath}`;
 };
 
 const triggerFileInput = () => {
