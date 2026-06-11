@@ -124,9 +124,8 @@
               <td class="px-6 py-4">
                 <div class="flex flex-col">
                   <button 
-                    @click="switchCompany(company.id)" 
-                    :disabled="switchingId === company.id"
-                    class="text-left font-bold text-indigo-600 hover:text-indigo-800 transition-colors text-base disabled:opacity-70"
+                    @click="viewCompany(company)" 
+                    class="text-left font-bold text-indigo-600 hover:text-indigo-800 transition-colors text-base"
                   >
                     {{ company.company_name }}
                     <span v-if="switchingId === company.id" class="inline-flex ml-2 items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 animate-pulse">
