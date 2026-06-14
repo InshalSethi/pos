@@ -99,8 +99,35 @@
              </div>
           </div>
 
+          <!-- Simple Pricing Parameters Card -->
+          <div v-show="!isVariantMode"
+               class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm mt-6">
+              <div class="border-b border-slate-100 dark:border-zinc-800 pb-3 mb-4">
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Product Pricing</h3>
+                  <p class="text-[11px] text-slate-400">Set default cost and selling metrics for standalone single products.</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                      <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Purchase Cost ($)</label>
+                      <input type="number" v-model="form.cost_price" step="0.01" placeholder="0.00" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none">
+                  </div>
+                  <div>
+                      <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Retail Price ($) *</label>
+                      <input type="number" v-model="form.selling_price" step="0.01" placeholder="0.00" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-emerald-600 font-bold focus:outline-none" :required="!isVariantMode">
+                  </div>
+                  <div>
+                      <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Wholesale Price ($) *</label>
+                      <input type="number" v-model="form.wholesale_price" step="0.01" placeholder="0.00" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-indigo-600 font-bold focus:outline-none" :required="!isVariantMode">
+                  </div>
+                  <div>
+                      <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Tax Rate (%)</label>
+                      <input type="number" v-model="form.tax_rate" step="0.01" placeholder="0.00" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none">
+                  </div>
+              </div>
+          </div>
+
           <!-- Variation-wise Matrix Allocation -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mt-6 animate-in fade-in duration-200">
+          <div v-show="isVariantMode" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mt-6 animate-in fade-in duration-200">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
                     <div>
                         <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Dynamic Variation Sourcing Matrix</h4>
@@ -202,8 +229,22 @@
              </div>
           </div>
 
+          <!-- Product Variations Toggle Card -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                  <div>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Product Variations</h3>
+                      <p class="text-[11px] text-slate-400">Enable variant-specific pricing options.</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer select-none">
+                      <input type="checkbox" v-model="form.has_variations" class="sr-only peer">
+                      <div class="w-8 h-4.5 bg-slate-200 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                  </label>
+              </div>
+          </div>
+
           <!-- Variations Card -->
-          <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 space-y-4">
+          <div v-show="isVariantMode" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 space-y-4">
             <div class="border-b border-slate-100 pb-3">
               <h3 class="text-sm font-bold text-slate-900">Variations (Mandatory)</h3>
               <p class="text-[11px] text-slate-400">Build options to configure product pricing & inventory.</p>
@@ -519,8 +560,15 @@ const onScan = (barcode) => {
 };
 
 // ─── Variant Mode Detection ────────────────────────────────────────────────
-// True whenever at least one variation row exists in the matrix
-const isVariantMode = computed(() => form.value.variations && form.value.variations.length > 0);
+const isVariantMode = computed(() => !!form.value.has_variations);
+
+// Clear variation structures when toggle switch is turned off
+watch(() => form.value.has_variations, (newVal) => {
+  if (!newVal) {
+    attributes.value = [];
+    form.value.variations = [];
+  }
+});
 
 // ─── Auto-Sum Calculation ──────────────────────────────────────────────────
 // Reactively sums all stock_qty values across every variation row
@@ -550,8 +598,9 @@ const submit = () => {
 
   const payload = { 
     ...form.value, 
-    attributes: attributes.value,
-    has_variations: form.value.variations && form.value.variations.length > 0
+    attributes: isVariantMode.value ? attributes.value : [],
+    has_variations: isVariantMode.value,
+    variations: isVariantMode.value ? form.value.variations : []
   };
   emit('submit', payload);
 };

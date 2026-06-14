@@ -114,16 +114,20 @@
             </template>
 
             <template #column-prices="{ item }">
-              <div v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)" class="flex justify-center">
+              <div v-if="item.variations_count > 0" class="flex justify-center items-center w-full">
                   <button type="button" 
                           @click.stop.prevent="openPricesModal(item)" 
                           class="px-2.5 py-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 shadow-sm transition-all focus:outline-none">
                       View Prices
                   </button>
               </div>
-              <div v-else class="flex flex-col gap-0.5 text-[10px] font-bold items-center">
-                  <span class="text-emerald-700">W: {{ currencyStore.formatPrice(item.wholesale_price) }}</span>
-                  <span class="text-indigo-700">R: {{ currencyStore.formatPrice(item.selling_price) }}</span>
+              <div v-else class="inline-flex flex-col text-center justify-center items-center mx-auto space-y-0.5">
+                  <span class="text-[11px] text-slate-500 font-semibold tracking-wide">
+                      W: <strong class="text-indigo-600 dark:text-indigo-400" v-text="'$ ' + parseFloat(item.wholesale_price || 0).toFixed(2)"></strong>
+                  </span>
+                  <span class="text-[11px] text-slate-500 font-semibold tracking-wide">
+                      R: <strong class="text-emerald-600 dark:text-emerald-400" v-text="'$ ' + parseFloat(item.retail_price || item.selling_price || 0).toFixed(2)"></strong>
+                  </span>
               </div>
             </template>
 
@@ -151,19 +155,8 @@
                 </span>
               </div>
             </template>
-
             <template #column-actions="{ item }">
               <div class="flex items-center justify-center space-x-1.5">
-                <button
-                  v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
-                  @click="openVariationsModal(item)"
-                  class="h-6 w-6 flex items-center justify-center rounded bg-indigo-50 border border-indigo-200/40 text-indigo-600 hover:bg-indigo-100 transition-all dark:bg-indigo-500/10 dark:text-indigo-400"
-                  title="View Variations Matrix"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25A2.25 2.25 0 0 1 13.5 8V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-                  </svg>
-                </button>
                 <button
                   @click="viewProduct(item)"
                   class="h-6 w-6 flex items-center justify-center rounded bg-white border border-slate-200 text-indigo-600 hover:text-indigo-700 hover:border-indigo-300 hover:shadow-sm transition-all"

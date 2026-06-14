@@ -96,6 +96,7 @@ class ProductController extends Controller
             'selling_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
             'wholesale_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
+            'tax_rate' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
@@ -123,14 +124,23 @@ class ProductController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $data = $request->all();
-            if (empty($data['selling_price'])) $data['selling_price'] = 0;
-            if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+            
+            $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
 
-            // Server-side auto-sum: if variations are present, derive stock_quantity from their stock_qty sum
-            if (!empty($data['variations']) && is_array($data['variations'])) {
-                $data['stock_quantity'] = collect($data['variations'])->sum(function ($row) {
+            if ($hasVariantsActive) {
+                $data['cost_price'] = 0.00;
+                $data['selling_price'] = 0.00;
+                $data['wholesale_price'] = 0.00;
+                $data['tax_rate'] = 0.00;
+                $data['stock_quantity'] = collect($request->variations)->sum(function ($row) {
                     return (int) ($row['stock_qty'] ?? 0);
                 });
+            } else {
+                if (empty($data['selling_price'])) $data['selling_price'] = 0;
+                if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+                if (empty($data['cost_price'])) $data['cost_price'] = 0;
+                if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                $data['has_variations'] = false;
             }
 
             if ($request->hasFile('image')) {
@@ -165,7 +175,7 @@ class ProductController extends Controller
                 }
             }
 
-            if ($request->has('variations') && is_array($request->variations)) {
+            if ($hasVariantsActive) {
                 foreach ($request->variations as $index => $row) {
                     \App\Models\ProductVariation::create([
                         'product_id' => $product->id,
@@ -239,6 +249,7 @@ class ProductController extends Controller
             'selling_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
             'wholesale_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
+            'tax_rate' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
@@ -266,14 +277,23 @@ class ProductController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $data = $request->all();
-            if (empty($data['selling_price'])) $data['selling_price'] = 0;
-            if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
 
-            // Server-side auto-sum: if variations are present, derive stock_quantity from their stock_qty sum
-            if (!empty($data['variations']) && is_array($data['variations'])) {
-                $data['stock_quantity'] = collect($data['variations'])->sum(function ($row) {
+            $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
+
+            if ($hasVariantsActive) {
+                $data['cost_price'] = 0.00;
+                $data['selling_price'] = 0.00;
+                $data['wholesale_price'] = 0.00;
+                $data['tax_rate'] = 0.00;
+                $data['stock_quantity'] = collect($request->variations)->sum(function ($row) {
                     return (int) ($row['stock_qty'] ?? 0);
                 });
+            } else {
+                if (empty($data['selling_price'])) $data['selling_price'] = 0;
+                if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+                if (empty($data['cost_price'])) $data['cost_price'] = 0;
+                if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                $data['has_variations'] = false;
             }
 
             if ($request->hasFile('image')) {
@@ -322,7 +342,7 @@ class ProductController extends Controller
                 $product->attributes()->delete();
             }
 
-            if ($request->has('variations') && is_array($request->variations)) {
+            if ($hasVariantsActive) {
                 // Purge old historical iterations for this target to prevent duplicate stacking id errors
                 $product->variations()->delete();
                 foreach ($request->variations as $index => $row) {
@@ -359,7 +379,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product profiles updated flawlessly.',
+                'message' => 'Product updated successfully',
                 'product' => $product
             ]);
         } catch (\Exception $e) {
