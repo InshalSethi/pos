@@ -99,30 +99,6 @@
              </div>
           </div>
 
-          <!-- Media Card -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-             <div class="mb-4">
-                 <h2 class="text-base font-semibold text-slate-900">Media</h2>
-             </div>
-             <div class="flex flex-wrap gap-4">
-               <!-- Uploaded Image -->
-               <div v-if="form.image_url" class="relative w-40 h-40 border border-slate-200 rounded-lg overflow-hidden group">
-                 <img :src="form.image_url" class="w-full h-full object-cover">
-                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                   <button type="button" @click="removeImage" class="p-1.5 bg-white text-red-600 rounded shadow hover:bg-slate-50">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                   </button>
-                 </div>
-               </div>
-               <!-- Upload Button -->
-               <button type="button" @click="$refs.imageInputRef.click()" class="w-40 h-40 border-[1.5px] border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
-                 <span class="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded">Add</span>
-                 <span class="text-xs font-medium text-indigo-600 hover:underline">Add from URL</span>
-               </button>
-               <input ref="imageInputRef" type="file" @change="handleImageUpload" class="hidden" accept="image/*">
-             </div>
-          </div>
-
           <!-- Variation-wise Matrix Allocation -->
           <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mt-6 animate-in fade-in duration-200">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
@@ -249,6 +225,32 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Product Media Card -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-4">
+              <div class="border-b border-slate-100 dark:border-zinc-800 pb-3">
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Product Media</h3>
+                  <p class="text-[11px] text-slate-400">Upload primary images and thumbnail gallery showcasing this product.</p>
+              </div>
+              
+              <div class="flex flex-wrap gap-4">
+                  <!-- Uploaded Image -->
+                  <div v-if="form.image_url" class="relative w-40 h-40 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden group">
+                    <img :src="form.image_url" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button type="button" @click="removeImage" class="p-1.5 bg-white text-red-600 rounded shadow hover:bg-slate-50">
+                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Upload Button -->
+                  <button type="button" @click="$refs.imageInputRef.click()" class="w-full h-40 border-[1.5px] border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors focus:outline-none">
+                    <span class="text-sm font-medium text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg">Add</span>
+                    <span class="text-xs font-medium text-indigo-600 hover:underline">Add from URL</span>
+                  </button>
+                  <input ref="imageInputRef" type="file" @change="handleImageUpload" class="hidden" accept="image/*">
+              </div>
           </div>
 
         </div>
