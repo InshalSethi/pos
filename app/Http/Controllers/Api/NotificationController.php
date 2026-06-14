@@ -27,6 +27,17 @@ class NotificationController extends Controller
      */
     public function markAsRead(Request $request, $id): JsonResponse
     {
+        // Try system notifications table first if numeric
+        if (is_numeric($id)) {
+            $affected = \DB::table('system_notifications')
+                ->where('id', $id)
+                ->where('company_id', $request->user()?->current_company_id)
+                ->update(['is_read' => true, 'updated_at' => now()]);
+            if ($affected) {
+                return response()->json(['message' => 'Notification marked as read']);
+            }
+        }
+
         $notification = $request->user()
             ->notifications()
             ->where('id', $id)
@@ -50,6 +61,11 @@ class NotificationController extends Controller
             ->unreadNotifications
             ->markAsRead();
 
+        \DB::table('system_notifications')
+            ->where('company_id', $request->user()?->current_company_id)
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'updated_at' => now()]);
+
         return response()->json(['message' => 'All notifications marked as read']);
     }
 
@@ -62,6 +78,40 @@ class NotificationController extends Controller
             ->unreadNotifications()
             ->count();
 
+        $count += \DB::table('system_notifications')
+            ->where('company_id', $request->user()?->current_company_id)
+            ->where('is_read', false)
+            ->count();
+
         return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Get low stock notifications summary
+     */
+    public function lowStockSummary(Request $request): JsonResponse
+    {
+        $companyId = $request->user()?->current_company_id;
+
+        $alerts = \DB::table('system_notifications')
+            ->where('company_id', $companyId)
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'message' => $item->message,
+                    'type' => $item->type,
+                    'product_id' => $item->product_id,
+                    'is_read' => (bool)$item->is_read,
+                    'created_at' => $item->created_at,
+                ];
+            });
+
+        return response()->json([
+            'alerts' => $alerts,
+            'unread_count' => $alerts->count(),
+        ]);
     }
 }

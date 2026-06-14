@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\StockThresholdService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -26,15 +27,17 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with('category');
+        $query = Product::with(['category', 'variations' => function($query) {
+            $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate');
+        }])->withCount('variations');
 
         // Search functionality
         if ($request->has('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%");
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%");
             });
         }
 
@@ -43,9 +46,19 @@ class ProductController extends Controller
             $query->where('category_id', $request->get('category_id'));
         }
 
+        // Filter by tag
+        if ($request->has('tag')) {
+            $query->whereJsonContains('tags', $request->get('tag'));
+        }
+
         // Filter by active status
         if ($request->has('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        // Filter by on sale
+        if ($request->boolean('on_sale')) {
+            $query->where('discount_value', '>', 0);
         }
 
         // Filter by low stock
@@ -80,8 +93,8 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:products,sku',
-            'selling_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'required|numeric|min:0',
+            'selling_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
+            'wholesale_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'stock_quantity' => 'nullable|integer|min:0',
@@ -94,6 +107,10 @@ class ProductController extends Controller
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
             'image' => 'nullable|image|max:2048',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:50',
+            'has_variations' => 'boolean',
+            'variations' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -103,21 +120,91 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('product-images', 'public');
-            $data['image'] = '/storage/' . $path;
-        } else {
-            $data['image'] = null;
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $data = $request->all();
+            if (empty($data['selling_price'])) $data['selling_price'] = 0;
+            if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+
+            // Server-side auto-sum: if variations are present, derive stock_quantity from their stock_qty sum
+            if (!empty($data['variations']) && is_array($data['variations'])) {
+                $data['stock_quantity'] = collect($data['variations'])->sum(function ($row) {
+                    return (int) ($row['stock_qty'] ?? 0);
+                });
+            }
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('product-images', 'public');
+                $data['image'] = '/storage/' . $path;
+            } else {
+                $data['image'] = null;
+            }
+
+            $product = Product::create($data);
+            $product->load('category');
+
+            if ($request->has('tags') && is_array($request->tags)) {
+                $companyId = auth()->check() ? auth()->user()->current_company_id : null;
+                foreach ($request->tags as $tagName) {
+                    \App\Models\Tag::firstOrCreate([
+                        'company_id' => $companyId,
+                        'name' => $tagName
+                    ]);
+                }
+            }
+
+            if ($request->has('attributes') && is_array($request->attributes)) {
+                foreach ($request->attributes as $attr) {
+                    if (isset($attr['name']) && isset($attr['values'])) {
+                        \App\Models\ProductAttribute::create([
+                            'product_id' => $product->id,
+                            'name' => $attr['name'],
+                            'values' => $attr['values']
+                        ]);
+                    }
+                }
+            }
+
+            if ($request->has('variations') && is_array($request->variations)) {
+                foreach ($request->variations as $index => $row) {
+                    \App\Models\ProductVariation::create([
+                        'product_id' => $product->id,
+                        'combination_key' => $row['combination_key'] ?? $row['name_string'] ?? strval($index),
+                        'variation_name_string' => $row['name_string'] ?? 'Default',
+                        'sku' => $row['sku'] ?? 'SKU-' . strtoupper(uniqid()),
+                        'barcode' => $row['barcode'] ?? null,
+                        'retail_price' => $row['retail_price'] ?? 0,
+                        'wholesale_price' => $row['wholesale_price'] ?? 0,
+                        'cost_price' => $row['cost_price'] ?? 0,
+                        'tax_rate' => $row['tax_rate'] ?? null,
+                        'discount_type' => $row['discount_type'] ?? null,
+                        'discount_value' => $row['discount_value'] ?? null,
+                        'stock_qty' => $row['stock_qty'] ?? 0,
+                        'min_stock_alert' => $row['min_stock_alert'] ?? 0,
+                        'unit_of_measure' => $row['unit_of_measure'] ?? null,
+                        'expiry_date' => $row['expiry_date'] ?? null,
+                    ]);
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            // Evaluate stock thresholds and fire low-stock notifications
+            try {
+                (new StockThresholdService())->evaluate($product->fresh(['variations']));
+            } catch (\Throwable $th) {
+                \Illuminate\Support\Facades\Log::warning('StockThresholdService failed after store: ' . $th->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product created successfully',
+                'product' => $product
+            ], 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Failed storing product data: ' . $e->getMessage()], 500);
         }
-
-        $product = Product::create($data);
-        $product->load('category');
-
-        return response()->json([
-            'message' => 'Product created successfully',
-            'product' => $product
-        ], 201);
     }
 
     /**
@@ -125,9 +212,20 @@ class ProductController extends Controller
      */
     public function show(Product $product): JsonResponse
     {
-        $product->load('category', 'saleItems.sale');
+        $product->load('category', 'saleItems.sale', 'variations', 'attributes');
+        $product->loadCount('variations');
 
         return response()->json($product);
+    }
+    
+    /**
+     * Edit route mapping helper: ensures front-end views read variation attributes count state reactively.
+     */
+    public function edit($id)
+    {
+        // Include variations count structure explicitly
+        $product = Product::with(['variations', 'attributes'])->withCount('variations')->findOrFail($id);
+        return response()->json(['product' => $product]);
     }
 
     /**
@@ -138,8 +236,8 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:products,sku,' . $product->id,
-            'selling_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'required|numeric|min:0',
+            'selling_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
+            'wholesale_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'stock_quantity' => 'nullable|integer|min:0',
@@ -152,6 +250,10 @@ class ProductController extends Controller
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
             'image' => 'nullable',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:50',
+            'has_variations' => 'boolean',
+            'variations' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -161,32 +263,109 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        if ($request->hasFile('image')) {
-            if ($product->image) {
-                $oldPath = str_replace('/storage/', '', $product->image);
-                Storage::disk('public')->delete($oldPath);
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $data = $request->all();
+            if (empty($data['selling_price'])) $data['selling_price'] = 0;
+            if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+
+            // Server-side auto-sum: if variations are present, derive stock_quantity from their stock_qty sum
+            if (!empty($data['variations']) && is_array($data['variations'])) {
+                $data['stock_quantity'] = collect($data['variations'])->sum(function ($row) {
+                    return (int) ($row['stock_qty'] ?? 0);
+                });
             }
-            $path = $request->file('image')->store('product-images', 'public');
-            $data['image'] = '/storage/' . $path;
-        } elseif ($request->input('image') === '') {
-            if ($product->image) {
-                $oldPath = str_replace('/storage/', '', $product->image);
-                Storage::disk('public')->delete($oldPath);
+
+            if ($request->hasFile('image')) {
+                if ($product->image) {
+                    $oldPath = str_replace('/storage/', '', $product->image);
+                    Storage::disk('public')->delete($oldPath);
+                }
+                $path = $request->file('image')->store('product-images', 'public');
+                $data['image'] = '/storage/' . $path;
+            } elseif ($request->input('image') === '') {
+                if ($product->image) {
+                    $oldPath = str_replace('/storage/', '', $product->image);
+                    Storage::disk('public')->delete($oldPath);
+                }
+                $data['image'] = null;
+            } else {
+                // Keep the existing image if no new image was uploaded and it was not explicitly cleared
+                unset($data['image']);
             }
-            $data['image'] = null;
-        } else {
-            // Keep the existing image if no new image was uploaded and it was not explicitly cleared
-            unset($data['image']);
+
+            $product->update($data);
+            $product->load('category');
+
+            if ($request->has('tags') && is_array($request->tags)) {
+                $companyId = auth()->check() ? auth()->user()->current_company_id : null;
+                foreach ($request->tags as $tagName) {
+                    \App\Models\Tag::firstOrCreate([
+                        'company_id' => $companyId,
+                        'name' => $tagName
+                    ]);
+                }
+            }
+
+            if ($request->has('attributes') && is_array($request->attributes)) {
+                $product->attributes()->delete();
+                foreach ($request->attributes as $attr) {
+                    if (isset($attr['name']) && isset($attr['values'])) {
+                        \App\Models\ProductAttribute::create([
+                            'product_id' => $product->id,
+                            'name' => $attr['name'],
+                            'values' => $attr['values']
+                        ]);
+                    }
+                }
+            } else {
+                $product->attributes()->delete();
+            }
+
+            if ($request->has('variations') && is_array($request->variations)) {
+                // Purge old historical iterations for this target to prevent duplicate stacking id errors
+                $product->variations()->delete();
+                foreach ($request->variations as $index => $row) {
+                    \App\Models\ProductVariation::create([
+                        'product_id' => $product->id,
+                        'combination_key' => $row['combination_key'] ?? $row['name_string'] ?? strval($index),
+                        'variation_name_string' => $row['name_string'] ?? 'Default',
+                        'sku' => $row['sku'] ?? 'SKU-' . strtoupper(uniqid()),
+                        'barcode' => $row['barcode'] ?? null,
+                        'retail_price' => $row['retail_price'] ?? 0,
+                        'wholesale_price' => $row['wholesale_price'] ?? 0,
+                        'cost_price' => $row['cost_price'] ?? 0,
+                        'tax_rate' => $row['tax_rate'] ?? null,
+                        'discount_type' => $row['discount_type'] ?? null,
+                        'discount_value' => $row['discount_value'] ?? null,
+                        'stock_qty' => $row['stock_qty'] ?? 0,
+                        'min_stock_alert' => $row['min_stock_alert'] ?? 0,
+                        'unit_of_measure' => $row['unit_of_measure'] ?? null,
+                        'expiry_date' => $row['expiry_date'] ?? null,
+                    ]);
+                }
+            } else {
+                $product->variations()->delete();
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            // Evaluate stock thresholds and fire low-stock notifications
+            try {
+                (new StockThresholdService())->evaluate($product->fresh(['variations']));
+            } catch (\Throwable $th) {
+                \Illuminate\Support\Facades\Log::warning('StockThresholdService failed after update: ' . $th->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product profiles updated flawlessly.',
+                'product' => $product
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Update runtime fault: ' . $e->getMessage()], 500);
         }
-
-        $product->update($data);
-        $product->load('category');
-
-        return response()->json([
-            'message' => 'Product updated successfully',
-            'product' => $product
-        ]);
     }
 
     /**
@@ -296,8 +475,8 @@ class ProductController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -422,11 +601,11 @@ class ProductController extends Controller
                     'name' => $data[0] ?? '',
                     'sku' => $data[1] ?? '',
                     'description' => $data[2] ?? '',
-                    'category_id' => !empty($data[3]) ? (int)$data[3] : null,
-                    'selling_price' => !empty($data[4]) ? (float)$data[4] : 0,
-                    'cost_price' => !empty($data[5]) ? (float)$data[5] : 0,
-                    'stock_quantity' => !empty($data[6]) ? (int)$data[6] : 0,
-                    'min_stock_level' => !empty($data[7]) ? (int)$data[7] : 0,
+                    'category_id' => !empty($data[3]) ? (int) $data[3] : null,
+                    'selling_price' => !empty($data[4]) ? (float) $data[4] : 0,
+                    'cost_price' => !empty($data[5]) ? (float) $data[5] : 0,
+                    'stock_quantity' => !empty($data[6]) ? (int) $data[6] : 0,
+                    'min_stock_level' => !empty($data[7]) ? (int) $data[7] : 0,
                     'unit' => $data[8] ?? 'pcs',
                     'barcode' => $data[9] ?? '',
                     'is_active' => true,
@@ -446,5 +625,33 @@ class ProductController extends Controller
         // For now, treat Excel files as CSV
         // In a real implementation, you would use PhpSpreadsheet library
         return $this->importFromCsv($file);
+    }
+
+    /**
+     * Calculates the Cartesian Product of multi-dimensional attribute values arrays 
+     * to auto-generate unique product variations grid entries on the fly.
+     */
+    public function generateCombinationsMatrix(array $attributeGroups) {
+        // Input format example: [ [1, 2], [3, 4] ] -> (IDs of chosen values)
+        $result = [[]];
+        foreach ($attributeGroups as $property => $values) {
+            if (empty($values)) continue;
+            $append = [];
+            foreach ($result as $productCombo) {
+                foreach ($values as $item) {
+                    $append[] = array_merge($productCombo, [$property => $item]);
+                }
+            }
+            $result = $append;
+        }
+        
+        // Returns array matrices containing sorted ID combinations keys
+        return array_map(function($combo) {
+            sort($combo); // Ensure chronological sequence consistency, e.g., always "1-5", never "5-1"
+            return [
+                'combination_key' => implode('-', $combo),
+                'suggested_sku'   => 'SKU-' . strtoupper(uniqid())
+            ];
+        }, $result);
     }
 }

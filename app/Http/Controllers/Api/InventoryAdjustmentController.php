@@ -140,6 +140,12 @@ class InventoryAdjustmentController extends Controller
             // Update product stock
             $product->update(['stock_quantity' => $quantityAfter]);
 
+            try {
+                $this->verifyStockThresholds($product->id);
+            } catch (\Throwable $th) {
+                \Illuminate\Support\Facades\Log::warning('verifyStockThresholds failed in InventoryAdjustmentController: ' . $th->getMessage());
+            }
+
             DB::commit();
 
             $adjustment->load(['product', 'user']);
@@ -297,6 +303,11 @@ class InventoryAdjustmentController extends Controller
                     ]);
 
                     $product->update(['stock_quantity' => $quantityAfter]);
+                    try {
+                        $this->verifyStockThresholds($product->id);
+                    } catch (\Throwable $th) {
+                        \Illuminate\Support\Facades\Log::warning('verifyStockThresholds failed in InventoryAdjustmentController import: ' . $th->getMessage());
+                    }
                     $imported++;
                 }
             }
@@ -315,6 +326,79 @@ class InventoryAdjustmentController extends Controller
                 'message' => 'Import failed',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Invoked immediately whenever items are checked out via POS or processed through stock adjustments.
+     */
+    public function verifyStockThresholds($productId, $variationId = null)
+    {
+        $product = \Illuminate\Support\Facades\DB::table('products')->where('id', $productId)->first();
+        
+        if (!$product) return;
+
+        // Calculate total or specific local variant stock qty available
+        if (is_null($variationId)) {
+            // Simple Product Stock Calculation
+            if (\Illuminate\Support\Facades\Schema::hasTable('inventories')) {
+                $currentStock = \Illuminate\Support\Facades\DB::table('inventories')->where('product_id', $productId)->sum('stock_qty');
+            } else {
+                $currentStock = \Illuminate\Support\Facades\DB::table('products')->where('id', $productId)->value('stock_quantity') ?? 0;
+            }
+            $minAlertLimit = $product->min_stock_alert ?? ($product->min_stock_level ?? 0);
+            $msg = "Product '{$product->name}' is running low! Only {$currentStock} items remaining.";
+        } else {
+            // Variant Specific Stock Calculation
+            $variant = \Illuminate\Support\Facades\DB::table('product_variations')->where('id', $variationId)->first();
+            if (!$variant) return;
+            if (\Illuminate\Support\Facades\Schema::hasTable('inventories')) {
+                $currentStock = \Illuminate\Support\Facades\DB::table('inventories')->where('product_variation_id', $variationId)->sum('stock_qty');
+            } else {
+                $currentStock = $variant->stock_qty ?? 0;
+            }
+            // Fallback to product alert if variant specific alert is unassigned
+            $minAlertLimit = $variant->min_stock_alert ?? ($variant->min_stock_level ?? ($product->min_stock_alert ?? ($product->min_stock_level ?? 0)));
+            $msg = "Variant '{$product->name} ({$variant->variation_name_string})' is low! Only {$currentStock} items left.";
+        }
+
+        // Trigger Notification insertion if bounds are breached
+        if ($currentStock <= $minAlertLimit) {
+            // Avoid inserting repetitive duplicate unread alerts for the same item
+            $exists = \Illuminate\Support\Facades\DB::table('system_notifications')
+                ->where('product_id', $productId)
+                ->where('type', 'low_stock')
+                ->where('is_read', false)
+                ->exists();
+
+            if (!$exists) {
+                \Illuminate\Support\Facades\DB::table('system_notifications')->insert([
+                    'company_id' => $product->company_id,
+                    'product_id' => $productId,
+                    'type' => 'low_stock',
+                    'message' => $msg,
+                    'is_read' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Also trigger LowStockNotification Laravel notification
+                try {
+                    $users = \App\Models\User::where('current_company_id', $product->company_id)->get();
+                    $notification = new \App\Notifications\LowStockNotification(
+                        productName:  $product->name,
+                        currentStock: $currentStock,
+                        minAlert:     $minAlertLimit,
+                        variantLabel: $variant->variation_name_string ?? '',
+                        productId:    $product->id,
+                    );
+                    foreach ($users as $user) {
+                        $user->notify($notification);
+                    }
+                } catch (\Throwable $th) {
+                    \Illuminate\Support\Facades\Log::warning('Failed sending low stock notification: ' . $th->getMessage());
+                }
+            }
         }
     }
 }

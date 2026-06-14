@@ -116,6 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/companies/switch', [CompanySwitcherController::class, 'switchCompany']);
     // Product management routes
     Route::apiResource('products', ProductController::class);
+    Route::post('/products/bulk-sale', [\App\Http\Controllers\Api\ProductSaleController::class, 'applyBulkSale']);
     Route::post('/products/import', [ProductController::class , 'import']);
     Route::get('/products/export', [ProductController::class , 'export']);
     Route::get('/products/download-template', [ProductController::class , 'downloadTemplate']);
@@ -258,6 +259,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/notifications/{id}/read', [NotificationController::class , 'markAsRead']);
         Route::post('/notifications/mark-all-read', [NotificationController::class , 'markAllAsRead']);
         Route::get('/notifications/unread-count', [NotificationController::class , 'unreadCount']);
+        Route::get('/notifications/low-stock-summary', [NotificationController::class, 'lowStockSummary']);
 
         // Payment settings routes
         Route::get('/payment-settings', [PaymentSettingsController::class , 'index']);

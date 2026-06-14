@@ -36,7 +36,8 @@
         enter-to-class="opacity-100 scale-100 translate-y-0"
       >
         <ListboxOptions
-          class="absolute left-0 mt-1 z-30 w-full min-w-full max-h-64 overflow-auto bg-white border border-slate-200/80 shadow-lg rounded-xl p-1 focus:outline-none custom-scrollbar"
+          class="absolute left-0 z-30 w-full min-w-full max-h-64 overflow-auto bg-white border border-slate-200/80 shadow-lg rounded-xl p-1 focus:outline-none custom-scrollbar"
+          :class="dropup ? 'bottom-full mb-1' : 'top-full mt-1'"
         >
           <ListboxOption
             v-slot="{ active, selected: isSelected }"
@@ -95,7 +96,8 @@ const props = defineProps({
   disabled: Boolean,
   error: Boolean,
   focusColor: String,
-  iconColor: String
+  iconColor: String,
+  dropup: Boolean
 });
 
 const emit = defineEmits(['update:modelValue']);

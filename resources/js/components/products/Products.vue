@@ -1,16 +1,67 @@
 <template>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
+  <div class="w-full mx-auto py-2 px-2 sm:px-4 lg:px-6">
+    <div class="w-full">
         <!-- Header -->
-        <div class="mb-6">
-          <h1 class="text-3xl font-bold text-gray-900">Products</h1>
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">Products</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Manage your inventory, pricing, and product details</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              v-if="selectedProducts.length > 0 || products.length > 0"
+              @click="showBulkSaleModal = true"
+              class="inline-flex items-center px-4 py-2 bg-white border border-rose-200 hover:bg-rose-50 hover:border-rose-300 text-rose-600 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM12 8V7m0 1v1m0-1c0-1.657-1.343-3-3-3h0M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+              Apply Sale
+            </button>
+            <button
+              v-if="authStore.hasPermission('products.import')"
+              @click="showImportModal = true"
+              class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+            >
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              </svg>
+              Import
+            </button>
+            <button
+              v-if="authStore.hasPermission('products.export')"
+              @click="exportProducts"
+              class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+            >
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Export
+            </button>
+            <button
+              @click="openCategoryModal"
+              class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+            >
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              Categories
+            </button>
+            <router-link
+              v-if="authStore.hasPermission('products.create')"
+              :to="{ name: 'CreateProduct' }"
+              class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Product
+            </router-link>
+          </div>
         </div>
 
 
         <!-- Products Table -->
         <DataTable
-          title="Products"
-          subtitle="Manage your product inventory and details"
           :columns="tableColumns"
           :data="products"
           :loading="loading"
@@ -22,150 +73,196 @@
           @sort="handleSort"
           @page-change="handlePageChange"
           @per-page-change="handlePerPageChange"
+          selectable
+          @selection-change="handleSelectionChange"
         >
             <!-- Custom column content -->
             <template #column-product="{ item }">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-12 w-12">
-                  <img
-                    v-if="item.image && !item.image.includes('Temp') && !item.image.includes('.tmp')"
-                    :src="item.image.startsWith('/') ? item.image : '/' + item.image"
-                    :alt="item.name"
-                    class="h-12 w-12 rounded-lg object-cover"
-                  />
-                  <div v-else class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
+              <div class="flex items-center gap-2">
+                  <div class="relative h-8 w-8 shrink-0 rounded-lg border border-slate-200/60 overflow-hidden bg-slate-50 group">
+                      <div v-if="Number(item.discount_value) > 0" class="absolute top-0 right-0 z-10 pointer-events-none select-none">
+                          <div class="absolute transform rotate-45 bg-rose-600 text-white text-[6px] font-black uppercase text-center tracking-widest py-0.5 w-[50px] -right-[15px] top-[4px] shadow-sm border-b border-white/20">Sale</div>
+                      </div>
+                      <img v-if="item.image && !item.image.includes('Temp') && !item.image.includes('.tmp')" :src="item.image.startsWith('/') ? item.image : '/' + item.image" :alt="item.name" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+                      <div v-else class="h-full w-full flex items-center justify-center">
+                          <span class="text-sm font-bold text-slate-400 uppercase">{{ item.name ? item.name.substring(0, 1) : 'P' }}</span>
+                      </div>
                   </div>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">{{ item.name }}</div>
-                  <div class="text-sm text-gray-500">{{ item.sku || 'No SKU' }}</div>
-                </div>
+                  <div class="flex flex-col">
+                      <span class="font-bold text-black text-xs">{{ item.name }}</span>
+                      <span class="text-[10px] text-black">{{ item.sku || 'No SKU' }}</span>
+                  </div>
               </div>
             </template>
 
             <template #column-category="{ item }">
-              <span v-if="item.category" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                {{ item.category.name }}
+              <span v-if="item.category" class="text-[11px] font-bold text-black">
+                  {{ item.category.name }}
               </span>
-              <span v-else class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                No Category
+              <span v-else class="text-[11px] font-bold text-black">
+                  No Category
               </span>
             </template>
 
+            <template #column-tags="{ item }">
+              <div v-if="item.tags && item.tags.length > 0" class="flex flex-wrap gap-1 justify-center">
+                  <span v-for="(tag, i) in item.tags" :key="i" class="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
+                      #{{ tag }}
+                  </span>
+              </div>
+              <span v-else class="text-slate-400 text-xs font-medium">-</span>
+            </template>
+
             <template #column-prices="{ item }">
-              <div class="flex flex-col items-end space-y-1">
-                <div class="text-[13px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                  W: {{ currencyStore.formatPrice(item.wholesale_price) }}
-                </div>
-                <div class="text-[13px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
-                  R: {{ currencyStore.formatPrice(item.selling_price) }}
-                </div>
+              <div v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)" class="flex justify-center">
+                  <button type="button" 
+                          @click.stop.prevent="openPricesModal(item)" 
+                          class="px-2.5 py-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 shadow-sm transition-all focus:outline-none">
+                      View Prices
+                  </button>
+              </div>
+              <div v-else class="flex flex-col gap-0.5 text-[10px] font-bold items-center">
+                  <span class="text-emerald-700">W: {{ currencyStore.formatPrice(item.wholesale_price) }}</span>
+                  <span class="text-indigo-700">R: {{ currencyStore.formatPrice(item.selling_price) }}</span>
               </div>
             </template>
 
             <template #column-stock="{ item }">
-              <div>
-                <div class="text-sm text-gray-900">{{ item.stock_quantity }}</div>
-                <div class="text-sm text-gray-500">Min: {{ item.low_stock_threshold }}</div>
+              <div class="flex flex-col items-center text-xs gap-0.5">
+                <div class="flex items-center gap-1">
+                  <span class="font-bold text-black text-sm">{{ item.stock_quantity ?? 0 }}</span>
+                  <span
+                    v-if="item.variations_count > 0"
+                    class="text-[9px] font-bold text-indigo-500 bg-indigo-50 border border-indigo-200 px-1 py-0.5 rounded"
+                    title="Sum of all variation stock quantities"
+                  >Σ VAR</span>
+                </div>
+                <span class="text-[10px] text-slate-400">Min: {{ item.min_stock_level ?? '-' }}</span>
               </div>
             </template>
 
             <template #column-status="{ item }">
-              <div class="flex flex-col space-y-1">
-                <span
-                  :class="[
-                    'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                    item.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  ]"
-                >
-                  {{ item.is_active ? 'Active' : 'Inactive' }}
+              <div class="flex flex-col items-center gap-0.5">
+                <span :class="['px-2 py-0.5 rounded-lg text-[10px] font-semibold', item.is_active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10']">
+                    {{ item.is_active ? 'Active' : 'Inactive' }}
                 </span>
-                <span
-                  v-if="item.is_low_stock"
-                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                >
-                  Low Stock
+                <span v-if="item.is_low_stock" class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10">
+                    Low Stock
                 </span>
               </div>
             </template>
 
             <template #column-actions="{ item }">
-              <div class="flex space-x-3">
+              <div class="flex items-center justify-center space-x-1.5">
+                <button
+                  v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
+                  @click="openVariationsModal(item)"
+                  class="h-6 w-6 flex items-center justify-center rounded bg-indigo-50 border border-indigo-200/40 text-indigo-600 hover:bg-indigo-100 transition-all dark:bg-indigo-500/10 dark:text-indigo-400"
+                  title="View Variations Matrix"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25A2.25 2.25 0 0 1 13.5 8V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                  </svg>
+                </button>
                 <button
                   @click="viewProduct(item)"
-                  class="text-indigo-600 hover:text-indigo-900"
+                  class="h-6 w-6 flex items-center justify-center rounded bg-white border border-slate-200 text-indigo-600 hover:text-indigo-700 hover:border-indigo-300 hover:shadow-sm transition-all"
+                  title="View"
                 >
-                  View
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 </button>
                 <button
                   @click="editProduct(item)"
-                  class="text-green-600 hover:text-green-900"
+                  class="h-6 w-6 flex items-center justify-center rounded bg-white border border-slate-200 text-emerald-600 hover:text-emerald-700 hover:border-emerald-300 hover:shadow-sm transition-all"
+                  title="Update"
                 >
-                  Edit
-                </button>
-                <button
-                  @click="printBarcode(item)"
-                  class="text-amber-600 hover:text-amber-900 group relative flex items-center justify-center p-2 rounded-lg bg-amber-50 border border-amber-200 transition-all active:scale-95 shadow-sm"
-                  title="Print Barcode"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 </button>
                 <button
                   @click="deleteProduct(item)"
-                  class="text-red-600 hover:text-red-900"
+                  class="h-6 w-6 flex items-center justify-center rounded bg-white border border-slate-200 text-red-600 hover:text-red-700 hover:border-red-300 hover:shadow-sm transition-all"
+                  title="Delete"
                 >
-                  Delete
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+                <button
+                  @click="printBarcode(item)"
+                  class="h-6 w-6 flex items-center justify-center rounded bg-white border border-slate-200 text-amber-600 hover:text-amber-700 hover:border-amber-300 hover:shadow-sm transition-all"
+                  title="Print Barcode"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                 </button>
               </div>
             </template>
 
-            <!-- Action buttons in header -->
-            <template #actions>
-              <div class="flex space-x-3">
+
+            <template #filters>
+              <div class="flex items-center space-x-2">
+                <!-- Sales Filter -->
                 <button
-                  v-if="authStore.hasPermission('products.import')"
-                  @click="showImportModal = true"
-                  class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                  @click="toggleOnSaleFilter"
+                  :class="tableFilters.on_sale ? 'bg-rose-100 text-rose-700 border-rose-300' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                  class="inline-flex items-center px-3 py-2 border font-medium rounded-md shadow-sm transition-colors duration-200 text-sm"
+                  title="Show On Sale Only"
                 >
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                  </svg>
-                  Import
+                  <svg v-if="tableFilters.on_sale" class="w-4 h-4 mr-1 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  <svg v-else class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM12 8V7m0 1v1m0-1c0-1.657-1.343-3-3-3h0M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                  Sales
                 </button>
-                <button
-                  v-if="authStore.hasPermission('products.export')"
-                  @click="exportProducts"
-                  class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
-                >
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Export
-                </button>
-                <button
-                  @click="openCategoryModal"
-                  class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
-                >
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  Categories
-                </button>
-                <router-link
-                  v-if="authStore.hasPermission('products.create')"
-                  :to="{ name: 'CreateProduct' }"
-                  class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
-                >
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add Product
-                </router-link>
+
+                <!-- Tag Filter -->
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                  </div>
+                  <input
+                    v-model="tableFilters.tag"
+                    @keyup.enter="handleFilterChange"
+                    @blur="handleFilterChange"
+                    type="text"
+                    placeholder="Filter by tag..."
+                    class="pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 md:w-40"
+                  />
+                </div>
+
+                <!-- Category Filter -->
+                <div class="relative" @click.stop>
+                  <button type="button" @click="toggleDropdown('category')" class="px-3.5 py-2 min-w-[180px] bg-white border border-gray-300 rounded-md text-sm flex justify-between items-center cursor-pointer text-gray-700 hover:bg-gray-50 transition-colors shadow-sm" :class="dropdownOpen.category ? 'ring-2 ring-indigo-500 border-indigo-500' : ''">
+                    <span class="truncate">{{ getCategoryName(tableFilters.category_id) || 'All Categories' }}</span>
+                    <svg :class="dropdownOpen.category ? 'rotate-180' : ''" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
+                    <div v-show="dropdownOpen.category" class="absolute z-50 left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto py-1">
+                      <div @click="selectCategory('')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="!tableFilters.category_id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                        All Categories
+                      </div>
+                      <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.category_id === category.id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                        {{ category.name }}
+                      </div>
+                    </div>
+                  </transition>
+                </div>
+
+                <!-- Price Sort -->
+                <div class="relative" @click.stop>
+                  <button type="button" @click="toggleDropdown('price')" class="px-3.5 py-2 min-w-[150px] bg-white border border-gray-300 rounded-md text-sm flex justify-between items-center cursor-pointer text-gray-700 hover:bg-gray-50 transition-colors shadow-sm" :class="dropdownOpen.price ? 'ring-2 ring-indigo-500 border-indigo-500' : ''">
+                    <span class="truncate">{{ getPriceSortName(tableFilters.price_sort) }}</span>
+                    <svg :class="dropdownOpen.price ? 'rotate-180' : ''" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
+                    <div v-show="dropdownOpen.price" class="absolute z-50 left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-xl overflow-y-auto py-1">
+                      <div @click="selectPriceSort('')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="!tableFilters.price_sort ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                        Sort by Price
+                      </div>
+                      <div @click="selectPriceSort('asc')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.price_sort === 'asc' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                        Low to High
+                      </div>
+                      <div @click="selectPriceSort('desc')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.price_sort === 'desc' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                        High to Low
+                      </div>
+                    </div>
+                  </transition>
+                </div>
               </div>
             </template>
         </DataTable>
@@ -265,71 +362,199 @@
 
 
 
-    <!-- View Product Modal -->
-    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">Product Details</h3>
-            <button
-              @click="showViewModal = false"
-              class="text-gray-400 hover:text-gray-600"
-            >
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+    <!-- Bulk Sale Modal -->
+    <div v-if="showBulkSaleModal" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm overflow-y-auto h-full w-full z-50 transition-all">
+      <div class="relative top-20 mx-auto p-8 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white transform transition-all">
+        <div class="mt-2">
+          <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center space-x-3">
+               <div class="bg-indigo-100 p-2 rounded-xl">
+                 <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM12 8V7m0 1v1m0-1c0-1.657-1.343-3-3-3h0M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+               </div>
+               <h3 class="text-xl font-semibold text-gray-900">Apply Bulk Sale</h3>
+            </div>
+            <button @click="closeBulkSaleModal" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-xl transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form @submit.prevent="submitBulkSale" class="space-y-5">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Name</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.name }}</p>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Apply To</label>
+              <div class="relative">
+                <select v-model="bulkSaleForm.apply_to" class="appearance-none block w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent sm:text-sm bg-white shadow-sm transition-all pr-10">
+                  <option value="all">All Products in Stock</option>
+                  <option value="selected" :disabled="selectedProducts.length === 0">Selected Products ({{ selectedProducts.length }})</option>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </div>
+              </div>
             </div>
-
             <div>
-              <label class="block text-sm font-medium text-gray-700">SKU</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.sku }}</p>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Discount Type</label>
+              <div class="relative">
+                <select v-model="bulkSaleForm.discount_type" required class="appearance-none block w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent sm:text-sm bg-white shadow-sm transition-all pr-10">
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount ({{ currencyStore.symbol }})</option>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </div>
+              </div>
             </div>
-
             <div>
-              <label class="block text-sm font-medium text-gray-700">Category</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.category?.name || 'No category' }}</p>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Discount Value</label>
+              <div class="relative">
+                <input v-model="bulkSaleForm.discount_value" type="number" step="0.01" required min="0" class="block w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent sm:text-sm bg-white shadow-sm transition-all pr-10">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                  <span class="text-sm font-medium text-gray-500">{{ bulkSaleForm.discount_type === 'percentage' ? '%' : currencyStore.symbol }}</span>
+                </div>
+              </div>
             </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Barcode</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.barcode || 'N/A' }}</p>
+            <div class="flex justify-end space-x-3 pt-6 border-t mt-6 border-gray-200">
+              <button type="button" @click="closeBulkSaleModal" class="px-5 py-2.5 rounded-xl text-sm font-medium border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all">Cancel</button>
+              <button type="submit" :disabled="applyingBulkSale" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                <svg v-if="applyingBulkSale" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                {{ applyingBulkSale ? 'Applying...' : 'Apply Sale' }}
+              </button>
             </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Cost Price</label>
-              <p class="mt-1 text-sm text-gray-900">{{ $baseCurrency }} {{ viewingProduct.cost_price }}</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Selling Price</label>
-              <p class="mt-1 text-sm text-gray-900">{{ $baseCurrency }} {{ viewingProduct.selling_price }}</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Stock Quantity</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.stock_quantity }} {{ viewingProduct.unit_of_measure }}</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Min Stock Level</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.min_stock_level }}</p>
-            </div>
-
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700">Description</label>
-              <p class="mt-1 text-sm text-gray-900">{{ viewingProduct.description || 'No description' }}</p>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
+
+    <!-- View Product Modal -->
+    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+      <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 pt-6 pb-5">
+          <div class="flex items-center gap-4">
+            <!-- Product Avatar -->
+            <div class="relative h-14 w-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex-shrink-0">
+              <div v-if="Number(viewingProduct.discount_value) > 0" class="absolute top-0 right-0 z-10">
+                <div class="absolute transform rotate-45 bg-rose-600 text-white text-[6px] font-black uppercase text-center tracking-widest py-0.5 w-[50px] -right-[15px] top-[4px]">Sale</div>
+              </div>
+              <img
+                v-if="viewingProduct.image && !viewingProduct.image.includes('Temp') && !viewingProduct.image.includes('.tmp')"
+                :src="viewingProduct.image.startsWith('/') ? viewingProduct.image : '/' + viewingProduct.image"
+                :alt="viewingProduct.name"
+                class="h-full w-full object-cover"
+              >
+              <div v-else class="h-full w-full flex items-center justify-center bg-indigo-100">
+                <span class="text-xl font-black text-indigo-500 uppercase">{{ viewingProduct.name ? viewingProduct.name.substring(0, 1) : 'P' }}</span>
+              </div>
+            </div>
+            <!-- Name & SKU -->
+            <div>
+              <h2 class="text-base font-bold text-gray-900 leading-tight">{{ viewingProduct.name }}</h2>
+              <p class="text-xs text-gray-400 mt-0.5">SKU: #{{ viewingProduct.sku || 'N/A' }}</p>
+            </div>
+          </div>
+          <!-- Close X -->
+          <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-gray-100 mx-6"></div>
+
+        <!-- Body — two columns -->
+        <div class="grid grid-cols-2 gap-0 px-6 py-5 max-h-[60vh] overflow-y-auto">
+
+          <!-- Left: Product Info -->
+          <div class="pr-6 border-r border-gray-100 space-y-5">
+            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Product Info</p>
+
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Category</p>
+              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.category?.name || 'No Category' }}</p>
+            </div>
+
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Barcode</p>
+              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.barcode || 'N/A' }}</p>
+            </div>
+
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Status</p>
+              <span :class="['inline-flex px-2 py-0.5 rounded-lg text-[11px] font-semibold', viewingProduct.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700']">
+                {{ viewingProduct.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <div v-if="viewingProduct.tags && viewingProduct.tags.length > 0">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Tags</p>
+              <div class="flex flex-wrap gap-1">
+                <span v-for="(tag, i) in viewingProduct.tags" :key="i" class="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-slate-100 text-slate-600">#{{ tag }}</span>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Description</p>
+              <p class="text-sm text-gray-600 leading-relaxed">{{ viewingProduct.description || 'No description provided.' }}</p>
+            </div>
+          </div>
+
+          <!-- Right: Pricing & Stock -->
+          <div class="pl-6 space-y-5">
+            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Inventory &amp; Pricing</p>
+
+            <div>
+              <button type="button" 
+                      @click="openPricesModal(viewingProduct)" 
+                      class="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 shadow-sm transition-all focus:outline-none flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                  View Prices
+              </button>
+            </div>
+
+            <div v-if="Number(viewingProduct.discount_value) > 0">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Discount</p>
+              <p class="text-sm font-semibold text-rose-600">
+                {{ viewingProduct.discount_type === 'percentage' ? viewingProduct.discount_value + '%' : currencyStore.formatPrice(viewingProduct.discount_value) }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Stock Quantity</p>
+              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.stock_quantity }} <span class="text-gray-400 text-xs">{{ viewingProduct.unit_of_measure }}</span></p>
+            </div>
+
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Min Stock Level</p>
+              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.low_stock_threshold || viewingProduct.min_stock_level || '-' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
+          <button
+            @click="showViewModal = false"
+            class="px-5 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+          >
+            Close
+          </button>
+          <button
+            @click="editProduct(viewingProduct); showViewModal = false"
+            class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all flex items-center gap-2 shadow-sm"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Edit Details
+          </button>
+        </div>
+
+      </div>
+    </div>
+
 
     <!-- Category Management Modal -->
     <div v-if="showCategoryModal" class="fixed inset-0 overflow-y-auto h-full w-full" style="z-index: 9999; background-color: rgba(0, 0, 0, 0.5);">
@@ -457,11 +682,154 @@
 
     <!-- Barcode Printer Modal -->
     <BarcodePrinter v-if="showBarcodeModal" :product="printingProduct" @close="showBarcodeModal = false" />
+
+    <!-- Variations Modal -->
+    <div v-if="showVariationsModal && selectedVariationsProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="absolute inset-0" @click="showVariationsModal = false"></div>
+        <div class="relative w-full max-w-6xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-black uppercase text-indigo-600 tracking-wider">Product Variations View</span>
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">{{ selectedVariationsProduct.name }}</h3>
+                </div>
+                <button type="button" @click="showVariationsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-bold text-lg focus:outline-none">&times;</button>
+            </div>
+
+            <div class="w-full overflow-y-auto border border-slate-200/60 dark:border-zinc-800 rounded-xl overflow-x-auto shadow-inner custom-scrollbar">
+                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
+                    <thead class="bg-slate-50 dark:bg-zinc-800/40 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Variant Combination</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">SKU Code</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Barcode</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Cost Price</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Retail Price</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Wholesale Price</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Sale Price</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Tax Rate</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Current Stock</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Min Alert</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Unit</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Batch Number</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Expiry Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-[11px]">
+                        <tr v-for="(variant, idx) in selectedVariationsProduct.variations" :key="idx" class="hover:bg-slate-50/60 dark:hover:bg-zinc-800/30 transition-colors">
+                            <!-- Variant Combination -->
+                            <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-zinc-200">{{ variant.name_string || variant.variation_name_string || variant.combination_key || '-' }}</td>
+                            
+                            <!-- SKU -->
+                            <td class="px-4 py-2.5 font-mono text-slate-500 tracking-tight">{{ variant.sku || '-' }}</td>
+                            
+                            <!-- Barcode -->
+                            <td class="px-4 py-2.5 font-mono text-slate-500 tracking-tight">{{ variant.barcode || '-' }}</td>
+                            
+                            <!-- Cost Price -->
+                            <td class="px-4 py-2.5 font-semibold text-slate-600 dark:text-zinc-400">
+                                {{ currencyStore.symbol }} {{ parseFloat(variant.cost_price || 0).toFixed(2) }}
+                            </td>
+                            
+                            <!-- Retail Price -->
+                            <td class="px-4 py-2.5 font-semibold text-emerald-600">
+                                {{ currencyStore.symbol }} {{ parseFloat(variant.retail_price || variant.selling_price || 0).toFixed(2) }}
+                            </td>
+
+                            <!-- Wholesale Price -->
+                            <td class="px-4 py-2.5 font-semibold text-indigo-500">
+                                {{ currencyStore.symbol }} {{ parseFloat(variant.wholesale_price || 0).toFixed(2) }}
+                            </td>
+
+                            <!-- Sale Price -->
+                            <td class="px-4 py-2.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span v-if="variant.on_sale" class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">Sale</span>
+                                    <span class="font-semibold text-amber-600">
+                                        {{ currencyStore.symbol }} {{ parseFloat(variant.sale_price || 0).toFixed(2) }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Tax Rate -->
+                            <td class="px-4 py-2.5 text-center font-medium text-slate-600 dark:text-zinc-400">
+                                {{ variant.tax_rate !== null && variant.tax_rate !== undefined ? variant.tax_rate + '%' : '-' }}
+                            </td>
+
+                            <!-- Stock -->
+                            <td class="px-4 py-2.5 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-bold text-[10px]"
+                                      :class="(variant.stock_qty > 0 || variant.stock_quantity > 0) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10' : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10'">
+                                    {{ variant.stock_qty !== undefined ? variant.stock_qty : (variant.stock_quantity !== undefined ? variant.stock_quantity : 0) }}
+                                </span>
+                            </td>
+
+                            <!-- Min Stock Alert -->
+                            <td class="px-4 py-2.5 text-center font-medium text-slate-500 dark:text-zinc-400">
+                                {{ variant.min_stock_alert !== null && variant.min_stock_alert !== undefined ? variant.min_stock_alert : '-' }}
+                            </td>
+
+                            <!-- Unit of Measure -->
+                            <td class="px-4 py-2.5 text-center font-medium text-slate-600 dark:text-zinc-400">
+                                {{ variant.unit_of_measure || '-' }}
+                            </td>
+
+                            <!-- Batch Number -->
+                            <td class="px-4 py-2.5 text-slate-600 dark:text-zinc-400 font-mono">{{ variant.batch_number || '-' }}</td>
+
+                            <!-- Expiry Date -->
+                            <td class="px-4 py-2.5 text-slate-600 dark:text-zinc-400">{{ variant.expiry_date || '-' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button type="button" @click="showVariationsModal = false" class="px-4 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 rounded-xl transition-all">Close View</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="toast.show" class="fixed top-5 right-5 max-w-sm w-full bg-white shadow-2xl rounded-2xl pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden z-[100] border-l-4 border-emerald-500">
+        <div class="p-4">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <div class="p-2 bg-emerald-100 rounded-full">
+                 <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                 </svg>
+              </div>
+            </div>
+            <div class="ml-3 w-0 flex-1 pt-0.5">
+              <p class="text-sm font-bold text-gray-900">{{ toast.title }}</p>
+              <p class="mt-1 text-xs text-gray-500 font-medium">{{ toast.message }}</p>
+            </div>
+            <div class="ml-4 flex-shrink-0 flex">
+              <button @click="toast.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
+                <span class="sr-only">Close</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import DataTable from '@/components/common/DataTable.vue';
@@ -484,6 +852,35 @@ const showImportModal = ref(false);
 const viewingProduct = ref(null);
 const printingProduct = ref(null);
 const showBarcodeModal = ref(false);
+
+const showVariationsModal = ref(false);
+const selectedVariationsProduct = ref(null);
+const openVariationsModal = (item) => {
+    selectedVariationsProduct.value = item;
+    showVariationsModal.value = true;
+};
+
+const selectedProducts = ref([]);
+const showBulkSaleModal = ref(false);
+const applyingBulkSale = ref(false);
+const bulkSaleForm = ref({
+  apply_to: 'all',
+  discount_type: 'percentage',
+  discount_value: 0
+});
+
+const toast = ref({
+  show: false,
+  title: '',
+  message: ''
+});
+
+const showToastNotification = (title, message) => {
+  toast.value = { show: true, title, message };
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 4000);
+};
 
 // Import/Export related
 const importing = ref(false);
@@ -527,16 +924,22 @@ const tableColumns = ref([
     align: 'left'
   },
   {
+    key: 'tags',
+    label: 'Tags',
+    sortable: false,
+    align: 'center'
+  },
+  {
     key: 'prices',
     label: 'Prices (W / R)',
     sortable: false,
-    align: 'right'
+    align: 'center'
   },
   {
     key: 'stock',
     label: 'Stock',
     sortable: true,
-    align: 'left'
+    align: 'center'
   },
   {
     key: 'status',
@@ -548,7 +951,7 @@ const tableColumns = ref([
     key: 'actions',
     label: 'Actions',
     sortable: false,
-    align: 'left'
+    align: 'center'
   }
 ]);
 
@@ -556,12 +959,74 @@ const tableColumns = ref([
 const tableFilters = ref({
   search: '',
   sort_field: '',
-  sort_order: ''
+  sort_order: '',
+  category_id: '',
+  price_sort: '',
+  on_sale: false,
+  tag: ''
 });
 
-
-
 // Methods
+
+const dropdownOpen = ref({
+  category: false,
+  price: false
+});
+
+const toggleDropdown = (type) => {
+  dropdownOpen.value[type] = !dropdownOpen.value[type];
+  if (type === 'category') dropdownOpen.value.price = false;
+  else if (type === 'price') dropdownOpen.value.category = false;
+};
+
+const closeDropdowns = () => {
+  dropdownOpen.value.category = false;
+  dropdownOpen.value.price = false;
+};
+
+const selectCategory = (id) => {
+  tableFilters.value.category_id = id;
+  dropdownOpen.value.category = false;
+  fetchProductsForTable(1);
+};
+
+const selectPriceSort = (sort) => {
+  tableFilters.value.price_sort = sort;
+  dropdownOpen.value.price = false;
+  handlePriceSortChange();
+};
+
+const getCategoryName = (id) => {
+  if (!id) return '';
+  const category = categories.value.find(c => c.id === id);
+  return category ? category.name : '';
+};
+
+const getPriceSortName = (sort) => {
+  if (sort === 'asc') return 'Low to High';
+  if (sort === 'desc') return 'High to Low';
+  return 'Sort by Price';
+};
+
+const handleFilterChange = () => {
+  fetchProductsForTable(1);
+};
+
+const toggleOnSaleFilter = () => {
+  tableFilters.value.on_sale = !tableFilters.value.on_sale;
+  fetchProductsForTable(1);
+};
+
+const handlePriceSortChange = () => {
+  if (tableFilters.value.price_sort) {
+    tableFilters.value.sort_field = 'selling_price';
+    tableFilters.value.sort_order = tableFilters.value.price_sort;
+  } else {
+    tableFilters.value.sort_field = '';
+    tableFilters.value.sort_order = '';
+  }
+  fetchProductsForTable(1);
+};
 
 const fetchCategories = async () => {
   try {
@@ -579,6 +1044,26 @@ const editProduct = (product) => {
 const viewProduct = (product) => {
   viewingProduct.value = product;
   showViewModal.value = true;
+};
+
+const openPricesModal = (item) => {
+  const variants = (item.variations && item.variations.length > 0)
+    ? item.variations
+    : [{
+        variation_name_string: 'Regular / Single Product',
+        cost_price: item.cost_price,
+        retail_price: item.selling_price || item.retail_price,
+        wholesale_price: item.wholesale_price,
+        tax_rate: item.tax_rate
+      }];
+
+  // Broadcast custom window event containing targeted pricing parameters from product_variations
+  window.dispatchEvent(new CustomEvent('open-variations-modal', {
+    detail: {
+      name: item.name,
+      variants: variants
+    }
+  }));
 };
 
 const printBarcode = (product) => {
@@ -784,6 +1269,40 @@ const downloadTemplate = async () => {
   }
 };
 
+const handleSelectionChange = (selectedIds) => {
+  selectedProducts.value = selectedIds;
+  if (selectedIds.length > 0) {
+    bulkSaleForm.value.apply_to = 'selected';
+  } else {
+    bulkSaleForm.value.apply_to = 'all';
+  }
+};
+
+const closeBulkSaleModal = () => {
+  showBulkSaleModal.value = false;
+  bulkSaleForm.value.discount_value = 0;
+};
+
+const submitBulkSale = async () => {
+  applyingBulkSale.value = true;
+  try {
+    const payload = { ...bulkSaleForm.value };
+    if (payload.apply_to === 'selected') {
+      payload.product_ids = selectedProducts.value;
+    }
+    
+    await axios.post('/api/products/bulk-sale', payload);
+    showToastNotification('Sale Applied', 'Your bulk sale has been successfully applied to the inventory!');
+    closeBulkSaleModal();
+    fetchProductsForTable(tablePagination.value.current_page);
+  } catch (error) {
+    console.error('Error applying bulk sale:', error);
+    showToastNotification('Error', error.response?.data?.message || 'Failed to apply sale');
+  } finally {
+    applyingBulkSale.value = false;
+  }
+};
+
 const importProducts = async () => {
   if (!selectedFile.value) {
     alert('Please select a file to import');
@@ -874,7 +1393,12 @@ const formatFileSize = (bytes) => {
 
 // Lifecycle
 onMounted(() => {
-  fetchProductsForTable();
   fetchCategories();
+  fetchProductsForTable();
+  document.addEventListener('click', closeDropdowns);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropdowns);
 });
 </script>

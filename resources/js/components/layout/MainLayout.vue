@@ -795,22 +795,44 @@
                     <div
                       v-for="notification in notifications"
                       :key="notification.id"
-                      class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors"
+                      :class="{'opacity-60': notification.read_at}"
                       @click="markAsRead(notification.id)"
                     >
-                      <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                          <div :class="[
-                            'w-2 h-2 rounded-full mt-2',
-                            notification.read_at ? 'bg-gray-300' : 'bg-blue-500'
-                          ]"></div>
+                      <!-- Low-stock alert style -->
+                      <template v-if="notification.data && notification.data.type === 'low_stock'">
+                        <div class="flex items-start gap-2.5">
+                          <div class="mt-0.5 shrink-0 w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-[11px] font-black text-rose-700 uppercase tracking-wide">{{ notification.data.title }}</p>
+                            <p class="text-[12px] text-gray-700 mt-0.5 leading-snug">{{ notification.data.message }}</p>
+                            <div class="flex items-center gap-2 mt-1.5">
+                              <span class="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-bold rounded">
+                                Stock: {{ notification.data.current_stock }} / Min: {{ notification.data.min_alert }}
+                              </span>
+                              <span class="text-[10px] text-gray-400">{{ formatDate(notification.created_at) }}</span>
+                            </div>
+                          </div>
+                          <div v-if="!notification.read_at" class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0 animate-pulse"></div>
                         </div>
-                        <div class="ml-3 flex-1">
-                          <p class="text-sm font-medium text-gray-900">{{ notification.data.title }}</p>
-                          <p class="text-sm text-gray-500">{{ notification.data.message }}</p>
-                          <p class="text-xs text-gray-400 mt-1">{{ formatDate(notification.created_at) }}</p>
+                      </template>
+                      <!-- Generic notification style -->
+                      <template v-else>
+                        <div class="flex items-start">
+                          <div class="flex-shrink-0">
+                            <div :class="['w-2 h-2 rounded-full mt-2', notification.read_at ? 'bg-gray-300' : 'bg-blue-500']"></div>
+                          </div>
+                          <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ notification.data?.title }}</p>
+                            <p class="text-sm text-gray-500">{{ notification.data?.message }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ formatDate(notification.created_at) }}</p>
+                          </div>
                         </div>
-                      </div>
+                      </template>
                     </div>
                   </div>
                   <div class="px-4 py-2 border-t border-gray-200">

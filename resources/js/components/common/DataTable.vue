@@ -1,13 +1,13 @@
 <template>
   <div class="bg-white rounded-lg shadow-sm border border-gray-200">
     <!-- Header with Title and Actions -->
-    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
-      <div>
+    <div class="p-3 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+      <div v-if="title || subtitle" class="mr-4">
         <h2 v-if="title" class="text-lg font-semibold text-gray-900">{{ title }}</h2>
         <p v-if="subtitle" class="text-sm text-gray-600">{{ subtitle }}</p>
       </div>
       
-      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 flex-1" :class="title || subtitle ? 'sm:justify-end' : 'sm:justify-start'">
         <!-- Search -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -24,30 +24,42 @@
           />
         </div>
         
+        <!-- Filters -->
+        <slot name="filters"></slot>
+        
         <!-- Action Buttons -->
         <slot name="actions"></slot>
       </div>
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+    <div class="w-full overflow-x-auto custom-scrollbar">
+      <table class="w-full min-w-max divide-y divide-slate-100 dark:divide-zinc-800/80 table-auto align-middle">
         <!-- Table Header -->
-        <thead class="bg-gray-50">
+        <thead class="bg-slate-50/70 dark:bg-zinc-800/30">
           <tr>
             <th
-              v-for="column in columns"
+              v-for="column in actualColumns"
               :key="column.key"
               :class="[
-                'px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider',
+                'px-3 py-2 text-[11px] font-bold tracking-wider text-slate-500 uppercase',
                 column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left',
                 column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
               ]"
               @click="column.sortable ? handleSort(column.key) : null"
             >
               <div class="flex items-center" :class="column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : 'justify-start'">
-                <span>{{ column.label }}</span>
-                <template v-if="column.sortable">
+                <template v-if="column.key === '_selection'">
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    @change="toggleAllSelection"
+                    class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                </template>
+                <template v-else>
+                  <span>{{ column.label }}</span>
+                  <template v-if="column.sortable">
                   <svg
                     v-if="sortField === column.key && sortOrder === 'asc'"
                     class="ml-1 h-4 w-4"
@@ -73,16 +85,17 @@
                     <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
                   </svg>
                 </template>
+                </template>
               </div>
             </th>
           </tr>
         </thead>
 
         <!-- Table Body -->
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
           <!-- Loading State -->
           <tr v-if="loading">
-            <td :colspan="columns.length" class="px-6 py-8 text-center text-gray-500">
+            <td :colspan="actualColumns.length" class="px-6 py-8 text-center text-gray-500">
               <div class="flex justify-center items-center">
                 <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
@@ -95,7 +108,7 @@
 
           <!-- Empty State -->
           <tr v-else-if="!data || data.length === 0">
-            <td :colspan="columns.length" class="px-6 py-8 text-center text-gray-500">
+            <td :colspan="actualColumns.length" class="px-6 py-8 text-center text-gray-500">
               <div class="flex flex-col items-center">
                 <svg class="h-12 w-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -107,23 +120,32 @@
           </tr>
 
           <!-- Data Rows -->
-          <tr v-else v-for="(item, index) in data" :key="getRowKey(item, index)" class="hover:bg-gray-50">
+          <tr v-else v-for="(item, index) in data" :key="getRowKey(item, index)" class="hover:bg-white transition-colors">
             <td
-              v-for="column in columns"
+              v-for="column in actualColumns"
               :key="column.key"
               :class="[
-                'px-6 py-4 whitespace-nowrap text-sm',
+                'px-3 py-1.5 text-xs align-middle',
                 column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left',
                 column.class || 'text-gray-900'
               ]"
             >
               <!-- Custom slot for column content -->
-              <slot
+              <template v-if="column.key === '_selection'">
+                <input
+                  type="checkbox"
+                  :value="item.id"
+                  v-model="selectedItems"
+                  class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+              </template>
+              <slot v-else
                 :name="`column-${column.key}`"
                 :item="item"
                 :value="getNestedValue(item, column.key)"
                 :index="index"
               >
+
                 <!-- Default content -->
                 <template v-if="column.type === 'currency'">
                   {{ formatCurrency(getNestedValue(item, column.key)) }}
@@ -272,11 +294,15 @@ const props = defineProps({
   initialPerPage: {
     type: Number,
     default: null
+  },
+  selectable: {
+    type: Boolean,
+    default: false
   }
 });
 
 // Emits
-const emit = defineEmits(['search', 'sort', 'page-change', 'per-page-change']);
+const emit = defineEmits(['search', 'sort', 'page-change', 'per-page-change', 'selection-change']);
 
 // Reactive data
 const currencyStore = useCurrencyStore();
@@ -284,8 +310,20 @@ const searchQuery = ref(props.initialSearch || '');
 const sortField = ref(props.defaultSort.field);
 const sortOrder = ref(props.defaultSort.order);
 const perPage = ref(props.initialPerPage || props.defaultPerPage);
+const selectedItems = ref([]);
 
 // Computed
+const isAllSelected = computed(() => {
+  if (!props.data || props.data.length === 0) return false;
+  return props.data.every(item => selectedItems.value.includes(item.id));
+});
+
+const actualColumns = computed(() => {
+  if (props.selectable) {
+    return [{ key: '_selection', label: '', sortable: false, align: 'center', class: 'w-10' }, ...props.columns];
+  }
+  return props.columns;
+});
 const visiblePages = computed(() => {
   if (!props.pagination) return [];
   
@@ -303,7 +341,28 @@ const visiblePages = computed(() => {
   return pages;
 });
 
+// Watchers
+watch(selectedItems, (newVal) => {
+  emit('selection-change', newVal);
+});
+
 // Methods
+const toggleAllSelection = (event) => {
+  if (event.target.checked) {
+    const newSelected = [...selectedItems.value];
+    props.data.forEach(item => {
+      if (!newSelected.includes(item.id)) {
+        newSelected.push(item.id);
+      }
+    });
+    selectedItems.value = newSelected;
+  } else {
+    selectedItems.value = selectedItems.value.filter(
+      id => !props.data.some(item => item.id === id)
+    );
+  }
+};
+
 const handleSearch = debounce(() => {
   saveState();
   emit('search', searchQuery.value);

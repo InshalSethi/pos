@@ -30,8 +30,18 @@ const handleCreate = async (formData) => {
       
       const value = formData[key];
       
-      // Handle booleans explicitly for FormData
-      if (typeof value === 'boolean') {
+      // Handle arrays explicitly
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            Object.keys(item).forEach(objKey => {
+              data.append(`${key}[${index}][${objKey}]`, item[objKey] === null ? '' : item[objKey]);
+            });
+          } else {
+            data.append(`${key}[]`, item);
+          }
+        });
+      } else if (typeof value === 'boolean') {
         data.append(key, value ? '1' : '0');
       } else if (value === null && key === 'image') {
         data.append(key, '');

@@ -93,6 +93,7 @@ class Product extends Model
         'expiry_date',
         'discount_type',
         'discount_value',
+        'tags',
     ];
 
     protected $casts = [
@@ -106,6 +107,7 @@ class Product extends Model
         'track_inventory' => 'boolean',
         'is_active' => 'boolean',
         'images' => 'array',
+        'tags' => 'array',
         'expiry_date' => 'date',
     ];
 
@@ -133,6 +135,16 @@ class Product extends Model
     public function purchaseOrderItems(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function variations(): HasMany
+    {
+        return $this->hasMany(ProductVariation::class);
+    }
+
+    public function attributes(): HasMany
+    {
+        return $this->hasMany(ProductAttribute::class);
     }
 
     // Scopes
