@@ -14,12 +14,68 @@ class ProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:products.view')->only(['index', 'show']);
+        $this->middleware('permission:products.view')->only(['index', 'show', 'fetchDraftsSummary']);
         $this->middleware('permission:products.create')->only(['store']);
         $this->middleware('permission:products.edit')->only(['update']);
-        $this->middleware('permission:products.delete')->only(['destroy']);
+        $this->middleware('permission:products.delete')->only(['destroy', 'bulkDestroyDrafts']);
         $this->middleware('permission:products.import')->only(['import']);
         $this->middleware('permission:products.export')->only(['export']);
+    }
+
+    /**
+     * Fetches all inventory products isolated under draft state criteria.
+     */
+    public function fetchDraftsSummary(Request $request): JsonResponse
+    {
+        $drafts = Product::with(['category', 'variations'])
+            ->withCount('variations')
+            ->where('status', 'draft')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'drafts' => $drafts
+        ]);
+    }
+
+    /**
+     * Processes collection requests to batch delete drafted inventory lines safely.
+     */
+    public function bulkDestroyDrafts(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'required|integer|exists:products,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Delete product variations associated with these draft products first
+            \Illuminate\Support\Facades\DB::table('product_variations')
+                ->whereIn('product_id', $request->ids)
+                ->delete();
+
+            // Delete products
+            \Illuminate\Support\Facades\DB::table('products')
+                ->whereIn('id', $request->ids)
+                ->where('status', 'draft')
+                ->delete();
+
+            \Illuminate\Support\Facades\DB::commit();
+            return response()->json(['success' => true, 'message' => 'Selected drafts removed successfully.']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -29,7 +85,7 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'variations' => function($query) {
             $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate');
-        }])->withCount('variations');
+        }])->withCount('variations')->where('status', '!=', 'draft');
 
         // Search functionality
         if ($request->has('search')) {
@@ -93,8 +149,8 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:products,sku',
-            'selling_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
-            'wholesale_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
+            'selling_price' => 'nullable|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
@@ -104,6 +160,7 @@ class ProductController extends Controller
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
+            'status' => 'nullable|string|in:active,draft',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
@@ -113,6 +170,10 @@ class ProductController extends Controller
             'has_variations' => 'boolean',
             'variations' => 'nullable|array',
         ]);
+
+        $validator->sometimes(['selling_price', 'wholesale_price'], 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && !$input->has_variations;
+        });
 
         if ($validator->fails()) {
             return response()->json([
@@ -246,8 +307,8 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:products,sku,' . $product->id,
-            'selling_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
-            'wholesale_price' => 'required_unless:has_variations,true|nullable|numeric|min:0',
+            'selling_price' => 'nullable|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
@@ -257,6 +318,7 @@ class ProductController extends Controller
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
+            'status' => 'nullable|string|in:active,draft',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
@@ -266,6 +328,10 @@ class ProductController extends Controller
             'has_variations' => 'boolean',
             'variations' => 'nullable|array',
         ]);
+
+        $validator->sometimes(['selling_price', 'wholesale_price'], 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && !$input->has_variations;
+        });
 
         if ($validator->fails()) {
             return response()->json([

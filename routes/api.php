@@ -115,6 +115,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies/my-companies', [CompanySwitcherController::class, 'index']);
     Route::post('/companies/switch', [CompanySwitcherController::class, 'switchCompany']);
     // Product management routes
+    Route::get('/products/drafts-summary', [ProductController::class, 'fetchDraftsSummary']);
+    Route::post('/products/drafts/bulk-destroy', [ProductController::class, 'bulkDestroyDrafts']);
     Route::apiResource('products', ProductController::class);
     Route::post('/products/bulk-sale', [\App\Http\Controllers\Api\ProductSaleController::class, 'applyBulkSale']);
     Route::post('/products/import', [ProductController::class , 'import']);

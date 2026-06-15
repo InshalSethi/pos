@@ -94,6 +94,7 @@ class Product extends Model
         'discount_type',
         'discount_value',
         'tags',
+        'status',
     ];
 
     protected $casts = [

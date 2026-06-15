@@ -256,10 +256,157 @@
                     </div>
                   </transition>
                 </div>
+
+                <!-- Drafts Button -->
+                <div class="flex items-center">
+                  <button type="button" 
+                          @click="openDraftsModal"
+                          class="inline-flex items-center gap-2 h-[38px] px-4 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50/80 shadow-xs transition-all focus:outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800/80">
+                      
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.3" stroke="currentColor" 
+                           class="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                      </svg>
+
+                      <span class="tracking-wide">Drafts</span>
+                      
+                      <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 rounded-md ml-0.5" 
+                            id="global-drafts-count">
+                          {{ draftsCount }}
+                      </span>
+                  </button>
+                </div>
               </div>
             </template>
         </DataTable>
       </div>
+    </div>
+
+    <!-- Drafts Workbench Modal -->
+    <div v-if="isDraftsModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+        <div class="w-full max-w-4xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">            <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-black uppercase text-amber-600 tracking-wider">Incomplete Items Workbench</span>
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Product Drafts System</h3>
+                </div>
+
+                <div class="flex items-center gap-4.5">
+                    <button v-show="selectedDraftIds.length > 0" 
+                            @click="deleteSelectedDrafts" 
+                            type="button" 
+                            class="inline-flex items-center gap-1.5 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 bg-transparent border-0 p-1 rounded-md transition-colors focus:outline-none group"
+                            title="Delete Selected Items permanently">
+                        
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                             class="w-4 h-4 transition-transform group-hover:scale-105">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+                        
+                        <span class="text-xs font-black tracking-wide">{{ selectedDraftIds.length }}</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="isDraftsModalOpen = false" 
+                            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-bold text-xl transition-colors focus:outline-none leading-none select-none">
+                        &times;
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full overflow-y-auto border border-slate-200/60 dark:border-zinc-800 rounded-2xl shadow-inner overflow-x-auto">
+                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
+                    <thead class="bg-slate-50 dark:bg-zinc-850/40 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40 w-10">
+                                <input type="checkbox" 
+                                       @click="toggleSelectAllDrafts" 
+                                       :checked="draftProducts.length > 0 && selectedDraftIds.length === draftProducts.length"
+                                       class="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer bg-transparent">
+                            </th>
+                            <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-850/40">Product Title</th>
+                            <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-850/40">Category</th>
+                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40">Tags</th>
+                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40">Prices (W / R)</th>
+                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-[11px] text-slate-700 dark:text-zinc-300">
+                        <tr v-if="isLoadingDrafts">
+                            <td colspan="6" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">Fetching compiled draft lots...</td>
+                        </tr>
+                        
+                        <tr v-else-if="draftProducts.length === 0">
+                            <td colspan="6" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">No drafted items found in your workbench.</td>
+                        </tr>
+
+                        <tr v-else v-for="draft in draftProducts" :key="draft.id" :class="selectedDraftIds.includes(draft.id) ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/30'" class="transition-colors">
+                            
+                            <td class="px-4 py-3 align-middle text-center">
+                                <input type="checkbox" 
+                                       :value="draft.id" 
+                                       v-model="selectedDraftIds"
+                                       class="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer bg-transparent">
+                            </td>
+
+                            <td class="px-4 py-3 align-middle text-xs">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 flex-shrink-0 flex items-center justify-center border border-slate-200/60 dark:border-zinc-700/50 overflow-hidden">
+                                        <img v-if="draft.image || draft.image_path || draft.thumbnail || draft.logo" :src="draft.image || draft.image_path || draft.thumbnail || draft.logo" class="w-full h-full object-cover">
+                                        <div v-else class="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold text-[10px]">
+                                            <span>{{ draft.name ? draft.name.charAt(0).toUpperCase() : 'P' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col text-left">
+                                        <span class="font-extrabold text-slate-900 dark:text-white">{{ draft.name }}</span>
+                                        <span class="text-[10px] text-slate-400 font-mono mt-0.5">{{ draft.sku || draft.id || 'No SKU' }}</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-4 py-3 align-middle text-slate-500 text-left">{{ draft.category ? draft.category.name : 'No Category' }}</td>
+
+                            <td class="px-4 py-3 align-middle text-center">
+                                <div class="flex justify-center items-center gap-1 flex-wrap max-w-[120px] mx-auto">
+                                    <template v-if="draft.tags && draft.tags.length > 0">
+                                        <span v-for="(tag, i) in draft.tags" :key="i" class="text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 px-1.5 py-0.5 rounded">
+                                            #{{ tag }}
+                                        </span>
+                                    </template>
+                                    <span v-else class="text-slate-300 dark:text-zinc-700 font-black">-</span>
+                                </div>
+                            </td>
+
+                            <td class="px-4 py-3 align-middle text-center">
+                                <span v-if="draft.variations_count > 0" class="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded text-[10px]">
+                                    {{ draft.variations_count }} Matrix Prices
+                                </span>
+                                <div v-else class="inline-flex flex-col text-center justify-center items-center mx-auto space-y-0.5">
+                                    <span class="text-[10px] text-slate-400 font-medium">
+                                        W: <strong class="text-indigo-600 dark:text-indigo-400">${{ parseFloat(draft.wholesale_price || 0).toFixed(2) }}</strong>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-medium">
+                                        R: <strong class="text-emerald-600 dark:text-emerald-400">${{ parseFloat(draft.retail_price || draft.selling_price || 0).toFixed(2) }}</strong>
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td class="px-4 py-3 align-middle text-center">
+                                <button type="button" @click="editProduct(draft); isDraftsModalOpen = false" class="inline-flex items-center px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md hover:bg-indigo-100 transition-all focus:outline-none shadow-xs">
+                                    Resume Setup
+                                </button>
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+                <button type="button" @click="isDraftsModalOpen = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-all focus:outline-none">
+                    Dismiss Workbench
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Import Products Modal -->
@@ -843,6 +990,60 @@ const showViewModal = ref(false);
 const showCategoryModal = ref(false);
 const showImportModal = ref(false);
 const viewingProduct = ref(null);
+
+const isDraftsModalOpen = ref(false);
+const draftProducts = ref([]);
+const draftsCount = ref(0);
+const isLoadingDrafts = ref(false);
+const selectedDraftIds = ref([]);
+
+const fetchDraftsData = async () => {
+  isLoadingDrafts.value = true;
+  try {
+    const response = await axios.get('/api/products/drafts-summary');
+    if (response.data && response.data.success) {
+      draftProducts.value = response.data.drafts || [];
+      draftsCount.value = draftProducts.value.length;
+    }
+  } catch (error) {
+    console.error('Error fetching drafts:', error);
+  } finally {
+    isLoadingDrafts.value = false;
+  }
+};
+
+const openDraftsModal = async () => {
+  isDraftsModalOpen.value = true;
+  selectedDraftIds.value = [];
+  await fetchDraftsData();
+};
+
+const toggleSelectAllDrafts = () => {
+  if (selectedDraftIds.value.length === draftProducts.value.length) {
+    selectedDraftIds.value = [];
+  } else {
+    selectedDraftIds.value = draftProducts.value.map(d => d.id);
+  }
+};
+
+const deleteSelectedDrafts = async () => {
+  if (selectedDraftIds.value.length === 0) return;
+  if (!confirm('Are you absolutely sure you want to permanently delete the ' + selectedDraftIds.value.length + ' selected draft item(s)?')) return;
+
+  try {
+    const response = await axios.post('/api/products/drafts/bulk-destroy', {
+      ids: selectedDraftIds.value
+    });
+    if (response.data && response.data.success) {
+      selectedDraftIds.value = [];
+      await fetchDraftsData();
+      await fetchProductsForTable();
+    }
+  } catch (error) {
+    console.error('Error deleting drafts:', error);
+    alert(error.response?.data?.message || 'Failed to delete selected drafts');
+  }
+};
 const printingProduct = ref(null);
 const showBarcodeModal = ref(false);
 
@@ -1072,6 +1273,7 @@ const deleteProduct = async (product) => {
   try {
     await axios.delete(`/api/products/${product.id}`);
     fetchProductsForTable();
+    fetchDraftsData();
   } catch (error) {
     alert(error.response?.data?.message || 'An error occurred');
   }
@@ -1388,6 +1590,7 @@ const formatFileSize = (bytes) => {
 onMounted(() => {
   fetchCategories();
   fetchProductsForTable();
+  fetchDraftsData();
   document.addEventListener('click', closeDropdowns);
 });
 

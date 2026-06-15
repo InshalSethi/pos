@@ -7,8 +7,8 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         </button>
         <h1 class="text-xl font-bold text-slate-900">{{ form.name || 'New Product' }}</h1>
-        <span v-if="form.is_active" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-semibold">Active</span>
-        <span v-else class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-xs font-semibold">Draft</span>
+        <span v-if="form.status === 'active'" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-semibold">Active</span>
+        <span v-else class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-semibold">Draft</span>
       </div>
       <div class="flex items-center gap-2">
          <button @click="$router.back()" type="button" class="px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">Discard</button>
@@ -193,9 +193,9 @@
           <!-- Status Card -->
           <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
              <h2 class="text-base font-semibold text-slate-900 mb-4">Product status</h2>
-             <SystemSelect v-model="form.is_active" :options="statusOptions" placeholder="Select Status" />
+             <SystemSelect v-model="form.status" :options="statusOptions" placeholder="Select Status" />
              <p class="text-[13px] text-slate-500 mt-3 leading-relaxed">
-               {{ form.is_active ? 'This product will be available on all sales channels.' : 'This product will be hidden from all sales channels.' }}
+               {{ form.status === 'active' ? 'This product will be available on all sales channels.' : 'This product will be hidden from all sales channels.' }}
              </p>
           </div>
 
@@ -365,6 +365,7 @@ const sanitizeInitialData = (data) => {
     unit_of_measure: 'pcs',
     track_inventory: true,
     is_active: true,
+    status: 'active',
     category_id: '',
     weight: '',
     dimensions: '',
@@ -517,8 +518,8 @@ const unitOptions = [
 ];
 
 const statusOptions = [
-  { label: 'Active', value: true },
-  { label: 'Draft', value: false }
+  { label: 'Active', value: 'active' },
+  { label: 'Draft', value: 'draft' }
 ];
 
 onMounted(async () => {
@@ -598,6 +599,7 @@ const submit = () => {
 
   const payload = { 
     ...form.value, 
+    is_active: form.value.status === 'active',
     attributes: isVariantMode.value ? attributes.value : [],
     has_variations: isVariantMode.value,
     variations: isVariantMode.value ? form.value.variations : []
