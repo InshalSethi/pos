@@ -19,7 +19,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search"
-            class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 w-full sm:w-64"
+            class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:border-slate-300 w-full sm:w-64"
             @input="handleSearch"
           />
         </div>

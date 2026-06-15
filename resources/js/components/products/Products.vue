@@ -20,31 +20,31 @@
             <button
               v-if="authStore.hasPermission('products.import')"
               @click="showImportModal = true"
-              class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+              class="inline-flex items-center gap-1.5 h-[38px] px-4 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all focus:outline-none focus:ring-0 focus:border-slate-200 shadow-xs"
             >
-              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              <svg class="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
               </svg>
-              Import
+              <span>Import</span>
             </button>
             <button
               v-if="authStore.hasPermission('products.export')"
               @click="exportProducts"
-              class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+              class="inline-flex items-center gap-1.5 h-[38px] px-4 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all focus:outline-none focus:ring-0 focus:border-slate-200 shadow-xs"
             >
-              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              <svg class="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
               </svg>
-              Export
+              <span>Export</span>
             </button>
             <button
               @click="openCategoryModal"
-              class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl shadow-sm transition-all duration-200 text-sm"
+              class="inline-flex items-center gap-1.5 h-[38px] px-4 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all focus:outline-none focus:ring-0 focus:border-slate-200 shadow-xs"
             >
-              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <svg class="w-4 h-4 text-violet-500 dark:text-violet-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              Categories
+              <span>Categories</span>
             </button>
             <router-link
               v-if="authStore.hasPermission('products.create')"
@@ -190,46 +190,48 @@
 
 
             <template #filters>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center gap-2">
                 <!-- Sales Filter -->
                 <button
                   @click="toggleOnSaleFilter"
-                  :class="tableFilters.on_sale ? 'bg-rose-100 text-rose-700 border-rose-300' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                  class="inline-flex items-center px-3 py-2 border font-medium rounded-md shadow-sm transition-colors duration-200 text-sm"
+                  :class="tableFilters.on_sale ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                  class="inline-flex items-center gap-1.5 h-[38px] px-3.5 text-xs font-bold border rounded-xl shadow-xs transition-all focus:outline-none focus:ring-0 cursor-pointer"
                   title="Show On Sale Only"
                 >
-                  <svg v-if="tableFilters.on_sale" class="w-4 h-4 mr-1 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                  <svg v-else class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM12 8V7m0 1v1m0-1c0-1.657-1.343-3-3-3h0M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                  Sales
+                  <svg class="w-4 h-4 text-pink-500 dark:text-pink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                  <span>Sales</span>
                 </button>
 
                 <!-- Tag Filter -->
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                  </div>
+                <div class="relative flex items-center">
+                  <span class="absolute left-3.5 text-indigo-500 dark:text-indigo-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                  </span>
                   <input
                     v-model="tableFilters.tag"
                     @keyup.enter="handleFilterChange"
                     @blur="handleFilterChange"
                     type="text"
                     placeholder="Filter by tag..."
-                    class="pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 md:w-40"
+                    class="h-[38px] pl-10 pr-4 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-0 focus:border-slate-300 transition-all w-36"
                   />
                 </div>
 
                 <!-- Category Filter -->
                 <div class="relative" @click.stop>
-                  <button type="button" @click="toggleDropdown('category')" class="px-3.5 py-2 min-w-[180px] bg-white border border-gray-300 rounded-md text-sm flex justify-between items-center cursor-pointer text-gray-700 hover:bg-gray-50 transition-colors shadow-sm" :class="dropdownOpen.category ? 'ring-2 ring-indigo-500 border-indigo-500' : ''">
+                  <button type="button" @click="toggleDropdown('category')" class="h-[38px] pl-10 pr-8 min-w-[170px] bg-white border border-slate-200 rounded-xl text-xs font-bold flex justify-between items-center cursor-pointer text-slate-700 hover:bg-slate-50 transition-all focus:outline-none focus:ring-0 shadow-xs">
+                    <span class="absolute left-3.5 text-violet-500 dark:text-violet-400 pointer-events-none">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </span>
                     <span class="truncate">{{ getCategoryName(tableFilters.category_id) || 'All Categories' }}</span>
-                    <svg :class="dropdownOpen.category ? 'rotate-180' : ''" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg :class="dropdownOpen.category ? 'rotate-180' : ''" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 absolute right-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                   </button>
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                    <div v-show="dropdownOpen.category" class="absolute z-50 left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto py-1">
-                      <div @click="selectCategory('')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="!tableFilters.category_id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                    <div v-show="dropdownOpen.category" class="absolute z-50 left-0 right-0 bottom-full mb-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1">
+                      <div @click="selectCategory('')" class="w-full text-left px-4 py-2 text-xs hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="!tableFilters.category_id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'">
                         All Categories
                       </div>
-                      <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.category_id === category.id ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                      <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="w-full text-left px-4 py-2 text-xs hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.category_id === category.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'">
                         {{ category.name }}
                       </div>
                     </div>
@@ -238,19 +240,19 @@
 
                 <!-- Price Sort -->
                 <div class="relative" @click.stop>
-                  <button type="button" @click="toggleDropdown('price')" class="px-3.5 py-2 min-w-[150px] bg-white border border-gray-300 rounded-md text-sm flex justify-between items-center cursor-pointer text-gray-700 hover:bg-gray-50 transition-colors shadow-sm" :class="dropdownOpen.price ? 'ring-2 ring-indigo-500 border-indigo-500' : ''">
+                  <button type="button" @click="toggleDropdown('price')" class="h-[38px] px-3.5 pr-8 min-w-[145px] bg-white border border-slate-200 rounded-xl text-xs font-bold flex justify-between items-center cursor-pointer text-slate-700 hover:bg-slate-50 transition-all focus:outline-none focus:ring-0 shadow-xs">
                     <span class="truncate">{{ getPriceSortName(tableFilters.price_sort) }}</span>
-                    <svg :class="dropdownOpen.price ? 'rotate-180' : ''" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg :class="dropdownOpen.price ? 'rotate-180' : ''" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 absolute right-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                   </button>
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                    <div v-show="dropdownOpen.price" class="absolute z-50 left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-xl overflow-y-auto py-1">
-                      <div @click="selectPriceSort('')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="!tableFilters.price_sort ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                    <div v-show="dropdownOpen.price" class="absolute z-50 left-0 right-0 bottom-full mb-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-y-auto py-1">
+                      <div @click="selectPriceSort('')" class="w-full text-left px-4 py-2 text-xs hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="!tableFilters.price_sort ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'">
                         Sort by Price
                       </div>
-                      <div @click="selectPriceSort('asc')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.price_sort === 'asc' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                      <div @click="selectPriceSort('asc')" class="w-full text-left px-4 py-2 text-xs hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.price_sort === 'asc' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'">
                         Low to High
                       </div>
-                      <div @click="selectPriceSort('desc')" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.price_sort === 'desc' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'">
+                      <div @click="selectPriceSort('desc')" class="w-full text-left px-4 py-2 text-xs hover:bg-indigo-500 hover:text-white cursor-pointer transition-colors" :class="tableFilters.price_sort === 'desc' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700'">
                         High to Low
                       </div>
                     </div>
@@ -258,24 +260,17 @@
                 </div>
 
                 <!-- Drafts Button -->
-                <div class="flex items-center">
-                  <button type="button" 
-                          @click="openDraftsModal"
-                          class="inline-flex items-center gap-2 h-[38px] px-4 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50/80 shadow-xs transition-all focus:outline-none dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800/80">
-                      
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.3" stroke="currentColor" 
-                           class="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-                      </svg>
-
-                      <span class="tracking-wide">Drafts</span>
-                      
-                      <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 rounded-md ml-0.5" 
-                            id="global-drafts-count">
-                          {{ draftsCount }}
-                      </span>
-                  </button>
-                </div>
+                <button type="button"
+                        @click="openDraftsModal"
+                        class="inline-flex items-center gap-2 h-[38px] px-4 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-xs transition-all focus:outline-none focus:ring-0 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.3" stroke="currentColor"
+                         class="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                    </svg>
+                    <span class="tracking-wide">Drafts</span>
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 rounded-md"
+                          id="global-drafts-count">{{ draftsCount }}</span>
+                </button>
               </div>
             </template>
         </DataTable>
@@ -283,126 +278,149 @@
     </div>
 
     <!-- Drafts Workbench Modal -->
-    <div v-if="isDraftsModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-        <div class="w-full max-w-4xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">            <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3 mb-4">
-                <div>
-                    <span class="text-[10px] font-black uppercase text-amber-600 tracking-wider">Incomplete Items Workbench</span>
-                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Product Drafts System</h3>
+    <div v-if="isDraftsModalOpen"
+         @click.self="isDraftsModalOpen = false"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md">
+        
+        <div class="w-full max-w-5xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 rounded-[28px] p-6 shadow-2xl flex flex-col max-h-[85vh] transition-all">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/60 pb-4 mb-5 px-1">
+                <div class="flex flex-col space-y-0.5">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-zinc-500">
+                        Incomplete Items Workbench
+                    </span>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100 tracking-wide">
+                        Product Drafts Workbench
+                    </h3>
                 </div>
 
-                <div class="flex items-center gap-4.5">
+                <div class="flex items-center gap-5">
                     <button v-show="selectedDraftIds.length > 0" 
                             @click="deleteSelectedDrafts" 
                             type="button" 
-                            class="inline-flex items-center gap-1.5 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 bg-transparent border-0 p-1 rounded-md transition-colors focus:outline-none group"
-                            title="Delete Selected Items permanently">
+                            class="inline-flex items-center gap-1.5 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-0 p-1 rounded-lg transition-colors focus:outline-none group cursor-pointer"
+                            title="Permanently remove selected slots">
                         
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" 
                              class="w-4 h-4 transition-transform group-hover:scale-105">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                         </svg>
-                        
                         <span class="text-xs font-black tracking-wide">{{ selectedDraftIds.length }}</span>
                     </button>
 
+                    <span v-show="selectedDraftIds.length > 0" class="w-[1px] h-4 bg-slate-200 dark:bg-zinc-800"></span>
+
                     <button type="button" 
                             @click="isDraftsModalOpen = false" 
-                            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-bold text-xl transition-colors focus:outline-none leading-none select-none">
+                            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-medium text-xl transition-all focus:outline-none hover:rotate-90 duration-200 p-1 rounded-lg leading-none select-none cursor-pointer">
                         &times;
                     </button>
                 </div>
             </div>
 
-            <div class="w-full overflow-y-auto border border-slate-200/60 dark:border-zinc-800 rounded-2xl shadow-inner overflow-x-auto">
-                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
-                    <thead class="bg-slate-50 dark:bg-zinc-850/40 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 sticky top-0 z-10">
+            <div class="w-full overflow-y-auto border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl overflow-x-auto shadow-inner bg-slate-50/20 dark:bg-zinc-950/20 custom-scrollbar">
+                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
+                    
+                    <thead class="bg-slate-50/80 dark:bg-zinc-800/50 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10 backdrop-blur-xs">
                         <tr>
-                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40 w-10">
+                            <th class="px-4 py-3.5 text-center w-12">
                                 <input type="checkbox" 
                                        @click="toggleSelectAllDrafts" 
                                        :checked="draftProducts.length > 0 && selectedDraftIds.length === draftProducts.length"
-                                       class="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer bg-transparent">
+                                       class="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-3.5 h-3.5 transition-all">
                             </th>
-                            <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-850/40">Product Title</th>
-                            <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-850/40">Category</th>
-                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40">Tags</th>
-                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40">Prices (W / R)</th>
-                            <th class="px-4 py-3 text-center bg-slate-50 dark:bg-zinc-850/40">Action</th>
+                            <th class="px-4 py-3.5 text-left">Product Title</th>
+                            <th class="px-4 py-3.5 text-left">Category</th>
+                            <th class="px-4 py-3.5 text-center">Tags</th>
+                            <th class="px-4 py-3.5 text-center">Product Type</th>
+                            <th class="px-4 py-3.5 text-center">Prices (W / R)</th>
+                            <th class="px-4 py-3.5 text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-[11px] text-slate-700 dark:text-zinc-300">
+
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/40 text-[11px] bg-white dark:bg-zinc-900">
                         <tr v-if="isLoadingDrafts">
-                            <td colspan="6" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">Fetching compiled draft lots...</td>
+                            <td colspan="7" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">Fetching compiled draft lots...</td>
                         </tr>
                         
                         <tr v-else-if="draftProducts.length === 0">
-                            <td colspan="6" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">No drafted items found in your workbench.</td>
+                            <td colspan="7" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">No drafted items found in your workbench.</td>
                         </tr>
 
-                        <tr v-else v-for="draft in draftProducts" :key="draft.id" :class="selectedDraftIds.includes(draft.id) ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/30'" class="transition-colors">
+                        <tr v-else v-for="draft in draftProducts" :key="draft.id"
+                            :class="selectedDraftIds.includes(draft.id) ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/30'" 
+                            class="transition-colors duration-150">
                             
-                            <td class="px-4 py-3 align-middle text-center">
+                            <td class="px-4 py-3.5 align-middle text-center">
                                 <input type="checkbox" 
                                        :value="draft.id" 
                                        v-model="selectedDraftIds"
-                                       class="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer bg-transparent">
+                                       class="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-3.5 h-3.5 transition-all">
                             </td>
 
-                            <td class="px-4 py-3 align-middle text-xs">
+                            <td class="px-4 py-3.5 align-middle text-xs">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 flex-shrink-0 flex items-center justify-center border border-slate-200/60 dark:border-zinc-700/50 overflow-hidden">
+                                    <div class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-zinc-950 flex-shrink-0 flex items-center justify-center border border-slate-200/60 dark:border-zinc-800 overflow-hidden shadow-xs">
                                         <img v-if="draft.image || draft.image_path || draft.thumbnail || draft.logo" :src="draft.image || draft.image_path || draft.thumbnail || draft.logo" class="w-full h-full object-cover">
-                                        <div v-else class="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold text-[10px]">
+                                        <div v-else class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-[11px]">
                                             <span>{{ draft.name ? draft.name.charAt(0).toUpperCase() : 'P' }}</span>
                                         </div>
                                     </div>
                                     <div class="flex flex-col text-left">
-                                        <span class="font-extrabold text-slate-900 dark:text-white">{{ draft.name }}</span>
-                                        <span class="text-[10px] text-slate-400 font-mono mt-0.5">{{ draft.sku || draft.id || 'No SKU' }}</span>
+                                        <span class="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">{{ draft.name }}</span>
+                                        <span class="text-[10px] text-slate-400 font-mono mt-0.5">{{ draft.sku || draft.id }}</span>
                                     </div>
                                 </div>
                             </td>
 
-                            <td class="px-4 py-3 align-middle text-slate-500 text-left">{{ draft.category ? draft.category.name : 'No Category' }}</td>
+                            <td class="px-4 py-3.5 align-middle text-slate-500 text-left font-medium">{{ draft.category ? draft.category.name : 'No Category' }}</td>
 
-                            <td class="px-4 py-3 align-middle text-center">
-                                <div class="flex justify-center items-center gap-1 flex-wrap max-w-[120px] mx-auto">
+                            <td class="px-4 py-3.5 align-middle text-center">
+                                <div class="flex justify-center items-center gap-1 flex-wrap max-w-[130px] mx-auto">
                                     <template v-if="draft.tags && draft.tags.length > 0">
-                                        <span v-for="(tag, i) in draft.tags" :key="i" class="text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 px-1.5 py-0.5 rounded">
-                                            #{{ tag }}
+                                        <span v-for="(tag, i) in draft.tags" :key="i" class="text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 px-1.5 py-0.5 rounded-md">
+                                            #{{ typeof tag === 'object' ? tag.name : tag }}
                                         </span>
                                     </template>
                                     <span v-else class="text-slate-300 dark:text-zinc-700 font-black">-</span>
                                 </div>
                             </td>
 
-                            <td class="px-4 py-3 align-middle text-center">
-                                <span v-if="draft.variations_count > 0" class="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded text-[10px]">
-                                    {{ draft.variations_count }} Matrix Prices
+                            <td class="px-4 py-3.5 align-middle text-center">
+                                <span :class="draft.variations_count > 0 ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400' : 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'" 
+                                      class="inline-flex items-center px-2.5 py-0.5 rounded-md font-bold text-[10px]">
+                                    {{ draft.variations_count > 0 ? 'Variant Product' : 'Simple Product' }}
                                 </span>
-                                <div v-else class="inline-flex flex-col text-center justify-center items-center mx-auto space-y-0.5">
-                                    <span class="text-[10px] text-slate-400 font-medium">
-                                        W: <strong class="text-indigo-600 dark:text-indigo-400">${{ parseFloat(draft.wholesale_price || 0).toFixed(2) }}</strong>
-                                    </span>
-                                    <span class="text-[10px] text-slate-400 font-medium">
-                                        R: <strong class="text-emerald-600 dark:text-emerald-400">${{ parseFloat(draft.retail_price || draft.selling_price || 0).toFixed(2) }}</strong>
-                                    </span>
-                                </div>
                             </td>
 
-                            <td class="px-4 py-3 align-middle text-center">
-                                <button type="button" @click="editProduct(draft); isDraftsModalOpen = false" class="inline-flex items-center px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md hover:bg-indigo-100 transition-all focus:outline-none shadow-xs">
+                            <td class="px-4 py-3.5 align-middle text-center">
+                                <template v-if="draft.variations_count > 0">
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md text-[10px]">{{ draft.variations_count }} Matrix Prices</span>
+                                </template>
+                                <template v-else>
+                                    <div class="inline-flex flex-col text-center justify-center items-center mx-auto space-y-0.5">
+                                        <span class="text-[10px] text-slate-400 font-medium">W: <strong class="text-indigo-600 dark:text-indigo-400">${{ parseFloat(draft.wholesale_price || 0).toFixed(2) }}</strong></span>
+                                        <span class="text-[10px] text-slate-400 font-medium">R: <strong class="text-emerald-600 dark:text-emerald-400">${{ parseFloat(draft.retail_price || draft.selling_price || 0).toFixed(2) }}</strong></span>
+                                    </div>
+                                </template>
+                            </td>
+
+                            <td class="px-4 py-3.5 align-middle text-center">
+                                <button type="button"
+                                        @click="editProduct(draft); isDraftsModalOpen = false"
+                                        class="inline-flex items-center px-3 py-1.5 text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-all focus:outline-none shadow-xs dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20">
                                     Resume Setup
                                 </button>
                             </td>
-
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="mt-5 flex justify-end">
-                <button type="button" @click="isDraftsModalOpen = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-all focus:outline-none">
+            <div class="mt-5 flex justify-end px-1">
+                <button type="button" 
+                        @click="isDraftsModalOpen = false" 
+                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-all shadow-xs focus:outline-none cursor-pointer">
                     Dismiss Workbench
                 </button>
             </div>

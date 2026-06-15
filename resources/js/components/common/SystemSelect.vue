@@ -6,9 +6,9 @@
     
     <div class="relative group">
       <ListboxButton
-        class="relative w-full pl-3 pr-10 py-2 text-left bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer focus:outline-none focus:ring-2 transition-all duration-300 font-medium text-sm text-gray-700 shadow-inner group-hover:bg-white"
+        class="relative w-full pl-3 pr-10 py-2 text-left bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer focus:outline-none focus:ring-0 focus:border-slate-300 transition-all duration-300 font-medium text-sm text-gray-700 shadow-inner group-hover:bg-white"
         :class="[
-          focusColor || 'focus:ring-indigo-500', 
+          focusColor || 'focus:border-slate-300', 
           error ? 'border-red-300 ring-red-500' : '',
           disabled ? 'opacity-50 cursor-not-allowed' : ''
         ]"
@@ -19,7 +19,7 @@
         <span class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none">
           <svg 
             class="w-5 h-5 text-gray-400 transition-all duration-300 group-hover:scale-110" 
-            :class="iconColor || 'group-hover:text-indigo-500'"
+            :class="iconColor || 'group-hover:text-slate-600'"
             fill="none" stroke="currentColor" viewBox="0 0 24 24"
           >
             <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>

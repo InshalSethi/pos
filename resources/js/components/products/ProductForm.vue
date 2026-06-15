@@ -31,12 +31,12 @@
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-slate-800 mb-1">Title</label>
-                <input v-model="form.name" type="text" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                <input v-model="form.name" type="text" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-0 focus:border-slate-300 text-sm" required>
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-800 mb-1">Description</label>
                 <!-- Fake toolbar for description -->
-                <div class="border border-slate-300 rounded-lg overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
+                <div class="border border-slate-300 rounded-lg overflow-hidden shadow-sm focus-within:outline-none focus-within:ring-0 focus-within:border-slate-300 transition-shadow">
                   <div class="bg-slate-50 border-b border-slate-300 px-3 py-2 flex items-center gap-2 text-slate-600 overflow-x-auto">
                      <span class="text-sm font-medium cursor-pointer hover:text-slate-900">Paragraph</span>
                      <svg class="w-4 h-4 cursor-pointer hover:text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -65,12 +65,12 @@
              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div>
                   <label class="block text-sm font-medium text-slate-800 mb-1">Product SKU *</label>
-                  <input v-model="form.sku" type="text" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium" required placeholder="Auto-generated or custom">
+                  <input v-model="form.sku" type="text" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-0 focus:border-slate-300 text-sm font-medium" required placeholder="Auto-generated or custom">
                </div>
                <div>
                   <label class="block text-sm font-medium text-slate-800 mb-1">Barcode</label>
                   <div class="relative">
-                    <input v-model="form.barcode" type="text" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium pr-10" placeholder="Scan or enter barcode">
+                    <input v-model="form.barcode" type="text" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-0 focus:border-slate-300 text-sm font-medium pr-10" placeholder="Scan or enter barcode">
                     <button type="button" @click="scanning = true" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                       <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" />
@@ -78,23 +78,20 @@
                     </button>
                   </div>
                </div>
-               <div>
-                  <label class="block text-sm font-medium text-slate-800 mb-1">Unit</label>
-                  <select v-model="form.unit_of_measure" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium">
-                      <option value="">Select Unit</option>
-                      <option v-for="u in unitOptions" :key="u.value" :value="u.value">{{ u.label }}</option>
-                  </select>
-               </div>
+                <div>
+                   <label class="block text-sm font-medium text-slate-800 mb-1">Unit</label>
+                   <SystemSelect v-model="form.unit_of_measure" :options="unitOptions" placeholder="Select Unit" />
+                </div>
                <div>
                   <label class="block text-sm font-medium text-slate-800 mb-1 flex items-center gap-2">
                     Total Quantity
                     <span v-if="isVariantMode" class="text-[10px] font-bold text-indigo-500 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-md">Auto-Sum</span>
                   </label>
-                  <input type="number" :value="isVariantMode ? totalVariantStock : form.stock_quantity" @input="onStockInput($event)" :readonly="isVariantMode" :class="isVariantMode ? 'bg-slate-100 text-slate-500 font-extrabold cursor-not-allowed border-slate-200' : 'bg-white border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'" class="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none text-sm font-medium transition-all" placeholder="0">
+                  <input type="number" :value="isVariantMode ? totalVariantStock : form.stock_quantity" @input="onStockInput($event)" :readonly="isVariantMode" :class="isVariantMode ? 'bg-slate-100 text-slate-500 font-extrabold cursor-not-allowed border-slate-200' : 'bg-white border-slate-300 focus:ring-0 focus:border-slate-300'" class="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none text-sm font-medium transition-all" placeholder="0">
                </div>
                <div>
                   <label class="block text-sm font-medium text-slate-800 mb-1">Min Alert</label>
-                  <input v-model="form.min_stock_level" type="number" min="0" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium" placeholder="0">
+                  <input v-model="form.min_stock_level" type="number" min="0" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-0 focus:border-slate-300 text-sm font-medium" placeholder="0">
                </div>
              </div>
           </div>
@@ -137,10 +134,7 @@
                     <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200/40">
                         <div v-for="(attr, aIdx) in attributes" :key="aIdx" class="flex flex-col">
                             <span class="text-[9px] font-black uppercase text-slate-400 tracking-tight px-1 mb-0.5">Select {{ attr.name }}</span>
-                            <select v-model="selectedCombo[attr.name]" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-500 min-w-[100px]">
-                                <option value="">-- Choose --</option>
-                                <option v-for="(val, vIdx) in attr.values" :key="vIdx" :value="val">{{ val }}</option>
-                            </select>
+                            <SystemSelect v-model="selectedCombo[attr.name]" :options="attr.values.map(val => ({ label: val, value: val }))" placeholder="Choose" class="min-w-[120px]" />
                         </div>
 
                         <button type="button" @click="addNewManualRow" class="mt-3 px-3 py-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow transition-all active:scale-95">
@@ -149,7 +143,7 @@
                     </div>
                 </div>
 
-                <div class="w-full overflow-x-auto border border-slate-200 rounded-xl shadow-inner">
+                <div class="w-full overflow-x-auto border border-slate-200 rounded-xl shadow-inner custom-scrollbar">
                     <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100">
                         <thead class="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             <tr>
@@ -171,13 +165,13 @@
 
                             <tr v-for="(row, index) in form.variations" :key="index" class="hover:bg-slate-50 transition-colors">
                                 <td class="px-3 py-2 font-bold text-slate-900 sticky left-0 bg-white shadow-[1px_0_0_0_#e2e8f0] z-10">{{ row.name_string }}</td>
-                                <td class="px-3 py-2"><input type="number" v-model="row.cost_price" step="0.01" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full text-amber-600 focus:outline-none focus:border-indigo-500"></td>
-                                <td class="px-3 py-2"><input type="number" v-model="row.retail_price" step="0.01" required class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full text-emerald-600 focus:outline-none focus:border-indigo-500"></td>
-                                <td class="px-3 py-2"><input type="number" v-model="row.wholesale_price" step="0.01" required class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full text-indigo-600 focus:outline-none focus:border-indigo-500"></td>
-                                <td class="px-3 py-2"><input type="number" v-model="row.tax_rate" step="0.01" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full focus:outline-none focus:border-indigo-500"></td>
-                                <td class="px-3 py-2"><input type="number" v-model="row.stock_qty" required class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full font-bold focus:outline-none focus:border-indigo-500"></td>
+                                <td class="px-3 py-2"><input type="number" v-model="row.cost_price" step="0.01" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full text-amber-600 focus:outline-none focus:ring-0 focus:border-slate-300"></td>
+                                <td class="px-3 py-2"><input type="number" v-model="row.retail_price" step="0.01" required class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full text-emerald-600 focus:outline-none focus:ring-0 focus:border-slate-300"></td>
+                                <td class="px-3 py-2"><input type="number" v-model="row.wholesale_price" step="0.01" required class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full text-slate-900 font-bold focus:outline-none focus:ring-0 focus:border-slate-300"></td>
+                                <td class="px-3 py-2"><input type="number" v-model="row.tax_rate" step="0.01" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full focus:outline-none focus:ring-0 focus:border-slate-300"></td>
+                                <td class="px-3 py-2"><input type="number" v-model="row.stock_qty" required class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs w-full font-bold focus:outline-none focus:ring-0 focus:border-slate-300"></td>
 
-                                <td class="px-3 py-2"><input type="date" v-model="row.expiry_date" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] w-full focus:outline-none focus:border-indigo-500"></td>
+                                <td class="px-3 py-2"><input type="date" v-model="row.expiry_date" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] w-full focus:outline-none focus:ring-0 focus:border-slate-300"></td>
                                 <td class="px-3 py-2 text-center sticky right-0 bg-white shadow-[-1px_0_0_0_#e2e8f0] z-10"><button type="button" @click="removeRow(index)" class="text-rose-500 font-bold hover:text-rose-700 text-sm">&times;</button></td>
                             </tr>
                         </tbody>
@@ -216,7 +210,7 @@
 
                <div>
                  <label class="block text-sm font-medium text-slate-800 mb-1">Tags</label>
-                 <div class="border border-slate-300 rounded-lg shadow-sm p-1.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 bg-white flex flex-wrap gap-1.5 min-h-[42px]">
+                 <div class="border border-slate-300 rounded-lg shadow-sm p-1.5 focus-within:ring-0 focus-within:border-slate-300 bg-white flex flex-wrap gap-1.5 min-h-[42px]">
                    <span v-for="(tag, index) in form.tags" :key="index" class="bg-slate-100 text-slate-700 text-[13px] font-medium px-2 py-0.5 rounded flex items-center gap-1 border border-slate-200">
                       {{ tag }}
                       <button type="button" @click="removeTag(index)" class="text-slate-400 hover:text-slate-600">
@@ -316,11 +310,11 @@
         <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Configure Attribute Group</h4>
         <div>
             <label class="text-[10px] font-bold text-slate-400 block mb-1">Option Name</label>
-            <input type="text" v-model="tempAttrName" placeholder="e.g., Color, Size, Storage" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+            <input type="text" v-model="tempAttrName" placeholder="e.g., Color, Size, Storage" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300">
         </div>
         <div>
             <label class="text-[10px] font-bold text-slate-400 block mb-1">Option Values (Comma separated)</label>
-            <input type="text" v-model="tempAttrValues" @keydown.enter.prevent="addAttributesGroup" placeholder="e.g., Pink, Black, 128GB, 256GB" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
+            <input type="text" v-model="tempAttrValues" @keydown.enter.prevent="addAttributesGroup" placeholder="e.g., Pink, Black, 128GB, 256GB" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300">
         </div>
         <div class="flex justify-end gap-2 pt-2 text-xs">
             <button type="button" @click="showOptionsModal = false" class="px-3 py-1 text-slate-400">Cancel</button>
