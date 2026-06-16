@@ -50,11 +50,22 @@ class CompanySetupController extends Controller
         // ── Context B: Start fresh (explicit flag OR no active company) ─
         if ($request->filled('start_fresh_flow') || !$hasExistingActiveCompany) {
             $company = Company::create([
-                'user_id'       => $user->id,
-                'company_name'  => 'Untitled Draft Workspace',
-                'company_email' => $user->email,
-                'status'        => 'draft',
-                'draft_step'    => 1,
+                'user_id'           => $user->id,
+                'company_name'      => 'Untitled Draft Workspace',
+                'company_email'     => $user->email,
+                'company_phone'     => '',
+                'owner_role'        => 'Owner/CEO',
+                'team_size'         => 'Just Me',
+                'intended_tasks'    => [],
+                'business_type'     => '',
+                'business_scale'    => 'Single Outlet',
+                'country'           => 'United States',
+                'system_language'   => 'en',
+                'base_currency'     => 'USD',
+                'timezone_offset'   => 'UTC',
+                'fiscal_year_start' => date('Y-01-01'),
+                'status'            => 'draft',
+                'draft_step'        => 1,
             ]);
 
             session(['creating_subsequent_company' => true]);
