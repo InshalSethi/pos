@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         // Seed roles and permissions first
         $this->command->info('Seeding roles and permissions...');
         $this->call(RolePermissionSeeder::class);
+        $this->call(AdminSeeder::class);
 
         // Seed chart of accounts
         $this->command->info('Seeding chart of accounts...');
