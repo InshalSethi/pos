@@ -124,6 +124,12 @@ class RolePermissionSeeder extends Seeder
             'settings.manage',
             'settings.payment_gateways',
 
+            // Taxes permissions
+            'taxes.view',
+            'taxes.create',
+            'taxes.edit',
+            'taxes.delete',
+
             // System permissions
             'system.settings',
             'system.backup',
@@ -194,6 +200,9 @@ class RolePermissionSeeder extends Seeder
             // Settings (limited)
             'settings.view',
 
+            // Taxes
+            'taxes.view', 'taxes.create', 'taxes.edit', 'taxes.delete',
+
             // Payments
             'payments.view', 'payments.create', 'payments.edit', 'payments.approve', 'payments.pay',
             'payment_receipts.view', 'payment_receipts.create', 'payment_receipts.edit', 'payment_receipts.verify', 'payment_receipts.deposit',
@@ -229,6 +238,9 @@ class RolePermissionSeeder extends Seeder
 
             // Settings (limited)
             'settings.view',
+
+            // Taxes
+            'taxes.view', 'taxes.create', 'taxes.edit', 'taxes.delete',
 
             // Payments
             'payments.view', 'payments.create', 'payments.edit', 'payments.approve', 'payments.pay',

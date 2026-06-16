@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\UnitController;
+use App\Http\Controllers\Api\TaxController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\SupplierController;
@@ -123,6 +125,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/export', [ProductController::class , 'export']);
     Route::get('/products/download-template', [ProductController::class , 'downloadTemplate']);
     Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('units', UnitController::class);
+    Route::apiResource('taxes', TaxController::class);
 
     // Customer management routes
     Route::get('/customers/statistics', [CustomerController::class , 'getStatistics']);

@@ -80,7 +80,7 @@
                </div>
                 <div>
                    <label class="block text-sm font-medium text-slate-800 mb-1">Unit</label>
-                   <SystemSelect v-model="form.unit_of_measure" :options="unitOptions" placeholder="Select Unit" />
+                   <SystemSelect v-model="form.unit_id" :options="unitOptions" placeholder="Select Unit" />
                 </div>
                <div>
                   <label class="block text-sm font-medium text-slate-800 mb-1 flex items-center gap-2">
@@ -322,6 +322,98 @@
         </div>
       </div>
     </div>
+
+    <!-- Add New Category Modal -->
+    <div v-if="showCategoryModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200">
+      <div class="absolute inset-0" @click="closeCategoryModal"></div>
+      <div class="relative w-full max-w-md p-6 bg-white rounded-2xl border border-slate-200 shadow-xl space-y-4 z-10">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Add New Category</h4>
+          <button @click="closeCategoryModal" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        </div>
+        
+        <div v-if="categoryModalError" class="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 font-medium">
+          {{ categoryModalError }}
+        </div>
+
+        <div class="space-y-3">
+          <div>
+              <label class="text-[10px] font-bold text-slate-400 block mb-1">Category Name *</label>
+              <input type="text" v-model="newCategoryForm.name" placeholder="e.g., Electronics, Apparel" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 font-medium">
+          </div>
+          <div>
+              <label class="text-[10px] font-bold text-slate-400 block mb-1">Parent Category</label>
+              <SystemSelect v-model="newCategoryForm.parent_id" :options="parentCategoryOptions" placeholder="None (Top Level)" />
+          </div>
+          <div>
+              <label class="text-[10px] font-bold text-slate-400 block mb-1">Description</label>
+              <textarea v-model="newCategoryForm.description" rows="3" placeholder="Describe the category..." class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 resize-none font-medium"></textarea>
+          </div>
+          <div class="flex items-center justify-between py-1">
+              <div>
+                  <label class="text-[10px] font-bold text-slate-400">Is Active</label>
+                  <p class="text-[9px] text-slate-400">Visible and active across system.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer select-none">
+                  <input type="checkbox" v-model="newCategoryForm.is_active" class="sr-only peer">
+                  <div class="w-8 h-4.5 bg-slate-200 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+              </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 text-xs">
+            <button type="button" @click="closeCategoryModal" class="px-3 py-1 text-slate-400 font-medium hover:text-slate-600">Cancel</button>
+            <button type="button" @click="submitNewCategory" :disabled="submittingCategory" class="px-4 py-1.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                <svg v-if="submittingCategory" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Create Category
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add New Unit Modal -->
+    <div v-if="showUnitModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200">
+      <div class="absolute inset-0" @click="closeUnitModal"></div>
+      <div class="relative w-full max-w-md p-6 bg-white rounded-2xl border border-slate-200 shadow-xl space-y-4 z-10">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Add New Unit</h4>
+          <button @click="closeUnitModal" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        </div>
+        
+        <div v-if="unitModalError" class="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 font-medium">
+          {{ unitModalError }}
+        </div>
+
+        <div class="space-y-3">
+          <div>
+              <label class="text-[10px] font-bold text-slate-400 block mb-1">Unit Name *</label>
+              <input type="text" v-model="newUnitForm.name" placeholder="e.g., Kilogram, Litre, Piece" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 font-medium">
+          </div>
+          <div>
+              <label class="text-[10px] font-bold text-slate-400 block mb-1">Short Name / Code *</label>
+              <input type="text" v-model="newUnitForm.short_name" placeholder="e.g., KG, LTR, PCS" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 font-medium">
+          </div>
+          <div class="flex items-center justify-between py-1">
+              <div>
+                  <label class="text-[10px] font-bold text-slate-400">Is Active</label>
+                  <p class="text-[9px] text-slate-400">Visible and active across system.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer select-none">
+                  <input type="checkbox" v-model="newUnitForm.is_active" class="sr-only peer">
+                  <div class="w-8 h-4.5 bg-slate-200 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+              </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 text-xs">
+            <button type="button" @click="closeUnitModal" class="px-3 py-1 text-slate-400 font-medium hover:text-slate-600">Cancel</button>
+            <button type="button" @click="submitNewUnit" :disabled="submittingUnit" class="px-4 py-1.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                <svg v-if="submittingUnit" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Create Unit
+            </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -356,7 +448,8 @@ const sanitizeInitialData = (data) => {
     stock_quantity: '',
     min_stock_level: '',
     max_stock_level: '',
-    unit_of_measure: 'pcs',
+    unit_of_measure: '',
+    unit_id: '',
     track_inventory: true,
     is_active: true,
     status: 'active',
@@ -370,7 +463,7 @@ const sanitizeInitialData = (data) => {
     batch_number: '',
     expiry_date: '',
     tags: [],
-    has_variations: data.variations && data.variations.length > 0 ? true : false,
+    has_variations: data?.variations && data.variations.length > 0 ? true : false,
     variations: [],
     attributes: [],
     image: null,
@@ -381,15 +474,17 @@ const sanitizeInitialData = (data) => {
 
   const sanitized = { ...defaults };
   Object.keys(defaults).forEach(key => {
-    if (data[key] !== undefined && data[key] !== null) {
-      if (key === 'variations') {
-         sanitized[key] = data[key].map(v => ({...v, name_string: v.variation_name_string || v.name_string}));
+    if (key in data) {
+      if (data[key] !== undefined && data[key] !== null) {
+        if (key === 'variations') {
+           sanitized[key] = data[key].map(v => ({...v, name_string: v.variation_name_string || v.name_string}));
+        } else {
+           sanitized[key] = data[key];
+        }
       } else {
-         sanitized[key] = data[key];
-      }
-    } else {
-      if (typeof defaults[key] === 'string') {
-        sanitized[key] = '';
+        if (typeof defaults[key] === 'string') {
+          sanitized[key] = '';
+        }
       }
     }
   });
@@ -485,7 +580,19 @@ const categoryOptions = computed(() => {
   const list = Array.isArray(categories.value)
     ? categories.value
     : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
-  return list.map(c => ({ label: c?.name || '', value: c?.id || '' }));
+  const options = list.map(c => ({ label: c?.name || '', value: c?.id || '' }));
+  options.push({ label: '+ ADD New Category', value: 'add_new_category' });
+  return options;
+});
+
+const parentCategoryOptions = computed(() => {
+  const list = Array.isArray(categories.value)
+    ? categories.value
+    : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
+  return [
+    { label: 'None (Top Level)', value: '' },
+    ...list.map(c => ({ label: c?.name || '', value: c?.id || '' }))
+  ];
 });
 
 const supplierOptions = computed(() => {
@@ -504,12 +611,14 @@ const discountOptions = computed(() => [
   { label: 'Percentage (%)', value: 'percentage' }
 ]);
 
-const unitOptions = [
-  { label: 'PCS', value: 'pcs' },
-  { label: 'KG', value: 'kg' },
-  { label: 'LTR', value: 'liters' },
-  { label: 'BOX', value: 'boxes' }
-];
+const units = ref([]);
+
+const unitOptions = computed(() => {
+  const list = Array.isArray(units.value) ? units.value : [];
+  const options = list.map(u => ({ label: `${u?.name} (${u?.short_name})`, value: u?.id }));
+  options.push({ label: '+ ADD New Unit', value: 'add_new_unit' });
+  return options;
+});
 
 const statusOptions = [
   { label: 'Active', value: 'active' },
@@ -518,12 +627,14 @@ const statusOptions = [
 
 onMounted(async () => {
   try {
-    const [catResponse, supResponse] = await Promise.all([
+    const [catResponse, supResponse, unitResponse] = await Promise.all([
       axios.get('/api/categories'),
-      axios.get('/api/suppliers')
+      axios.get('/api/suppliers'),
+      axios.get('/api/units')
     ]);
     categories.value = catResponse?.data || [];
     suppliers.value = supResponse?.data || [];
+    units.value = unitResponse?.data || [];
   } catch (error) {
     console.error('Error fetching dynamic data:', error);
   }
@@ -586,6 +697,146 @@ const onStockInput = (event) => {
     form.value.stock_quantity = parseInt(event.target.value) || 0;
   }
 };
+
+// ─── Add New Category Logic ────────────────────────────────────────────────
+const showCategoryModal = ref(false);
+const submittingCategory = ref(false);
+const categoryModalError = ref('');
+const newCategoryForm = ref({
+  name: '',
+  parent_id: '',
+  description: '',
+  is_active: true
+});
+
+const openCategoryModal = () => {
+  newCategoryForm.value = {
+    name: '',
+    parent_id: '',
+    description: '',
+    is_active: true
+  };
+  categoryModalError.value = '';
+  showCategoryModal.value = true;
+};
+
+const closeCategoryModal = () => {
+  showCategoryModal.value = false;
+};
+
+const submitNewCategory = async () => {
+  if (!newCategoryForm.value.name.trim()) {
+    categoryModalError.value = 'Category name is required.';
+    return;
+  }
+  
+  submittingCategory.value = true;
+  categoryModalError.value = '';
+
+  try {
+    const response = await axios.post('/api/categories', {
+      name: newCategoryForm.value.name.trim(),
+      description: newCategoryForm.value.description.trim() || null,
+      parent_id: newCategoryForm.value.parent_id || null,
+      is_active: newCategoryForm.value.is_active
+    });
+
+    if (response.data && response.data.category) {
+      const newCat = response.data.category;
+      
+      // Add to local categories list
+      categories.value.push(newCat);
+      
+      // Auto-select the newly created category
+      form.value.category_id = newCat.id;
+      
+      closeCategoryModal();
+    }
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      categoryModalError.value = Object.values(error.response.data.errors).flat().join(' ');
+    } else {
+      categoryModalError.value = error.response?.data?.message || 'An error occurred while creating the category.';
+    }
+  } finally {
+    submittingCategory.value = false;
+  }
+};
+
+watch(() => form.value.category_id, (newVal, oldVal) => {
+  if (newVal === 'add_new_category') {
+    openCategoryModal();
+    form.value.category_id = oldVal || '';
+  }
+});
+
+// ─── Add New Unit Modal state & handlers ───────────────────
+const showUnitModal = ref(false);
+const submittingUnit = ref(false);
+const unitModalError = ref('');
+const newUnitForm = ref({
+  name: '',
+  short_name: '',
+  is_active: true
+});
+
+const openUnitModal = () => {
+  newUnitForm.value = {
+    name: '',
+    short_name: '',
+    is_active: true
+  };
+  unitModalError.value = '';
+  showUnitModal.value = true;
+};
+
+const closeUnitModal = () => {
+  showUnitModal.value = false;
+};
+
+const submitNewUnit = async () => {
+  if (!newUnitForm.value.name.trim()) {
+    unitModalError.value = 'Unit name is required.';
+    return;
+  }
+  if (!newUnitForm.value.short_name.trim()) {
+    unitModalError.value = 'Short name / Code is required.';
+    return;
+  }
+  
+  submittingUnit.value = true;
+  unitModalError.value = '';
+
+  try {
+    const response = await axios.post('/api/units', {
+      name: newUnitForm.value.name.trim(),
+      short_name: newUnitForm.value.short_name.trim().toUpperCase(),
+      is_active: newUnitForm.value.is_active
+    });
+
+    if (response.data && response.data.unit) {
+      const newUnit = response.data.unit;
+      units.value.push(newUnit);
+      form.value.unit_id = newUnit.id;
+      closeUnitModal();
+    }
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      unitModalError.value = Object.values(error.response.data.errors).flat().join(' ');
+    } else {
+      unitModalError.value = error.response?.data?.message || 'An error occurred while creating the unit.';
+    }
+  } finally {
+    submittingUnit.value = false;
+  }
+};
+
+watch(() => form.value.unit_id, (newVal, oldVal) => {
+  if (newVal === 'add_new_unit') {
+    openUnitModal();
+    form.value.unit_id = oldVal || '';
+  }
+});
 
 const submit = () => {
   // Ensure stock_quantity is up-to-date before emitting

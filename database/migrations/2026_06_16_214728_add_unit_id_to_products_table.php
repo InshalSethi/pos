@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('admins', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('products', function (Blueprint $table) {
+            $table->foreignId('unit_id')->nullable()->after('category_id')->constrained('units')->onDelete('set null');
         });
     }
 
@@ -22,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('admins');
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropForeign(['unit_id']);
+            $table->dropColumn('unit_id');
+        });
     }
 };

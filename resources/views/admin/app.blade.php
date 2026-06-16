@@ -4,7 +4,7 @@
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
-            if (savedTheme === 'dark' || (savedTheme === 'match system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            if (savedTheme === 'dark' || (['match system', 'system', 'auto'].includes(savedTheme) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
                 document.documentElement.setAttribute('data-theme', 'dark');
             } else {

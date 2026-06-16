@@ -48,7 +48,8 @@
           >
             <li
               :class="[
-                active ? 'bg-indigo-50 text-indigo-900' : 'text-gray-700',
+                active ? 'bg-indigo-50 text-indigo-900' : (option.value === 'add_new_category' ? 'text-indigo-600' : 'text-gray-700'),
+                option.value === 'add_new_category' ? 'font-bold border-t border-slate-100 mt-1' : '',
                 'relative cursor-pointer select-none px-3 py-1.5 text-sm rounded-lg transition-all duration-200 font-medium'
               ]"
             >

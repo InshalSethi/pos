@@ -12,6 +12,12 @@ class SupplierSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if seeder test suppliers already exist
+        if (Supplier::where('name', 'Tech Solutions Inc.')->exists()) {
+            $this->command->info('Seeder test suppliers already exist. Skipping supplier seeding.');
+            return;
+        }
+
         $suppliers = [
             [
                 'name' => 'Tech Solutions Inc.',

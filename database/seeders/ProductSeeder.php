@@ -13,9 +13,9 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        // Check if products already exist
-        if (Product::count() > 0) {
-            $this->command->info('Products already exist. Skipping product seeding.');
+        // Check if seeder test products already exist
+        if (Product::where('sku', 'IPH15PRO001')->exists()) {
+            $this->command->info('Seeder test products already exist. Skipping product seeding.');
             return;
         }
 

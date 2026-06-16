@@ -65,6 +65,18 @@
           >
             Accounting
           </button>
+          <button
+            v-if="authStore.hasPermission('taxes.view')"
+            @click="activeTab = 'taxes'"
+            :class="[
+              'py-2 px-1 border-b-2 font-medium text-sm',
+              activeTab === 'taxes'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Taxes
+          </button>
         </nav>
       </div>
 
@@ -1091,6 +1103,138 @@
             </div>
           </div>
         </div>
+
+        <!-- Taxes Tab -->
+        <div v-else-if="activeTab === 'taxes'" class="p-6 bg-gray-50 min-h-screen">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h3 class="text-lg font-medium text-gray-900">Tax Settings</h3>
+              <p class="text-sm text-gray-600">Configure taxes that can be applied to products and sales</p>
+            </div>
+            <button
+              v-if="authStore.hasPermission('taxes.create')"
+              @click="openTaxModal()"
+              class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 text-sm"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Tax
+            </button>
+          </div>
+
+          <!-- Search -->
+          <div class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-md">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                v-model="taxSearchQuery"
+                type="text"
+                placeholder="Search taxes by name..."
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white text-gray-900"
+              />
+            </div>
+          </div>
+
+          <!-- Taxes Table -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" class="relative px-6 py-3">
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="tax in filteredTaxes" :key="tax.id" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ tax.name }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ tax.type === 'percentage' ? tax.value + '%' : '$' + tax.value }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize font-medium">
+                    {{ tax.type }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span :class="tax.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                      {{ tax.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <button v-if="authStore.hasPermission('taxes.edit')" @click="openTaxModal(tax)" class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</button>
+                    <button v-if="authStore.hasPermission('taxes.delete')" @click="deleteTax(tax.id)" class="text-red-600 hover:text-red-900 font-semibold">Delete</button>
+                  </td>
+                </tr>
+                <tr v-if="filteredTaxes.length === 0">
+                  <td colspan="5" class="text-center py-8 text-gray-500 text-sm">
+                    No taxes found. Get started by adding a tax rule.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax Create/Edit Modal -->
+  <div v-if="showTaxModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+    <div class="absolute inset-0" @click="closeTaxModal"></div>
+    <div class="relative w-full max-w-md p-6 bg-white rounded-2xl border border-slate-200 shadow-xl space-y-4 z-10">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+        <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">{{ editingTax ? 'Edit Tax Rule' : 'Add New Tax Rule' }}</h4>
+        <button @click="closeTaxModal" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+
+      <div v-if="taxModalError" class="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 font-medium">
+        {{ taxModalError }}
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 block mb-1">Tax Name *</label>
+          <input type="text" v-model="taxForm.name" placeholder="e.g., VAT, Service Tax" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 font-medium text-gray-900">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 block mb-1">Tax Value *</label>
+          <input type="number" step="0.01" v-model="taxForm.value" placeholder="e.g., 15.00" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 font-medium text-gray-900">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 block mb-1">Tax Type *</label>
+          <select v-model="taxForm.type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-300 font-medium text-gray-900">
+            <option value="percentage">Percentage (%)</option>
+            <option value="flat">Flat ($)</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400">Is Active</label>
+            <p class="text-[9px] text-slate-400">Active status will make the tax available across transactions.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer select-none">
+            <input type="checkbox" v-model="taxForm.is_active" class="sr-only peer">
+            <div class="w-8 h-4.5 bg-slate-200 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 text-xs">
+        <button type="button" @click="closeTaxModal" class="px-3 py-1 text-slate-400 font-medium hover:text-slate-600">Cancel</button>
+        <button type="button" @click="submitTax" :disabled="submittingTax" class="px-4 py-1.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 transition-colors flex items-center gap-1.5 disabled:opacity-50">
+          <svg v-if="submittingTax" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          {{ editingTax ? 'Update Tax' : 'Create Tax' }}
+        </button>
       </div>
     </div>
   </div>
@@ -1252,6 +1396,20 @@ const showRoleModal = ref(false);
 const editingRole = ref(null);
 const roleSearchQuery = ref('');
 
+// Taxes state
+const taxes = ref([]);
+const taxSearchQuery = ref('');
+const showTaxModal = ref(false);
+const submittingTax = ref(false);
+const taxModalError = ref('');
+const editingTax = ref(null);
+const taxForm = ref({
+  name: '',
+  value: '',
+  type: 'percentage',
+  is_active: true
+});
+
 const systemRoles = ['admin', 'manager', 'cashier', 'user'];
 const isSystemRole = (roleName) => {
   return systemRoles.includes(roleName?.toLowerCase());
@@ -1261,6 +1419,13 @@ const filteredSettingsRoles = computed(() => {
   if (!roleSearchQuery.value) return roles.value;
   return roles.value.filter(r => 
     r.name?.toLowerCase().includes(roleSearchQuery.value.toLowerCase())
+  );
+});
+
+const filteredTaxes = computed(() => {
+  if (!taxSearchQuery.value) return taxes.value;
+  return taxes.value.filter(t => 
+    t.name?.toLowerCase().includes(taxSearchQuery.value.toLowerCase())
   );
 });
 
@@ -1319,15 +1484,15 @@ const updateSetting = async (key, value) => {
 // Theme functionality
 const applyTheme = (theme) => {
   const html = document.documentElement;
-  localStorage.setItem('theme', theme);
-  document.cookie = `theme=${theme}; path=/; max-age=31536000`; // 1 year
+  const normalizedTheme = (theme === 'auto' || theme === 'match system') ? 'system' : theme;
+  localStorage.setItem('theme', normalizedTheme);
+  document.cookie = `theme=${normalizedTheme}; path=/; max-age=31536000`; // 1 year
 
-  if (theme === 'dark') {
+  if (normalizedTheme === 'dark') {
     html.classList.add('dark');
-  } else if (theme === 'light') {
+  } else if (normalizedTheme === 'light') {
     html.classList.remove('dark');
-  } else if (theme === 'match system') {
-    // Auto theme based on system preference
+  } else if (normalizedTheme === 'system') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (prefersDark) {
       html.classList.add('dark');
@@ -1353,12 +1518,12 @@ const saveAllSettings = async () => {
 // Watch for theme changes
 watch(() => settings.value.theme, (newTheme) => {
   applyTheme(newTheme);
-});
-
-// Watch for accounting tab activation
+});// Watch for accounting or taxes tab activation
 watch(() => activeTab.value, (newTab) => {
   if (newTab === 'accounting') {
     loadAccountingSettings();
+  } else if (newTab === 'taxes') {
+    loadTaxes();
   }
 });
 
@@ -1383,9 +1548,97 @@ onMounted(() => {
     loadPaymentSettings();
   }
   loadCompanyDetails();
+
+  if (activeTab.value === 'taxes') {
+    loadTaxes();
+  }
 });
 
+// Taxes management methods
+const loadTaxes = async () => {
+  try {
+    const response = await axios.get('/api/taxes');
+    taxes.value = response.data;
+  } catch (error) {
+    console.error('Error loading taxes:', error);
+    showToast('Failed to load taxes', 'error');
+  }
+};
 
+const openTaxModal = (tax = null) => {
+  taxModalError.value = '';
+  if (tax) {
+    editingTax.value = tax;
+    taxForm.value = {
+      name: tax.name,
+      value: tax.value,
+      type: tax.type,
+      is_active: !!tax.is_active
+    };
+  } else {
+    editingTax.value = null;
+    taxForm.value = {
+      name: '',
+      value: '',
+      type: 'percentage',
+      is_active: true
+    };
+  }
+  showTaxModal.value = true;
+};
+
+const closeTaxModal = () => {
+  showTaxModal.value = false;
+  editingTax.value = null;
+};
+
+const submitTax = async () => {
+  if (!taxForm.value.name) {
+    taxModalError.value = 'Tax name is required.';
+    return;
+  }
+  if (taxForm.value.value === '' || taxForm.value.value === null || taxForm.value.value === undefined) {
+    taxModalError.value = 'Tax value is required.';
+    return;
+  }
+  submittingTax.value = true;
+  taxModalError.value = '';
+  try {
+    if (editingTax.value) {
+      await axios.put(`/api/taxes/${editingTax.value.id}`, taxForm.value);
+      showToast('Tax rule updated successfully', 'success');
+    } else {
+      await axios.post('/api/taxes', taxForm.value);
+      showToast('Tax rule created successfully', 'success');
+    }
+    await loadTaxes();
+    closeTaxModal();
+  } catch (error) {
+    console.error('Error saving tax:', error);
+    const message = error.response?.data?.message || 'Failed to save tax';
+    const errors = error.response?.data?.errors;
+    if (errors) {
+      taxModalError.value = Object.values(errors).flat().join(' ');
+    } else {
+      taxModalError.value = message;
+    }
+  } finally {
+    submittingTax.value = false;
+  }
+};
+
+const deleteTax = async (taxId) => {
+  if (confirm('Are you sure you want to delete this tax rule?')) {
+    try {
+      await axios.delete(`/api/taxes/${taxId}`);
+      showToast('Tax rule deleted successfully', 'success');
+      await loadTaxes();
+    } catch (error) {
+      console.error('Error deleting tax:', error);
+      showToast(error.response?.data?.message || 'Error deleting tax', 'error');
+    }
+  }
+};
 // Users management methods
 const loadUserStatistics = async () => {
   try {

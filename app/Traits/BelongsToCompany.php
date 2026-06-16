@@ -17,8 +17,8 @@ trait BelongsToCompany
         static::addGlobalScope(new CompanyScope);
 
         static::creating(function ($model) {
-            if (Auth::check() && Auth::user()->current_company_id) {
-                $model->company_id = Auth::user()->current_company_id;
+            if (empty($model->company_id) && auth()->check() && auth()->user()->current_company_id) {
+                $model->company_id = auth()->user()->current_company_id;
             }
         });
     }

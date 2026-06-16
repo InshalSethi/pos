@@ -11,6 +11,27 @@ class Company extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::created(function ($company) {
+            $defaultUnits = [
+                ['name' => 'Pieces', 'short_name' => 'PCS'],
+                ['name' => 'Kilograms', 'short_name' => 'KG'],
+                ['name' => 'Liters', 'short_name' => 'LTR'],
+                ['name' => 'Boxes', 'short_name' => 'BOX'],
+            ];
+
+            foreach ($defaultUnits as $unit) {
+                \App\Models\Unit::create([
+                    'company_id' => $company->id,
+                    'name' => $unit['name'],
+                    'short_name' => $unit['short_name'],
+                    'is_active' => true,
+                ]);
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'company_name',

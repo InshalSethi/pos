@@ -12,6 +12,12 @@ class CustomerSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if seeder test customers already exist
+        if (Customer::where('email', 'like', '%@email.com')->exists()) {
+            $this->command->info('Seeder test customers already exist. Skipping customer seeding.');
+            return;
+        }
+
         $customers = [
             [
                 'name' => 'John Smith',

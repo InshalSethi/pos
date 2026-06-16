@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -83,7 +84,7 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['category', 'variations' => function($query) {
+        $query = Product::with(['category', 'unit', 'variations' => function($query) {
             $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate');
         }])->withCount('variations')->where('status', '!=', 'draft');
 
@@ -153,7 +154,20 @@ class ProductController extends Controller
             'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => [
+                'nullable',
+                Rule::exists('categories', 'id')->where(function ($query) {
+                    $companyId = auth()->user()->current_company_id;
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'unit_id' => [
+                'nullable',
+                Rule::exists('units', 'id')->where(function ($query) {
+                    $companyId = auth()->user()->current_company_id;
+                    return $query->where('company_id', $companyId);
+                })
+            ],
             'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
             'barcode' => 'nullable|string|unique:products,barcode',
@@ -185,6 +199,12 @@ class ProductController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $data = $request->all();
+            if ($request->has('unit_id') && $request->unit_id) {
+                $unit = \App\Models\Unit::find($request->unit_id);
+                if ($unit) {
+                    $data['unit_of_measure'] = $unit->short_name;
+                }
+            }
             
             $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
 
@@ -283,7 +303,7 @@ class ProductController extends Controller
      */
     public function show(Product $product): JsonResponse
     {
-        $product->load('category', 'saleItems.sale', 'variations', 'attributes');
+        $product->load('category', 'unit', 'saleItems.sale', 'variations', 'attributes');
         $product->loadCount('variations');
 
         return response()->json($product);
@@ -311,7 +331,20 @@ class ProductController extends Controller
             'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => [
+                'nullable',
+                Rule::exists('categories', 'id')->where(function ($query) {
+                    $companyId = auth()->user()->current_company_id;
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'unit_id' => [
+                'nullable',
+                Rule::exists('units', 'id')->where(function ($query) {
+                    $companyId = auth()->user()->current_company_id;
+                    return $query->where('company_id', $companyId);
+                })
+            ],
             'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
             'barcode' => 'nullable|string|unique:products,barcode,' . $product->id,
@@ -343,6 +376,12 @@ class ProductController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $data = $request->all();
+            if ($request->has('unit_id') && $request->unit_id) {
+                $unit = \App\Models\Unit::find($request->unit_id);
+                if ($unit) {
+                    $data['unit_of_measure'] = $unit->short_name;
+                }
+            }
 
             $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
 

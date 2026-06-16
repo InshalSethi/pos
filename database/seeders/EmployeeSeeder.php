@@ -17,9 +17,9 @@ class EmployeeSeeder extends Seeder
      */
     public function run(): void
     {
-        // Check if employees already exist
-        if (Employee::count() > 0) {
-            $this->command->info('Employees already exist. Skipping employee seeding.');
+        // Check if seeder test employees already exist
+        if (Employee::where('email', 'like', '%@company.com')->exists()) {
+            $this->command->info('Seeder test employees already exist. Skipping employee seeding.');
             return;
         }
 

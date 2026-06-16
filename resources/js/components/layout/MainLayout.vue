@@ -1078,37 +1078,49 @@ router.afterEach(() => {
 });
 
 // Theme Management
-const currentThemeSetting = ref(localStorage.getItem('theme') || 'system');
+const currentThemeSetting = ref(
+  localStorage.getItem('theme') === 'auto' ? 'system' : (localStorage.getItem('theme') || 'system')
+);
 const isDarkMode = ref(false);
 
 const applyTheme = (setting) => {
-  if (setting === 'dark') {
+  const html = document.documentElement;
+  const normalizedSetting = (setting === 'auto' || setting === 'match system') ? 'system' : setting;
+
+  if (normalizedSetting === 'dark') {
     isDarkMode.value = true;
-    document.documentElement.classList.add('dark');
-  } else if (setting === 'light') {
+    html.classList.add('dark');
+  } else if (normalizedSetting === 'light') {
     isDarkMode.value = false;
-    document.documentElement.classList.remove('dark');
+    html.classList.remove('dark');
   } else {
     // system
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       isDarkMode.value = true;
-      document.documentElement.classList.add('dark');
+      html.classList.add('dark');
     } else {
       isDarkMode.value = false;
-      document.documentElement.classList.remove('dark');
+      html.classList.remove('dark');
     }
   }
 };
 
-const setTheme = (setting) => {
+const setTheme = async (setting) => {
   currentThemeSetting.value = setting;
-  if (setting === 'system') {
-    localStorage.removeItem('theme');
-  } else {
-    localStorage.setItem('theme', setting);
-  }
+  localStorage.setItem('theme', setting);
+  document.cookie = `theme=${setting}; path=/; max-age=31536000`; // 1 year
+  
   applyTheme(setting);
   showThemeMenu.value = false;
+
+  try {
+    const backendTheme = setting === 'system' ? 'auto' : setting;
+    await axios.put('/api/user/settings', {
+      theme: backendTheme
+    });
+  } catch (error) {
+    console.error('Failed to update theme in settings database:', error);
+  }
 };
 // Reactive data
 const showLogoLightbox = ref(false);

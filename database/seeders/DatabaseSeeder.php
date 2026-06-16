@@ -54,6 +54,9 @@ class DatabaseSeeder extends Seeder
             $admin->assignRole('admin');
         }
 
+        // Link admin user to a sample company
+        $this->call(SampleCompanySeeder::class);
+
         // Create test user
         $this->command->info('Creating test user...');
         $user = User::firstOrCreate([

@@ -19,14 +19,16 @@ const currencyStore = useCurrencyStore();
 
 const applyTheme = (theme) => {
   const html = document.documentElement;
-  localStorage.setItem('theme', theme);
-  document.cookie = `theme=${theme}; path=/; max-age=31536000`; // 1 year
+  // Normalize theme settings (e.g. backend 'auto' to 'system')
+  const normalizedTheme = (theme === 'auto' || theme === 'match system') ? 'system' : theme;
+  localStorage.setItem('theme', normalizedTheme);
+  document.cookie = `theme=${normalizedTheme}; path=/; max-age=31536000`; // 1 year
 
-  if (theme === 'dark') {
+  if (normalizedTheme === 'dark') {
     html.classList.add('dark');
-  } else if (theme === 'light') {
+  } else if (normalizedTheme === 'light') {
     html.classList.remove('dark');
-  } else if (theme === 'match system') {
+  } else if (normalizedTheme === 'system') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (prefersDark) {
       html.classList.add('dark');

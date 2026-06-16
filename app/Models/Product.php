@@ -88,6 +88,7 @@ class Product extends Model
         'dimensions',
         'tax_rate',
         'category_id',
+        'unit_id',
         'supplier_id',
         'batch_number',
         'expiry_date',
@@ -116,6 +117,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function supplier(): BelongsTo
