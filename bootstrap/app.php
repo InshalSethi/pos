@@ -24,6 +24,20 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetTenantLocalization::class,
             \App\Http\Middleware\EnsureOnboardingIsCompleted::class,
         ]);
+
+        $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return $request->expectsJson() ? null : url('/admin/login');
+            }
+            return $request->expectsJson() ? null : route('login');
+        });
+
+        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
+            if ($request->is('admin/*') || $request->is('admin')) {
+                return url('/admin');
+            }
+            return '/';
+        });
         $middleware->alias([
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

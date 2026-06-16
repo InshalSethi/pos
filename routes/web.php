@@ -124,6 +124,9 @@ Route::get('/initiate-new-company', function () {
     return redirect()->to('/company-setup?start_fresh_flow=true');
 })->name('company.initiate-new');
 
+// Admin Routes
+require __DIR__.'/admin.php';
+
 // 4. Vue.js SPA Catch-all
 Route::fallback(function () {
     return view('app');

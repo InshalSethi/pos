@@ -43,7 +43,8 @@ class EnsureOnboardingIsCompleted
                    || $request->routeIs('onboarding.wizard')
                    || $request->routeIs('abort-onboarding')
                    || $request->is('livewire*')
-                   || $request->is('login');
+                   || $request->is('login')
+                   || $request->is('admin*');
 
             if (!$exempt) {
                 return redirect()->route('company.setup');
