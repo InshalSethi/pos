@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryAdjustment;
 use App\Models\Product;
+use App\Models\Warehouse;
+use App\Models\Inventory;
+use App\Services\WarehouseInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +26,7 @@ class InventoryAdjustmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = InventoryAdjustment::with(['product', 'user']);
+        $query = InventoryAdjustment::with(['product', 'user', 'warehouse']);
 
         // Filter by product
         if ($request->has('product_id')) {
@@ -62,6 +65,7 @@ class InventoryAdjustmentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'product_id' => 'required|exists:products,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'adjustment_type' => 'required|in:increase,decrease,recount',
             'quantity_adjusted' => 'required|integer',
             'reason' => 'required|string|max:255',
@@ -81,8 +85,33 @@ class InventoryAdjustmentController extends Controller
         try {
             DB::beginTransaction();
 
+            $companyId = auth()->user()->current_company_id;
+            $warehouseId = $request->warehouse_id;
+
+            if (!$warehouseId) {
+                $warehouse = Warehouse::where('company_id', $companyId)->where('is_default', true)->first();
+                if (!$warehouse) {
+                    $warehouse = Warehouse::where('company_id', $companyId)->first();
+                }
+                if (!$warehouse) {
+                    $warehouse = Warehouse::create([
+                        'company_id' => $companyId,
+                        'name' => 'Main Warehouse',
+                        'is_default' => true,
+                        'is_active' => true,
+                    ]);
+                }
+                $warehouseId = $warehouse->id;
+            }
+
             $product = Product::find($request->product_id);
-            $quantityBefore = $product->stock_quantity;
+            
+            $inventory = Inventory::where('warehouse_id', $warehouseId)
+                ->where('product_id', $product->id)
+                ->whereNull('product_variation_id')
+                ->first();
+
+            $quantityBefore = $inventory ? $inventory->stock_qty : 0;
             $quantityAdjusted = $request->quantity_adjusted;
 
             // Calculate new quantity based on adjustment type
@@ -123,6 +152,7 @@ class InventoryAdjustmentController extends Controller
             $adjustment = InventoryAdjustment::create([
                 'adjustment_number' => $adjustmentNumber,
                 'product_id' => $request->product_id,
+                'warehouse_id' => $warehouseId,
                 'adjustment_type' => $request->adjustment_type,
                 'quantity_before' => $quantityBefore,
                 'quantity_adjusted' => $quantityAdjusted,
@@ -137,18 +167,13 @@ class InventoryAdjustmentController extends Controller
                 'attachment' => $attachmentPath,
             ]);
 
-            // Update product stock
-            $product->update(['stock_quantity' => $quantityAfter]);
-
-            try {
-                $this->verifyStockThresholds($product->id);
-            } catch (\Throwable $th) {
-                \Illuminate\Support\Facades\Log::warning('verifyStockThresholds failed in InventoryAdjustmentController: ' . $th->getMessage());
-            }
+            // Update product stock in warehouse
+            $whService = new WarehouseInventoryService();
+            $whService->setStock($warehouseId, $product->id, null, $quantityAfter, $companyId, 'Manual Adjustment', $adjustment->adjustment_number);
 
             DB::commit();
 
-            $adjustment->load(['product', 'user']);
+            $adjustment->load(['product', 'user', 'warehouse']);
 
             return response()->json([
                 'message' => 'Inventory adjustment created successfully',

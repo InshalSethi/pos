@@ -23,10 +23,14 @@ class Category extends Model
         'image',
         'is_active',
         'parent_id',
+        'tax_id',
+        'discount_type',
+        'discount_value',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'discount_value' => 'decimal:2',
     ];
 
     protected $appends = [
@@ -42,6 +46,11 @@ class Category extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Category::class, 'parent_id');
+    }
+
+    public function tax(): BelongsTo
+    {
+        return $this->belongsTo(Tax::class);
     }
 
     public function products(): HasMany

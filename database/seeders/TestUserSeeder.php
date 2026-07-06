@@ -30,7 +30,7 @@ class TestUserSeeder extends Seeder
         ]);
 
         // Assign admin role
-        $adminRole = Role::where('name', 'admin')->first();
+        $adminRole = Role::where('name', 'admin')->where('guard_name', 'web')->first();
         if ($adminRole && !$adminUser->hasRole('admin')) {
             $adminUser->assignRole($adminRole);
         }
@@ -60,7 +60,7 @@ class TestUserSeeder extends Seeder
         ]);
 
         // Assign manager role
-        $managerRole = Role::where('name', 'manager')->first();
+        $managerRole = Role::where('name', 'manager')->where('guard_name', 'web')->first();
         if ($managerRole && !$managerUser->hasRole('manager')) {
             $managerUser->assignRole($managerRole);
         }

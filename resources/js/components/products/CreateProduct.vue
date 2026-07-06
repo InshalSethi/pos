@@ -30,8 +30,10 @@ const handleCreate = async (formData) => {
       
       const value = formData[key];
       
-      // Handle arrays explicitly
-      if (Array.isArray(value)) {
+      // Handle complex arrays/objects as JSON strings, others normally
+      if (['variations', 'tags', 'taxes', 'attributes', 'warehouses', 'warehouse_ids'].includes(key)) {
+        data.append(key, JSON.stringify(value));
+      } else if (Array.isArray(value)) {
         value.forEach((item, index) => {
           if (typeof item === 'object' && item !== null) {
             Object.keys(item).forEach(objKey => {

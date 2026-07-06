@@ -34,6 +34,7 @@ class RegisterController extends Controller
                 'onboarding_completed' => false,
             ]);
 
+            \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
             $user->assignRole('user');
 
             UserSettings::create([

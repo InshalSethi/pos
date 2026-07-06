@@ -147,9 +147,31 @@ class ProductController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        foreach (['variations', 'tags', 'taxes', 'attributes', 'warehouses', 'warehouse_ids'] as $key) {
+            if (is_string($request->input($key))) {
+                $decoded = json_decode($request->input($key), true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $request->merge([$key => $decoded]);
+                }
+            }
+        }
+
+        $status = $request->input('status', 'active');
+
+        // Accidental Activation Guard & Draft vs Active Rule definition
+        if ($status === 'draft') {
+            if (!$request->filled('sku')) {
+                // Auto-generate a unique draft SKU to satisfy DB constraints
+                $request->merge(['sku' => 'DRAFT-' . strtoupper(uniqid())]);
+            }
+            $skuRule = 'nullable|string|unique:products,sku';
+        } else {
+            $skuRule = ['required', 'string', 'regex:/^(?!DRAFT-)/i', 'unique:products,sku'];
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products,sku',
+            'sku' => $skuRule,
             'selling_price' => 'nullable|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -183,10 +205,21 @@ class ProductController extends Controller
             'tags.*' => 'string|max:50',
             'has_variations' => 'boolean',
             'variations' => 'nullable|array',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
+        ], [
+            'sku.regex' => 'The SKU cannot be a draft placeholder (starting with DRAFT-) when activating the product.',
         ]);
 
-        $validator->sometimes(['selling_price', 'wholesale_price'], 'required', function ($input) {
+        $validator->sometimes(['selling_price', 'cost_price'], 'required', function ($input) {
             return ($input->status ?? 'active') !== 'draft' && !$input->has_variations;
+        });
+
+        $validator->sometimes('wholesale_price', 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && !$input->has_variations && filter_var($input->enabled_for_wholesale ?? false, FILTER_VALIDATE_BOOLEAN);
+        });
+
+        $validator->sometimes('tax_rate', 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && filter_var($input->enabled_for_tax ?? false, FILTER_VALIDATE_BOOLEAN);
         });
 
         if ($validator->fails()) {
@@ -209,18 +242,32 @@ class ProductController extends Controller
             $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
 
             if ($hasVariantsActive) {
-                $data['cost_price'] = 0.00;
-                $data['selling_price'] = 0.00;
-                $data['wholesale_price'] = 0.00;
-                $data['tax_rate'] = 0.00;
-                $data['stock_quantity'] = collect($request->variations)->sum(function ($row) {
+                $variationsData = $request->variations;
+                foreach ($variationsData as $index => &$row) {
+                    if (isset($row['taxes']) && is_array($row['taxes'])) {
+                        $row['tax_rate'] = \App\Models\Tax::whereIn('id', $row['taxes'])->where('is_active', true)->sum('value');
+                    }
+                }
+                unset($row);
+                $request->merge(['variations' => $variationsData]);
+
+                $firstVar = $variationsData[0] ?? null;
+                $data['cost_price'] = $firstVar ? ($firstVar['cost_price'] ?? 0.00) : 0.00;
+                $data['selling_price'] = $firstVar ? ($firstVar['retail_price'] ?? $firstVar['selling_price'] ?? 0.00) : 0.00;
+                $data['wholesale_price'] = $firstVar ? ($firstVar['wholesale_price'] ?? 0.00) : 0.00;
+                $data['tax_rate'] = $firstVar ? ($firstVar['tax_rate'] ?? 0.00) : 0.00;
+                $data['stock_quantity'] = collect($variationsData)->sum(function ($row) {
                     return (int) ($row['stock_qty'] ?? 0);
                 });
             } else {
-                if (empty($data['selling_price'])) $data['selling_price'] = 0;
-                if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
-                if (empty($data['cost_price'])) $data['cost_price'] = 0;
-                if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                if ($request->has('taxes') && is_array($request->taxes)) {
+                    $data['tax_rate'] = \App\Models\Tax::whereIn('id', $request->taxes)->where('is_active', true)->sum('value');
+                } else {
+                    if (empty($data['selling_price'])) $data['selling_price'] = 0;
+                    if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+                    if (empty($data['cost_price'])) $data['cost_price'] = 0;
+                    if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                }
                 $data['has_variations'] = false;
             }
 
@@ -256,9 +303,21 @@ class ProductController extends Controller
                 }
             }
 
+            $companyId = auth()->user()->current_company_id ?? $product->company_id;
+
             if ($hasVariantsActive) {
+                $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
+                    'company_id' => $companyId,
+                    'is_default' => true,
+                ], [
+                    'name' => 'Main Warehouse',
+                    'is_active' => true,
+                ]);
+
+                $whService = new \App\Services\WarehouseInventoryService();
+
                 foreach ($request->variations as $index => $row) {
-                    \App\Models\ProductVariation::create([
+                    $variation = \App\Models\ProductVariation::create([
                         'product_id' => $product->id,
                         'combination_key' => $row['combination_key'] ?? $row['name_string'] ?? strval($index),
                         'variation_name_string' => $row['name_string'] ?? 'Default',
@@ -268,6 +327,8 @@ class ProductController extends Controller
                         'wholesale_price' => $row['wholesale_price'] ?? 0,
                         'cost_price' => $row['cost_price'] ?? 0,
                         'tax_rate' => $row['tax_rate'] ?? null,
+                        'tags' => $row['tags'] ?? [],
+                        'taxes' => $row['taxes'] ?? [],
                         'discount_type' => $row['discount_type'] ?? null,
                         'discount_value' => $row['discount_value'] ?? null,
                         'stock_qty' => $row['stock_qty'] ?? 0,
@@ -275,6 +336,98 @@ class ProductController extends Controller
                         'unit_of_measure' => $row['unit_of_measure'] ?? null,
                         'expiry_date' => $row['expiry_date'] ?? null,
                     ]);
+
+                    $targetWarehouseIds = isset($row['warehouse_ids']) && is_array($row['warehouse_ids']) && count($row['warehouse_ids']) > 0
+                        ? $row['warehouse_ids']
+                        : [$defaultWarehouse->id];
+
+                    foreach ($targetWarehouseIds as $whId) {
+                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int)$row['warehouse_stocks'][$whId] : 0;
+                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int)$row['warehouse_min_stocks'][$whId] : 0;
+
+                        $whService->setStock(
+                            $whId,
+                            $product->id,
+                            $variation->id,
+                            $qty,
+                            $companyId
+                        );
+
+                        \App\Models\Inventory::where('warehouse_id', $whId)
+                            ->where('product_id', $product->id)
+                            ->where('product_variation_id', $variation->id)
+                            ->update(['min_stock_level' => $minStock]);
+                    }
+                }
+            } else {
+                if ($product->track_inventory) {
+                    $whService = new \App\Services\WarehouseInventoryService();
+
+                    if ($request->has('warehouses') && is_array($request->warehouses) && count($request->warehouses) > 0) {
+                        foreach ($request->warehouses as $whAllocation) {
+                            $warehouseId = $whAllocation['id'] ?? null;
+                            $warehouse = null;
+                            if ($warehouseId) {
+                                $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->find($warehouseId);
+                            }
+                            if (!$warehouse) {
+                                $warehouse = \App\Models\Warehouse::firstOrCreate([
+                                    'company_id' => $companyId,
+                                    'name' => $whAllocation['name'] ?? 'Warehouse',
+                                ], [
+                                    'is_default' => filter_var($whAllocation['is_default'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                                    'is_active' => true,
+                                ]);
+                            }
+
+                            $whService->setStock(
+                                $warehouse->id,
+                                $product->id,
+                                null,
+                                (int)($whAllocation['opening_stock'] ?? 0),
+                                $companyId
+                            );
+
+                            \App\Models\Inventory::where('warehouse_id', $warehouse->id)
+                                ->where('product_id', $product->id)
+                                ->whereNull('product_variation_id')
+                                ->update(['min_stock_level' => (int)($whAllocation['reorder_level'] ?? 0)]);
+                        }
+                    } elseif ($targetWarehouseId = $request->get('warehouse_id')) {
+                        $whService->setStock(
+                            $targetWarehouseId,
+                            $product->id,
+                            null,
+                            (int)($request->stock_quantity ?? 0),
+                            $companyId
+                        );
+
+                        \App\Models\Inventory::where('warehouse_id', $targetWarehouseId)
+                            ->where('product_id', $product->id)
+                            ->whereNull('product_variation_id')
+                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                    } else {
+                        $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
+                            'company_id' => $companyId,
+                            'is_default' => true,
+                        ], [
+                            'name' => 'Main Warehouse',
+                            'is_active' => true,
+                        ]);
+
+                        $whService->setStock(
+                            $defaultWarehouse->id,
+                            $product->id,
+                            null,
+                            (int)($request->stock_quantity ?? 0),
+                            $companyId
+                        );
+
+                        \App\Models\Inventory::where('warehouse_id', $defaultWarehouse->id)
+                            ->where('product_id', $product->id)
+                            ->whereNull('product_variation_id')
+                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                    }
                 }
             }
 
@@ -306,7 +459,52 @@ class ProductController extends Controller
         $product->load('category', 'unit', 'saleItems.sale', 'variations', 'attributes');
         $product->loadCount('variations');
 
-        return response()->json($product);
+        $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function($wh) use ($product) {
+            $inventory = \App\Models\Inventory::where('warehouse_id', $wh->id)
+                ->where('product_id', $product->id)
+                ->whereNull('product_variation_id')
+                ->first();
+            return [
+                'id' => $wh->id,
+                'name' => $wh->name,
+                'is_default' => $wh->is_default,
+                'opening_stock' => $inventory ? $inventory->stock_qty : 0,
+                'reorder_level' => $inventory ? $inventory->min_stock_level : 0,
+            ];
+        });
+
+        $productArray = $product->toArray();
+        $productArray['warehouses'] = $warehouses;
+        
+        $inventoryWarehouseIds = \App\Models\Inventory::where('product_id', $product->id)
+            ->whereNull('product_variation_id')
+            ->pluck('warehouse_id')
+            ->unique()
+            ->values()
+            ->toArray();
+        $productArray['warehouse_ids'] = $inventoryWarehouseIds;
+        $productArray['warehouse_id'] = $inventoryWarehouseIds[0] ?? null;
+
+        $productArray['variations'] = array_map(function ($variation) use ($product) {
+            $inventories = \App\Models\Inventory::where('product_id', $product->id)
+                ->where('product_variation_id', $variation['id'])
+                ->get();
+            
+            $variation['warehouse_ids'] = $inventories->pluck('warehouse_id')->toArray();
+            
+            $warehouseStocks = [];
+            $warehouseMinStocks = [];
+            foreach ($inventories as $inv) {
+                $warehouseStocks[$inv->warehouse_id] = $inv->stock_qty;
+                $warehouseMinStocks[$inv->warehouse_id] = $inv->min_stock_level;
+            }
+            $variation['warehouse_stocks'] = $warehouseStocks;
+            $variation['warehouse_min_stocks'] = $warehouseMinStocks;
+            
+            return $variation;
+        }, $productArray['variations']);
+
+        return response()->json($productArray);
     }
     
     /**
@@ -316,7 +514,53 @@ class ProductController extends Controller
     {
         // Include variations count structure explicitly
         $product = Product::with(['variations', 'attributes'])->withCount('variations')->findOrFail($id);
-        return response()->json(['product' => $product]);
+
+        $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function($wh) use ($product) {
+            $inventory = \App\Models\Inventory::where('warehouse_id', $wh->id)
+                ->where('product_id', $product->id)
+                ->whereNull('product_variation_id')
+                ->first();
+            return [
+                'id' => $wh->id,
+                'name' => $wh->name,
+                'is_default' => $wh->is_default,
+                'opening_stock' => $inventory ? $inventory->stock_qty : 0,
+                'reorder_level' => $inventory ? $inventory->min_stock_level : 0,
+            ];
+        });
+
+        $productArray = $product->toArray();
+        $productArray['warehouses'] = $warehouses;
+        
+        $inventoryWarehouseIds = \App\Models\Inventory::where('product_id', $product->id)
+            ->whereNull('product_variation_id')
+            ->pluck('warehouse_id')
+            ->unique()
+            ->values()
+            ->toArray();
+        $productArray['warehouse_ids'] = $inventoryWarehouseIds;
+        $productArray['warehouse_id'] = $inventoryWarehouseIds[0] ?? null;
+
+        $productArray['variations'] = array_map(function ($variation) use ($product) {
+            $inventories = \App\Models\Inventory::where('product_id', $product->id)
+                ->where('product_variation_id', $variation['id'])
+                ->get();
+            
+            $variation['warehouse_ids'] = $inventories->pluck('warehouse_id')->toArray();
+            
+            $warehouseStocks = [];
+            $warehouseMinStocks = [];
+            foreach ($inventories as $inv) {
+                $warehouseStocks[$inv->warehouse_id] = $inv->stock_qty;
+                $warehouseMinStocks[$inv->warehouse_id] = $inv->min_stock_level;
+            }
+            $variation['warehouse_stocks'] = $warehouseStocks;
+            $variation['warehouse_min_stocks'] = $warehouseMinStocks;
+            
+            return $variation;
+        }, $productArray['variations']);
+
+        return response()->json(['product' => $productArray]);
     }
 
     /**
@@ -324,9 +568,31 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product): JsonResponse
     {
+        foreach (['variations', 'tags', 'taxes', 'attributes', 'warehouses', 'warehouse_ids'] as $key) {
+            if (is_string($request->input($key))) {
+                $decoded = json_decode($request->input($key), true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $request->merge([$key => $decoded]);
+                }
+            }
+        }
+
+        $status = $request->input('status', 'active');
+
+        // Accidental Activation Guard & Draft vs Active Rule definition
+        if ($status === 'draft') {
+            if (!$request->filled('sku') && (!$product->sku || str_starts_with($product->sku, 'DRAFT-'))) {
+                // If they update a draft and left SKU blank, preserve or generate one if missing
+                $request->merge(['sku' => $product->sku ?: 'DRAFT-' . strtoupper(uniqid())]);
+            }
+            $skuRule = 'nullable|string|unique:products,sku,' . $product->id;
+        } else {
+            $skuRule = ['required', 'string', 'regex:/^(?!DRAFT-)/i', 'unique:products,sku,' . $product->id];
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products,sku,' . $product->id,
+            'sku' => $skuRule,
             'selling_price' => 'nullable|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -360,10 +626,21 @@ class ProductController extends Controller
             'tags.*' => 'string|max:50',
             'has_variations' => 'boolean',
             'variations' => 'nullable|array',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
+        ], [
+            'sku.regex' => 'The SKU cannot be a draft placeholder (starting with DRAFT-) when activating the product.',
         ]);
 
-        $validator->sometimes(['selling_price', 'wholesale_price'], 'required', function ($input) {
+        $validator->sometimes(['selling_price', 'cost_price'], 'required', function ($input) {
             return ($input->status ?? 'active') !== 'draft' && !$input->has_variations;
+        });
+
+        $validator->sometimes('wholesale_price', 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && !$input->has_variations && filter_var($input->enabled_for_wholesale ?? false, FILTER_VALIDATE_BOOLEAN);
+        });
+
+        $validator->sometimes('tax_rate', 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && filter_var($input->enabled_for_tax ?? false, FILTER_VALIDATE_BOOLEAN);
         });
 
         if ($validator->fails()) {
@@ -386,18 +663,32 @@ class ProductController extends Controller
             $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
 
             if ($hasVariantsActive) {
-                $data['cost_price'] = 0.00;
-                $data['selling_price'] = 0.00;
-                $data['wholesale_price'] = 0.00;
-                $data['tax_rate'] = 0.00;
-                $data['stock_quantity'] = collect($request->variations)->sum(function ($row) {
+                $variationsData = $request->variations;
+                foreach ($variationsData as $index => &$row) {
+                    if (isset($row['taxes']) && is_array($row['taxes'])) {
+                        $row['tax_rate'] = \App\Models\Tax::whereIn('id', $row['taxes'])->where('is_active', true)->sum('value');
+                    }
+                }
+                unset($row);
+                $request->merge(['variations' => $variationsData]);
+
+                $firstVar = $variationsData[0] ?? null;
+                $data['cost_price'] = $firstVar ? ($firstVar['cost_price'] ?? 0.00) : 0.00;
+                $data['selling_price'] = $firstVar ? ($firstVar['retail_price'] ?? $firstVar['selling_price'] ?? 0.00) : 0.00;
+                $data['wholesale_price'] = $firstVar ? ($firstVar['wholesale_price'] ?? 0.00) : 0.00;
+                $data['tax_rate'] = $firstVar ? ($firstVar['tax_rate'] ?? 0.00) : 0.00;
+                $data['stock_quantity'] = collect($variationsData)->sum(function ($row) {
                     return (int) ($row['stock_qty'] ?? 0);
                 });
             } else {
-                if (empty($data['selling_price'])) $data['selling_price'] = 0;
-                if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
-                if (empty($data['cost_price'])) $data['cost_price'] = 0;
-                if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                if ($request->has('taxes') && is_array($request->taxes)) {
+                    $data['tax_rate'] = \App\Models\Tax::whereIn('id', $request->taxes)->where('is_active', true)->sum('value');
+                } else {
+                    if (empty($data['selling_price'])) $data['selling_price'] = 0;
+                    if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
+                    if (empty($data['cost_price'])) $data['cost_price'] = 0;
+                    if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                }
                 $data['has_variations'] = false;
             }
 
@@ -447,11 +738,27 @@ class ProductController extends Controller
                 $product->attributes()->delete();
             }
 
+            $companyId = auth()->user()->current_company_id ?? $product->company_id;
+
             if ($hasVariantsActive) {
-                // Purge old historical iterations for this target to prevent duplicate stacking id errors
+                \App\Models\Inventory::where('product_id', $product->id)
+                    ->whereNotNull('product_variation_id')
+                    ->delete();
+
                 $product->variations()->delete();
+
+                $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
+                    'company_id' => $companyId,
+                    'is_default' => true,
+                ], [
+                    'name' => 'Main Warehouse',
+                    'is_active' => true,
+                ]);
+
+                $whService = new \App\Services\WarehouseInventoryService();
+
                 foreach ($request->variations as $index => $row) {
-                    \App\Models\ProductVariation::create([
+                    $variation = \App\Models\ProductVariation::create([
                         'product_id' => $product->id,
                         'combination_key' => $row['combination_key'] ?? $row['name_string'] ?? strval($index),
                         'variation_name_string' => $row['name_string'] ?? 'Default',
@@ -461,6 +768,8 @@ class ProductController extends Controller
                         'wholesale_price' => $row['wholesale_price'] ?? 0,
                         'cost_price' => $row['cost_price'] ?? 0,
                         'tax_rate' => $row['tax_rate'] ?? null,
+                        'tags' => $row['tags'] ?? [],
+                        'taxes' => $row['taxes'] ?? [],
                         'discount_type' => $row['discount_type'] ?? null,
                         'discount_value' => $row['discount_value'] ?? null,
                         'stock_qty' => $row['stock_qty'] ?? 0,
@@ -468,9 +777,114 @@ class ProductController extends Controller
                         'unit_of_measure' => $row['unit_of_measure'] ?? null,
                         'expiry_date' => $row['expiry_date'] ?? null,
                     ]);
+
+                    $targetWarehouseIds = isset($row['warehouse_ids']) && is_array($row['warehouse_ids']) && count($row['warehouse_ids']) > 0
+                        ? $row['warehouse_ids']
+                        : [$defaultWarehouse->id];
+
+                    foreach ($targetWarehouseIds as $whId) {
+                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int)$row['warehouse_stocks'][$whId] : 0;
+                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int)$row['warehouse_min_stocks'][$whId] : 0;
+
+                        $whService->setStock(
+                            $whId,
+                            $product->id,
+                            $variation->id,
+                            $qty,
+                            $companyId
+                        );
+
+                        \App\Models\Inventory::where('warehouse_id', $whId)
+                            ->where('product_id', $product->id)
+                            ->where('product_variation_id', $variation->id)
+                            ->update(['min_stock_level' => $minStock]);
+                    }
                 }
             } else {
                 $product->variations()->delete();
+
+                \App\Models\Inventory::where('product_id', $product->id)
+                    ->whereNotNull('product_variation_id')
+                    ->delete();
+
+                if ($product->track_inventory) {
+                    $whService = new \App\Services\WarehouseInventoryService();
+
+                    if ($request->has('warehouses') && is_array($request->warehouses) && count($request->warehouses) > 0) {
+                        \App\Models\Inventory::where('product_id', $product->id)
+                            ->whereNull('product_variation_id')
+                            ->delete();
+
+                        foreach ($request->warehouses as $whAllocation) {
+                            $warehouseId = $whAllocation['id'] ?? null;
+                            $warehouse = null;
+                            if ($warehouseId) {
+                                $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->find($warehouseId);
+                            }
+                            if (!$warehouse) {
+                                $warehouse = \App\Models\Warehouse::firstOrCreate([
+                                    'company_id' => $companyId,
+                                    'name' => $whAllocation['name'] ?? 'Warehouse',
+                                ], [
+                                    'is_default' => filter_var($whAllocation['is_default'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                                    'is_active' => true,
+                                ]);
+                            }
+
+                            $whService->setStock(
+                                $warehouse->id,
+                                $product->id,
+                                null,
+                                (int)($whAllocation['opening_stock'] ?? $whAllocation['stock_qty'] ?? 0),
+                                $companyId
+                            );
+
+                            \App\Models\Inventory::where('warehouse_id', $warehouse->id)
+                                ->where('product_id', $product->id)
+                                ->whereNull('product_variation_id')
+                                ->update(['min_stock_level' => (int)($whAllocation['reorder_level'] ?? $whAllocation['min_stock_level'] ?? 0)]);
+                        }
+                    } elseif ($targetWarehouseId = $request->get('warehouse_id')) {
+                        \App\Models\Inventory::where('product_id', $product->id)
+                            ->where('warehouse_id', '!=', $targetWarehouseId)
+                            ->whereNull('product_variation_id')
+                            ->delete();
+
+                        $whService->setStock(
+                            $targetWarehouseId,
+                            $product->id,
+                            null,
+                            (int)($request->stock_quantity ?? 0),
+                            $companyId
+                        );
+
+                        \App\Models\Inventory::where('warehouse_id', $targetWarehouseId)
+                            ->where('product_id', $product->id)
+                            ->whereNull('product_variation_id')
+                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                    } else {
+                        $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
+                            'company_id' => $companyId,
+                            'is_default' => true,
+                        ], [
+                            'name' => 'Main Warehouse',
+                            'is_active' => true,
+                        ]);
+
+                        $whService->setStock(
+                            $defaultWarehouse->id,
+                            $product->id,
+                            null,
+                            (int)($request->stock_quantity ?? 0),
+                            $companyId
+                        );
+
+                        \App\Models\Inventory::where('warehouse_id', $defaultWarehouse->id)
+                            ->where('product_id', $product->id)
+                            ->whereNull('product_variation_id')
+                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                    }
+                }
             }
 
             \Illuminate\Support\Facades\DB::commit();

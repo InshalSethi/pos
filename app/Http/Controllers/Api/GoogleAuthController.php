@@ -46,6 +46,7 @@ class GoogleAuthController extends Controller
                 ]);
 
                 // Assign default 'user' role
+                \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
                 $user->assignRole('user');
             }
             else if (!$user->google_id) {

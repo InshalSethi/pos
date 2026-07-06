@@ -20,6 +20,7 @@ class Sale extends Model
     protected $fillable = [
         'sale_number',
         'customer_id',
+        'warehouse_id',
         'user_id',
         'sale_date',
         'status',
@@ -52,6 +53,11 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     public function user(): BelongsTo

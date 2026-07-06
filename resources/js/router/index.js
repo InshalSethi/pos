@@ -15,6 +15,7 @@ import EditProduct from '@/components/products/EditProduct.vue';
 
 
 import Inventory from '@/components/inventory/Inventory.vue';
+import ProductVariations from '@/components/inventory/ProductVariations.vue';
 import Accounting from '@/components/accounting/Accounting.vue';
 import Transactions from '@/components/transactions/Transactions.vue';
 import Reports from '@/components/reports/Reports.vue';
@@ -103,12 +104,54 @@ const routes = [
         component: EditProduct,
         meta: { permission: 'products.edit' }
       },
+      {
+        path: 'inventory/groups',
+        name: 'Groups',
+        component: () => import('@/components/inventory/Groups.vue'),
+        meta: { permission: 'inventory.view' }
+      },
 
 
       {
         path: 'inventory',
         name: 'Inventory',
         component: Inventory,
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'inventory/product-variations',
+        name: 'ProductVariations',
+        component: ProductVariations,
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'inventory/warehouses',
+        name: 'Warehouses',
+        component: () => import('@/components/inventory/Warehouses.vue'),
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'inventory/transfer-orders',
+        name: 'TransferOrders',
+        component: () => import('@/components/inventory/TransferOrders.vue'),
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'inventory/transfer-orders/create',
+        name: 'CreateTransferOrder',
+        component: () => import('@/components/inventory/CreateTransferOrder.vue'),
+        meta: { permission: 'inventory.edit' }
+      },
+      {
+        path: 'inventory/transfer-orders/:id',
+        name: 'TransferOrderView',
+        component: () => import('@/components/inventory/TransferOrderView.vue'),
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'inventory/histories',
+        name: 'Histories',
+        component: () => import('@/components/inventory/Histories.vue'),
         meta: { permission: 'inventory.view' }
       },
       {
@@ -138,6 +181,11 @@ const routes = [
         path: 'settings',
         name: 'Settings',
         component: Settings
+      },
+      {
+        path: 'settings/tax-tags',
+        name: 'TaxTags',
+        component: () => import('@/components/settings/TaxTags.vue')
       },
       {
         path: 'sales/invoices',

@@ -7,6 +7,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Product;
 use App\Services\DoubleEntryAccountingService;
+use App\Services\WarehouseInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -349,7 +350,15 @@ class PurchaseOrderController extends Controller
                 // Update product inventory
                 $product = Product::find($poItem->product_id);
                 if ($product->track_inventory) {
-                    $product->increment('stock_quantity', $item['quantity_received']);
+                    $companyId = $purchaseOrder->company_id ?? auth()->user()->current_company_id ?? 1;
+                    $warehouseId = $purchaseOrder->warehouse_id;
+                    if (!$warehouseId) {
+                        $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first();
+                        $warehouseId = $defaultWh ? $defaultWh->id : 1;
+                    }
+
+                    $inventoryService = new WarehouseInventoryService();
+                    $inventoryService->adjustStock($warehouseId, $product->id, null, $item['quantity_received'], $companyId, 'Bill', $purchaseOrder->po_number);
 
                     // Update cost price if different
                     if ($product->cost_price != $poItem->unit_cost) {

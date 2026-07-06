@@ -7,6 +7,8 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Warehouse;
+use App\Services\WarehouseInventoryService;
 use App\Services\DoubleEntryAccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -103,6 +105,7 @@ class SaleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'nullable|exists:customers,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -122,6 +125,26 @@ class SaleController extends Controller
 
         try {
             DB::beginTransaction();
+
+            $companyId = auth()->user()->current_company_id;
+
+            // Resolve selected or default warehouse
+            $warehouseId = $request->warehouse_id;
+            if (!$warehouseId) {
+                $warehouse = Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
+                    ?? Warehouse::where('company_id', $companyId)->first();
+                
+                if (!$warehouse) {
+                    $warehouse = Warehouse::create([
+                        'company_id' => $companyId,
+                        'name' => 'Default Warehouse',
+                        'code' => 'DEFAULT',
+                        'is_default' => true,
+                        'is_active' => true
+                    ]);
+                }
+                $warehouseId = $warehouse->id;
+            }
 
             // Calculate totals
             $subtotal = 0;
@@ -149,6 +172,7 @@ class SaleController extends Controller
             $sale = Sale::create([
                 'sale_number' => $saleNumber,
                 'customer_id' => $request->customer_id,
+                'warehouse_id' => $warehouseId,
                 'user_id' => Auth::id(),
                 'sale_date' => now(),
                 'status' => 'completed',
@@ -163,6 +187,7 @@ class SaleController extends Controller
             ]);
 
             // Create sale items and update inventory
+            $inventoryService = new WarehouseInventoryService();
             foreach ($request->items as $item) {
                 $product = Product::find($item['product_id']);
                 $itemSubtotal = $item['quantity'] * $item['unit_price'];
@@ -181,9 +206,9 @@ class SaleController extends Controller
                     'total_amount' => $itemTotal,
                 ]);
 
-                // Update product inventory
+                // Update warehouse inventory
                 if ($product->track_inventory) {
-                    $product->decrement('stock_quantity', $item['quantity']);
+                    $inventoryService->adjustStock($warehouseId, $product->id, null, -$item['quantity'], $companyId, 'Invoice', $sale->sale_number);
                     try {
                         $this->verifyStockThresholds($product->id);
                     } catch (\Throwable $th) {

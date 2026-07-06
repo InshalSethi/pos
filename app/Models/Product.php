@@ -95,7 +95,9 @@ class Product extends Model
         'discount_type',
         'discount_value',
         'tags',
+        'taxes',
         'status',
+        'has_variations',
     ];
 
     protected $casts = [
@@ -108,8 +110,10 @@ class Product extends Model
         'weight' => 'decimal:3',
         'track_inventory' => 'boolean',
         'is_active' => 'boolean',
+        'has_variations' => 'boolean',
         'images' => 'array',
         'tags' => 'array',
+        'taxes' => 'array',
         'expiry_date' => 'date',
     ];
 

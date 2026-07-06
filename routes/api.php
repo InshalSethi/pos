@@ -7,11 +7,14 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\TaxController;
+use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\InventoryAdjustmentController;
+use App\Http\Controllers\Api\WarehouseController;
+use App\Http\Controllers\Api\TransferOrderController;
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\JournalEntryController;
 use App\Http\Controllers\Api\BankAccountController;
@@ -44,6 +47,7 @@ use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\TimezoneController;
 use App\Http\Controllers\Api\CompanySwitcherController;
+use App\Http\Controllers\Api\AttributeController;
 // Public routes
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
 Route::middleware('web')->group(function() {
@@ -125,8 +129,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/export', [ProductController::class , 'export']);
     Route::get('/products/download-template', [ProductController::class , 'downloadTemplate']);
     Route::apiResource('categories', CategoryController::class);
+    Route::post('/categories/{category}/apply-pricing', [CategoryController::class, 'applyPricing']);
     Route::apiResource('units', UnitController::class);
     Route::apiResource('taxes', TaxController::class);
+    Route::apiResource('tags', TagController::class);
+    Route::apiResource('attributes', AttributeController::class);
+    Route::get('/inventory/histories', [\App\Http\Controllers\Api\InventoryHistoryController::class, 'index']);
 
     // Customer management routes
     Route::get('/customers/statistics', [CustomerController::class , 'getStatistics']);
@@ -180,6 +188,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('inventory-adjustments', InventoryAdjustmentController::class)->only(['index', 'store', 'show']);
     Route::get('/inventory/summary', [InventoryAdjustmentController::class , 'summary']);
     Route::get('/inventory/low-stock', [InventoryAdjustmentController::class , 'lowStock']);
+
+    // Warehouse and stock transfer routes
+    Route::get('/warehouses/{warehouse}/inventory', [WarehouseController::class, 'inventory']);
+    Route::apiResource('warehouses', WarehouseController::class);
+    Route::apiResource('transfer-orders', TransferOrderController::class);
+    Route::post('/transfer-orders/{transferOrder}/send', [TransferOrderController::class , 'send']);
+    Route::post('/transfer-orders/{transferOrder}/receive', [TransferOrderController::class , 'receive']);
+    Route::post('/transfer-orders/{transferOrder}/cancel', [TransferOrderController::class , 'cancel']);
 
     // Accounting routes
     Route::apiResource('accounts', AccountController::class);

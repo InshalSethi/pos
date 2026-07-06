@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -25,7 +26,7 @@ class CategoryController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Category::with('parent', 'children')->withCount('products');
+        $query = Category::with('parent', 'children', 'tax')->withCount('products');
 
         // Search functionality
         if ($request->has('search')) {
@@ -71,6 +72,14 @@ class CategoryController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
+            'tax_id' => [
+                'nullable',
+                Rule::exists('taxes', 'id')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'discount_type' => 'nullable|string|in:percentage,flat,markup_percentage',
+            'discount_value' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
 
@@ -85,7 +94,7 @@ class CategoryController extends Controller
         $category->fill($request->all());
         $category->company_id = $companyId;
         $category->save();
-        $category->load('parent', 'children');
+        $category->load('parent', 'children', 'tax');
 
         return response()->json([
             'message' => 'Category created successfully',
@@ -98,7 +107,7 @@ class CategoryController extends Controller
      */
     public function show(Category $category): JsonResponse
     {
-        $category->load('parent', 'children', 'products');
+        $category->load('parent', 'children', 'tax', 'products');
 
         return response()->json($category);
     }
@@ -126,6 +135,14 @@ class CategoryController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
+            'tax_id' => [
+                'nullable',
+                Rule::exists('taxes', 'id')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'discount_type' => 'nullable|string|in:percentage,flat,markup_percentage',
+            'discount_value' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
 
@@ -144,7 +161,7 @@ class CategoryController extends Controller
         }
 
         $category->update($request->all());
-        $category->load('parent', 'children');
+        $category->load('parent', 'children', 'tax');
 
         return response()->json([
             'message' => 'Category updated successfully',
@@ -176,6 +193,117 @@ class CategoryController extends Controller
         return response()->json([
             'message' => 'Category deleted successfully'
         ]);
+    }
+
+    /**
+     * Apply pricing rules to all products in the category.
+     */
+    public function applyPricing(Request $request, Category $category): JsonResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        $validator = Validator::make($request->all(), [
+            'action_type' => 'required|string|in:markup_percentage,discount_percentage,set_tax',
+            'value' => 'required_if:action_type,markup_percentage,discount_percentage|numeric|min:0',
+            'tax_id' => 'required_if:action_type,set_tax|nullable|exists:taxes,id',
+            'apply_to_subcategories' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $actionType = $request->input('action_type');
+        $value = $request->input('value', 0);
+        $taxId = $request->input('tax_id');
+        $applyToSubcategories = $request->boolean('apply_to_subcategories');
+
+        // Gather all category IDs (current + children if requested)
+        $categoryIds = [$category->id];
+        if ($applyToSubcategories) {
+            $categoryIds = array_merge($categoryIds, $this->getDescendantIds($category));
+        }
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            if ($actionType === 'markup_percentage') {
+                $products = Product::whereIn('category_id', $categoryIds)
+                    ->where('company_id', $companyId)
+                    ->get();
+
+                foreach ($products as $product) {
+                    $costPrice = floatval($product->cost_price);
+                    $basePrice = $costPrice > 0 ? $costPrice : floatval($product->selling_price);
+                    $newSellingPrice = $basePrice * (1 + $value / 100);
+
+                    $product->update([
+                        'selling_price' => $newSellingPrice,
+                        'markup_percentage' => $value,
+                    ]);
+                }
+
+                // Update category default settings
+                Category::whereIn('id', $categoryIds)
+                    ->where('company_id', $companyId)
+                    ->update([
+                        'discount_type' => 'markup_percentage',
+                        'discount_value' => $value
+                    ]);
+
+            } elseif ($actionType === 'discount_percentage') {
+                Product::whereIn('category_id', $categoryIds)
+                    ->where('company_id', $companyId)
+                    ->update([
+                        'discount_type' => 'percentage',
+                        'discount_value' => $value
+                    ]);
+
+                // Update category default settings
+                Category::whereIn('id', $categoryIds)
+                    ->where('company_id', $companyId)
+                    ->update([
+                        'discount_type' => 'percentage',
+                        'discount_value' => $value
+                    ]);
+
+            } elseif ($actionType === 'set_tax') {
+                $tax = \App\Models\Tax::where('id', $taxId)
+                    ->where('company_id', $companyId)
+                    ->first();
+
+                if ($tax) {
+                    // Update products with tax rate value
+                    Product::whereIn('category_id', $categoryIds)
+                        ->where('company_id', $companyId)
+                        ->update([
+                            'tax_rate' => $tax->value
+                        ]);
+
+                    // Set category default tax_id
+                    Category::whereIn('id', $categoryIds)
+                        ->where('company_id', $companyId)
+                        ->update([
+                            'tax_id' => $tax->id
+                        ]);
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'message' => 'Pricing rules applied successfully to products.',
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to apply pricing rules.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

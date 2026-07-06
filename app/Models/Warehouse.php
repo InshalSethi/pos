@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Unit extends Model
+class Warehouse extends Model
 {
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
@@ -17,23 +17,20 @@ class Unit extends Model
     protected $fillable = [
         'company_id',
         'name',
-        'short_name',
+        'email',
+        'phone',
+        'address',
+        'is_default',
         'is_active',
     ];
 
     protected $casts = [
+        'is_default' => 'boolean',
         'is_active' => 'boolean',
     ];
 
-    // Relationships
-    public function products(): HasMany
+    public function inventories(): HasMany
     {
-        return $this->hasMany(Product::class);
-    }
-
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
+        return $this->hasMany(Inventory::class);
     }
 }

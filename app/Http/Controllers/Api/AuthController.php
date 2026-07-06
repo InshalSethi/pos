@@ -96,6 +96,7 @@ class AuthController extends Controller
             ]);
 
             // Assign default role
+            \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
             $user->assignRole('user');
 
             // Create default user settings
