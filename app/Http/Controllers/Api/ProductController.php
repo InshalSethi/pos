@@ -775,6 +775,11 @@ class ProductController extends Controller
             $companyId = auth()->user()->current_company_id ?? $product->company_id;
 
             if ($hasVariantsActive) {
+                // Delete old simple product inventory records to prevent double counting
+                \App\Models\Inventory::where('product_id', $product->id)
+                    ->whereNull('product_variation_id')
+                    ->delete();
+
                 \App\Models\Inventory::where('product_id', $product->id)
                     ->whereNotNull('product_variation_id')
                     ->delete();

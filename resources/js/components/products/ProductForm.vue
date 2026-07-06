@@ -2688,19 +2688,20 @@ watch(() => form.value.has_variations, (newVal) => {
 watch(
   [() => form.value.has_variations, () => form.value.variations],
   ([isVar, vars]) => {
-    if (isVar && Array.isArray(vars) && vars.length > 0) {
-      const first = vars[0];
+    if (isVar) {
+      const list = Array.isArray(vars) ? vars : [];
+      const first = list[0];
       if (first) {
         form.value.selling_price = first.retail_price ?? '';
         form.value.cost_price = first.cost_price ?? '';
         form.value.wholesale_price = first.wholesale_price ?? '';
         form.value.tax_rate = first.tax_rate !== null && first.tax_rate !== undefined ? parseFloat(first.tax_rate) : '';
       }
-      form.value.stock_quantity = vars.reduce((total, row) => {
+      form.value.stock_quantity = list.reduce((total, row) => {
         const qty = parseInt(row.stock_qty);
         return total + (isNaN(qty) ? 0 : qty);
       }, 0);
-      form.value.min_stock_level = vars.reduce((total, row) => {
+      form.value.min_stock_level = list.reduce((total, row) => {
         const qty = parseInt(row.min_stock_alert);
         return total + (isNaN(qty) ? 0 : qty);
       }, 0);
