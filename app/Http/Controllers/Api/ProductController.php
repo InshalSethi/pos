@@ -156,6 +156,23 @@ class ProductController extends Controller
             }
         }
 
+        if ($request->has('variations') && is_array($request->variations)) {
+            $variations = $request->variations;
+            foreach ($variations as &$v) {
+                if (isset($v['barcode']) && $v['barcode'] === '') $v['barcode'] = null;
+                if (isset($v['cost_price']) && $v['cost_price'] === '') $v['cost_price'] = 0;
+                if (isset($v['retail_price']) && $v['retail_price'] === '') $v['retail_price'] = 0;
+                if (isset($v['wholesale_price']) && $v['wholesale_price'] === '') $v['wholesale_price'] = 0;
+                if (isset($v['discount_type']) && $v['discount_type'] === '') $v['discount_type'] = null;
+                if (isset($v['discount_value']) && $v['discount_value'] === '') $v['discount_value'] = null;
+                if (isset($v['tax_rate']) && $v['tax_rate'] === '') $v['tax_rate'] = null;
+                if (isset($v['unit_of_measure']) && $v['unit_of_measure'] === '') $v['unit_of_measure'] = null;
+                if (isset($v['expiry_date']) && $v['expiry_date'] === '') $v['expiry_date'] = null;
+            }
+            unset($v);
+            $request->merge(['variations' => $variations]);
+        }
+
         $status = $request->input('status', 'active');
 
         // Accidental Activation Guard & Draft vs Active Rule definition
@@ -575,6 +592,23 @@ class ProductController extends Controller
                     $request->merge([$key => $decoded]);
                 }
             }
+        }
+
+        if ($request->has('variations') && is_array($request->variations)) {
+            $variations = $request->variations;
+            foreach ($variations as &$v) {
+                if (isset($v['barcode']) && $v['barcode'] === '') $v['barcode'] = null;
+                if (isset($v['cost_price']) && $v['cost_price'] === '') $v['cost_price'] = 0;
+                if (isset($v['retail_price']) && $v['retail_price'] === '') $v['retail_price'] = 0;
+                if (isset($v['wholesale_price']) && $v['wholesale_price'] === '') $v['wholesale_price'] = 0;
+                if (isset($v['discount_type']) && $v['discount_type'] === '') $v['discount_type'] = null;
+                if (isset($v['discount_value']) && $v['discount_value'] === '') $v['discount_value'] = null;
+                if (isset($v['tax_rate']) && $v['tax_rate'] === '') $v['tax_rate'] = null;
+                if (isset($v['unit_of_measure']) && $v['unit_of_measure'] === '') $v['unit_of_measure'] = null;
+                if (isset($v['expiry_date']) && $v['expiry_date'] === '') $v['expiry_date'] = null;
+            }
+            unset($v);
+            $request->merge(['variations' => $variations]);
         }
 
         $status = $request->input('status', 'active');

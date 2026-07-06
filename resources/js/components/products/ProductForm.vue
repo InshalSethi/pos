@@ -58,7 +58,20 @@
               <div class="md:col-span-2 space-y-3">
                 <!-- Name -->
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Name *</label>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Name *
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                        Enter the full descriptive name of the product or item.
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      </span>
+                    </span>
+                  </label>
                   <input 
                     v-model="form.name" 
                     type="text" 
@@ -67,49 +80,77 @@
                   />
                 </div>
 
-                <!-- Multi-select Category Badge / Tag Input -->
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Category *</label>
-                  <div class="relative" id="category-multiselect-container">
-                    <div 
-                      @click="showCategoryDropdown = !showCategoryDropdown"
-                      class="w-full min-h-[34px] px-3 py-1 bg-white border border-gray-200 focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
-                    >
-                      <div 
-                        v-for="catId in form.category_ids" 
-                        :key="catId" 
-                        class="bg-[#1e293b] text-white rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold"
-                      >
-                        <span>{{ getCategoryLabel(catId) }}</span>
-                        <button type="button" @click.stop="removeCategory(catId)" class="hover:text-red-300 font-bold focus:outline-none">&times;</button>
-                      </div>
-                      <span v-if="form.category_ids.length === 0" class="text-gray-400 text-sm">Add category</span>
-                      
-                      <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                      </span>
-                    </div>
-
-                    <!-- Dropdown Menu -->
-                    <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
-                      <div 
-                        v-for="opt in categoryOptions" 
-                        :key="opt.value"
-                        @click="toggleCategorySelection(opt.value)"
-                        class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 rounded-lg flex items-center justify-between"
-                      >
-                        <span :class="form.category_ids.includes(opt.value) ? 'text-indigo-600 font-bold' : 'text-slate-700'">{{ opt.label }}</span>
-                        <span v-if="form.category_ids.includes(opt.value)" class="text-indigo-600">
-                          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                <!-- Category & Tags Side-by-Side Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Multi-select Category Badge / Tag Input -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Category *
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                          Select one or more categories to classify this product.
+                          <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                         </span>
+                      </span>
+                    </label>
+                    <div class="relative" id="category-multiselect-container">
+                      <div 
+                        @click="showCategoryDropdown = !showCategoryDropdown"
+                        class="w-full min-h-[34px] px-3 py-1 bg-white border border-gray-200 focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
+                      >
+                        <div 
+                          v-for="catId in form.category_ids" 
+                          :key="catId" 
+                          class="bg-[#1e293b] text-white rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold"
+                        >
+                          <span>{{ getCategoryLabel(catId) }}</span>
+                          <button type="button" @click.stop="removeCategory(catId)" class="hover:text-red-300 font-bold focus:outline-none">&times;</button>
+                        </div>
+                        <span v-if="form.category_ids.length === 0" class="text-gray-400 text-sm">Add category</span>
+                        
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                        </span>
+                      </div>
+
+                      <!-- Dropdown Menu -->
+                      <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                        <div 
+                          v-for="opt in categoryOptions" 
+                          :key="opt.value"
+                          @click="toggleCategorySelection(opt.value)"
+                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                        >
+                          <span :class="form.category_ids.includes(opt.value) ? 'text-indigo-600 font-bold' : 'text-slate-700'">{{ opt.label }}</span>
+                          <span v-if="form.category_ids.includes(opt.value)" class="text-indigo-600">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Multi-select Tags Badge / Tag Input -->
-                <div v-show="!form.has_variations" class="mt-3">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tags</label>
+                  <!-- Multi-select Tags Badge / Tag Input -->
+                  <div v-show="!form.has_variations">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Tags
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                        Add tags to help search, filter, and organize products easily.
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      </span>
+                    </span>
+                  </label>
                   <div class="relative" id="tag-multiselect-container">
                     <div 
                       @click="showTagDropdown = !showTagDropdown"
@@ -131,26 +172,94 @@
                     </div>
 
                     <!-- Dropdown Menu -->
-                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
-                      <div 
-                        v-for="opt in tagOptions" 
-                        :key="opt.value"
-                        @click="toggleTagSelection(opt.value)"
-                        class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 rounded-lg flex items-center justify-between"
-                      >
-                        <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 font-bold' : 'text-slate-700'">{{ opt.label }}</span>
-                        <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600">
-                          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                        </span>
+                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                      <!-- Scrollable List of Options -->
+                      <div class="overflow-y-auto max-h-44 custom-scrollbar">
+                        <div 
+                          v-for="opt in tagOptions" 
+                          :key="opt.value"
+                          @click="toggleTagSelection(opt.value)"
+                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                        >
+                          <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 font-bold' : 'text-slate-700'">{{ opt.label }}</span>
+                          <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                          </span>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div v-if="tagOptions.length === 0" class="p-3 text-center">
+                          <p class="text-slate-400 text-xs font-semibold">No tags found</p>
+                        </div>
+                      </div>
+
+                      <!-- Inline Creation Footer -->
+                      <div class="border-t border-slate-100 mt-1 p-1 bg-white">
+                        <button 
+                          v-if="!showInlineCreateTag" 
+                          type="button"
+                          @click.stop="startInlineTagCreate" 
+                          class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-650 hover:bg-indigo-50/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Add Tag
+                        </button>
+                        <div v-else class="flex items-center gap-1.5" @click.stop>
+                          <input 
+                            v-model="newInlineTagName"
+                            ref="inlineTagInputRef"
+                            @keydown.enter.prevent="submitInlineTag"
+                            @keydown.esc="cancelInlineTagCreate"
+                            type="text" 
+                            placeholder="Enter tag name..."
+                            class="flex-1 px-2 py-1 bg-slate-50 border border-slate-200 focus:border-slate-350 focus:bg-white rounded-lg text-xs font-semibold outline-none transition-all text-slate-800"
+                          />
+                          <button 
+                            @click="submitInlineTag"
+                            type="button"
+                            class="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-all focus:outline-none"
+                            title="Save Tag"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button 
+                            @click="cancelInlineTagCreate"
+                            type="button"
+                            class="p-1 text-slate-400 hover:bg-slate-100 rounded transition-all focus:outline-none"
+                            title="Cancel"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
 
               <!-- Right Column: Picture Gallery (Single view with "+ N more" support) -->
               <div class="md:col-span-1 flex flex-col justify-end">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Pictures</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Item Pictures
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      Upload up to 8 images. Crop, rotate, zoom, and select the primary image.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
+                </label>
                 <div class="space-y-2">
                   <!-- Single Image Container -->
                   <div v-if="productImages.length > 0" class="relative border border-slate-200 rounded-lg overflow-hidden h-32 group bg-slate-50/50 flex items-center justify-center">
@@ -216,7 +325,20 @@
 
             <!-- Description -->
             <div class="mt-3">
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</label>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Description
+                <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    Provide a detailed overview of the product specifications and benefits.
+                    <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                  </span>
+                </span>
+              </label>
               <textarea v-model="form.description" rows="3" class="w-full px-3 py-1.5 bg-white border border-gray-200 focus:border-slate-300 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 placeholder-slate-400 outline-none resize-none h-20" placeholder="Enter description..."></textarea>
             </div>
           </div>
@@ -252,6 +374,17 @@
               <div v-show="form.enabled_for_sale">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Sale Price <span v-if="form.enabled_for_sale && !form.has_variations" class="text-rose-500">*</span>
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      The standard retail selling price offered to consumers.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
                 </label>
                 <input 
                   type="number" 
@@ -266,6 +399,17 @@
               <div v-show="form.enabled_for_purchase">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Purchase Price <span v-if="form.enabled_for_purchase && !form.has_variations" class="text-rose-500">*</span>
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      The cost price paid to acquire or manufacture the item.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
                 </label>
                 <input 
                   type="number" 
@@ -280,6 +424,17 @@
               <div v-show="form.enabled_for_wholesale">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Wholesale Price <span v-if="form.enabled_for_wholesale && !form.has_variations" class="text-rose-500">*</span>
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      The bulk purchase price offered to business-to-business clients.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
                 </label>
                 <input 
                   type="number" 
@@ -292,7 +447,20 @@
                 />
               </div>
               <div v-show="form.enabled_for_tax">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tax</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Tax
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      Select applicable tax rates to apply during transaction billing.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
+                </label>
                 <div class="relative" id="tax-multiselect-container">
                   <div 
                     @click="!form.has_variations && (showTaxDropdown = !showTaxDropdown)"
@@ -358,7 +526,20 @@
             <!-- Balanced Grid Structure for Inventory parameters -->
             <div v-show="form.track_inventory" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">SKU</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  SKU
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      Enter a unique Stock Keeping Unit code for tracking inventory.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
+                </label>
                 <input 
                   v-model="form.sku" 
                   type="text" 
@@ -367,11 +548,37 @@
                 />
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Unit</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Unit
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      Select the standard unit of measurement (e.g. Pcs, Kgs).
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
+                </label>
                 <SystemSelect v-model="form.unit_id" :options="unitOptions" placeholder="Select Unit" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Barcode</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Barcode
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      Enter the scanner barcode or UPC/EAN code for the item.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
+                </label>
                 <input 
                   v-model="form.barcode" 
                   type="text" 
@@ -386,7 +593,20 @@
               <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Inventory Stock & Location</h3>
               <div class="space-y-3 bg-slate-50 p-3 rounded-lg border border-slate-200/50">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Assign Warehouse(s)</label>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                    Assign Warehouse(s)
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                        Select one or more warehouses where this item is physically stored.
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      </span>
+                    </span>
+                  </label>
                   <div class="relative" id="warehouse-multiselect-container">
                     <button 
                       type="button"
@@ -429,7 +649,20 @@
 
                 <!-- Dynamic Warehouse Stock Allocations when Variations are OFF -->
                 <div v-if="!form.has_variations && warehouses.length > 0" class="mt-3 space-y-2">
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Warehouse Stock Allocations</label>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Warehouse Stock Allocations
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                        Allocate the initial stock quantities and reorder thresholds.
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      </span>
+                    </span>
+                  </label>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div v-for="wh in warehouses" :key="wh.id" class="p-3 bg-white rounded-lg border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
                       <div class="flex-1 min-w-0">
@@ -478,6 +711,17 @@
               <div class="relative md:w-1/2 w-full" id="master-attr-multiselect-container">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Search or Enter Variation Name
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      Select pre-created master attributes or type a new one to enable variations.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
                 </label>
                 <div 
                   @click="showMasterAttrDropdown = true"
@@ -1417,6 +1661,7 @@ const sanitizeInitialData = (data) => {
   if (data && data.variations && Array.isArray(data.variations)) {
     sanitized.variations = data.variations.map(v => ({
       ...v,
+      name_string: v.variation_name_string || v.name_string || '',
       taxes: Array.isArray(v.taxes) ? v.taxes.map(id => Number(id)) : [],
       warehouse_ids: Array.isArray(v.warehouse_ids) ? v.warehouse_ids.map(id => Number(id)) : []
     }));
@@ -2784,6 +3029,11 @@ const submit = () => {
 // Tags state & dropdown selection logic
 const allTags = ref([]);
 const showTagDropdown = ref(false);
+const creatingTag = ref(false);
+
+const showInlineCreateTag = ref(false);
+const newInlineTagName = ref('');
+const inlineTagInputRef = ref(null);
 
 const tagOptions = computed(() => {
   const list = Array.isArray(allTags.value) ? allTags.value : [];
@@ -2811,10 +3061,73 @@ const removeTag = (val) => {
   }
 };
 
+const startInlineTagCreate = () => {
+  showInlineCreateTag.value = true;
+  nextTick(() => {
+    if (inlineTagInputRef.value) {
+      inlineTagInputRef.value.focus();
+    }
+  });
+};
+
+const cancelInlineTagCreate = () => {
+  showInlineCreateTag.value = false;
+  newInlineTagName.value = '';
+};
+
+const submitInlineTag = async () => {
+  const tagName = newInlineTagName.value.trim();
+  if (!tagName) return;
+
+  const exists = allTags.value.some(t => t.name.toLowerCase() === tagName.toLowerCase());
+  if (exists) {
+    const found = allTags.value.find(t => t.name.toLowerCase() === tagName.toLowerCase());
+    if (found) {
+      if (!form.value.tags) form.value.tags = [];
+      if (!form.value.tags.includes(found.name)) {
+        form.value.tags.push(found.name);
+      }
+    }
+    cancelInlineTagCreate();
+    return;
+  }
+
+  creatingTag.value = true;
+  try {
+    const res = await axios.post('/api/tags', { name: tagName });
+    const createdTag = res.data?.tag || res.data?.data || res.data || { name: tagName };
+    const nameToAdd = createdTag.name || tagName;
+
+    // Add to allTags if not already there
+    if (!allTags.value.some(t => t.name.toLowerCase() === nameToAdd.toLowerCase())) {
+      allTags.value.push({ id: createdTag.id || Date.now(), name: nameToAdd });
+    }
+
+    if (!form.value.tags) form.value.tags = [];
+    if (!form.value.tags.includes(nameToAdd)) {
+      form.value.tags.push(nameToAdd);
+    }
+  } catch (err) {
+    console.error('Failed to create tag:', err);
+    // Fallback local creation
+    if (!allTags.value.some(t => t.name.toLowerCase() === tagName.toLowerCase())) {
+      allTags.value.push({ id: Date.now(), name: tagName });
+    }
+    if (!form.value.tags) form.value.tags = [];
+    if (!form.value.tags.includes(tagName)) {
+      form.value.tags.push(tagName);
+    }
+  } finally {
+    creatingTag.value = false;
+    cancelInlineTagCreate();
+  }
+};
+
 const closeTagDropdownOnOutsideClick = (e) => {
   const el = document.getElementById('tag-multiselect-container');
   if (el && !el.contains(e.target)) {
     showTagDropdown.value = false;
+    cancelInlineTagCreate();
   }
 };
 
