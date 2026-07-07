@@ -36,25 +36,7 @@
         </div>
       </div>
 
-      <!-- FEEDBACK NOTIFICATION BANNER -->
-      <transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="opacity-0 -translate-y-2"
-        enter-to-class="opacity-100 translate-y-0"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="opacity-100 translate-y-0"
-        leave-to-class="opacity-0 -translate-y-2"
-      >
-        <div v-if="feedbackMsg" :class="feedbackClass" class="mb-6 p-4 rounded-2xl border flex items-center justify-between text-xs font-semibold shadow-xs">
-          <span class="flex items-center gap-2">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ feedbackMsg }}
-          </span>
-          <button @click="feedbackMsg = ''" class="text-current opacity-70 hover:opacity-100 text-lg font-bold leading-none">&times;</button>
-        </div>
-      </transition>
+
 
       <!-- STATS SUMMARY CARDS -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -480,11 +462,6 @@
 
           <!-- Content Form -->
           <div class="px-8 py-6 overflow-y-auto custom-scrollbar flex-1 text-xs min-h-[450px]">
-            <div v-if="formErrors.length > 0" class="mb-4 p-3 bg-rose-50 text-rose-700 rounded-xl border border-rose-200 font-bold">
-              <ul class="list-disc pl-4 space-y-0.5">
-                <li v-for="(err, idx) in formErrors" :key="idx">{{ err }}</li>
-              </ul>
-            </div>
 
             <form @submit.prevent="submitAdjustmentForm" class="space-y-6">
               
@@ -931,6 +908,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
+import { useToast } from '@/composables/useToast';
+
+const { showToast } = useToast();
 
 // LOGS STATE
 const adjustments = ref([]);
@@ -1206,12 +1186,11 @@ const handleFileAttachment = (e) => {
 // SUBMIT BULK ADJUSTMENT
 const submitAdjustmentForm = async () => {
   if (checkedWarehouseIds.value.length === 0) {
-    formErrors.value = ['Please select at least one warehouse location.'];
+    showToast('Please select at least one warehouse location.', 'error');
     return;
   }
 
   submitting.value = true;
-  formErrors.value = [];
 
   try {
     const list = [];
@@ -1248,7 +1227,7 @@ const submitAdjustmentForm = async () => {
     }
 
     if (list.length === 0) {
-      formErrors.value = ['Please enter an adjustment quantity greater than 0 on at least one item row.'];
+      showToast('Please enter an adjustment quantity greater than 0 on at least one item row.', 'error');
       submitting.value = false;
       return;
     }
@@ -1286,9 +1265,10 @@ const submitAdjustmentForm = async () => {
   } catch (err) {
     console.error(err);
     if (err.response?.status === 422) {
-      formErrors.value = Object.values(err.response.data.errors || {}).flat();
+      const errMsgs = Object.values(err.response.data.errors || {}).flat();
+      errMsgs.forEach(msg => showToast(msg, 'error'));
     } else {
-      formErrors.value = [err.response?.data?.message || 'Failed to submit inventory adjustments.'];
+      showToast(err.response?.data?.message || 'Failed to submit inventory adjustments.', 'error');
     }
   } finally {
     submitting.value = false;
@@ -1337,13 +1317,8 @@ const processUpload = async () => {
 };
 
 const showFeedback = (msg, cls) => {
-  feedbackMsg.value = msg;
-  feedbackClass.value = cls;
-  setTimeout(() => {
-    if (feedbackMsg.value === msg) {
-      feedbackMsg.value = '';
-    }
-  }, 4000);
+  const type = (cls && (cls.includes('emerald') || cls.includes('success'))) ? 'success' : 'error';
+  showToast(msg, type);
 };
 
 const formatDate = (dateString) => {
