@@ -191,6 +191,7 @@
                     />
                   </th>
                   <th class="px-6 py-3.5 text-left font-bold">Item Name &amp; Description</th>
+                  <th class="px-6 py-3.5 text-center font-bold">SKU</th>
                   <th class="px-6 py-3.5 text-center font-bold">Category</th>
                   <th class="px-6 py-3.5 text-center font-bold">Stock Status</th>
                   <th class="px-6 py-3.5 text-center font-bold">Price Matrix</th>
@@ -199,7 +200,7 @@
               <tbody class="divide-y divide-gray-100">
                 <!-- Loading State -->
                 <tr v-if="loading">
-                  <td colspan="5" class="px-6 py-16 text-center text-gray-400">
+                  <td colspan="6" class="px-6 py-16 text-center text-gray-400">
                     <div class="flex justify-center items-center gap-2">
                       <svg class="animate-spin h-5 w-5 text-emerald-600" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
@@ -212,7 +213,7 @@
 
                 <!-- Empty State -->
                 <tr v-else-if="products.length === 0">
-                  <td colspan="5" class="px-6 py-20 text-center text-gray-500">
+                  <td colspan="6" class="px-6 py-20 text-center text-gray-500">
                     <div class="flex flex-col items-center max-w-sm mx-auto">
                       <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 text-gray-400">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,6 +270,22 @@
                         <span class="text-xs text-gray-400 mt-0.5 font-medium truncate max-w-xs sm:max-w-sm">{{ item.description || item.sku || 'No description' }}</span>
                       </div>
                     </div>
+                  </td>
+
+                  <!-- SKU -->
+                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
+                    <div v-if="item.variations && item.variations.length > 0" class="flex flex-wrap gap-1 justify-center max-w-[150px] mx-auto">
+                      <span 
+                        v-for="varItem in item.variations" 
+                        :key="varItem.id" 
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-650 border border-slate-200/60 uppercase"
+                      >
+                        {{ varItem.sku || '-' }}
+                      </span>
+                    </div>
+                    <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-650 border border-slate-200/60 uppercase">
+                      {{ item.sku || '-' }}
+                    </span>
                   </td>
 
                   <!-- Category Badge -->

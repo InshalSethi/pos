@@ -882,6 +882,7 @@
                     <thead class="bg-slate-50 text-[9px] font-bold uppercase tracking-wider text-slate-500">
                       <tr>
                         <th class="px-2.5 py-2 text-left bg-slate-50 z-10 w-40 shadow-[1px_0_0_0_#cbd5e1]">Variant Profile</th>
+                        <th class="px-2.5 py-2 text-left min-w-[120px]">SKU *</th>
                         <th class="px-2.5 py-2 text-left min-w-[150px]">Warehouse(s) *</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Purchase Cost ($)</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Retail Price ($) *</th>
@@ -898,6 +899,15 @@
                       </tr>
                       <tr v-for="(row, index) in form.variations" :key="index" class="hover:bg-slate-50 transition-colors">
                         <td class="px-2.5 py-1.5 font-bold text-slate-900 bg-white shadow-[1px_0_0_0_#cbd5e1] z-10">{{ row.name_string }}</td>
+                        <td class="px-2.5 py-1.5">
+                          <input 
+                            type="text" 
+                            v-model="row.sku" 
+                            required
+                            placeholder="SKU" 
+                            class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs w-full font-semibold focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 text-slate-800 transition-all"
+                          />
+                        </td>
                         <td class="px-2.5 py-1.5 relative wh-dropdown-cell">
                           <button
                             type="button"
@@ -1581,8 +1591,8 @@ const sanitizeInitialData = (data) => {
     taxes: [],
     warehouse_id: '',
     warehouse_ids: [],
-    show_wholesale_price: true,
-    show_tax_rate: true,
+    show_wholesale_price: false,
+    show_tax_rate: false,
   };
 
   if (!data) return defaults;
@@ -1595,6 +1605,7 @@ const sanitizeInitialData = (data) => {
            sanitized[key] = data[key].map(v => ({
              ...v, 
              name_string: v.variation_name_string || v.name_string,
+             sku: v.sku || '',
              warehouse_ids: v.warehouse_ids || [],
              warehouse_stocks: v.warehouse_stocks || {},
              warehouse_min_stocks: v.warehouse_min_stocks || {},
@@ -1646,6 +1657,7 @@ const sanitizeInitialData = (data) => {
     sanitized.variations = data.variations.map(v => ({
       ...v,
       name_string: v.variation_name_string || v.name_string || '',
+      sku: v.sku || '',
       taxes: Array.isArray(v.taxes) ? v.taxes.map(id => Number(id)) : [],
       warehouse_ids: Array.isArray(v.warehouse_ids) ? v.warehouse_ids.map(id => Number(id)) : []
     }));
@@ -1655,8 +1667,8 @@ const sanitizeInitialData = (data) => {
     sanitized.show_wholesale_price = data.variations.some(v => parseFloat(v.wholesale_price || 0) > 0);
     sanitized.show_tax_rate = data.variations.some(v => (v.taxes && v.taxes.length > 0) || parseFloat(v.tax_rate || 0) > 0);
   } else {
-    sanitized.show_wholesale_price = true;
-    sanitized.show_tax_rate = true;
+    sanitized.show_wholesale_price = false;
+    sanitized.show_tax_rate = false;
   }
 
   return sanitized;
@@ -2037,8 +2049,14 @@ const addSingleVariantRow = (nameString) => {
       whMinStocks[id] = 0;
     });
 
+    const baseSku = form.value.sku ? `${form.value.sku}-` : 'SKU-';
+    const variantSuffix = nameString ? nameString.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase() : '';
+    const randPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const generatedSku = `${baseSku}${variantSuffix ? variantSuffix + '-' : ''}${randPart}`;
+
     form.value.variations.push({
         name_string: nameString,
+        sku: generatedSku,
         barcode: '',
         cost_price: '',
         retail_price: '',
@@ -3186,7 +3204,7 @@ const activeRowTaxDropdown = ref(null);
 const taxDropdownStyles = ref({});
 
 const totalMatrixColumns = computed(() => {
-  let cols = 7; // Variant Profile, Warehouse, Cost, Retail, Stock, Expiry, Action
+  let cols = 8; // Variant Profile, SKU, Warehouse, Cost, Retail, Stock, Expiry, Action
   if (form.value.show_wholesale_price) cols++;
   if (form.value.show_tax_rate) cols++;
   return cols;

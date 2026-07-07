@@ -85,7 +85,7 @@ class ProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Product::with(['category', 'unit', 'variations' => function($query) {
-            $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate');
+            $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate', 'sku');
         }])->withCount('variations')->where('status', '!=', 'draft');
 
         // Search functionality
