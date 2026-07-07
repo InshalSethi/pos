@@ -174,18 +174,6 @@
             <span>On Sale Only</span>
           </button>
 
-          <!-- Tag Filter Input chip -->
-          <div class="relative flex items-center bg-white border border-gray-200 rounded-full shadow-xs px-3 py-1">
-            <span class="text-indigo-400 mr-1.5">#</span>
-            <input
-              v-model="tableFilters.tag"
-              @keyup.enter="handleFilterChange"
-              @blur="handleFilterChange"
-              type="text"
-              placeholder="filter by tag.."
-              class="bg-transparent border-none rounded-full text-xs font-semibold placeholder-gray-400 focus:outline-none w-28 py-0.5"
-            />
-          </div>
         </div>
 
         <!-- Custom Products Data Table -->
@@ -1307,8 +1295,7 @@ const tableFilters = ref({
   sort_order: '',
   category_id: '',
   price_sort: '',
-  on_sale: false,
-  tag: ''
+  on_sale: false
 });
 
 // Methods
