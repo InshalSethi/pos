@@ -80,6 +80,7 @@
                     <thead class="bg-slate-50 dark:bg-zinc-800/40 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10">
                         <tr>
                             <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-800/40">Variant Profile Combo</th>
+                            <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-800/40">SKU Code</th>
                             <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-800/40">Purchase Cost ($)</th>
                             <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-800/40">Retail Price ($) *</th>
                             <th class="px-4 py-3 text-left bg-slate-50 dark:bg-zinc-800/40">Wholesale Price ($) *</th>
@@ -91,6 +92,8 @@
                             <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                                 
                                 <td class="px-4 py-3 font-bold text-slate-900 dark:text-zinc-200" x-text="row.variation_name_string || row.combination_key"></td>
+                                
+                                <td class="px-4 py-3 font-mono text-[10px] font-semibold text-slate-500 dark:text-zinc-400 tracking-tight uppercase" x-text="row.sku || '-'"></td>
                                 
                                 <td class="px-4 py-3 font-medium text-slate-600 dark:text-zinc-400">
                                     <span x-text="'$ ' + parseFloat(row.purchase_cost || row.cost_price || 0).toFixed(2)"></span>

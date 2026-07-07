@@ -264,7 +264,7 @@
                             v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
                             class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase shrink-0"
                           >
-                            Variable
+                            Variants
                           </span>
                         </div>
                         <span class="text-xs text-gray-400 mt-0.5 font-medium truncate max-w-xs sm:max-w-sm">{{ item.description || item.sku || 'No description' }}</span>
@@ -274,13 +274,15 @@
 
                   <!-- SKU -->
                   <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
-                    <div v-if="item.variations && item.variations.length > 0" class="flex flex-wrap gap-1 justify-center max-w-[150px] mx-auto">
+                    <div v-if="item.variations && item.variations.length > 0" class="flex flex-col items-center gap-0.5">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-650 border border-slate-200/60 uppercase">
+                        {{ item.variations[0].sku || '-' }}
+                      </span>
                       <span 
-                        v-for="varItem in item.variations" 
-                        :key="varItem.id" 
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-650 border border-slate-200/60 uppercase"
+                        v-if="item.variations.length > 1" 
+                        class="text-[9px] font-semibold text-slate-400 mt-0.5"
                       >
-                        {{ varItem.sku || '-' }}
+                        +{{ item.variations.length - 1 }} more
                       </span>
                     </div>
                     <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-650 border border-slate-200/60 uppercase">
@@ -1429,6 +1431,7 @@ const openPricesModal = (item) => {
     ? item.variations
     : [{
         variation_name_string: 'Regular / Single Product',
+        sku: item.sku || '-',
         cost_price: item.cost_price,
         retail_price: item.selling_price || item.retail_price,
         wholesale_price: item.wholesale_price,
