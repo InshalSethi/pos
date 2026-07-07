@@ -136,7 +136,7 @@
                   </div>
 
                   <!-- Multi-select Tags Badge / Tag Input -->
-                  <div v-show="!form.has_variations">
+                  <div>
                   <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     Tags
                     <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
@@ -785,8 +785,28 @@
               <!-- Sourcing Matrix -->
               <div class="space-y-2">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div>
+                  <div class="flex flex-wrap items-center gap-3">
                     <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Variation Sourcing Matrix</h4>
+                    
+                    <div class="flex items-center gap-3 bg-slate-55/65 border border-slate-200/50 rounded-xl px-2.5 py-1">
+                      <label class="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-750 transition-colors select-none">
+                        <input 
+                          type="checkbox" 
+                          v-model="form.show_wholesale_price" 
+                          class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        Wholesale
+                      </label>
+                      <span class="text-slate-300">|</span>
+                      <label class="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-750 transition-colors select-none">
+                        <input 
+                          type="checkbox" 
+                          v-model="form.show_tax_rate" 
+                          class="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        Tax Rates
+                      </label>
+                    </div>
                   </div>
                   <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1.5 rounded-2xl border border-slate-200/45">
                     <div v-for="(attr, aIdx) in attributes" :key="aIdx" class="flex flex-col relative" :id="`matrix-select-container-${aIdx}`">
@@ -865,9 +885,8 @@
                         <th class="px-2.5 py-2 text-left min-w-[150px]">Warehouse(s) *</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Purchase Cost ($)</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Retail Price ($) *</th>
-                        <th class="px-2.5 py-2 text-left min-w-[100px]">Wholesale ($) *</th>
-                        <th class="px-2.5 py-2 text-left min-w-[120px]">Tax Rate(s)</th>
-                        <th class="px-2.5 py-2 text-left min-w-[125px]">Tag(s)</th>
+                        <th v-if="form.show_wholesale_price" class="px-2.5 py-2 text-left min-w-[100px]">Wholesale ($) *</th>
+                        <th v-if="form.show_tax_rate" class="px-2.5 py-2 text-left min-w-[120px]">Tax Rate(s)</th>
                         <th class="px-2.5 py-2 text-left min-w-[80px]">Stock Qty *</th>
                         <th class="px-2.5 py-2 text-left min-w-[120px]">Expiry Date</th>
                         <th class="px-2.5 py-2 text-center bg-slate-50 z-10 shadow-[-1px_0_0_0_#cbd5e1]">Action</th>
@@ -875,7 +894,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-xs">
                       <tr v-if="form.variations.length === 0">
-                        <td colspan="10" class="text-center py-4 text-xs text-slate-400 italic">No variants configured. Click "+ Add Combo" to create variant options.</td>
+                        <td :colspan="totalMatrixColumns" class="text-center py-4 text-xs text-slate-400 italic">No variants configured. Click "+ Add Combo" to create variant options.</td>
                       </tr>
                       <tr v-for="(row, index) in form.variations" :key="index" class="hover:bg-slate-50 transition-colors">
                         <td class="px-2.5 py-1.5 font-bold text-slate-900 bg-white shadow-[1px_0_0_0_#cbd5e1] z-10">{{ row.name_string }}</td>
@@ -926,10 +945,18 @@
                         </td>
                         <td class="px-2.5 py-1.5"><input type="number" v-model="row.cost_price" step="0.01" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs w-full text-amber-600 focus:outline-none"></td>
                         <td class="px-2.5 py-1.5"><input type="number" v-model="row.retail_price" step="0.01" required class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs w-full text-emerald-600 focus:outline-none"></td>
-                        <td class="px-2.5 py-1.5"><input type="number" v-model="row.wholesale_price" step="0.01" required class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs w-full text-slate-900 font-bold focus:outline-none"></td>
+                        <td v-if="form.show_wholesale_price" class="px-2.5 py-1.5">
+                          <input 
+                            type="number" 
+                            v-model="row.wholesale_price" 
+                            step="0.01" 
+                            :required="form.show_wholesale_price" 
+                            class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs w-full text-slate-900 font-bold focus:outline-none"
+                          />
+                        </td>
                         
                         <!-- Multi-select Tax Rates for Variation -->
-                        <td class="px-2.5 py-1.5 relative tax-dropdown-cell">
+                        <td v-if="form.show_tax_rate" class="px-2.5 py-1.5 relative tax-dropdown-cell">
                           <button
                             type="button"
                             :id="'tax-trigger-' + index"
@@ -975,52 +1002,7 @@
                           </Teleport>
                         </td>
 
-                        <!-- Multi-select Tags for Variation -->
-                        <td class="px-2.5 py-1.5 relative tag-dropdown-cell">
-                          <button
-                            type="button"
-                            :id="'tag-trigger-' + index"
-                            @click="toggleRowTagDropdown(index)"
-                            class="w-full text-left px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs flex justify-between items-center min-h-[30px]"
-                          >
-                            <span class="truncate pr-2 text-slate-700 font-medium">
-                              {{ getRowTagLabel(row.tags) }}
-                            </span>
-                            <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform duration-200" :class="activeRowTagDropdown === index ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
-                            </svg>
-                          </button>
-                          
-                          <Teleport to="body">
-                            <transition
-                              enter-active-class="transition duration-200 ease-out"
-                              enter-from-class="opacity-0 scale-95"
-                              enter-to-class="opacity-100 scale-100"
-                              leave-active-class="transition duration-100 ease-in"
-                              leave-from-class="opacity-100 scale-100"
-                              leave-to-class="opacity-0 scale-95"
-                            >
-                              <div v-if="activeRowTagDropdown === index" :style="tagDropdownStyles[index]" class="tag-teleport-dropdown fixed z-[9999] max-h-48 overflow-y-auto bg-white border border-slate-200/80 shadow-lg rounded-xl p-1.5 custom-scrollbar">
-                                <label
-                                  v-for="tagOpt in variationTagOptions"
-                                  :key="tagOpt.value"
-                                  class="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-xs font-semibold hover:bg-indigo-50"
-                                  :class="(row.tags || []).includes(tagOpt.value) ? 'bg-indigo-50/60 text-indigo-750' : 'text-slate-700'"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    :value="tagOpt.value"
-                                    :checked="(row.tags || []).includes(tagOpt.value)"
-                                    @change="toggleRowTagSelection(index, tagOpt.value)"
-                                    class="w-3.5 h-3.5 rounded border-gray-355 text-indigo-655 focus:ring-indigo-555 cursor-pointer"
-                                  />
-                                  <span>{{ tagOpt.label }}</span>
-                                </label>
-                                <div v-if="variationTagOptions.length === 0" class="px-2 py-1.5 text-[10px] text-slate-400 italic">No tags</div>
-                              </div>
-                            </transition>
-                          </Teleport>
-                        </td>
+
 
                         <td class="px-2.5 py-1.5 min-w-[125px]">
                           <div v-if="(row.warehouse_ids || []).length > 0" class="flex flex-col gap-1.5">
@@ -1599,6 +1581,8 @@ const sanitizeInitialData = (data) => {
     taxes: [],
     warehouse_id: '',
     warehouse_ids: [],
+    show_wholesale_price: true,
+    show_tax_rate: true,
   };
 
   if (!data) return defaults;
@@ -1665,6 +1649,14 @@ const sanitizeInitialData = (data) => {
       taxes: Array.isArray(v.taxes) ? v.taxes.map(id => Number(id)) : [],
       warehouse_ids: Array.isArray(v.warehouse_ids) ? v.warehouse_ids.map(id => Number(id)) : []
     }));
+  }
+
+  if (data && data.variations && data.variations.length > 0) {
+    sanitized.show_wholesale_price = data.variations.some(v => parseFloat(v.wholesale_price || 0) > 0);
+    sanitized.show_tax_rate = data.variations.some(v => (v.taxes && v.taxes.length > 0) || parseFloat(v.tax_rate || 0) > 0);
+  } else {
+    sanitized.show_wholesale_price = true;
+    sanitized.show_tax_rate = true;
   }
 
   return sanitized;
@@ -2999,6 +2991,24 @@ const submit = () => {
       return;
     }
 
+    if (form.value.show_wholesale_price) {
+      for (const v of (form.value.variations || [])) {
+        if (v.wholesale_price === undefined || v.wholesale_price === null || String(v.wholesale_price).trim() === '') {
+          showLocalError(`Wholesale price is required for variation "${v.name_string}".`);
+          return;
+        }
+      }
+    }
+
+    if (form.value.show_tax_rate) {
+      for (const v of (form.value.variations || [])) {
+        if (!v.taxes || v.taxes.length === 0) {
+          showLocalError(`At least one tax rate must be selected for variation "${v.name_string}".`);
+          return;
+        }
+      }
+    }
+
     form.value.stock_quantity = (form.value.variations || []).reduce((sum, row) => {
       const qty = parseInt(row.stock_qty);
       return sum + (isNaN(qty) ? 0 : qty);
@@ -3011,6 +3021,20 @@ const submit = () => {
   const finalForm = { ...form.value };
   if (!finalForm.enabled_for_wholesale) {
     finalForm.wholesale_price = 0;
+  }
+
+  if (isVariantMode.value) {
+    finalForm.variations = (finalForm.variations || []).map(v => {
+      const updated = { ...v };
+      if (!finalForm.show_wholesale_price) {
+        updated.wholesale_price = 0;
+      }
+      if (!finalForm.show_tax_rate) {
+        updated.taxes = [];
+        updated.tax_rate = 0;
+      }
+      return updated;
+    });
   }
 
   const payload = { 
@@ -3135,6 +3159,13 @@ const closeTagDropdownOnOutsideClick = (e) => {
 // Variation Table Tax & Tag dropdown logic
 const activeRowTaxDropdown = ref(null);
 const taxDropdownStyles = ref({});
+
+const totalMatrixColumns = computed(() => {
+  let cols = 7; // Variant Profile, Warehouse, Cost, Retail, Stock, Expiry, Action
+  if (form.value.show_wholesale_price) cols++;
+  if (form.value.show_tax_rate) cols++;
+  return cols;
+});
 
 const variationTaxOptions = computed(() => {
   const list = Array.isArray(taxes.value) ? taxes.value : [];
