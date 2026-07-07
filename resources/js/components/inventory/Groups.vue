@@ -33,72 +33,98 @@
     <!-- Main Content Area: Split Pane -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Left Column: Groups Tree & List (4 cols) -->
-      <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-[24px] p-5 shadow-sm space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Group Directory</h3>
-          <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-650 dark:text-slate-400 rounded-full">
-            {{ groups.length }} Total
-          </span>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="relative">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search groups..."
-            class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-850 border border-gray-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 rounded-xl outline-none transition-all dark:text-slate-200"
-          />
-          <span class="absolute left-3 top-2.5 text-gray-400">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </span>
-        </div>
-
-        <!-- Group List Tree -->
-        <div class="space-y-1.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
-          <div
-            v-for="group in filteredGroups"
-            :key="group.id"
-            @click="selectGroup(group)"
-            class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer group"
-            :class="selectedGroup?.id === group.id
-              ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/60 text-slate-900 dark:text-slate-100'
-              : 'bg-transparent border-gray-100/50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-850/60 text-slate-600 dark:text-slate-400'"
-          >
-            <div class="min-w-0 flex items-center gap-2.5">
-              <span class="text-sm shrink-0">
-                {{ group.parent_id ? '➖' : '📦' }}
-              </span>
-              <div class="truncate">
-                <h4 class="text-xs font-bold truncate">{{ group.name }}</h4>
-                <p class="text-[10px] text-gray-400 truncate mt-0.5">
-                  {{ group.parent ? `Child of ${group.parent.name}` : 'Parent Group' }}
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="px-1.5 py-0.5 text-[8px] font-black rounded uppercase tracking-wider" :class="group.is_active ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'">
-                {{ group.is_active ? 'Active' : 'Inactive' }}
-              </span>
-            </div>
+      <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[24px] p-5 shadow-xs space-y-4 flex flex-col justify-between min-h-[50vh]">
+        <div class="space-y-4 flex-1 flex flex-col min-h-0">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Group Directory</h3>
+            <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-650 dark:text-slate-400 rounded-full">
+              {{ pagination.total }} Total
+            </span>
           </div>
 
-          <div v-if="filteredGroups.length === 0" class="text-center py-8 text-xs text-gray-400 font-medium">
-            No groups found.
+          <!-- Search Bar -->
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search groups..."
+              class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 rounded-xl outline-none transition-all dark:text-slate-200"
+              @input="debouncedFetch"
+            />
+            <span class="absolute left-3 top-2.5 text-gray-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </span>
+          </div>
+
+          <!-- Group List Tree -->
+          <div class="space-y-1.5 max-h-[60vh] overflow-y-auto custom-scrollbar flex-1 pr-1">
+            <div
+              v-for="group in groups"
+              :key="group.id"
+              @click="selectGroup(group)"
+              class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer group"
+              :class="selectedGroup?.id === group.id
+                ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/60 text-slate-900 dark:text-slate-100'
+                : 'bg-transparent border-slate-100/50 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-850/60 text-slate-600 dark:text-slate-400'"
+            >
+              <div class="min-w-0 flex items-center gap-2.5">
+                <span class="text-sm shrink-0">
+                  {{ group.parent_id ? '➖' : '📦' }}
+                </span>
+                <div class="truncate">
+                  <h4 class="text-xs font-bold truncate">{{ group.name }}</h4>
+                  <p class="text-[10px] text-gray-405 dark:text-slate-455 truncate mt-0.5">
+                    {{ group.parent ? `Child of ${group.parent.name}` : 'Parent Group' }}
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="px-1.5 py-0.5 text-[8px] font-black rounded uppercase tracking-wider" :class="group.is_active ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'">
+                  {{ group.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+            </div>
+
+            <div v-if="groups.length === 0" class="text-center py-8 text-xs text-gray-400 font-medium">
+              No groups found.
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination Control -->
+        <div v-if="pagination.last_page > 1" class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
+          <span class="text-gray-400 text-[10px]">
+            Page {{ pagination.current_page }} of {{ pagination.last_page }}
+          </span>
+          <div class="flex items-center gap-1">
+            <button
+              @click="goToPage(pagination.current_page - 1)"
+              :disabled="pagination.current_page === 1"
+              class="px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all hover:bg-slate-50 text-[10px]"
+            >
+              Prev
+            </button>
+            <button
+              @click="goToPage(pagination.current_page + 1)"
+              :disabled="pagination.current_page === pagination.last_page"
+              class="px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all hover:bg-slate-50 text-[10px]"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Right Column: Detail View, Bulk Pricing, and Product Inclusions (8 cols) -->
       <div class="lg:col-span-8 space-y-6">
-        <div v-if="selectedGroup" class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-[24px] p-6 shadow-sm space-y-6 animate-in fade-in duration-200">
+        <div v-if="selectedGroup" class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[24px] p-6 shadow-xs space-y-6 animate-in fade-in duration-200">
           
           <!-- Selected Group Title & Quick Info -->
-          <div class="flex justify-between items-start gap-4 pb-4 border-b border-gray-100 dark:border-slate-800">
+          <div class="flex justify-between items-start gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-base font-extrabold text-slate-800 dark:text-slate-100">{{ selectedGroup.name }}</h2>
-                <span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-full">
+                <span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-650 dark:text-indigo-400 text-[10px] font-bold rounded-full">
                   {{ selectedGroup.products_count || 0 }} Items Linked
                 </span>
               </div>
@@ -132,21 +158,21 @@
               <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Group Settings</h3>
               
               <div class="space-y-3">
-                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-gray-100 dark:border-slate-800">
+                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span class="text-xs text-gray-500 dark:text-slate-400">Parent Category</span>
                   <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
                     {{ selectedGroup.parent ? selectedGroup.parent.name : 'None (Root Group)' }}
                   </span>
                 </div>
 
-                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-gray-100 dark:border-slate-800">
+                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span class="text-xs text-gray-500 dark:text-slate-400">Inherited Tax Rate</span>
                   <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
                     {{ selectedGroup.tax ? `${selectedGroup.tax.name} (${parseFloat(selectedGroup.tax.value)}%)` : 'Not Assigned' }}
                   </span>
                 </div>
 
-                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-gray-100 dark:border-slate-800">
+                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span class="text-xs text-gray-500 dark:text-slate-400">Default Discount/Markup</span>
                   <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
                     <span v-if="selectedGroup.discount_type">
@@ -159,7 +185,7 @@
             </div>
 
             <!-- Right Panel: Bulk Actions Form (Mass Pricing & Taxes) -->
-            <div class="p-5 bg-gradient-to-br from-indigo-50/20 to-white dark:from-slate-850 dark:to-slate-900 rounded-[20px] border border-gray-100 dark:border-slate-800 space-y-4">
+            <div class="p-5 bg-gradient-to-br from-indigo-50/20 to-white dark:from-slate-850 dark:to-slate-900 rounded-[20px] border border-slate-100 dark:border-slate-800 space-y-4">
               <h3 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1">
                 <span>⚡</span> Bulk Pricing & Tax Action
               </h3>
@@ -169,7 +195,7 @@
                   <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Action Type</label>
                   <select
                     v-model="bulkAction.action_type"
-                    class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-250"
+                    class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-250"
                   >
                     <option value="markup_percentage">Apply Markup Percentage (%)</option>
                     <option value="discount_percentage">Apply Discount Percentage (%)</option>
@@ -186,7 +212,7 @@
                     min="0"
                     v-model="bulkAction.value"
                     placeholder="Enter percentage (e.g. 15)"
-                    class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
+                    class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
                   />
                 </div>
 
@@ -195,7 +221,7 @@
                   <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Select Tax Group</label>
                   <select
                     v-model="bulkAction.tax_id"
-                    class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
+                    class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
                   >
                     <option :value="null">Remove Tax Rule</option>
                     <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
@@ -236,14 +262,14 @@
                   v-model="productSearch"
                   type="text"
                   placeholder="Filter products..."
-                  class="w-full px-2.5 py-1 text-[11px] bg-slate-50 dark:bg-slate-850 border border-gray-250 dark:border-slate-850 focus:border-indigo-500 rounded-lg outline-none text-slate-800 dark:text-slate-350"
+                  class="w-full px-2.5 py-1 text-[11px] bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-850 focus:border-indigo-500 rounded-lg outline-none text-slate-800 dark:text-slate-350"
                 />
               </div>
             </div>
 
             <!-- Products List table -->
-            <div class="overflow-x-auto border border-gray-100 dark:border-slate-800 rounded-2xl">
-              <table class="min-w-full divide-y divide-gray-150 dark:divide-slate-800">
+            <div class="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-2xl">
+              <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
                 <thead class="bg-slate-50 dark:bg-slate-850">
                   <tr>
                     <th class="px-4 py-2.5 text-left text-[9px] font-black text-slate-400 uppercase tracking-wider">SKU</th>
@@ -255,7 +281,7 @@
                     <th class="px-4 py-2.5 text-center text-[9px] font-black text-slate-400 uppercase tracking-wider">Stock</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900 text-xs">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900 text-xs">
                   <tr v-for="prod in filteredProducts" :key="prod.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30">
                     <td class="px-4 py-2.5 font-semibold text-slate-550 dark:text-slate-400">{{ prod.sku }}</td>
                     <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200">{{ prod.name }}</td>
@@ -284,7 +310,7 @@
         </div>
 
         <!-- No Selected Group Placeholder -->
-        <div v-else class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-[24px] p-12 text-center shadow-sm">
+        <div v-else class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[24px] p-12 text-center shadow-xs">
           <div class="text-4xl mb-3">📂</div>
           <h3 class="text-sm font-extrabold text-slate-700 dark:text-slate-300 mb-1">Select an Inventory Group</h3>
           <p class="text-xs text-gray-400 max-w-xs mx-auto">
@@ -296,10 +322,10 @@
 
     <!-- Create / Edit Group Modal Dialog -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm" role="dialog">
-      <div class="relative bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[28px] max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+      <div class="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[28px] max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
         
         <!-- Header -->
-        <div class="p-6 border-b border-gray-100 dark:border-slate-800">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
           <h2 class="text-sm font-extrabold text-gray-900 dark:text-slate-100 uppercase tracking-wider">
             {{ editingGroup ? 'Modify Group' : 'Create New Group' }}
           </h2>
@@ -316,7 +342,7 @@
               type="text"
               required
               placeholder="e.g. Clothing, Furniture..."
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
             />
           </div>
 
@@ -325,7 +351,7 @@
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Parent Group (Hierarchy)</label>
             <select
               v-model="groupForm.parent_id"
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
             >
               <option :value="null">None (Root Level Group)</option>
               <option v-for="g in parentGroupOptions" :key="g.id" :value="g.id">
@@ -339,7 +365,7 @@
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Default Tax Group</label>
             <select
               v-model="groupForm.tax_id"
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200"
             >
               <option :value="null">None (Inherit Global Default)</option>
               <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
@@ -355,7 +381,7 @@
               v-model="groupForm.description"
               rows="3"
               placeholder="Provide information about this classification..."
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200 resize-none"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200 resize-none"
             ></textarea>
           </div>
 
@@ -364,16 +390,16 @@
             <span class="text-xs font-semibold text-slate-600 dark:text-slate-450">Set Active Status</span>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" v-model="groupForm.is_active" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
             </label>
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+          <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               @click="showModal = false"
-              class="px-4 py-2 border border-gray-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-550 dark:text-slate-450 font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+              class="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-550 dark:text-slate-450 font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
             >
               Cancel
             </button>
@@ -398,11 +424,18 @@ import axios from 'axios';
 
 // States
 const groups = ref([]);
+const allGroups = ref([]);
 const taxes = ref([]);
 const searchQuery = ref('');
 const productSearch = ref('');
 const selectedGroup = ref(null);
 const groupProducts = ref([]);
+
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0
+});
 
 const showModal = ref(false);
 const editingGroup = ref(null);
@@ -432,12 +465,12 @@ const loadData = async () => {
       axios.get('/api/categories'),
       axios.get('/api/taxes')
     ]);
-    groups.value = catRes.data;
+    allGroups.value = catRes.data;
     taxes.value = taxRes.data;
 
     // Reselect selectedGroup to update count/objects
     if (selectedGroup.value) {
-      const updated = groups.value.find(g => g.id === selectedGroup.value.id);
+      const updated = allGroups.value.find(g => g.id === selectedGroup.value.id);
       if (updated) {
         selectGroup(updated);
       } else {
@@ -447,6 +480,40 @@ const loadData = async () => {
   } catch (error) {
     showToast('error', 'Failed to load group inventory directory.');
   }
+};
+
+const fetchGroups = async () => {
+  try {
+    const params = {
+      paginate: true,
+      per_page: 10,
+      page: pagination.value.current_page,
+      search: searchQuery.value
+    };
+    const res = await axios.get('/api/categories', { params });
+    groups.value = res.data.data;
+    pagination.value = {
+      current_page: res.data.current_page,
+      last_page: res.data.last_page,
+      total: res.data.total
+    };
+  } catch (error) {
+    showToast('error', 'Failed to load group directory.');
+  }
+};
+
+const goToPage = (page) => {
+  pagination.value.current_page = page;
+  fetchGroups();
+};
+
+let debounceTimeout = null;
+const debouncedFetch = () => {
+  clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(() => {
+    pagination.value.current_page = 1;
+    fetchGroups();
+  }, 350);
 };
 
 const selectGroup = async (group) => {
@@ -460,19 +527,10 @@ const selectGroup = async (group) => {
   }
 };
 
-// Filtered Computed Lists
-const filteredGroups = computed(() => {
-  if (!searchQuery.value.trim()) return groups.value;
-  return groups.value.filter(g =>
-    g.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    (g.description && g.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
-  );
-});
-
 const parentGroupOptions = computed(() => {
   // If editing, filter out self and descendants to prevent loops
-  if (!editingGroup.value) return groups.value;
-  return groups.value.filter(g => g.id !== editingGroup.value.id && g.parent_id !== editingGroup.value.id);
+  if (!editingGroup.value) return allGroups.value;
+  return allGroups.value.filter(g => g.id !== editingGroup.value.id && g.parent_id !== editingGroup.value.id);
 });
 
 const filteredProducts = computed(() => {
@@ -521,6 +579,7 @@ const saveGroup = async () => {
     }
     showModal.value = false;
     await loadData();
+    await fetchGroups();
   } catch (error) {
     const errorMsg = error.response?.data?.message || 'Error occurred while saving group parameters.';
     showToast('error', errorMsg);
@@ -536,6 +595,7 @@ const deleteGroup = async (group) => {
     showToast('success', 'Group removed successfully.');
     selectedGroup.value = null;
     await loadData();
+    await fetchGroups();
   } catch (error) {
     const errorMsg = error.response?.data?.message || 'Cannot delete group with child nesting or active products.';
     showToast('error', errorMsg);
@@ -586,6 +646,7 @@ const showToast = (type, message) => {
 
 onMounted(() => {
   loadData();
+  fetchGroups();
 });
 </script>
 

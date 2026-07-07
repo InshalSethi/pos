@@ -29,7 +29,7 @@ class CategoryController extends Controller
         $query = Category::with('parent', 'children', 'tax')->withCount('products');
 
         // Search functionality
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->get('search'))) {
             $search = $request->get('search');
             $query->where('name', 'like', "%{$search}%");
         }
@@ -44,7 +44,12 @@ class CategoryController extends Controller
             $query->whereNull('parent_id');
         }
 
-        $categories = $query->orderBy('name')->get();
+        if ($request->boolean('paginate')) {
+            $perPage = $request->input('per_page', 10);
+            $categories = $query->orderBy('name')->paginate($perPage);
+        } else {
+            $categories = $query->orderBy('name')->get();
+        }
 
         return response()->json($categories);
     }
