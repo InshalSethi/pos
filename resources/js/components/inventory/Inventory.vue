@@ -479,7 +479,7 @@
           </div>
 
           <!-- Content Form -->
-          <div class="px-8 py-6 overflow-y-auto custom-scrollbar flex-1 text-xs">
+          <div class="px-8 py-6 overflow-y-auto custom-scrollbar flex-1 text-xs min-h-[450px]">
             <div v-if="formErrors.length > 0" class="mb-4 p-3 bg-rose-50 text-rose-700 rounded-xl border border-rose-200 font-bold">
               <ul class="list-disc pl-4 space-y-0.5">
                 <li v-for="(err, idx) in formErrors" :key="idx">{{ err }}</li>
@@ -826,13 +826,6 @@
 
               <!-- Footer actions -->
               <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  @click="closeFormModal"
-                  class="px-5 py-2.5 text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-                >
-                  Cancel
-                </button>
                 <button
                   v-if="selectedProductDetail && checkedWarehouseIds.length > 0"
                   type="submit"
