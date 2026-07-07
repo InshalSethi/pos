@@ -7,14 +7,14 @@
           <span class="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">📜</span>
           Inventory Histories
         </h1>
-        <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Master transaction log tracking stock fluctuations across all items, warehouses, and actions.
         </p>
       </div>
     </div>
 
     <!-- Filters Section -->
-    <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-[24px] p-5 shadow-sm space-y-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[24px] p-5 shadow-xs space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Search & Filter Movements</h3>
         <button @click="resetFilters" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
@@ -31,7 +31,7 @@
               v-model="filters.search"
               type="text"
               placeholder="Name, SKU, or Barcode..."
-              class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+              class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 transition-colors"
               @input="debouncedFetch"
             />
             <span class="absolute left-2.5 top-2 text-gray-400">
@@ -45,7 +45,7 @@
           <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Warehouse</label>
           <select
             v-model="filters.warehouse_id"
-            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 transition-colors"
             @change="fetchHistory"
           >
             <option value="">All Warehouses</option>
@@ -60,7 +60,7 @@
           <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Movement Type</label>
           <select
             v-model="filters.type"
-            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 transition-colors"
             @change="fetchHistory"
           >
             <option value="">All Types</option>
@@ -77,7 +77,7 @@
           <input
             v-model="filters.start_date"
             type="date"
-            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 transition-colors"
             @change="fetchHistory"
           />
         </div>
@@ -88,7 +88,7 @@
           <input
             v-model="filters.end_date"
             type="date"
-            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 transition-colors"
             @change="fetchHistory"
           />
         </div>
@@ -96,8 +96,8 @@
     </div>
 
     <!-- Master Timeline Log -->
-    <div class="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-[24px] overflow-hidden shadow-sm">
-      <div class="p-5 border-b border-gray-100 dark:border-slate-850 flex items-center justify-between">
+    <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[24px] overflow-hidden shadow-xs">
+      <div class="p-5 border-b border-slate-100 dark:border-slate-850 flex items-center justify-between">
         <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">All-in-One Activity Timeline</h3>
         <span class="px-2.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-650 dark:text-indigo-400 text-[10px] font-bold rounded-full">
           {{ pagination.total }} Actions Tracked
@@ -121,7 +121,7 @@
 
       <!-- Log Table -->
       <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-150 dark:divide-slate-850">
+        <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-850">
           <thead class="bg-slate-50 dark:bg-slate-850/40">
             <tr>
               <th class="px-6 py-3.5 text-left text-[9px] font-black text-slate-400 uppercase tracking-wider">Date & Time</th>
@@ -132,7 +132,7 @@
               <th class="px-6 py-3.5 text-left text-[9px] font-black text-slate-400 uppercase tracking-wider">Reference ID</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900 text-xs">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900 text-xs">
             <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
               <!-- Timestamp -->
               <td class="px-6 py-3.5 whitespace-nowrap text-slate-550 dark:text-slate-400 font-medium">
@@ -182,7 +182,7 @@
       </div>
 
       <!-- Pagination Control -->
-      <div v-if="pagination.last_page > 1" class="px-6 py-4 bg-slate-50 dark:bg-slate-850/20 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-xs">
+      <div v-if="pagination.last_page > 1" class="px-6 py-4 bg-slate-50 dark:bg-slate-850/20 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
         <span class="text-gray-400">
           Showing page {{ pagination.current_page }} of {{ pagination.last_page }}
         </span>
@@ -191,7 +191,7 @@
           <button
             @click="goToPage(pagination.current_page - 1)"
             :disabled="pagination.current_page === 1"
-            class="px-3 py-1.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all hover:bg-slate-50"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all hover:bg-slate-50"
           >
             Prev
           </button>
@@ -199,7 +199,7 @@
           <button
             @click="goToPage(pagination.current_page + 1)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-1.5 rounded-lg border border-gray-250 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all hover:bg-slate-50"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all hover:bg-slate-50"
           >
             Next
           </button>
