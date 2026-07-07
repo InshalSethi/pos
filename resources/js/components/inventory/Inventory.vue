@@ -386,11 +386,30 @@
               <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{{ cardModalTitle }}</h3>
               <p class="text-indigo-650 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-1">AJAX Search & Pagination Enabled</p>
             </div>
-            <button @click="showCardModal = false" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors group cursor-pointer">
-              <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+            
+            <div class="flex items-center gap-4">
+              <!-- Warehouse Selector Dropdown for Low Stock Modal -->
+              <div v-if="cardModalType === 'low_stock'" class="flex items-center gap-2">
+                <label for="modalWarehouseSelect" class="text-xs font-bold text-slate-500 dark:text-slate-400">Warehouse:</label>
+                <select
+                  id="modalWarehouseSelect"
+                  v-model="selectedModalWarehouseId"
+                  @change="fetchCardModalData(1)"
+                  class="px-3 py-1.5 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="">All Warehouses</option>
+                  <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
+                    {{ wh.name }}
+                  </option>
+                </select>
+              </div>
+
+              <button @click="showCardModal = false" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors group cursor-pointer">
+                <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Filters Section -->
@@ -466,6 +485,7 @@
                     <th class="py-4 px-5">Item Details</th>
                     <th class="py-4 px-5">SKU Code</th>
                     <th class="py-4 px-5">Category</th>
+                    <th class="py-4 px-5">Warehouse</th>
                     <th class="py-4 px-5 text-right">Min Alert Level</th>
                     <th class="py-4 px-5 text-right">Current Stock</th>
                   </tr>
@@ -504,7 +524,7 @@
 
                   <!-- Row rendering for low stock products -->
                   <template v-else>
-                    <tr v-for="product in cardModalData" :key="product.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
+                    <tr v-for="product in cardModalData" :key="product.id + '-' + product.warehouse_id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
                       <td class="py-4 px-5">
                         <div class="text-slate-850 dark:text-slate-200 font-extrabold">{{ product.name }}</div>
                       </td>
@@ -519,6 +539,7 @@
                         <span v-else>{{ product.sku }}</span>
                       </td>
                       <td class="py-4 px-5 text-slate-500">{{ product.category?.name || 'Uncategorized' }}</td>
+                      <td class="py-4 px-5 text-slate-500">{{ product.warehouse_name || 'N/A' }}</td>
                       <td class="py-4 px-5 text-right font-bold text-slate-400">{{ product.min_stock_level || 0 }}</td>
                       <td class="py-4 px-5 text-right font-black text-rose-600 dark:text-rose-450">{{ product.stock_quantity || 0 }}</td>
                     </tr>
@@ -1223,6 +1244,7 @@ const cardModalPagination = ref({
   total: 0,
   per_page: 10
 });
+const selectedModalWarehouseId = ref('');
 
 // NEW ADJUSTMENT STATE
 const showFormModal = ref(false);
@@ -1621,6 +1643,7 @@ const clearFilters = () => {
 const openCardModal = (type) => {
   cardModalType.value = type;
   cardModalSearchQuery.value = '';
+  selectedModalWarehouseId.value = '';
   cardModalPagination.value = { current_page: 1, last_page: 1, total: 0, per_page: 10 };
   
   if (type === 'total') {
@@ -1653,6 +1676,9 @@ const fetchCardModalData = async (page = 1) => {
       params.adjustment_type = 'decrease';
     } else if (cardModalType.value === 'low_stock') {
       url = '/api/inventory/low-stock';
+      if (selectedModalWarehouseId.value) {
+        params.warehouse_id = selectedModalWarehouseId.value;
+      }
     }
     
     const res = await axios.get(url, { params });

@@ -888,7 +888,7 @@
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Retail Price ($) *</th>
                         <th v-if="form.show_wholesale_price" class="px-2.5 py-2 text-left min-w-[100px]">Wholesale ($) *</th>
                         <th v-if="form.show_tax_rate" class="px-2.5 py-2 text-left min-w-[120px]">Tax Rate(s)</th>
-                        <th class="px-2.5 py-2 text-left min-w-[80px]">Stock Qty *</th>
+                        <th class="px-2.5 py-2 text-left min-w-[180px]">Stock Qty *</th>
                         <th class="px-2.5 py-2 text-left min-w-[120px]">Expiry Date</th>
                         <th class="px-2.5 py-2 text-center bg-slate-50 z-10 shadow-[-1px_0_0_0_#cbd5e1]">Action</th>
                       </tr>
@@ -1014,23 +1014,38 @@
 
 
 
-                        <td class="px-2.5 py-1.5 min-w-[125px]">
-                          <div v-if="(row.warehouse_ids || []).length > 0" class="flex flex-col gap-1.5">
-                            <div v-for="whId in row.warehouse_ids" :key="whId" class="flex items-center justify-between gap-1">
-                              <span class="text-[9px] text-slate-400 font-bold truncate max-w-[65px]" :title="getRowWarehouseLabel([whId])">
-                                {{ getRowWarehouseLabel([whId]) }}:
+                        <td class="px-2.5 py-1.5 min-w-[180px]">
+                          <div v-if="(row.warehouse_ids || []).length > 0" class="flex flex-col gap-2">
+                            <div v-for="whId in row.warehouse_ids" :key="whId" class="flex flex-col gap-1 pb-1.5 border-b border-slate-100/60 last:border-0 last:pb-0">
+                              <span class="text-[9px] text-slate-500 font-bold truncate block" :title="getRowWarehouseLabel([whId])">
+                                {{ getRowWarehouseLabel([whId]) }}
                               </span>
-                              <input 
-                                type="number" 
-                                v-model.number="(row.warehouse_stocks = row.warehouse_stocks || {})[whId]" 
-                                @input="updateVariantStockQty(row)"
-                                placeholder="0" 
-                                class="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] w-12 font-bold text-slate-800 focus:outline-none focus:border-slate-350 focus:ring-1 focus:ring-slate-350/20"
-                              />
+                              <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5">
+                                  <span class="text-[8px] text-slate-400 uppercase font-black">Qty:</span>
+                                  <input 
+                                    type="number" 
+                                    v-model.number="(row.warehouse_stocks = row.warehouse_stocks || {})[whId]" 
+                                    @input="updateVariantStockQty(row)"
+                                    placeholder="0" 
+                                    class="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] w-12 font-bold text-slate-800 focus:outline-none focus:border-slate-350 focus:ring-1 focus:ring-slate-350/20"
+                                  />
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                  <span class="text-[8px] text-slate-400 uppercase font-black">Min:</span>
+                                  <input 
+                                    type="number" 
+                                    v-model.number="(row.warehouse_min_stocks = row.warehouse_min_stocks || {})[whId]" 
+                                    @input="updateVariantStockQty(row)"
+                                    placeholder="0" 
+                                    class="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] w-12 font-bold text-slate-800 focus:outline-none focus:border-slate-350 focus:ring-1 focus:ring-slate-350/20"
+                                  />
+                                </div>
+                              </div>
                             </div>
                             <div class="text-[10px] font-black text-slate-600 mt-1 pt-1 border-t border-slate-100/80 flex items-center justify-between">
-                              <span>Total:</span>
-                              <span class="text-indigo-650 font-extrabold">{{ row.stock_qty }}</span>
+                              <span>Total Qty/Min:</span>
+                              <span class="text-indigo-650 font-extrabold">{{ row.stock_qty }} / {{ row.min_stock_alert || 0 }}</span>
                             </div>
                           </div>
                           <span v-else class="text-[10px] text-rose-500 font-bold">Select Wh first</span>

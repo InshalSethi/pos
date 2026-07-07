@@ -257,6 +257,19 @@ class InventoryAdjustmentController extends Controller
     {
         $startDate = $request->get('start_date', today()->subDays(30)->toDateString());
         $endDate = $request->get('end_date', today()->toDateString());
+        $warehouseId = $request->get('warehouse_id');
+
+        $warehouseQuery = \App\Models\Warehouse::select('id as wh_id');
+        $lowStockQuery = Product::crossJoinSub($warehouseQuery, 'wh')
+            ->where('products.track_inventory', true)
+            ->where('products.is_active', true)
+            ->whereRaw(
+                "COALESCE((SELECT SUM(stock_qty) FROM inventories WHERE inventories.product_id = products.id AND inventories.warehouse_id = wh.wh_id), 0) <= products.min_stock_level"
+            );
+
+        if ($warehouseId) {
+            $lowStockQuery->where('wh.wh_id', $warehouseId);
+        }
 
         $summary = [
             'total_adjustments' => InventoryAdjustment::whereBetween('adjustment_date', [$startDate, $endDate])->count(),
@@ -268,9 +281,7 @@ class InventoryAdjustmentController extends Controller
                                                   ->sum('quantity_adjusted'),
             'total_cost_impact' => InventoryAdjustment::whereBetween('adjustment_date', [$startDate, $endDate])
                                                     ->sum('cost_impact'),
-            'low_stock_products' => Product::where('track_inventory', true)
-                                          ->whereColumn('stock_quantity', '<=', 'min_stock_level')
-                                          ->count(),
+            'low_stock_products' => $lowStockQuery->count(),
         ];
 
         return response()->json($summary);
@@ -281,12 +292,45 @@ class InventoryAdjustmentController extends Controller
      */
     public function lowStock(Request $request): JsonResponse
     {
-        $products = Product::with('category')
-            ->where('track_inventory', true)
-            ->where('is_active', true)
-            ->whereColumn('stock_quantity', '<=', 'min_stock_level')
-            ->orderBy('stock_quantity', 'asc')
+        $warehouseId = $request->get('warehouse_id');
+        $warehouseQuery = \App\Models\Warehouse::select('id as wh_id', 'name as wh_name');
+
+        $query = Product::crossJoinSub($warehouseQuery, 'wh')
+            ->select('products.*', 'wh.wh_name as warehouse_name', 'wh.wh_id as warehouse_id')
+            ->selectSub(function ($q) {
+                $q->selectRaw('COALESCE(SUM(stock_qty), 0)')
+                    ->from('inventories')
+                    ->whereColumn('inventories.product_id', 'products.id')
+                    ->whereColumn('inventories.warehouse_id', 'wh.wh_id');
+            }, 'warehouse_stock')
+            ->with(['category', 'variations'])
+            ->where('products.track_inventory', true)
+            ->where('products.is_active', true)
+            ->whereRaw(
+                "COALESCE((SELECT SUM(stock_qty) FROM inventories WHERE inventories.product_id = products.id AND inventories.warehouse_id = wh.wh_id), 0) <= products.min_stock_level"
+            );
+
+        if ($warehouseId) {
+            $query->where('wh.wh_id', $warehouseId);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%");
+            });
+        }
+
+        $products = $query->orderBy('warehouse_stock', 'asc')
             ->paginate($request->get('per_page', 15));
+
+        // Override stock_quantity with the warehouse_stock
+        $products->getCollection()->transform(function ($product) {
+            $product->stock_quantity = (int) $product->warehouse_stock;
+            return $product;
+        });
 
         return response()->json($products);
     }
