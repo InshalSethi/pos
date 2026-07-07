@@ -41,8 +41,11 @@
       <!-- STATS SUMMARY CARDS -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Card 1: Total Adjustments -->
-        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
+        <div
+          @click="openCardModal('total')"
+          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+        >
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
@@ -54,7 +57,10 @@
         </div>
 
         <!-- Card 2: Increases -->
-        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div
+          @click="openCardModal('increase')"
+          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+        >
           <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
@@ -67,7 +73,10 @@
         </div>
 
         <!-- Card 3: Decreases -->
-        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div
+          @click="openCardModal('decrease')"
+          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+        >
           <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"></path>
@@ -80,7 +89,10 @@
         </div>
 
         <!-- Card 4: Low Stock Products -->
-        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div
+          @click="openCardModal('low_stock')"
+          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+        >
           <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-650 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
@@ -115,17 +127,67 @@
               />
             </div>
 
-            <!-- Adjustment type filter -->
-            <select
-              v-model="filters.adjustment_type"
-              @change="fetchAdjustments(1)"
-              class="px-3 py-2 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+            <!-- Pills/Buttons for Type Filter -->
+            <div class="flex items-center bg-slate-50 dark:bg-slate-850 rounded-xl p-1 border border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                @click="setTypeFilter('')"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  filters.adjustment_type === '' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-450 dark:text-slate-400 hover:text-slate-650'
+                ]"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                @click="setTypeFilter('increase')"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  filters.adjustment_type === 'increase' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-450 shadow-xs' : 'text-slate-450 dark:text-slate-450 hover:text-emerald-650'
+                ]"
+              >
+                Increase
+              </button>
+              <button
+                type="button"
+                @click="setTypeFilter('decrease')"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  filters.adjustment_type === 'decrease' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-450 shadow-xs' : 'text-slate-450 dark:text-slate-450 hover:text-rose-650'
+                ]"
+              >
+                Decrease
+              </button>
+            </div>
+
+            <!-- Clear button -->
+            <button
+              v-if="filters.search || filters.adjustment_type"
+              type="button"
+              @click="clearFilters"
+              class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-350 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
-              <option value="">All Types</option>
-              <option value="increase">Stock Increase</option>
-              <option value="decrease">Stock Decrease</option>
-              <option value="recount">Stock Recount</option>
-            </select>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Clear
+            </button>
+
+            <!-- Low Stock Alerts button -->
+            <button
+              type="button"
+              @click="openCardModal('low_stock')"
+              class="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-955/40 dark:hover:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              Low Stock Alerts
+              <span class="px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-[10px] font-black text-amber-850 dark:text-amber-350">
+                {{ summary.low_stock_products || 0 }}
+              </span>
+            </button>
           </div>
 
           <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
@@ -301,6 +363,215 @@
 
       </div>
     </div>
+
+    <!-- STATS DETAILS CARD MODAL -->
+    <transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showCardModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity" @click="showCardModal = false"></div>
+
+        <!-- Modal Card container -->
+        <div class="relative bg-white dark:bg-slate-900 w-full max-w-5xl shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all flex flex-col max-h-[90vh]">
+          
+          <!-- Header -->
+          <div class="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div>
+              <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{{ cardModalTitle }}</h3>
+              <p class="text-indigo-650 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-1">AJAX Search & Pagination Enabled</p>
+            </div>
+            <button @click="showCardModal = false" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors group cursor-pointer">
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Filters Section -->
+          <div class="px-8 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between gap-4">
+            <!-- Modal search field -->
+            <div class="relative w-full max-w-sm">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input
+                v-model="cardModalSearchQuery"
+                @input="debouncedCardSearch"
+                type="text"
+                placeholder="Search detail rows..."
+                class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:border-slate-350 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+              />
+            </div>
+
+            <!-- Page Size selector -->
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+              <span>Show</span>
+              <select
+                v-model="cardModalPagination.per_page"
+                @change="fetchCardModalData(1)"
+                class="px-2.5 py-1.5 bg-white dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              >
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+              </select>
+              <span>entries</span>
+            </div>
+          </div>
+
+          <!-- Content Table Area -->
+          <div class="p-8 overflow-y-auto custom-scrollbar flex-1 min-h-[350px]">
+            <div v-if="cardModalLoading" class="text-center py-20 bg-white dark:bg-slate-900">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+              <p class="mt-3 text-slate-500 text-xs font-bold uppercase tracking-wider">Loading detailed data...</p>
+            </div>
+
+            <div v-else-if="cardModalData.length === 0" class="text-center py-16 px-4 bg-white dark:bg-slate-900">
+              <div class="w-16 h-16 bg-slate-50 dark:bg-slate-850 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800">
+                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 class="text-base font-bold text-slate-850 dark:text-slate-200">No matching items found</h3>
+              <p class="text-xs text-slate-450 mt-1 max-w-xs mx-auto">Try refining your search keyword above.</p>
+            </div>
+
+            <div v-else class="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden">
+              <table class="w-full text-left border-collapse">
+                <!-- Header for Logs -->
+                <thead v-if="cardModalType !== 'low_stock'" class="bg-slate-50 dark:bg-slate-850 text-slate-400 uppercase tracking-widest text-[9px] font-black border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th class="py-4 px-5">Date</th>
+                    <th class="py-4 px-5">Adjustment No.</th>
+                    <th class="py-4 px-5">Item Details</th>
+                    <th class="py-4 px-5">Warehouse</th>
+                    <th class="py-4 px-5">Type</th>
+                    <th class="py-4 px-5 text-right">Quantity</th>
+                    <th class="py-4 px-5">Reason</th>
+                    <th class="py-4 px-5">Operator</th>
+                  </tr>
+                </thead>
+
+                <!-- Header for Low Stock -->
+                <thead v-else class="bg-slate-50 dark:bg-slate-850 text-slate-400 uppercase tracking-widest text-[9px] font-black border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th class="py-4 px-5">Item Details</th>
+                    <th class="py-4 px-5">SKU Code</th>
+                    <th class="py-4 px-5">Category</th>
+                    <th class="py-4 px-5 text-right">Min Alert Level</th>
+                    <th class="py-4 px-5 text-right">Current Stock</th>
+                  </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-850 text-xs font-bold text-slate-700 dark:text-slate-255">
+                  <!-- Row rendering for logs -->
+                  <template v-if="cardModalType !== 'low_stock'">
+                    <tr v-for="log in cardModalData" :key="log.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
+                      <td class="py-4 px-5 text-slate-500 whitespace-nowrap">{{ formatDate(log.adjustment_date) }}</td>
+                      <td class="py-4 px-5 font-black text-slate-900 dark:text-white uppercase">{{ log.adjustment_number }}</td>
+                      <td class="py-4 px-5">
+                        <div class="text-slate-850 dark:text-slate-200 font-extrabold">{{ log.product?.name }}</div>
+                        <div v-if="log.variation" class="text-[10px] text-slate-450 font-bold uppercase tracking-wider mt-0.5">
+                          {{ log.variation.variant_profile_combo }}
+                        </div>
+                      </td>
+                      <td class="py-4 px-5 text-slate-500">{{ log.warehouse?.name || 'N/A' }}</td>
+                      <td class="py-4 px-5 whitespace-nowrap">
+                        <span 
+                          :class="[
+                            'px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-block',
+                            log.adjustment_type === 'increase' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                            log.adjustment_type === 'decrease' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
+                            'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                          ]"
+                        >
+                          {{ log.adjustment_type === 'increase' ? 'Increase' : log.adjustment_type === 'decrease' ? 'Decrease' : 'Recount' }}
+                        </span>
+                      </td>
+                      <td class="py-4 px-5 text-right font-black text-slate-900 dark:text-white">{{ log.quantity_adjusted }}</td>
+                      <td class="py-4 px-5 text-slate-500 max-w-xs truncate">{{ log.reason }}</td>
+                      <td class="py-4 px-5 text-slate-500">{{ log.user?.name || 'System' }}</td>
+                    </tr>
+                  </template>
+
+                  <!-- Row rendering for low stock products -->
+                  <template v-else>
+                    <tr v-for="product in cardModalData" :key="product.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
+                      <td class="py-4 px-5">
+                        <div class="text-slate-850 dark:text-slate-200 font-extrabold">{{ product.name }}</div>
+                      </td>
+                      <td class="py-4 px-5 text-slate-555 font-black tracking-wider uppercase">
+                        <!-- Primary SKU or Variation SKUs count indicator -->
+                        <span v-if="product.variations && product.variations.length > 0">
+                          {{ product.variations[0].sku }}
+                          <span v-if="product.variations.length > 1" class="ml-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[9px] font-bold text-slate-500 tracking-normal lowercase">
+                            +{{ product.variations.length - 1 }} variants
+                          </span>
+                        </span>
+                        <span v-else>{{ product.sku }}</span>
+                      </td>
+                      <td class="py-4 px-5 text-slate-500">{{ product.category?.name || 'Uncategorized' }}</td>
+                      <td class="py-4 px-5 text-right font-bold text-slate-400">{{ product.min_stock_level || 0 }}</td>
+                      <td class="py-4 px-5 text-right font-black text-rose-600 dark:text-rose-450">{{ product.stock_quantity || 0 }}</td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pagination Footer -->
+          <div class="px-8 py-5 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between text-xs font-bold text-slate-450">
+            <div>
+              Showing {{ ((cardModalPagination.current_page - 1) * cardModalPagination.per_page) + 1 }} to 
+              {{ Math.min(cardModalPagination.current_page * cardModalPagination.per_page, cardModalPagination.total) }} of 
+              {{ cardModalPagination.total }} entries
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button
+                :disabled="cardModalPagination.current_page === 1"
+                @click="fetchCardModalData(cardModalPagination.current_page - 1)"
+                class="px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer"
+              >
+                Previous
+              </button>
+              
+              <!-- Simple dynamic pages rendering -->
+              <template v-for="p in cardModalPagination.last_page" :key="p">
+                <button
+                  v-if="p >= cardModalPagination.current_page - 2 && p <= cardModalPagination.current_page + 2"
+                  @click="fetchCardModalData(p)"
+                  :class="[
+                    'w-9 h-9 flex items-center justify-center rounded-xl border transition-colors cursor-pointer',
+                    p === cardModalPagination.current_page ? 'bg-indigo-650 border-indigo-650 text-white font-extrabold' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-300'
+                  ]"
+                >
+                  {{ p }}
+                </button>
+              </template>
+
+              <button
+                :disabled="cardModalPagination.current_page === cardModalPagination.last_page"
+                @click="fetchCardModalData(cardModalPagination.current_page + 1)"
+                class="px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </transition>
 
     <!-- VIEW DETAILS MODAL -->
     <transition
@@ -939,6 +1210,20 @@ const filters = ref({
 const showDetailModal = ref(false);
 const detailLog = ref(null);
 
+// STATS CARD MODAL STATE
+const showCardModal = ref(false);
+const cardModalTitle = ref('');
+const cardModalType = ref(''); // 'total', 'increase', 'decrease', 'low_stock'
+const cardModalLoading = ref(false);
+const cardModalData = ref([]);
+const cardModalSearchQuery = ref('');
+const cardModalPagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0,
+  per_page: 10
+});
+
 // NEW ADJUSTMENT STATE
 const showFormModal = ref(false);
 const submitting = ref(false);
@@ -1319,6 +1604,79 @@ const processUpload = async () => {
 const showFeedback = (msg, cls) => {
   const type = (cls && (cls.includes('emerald') || cls.includes('success'))) ? 'success' : 'error';
   showToast(msg, type);
+};
+
+const setTypeFilter = (type) => {
+  filters.value.adjustment_type = type;
+  fetchAdjustments(1);
+};
+
+const clearFilters = () => {
+  filters.value.search = '';
+  filters.value.adjustment_type = '';
+  fetchAdjustments(1);
+};
+
+// STATS CARD MODAL METHODS
+const openCardModal = (type) => {
+  cardModalType.value = type;
+  cardModalSearchQuery.value = '';
+  cardModalPagination.value = { current_page: 1, last_page: 1, total: 0, per_page: 10 };
+  
+  if (type === 'total') {
+    cardModalTitle.value = 'Total Adjustment Logs';
+  } else if (type === 'increase') {
+    cardModalTitle.value = 'Increase Logs';
+  } else if (type === 'decrease') {
+    cardModalTitle.value = 'Decrease Logs';
+  } else if (type === 'low_stock') {
+    cardModalTitle.value = 'Low Stock Alerts';
+  }
+  
+  showCardModal.value = true;
+  fetchCardModalData(1);
+};
+
+const fetchCardModalData = async (page = 1) => {
+  cardModalLoading.value = true;
+  try {
+    let url = '/api/inventory-adjustments';
+    let params = {
+      page,
+      per_page: cardModalPagination.value.per_page,
+      search: cardModalSearchQuery.value
+    };
+    
+    if (cardModalType.value === 'increase') {
+      params.adjustment_type = 'increase';
+    } else if (cardModalType.value === 'decrease') {
+      params.adjustment_type = 'decrease';
+    } else if (cardModalType.value === 'low_stock') {
+      url = '/api/inventory/low-stock';
+    }
+    
+    const res = await axios.get(url, { params });
+    cardModalData.value = res.data.data || [];
+    cardModalPagination.value = {
+      current_page: res.data.current_page || 1,
+      last_page: res.data.last_page || 1,
+      total: res.data.total || 0,
+      per_page: res.data.per_page || 10
+    };
+  } catch (err) {
+    console.error('Failed fetching card modal data:', err);
+    showToast('Failed loading card details.', 'error');
+  } finally {
+    cardModalLoading.value = false;
+  }
+};
+
+let cardDebounceTimeout = null;
+const debouncedCardSearch = () => {
+  clearTimeout(cardDebounceTimeout);
+  cardDebounceTimeout = setTimeout(() => {
+    fetchCardModalData(1);
+  }, 300);
 };
 
 const formatDate = (dateString) => {
