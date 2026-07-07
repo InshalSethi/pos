@@ -172,6 +172,17 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
+
+                  <!-- Received Action (Disabled, clickable to show alert) -->
+                  <button 
+                    v-if="to.status === 'received'"
+                    type="button" 
+                    @click="handleReceivedClick"
+                    class="px-2 py-1 text-[10px] font-extrabold text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 rounded-lg transition-all"
+                    title="Received"
+                  >
+                    Received
+                  </button>
                 </div>
               </td>
             </tr>
@@ -288,6 +299,11 @@ const deleteTransfer = async (id) => {
     console.error(err);
     showFeedback('Failed to delete draft transfer order.', 'bg-rose-50 text-rose-800 border-rose-200');
   }
+};
+
+const handleReceivedClick = () => {
+  alert('Received');
+  showFeedback('Received', 'bg-slate-50 text-slate-800 border-slate-200');
 };
 
 const showFeedback = (msg, cls) => {
