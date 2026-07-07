@@ -112,6 +112,12 @@ class WarehouseController extends Controller
      */
     public function show(Warehouse $warehouse): JsonResponse
     {
+        $warehouse->load(['inventories' => function ($query) {
+            $query->whereHas('product', function ($pQuery) {
+                $pQuery->where('status', '!=', 'draft');
+            })->with(['product.category', 'variation']);
+        }]);
+
         return response()->json($warehouse);
     }
 

@@ -97,6 +97,7 @@
           <div class="relative flex-1">
             <select 
               v-model="selectedProductKey"
+              @change="onProductSelected"
               class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-xs"
               :disabled="!form.source_warehouse_id"
             >
@@ -267,19 +268,19 @@ const onSourceWarehouseChange = async () => {
 
 const buildProductOptions = () => {
   productOptions.value = sourceStock.value.map(item => {
-    let label = item.product?.name;
+    let label = item.product?.name || 'Unknown Product';
     if (item.variation) {
       label += ` (${item.variation.variation_name_string})`;
     }
     
-    // Key will uniquely identify product + variation
-    const key = item.product_id + (item.product_variation_id ? `_v_${item.product_variation_id}` : '');
+    // Key will uniquely identify product + variation — always use String to avoid type issues
+    const key = String(item.product_id) + (item.product_variation_id ? `_v_${item.product_variation_id}` : '');
     
     return {
       key,
       product_id: item.product_id,
       product_variation_id: item.product_variation_id,
-      product_name: item.product?.name,
+      product_name: item.product?.name || 'Unknown Product',
       variation_name: item.variation?.variation_name_string || null,
       sku: item.variation?.sku || item.product?.sku || 'N/A',
       stock_qty: item.stock_qty,
@@ -288,10 +289,16 @@ const buildProductOptions = () => {
   }).filter(opt => opt.stock_qty > 0); // Only permit transferring items with positive stock
 };
 
+const onProductSelected = () => {
+  if (selectedProductKey.value) {
+    addItem();
+  }
+};
+
 const addItem = () => {
   if (!selectedProductKey.value) return;
   
-  const selectedOpt = productOptions.value.find(opt => opt.key === selectedProductKey.value);
+  const selectedOpt = productOptions.value.find(opt => String(opt.key) === String(selectedProductKey.value));
   if (!selectedOpt) return;
   
   // Check if item is already added to lists
@@ -302,6 +309,7 @@ const addItem = () => {
   
   if (exists) {
     errorMsg.value = 'Product is already added to transfer list.';
+    selectedProductKey.value = '';
     return;
   }
   
