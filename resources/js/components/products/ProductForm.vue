@@ -2016,13 +2016,13 @@ const cartesianProduct = (arrays) => {
 
 const addNewManualRow = () => {
     if (attributes.value.length === 0) {
-        addSingleVariantRow('Default Variant');
+        showLocalError('Please select or enter a variation name first!');
         return;
     }
 
     const missingSelection = attributes.value.some(attr => !selectedCombo.value[attr.name] || selectedCombo.value[attr.name].length === 0);
     if (missingSelection) {
-        alert('Please select at least one value for all attribute types before adding!');
+        showLocalError('Please select at least one value for all attribute types before adding!');
         return;
     }
 
