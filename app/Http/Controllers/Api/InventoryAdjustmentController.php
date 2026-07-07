@@ -259,16 +259,22 @@ class InventoryAdjustmentController extends Controller
         $endDate = $request->get('end_date', today()->toDateString());
         $warehouseId = $request->get('warehouse_id');
 
-        $warehouseQuery = \App\Models\Warehouse::select('id as wh_id');
-        $lowStockQuery = Product::crossJoinSub($warehouseQuery, 'wh')
-            ->where('products.track_inventory', true)
-            ->where('products.is_active', true)
-            ->whereRaw(
-                "COALESCE((SELECT SUM(stock_qty) FROM inventories WHERE inventories.product_id = products.id AND inventories.warehouse_id = wh.wh_id), 0) <= products.min_stock_level"
-            );
+        $lowStockQuery = \App\Models\Inventory::whereHas('product', function ($q) {
+            $q->where('track_inventory', true)
+              ->where('is_active', true);
+        })
+        ->where(function ($q) {
+            $q->whereRaw('inventories.stock_qty <= COALESCE(inventories.min_stock_level, 0)')
+              ->orWhere(function ($sub) {
+                  $sub->whereNull('inventories.min_stock_level')
+                      ->whereHas('product', function ($pq) {
+                          $pq->whereRaw('inventories.stock_qty <= COALESCE(products.min_stock_level, 0)');
+                      });
+              });
+        });
 
         if ($warehouseId) {
-            $lowStockQuery->where('wh.wh_id', $warehouseId);
+            $lowStockQuery->where('warehouse_id', $warehouseId);
         }
 
         $summary = [
@@ -293,46 +299,72 @@ class InventoryAdjustmentController extends Controller
     public function lowStock(Request $request): JsonResponse
     {
         $warehouseId = $request->get('warehouse_id');
-        $warehouseQuery = \App\Models\Warehouse::select('id as wh_id', 'name as wh_name');
 
-        $query = Product::crossJoinSub($warehouseQuery, 'wh')
-            ->select('products.*', 'wh.wh_name as warehouse_name', 'wh.wh_id as warehouse_id')
-            ->selectSub(function ($q) {
-                $q->selectRaw('COALESCE(SUM(stock_qty), 0)')
-                    ->from('inventories')
-                    ->whereColumn('inventories.product_id', 'products.id')
-                    ->whereColumn('inventories.warehouse_id', 'wh.wh_id');
-            }, 'warehouse_stock')
-            ->with(['category', 'variations'])
-            ->where('products.track_inventory', true)
-            ->where('products.is_active', true)
-            ->whereRaw(
-                "COALESCE((SELECT SUM(stock_qty) FROM inventories WHERE inventories.product_id = products.id AND inventories.warehouse_id = wh.wh_id), 0) <= products.min_stock_level"
-            );
+        $query = \App\Models\Inventory::with(['product.category', 'variation', 'warehouse'])
+            ->whereHas('product', function ($q) {
+                $q->where('track_inventory', true)
+                  ->where('is_active', true);
+            })
+            ->where(function ($q) {
+                $q->whereRaw('inventories.stock_qty <= COALESCE(inventories.min_stock_level, 0)')
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('inventories.min_stock_level')
+                          ->whereHas('product', function ($pq) {
+                              $pq->whereRaw('inventories.stock_qty <= COALESCE(products.min_stock_level, 0)');
+                          });
+                  });
+            });
 
         if ($warehouseId) {
-            $query->where('wh.wh_id', $warehouseId);
+            $query->where('warehouse_id', $warehouseId);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%");
+                $q->whereHas('product', function ($pq) use ($search) {
+                    $pq->where('name', 'like', "%{$search}%")
+                      ->orWhere('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%");
+                })->orWhereHas('variation', function ($vq) use ($search) {
+                    $vq->where('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%")
+                      ->orWhere('variation_name_string', 'like', "%{$search}%");
+                });
             });
         }
 
-        $products = $query->orderBy('warehouse_stock', 'asc')
+        $inventories = $query->orderBy('stock_qty', 'asc')
             ->paginate($request->get('per_page', 15));
 
-        // Override stock_quantity with the warehouse_stock
-        $products->getCollection()->transform(function ($product) {
-            $product->stock_quantity = (int) $product->warehouse_stock;
-            return $product;
+        // Format for frontend response
+        $formattedItems = $inventories->getCollection()->map(function ($inv) {
+            $product = $inv->product;
+            $variation = $inv->variation;
+            
+            $name = $product->name;
+            if ($variation && $variation->variation_name_string && $variation->variation_name_string !== 'Default') {
+                $name .= ' (' . $variation->variation_name_string . ')';
+            }
+            
+            return [
+                'id' => $product->id, // keep it for compatibility
+                'product_id' => $product->id,
+                'product_variation_id' => $inv->product_variation_id,
+                'name' => $name,
+                'sku' => $variation ? $variation->sku : $product->sku,
+                'category' => $product->category,
+                'warehouse_name' => $inv->warehouse->name ?? 'N/A',
+                'warehouse_id' => $inv->warehouse_id,
+                'min_stock_level' => $inv->min_stock_level ?? $product->min_stock_level ?? 0,
+                'stock_quantity' => $inv->stock_qty,
+            ];
         });
 
-        return response()->json($products);
+        // We replace the paginated collection with formatted items
+        $inventories->setCollection($formattedItems);
+
+        return response()->json($inventories);
     }
 
     /**

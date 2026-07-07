@@ -119,10 +119,20 @@ class DashboardController extends Controller
      */
     private function getLowStockStatistics(): array
     {
-        $lowStockCount = Product::where('track_inventory', true)
-                               ->active()
-                               ->lowStock()
-                               ->count();
+        $lowStockCount = \App\Models\Inventory::whereHas('product', function ($q) {
+            $q->where('track_inventory', true)
+              ->where('is_active', true);
+        })
+        ->where(function ($q) {
+            $q->whereRaw('inventories.stock_qty <= COALESCE(inventories.min_stock_level, 0)')
+              ->orWhere(function ($sub) {
+                  $sub->whereNull('inventories.min_stock_level')
+                      ->whereHas('product', function ($pq) {
+                          $pq->whereRaw('inventories.stock_qty <= COALESCE(products.min_stock_level, 0)');
+                      });
+              });
+        })
+        ->count();
 
         return [
             'count' => $lowStockCount
@@ -502,19 +512,34 @@ class DashboardController extends Controller
      */
     private function getStockAlerts(): array
     {
-        $lowStockProducts = Product::where('track_inventory', true)
-                                  ->active()
-                                  ->lowStock()
-                                  ->orderBy('stock_quantity', 'asc')
-                                  ->limit(10)
-                                  ->get()
-                                  ->map(function ($product) {
-                                      return [
-                                          'product' => $product->name,
-                                          'quantity' => $product->stock_quantity,
-                                          'minimum_level' => $product->min_stock_level ?? 5
-                                      ];
-                                  });
+        $lowStockProducts = \App\Models\Inventory::with(['product', 'variation'])
+            ->whereHas('product', function ($q) {
+                $q->where('track_inventory', true)
+                  ->where('is_active', true);
+            })
+            ->where(function ($q) {
+                $q->whereRaw('inventories.stock_qty <= COALESCE(inventories.min_stock_level, 0)')
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('inventories.min_stock_level')
+                          ->whereHas('product', function ($pq) {
+                              $pq->whereRaw('inventories.stock_qty <= COALESCE(products.min_stock_level, 0)');
+                          });
+                  });
+            })
+            ->orderBy('stock_qty', 'asc')
+            ->limit(10)
+            ->get()
+            ->map(function ($inv) {
+                $name = $inv->product->name;
+                if ($inv->variation && $inv->variation->variation_name_string && $inv->variation->variation_name_string !== 'Default') {
+                    $name .= ' (' . $inv->variation->variation_name_string . ')';
+                }
+                return [
+                    'product' => $name,
+                    'quantity' => $inv->stock_qty,
+                    'minimum_level' => $inv->min_stock_level ?? $inv->product->min_stock_level ?? 5
+                ];
+            });
 
         return $lowStockProducts->toArray();
     }

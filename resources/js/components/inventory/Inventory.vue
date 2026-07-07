@@ -524,19 +524,12 @@
 
                   <!-- Row rendering for low stock products -->
                   <template v-else>
-                    <tr v-for="product in cardModalData" :key="product.id + '-' + product.warehouse_id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
+                    <tr v-for="product in cardModalData" :key="product.id + '-' + (product.product_variation_id || 'parent') + '-' + product.warehouse_id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
                       <td class="py-4 px-5">
                         <div class="text-slate-850 dark:text-slate-200 font-extrabold">{{ product.name }}</div>
                       </td>
                       <td class="py-4 px-5 text-slate-555 font-black tracking-wider uppercase">
-                        <!-- Primary SKU or Variation SKUs count indicator -->
-                        <span v-if="product.variations && product.variations.length > 0">
-                          {{ product.variations[0].sku }}
-                          <span v-if="product.variations.length > 1" class="ml-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[9px] font-bold text-slate-500 tracking-normal lowercase">
-                            +{{ product.variations.length - 1 }} variants
-                          </span>
-                        </span>
-                        <span v-else>{{ product.sku }}</span>
+                        {{ product.sku }}
                       </td>
                       <td class="py-4 px-5 text-slate-500">{{ product.category?.name || 'Uncategorized' }}</td>
                       <td class="py-4 px-5 text-slate-500">{{ product.warehouse_name || 'N/A' }}</td>
