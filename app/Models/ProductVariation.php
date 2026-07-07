@@ -25,6 +25,10 @@ class ProductVariation extends Model
         'tax_rate' => 'decimal:2',
     ];
 
+    public function inventories() {
+        return $this->hasMany(Inventory::class, 'product_variation_id');
+    }
+
     public function product() {
         return $this->belongsTo(Product::class);
     }

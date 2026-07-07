@@ -19,6 +19,7 @@ class InventoryAdjustment extends Model
     protected $fillable = [
         'adjustment_number',
         'product_id',
+        'product_variation_id',
         'warehouse_id',
         'adjustment_type',
         'quantity_before',
@@ -44,6 +45,11 @@ class InventoryAdjustment extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variation(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariation::class, 'product_variation_id');
     }
 
     public function warehouse(): BelongsTo

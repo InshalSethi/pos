@@ -21,12 +21,9 @@ class InventoryAdjustmentController extends Controller
         $this->middleware('permission:inventory.adjust')->only(['store']);
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request): JsonResponse
     {
-        $query = InventoryAdjustment::with(['product', 'user', 'warehouse']);
+        $query = InventoryAdjustment::with(['product.variations', 'user', 'warehouse', 'variation']);
 
         // Filter by product
         if ($request->has('product_id')) {
@@ -63,17 +60,36 @@ class InventoryAdjustmentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
-            'adjustment_type' => 'required|in:increase,decrease,recount',
-            'quantity_adjusted' => 'required|integer',
-            'reason' => 'required|string|max:255',
-            'notes' => 'nullable|string',
-            'batch_number' => 'nullable|string|max:100',
-            'expiry_date' => 'nullable|date',
-            'attachment' => 'nullable|file|max:5120',
-        ]);
+        $hasBulk = $request->has('adjustments') && is_array($request->adjustments);
+
+        if ($hasBulk) {
+            $validator = Validator::make($request->all(), [
+                'product_id' => 'required|exists:products,id',
+                'reason' => 'required|string|max:255',
+                'notes' => 'nullable|string',
+                'batch_number' => 'nullable|string|max:100',
+                'expiry_date' => 'nullable|date',
+                'attachment' => 'nullable|file|max:5120',
+                'adjustments' => 'required|array|min:1',
+                'adjustments.*.warehouse_id' => 'required|exists:warehouses,id',
+                'adjustments.*.product_variation_id' => 'nullable|exists:product_variations,id',
+                'adjustments.*.adjustment_type' => 'required|in:increase,decrease,recount',
+                'adjustments.*.quantity_adjusted' => 'required|integer|min:0',
+            ]);
+        } else {
+            $validator = Validator::make($request->all(), [
+                'product_id' => 'required|exists:products,id',
+                'warehouse_id' => 'nullable|exists:warehouses,id',
+                'product_variation_id' => 'nullable|exists:product_variations,id',
+                'adjustment_type' => 'required|in:increase,decrease,recount',
+                'quantity_adjusted' => 'required|integer|min:0',
+                'reason' => 'required|string|max:255',
+                'notes' => 'nullable|string',
+                'batch_number' => 'nullable|string|max:100',
+                'expiry_date' => 'nullable|date',
+                'attachment' => 'nullable|file|max:5120',
+            ]);
+        }
 
         if ($validator->fails()) {
             return response()->json([
@@ -86,98 +102,125 @@ class InventoryAdjustmentController extends Controller
             DB::beginTransaction();
 
             $companyId = auth()->user()->current_company_id;
-            $warehouseId = $request->warehouse_id;
-
-            if (!$warehouseId) {
-                $warehouse = Warehouse::where('company_id', $companyId)->where('is_default', true)->first();
-                if (!$warehouse) {
-                    $warehouse = Warehouse::where('company_id', $companyId)->first();
-                }
-                if (!$warehouse) {
-                    $warehouse = Warehouse::create([
-                        'company_id' => $companyId,
-                        'name' => 'Main Warehouse',
-                        'is_default' => true,
-                        'is_active' => true,
-                    ]);
-                }
-                $warehouseId = $warehouse->id;
-            }
-
             $product = Product::find($request->product_id);
-            
-            $inventory = Inventory::where('warehouse_id', $warehouseId)
-                ->where('product_id', $product->id)
-                ->whereNull('product_variation_id')
-                ->first();
 
-            $quantityBefore = $inventory ? $inventory->stock_qty : 0;
-            $quantityAdjusted = $request->quantity_adjusted;
-
-            // Calculate new quantity based on adjustment type
-            switch ($request->adjustment_type) {
-                case 'increase':
-                    $quantityAfter = $quantityBefore + $quantityAdjusted;
-                    break;
-                case 'decrease':
-                    $quantityAfter = max(0, $quantityBefore - $quantityAdjusted);
-                    $quantityAdjusted = $quantityBefore - $quantityAfter; // Actual adjustment
-                    break;
-                case 'recount':
-                    $quantityAfter = $quantityAdjusted;
-                    $quantityAdjusted = $quantityAfter - $quantityBefore; // Difference
-                    break;
-            }
-
-            // Generate adjustment number securely
-            $datePrefix = 'ADJ-' . date('Ymd') . '-';
-            $lastAdjustment = InventoryAdjustment::where('adjustment_number', 'like', $datePrefix . '%')
-                ->orderBy('adjustment_number', 'desc')
-                ->lockForUpdate()
-                ->first();
-
-            $newNumber = $lastAdjustment ? ((int) substr($lastAdjustment->adjustment_number, -4)) + 1 : 1;
-            $adjustmentNumber = $datePrefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-
-            // Calculate cost impact
-            $costImpact = $quantityAdjusted * $product->cost_price;
-
+            // Setup attachment
             $attachmentPath = null;
             if ($request->hasFile('attachment')) {
                 $path = $request->file('attachment')->store('inventory-adjustments', 'public');
                 $attachmentPath = '/storage/' . $path;
             }
 
-            // Create adjustment record
-            $adjustment = InventoryAdjustment::create([
-                'adjustment_number' => $adjustmentNumber,
-                'product_id' => $request->product_id,
-                'warehouse_id' => $warehouseId,
-                'adjustment_type' => $request->adjustment_type,
-                'quantity_before' => $quantityBefore,
-                'quantity_adjusted' => $quantityAdjusted,
-                'quantity_after' => $quantityAfter,
-                'reason' => $request->reason,
-                'user_id' => $request->user()?->id ?? auth()->id() ?? 1,
-                'adjustment_date' => now(),
-                'cost_impact' => $costImpact,
-                'notes' => $request->notes,
-                'batch_number' => $request->batch_number,
-                'expiry_date' => $request->expiry_date,
-                'attachment' => $attachmentPath,
-            ]);
+            $adjustmentsData = [];
+            if ($hasBulk) {
+                $adjustmentsData = $request->adjustments;
+            } else {
+                $adjustmentsData = [[
+                    'warehouse_id' => $request->warehouse_id,
+                    'product_variation_id' => $request->product_variation_id,
+                    'adjustment_type' => $request->adjustment_type,
+                    'quantity_adjusted' => $request->quantity_adjusted,
+                ]];
+            }
 
-            // Update product stock in warehouse
+            $createdAdjustments = [];
             $whService = new WarehouseInventoryService();
-            $whService->setStock($warehouseId, $product->id, null, $quantityAfter, $companyId, 'Manual Adjustment', $adjustment->adjustment_number);
+
+            foreach ($adjustmentsData as $adj) {
+                $warehouseId = $adj['warehouse_id'] ?? null;
+                $variationId = $adj['product_variation_id'] ?? null;
+                $adjType = $adj['adjustment_type'];
+                $quantityAdjusted = (int)$adj['quantity_adjusted'];
+
+                // Get fallback warehouse if not provided
+                if (!$warehouseId) {
+                    $warehouse = Warehouse::where('company_id', $companyId)->where('is_default', true)->first();
+                    if (!$warehouse) {
+                        $warehouse = Warehouse::where('company_id', $companyId)->first();
+                    }
+                    if (!$warehouse) {
+                        $warehouse = Warehouse::create([
+                            'company_id' => $companyId,
+                            'name' => 'Main Warehouse',
+                            'is_default' => true,
+                            'is_active' => true,
+                        ]);
+                    }
+                    $warehouseId = $warehouse->id;
+                }
+
+                // Get current stock
+                $inventory = Inventory::where('warehouse_id', $warehouseId)
+                    ->where('product_id', $product->id)
+                    ->where('product_variation_id', $variationId)
+                    ->first();
+
+                $quantityBefore = $inventory ? $inventory->stock_qty : 0;
+
+                // Calculate quantity after
+                switch ($adjType) {
+                    case 'increase':
+                        $quantityAfter = $quantityBefore + $quantityAdjusted;
+                        break;
+                    case 'decrease':
+                        $quantityAfter = max(0, $quantityBefore - $quantityAdjusted);
+                        $quantityAdjusted = $quantityBefore - $quantityAfter; // actual change
+                        break;
+                    case 'recount':
+                        $quantityAfter = $quantityAdjusted;
+                        $quantityAdjusted = $quantityAfter - $quantityBefore; // difference
+                        break;
+                }
+
+                // Generate adjustment number securely
+                $datePrefix = 'ADJ-' . date('Ymd') . '-';
+                $lastAdjustment = InventoryAdjustment::where('adjustment_number', 'like', $datePrefix . '%')
+                    ->orderBy('adjustment_number', 'desc')
+                    ->lockForUpdate()
+                    ->first();
+
+                $newNumber = $lastAdjustment ? ((int) substr($lastAdjustment->adjustment_number, -4)) + 1 : 1;
+                $adjustmentNumber = $datePrefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+                // Cost impact
+                $costImpact = $quantityAdjusted * $product->cost_price;
+
+                // Create adjustment record
+                $adjustment = InventoryAdjustment::create([
+                    'adjustment_number' => $adjustmentNumber,
+                    'product_id' => $product->id,
+                    'product_variation_id' => $variationId,
+                    'warehouse_id' => $warehouseId,
+                    'adjustment_type' => $adjType,
+                    'quantity_before' => $quantityBefore,
+                    'quantity_adjusted' => $quantityAdjusted,
+                    'quantity_after' => $quantityAfter,
+                    'reason' => $request->reason,
+                    'user_id' => $request->user()?->id ?? auth()->id() ?? 1,
+                    'adjustment_date' => now(),
+                    'cost_impact' => $costImpact,
+                    'notes' => $request->notes,
+                    'batch_number' => $request->batch_number,
+                    'expiry_date' => $request->expiry_date,
+                    'attachment' => $attachmentPath,
+                ]);
+
+                // Update product stock in warehouse
+                $whService->setStock($warehouseId, $product->id, $variationId, $quantityAfter, $companyId, 'Manual Adjustment', $adjustment->adjustment_number);
+
+                $createdAdjustments[] = $adjustment;
+            }
 
             DB::commit();
 
-            $adjustment->load(['product', 'user', 'warehouse']);
+            // Load relations on first adjustment for response compatibility
+            if (!empty($createdAdjustments)) {
+                $createdAdjustments[0]->load(['product', 'user', 'warehouse', 'variation']);
+            }
 
             return response()->json([
                 'message' => 'Inventory adjustment created successfully',
-                'adjustment' => $adjustment
+                'adjustment' => $createdAdjustments[0] ?? null
             ], 201);
 
         } catch (\Exception $e) {
@@ -196,7 +239,7 @@ class InventoryAdjustmentController extends Controller
      */
     public function show(InventoryAdjustment $inventoryAdjustment): JsonResponse
     {
-        $inventoryAdjustment->load(['product', 'user']);
+        $inventoryAdjustment->load(['product', 'user', 'warehouse', 'variation']);
 
         return response()->json($inventoryAdjustment);
     }
