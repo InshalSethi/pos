@@ -313,7 +313,7 @@
                         @click.stop="openVariationsModal(item)"
                         class="text-[10px] text-indigo-600 hover:text-indigo-800 hover:underline mt-1 font-bold focus:outline-none transition-colors"
                       >
-                        View Prices
+                        View Variations
                       </button>
                     </div>
 
@@ -775,11 +775,12 @@
               </span>
             </div>
 
-            <div v-if="viewingProduct.tags && viewingProduct.tags.length > 0">
+            <div>
               <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Tags</p>
-              <div class="flex flex-wrap gap-1">
-                <span v-for="(tag, i) in viewingProduct.tags" :key="i" class="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-slate-100 text-slate-600">#{{ tag }}</span>
+              <div v-if="getParsedTags(viewingProduct).length > 0" class="flex flex-wrap gap-1">
+                <span v-for="(tag, i) in getParsedTags(viewingProduct)" :key="i" class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 text-slate-600">#{{ tag }}</span>
               </div>
+              <p v-else class="text-sm font-medium text-gray-800">N/A</p>
             </div>
 
             <div>
@@ -799,7 +800,7 @@
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                   </svg>
-                  View Prices
+                  View Variations
               </button>
             </div>
 
@@ -1388,6 +1389,33 @@ const fetchCategories = async () => {
   } catch (error) {
     console.error('Error fetching categories:', error);
   }
+};
+
+const getParsedTags = (item) => {
+  if (!item || !item.tags) return [];
+  
+  let tagsArray = [];
+  if (Array.isArray(item.tags)) {
+    tagsArray = item.tags;
+  } else if (typeof item.tags === 'string') {
+    try {
+      const parsed = JSON.parse(item.tags);
+      if (Array.isArray(parsed)) {
+        tagsArray = parsed;
+      } else {
+        tagsArray = [item.tags];
+      }
+    } catch (e) {
+      tagsArray = item.tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
+  }
+  
+  return tagsArray.map(tag => {
+    if (tag && typeof tag === 'object') {
+      return tag.name || tag.label || '';
+    }
+    return String(tag);
+  }).filter(Boolean);
 };
 
 const editProduct = (product) => {
