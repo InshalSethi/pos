@@ -1826,6 +1826,31 @@ const tempAttrValues = ref('');
 
 const selectedCombo = ref({});
 
+// Populate selectedCombo and ensure attribute values exist from existing variations when editing
+if (form.value && form.value.has_variations && form.value.variations && form.value.variations.length > 0) {
+  form.value.variations.forEach(variation => {
+    const parts = (variation.name_string || '').split(' / ').map(p => p.trim());
+    attributes.value.forEach((attr, idx) => {
+      const val = parts[idx];
+      if (val) {
+        if (!attr.values) {
+          attr.values = [];
+        }
+        if (!attr.values.some(v => v.toLowerCase() === val.toLowerCase())) {
+          attr.values.push(val);
+        }
+        if (!selectedCombo.value[attr.name]) {
+          selectedCombo.value[attr.name] = [];
+        }
+        const existingVal = attr.values.find(v => v.toLowerCase() === val.toLowerCase());
+        if (existingVal && !selectedCombo.value[attr.name].includes(existingVal)) {
+          selectedCombo.value[attr.name].push(existingVal);
+        }
+      }
+    });
+  });
+}
+
 const showMasterAttrDropdown = ref(false);
 const masterAttrSearchQuery = ref('');
 
