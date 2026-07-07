@@ -308,13 +308,6 @@
                       <span class="text-xs text-gray-400 mt-0.5 font-semibold">
                         {{ currencyStore.formatPrice((item.variations && item.variations.length > 0) ? (item.variations[0].cost_price || 0) : (item.cost_price || 0)) }}
                       </span>
-                      <button 
-                        v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
-                        @click.stop="openVariationsModal(item)"
-                        class="text-[10px] text-indigo-600 hover:text-indigo-800 hover:underline mt-1 font-bold focus:outline-none transition-colors"
-                      >
-                        View Variations
-                      </button>
                     </div>
 
                     <!-- Floating Actions (Revealed on Row Hover) -->
