@@ -63,7 +63,7 @@
           v-model="searchQuery"
           type="text" 
           placeholder="Search or filter results.." 
-          class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-slate-400 transition-all font-medium"
+          class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700 text-sm placeholder-slate-400 transition-all font-medium"
         />
         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +209,7 @@
                 v-model="modalForm.name"
                 type="text" 
                 placeholder="e.g., Color, Size, GB, Material" 
-                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-300 font-medium focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-300 font-medium focus:bg-white focus:ring-1 focus:ring-indigo-500 dark:focus:ring-slate-700"
                 required
               />
             </div>
@@ -220,7 +220,7 @@
                 v-model="modalForm.valuesRaw"
                 type="text" 
                 placeholder="e.g., Red, Blue, Green" 
-                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-300 font-medium focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-300 font-medium focus:bg-white focus:ring-1 focus:ring-indigo-500 dark:focus:ring-slate-700"
                 required
               />
               <p class="text-[10px] text-slate-400 mt-1">Separate individual value tags using commas.</p>

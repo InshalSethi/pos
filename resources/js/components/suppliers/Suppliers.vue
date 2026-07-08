@@ -110,7 +110,7 @@
               <input
                 v-model="searchQuery"
                 type="text"
-                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                class="block w-full pl-10 pr-3 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-300 dark:border-[#2E2E2E] rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700 dark:text-slate-300 placeholder-gray-400"
                 placeholder="Search by name, company, email, phone..."
                 @input="debouncedSearch"
               />
@@ -121,7 +121,7 @@
             <select
               v-model="statusFilter"
               @change="loadSuppliers"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+              class="block w-full px-3 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-300 dark:border-[#2E2E2E] dark:text-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700"
             >
               <option value="">All Status</option>
               <option value="1">Active</option>
@@ -133,7 +133,7 @@
             <select
               v-model="perPage"
               @change="loadSuppliers"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+              class="block w-full px-3 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-300 dark:border-[#2E2E2E] dark:text-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700"
             >
               <option value="15">15 per page</option>
               <option value="25">25 per page</option>
