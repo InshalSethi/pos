@@ -17,7 +17,7 @@
             <div class="relative">
               <button
                 @click.stop="showSalesPurchaseDropdown = !showSalesPurchaseDropdown"
-                class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 font-medium rounded-full shadow-xs transition-all duration-200 text-sm cursor-pointer"
+                class="inline-flex items-center px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-700 dark:text-slate-300 font-medium rounded-full shadow-xs transition-all duration-200 text-sm cursor-pointer"
               >
                 <span>Sales/Purchase Orders</span>
                 <svg class="w-4 h-4 ml-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,9 +25,9 @@
                 </svg>
               </button>
               <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                <div v-show="showSalesPurchaseDropdown" class="absolute right-0 mt-1.5 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50">
-                  <router-link :to="{ name: 'SalesInvoices' }" class="block px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors font-medium">Sales Invoices</router-link>
-                  <router-link :to="{ name: 'PurchaseOrders' }" class="block px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors font-medium">Purchase Orders</router-link>
+                <div v-show="showSalesPurchaseDropdown" class="absolute right-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1.5 z-50">
+                  <router-link :to="{ name: 'SalesInvoices' }" class="block px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors font-medium">Sales Invoices</router-link>
+                  <router-link :to="{ name: 'PurchaseOrders' }" class="block px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors font-medium">Purchase Orders</router-link>
                 </div>
               </transition>
             </div>
@@ -36,7 +36,7 @@
             <router-link
               v-if="authStore.hasPermission('products.create')"
               :to="{ name: 'CreateProduct' }"
-              class="inline-flex items-center px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-full shadow-sm transition-all duration-200 text-sm"
+              class="inline-flex items-center px-5 py-2 bg-emerald-600 hover:bg-emerald-750 text-white font-medium rounded-full shadow-sm transition-all duration-200 text-sm"
             >
               + New Item
             </router-link>
@@ -45,16 +45,16 @@
             <div class="relative">
               <button
                 @click.stop="showOptionsDropdown = !showOptionsDropdown"
-                class="inline-flex items-center justify-center w-9 h-9 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-full shadow-xs transition-all duration-200 cursor-pointer focus:outline-none"
+                class="inline-flex items-center justify-center w-9 h-9 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-500 dark:text-slate-400 rounded-full shadow-xs transition-all duration-200 cursor-pointer focus:outline-none"
               >
                 <span class="text-sm font-bold tracking-widest leading-none mt-[-4px]">•••</span>
               </button>
               <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                <div v-show="showOptionsDropdown" class="absolute right-0 mt-1.5 w-56 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50">
+                <div v-show="showOptionsDropdown" class="absolute right-0 mt-1.5 w-56 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-2 z-50">
                   <button
                     v-if="selectedProducts.length > 0 || products.length > 0"
                     @click="showBulkSaleModal = true; showOptionsDropdown = false"
-                    class="w-full text-left px-4 py-2 text-xs text-rose-600 dark:text-rose-450 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors flex items-center gap-2 cursor-pointer font-semibold"
+                    class="w-full text-left px-4 py-2 text-xs text-rose-600 dark:text-rose-450 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors flex items-center gap-2 cursor-pointer font-semibold"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM12 8V7m0 1v1m0-1c0-1.657-1.343-3-3-3h0M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     Apply Sale
@@ -62,7 +62,7 @@
                   <button
                     v-if="authStore.hasPermission('products.import')"
                     @click="showImportModal = true; showOptionsDropdown = false"
-                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors flex items-center gap-2 cursor-pointer font-medium"
                   >
                     <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -72,7 +72,7 @@
                   <button
                     v-if="authStore.hasPermission('products.export')"
                     @click="exportProducts(); showOptionsDropdown = false"
-                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors flex items-center gap-2 cursor-pointer font-medium"
                   >
                     <svg class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -81,7 +81,7 @@
                   </button>
                   <button
                     @click="openCategoryModal(); showOptionsDropdown = false"
-                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors flex items-center gap-2 cursor-pointer font-medium"
                   >
                     <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -90,7 +90,7 @@
                   </button>
                   <button
                     @click="openDraftsModal(); showOptionsDropdown = false"
-                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors flex items-center gap-2 cursor-pointer font-medium"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-amber-500">
                       <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
@@ -116,7 +116,7 @@
               v-model="tableFilters.search"
               @input="handleSearchInput"
               placeholder="Search or filter results.."
-              class="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-slate-500 text-gray-900 dark:text-slate-300 shadow-sm"
+              class="w-full pl-11 pr-4 py-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-slate-400 text-gray-900 dark:text-slate-300 shadow-sm"
             />
           </div>
         </div>
@@ -127,7 +127,7 @@
           <div class="relative">
             <button
               @click.stop="toggleDropdown('category')"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
             >
               <span>Category: {{ getCategoryName(tableFilters.category_id) || 'All' }}</span>
               <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,9 +135,9 @@
               </svg>
             </button>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-              <div v-show="dropdownOpen.category" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
-                <div @click="selectCategory('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer font-medium">All Categories</div>
-                <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer font-medium">
+              <div v-show="dropdownOpen.category" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
+                <div @click="selectCategory('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">All Categories</div>
+                <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">
                   {{ category.name }}
                 </div>
               </div>
@@ -148,7 +148,7 @@
           <div class="relative">
             <button
               @click.stop="toggleDropdown('price')"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
             >
               <span>Sort: {{ getPriceSortName(tableFilters.price_sort) }}</span>
               <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,10 +156,10 @@
               </svg>
             </button>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-              <div v-show="dropdownOpen.price" class="absolute left-0 mt-1.5 w-44 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-xl py-1 z-50">
-                <div @click="selectPriceSort('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer font-medium">Default Sort</div>
-                <div @click="selectPriceSort('asc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer font-semibold">Price: Low to High</div>
-                <div @click="selectPriceSort('desc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer font-semibold">Price: High to Low</div>
+              <div v-show="dropdownOpen.price" class="absolute left-0 mt-1.5 w-44 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50">
+                <div @click="selectPriceSort('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">Default Sort</div>
+                <div @click="selectPriceSort('asc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: Low to High</div>
+                <div @click="selectPriceSort('desc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: High to Low</div>
               </div>
             </transition>
           </div>
@@ -167,7 +167,7 @@
           <!-- On sale toggle chip -->
           <button
             @click="toggleOnSaleFilter"
-            :class="tableFilters.on_sale ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-350 hover:bg-gray-50 dark:hover:bg-slate-800'"
+            :class="tableFilters.on_sale ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
           >
             <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.on_sale ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
@@ -177,17 +177,17 @@
         </div>
 
         <!-- Custom Products Data Table -->
-        <div class="bg-white dark:bg-slate-900/40 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm mb-8">
+        <div class="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden shadow-sm mb-8">
           <div class="w-full overflow-x-auto">
             <table class="w-full min-w-max table-auto align-middle">
               <thead>
-                <tr class="border-b border-gray-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">
+                <tr class="border-b border-gray-100 dark:border-[#2E2E2E] bg-slate-50/50 dark:bg-[#252525] text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">
                   <th class="px-6 py-3.5 w-12 text-center">
                     <input
                       type="checkbox"
                       :checked="isAllSelected"
                       @change="toggleSelectAll"
-                      class="w-4 h-4 text-emerald-600 border border-gray-300 dark:border-slate-800 dark:bg-slate-900 focus:ring-0 rounded-none cursor-pointer"
+                      class="w-4 h-4 text-emerald-600 border border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] focus:ring-0 rounded-none cursor-pointer"
                     />
                   </th>
                   <th class="px-6 py-3.5 text-left font-bold">Item Name &amp; Description</th>
@@ -197,9 +197,9 @@
                   <th class="px-6 py-3.5 text-center font-bold">Price Matrix</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-slate-800/50">
+              <tbody class="divide-y divide-gray-100 dark:divide-[#2E2E2E]">
                 <!-- Loading State -->
-                <tr v-if="loading" class="dark:bg-slate-900/40">
+                <tr v-if="loading" class="dark:bg-[#1E1E1E]">
                   <td colspan="6" class="px-6 py-16 text-center text-gray-400">
                     <div class="flex justify-center items-center gap-2">
                       <svg class="animate-spin h-5 w-5 text-emerald-600" viewBox="0 0 24 24">
@@ -212,10 +212,10 @@
                 </tr>
 
                 <!-- Empty State -->
-                <tr v-else-if="products.length === 0" class="dark:bg-slate-900/40">
+                <tr v-else-if="products.length === 0" class="dark:bg-[#1E1E1E]">
                   <td colspan="6" class="px-6 py-20 text-center text-gray-500">
                     <div class="flex flex-col items-center max-w-sm mx-auto">
-                      <div class="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-slate-800 flex items-center justify-center mb-4 text-gray-400 dark:text-slate-500">
+                      <div class="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#252525] flex items-center justify-center mb-4 text-gray-400 dark:text-slate-500">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
@@ -227,14 +227,14 @@
                 </tr>
 
                 <!-- Data Rows -->
-                <tr v-else v-for="item in products" :key="item.id" class="group hover:bg-slate-50/20 dark:hover:bg-slate-800/40 dark:bg-slate-900/60 transition-colors relative">
+                <tr v-else v-for="item in products" :key="item.id" class="group hover:bg-slate-50/20 dark:hover:bg-[#2D2D2D]/80 dark:bg-transparent transition-colors relative">
                   <!-- Checkbox -->
                   <td class="px-6 py-4.5 sm:py-5 text-center align-middle">
                     <input
                       type="checkbox"
                       :value="item.id"
                       v-model="selectedProducts"
-                      class="w-4 h-4 text-emerald-600 border border-gray-300 dark:border-slate-800 dark:bg-slate-900 focus:ring-0 rounded-none cursor-pointer"
+                      class="w-4 h-4 text-emerald-600 border border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] focus:ring-0 rounded-none cursor-pointer"
                     />
                   </td>
 
@@ -242,7 +242,7 @@
                   <td class="px-6 py-4.5 sm:py-5 align-middle">
                     <div class="flex items-center gap-3">
                       <!-- Product Image Thumbnail -->
-                      <div class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-slate-800 overflow-hidden bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                      <div class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center">
                         <div v-if="Number(item.discount_value) > 0" class="absolute top-0 right-0 z-10 pointer-events-none select-none">
                           <div class="absolute transform rotate-45 bg-rose-600 text-white text-[6px] font-black uppercase text-center tracking-widest py-0.5 w-[50px] -right-[15px] top-[4px] shadow-xs border-b border-white/20">Sale</div>
                         </div>
@@ -275,7 +275,7 @@
                   <!-- SKU -->
                   <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
                     <div v-if="item.variations && item.variations.length > 0" class="flex flex-col items-center gap-0.5">
-                      <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-900/60 text-slate-650 dark:text-slate-400 border border-slate-200/60 dark:border-slate-800 uppercase">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-650 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase">
                         {{ item.variations[0].sku || '-' }}
                       </span>
                       <span 
@@ -285,7 +285,7 @@
                         +{{ item.variations.length - 1 }} more
                       </span>
                     </div>
-                    <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-900/60 text-slate-650 dark:text-slate-400 border border-slate-200/60 dark:border-slate-800 uppercase">
+                    <span v-else class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-650 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase">
                       {{ item.sku || '-' }}
                     </span>
                   </td>
@@ -318,26 +318,26 @@
                     </div>
 
                     <!-- Floating Actions (Revealed on Row Hover) -->
-                    <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/95 dark:bg-slate-800/95 shadow-md dark:shadow-slate-950/50 border border-gray-100 dark:border-slate-700 rounded-lg p-1.5 z-30"
+                    <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/95 dark:bg-[#1E1E1E]/95 shadow-md dark:shadow-slate-950/50 border border-gray-100 dark:border-[#2E2E2E] rounded-lg p-1.5 z-30"
                          style="right: 18%; top: 50%; transform: translateY(-55%);">
                       <div class="flex items-center space-x-1.5">
                         <button
                           @click="viewProduct(item)"
-                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
+                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
                           title="View"
                         >
                           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                         </button>
                         <button
                           @click="editProduct(item)"
-                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
+                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
                           title="Update"
                         >
                           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         </button>
                         <button
                           @click="deleteProduct(item)"
-                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
+                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
                           title="Delete"
                         >
                           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -351,7 +351,7 @@
           </div>
 
           <!-- Pagination Footer -->
-          <div v-if="tablePagination && !loading" class="px-6 py-4 bg-white dark:bg-slate-900/40 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div v-if="tablePagination && !loading" class="px-6 py-4 bg-white dark:bg-[#1E1E1E] border-t border-gray-100 dark:border-[#2E2E2E] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div class="text-xs text-gray-500 dark:text-slate-400 font-semibold">
               Showing {{ tablePagination.from || 0 }} to {{ tablePagination.to || 0 }} of {{ tablePagination.total || 0 }} results
             </div>
@@ -361,14 +361,14 @@
               <button
                 @click="goToPage(1)"
                 :disabled="tablePagination.current_page === 1"
-                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-450 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-[#2E2E2E] text-xs font-semibold text-gray-500 dark:text-slate-400 bg-white dark:bg-[#1E1E1E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 First
               </button>
               <button
                 @click="goToPage(tablePagination.current_page - 1)"
                 :disabled="tablePagination.current_page === 1"
-                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-450 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-[#2E2E2E] text-xs font-semibold text-gray-500 dark:text-slate-400 bg-white dark:bg-[#1E1E1E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Prev
               </button>
@@ -381,7 +381,7 @@
                   'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                   page === tablePagination.current_page
                     ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800'
+                    : 'border border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-400 bg-white dark:bg-[#1E1E1E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'
                 ]"
               >
                 {{ page }}
@@ -390,14 +390,14 @@
               <button
                 @click="goToPage(tablePagination.current_page + 1)"
                 :disabled="tablePagination.current_page === tablePagination.last_page"
-                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-450 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-[#2E2E2E] text-xs font-semibold text-gray-500 dark:text-slate-450 bg-white dark:bg-[#1E1E1E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
               </button>
               <button
                 @click="goToPage(tablePagination.last_page)"
                 :disabled="tablePagination.current_page === tablePagination.last_page"
-                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-450 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                class="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-[#2E2E2E] text-xs font-semibold text-gray-500 dark:text-slate-450 bg-white dark:bg-[#1E1E1E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Last
               </button>
