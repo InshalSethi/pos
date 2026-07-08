@@ -16,13 +16,13 @@
 /* Base tailwind v4 color overrides for dark mode */
 html.dark {
     color-scheme: dark;
-    --color-white: #1f2937;
+    --color-white: #1E1E1E;
     --color-black: #f9fafb;
     
     /* Gray */
-    --color-gray-50: #111827;
-    --color-gray-100: #1f2937;
-    --color-gray-200: #374151;
+    --color-gray-50: #121212;
+    --color-gray-100: #1E1E1E;
+    --color-gray-200: #2E2E2E;
     --color-gray-300: #4b5563;
     --color-gray-400: #6b7280;
     --color-gray-500: #9ca3af;

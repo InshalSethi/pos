@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-slate-950 min-h-screen font-sans">
+  <div class="w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-[#121212] min-h-screen font-sans">
     <div class="w-full max-w-7xl mx-auto">
       
       <!-- HEADER SECTION -->

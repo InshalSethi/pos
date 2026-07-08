@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 dark:bg-slate-950">
+  <div class="min-h-screen bg-gray-100 dark:bg-[#121212]">
     <!-- Sidebar -->
     <div
       :class="[
@@ -18,7 +18,10 @@
               type="button"
               @click="showLogoLightbox = true"
               :class="[
-                'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold text-lg shadow-md border border-white/10 hover:scale-105 active:scale-95 transition-all duration-150 cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 group',
+                'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-sm transition-all duration-150 cursor-zoom-in focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-350 dark:focus-visible:ring-slate-700 hover:scale-105 active:scale-95 group',
+                activeCompany.company_logo 
+                  ? 'bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-neutral-800' 
+                  : 'bg-gradient-to-tr from-indigo-600 to-purple-500 text-white border border-white/10 font-bold text-lg',
                 sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
               ]"
               :title="'Preview ' + activeCompany.company_name + ' logo'"
