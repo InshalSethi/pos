@@ -6,7 +6,7 @@
     
     <div class="relative group">
       <ListboxButton
-        class="relative w-full pl-3 pr-10 py-2 text-left bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer focus:outline-none focus:ring-0 focus:border-slate-300 transition-all duration-300 font-medium text-sm text-gray-700 shadow-inner group-hover:bg-white"
+        class="relative w-full pl-3 pr-10 py-2 text-left bg-gray-50/50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl cursor-pointer focus:outline-none focus:ring-0 focus:border-slate-300 dark:focus:border-slate-700 transition-all duration-300 font-medium text-sm text-gray-700 dark:text-slate-300 shadow-inner group-hover:bg-white dark:group-hover:bg-slate-850"
         :class="[
           focusColor || 'focus:border-slate-300', 
           error ? 'border-red-300 ring-red-500' : '',
@@ -19,14 +19,14 @@
         <span class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none">
           <svg 
             class="w-5 h-5 text-gray-400 transition-all duration-300 group-hover:scale-110" 
-            :class="iconColor || 'group-hover:text-slate-600'"
+            :class="iconColor || 'group-hover:text-slate-600 dark:group-hover:text-slate-400'"
             fill="none" stroke="currentColor" viewBox="0 0 24 24"
           >
             <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
           </svg>
         </span>
       </ListboxButton>
-
+  
       <transition
         leave-active-class="transition duration-100 ease-in"
         leave-from-class="opacity-100 scale-100"
@@ -36,7 +36,7 @@
         enter-to-class="opacity-100 scale-100 translate-y-0"
       >
         <ListboxOptions
-          class="absolute left-0 z-30 w-full min-w-full max-h-64 overflow-auto bg-white border border-slate-200/80 shadow-lg rounded-xl p-1 focus:outline-none custom-scrollbar"
+          class="absolute left-0 z-30 w-full min-w-full max-h-64 overflow-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl p-1 focus:outline-none custom-scrollbar"
           :class="dropup ? 'bottom-full mb-1' : 'top-full mt-1'"
         >
           <ListboxOption
@@ -48,13 +48,13 @@
           >
             <li
               :class="[
-                active ? 'bg-indigo-50 text-indigo-900' : (option.value === 'add_new_category' ? 'text-indigo-600' : 'text-gray-700'),
-                option.value === 'add_new_category' ? 'font-bold border-t border-slate-100 mt-1' : '',
+                active ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-300' : (option.value === 'add_new_category' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'),
+                option.value === 'add_new_category' ? 'font-bold border-t border-slate-100 dark:border-slate-800 mt-1' : '',
                 'relative cursor-pointer select-none px-3 py-1.5 text-sm rounded-lg transition-all duration-200 font-medium'
               ]"
             >
               <div class="flex items-center justify-between gap-4">
-                <span :class="[isSelected ? 'text-indigo-600 translate-x-1' : '', 'block whitespace-nowrap transition-transform duration-300']">
+                <span :class="[isSelected ? 'text-indigo-600 dark:text-indigo-450 translate-x-1' : '', 'block whitespace-nowrap transition-transform duration-300']">
                   {{ option.label }}
                 </span>
                 <span v-if="isSelected" :class="[active ? 'text-indigo-600' : 'text-indigo-500', 'flex items-center shrink-0']">
