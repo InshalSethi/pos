@@ -3402,3 +3402,40 @@ const closeRowTagDropdownOnOutsideClick = (e) => {
   display: none;
 }
 </style>
+
+<style>
+/* Dark theme overrides for perfect contrast and readability */
+.dark label {
+  color: #ffffff !important; /* Make all labels white in dark theme */
+}
+
+.dark .dark\:text-slate-500 {
+  color: #e2e8f0 !important; /* Make labels / text that use slate-500 white/light-slate */
+}
+
+.dark .dark\:text-slate-400 {
+  color: #f1f5f9 !important; /* Make checkbox labels / text that use slate-400 near-white */
+}
+
+.dark .dark\:text-slate-350 {
+  color: #f8fafc !important; /* Make text using slate-350 white */
+}
+
+.dark .dark\:text-slate-300 {
+  color: #ffffff !important; /* Make input values / text using slate-300 white */
+}
+
+.dark .dark\:text-slate-200 {
+  color: #ffffff !important; /* Make section titles / text using slate-200 white */
+}
+
+.dark .dark\:text-slate-550 {
+  color: #cbd5e1 !important; /* Make placeholders using slate-550 light slate so they are visible */
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: #ffffff !important; /* Force all user-input text to be white in dark mode */
+}
+</style>
