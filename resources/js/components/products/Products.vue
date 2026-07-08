@@ -413,9 +413,9 @@
          @click.self="isDraftsModalOpen = false"
          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md">
         
-        <div class="w-full max-w-5xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 rounded-[28px] p-6 shadow-2xl flex flex-col max-h-[85vh] transition-all">
+        <div class="w-full max-w-5xl bg-white dark:bg-[#1E1E1E] border border-slate-200/80 dark:border-[#2E2E2E]/80 rounded-[28px] p-6 shadow-2xl flex flex-col max-h-[85vh] transition-all">
             
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/60 pb-4 mb-5 px-1">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E]/60 pb-4 mb-5 px-1">
                 <div class="flex flex-col space-y-0.5">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-zinc-500">
                         Incomplete Items Workbench
@@ -439,7 +439,7 @@
                         <span class="text-xs font-black tracking-wide">{{ selectedDraftIds.length }}</span>
                     </button>
 
-                    <span v-show="selectedDraftIds.length > 0" class="w-[1px] h-4 bg-slate-200 dark:bg-zinc-800"></span>
+                    <span v-show="selectedDraftIds.length > 0" class="w-[1px] h-4 bg-slate-200 dark:bg-[#252525]"></span>
 
                     <button type="button" 
                             @click="isDraftsModalOpen = false" 
@@ -449,10 +449,10 @@
                 </div>
             </div>
 
-            <div class="w-full overflow-y-auto border border-slate-200/70 dark:border-zinc-800/80 rounded-2xl overflow-x-auto shadow-inner bg-slate-50/20 dark:bg-zinc-950/20 custom-scrollbar">
-                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
+            <div class="w-full overflow-y-auto border border-slate-200/70 dark:border-[#2E2E2E]/80 rounded-2xl overflow-x-auto shadow-inner bg-slate-50/20 dark:bg-zinc-950/20 custom-scrollbar">
+                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-[#2E2E2E]/60 text-xs">
                     
-                    <thead class="bg-slate-50/80 dark:bg-zinc-800/50 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10 backdrop-blur-xs">
+                    <thead class="bg-slate-50/80 dark:bg-[#252525]/50 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10 backdrop-blur-xs">
                         <tr>
                             <th class="px-4 py-3.5 text-center w-12">
                                 <input type="checkbox" 
@@ -469,7 +469,7 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/40 text-[11px] bg-white dark:bg-zinc-900">
+                    <tbody class="divide-y divide-slate-100 dark:divide-[#2E2E2E]/40 text-[11px] bg-white dark:bg-[#1E1E1E]">
                         <tr v-if="isLoadingDrafts">
                             <td colspan="7" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">Fetching compiled draft lots...</td>
                         </tr>
@@ -479,7 +479,7 @@
                         </tr>
 
                         <tr v-else v-for="draft in draftProducts" :key="draft.id"
-                            :class="selectedDraftIds.includes(draft.id) ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/30'" 
+                            :class="selectedDraftIds.includes(draft.id) ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-[#2D2D2D]/30'" 
                             class="transition-colors duration-150">
                             
                             <td class="px-4 py-3.5 align-middle text-center">
@@ -491,7 +491,7 @@
 
                             <td class="px-4 py-3.5 align-middle text-xs">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-zinc-950 flex-shrink-0 flex items-center justify-center border border-slate-200/60 dark:border-zinc-800 overflow-hidden shadow-xs">
+                                    <div class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-zinc-950 flex-shrink-0 flex items-center justify-center border border-slate-200/60 dark:border-[#2E2E2E] overflow-hidden shadow-xs">
                                         <img v-if="draft.image || draft.image_path || draft.thumbnail || draft.logo" :src="draft.image || draft.image_path || draft.thumbnail || draft.logo" class="w-full h-full object-cover">
                                         <div v-else class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-[11px]">
                                             <span>{{ draft.name ? draft.name.charAt(0).toUpperCase() : 'P' }}</span>
@@ -509,7 +509,7 @@
                             <td class="px-4 py-3.5 align-middle text-center">
                                 <div class="flex justify-center items-center gap-1 flex-wrap max-w-[130px] mx-auto">
                                     <template v-if="draft.tags && draft.tags.length > 0">
-                                        <span v-for="(tag, i) in draft.tags" :key="i" class="text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 px-1.5 py-0.5 rounded-md">
+                                        <span v-for="(tag, i) in draft.tags" :key="i" class="text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-[#252525] dark:text-zinc-400 px-1.5 py-0.5 rounded-md">
                                             #{{ typeof tag === 'object' ? tag.name : tag }}
                                         </span>
                                     </template>
@@ -551,7 +551,7 @@
             <div class="mt-5 flex justify-end px-1">
                 <button type="button" 
                         @click="isDraftsModalOpen = false" 
-                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-all shadow-xs focus:outline-none cursor-pointer">
+                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-[#252525] dark:text-zinc-200 dark:hover:bg-[#2D2D2D]/80 rounded-xl transition-all shadow-xs focus:outline-none cursor-pointer">
                     Dismiss Workbench
                 </button>
             </div>
@@ -976,9 +976,9 @@
     <!-- Variations Modal -->
     <div v-if="showVariationsModal && selectedVariationsProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <div class="absolute inset-0" @click="showVariationsModal = false"></div>
-        <div class="relative w-full max-w-6xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="relative w-full max-w-6xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
             
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3 mb-4">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E] pb-3 mb-4">
                 <div>
                     <span class="text-[10px] font-black uppercase text-indigo-600 tracking-wider">Product Variations View</span>
                     <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">{{ selectedVariationsProduct.name }}</h3>
@@ -986,30 +986,30 @@
                 <button type="button" @click="showVariationsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-bold text-lg focus:outline-none">&times;</button>
             </div>
 
-            <div class="w-full overflow-y-auto border border-slate-200/60 dark:border-zinc-800 rounded-xl overflow-x-auto shadow-inner custom-scrollbar">
-                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
-                    <thead class="bg-slate-50 dark:bg-zinc-800/40 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10">
+            <div class="w-full overflow-y-auto border border-slate-200/60 dark:border-[#2E2E2E] rounded-xl overflow-x-auto shadow-inner custom-scrollbar">
+                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-[#2E2E2E] text-xs">
+                    <thead class="bg-slate-50 dark:bg-[#252525]/40 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10">
                         <tr>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Variant Combination</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">SKU Code</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Barcode</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Cost Price</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Retail Price</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Wholesale Price</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Sale Price</th>
-                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Tax Rate</th>
-                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Current Stock</th>
-                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Min Alert</th>
-                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-zinc-800/40">Unit</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Batch Number</th>
-                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-zinc-800/40">Expiry Date</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Variant Combination</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">SKU Code</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Barcode</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Cost Price</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Retail Price</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Wholesale Price</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Sale Price</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-[#252525]/40">Tax Rate</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-[#252525]/40">Current Stock</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-[#252525]/40">Min Alert</th>
+                            <th class="px-4 py-2.5 text-center bg-slate-50 dark:bg-[#252525]/40">Unit</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Batch Number</th>
+                            <th class="px-4 py-2.5 text-left bg-slate-50 dark:bg-[#252525]/40">Expiry Date</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-[11px]">
+                    <tbody class="divide-y divide-slate-100 dark:divide-[#2E2E2E]/60 text-[11px]">
                         <tr v-if="!selectedVariationsProduct.variations || selectedVariationsProduct.variations.length === 0">
                             <td colspan="13" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">No variations found.</td>
                         </tr>
-                        <tr v-else v-for="(variant, idx) in selectedVariationsProduct.variations" :key="idx" class="hover:bg-slate-50/60 dark:hover:bg-zinc-800/30 transition-colors">
+                        <tr v-else v-for="(variant, idx) in selectedVariationsProduct.variations" :key="idx" class="hover:bg-slate-50/60 dark:hover:bg-[#2D2D2D]/30 transition-colors">
                             <!-- Variant Combination -->
                             <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-zinc-200">{{ variant.name_string || variant.variation_name_string || variant.combination_key || '-' }}</td>
                             
@@ -1078,7 +1078,7 @@
             </div>
 
             <div class="mt-4 flex justify-end">
-                <button type="button" @click="showVariationsModal = false" class="px-4 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 rounded-xl transition-all">Close View</button>
+                <button type="button" @click="showVariationsModal = false" class="px-4 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-[#252525] dark:text-zinc-200 rounded-xl transition-all">Close View</button>
             </div>
         </div>
     </div>

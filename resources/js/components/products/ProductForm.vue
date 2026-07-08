@@ -1,10 +1,10 @@
 <template>
   <div class="w-full bg-slate-50 dark:bg-zinc-950 font-sans text-slate-750 dark:text-slate-350 min-h-screen">
     <!-- Sticky Header -->
-    <div class="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.02)] z-30 w-full">
+    <div class="sticky top-0 bg-white dark:bg-[#1E1E1E] border-b border-slate-100 dark:border-[#2E2E2E] shadow-[0_1px_3px_rgba(0,0,0,0.02)] z-30 w-full">
       <div class="px-4 py-3 w-full max-w-7xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <button @click="$router.back()" type="button" class="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
+          <button @click="$router.back()" type="button" class="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-500 dark:text-slate-400 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
           <div class="flex items-center gap-2">
@@ -19,7 +19,7 @@
         </div>
         <div class="flex items-center gap-2">
           <span v-if="form.status === 'active'" class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/40">Active</span>
-          <span v-else class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-350 border-gray-300 dark:border-slate-700">Draft</span>
+          <span v-else class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-gray-100 dark:bg-[#252525] text-gray-700 dark:text-slate-350 border-gray-300 dark:border-slate-700">Draft</span>
         </div>
       </div>
     </div>
@@ -31,7 +31,7 @@
           
           <!-- 1. GENERAL SECTION -->
           <div class="space-y-3">
-            <div class="border-b border-gray-200 dark:border-slate-800 pb-2 mb-3 flex items-center justify-between">
+            <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-2 mb-3 flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">General</h2>
                 <!-- Elegant Inline Toggle Switcher -->
@@ -41,7 +41,7 @@
                     type="button" 
                     @click="toggleStatus"
                     class="relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                    :class="form.status === 'active' ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-800'"
+                    :class="form.status === 'active' ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-[#252525]'"
                   >
                     <span 
                       class="pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
@@ -66,7 +66,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                         Enter the full descriptive name of the product or item.
                         <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                       </span>
@@ -75,7 +75,7 @@
                   <input 
                     v-model="form.name" 
                     type="text" 
-                    class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
+                    class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
                     required
                   />
                 </div>
@@ -92,7 +92,7 @@
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                           Select one or more categories to classify this product.
                           <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                         </span>
@@ -101,12 +101,12 @@
                     <div class="relative" id="category-multiselect-container">
                       <div 
                         @click="showCategoryDropdown = !showCategoryDropdown"
-                        class="w-full min-h-[34px] px-3 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
+                        class="w-full min-h-[34px] px-3 py-1 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
                       >
                         <div 
                           v-for="catId in form.category_ids" 
                           :key="catId" 
-                          class="bg-slate-800 dark:bg-slate-950 text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-slate-850 rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
+                          class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
                         >
                           <span>{{ getCategoryLabel(catId) }}</span>
                           <button type="button" @click.stop="removeCategory(catId)" class="hover:text-red-350 font-bold focus:outline-none">&times;</button>
@@ -119,12 +119,12 @@
                       </div>
  
                       <!-- Dropdown Menu -->
-                      <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                      <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
                         <div 
                           v-for="opt in categoryOptions" 
                           :key="opt.value"
                           @click="toggleCategorySelection(opt.value)"
-                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg flex items-center justify-between"
+                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
                         >
                           <span :class="form.category_ids.includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ opt.label }}</span>
                           <span v-if="form.category_ids.includes(opt.value)" class="text-indigo-600 dark:text-indigo-450">
@@ -145,7 +145,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                         Add tags to help search, filter, and organize products easily.
                         <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                       </span>
@@ -154,7 +154,7 @@
                   <div class="relative" id="tag-multiselect-container">
                     <div 
                       @click="showTagDropdown = !showTagDropdown"
-                      class="w-full min-h-[34px] px-3 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
+                      class="w-full min-h-[34px] px-3 py-1 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
                     >
                       <div 
                         v-for="tagName in (form.tags || [])" 
@@ -172,14 +172,14 @@
                     </div>
  
                     <!-- Dropdown Menu -->
-                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
                       <!-- Scrollable List of Options -->
                       <div class="overflow-y-auto max-h-44 custom-scrollbar">
                         <div 
                           v-for="opt in tagOptions" 
                           :key="opt.value"
                           @click="toggleTagSelection(opt.value)"
-                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg flex items-center justify-between"
+                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
                         >
                           <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-350'">{{ opt.label }}</span>
                           <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-455">
@@ -194,12 +194,12 @@
                       </div>
  
                       <!-- Inline Creation Footer -->
-                      <div class="border-t border-slate-100 dark:border-slate-800 mt-1 p-1 bg-white dark:bg-slate-900">
+                      <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1 p-1 bg-white dark:bg-[#1E1E1E]">
                         <button 
                           v-if="!showInlineCreateTag" 
                           type="button"
                           @click.stop="startInlineTagCreate" 
-                          class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-650 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
+                          class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-650 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-[#2D2D2D]/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
@@ -214,7 +214,7 @@
                             @keydown.esc="cancelInlineTagCreate"
                             type="text" 
                             placeholder="Enter tag name..."
-                            class="flex-1 px-2 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-slate-350 focus:bg-white dark:focus:bg-slate-900 rounded-lg text-xs font-semibold outline-none transition-all text-slate-800 dark:text-slate-300"
+                            class="flex-1 px-2 py-1 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] focus:border-slate-350 focus:bg-white dark:focus:bg-slate-900 rounded-lg text-xs font-semibold outline-none transition-all text-slate-800 dark:text-slate-300"
                           />
                           <button 
                             @click="submitInlineTag"
@@ -229,7 +229,7 @@
                           <button 
                             @click="cancelInlineTagCreate"
                             type="button"
-                            class="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all focus:outline-none"
+                            class="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 rounded transition-all focus:outline-none"
                             title="Cancel"
                           >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +254,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       Upload up to 8 images. Crop, rotate, zoom, and select the primary image.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -262,7 +262,7 @@
                 </label>
                 <div class="space-y-2">
                   <!-- Single Image Container -->
-                  <div v-if="productImages.length > 0" class="relative border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden h-32 group bg-slate-50/50 dark:bg-slate-900/20 flex items-center justify-center">
+                  <div v-if="productImages.length > 0" class="relative border border-slate-200 dark:border-[#2E2E2E] rounded-lg overflow-hidden h-32 group bg-slate-50/50 dark:bg-[#1E1E1E]/20 flex items-center justify-center">
                     <img :src="productImages[primaryImageIndex]?.preview || productImages[0]?.preview" class="w-full h-full object-cover">
                     
                     <!-- Overlay Badge for Multiple Images -->
@@ -309,7 +309,7 @@
                   <div 
                     v-if="productImages.length === 0"
                     @click="$refs.imageInputRef.click()" 
-                    class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-lg p-4 h-32 bg-slate-50/50 dark:bg-slate-900/25 hover:bg-slate-55 dark:hover:bg-slate-900/40 hover:border-slate-350 dark:hover:border-slate-700 transition-all cursor-pointer"
+                    class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-[#2E2E2E] rounded-lg p-4 h-32 bg-slate-50/50 dark:bg-[#1E1E1E]/25 hover:bg-slate-55 dark:hover:bg-slate-900/40 hover:border-slate-350 dark:hover:border-slate-700 transition-all cursor-pointer"
                   >
                     <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -333,38 +333,38 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                     <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
-                  <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                  <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                     Provide a detailed overview of the product specifications and benefits.
                     <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                   </span>
                 </span>
               </label>
-              <textarea v-model="form.description" rows="3" class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-550 outline-none resize-none h-20" placeholder="Enter description..."></textarea>
+              <textarea v-model="form.description" rows="3" class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-550 outline-none resize-none h-20" placeholder="Enter description..."></textarea>
             </div>
           </div>
  
           <!-- 2. BILLING SECTION -->
-          <div v-show="!form.has_variations" class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 mt-4">
-            <div class="border-b border-gray-200 dark:border-slate-800 pb-2 mb-3">
+          <div v-show="!form.has_variations" class="space-y-3 pt-3 border-t border-slate-100 dark:border-[#2E2E2E] mt-4">
+            <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-2 mb-3">
               <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">Billing</h2>
             </div>
 
             <!-- Inline Activation Block Checkboxes -->
             <div class="flex items-center gap-5 mb-3">
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.enabled_for_sale" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.enabled_for_sale" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Sale Information
               </label>
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.enabled_for_purchase" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.enabled_for_purchase" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Purchase Information
               </label>
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.enabled_for_wholesale" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.enabled_for_wholesale" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Wholesale Information
               </label>
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.enabled_for_tax" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.enabled_for_tax" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Tax
               </label>
             </div>
@@ -380,7 +380,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       The standard retail selling price offered to consumers.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -391,7 +391,7 @@
                   step="0.01" 
                   v-model="form.selling_price" 
                   :disabled="!form.enabled_for_sale || form.has_variations"
-                  :class="(!form.enabled_for_sale || form.has_variations) ? 'bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-850 text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
+                  :class="(!form.enabled_for_sale || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
                   class="w-full px-3 py-1.5 rounded-md text-sm font-medium transition-all outline-none border" 
                   :required="form.enabled_for_sale && !form.has_variations"
                 />
@@ -405,7 +405,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       The cost price paid to acquire or manufacture the item.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -416,7 +416,7 @@
                   step="0.01" 
                   v-model="form.cost_price" 
                   :disabled="!form.enabled_for_purchase || form.has_variations"
-                  :class="(!form.enabled_for_purchase || form.has_variations) ? 'bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-850 text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
+                  :class="(!form.enabled_for_purchase || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
                   class="w-full px-3 py-1.5 rounded-md text-sm font-medium transition-all outline-none border"
                   :required="form.enabled_for_purchase && !form.has_variations"
                 />
@@ -430,7 +430,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       The bulk purchase price offered to business-to-business clients.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -441,7 +441,7 @@
                   step="0.01" 
                   v-model="form.wholesale_price" 
                   :disabled="!form.enabled_for_wholesale || form.has_variations"
-                  :class="(!form.enabled_for_wholesale || form.has_variations) ? 'bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-850 text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
+                  :class="(!form.enabled_for_wholesale || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
                   class="w-full px-3 py-1.5 rounded-md text-sm font-medium transition-all outline-none border"
                   :required="form.enabled_for_wholesale && !form.has_variations"
                 />
@@ -455,7 +455,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       Select applicable tax rates to apply during transaction billing.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -464,14 +464,14 @@
                 <div class="relative" id="tax-multiselect-container">
                   <div 
                     @click="!form.has_variations && (showTaxDropdown = !showTaxDropdown)"
-                    :class="(!form.enabled_for_tax || form.has_variations) ? 'bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-850 text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 cursor-pointer'"
+                    :class="(!form.enabled_for_tax || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 cursor-pointer'"
                     class="w-full min-h-[34px] px-3 py-1 border rounded-md text-sm font-medium transition-all outline-none flex flex-wrap items-center gap-1 pr-8"
                   >
                     <div 
                       @click.stop
                       v-for="taxId in (form.taxes || [])" 
                       :key="taxId" 
-                      class="bg-slate-800 dark:bg-slate-950 text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-slate-850 rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
+                      class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
                     >
                       <span>{{ getTaxLabel(taxId) }}</span>
                       <button v-if="!form.has_variations" type="button" @click.stop="removeTax(taxId)" class="hover:text-red-350 font-bold focus:outline-none">&times;</button>
@@ -484,12 +484,12 @@
                   </div>
 
                   <!-- Dropdown Menu -->
-                  <div v-if="showTaxDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                  <div v-if="showTaxDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
                     <div 
                       v-for="opt in taxOptions" 
                       :key="opt.value"
                       @click="toggleTaxSelection(opt.value)"
-                      class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg flex items-center justify-between"
+                      class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
                     >
                       <span :class="(form.taxes || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ opt.label }}</span>
                       <span v-if="(form.taxes || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-455">
@@ -503,23 +503,23 @@
           </div>
 
           <!-- 3. INVENTORY SECTION -->
-          <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 mt-4">
-            <div class="border-b border-gray-200 dark:border-slate-800 pb-2 mb-3">
+          <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-[#2E2E2E] mt-4">
+            <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-2 mb-3">
               <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">Inventory</h2>
             </div>
 
             <!-- Toggles Flex Row -->
             <div class="flex flex-wrap items-center gap-5 mb-3">
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.is_returnable" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.is_returnable" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Returnable Item
               </label>
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.track_inventory" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.track_inventory" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Track Inventory
               </label>
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.has_variations" class="rounded border-gray-300 dark:border-slate-800 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                <input type="checkbox" v-model="form.has_variations" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Add Variants
               </label>
             </div>
@@ -535,7 +535,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       Enter a unique Stock Keeping Unit code for tracking inventory.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -544,7 +544,7 @@
                 <input 
                   v-model="form.sku" 
                   type="text" 
-                  class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
+                  class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
                   placeholder="SKU"
                 />
               </div>
@@ -557,7 +557,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       Select the standard unit of measurement (e.g. Pcs, Kgs).
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -574,7 +574,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       Enter the scanner barcode or UPC/EAN code for the item.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -583,16 +583,16 @@
                 <input 
                   v-model="form.barcode" 
                   type="text" 
-                  class="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
+                  class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
                   placeholder="Barcode"
                 />
               </div>
             </div>
 
             <!-- Assign Warehouse & Stock Quantity Selection -->
-            <div v-show="form.track_inventory && !form.has_variations" class="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+            <div v-show="form.track_inventory && !form.has_variations" class="mt-4 border-t border-slate-100 dark:border-[#2E2E2E] pt-3">
               <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Inventory Stock & Location</h3>
-              <div class="space-y-3 bg-slate-50 dark:bg-slate-900/20 p-3 rounded-lg border border-slate-200/50 dark:border-slate-800/80">
+              <div class="space-y-3 bg-slate-50 dark:bg-[#1E1E1E]/20 p-3 rounded-lg border border-slate-200/50 dark:border-[#2E2E2E]/80">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
                     Assign Warehouse(s)
@@ -602,7 +602,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                         Select one or more warehouses where this item is physically stored.
                         <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                       </span>
@@ -613,13 +613,13 @@
                       type="button"
                       @click="!form.has_variations && (showWhDropdown = !showWhDropdown)"
                       :disabled="form.has_variations"
-                      :class="form.has_variations ? 'bg-gray-50 dark:bg-slate-900/50 border-gray-200 dark:border-slate-850 text-gray-400 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 cursor-pointer'"
+                      :class="form.has_variations ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-400 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 cursor-pointer'"
                       class="w-full min-h-[34px] px-3 py-1 border rounded-md text-sm font-medium transition-all outline-none flex flex-wrap items-center gap-1 pr-8 text-left"
                     >
                       <div 
                         v-for="whId in (form.warehouse_ids || [])" 
                         :key="whId" 
-                        class="bg-slate-800 dark:bg-slate-950 text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-slate-850 rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
+                        class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
                       >
                         <span>{{ getRowWarehouseLabel([whId]) }}</span>
                         <button type="button" @click.stop="toggleTopWarehouseSelection(whId)" class="hover:text-red-350 font-bold focus:outline-none">&times;</button>
@@ -632,12 +632,12 @@
                     </button>
 
                     <!-- Dropdown Menu -->
-                    <div v-if="showWhDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                    <div v-if="showWhDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
                       <div 
                         v-for="opt in warehouseOptions" 
                         :key="opt.value"
                         @click="toggleTopWarehouseSelection(opt.value)"
-                        class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg flex items-center justify-between"
+                        class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
                       >
                         <span :class="(form.warehouse_ids || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-350'">{{ opt.label }}</span>
                         <span v-if="(form.warehouse_ids || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-455">
@@ -658,14 +658,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                         Allocate the initial stock quantities and reorder thresholds.
                         <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                       </span>
                     </span>
                   </label>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div v-for="wh in warehouses" :key="wh.id" class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-850 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+                    <div v-for="wh in warehouses" :key="wh.id" class="p-3 bg-white dark:bg-[#1E1E1E] rounded-lg border border-slate-200 dark:border-[#2E2E2E] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
                       <div class="flex-1 min-w-0">
                         <span class="text-xs font-bold text-slate-700 dark:text-slate-300 truncate block">{{ wh.name }}</span>
                         <span class="text-[9px] text-slate-400 dark:text-slate-500 font-medium">Configure inventory quantities</span>
@@ -678,7 +678,7 @@
                             v-model.number="wh.opening_stock"
                             min="0"
                             placeholder="0"
-                            class="w-full px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-md text-xs font-bold text-slate-800 dark:text-slate-350 focus:outline-none"
+                            class="w-full px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-md text-xs font-bold text-slate-800 dark:text-slate-350 focus:outline-none"
                           />
                         </div>
                         <div class="w-28">
@@ -688,7 +688,7 @@
                             v-model.number="wh.reorder_level"
                             min="0"
                             placeholder="0"
-                            class="w-full px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-md text-xs font-bold text-slate-800 dark:text-slate-350 focus:outline-none"
+                            class="w-full px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-md text-xs font-bold text-slate-800 dark:text-slate-350 focus:outline-none"
                           />
                         </div>
                       </div>
@@ -700,7 +700,7 @@
             </div>
 
             <!-- Dynamic Variation Config -->
-            <div v-show="isVariantMode" class="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 space-y-4">
+            <div v-show="isVariantMode" class="mt-4 border-t border-slate-100 dark:border-[#2E2E2E] pt-3 space-y-4">
               <div class="flex items-center justify-between">
                 <div>
                   <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Variations Configuration</h3>
@@ -718,7 +718,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-slate-900/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-800 text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
                       Select pre-created master attributes or type a new one to enable variations.
                       <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
                     </span>
@@ -726,12 +726,12 @@
                 </label>
                 <div 
                   @click="showMasterAttrDropdown = true"
-                  class="w-full min-h-[38px] px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium transition-all outline-none flex flex-wrap items-center gap-1.5 cursor-pointer pr-10 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 relative"
+                  class="w-full min-h-[38px] px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs font-medium transition-all outline-none flex flex-wrap items-center gap-1.5 cursor-pointer pr-10 focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 relative"
                 >
                   <div 
                     v-for="attr in attributes" 
                     :key="attr.name" 
-                    class="bg-slate-800 dark:bg-slate-950 text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-slate-850 rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold shadow-sm hover:bg-slate-700 dark:hover:bg-slate-900 transition-colors"
+                    class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold shadow-sm hover:bg-slate-700 dark:hover:bg-slate-900 transition-colors"
                   >
                     <span>{{ attr.name }}</span>
                     <button type="button" @click.stop="removeMasterAttribute(attr.name)" class="hover:text-red-350 font-bold focus:outline-none text-[14px] leading-none">&times;</button>
@@ -750,12 +750,12 @@
                 </div>
 
                 <!-- Dropdown Menu of suggestions -->
-                <div v-if="showMasterAttrDropdown" class="absolute z-50 left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-slate-950/80 rounded-xl max-h-56 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-top-2 duration-150 custom-scrollbar">
+                <div v-if="showMasterAttrDropdown" class="absolute z-50 left-0 right-0 mt-1.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 rounded-xl max-h-56 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-top-2 duration-150 custom-scrollbar">
                   <div 
                     v-for="sysAttr in getFilteredMasterAttributes()" 
                     :key="sysAttr.id"
                     @click="selectMasterAttribute(sysAttr)"
-                    class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg flex items-center justify-between text-slate-700 dark:text-slate-300 transition-colors"
+                    class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 rounded-lg flex items-center justify-between text-slate-700 dark:text-slate-300 transition-colors"
                   >
                     <span class="text-slate-800 dark:text-slate-250 font-medium">{{ sysAttr.name }}</span>
                     <span class="text-[9px] text-slate-400 dark:text-slate-500 truncate max-w-[60%]">{{ sysAttr.values.map(v => v.value).join(', ') }}</span>
@@ -771,7 +771,7 @@
                     No variations found
                   </div>
                   <!-- Create Variation option -->
-                  <div class="border-t border-slate-100 dark:border-slate-800 mt-1 pt-1">
+                  <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1 pt-1">
                     <div 
                       @click="openVariationModal"
                       class="px-3 py-2 text-xs font-bold cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg text-emerald-600 dark:text-emerald-450 transition-colors flex items-center gap-1.5"
@@ -789,12 +789,12 @@
                   <div class="flex flex-wrap items-center gap-3">
                     <h4 class="text-xs font-bold text-slate-650 dark:text-slate-400 uppercase tracking-wider">Variation Sourcing Matrix</h4>
                     
-                    <div class="flex items-center gap-3 bg-slate-55/65 dark:bg-slate-900/20 border border-slate-200/50 dark:border-slate-850 rounded-xl px-2.5 py-1">
+                    <div class="flex items-center gap-3 bg-slate-55/65 dark:bg-[#1E1E1E]/20 border border-slate-200/50 dark:border-[#2E2E2E] rounded-xl px-2.5 py-1">
                       <label class="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 dark:text-slate-450 uppercase tracking-wider cursor-pointer hover:text-slate-750 dark:hover:text-slate-350 transition-colors select-none">
                         <input 
                           type="checkbox" 
                           v-model="form.show_wholesale_price" 
-                          class="w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-800 dark:bg-slate-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          class="w-3.5 h-3.5 rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         />
                         Wholesale
                       </label>
@@ -803,19 +803,19 @@
                         <input 
                           type="checkbox" 
                           v-model="form.show_tax_rate" 
-                          class="w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-800 dark:bg-slate-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          class="w-3.5 h-3.5 rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         />
                         Tax Rates
                       </label>
                     </div>
                   </div>
-                  <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-slate-900/20 p-1.5 rounded-2xl border border-slate-200/45 dark:border-slate-850">
+                  <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-[#1E1E1E]/20 p-1.5 rounded-2xl border border-slate-200/45 dark:border-[#2E2E2E]">
                     <div v-for="(attr, aIdx) in attributes" :key="aIdx" class="flex flex-col relative" :id="`matrix-select-container-${aIdx}`">
                       <span class="text-[8px] font-black uppercase text-slate-400 dark:text-slate-500 px-1 mb-0.5">Select {{ attr.name }}</span>
                       <button 
                         type="button"
                         @click="toggleMatrixDropdown(aIdx)"
-                        class="min-w-[100px] max-w-[200px] h-[30px] px-2.5 py-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl text-xs font-semibold transition-all outline-none flex items-center justify-between gap-1.5 cursor-pointer pr-7 text-left relative"
+                        class="min-w-[100px] max-w-[200px] h-[30px] px-2.5 py-1 border border-slate-200 dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] rounded-xl text-xs font-semibold transition-all outline-none flex items-center justify-between gap-1.5 cursor-pointer pr-7 text-left relative"
                       >
                         <div class="truncate flex items-center gap-1 max-w-[85%]">
                           <span v-if="(!selectedCombo[attr.name] || selectedCombo[attr.name].length === 0)" class="text-slate-400 dark:text-slate-550 text-[11px]">Choose</span>
@@ -829,13 +829,13 @@
                       </button>
 
                       <!-- Dropdown Menu (Opens upward) -->
-                      <div v-if="activeMatrixDropdown === aIdx" class="absolute bottom-full mb-1.5 z-50 left-0 min-w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-slate-950/80 rounded-xl max-h-64 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-bottom-2 duration-100 custom-scrollbar">
+                      <div v-if="activeMatrixDropdown === aIdx" class="absolute bottom-full mb-1.5 z-50 left-0 min-w-[200px] bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 rounded-xl max-h-64 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-bottom-2 duration-100 custom-scrollbar">
                         <!-- Existing Values -->
                         <div 
                           v-for="val in attr.values" 
                           :key="val"
                           @click="toggleMatrixComboSelection(attr.name, val)"
-                          class="px-2.5 py-1.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg flex items-center justify-between transition-colors"
+                          class="px-2.5 py-1.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 rounded-lg flex items-center justify-between transition-colors"
                         >
                           <span :class="(selectedCombo[attr.name] || []).includes(val) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ val }}</span>
                           <span v-if="(selectedCombo[attr.name] || []).includes(val)" class="text-indigo-600 dark:text-indigo-455">
@@ -845,14 +845,14 @@
                         <div v-if="!attr.values || attr.values.length === 0" class="px-2.5 py-2 text-[10px] text-slate-400 dark:text-slate-550 italic text-center">No values configured.</div>
                         
                         <!-- Add Custom Value Input -->
-                        <div class="border-t border-slate-100 dark:border-slate-800 mt-1.5 pt-1.5 px-1.5">
+                        <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1.5 pt-1.5 px-1.5">
                           <div class="flex items-center gap-1">
                             <input 
                               type="text" 
                               v-model="attr.newValueInput"
                               @keydown.enter.prevent="addMatrixCustomValue(aIdx)"
                               placeholder="New value..."
-                              class="w-full px-2 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-lg text-[10px] focus:outline-none focus:border-slate-350 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium"
+                              class="w-full px-2 py-1 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-[10px] focus:outline-none focus:border-slate-350 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium"
                             />
                             <button 
                               type="button" 
@@ -878,11 +878,11 @@
                   </div>
                 </div>
 
-                <div class="w-full overflow-x-auto overflow-y-auto max-h-[560px] border border-slate-200 dark:border-slate-800 rounded-xl scrollbar-hidden shadow-sm">
+                <div class="w-full overflow-x-auto overflow-y-auto max-h-[560px] border border-slate-200 dark:border-[#2E2E2E] rounded-xl scrollbar-hidden shadow-sm">
                   <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-200 dark:divide-slate-850">
-                    <thead class="bg-slate-50 dark:bg-slate-900/50 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-455">
+                    <thead class="bg-slate-50 dark:bg-[#1E1E1E]/50 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-455">
                       <tr>
-                        <th class="px-2.5 py-2 text-left bg-slate-50 dark:bg-slate-900/60 z-10 w-40 shadow-[1px_0_0_0_#cbd5e1] dark:shadow-[1px_0_0_0_#334155]">Variant Profile</th>
+                        <th class="px-2.5 py-2 text-left bg-slate-50 dark:bg-[#1E1E1E]/60 z-10 w-40 shadow-[1px_0_0_0_#cbd5e1] dark:shadow-[1px_0_0_0_#334155]">Variant Profile</th>
                         <th class="px-2.5 py-2 text-left min-w-[120px]">SKU *</th>
                         <th class="px-2.5 py-2 text-left min-w-[150px]">Warehouse(s) *</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Purchase Cost ($)</th>
@@ -891,7 +891,7 @@
                         <th v-if="form.show_tax_rate" class="px-2.5 py-2 text-left min-w-[120px]">Tax Rate(s)</th>
                         <th class="px-2.5 py-2 text-left min-w-[180px]">Stock Qty *</th>
                         <th class="px-2.5 py-2 text-left min-w-[120px]">Expiry Date</th>
-                        <th class="px-2.5 py-2 text-center bg-slate-50 dark:bg-slate-900/60 z-10 shadow-[-1px_0_0_0_#cbd5e1] dark:shadow-[-1px_0_0_0_#334155]">Action</th>
+                        <th class="px-2.5 py-2 text-center bg-slate-50 dark:bg-[#1E1E1E]/60 z-10 shadow-[-1px_0_0_0_#cbd5e1] dark:shadow-[-1px_0_0_0_#334155]">Action</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
@@ -899,14 +899,14 @@
                         <td :colspan="totalMatrixColumns" class="text-center py-4 text-xs text-slate-400 dark:text-slate-550 italic">No variants configured. Click "+ Add Combo" to create variant options.</td>
                       </tr>
                       <tr v-for="(row, index) in form.variations" :key="index" class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                        <td class="px-2.5 py-1.5 font-bold text-slate-900 dark:text-slate-350 bg-white dark:bg-slate-900 shadow-[1px_0_0_0_#cbd5e1] dark:shadow-[1px_0_0_0_#334155] z-10">{{ row.name_string }}</td>
+                        <td class="px-2.5 py-1.5 font-bold text-slate-900 dark:text-slate-350 bg-white dark:bg-[#1E1E1E] shadow-[1px_0_0_0_#cbd5e1] dark:shadow-[1px_0_0_0_#334155] z-10">{{ row.name_string }}</td>
                         <td class="px-2.5 py-1.5">
                           <input 
                             type="text" 
                             v-model="row.sku" 
                             required
                             placeholder="SKU" 
-                            class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs w-full font-semibold focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 text-slate-800 dark:text-slate-300 transition-all"
+                            class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs w-full font-semibold focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 text-slate-800 dark:text-slate-300 transition-all"
                           />
                         </td>
                         <td class="px-2.5 py-1.5 relative wh-dropdown-cell">
@@ -914,7 +914,7 @@
                             type="button"
                             :id="'wh-trigger-' + index"
                             @click="toggleRowWhDropdown(index)"
-                            class="w-full text-left px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs flex justify-between items-center min-h-[30px]"
+                            class="w-full text-left px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs flex justify-between items-center min-h-[30px]"
                           >
                             <span class="truncate pr-2 text-slate-700 dark:text-slate-350 font-medium">
                               {{ getRowWarehouseLabel(row.warehouse_ids) }}
@@ -933,7 +933,7 @@
                               leave-from-class="opacity-100 scale-100"
                               leave-to-class="opacity-0 scale-95"
                             >
-                              <div v-if="activeRowWhDropdown === index" :style="dropdownStyles[index]" class="wh-teleport-dropdown fixed z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl p-1.5 custom-scrollbar">
+                              <div v-if="activeRowWhDropdown === index" :style="dropdownStyles[index]" class="wh-teleport-dropdown fixed z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-[#1E1E1E] border border-slate-200/80 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl p-1.5 custom-scrollbar">
                                 <label
                                   v-for="wh in warehouseOptions"
                                   :key="wh.value"
@@ -945,7 +945,7 @@
                                     :value="wh.value"
                                     :checked="isRowWarehouseSelected(row, wh.value)"
                                     @change="toggleRowWarehouse(index, wh.value)"
-                                    class="w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-800 dark:bg-slate-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                    class="w-3.5 h-3.5 rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                   />
                                   <span>{{ wh.label }}</span>
                                 </label>
@@ -954,15 +954,15 @@
                             </transition>
                           </Teleport>
                         </td>
-                        <td class="px-2.5 py-1.5"><input type="number" v-model="row.cost_price" step="0.01" class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs w-full text-amber-600 dark:text-amber-500 focus:outline-none"></td>
-                        <td class="px-2.5 py-1.5"><input type="number" v-model="row.retail_price" step="0.01" required class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs w-full text-emerald-600 dark:text-emerald-500 focus:outline-none"></td>
+                        <td class="px-2.5 py-1.5"><input type="number" v-model="row.cost_price" step="0.01" class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs w-full text-amber-600 dark:text-amber-500 focus:outline-none"></td>
+                        <td class="px-2.5 py-1.5"><input type="number" v-model="row.retail_price" step="0.01" required class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs w-full text-emerald-600 dark:text-emerald-500 focus:outline-none"></td>
                         <td v-if="form.show_wholesale_price" class="px-2.5 py-1.5">
                           <input 
                             type="number" 
                             v-model="row.wholesale_price" 
                             step="0.01" 
                             :required="form.show_wholesale_price" 
-                            class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs w-full text-slate-900 dark:text-slate-300 font-bold focus:outline-none"
+                            class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs w-full text-slate-900 dark:text-slate-300 font-bold focus:outline-none"
                           />
                         </td>
                         
@@ -972,7 +972,7 @@
                             type="button"
                             :id="'tax-trigger-' + index"
                             @click="toggleRowTaxDropdown(index)"
-                            class="w-full text-left px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs flex justify-between items-center min-h-[30px]"
+                            class="w-full text-left px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs flex justify-between items-center min-h-[30px]"
                           >
                             <span class="truncate pr-2 text-slate-700 dark:text-slate-350 font-medium">
                               {{ getRowTaxLabel(row.taxes) }}
@@ -991,7 +991,7 @@
                               leave-from-class="opacity-100 scale-100"
                               leave-to-class="opacity-0 scale-95"
                             >
-                              <div v-if="activeRowTaxDropdown === index" :style="taxDropdownStyles[index]" class="tax-teleport-dropdown fixed z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl p-1.5 custom-scrollbar">
+                              <div v-if="activeRowTaxDropdown === index" :style="taxDropdownStyles[index]" class="tax-teleport-dropdown fixed z-[9999] max-h-48 overflow-y-auto bg-white dark:bg-[#1E1E1E] border border-slate-200/80 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl p-1.5 custom-scrollbar">
                                 <label
                                   v-for="taxOpt in variationTaxOptions"
                                   :key="taxOpt.value"
@@ -1003,7 +1003,7 @@
                                     :value="taxOpt.value"
                                     :checked="isRowTaxSelected(row, taxOpt.value)"
                                     @change="toggleRowTaxSelection(index, taxOpt.value)"
-                                    class="w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-800 dark:bg-slate-950 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                    class="w-3.5 h-3.5 rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                   />
                                   <span>{{ taxOpt.label }}</span>
                                 </label>
@@ -1017,7 +1017,7 @@
 
                         <td class="px-2.5 py-1.5 min-w-[180px]">
                           <div v-if="(row.warehouse_ids || []).length > 0" class="flex flex-col gap-2">
-                            <div v-for="whId in row.warehouse_ids" :key="whId" class="flex flex-col gap-1 pb-1.5 border-b border-slate-100/60 dark:border-slate-800/60 last:border-0 last:pb-0">
+                            <div v-for="whId in row.warehouse_ids" :key="whId" class="flex flex-col gap-1 pb-1.5 border-b border-slate-100/60 dark:border-[#2E2E2E]/60 last:border-0 last:pb-0">
                               <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold truncate block" :title="getRowWarehouseLabel([whId])">
                                 {{ getRowWarehouseLabel([whId]) }}
                               </span>
@@ -1029,7 +1029,7 @@
                                     v-model.number="(row.warehouse_stocks = row.warehouse_stocks || {})[whId]" 
                                     @input="updateVariantStockQty(row)"
                                     placeholder="0" 
-                                    class="px-1.5 py-0.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded text-[10px] w-12 font-bold text-slate-800 dark:text-slate-350 focus:outline-none focus:border-slate-350 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-350/20"
+                                    class="px-1.5 py-0.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded text-[10px] w-12 font-bold text-slate-800 dark:text-slate-350 focus:outline-none focus:border-slate-350 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-350/20"
                                   />
                                 </div>
                                 <div class="flex items-center gap-1.5">
@@ -1039,20 +1039,20 @@
                                     v-model.number="(row.warehouse_min_stocks = row.warehouse_min_stocks || {})[whId]" 
                                     @input="updateVariantStockQty(row)"
                                     placeholder="0" 
-                                    class="px-1.5 py-0.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded text-[10px] w-12 font-bold text-slate-800 dark:text-slate-350 focus:outline-none focus:border-slate-350 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-350/20"
+                                    class="px-1.5 py-0.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded text-[10px] w-12 font-bold text-slate-800 dark:text-slate-350 focus:outline-none focus:border-slate-350 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-350/20"
                                   />
                                 </div>
                               </div>
                             </div>
-                            <div class="text-[10px] font-black text-slate-600 dark:text-slate-400 mt-1 pt-1 border-t border-slate-100/80 dark:border-slate-800 flex items-center justify-between">
+                            <div class="text-[10px] font-black text-slate-600 dark:text-slate-400 mt-1 pt-1 border-t border-slate-100/80 dark:border-[#2E2E2E] flex items-center justify-between">
                               <span>Total Qty/Min:</span>
                               <span class="text-indigo-650 dark:text-indigo-400 font-extrabold">{{ row.stock_qty }} / {{ row.min_stock_alert || 0 }}</span>
                             </div>
                           </div>
                           <span v-else class="text-[10px] text-rose-500 font-bold">Select Wh first</span>
                         </td>
-                        <td class="px-2.5 py-1.5"><input type="date" v-model="row.expiry_date" class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] w-full text-slate-800 dark:text-slate-300 focus:outline-none"></td>
-                        <td class="px-2.5 py-1.5 text-center bg-white dark:bg-slate-900 shadow-[-1px_0_0_0_#cbd5e1] dark:shadow-[-1px_0_0_0_#334155] z-10"><button type="button" @click="removeRow(index)" class="text-rose-500 font-bold hover:text-rose-700 text-sm">&times;</button></td>
+                        <td class="px-2.5 py-1.5"><input type="date" v-model="row.expiry_date" class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-[11px] w-full text-slate-800 dark:text-slate-300 focus:outline-none"></td>
+                        <td class="px-2.5 py-1.5 text-center bg-white dark:bg-[#1E1E1E] shadow-[-1px_0_0_0_#cbd5e1] dark:shadow-[-1px_0_0_0_#334155] z-10"><button type="button" @click="removeRow(index)" class="text-rose-500 font-bold hover:text-rose-700 text-sm">&times;</button></td>
                       </tr>
                     </tbody>
                   </table>
@@ -1066,7 +1066,7 @@
             <button 
               type="button" 
               @click="$router.back()"
-              class="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
+              class="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#252525] hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
             >
               Cancel
             </button>
@@ -1084,7 +1084,7 @@
 
       <!-- Error Notifications -->
       <transition-group name="list" tag="div" class="fixed top-20 right-6 space-y-2 z-[9999] max-w-sm">
-        <div v-for="err in localErrors" :key="err.id" class="bg-slate-900 dark:bg-slate-950 text-white dark:text-slate-200 border dark:border-slate-800 px-4 py-3 rounded-lg shadow-lg flex items-center text-sm font-medium animate-in fade-in slide-in-from-top-4 duration-200">
+        <div v-for="err in localErrors" :key="err.id" class="bg-slate-900 dark:bg-[#1E1E1E] text-white dark:text-slate-200 border dark:border-[#2E2E2E] px-4 py-3 rounded-lg shadow-lg flex items-center text-sm font-medium animate-in fade-in slide-in-from-top-4 duration-200">
           <svg class="w-4 h-4 mr-2 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span class="break-words">{{ err.text }}</span>
         </div>
@@ -1097,15 +1097,15 @@
     <!-- Options & Attributes Modal -->
     <div v-if="showOptionsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="showOptionsModal = false"></div>
-      <div class="relative w-full max-w-sm p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-slate-950/80 space-y-3 z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div class="relative w-full max-w-sm p-5 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 space-y-3 z-10 animate-in fade-in zoom-in-95 duration-200">
         <h4 class="text-xs font-bold text-slate-800 dark:text-slate-250 uppercase tracking-wider">Configure Attribute Group</h4>
         <div>
             <label class="text-[10px] font-bold text-slate-450 dark:text-slate-500 block mb-1">Option Name</label>
-            <input type="text" v-model="tempAttrName" placeholder="e.g., Color, Size, Storage" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300">
+            <input type="text" v-model="tempAttrName" placeholder="e.g., Color, Size, Storage" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300">
         </div>
         <div>
             <label class="text-[10px] font-bold text-slate-450 dark:text-slate-500 block mb-1">Option Values (Comma separated)</label>
-            <input type="text" v-model="tempAttrValues" @keydown.enter.prevent="addAttributesGroup" placeholder="e.g., Pink, Black, 128GB, 256GB" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300">
+            <input type="text" v-model="tempAttrValues" @keydown.enter.prevent="addAttributesGroup" placeholder="e.g., Pink, Black, 128GB, 256GB" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300">
         </div>
         <div class="flex justify-end gap-2 pt-2 text-xs">
             <button type="button" @click="showOptionsModal = false" class="px-3 py-1 text-slate-400 dark:text-slate-500 dark:hover:text-slate-400">Cancel</button>
@@ -1117,8 +1117,8 @@
     <!-- Add New Category Modal -->
     <div v-if="showCategoryModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="closeCategoryModal"></div>
-      <div class="relative w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-slate-950/80 space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+      <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
           <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Add New Category</h4>
           <button @click="closeCategoryModal" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-bold text-lg">&times;</button>
         </div>
@@ -1128,7 +1128,7 @@
         <div class="space-y-3">
           <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Category Name *</label>
-              <input type="text" v-model="newCategoryForm.name" placeholder="e.g., Electronics, Apparel" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-350 font-medium">
+              <input type="text" v-model="newCategoryForm.name" placeholder="e.g., Electronics, Apparel" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-350 font-medium">
           </div>
           <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Parent Category</label>
@@ -1136,7 +1136,7 @@
           </div>
           <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Description</label>
-              <textarea v-model="newCategoryForm.description" rows="3" placeholder="Describe the category..." class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-350 resize-none font-medium"></textarea>
+              <textarea v-model="newCategoryForm.description" rows="3" placeholder="Describe the category..." class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-350 resize-none font-medium"></textarea>
           </div>
           <div class="flex items-center justify-between py-1">
               <div>
@@ -1145,7 +1145,7 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer select-none">
                   <input type="checkbox" v-model="newCategoryForm.is_active" class="sr-only peer">
-                  <div class="w-8 h-4.5 bg-slate-200 dark:bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <div class="w-8 h-4.5 bg-slate-200 dark:bg-[#252525] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-600"></div>
               </label>
           </div>
         </div>
@@ -1162,8 +1162,8 @@
     <!-- Add New Unit Modal -->
     <div v-if="showUnitModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="closeUnitModal"></div>
-      <div class="relative w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+      <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
           <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Add New Unit</h4>
           <button @click="closeUnitModal" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-bold text-lg">&times;</button>
         </div>
@@ -1173,11 +1173,11 @@
         <div class="space-y-3">
           <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Unit Name *</label>
-              <input type="text" v-model="newUnitForm.name" placeholder="e.g., Kilogram, Litre, Piece" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
+              <input type="text" v-model="newUnitForm.name" placeholder="e.g., Kilogram, Litre, Piece" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
           </div>
           <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Short Name / Code *</label>
-              <input type="text" v-model="newUnitForm.short_name" placeholder="e.g., KG, LTR, PCS" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
+              <input type="text" v-model="newUnitForm.short_name" placeholder="e.g., KG, LTR, PCS" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
           </div>
           <div class="flex items-center justify-between py-1">
               <div>
@@ -1186,7 +1186,7 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer select-none">
                   <input type="checkbox" v-model="newUnitForm.is_active" class="sr-only peer">
-                  <div class="w-8 h-4.5 bg-slate-200 dark:bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <div class="w-8 h-4.5 bg-slate-200 dark:bg-[#252525] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-600"></div>
               </label>
           </div>
         </div>
@@ -1203,7 +1203,7 @@
     <!-- Add New Tax Modal -->
     <div v-if="showTaxModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-955/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="closeTaxModal"></div>
-      <div class="relative w-full max-w-lg p-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-6 z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div class="relative w-full max-w-lg p-8 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl space-y-6 z-10 animate-in fade-in zoom-in-95 duration-200">
         <div class="flex justify-between items-center">
           <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">New Tax Rule</h4>
           <button @click="closeTaxModal" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 transition-colors">
@@ -1216,17 +1216,17 @@
         <div class="space-y-5">
           <div>
             <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Tax Code / Name *</label>
-            <input type="text" v-model="newTaxForm.name" placeholder="e.g., VAT, GST 18%, Sales Tax" class="w-full px-4 py-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-sm focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 text-slate-800 dark:text-slate-300 font-medium transition-all">
+            <input type="text" v-model="newTaxForm.name" placeholder="e.g., VAT, GST 18%, Sales Tax" class="w-full px-4 py-2.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-sm focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 text-slate-800 dark:text-slate-300 font-medium transition-all">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Rate / Value *</label>
-              <input type="number" step="0.01" v-model="newTaxForm.value" placeholder="0" class="w-full px-4 py-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-sm focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 text-slate-800 dark:text-slate-300 font-medium transition-all">
+              <input type="number" step="0.01" v-model="newTaxForm.value" placeholder="0" class="w-full px-4 py-2.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-sm focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 text-slate-800 dark:text-slate-300 font-medium transition-all">
             </div>
             <div>
               <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Value Type *</label>
               <div class="relative">
-                <select v-model="newTaxForm.type" class="w-full px-4 py-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-sm focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 text-slate-800 dark:text-slate-300 font-medium appearance-none pr-9 cursor-pointer transition-all">
+                <select v-model="newTaxForm.type" class="w-full px-4 py-2.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-sm focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 text-slate-800 dark:text-slate-300 font-medium appearance-none pr-9 cursor-pointer transition-all">
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount</option>
                 </select>
@@ -1236,12 +1236,12 @@
               </div>
             </div>
           </div>
-          <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-950 rounded-xl px-4 py-3 border border-slate-100 dark:border-slate-850">
+          <div class="flex items-center justify-between bg-slate-50 dark:bg-[#1E1E1E] rounded-xl px-4 py-3 border border-slate-100 dark:border-[#2E2E2E]">
             <div>
               <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block">Is Active</label>
               <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Toggle to enable/disable applying this tax rate on billing</p>
             </div>
-            <input type="checkbox" v-model="newTaxForm.is_active" class="w-5 h-5 rounded border-slate-300 dark:border-slate-800 dark:bg-slate-950 text-blue-600 focus:ring-blue-500 cursor-pointer">
+            <input type="checkbox" v-model="newTaxForm.is_active" class="w-5 h-5 rounded border-slate-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-blue-600 focus:ring-blue-500 cursor-pointer">
           </div>
         </div>
         <div class="flex justify-end gap-3 pt-2">
@@ -1257,8 +1257,8 @@
     <!-- Create Variation Modal -->
     <div v-if="showVariationModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-955/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="closeVariationModal"></div>
-      <div class="relative w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+      <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
           <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Create Variation</h4>
           <button @click="closeVariationModal" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-bold text-lg">&times;</button>
         </div>
@@ -1268,11 +1268,11 @@
         <div class="space-y-3">
           <div>
             <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Variation Name *</label>
-            <input type="text" v-model="newVariationForm.name" placeholder="e.g., Size, Color, Material" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
+            <input type="text" v-model="newVariationForm.name" placeholder="e.g., Size, Color, Material" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
           </div>
           <div>
             <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Values (Comma separated) *</label>
-            <input type="text" v-model="newVariationForm.valuesString" @keydown.enter.prevent="submitNewVariation" placeholder="e.g., Small, Medium, Large, XL" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-805 rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
+            <input type="text" v-model="newVariationForm.valuesString" @keydown.enter.prevent="submitNewVariation" placeholder="e.g., Small, Medium, Large, XL" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
             <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1">Separate each value with a comma.</p>
           </div>
         </div>
@@ -1288,12 +1288,12 @@
 
     <!-- Image Editor Modal -->
     <div v-if="showImageEditor" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm transition-opacity">
-      <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+      <div class="relative w-full max-w-3xl bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         <!-- Header -->
-        <div class="flex justify-between items-center px-6 py-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex justify-between items-center px-6 py-3 border-b border-slate-100 dark:border-[#2E2E2E]">
           <div class="flex items-center gap-3">
             <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Edit Image</h4>
-            <span v-if="editorBatchImages.length > 1" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            <span v-if="editorBatchImages.length > 1" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-[#252525] px-2 py-0.5 rounded-full">
               {{ editorActiveIdx + 1 }} / {{ editorBatchImages.length }}
             </span>
           </div>
@@ -1323,14 +1323,14 @@
         </div>
 
         <!-- Thumbnail Filmstrip (only when multiple images) -->
-        <div v-if="editorBatchImages.length > 1" class="px-4 py-2.5 border-t border-slate-100 dark:border-slate-850 bg-slate-50/80 dark:bg-slate-950/60">
+        <div v-if="editorBatchImages.length > 1" class="px-4 py-2.5 border-t border-slate-100 dark:border-[#2E2E2E] bg-slate-50/80 dark:bg-[#1E1E1E]/60">
           <div class="flex items-center gap-2 overflow-x-auto scrollbar-hidden py-0.5">
             <div 
               v-for="(bImg, bIdx) in editorBatchImages" 
               :key="bIdx"
               @click="switchEditorImage(bIdx)"
               class="relative w-14 h-14 rounded-lg overflow-hidden cursor-pointer flex-shrink-0 border-2 transition-all duration-150 group"
-              :class="bIdx === editorActiveIdx ? 'border-emerald-500 ring-2 ring-emerald-500/30 scale-105' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 opacity-60 hover:opacity-90'"
+              :class="bIdx === editorActiveIdx ? 'border-emerald-500 ring-2 ring-emerald-500/30 scale-105' : 'border-slate-200 dark:border-[#2E2E2E] hover:border-slate-300 dark:hover:border-slate-700 opacity-60 hover:opacity-90'"
             >
               <img :src="bImg.thumbSrc" class="w-full h-full object-cover">
               <div v-if="bIdx === editorActiveIdx" class="absolute inset-0 bg-emerald-500/10"></div>
@@ -1368,39 +1368,39 @@
         </div>
 
         <!-- Toolbar -->
-        <div class="px-6 py-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-2 flex-wrap bg-slate-50/50 dark:bg-slate-900/60">
-          <button type="button" @click="editorRotate(-90)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Rotate Left">
+        <div class="px-6 py-2.5 border-t border-slate-100 dark:border-[#2E2E2E] flex items-center justify-center gap-2 flex-wrap bg-slate-50/50 dark:bg-[#1E1E1E]/60">
+          <button type="button" @click="editorRotate(-90)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Rotate Left">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h1l1-2h2l1 2h1M7 4v4M3 14c0 4 3.5 6 7 6s7-2 7-6-3.5-6-7-6"/></svg>
           </button>
-          <button type="button" @click="editorRotate(90)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Rotate Right">
+          <button type="button" @click="editorRotate(90)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Rotate Right">
             <svg class="w-5 h-5 -scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h1l1-2h2l1 2h1M7 4v4M3 14c0 4 3.5 6 7 6s7-2 7-6-3.5-6-7-6"/></svg>
           </button>
-          <div class="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
-          <button type="button" @click="editorZoom(0.1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Zoom In">
+          <div class="w-px h-6 bg-slate-200 dark:bg-[#252525] mx-1"></div>
+          <button type="button" @click="editorZoom(0.1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Zoom In">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
           </button>
-          <button type="button" @click="editorZoom(-0.1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Zoom Out">
+          <button type="button" @click="editorZoom(-0.1)" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Zoom Out">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
           </button>
-          <div class="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
-          <button type="button" @click="editorFlipH" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Flip Horizontal">
+          <div class="w-px h-6 bg-slate-200 dark:bg-[#252525] mx-1"></div>
+          <button type="button" @click="editorFlipH" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Flip Horizontal">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21l-4-4 4-4M17 21l4-4-4-4M3 17h18"/></svg>
           </button>
-          <button type="button" @click="editorFlipV" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Flip Vertical">
+          <button type="button" @click="editorFlipV" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Flip Vertical">
             <svg class="w-5 h-5 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21l-4-4 4-4M17 21l4-4-4-4M3 17h18"/></svg>
           </button>
-          <div class="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
-          <button type="button" @click="editorReset" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors" title="Reset">
+          <div class="w-px h-6 bg-slate-200 dark:bg-[#252525] mx-1"></div>
+          <button type="button" @click="editorReset" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-400 transition-colors" title="Reset">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           </button>
-          <div class="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
+          <div class="w-px h-6 bg-slate-200 dark:bg-[#252525] mx-1"></div>
           <button v-if="editorTargetIndex >= 0" type="button" @click="removeEditorImage(editorActiveIdx)" class="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-955/35 text-rose-500 hover:text-rose-650 transition-colors" title="Delete This Image">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
 
         <!-- Footer Actions -->
-        <div class="flex justify-end gap-3 px-6 py-3 border-t border-slate-100 dark:border-slate-800">
+        <div class="flex justify-end gap-3 px-6 py-3 border-t border-slate-100 dark:border-[#2E2E2E]">
           <button type="button" @click="closeImageEditor" class="px-5 py-2 text-sm text-slate-500 dark:text-slate-400 font-medium hover:text-slate-700 dark:hover:text-slate-300 transition-colors">Cancel</button>
           <button type="button" @click="applyAllEdits" class="px-6 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow hover:bg-emerald-700 transition-all">
             Apply

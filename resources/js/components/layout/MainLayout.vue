@@ -3,13 +3,13 @@
     <!-- Sidebar -->
     <div
       :class="[
-        'fixed inset-y-0 left-0 z-50 bg-[#f0f2fa] dark:bg-slate-900 border-r border-gray-200/50 dark:border-slate-800/80 transform transition-all duration-300 ease-in-out flex flex-col',
+        'fixed inset-y-0 left-0 z-50 bg-[#f0f2fa] dark:bg-[#1E1E1E] border-r border-gray-200/50 dark:border-[#2E2E2E] transform transition-all duration-300 ease-in-out flex flex-col',
         sidebarCollapsed ? 'w-20' : 'w-[260px]',
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
       ]"
     >
       <!-- Sidebar Header -->
-      <div class="relative flex items-center justify-between h-16 px-4 border-b border-gray-200/50 dark:border-slate-800/80">
+      <div class="relative flex items-center justify-between h-16 px-4 border-b border-gray-200/50 dark:border-[#2E2E2E]">
         <!-- Company Switcher -->
         <div class="relative flex-1 w-full min-w-0" v-if="activeCompany">
           <div class="flex items-center gap-3.5 p-1 min-w-0">
@@ -72,7 +72,7 @@
           <div
             v-if="showCompanySwitcher && !sidebarCollapsed"
             ref="companySwitcherRef"
-            class="absolute left-0 right-0 w-full mt-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800/80 rounded-xl shadow-2xl divide-y divide-gray-100 dark:divide-slate-800 focus:outline-none z-50 overflow-hidden"
+            class="absolute left-0 right-0 w-full mt-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl divide-y divide-gray-100 dark:divide-[#2E2E2E] focus:outline-none z-50 overflow-hidden"
           >
             <div class="py-1 max-h-64 overflow-y-auto custom-scrollbar">
               <button
@@ -80,7 +80,7 @@
                 :key="company.id"
                 @click="switchCompany(company.id); showCompanySwitcher = false"
                 class="w-full text-left px-4 py-3 text-[13px] font-medium transition-colors flex items-center justify-between cursor-pointer"
-                :class="company.id === activeCompany.id ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-slate-200'"
+                :class="company.id === activeCompany.id ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200'"
               >
                 <div class="flex items-center overflow-hidden">
                   <div class="mr-3 flex-shrink-0 h-5 w-5 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm overflow-hidden">
@@ -95,7 +95,7 @@
               </button>
             </div>
             <div class="py-1">
-              <router-link to="/companies" class="flex items-center px-4 py-3 text-[13px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-400 transition-colors w-full text-left" @click="showCompanySwitcher = false">
+              <router-link to="/companies" class="flex items-center px-4 py-3 text-[13px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-[#252525] dark:hover:bg-[#2D2D2D]/85 dark:text-indigo-400 transition-colors w-full text-left" @click="showCompanySwitcher = false">
                 <svg class="mr-3 flex-shrink-0 h-4 w-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -109,7 +109,7 @@
         <!-- Collapse Trigger -->
         <button
           @click="toggleSidebar"
-          class="absolute -right-3.5 top-6 w-7 h-7 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-50 group shadow-sm cursor-pointer"
+          class="absolute -right-3.5 top-6 w-7 h-7 bg-white dark:bg-[#1E1E1E] text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-[#2E2E2E] rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-50 group shadow-sm cursor-pointer"
         >
           <svg :class="['w-3.5 h-3.5 transition-transform duration-300', sidebarCollapsed ? 'rotate-180 group-hover:translate-x-0.5' : 'group-hover:-translate-x-0.5']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -124,12 +124,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative',
             $route.path === '/'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Dashboard' : ''"
         >
-          <div v-if="$route.path === '/'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
@@ -157,8 +157,8 @@
               :class="[
                 'group flex items-center px-3 py-2 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
                 $route.path === fav.path
-                  ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-                  : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+                  ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
               ]"
               :title="sidebarCollapsed ? fav.name : ''"
             >
@@ -179,12 +179,12 @@
             :class="[
               'group w-full flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative',
               $route.path.startsWith('/sales')
-                ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-                : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
             ]"
             :title="sidebarCollapsed ? 'Sales' : ''"
           >
-            <div v-if="$route.path.startsWith('/sales')" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
             <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -218,14 +218,14 @@
               class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
             >
               <!-- Timeline accent line -->
-              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-slate-800"></div>
+              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
               <router-link
                 to="/sales/invoices"
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 relative',
                   $route.path === '/sales/invoices'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/sales/invoices'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -236,8 +236,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 relative',
                   $route.path === '/sales/returns'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/sales/returns'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -252,12 +252,12 @@
             :class="[
               'group w-full flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative',
               $route.path.startsWith('/purchase')
-                ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-                : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
             ]"
             :title="sidebarCollapsed ? 'Purchase' : ''"
           >
-            <div v-if="$route.path.startsWith('/purchase')" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
             <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
@@ -291,14 +291,14 @@
               class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
             >
               <!-- Timeline accent line -->
-              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-slate-800"></div>
+              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
               <router-link
                 to="/purchase/orders"
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/purchase/orders'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/purchase/orders'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -309,8 +309,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/purchase/returns'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/purchase/returns'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -325,12 +325,12 @@
             :class="[
               'group w-full flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative',
               $route.path.startsWith('/inventory') || $route.path.startsWith('/products') || $route.path === '/settings/tax-tags'
-                ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-                : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
             ]"
             :title="sidebarCollapsed ? 'Inventory' : ''"
           >
-            <div v-if="$route.path.startsWith('/inventory') || $route.path.startsWith('/products') || $route.path === '/settings/tax-tags'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
             <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
@@ -364,14 +364,14 @@
               class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
             >
               <!-- Timeline accent line -->
-              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-slate-800"></div>
+              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
               <router-link
                 to="/products"
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/products' || $route.path.startsWith('/products/')
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/products' || $route.path.startsWith('/products/')" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -382,8 +382,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/inventory/groups'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/inventory/groups'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -394,8 +394,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/inventory/product-variations'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/inventory/product-variations'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -406,8 +406,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/settings/tax-tags'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/settings/tax-tags'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -418,8 +418,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/inventory/warehouses'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/inventory/warehouses'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -430,8 +430,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path.startsWith('/inventory/transfer-orders')
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path.startsWith('/inventory/transfer-orders')" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -442,8 +442,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/inventory'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/inventory'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -454,8 +454,8 @@
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
                   $route.path === '/inventory/histories'
-                    ? 'text-[#3b4b72] bg-[#e2e8f5]/60 font-semibold'
-                    : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/30 font-medium'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
                 ]"
               >
                 <div v-if="$route.path === '/inventory/histories'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
@@ -469,12 +469,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/accounting'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Accounting' : ''"
         >
-          <div v-if="$route.path === '/accounting'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
@@ -487,12 +487,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/transactions'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Transactions' : ''"
         >
-          <div v-if="$route.path === '/transactions'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
           </svg>
@@ -505,12 +505,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/expenses'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Expenses' : ''"
         >
-          <div v-if="$route.path === '/expenses'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
           </svg>
@@ -529,12 +529,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/payments'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Payments Out' : ''"
         >
-          <div v-if="$route.path === '/payments'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
@@ -547,12 +547,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/payment-receipts'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Payment Receipts' : ''"
         >
-          <div v-if="$route.path === '/payment-receipts'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
@@ -571,12 +571,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/employees'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Employees' : ''"
         >
-          <div v-if="$route.path === '/employees'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
           </svg>
@@ -589,12 +589,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/customers'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Customers' : ''"
         >
-          <div v-if="$route.path === '/customers'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
@@ -607,12 +607,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/suppliers'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Suppliers' : ''"
         >
-          <div v-if="$route.path === '/suppliers'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
           </svg>
@@ -631,12 +631,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/reports'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-600 hover:bg-slate-200/40 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Reports' : ''"
         >
-          <div v-if="$route.path === '/reports'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
@@ -656,12 +656,12 @@
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/settings'
-              ? 'text-[#3b4b72] bg-[#e2e8f5] font-semibold'
-              : 'text-slate-650 dark:text-slate-400 hover:bg-slate-200/40 dark:hover:bg-slate-800/50 hover:text-slate-900 font-medium'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Settings' : ''"
         >
-          <div v-if="$route.path === '/settings'" class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600"></div>
+
           <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -675,7 +675,7 @@
           @click="showSupportModal = true"
           :class="[
             'group w-full flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative cursor-pointer text-left',
-            'text-slate-650 dark:text-slate-400 hover:bg-slate-200/40 dark:hover:bg-slate-800/50 hover:text-slate-900 font-medium'
+            'text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium'
           ]"
           :title="sidebarCollapsed ? 'Support & Help' : ''"
         >
@@ -688,7 +688,7 @@
         </button>
 
         <!-- Mobile User Profile Section (visible only on mobile when sidebar is open) -->
-        <div class="sm:hidden mt-8 pt-4 border-t border-gray-200 dark:border-slate-800">
+        <div class="sm:hidden mt-8 pt-4 border-t border-gray-200 dark:border-[#2E2E2E]">
           <div class="flex items-center px-3 py-2">
             <div class="flex-shrink-0">
               <div class="h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -712,7 +712,7 @@
           <div class="mt-2 space-y-1 px-1">
             <router-link
               to="/profile"
-              class="group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-850 hover:text-gray-900 dark:hover:text-slate-200 transition-all"
+              class="group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 hover:text-gray-900 dark:hover:text-slate-200 transition-all"
               @click="showMobileSidebar = false"
             >
               <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -723,7 +723,7 @@
 
             <router-link
               to="/settings"
-              class="group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-850 hover:text-gray-900 dark:hover:text-slate-200 transition-all"
+              class="group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 hover:text-gray-900 dark:hover:text-slate-200 transition-all"
               @click="showMobileSidebar = false"
             >
               <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -755,7 +755,7 @@
 
     <!-- Navigation -->
     <nav :class="[
-      'bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800/80 transition-all duration-300 sticky top-0 z-40 h-16 flex flex-col justify-center',
+      'bg-white dark:bg-[#1E1E1E] shadow-sm border-b border-gray-200 dark:border-[#2E2E2E] transition-all duration-300 sticky top-0 z-40 h-16 flex flex-col justify-center',
       sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
     ]">
       <div class="w-full">
@@ -809,16 +809,16 @@
                 @focus="showSearchResults = true"
                 type="text"
                 placeholder="Search features (e.g. Invoices...)"
-                class="block w-full pl-9 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 transition-all outline-none"
+                class="block w-full pl-9 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-[#252525] border border-transparent dark:border-[#2E2E2E] rounded-xl focus:bg-white dark:focus:bg-[#1E1E1E] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-550 transition-all outline-none"
               />
               
               <!-- Search Results Dropdown -->
               <div
                 v-if="showSearchResults && searchQuery"
                 ref="searchResultsRef"
-                class="origin-top-left absolute left-0 mt-2 w-72 rounded-xl shadow-2xl bg-white dark:bg-slate-900 border border-gray-250 dark:border-slate-800 z-50 overflow-hidden py-1 max-h-60 overflow-y-auto custom-scrollbar"
+                class="origin-top-left absolute left-0 mt-2 w-72 rounded-xl shadow-2xl bg-white dark:bg-[#1E1E1E] border border-gray-250 dark:border-[#2E2E2E] z-50 overflow-hidden py-1 max-h-60 overflow-y-auto custom-scrollbar"
               >
-                <div class="px-3 py-1.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-850/50 flex justify-between">
+                <div class="px-3 py-1.5 border-b border-gray-100 dark:border-[#2E2E2E] bg-gray-50/50 dark:bg-[#252525] flex justify-between">
                   <span class="text-[9px] font-black text-gray-400 dark:text-slate-550 uppercase tracking-widest">Menu Features</span>
                   <span class="text-[9px] text-gray-400 dark:text-slate-550 font-medium">{{ filteredMenuItems.length }} found</span>
                 </div>
@@ -829,7 +829,7 @@
                   v-for="item in filteredMenuItems"
                   :key="item.path"
                   @click="navigateToSearchItem(item)"
-                  class="w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  class="w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-[#2D2D2D]/80 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <span class="text-indigo-500 dark:text-indigo-400 font-bold">⚡</span>
                   <div class="flex-1 min-w-0">
@@ -862,42 +862,42 @@
               <div
                 v-if="showQuickAdd"
                 ref="quickAddRef"
-                class="origin-top-right absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 dark:border-slate-800/80 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
+                class="origin-top-right absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-xl border border-white/20 dark:border-[#2E2E2E] ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
                 <div class="py-0">
-                  <div class="px-5 py-4 bg-gradient-to-r from-gray-50 to-white dark:from-slate-850 dark:to-slate-900 border-b border-gray-100 dark:border-slate-800">
+                  <div class="px-5 py-4 bg-gradient-to-r from-gray-50 to-white dark:from-[#252525] dark:to-[#1E1E1E] border-b border-gray-100 dark:border-[#2E2E2E]">
                     <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Quick Access Panel</h3>
                   </div>
-                  <div class="p-4 bg-white/50 dark:bg-slate-900/50">
+                  <div class="p-4 bg-white/50 dark:bg-[#1E1E1E]/50">
                     <div class="grid grid-cols-3 gap-2">
                       <!-- Sale Invoice -->
                       <router-link
                         v-if="authStore.hasPermission('sales.create')"
                         to="/sales/invoices/create"
                         @click="showQuickAdd = false"
-                        class="flex flex-col items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-indigo-950/40 transition-colors duration-200 group"
+                        class="flex flex-col items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-indigo-950/60 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-200 dark:group-hover:bg-indigo-900/60">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-[#252525] rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-200 dark:group-hover:bg-[#2D2D2D]/90">
                           <svg class="w-5 h-5 text-blue-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
                         <span class="text-xs text-center text-gray-700 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-indigo-400">Sale Invoice</span>
                       </router-link>
-
+                      
                       <!-- Sale Return -->
                       <router-link
                         v-if="authStore.hasPermission('sales.refund')"
                         to="/sales/returns/create"
                         @click="showQuickAdd = false"
-                        class="flex flex-col items-center p-3 rounded-lg hover:bg-blue-50 transition-colors duration-200 group"
+                        class="flex flex-col items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
-                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-200">
-                          <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-[#252525] rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-200 dark:group-hover:bg-[#2D2D2D]/90">
+                          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                           </svg>
                         </div>
-                        <span class="text-xs text-center text-gray-700 group-hover:text-blue-700">Sale Return</span>
+                        <span class="text-xs text-center text-gray-700 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-400">Sale Return</span>
                       </router-link>
 
                       <!-- Purchase Order -->
@@ -905,14 +905,14 @@
                         v-if="authStore.hasPermission('purchases.create')"
                         to="/purchase/orders/create"
                         @click="showQuickAdd = false"
-                        class="flex flex-col items-center p-3 rounded-lg hover:bg-green-50 transition-colors duration-200 group"
+                        class="flex flex-col items-center p-3 rounded-lg hover:bg-green-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
-                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-green-200">
-                          <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-[#252525] rounded-full flex items-center justify-center mb-2 group-hover:bg-green-200 dark:group-hover:bg-[#2D2D2D]/90">
+                          <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                           </svg>
                         </div>
-                        <span class="text-xs text-center text-gray-700 group-hover:text-green-700">Purchase</span>
+                        <span class="text-xs text-center text-gray-700 dark:text-slate-400 group-hover:text-green-700 dark:group-hover:text-green-400">Purchase</span>
                       </router-link>
 
                       <!-- Expense -->
@@ -920,14 +920,14 @@
                         v-if="authStore.hasPermission('expenses.create')"
                         to="/expenses/create"
                         @click="showQuickAdd = false"
-                        class="flex flex-col items-center p-3 rounded-lg hover:bg-yellow-50 transition-colors duration-200 group"
+                        class="flex flex-col items-center p-3 rounded-lg hover:bg-yellow-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
-                        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-yellow-200">
-                          <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="w-10 h-10 bg-yellow-100 dark:bg-[#252525] rounded-full flex items-center justify-center mb-2 group-hover:bg-yellow-200 dark:group-hover:bg-[#2D2D2D]/90">
+                          <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                         </div>
-                        <span class="text-xs text-center text-gray-700 group-hover:text-yellow-700">Expense</span>
+                        <span class="text-xs text-center text-gray-700 dark:text-slate-400 group-hover:text-yellow-700 dark:group-hover:text-yellow-400">Expense</span>
                       </router-link>
 
                       <!-- Employee -->
@@ -935,14 +935,14 @@
                         v-if="authStore.hasPermission('employees.create')"
                         to="/employees/create"
                         @click="showQuickAdd = false"
-                        class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 transition-colors duration-200 group"
+                        class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
-                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-purple-200">
-                          <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="w-10 h-10 bg-purple-100 dark:bg-[#252525] rounded-full flex items-center justify-center mb-2 group-hover:bg-purple-200 dark:group-hover:bg-[#2D2D2D]/90">
+                          <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                           </svg>
                         </div>
-                        <span class="text-xs text-center text-gray-700 group-hover:text-purple-700">Employee</span>
+                        <span class="text-xs text-center text-gray-700 dark:text-slate-400 group-hover:text-purple-700 dark:group-hover:text-purple-400">Employee</span>
                       </router-link>
 
                       <!-- Customer -->
@@ -950,14 +950,14 @@
                         v-if="authStore.hasPermission('customers.create')"
                         to="/customers/create"
                         @click="showQuickAdd = false"
-                        class="flex flex-col items-center p-3 rounded-lg hover:bg-indigo-50 transition-colors duration-200 group"
+                        class="flex flex-col items-center p-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-200">
-                          <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="w-10 h-10 bg-indigo-100 dark:bg-[#252525] rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-200 dark:group-hover:bg-[#2D2D2D]/90">
+                          <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                         </div>
-                        <span class="text-xs text-center text-gray-700 group-hover:text-indigo-700">Customer</span>
+                        <span class="text-xs text-center text-gray-700 dark:text-slate-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-450">Customer</span>
                       </router-link>
                     </div>
                   </div>
@@ -982,24 +982,22 @@
                 <svg v-else xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5 text-indigo-200">
                   <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
-              </button>
-
-              <!-- Theme Dropdown -->
+              </button>              <!-- Theme Dropdown -->
               <div
                 v-if="showThemeMenu"
                 ref="themeMenuRef"
-                class="origin-top-right absolute right-0 top-full mt-3 w-40 rounded-2xl shadow-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/40 dark:border-slate-800/80 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
+                class="origin-top-right absolute right-0 top-full mt-3 w-40 rounded-2xl shadow-2xl bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-xl border border-white/40 dark:border-[#2E2E2E] ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
                 <div class="py-1">
-                  <button @click="setTheme('light')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'light' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-slate-200']">
+                  <button @click="setTheme('light')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'light' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200']">
                     <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     Light
                   </button>
-                  <button @click="setTheme('dark')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'dark' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-slate-200']">
+                  <button @click="setTheme('dark')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'dark' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200']">
                     <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                     Dark
                   </button>
-                  <button @click="setTheme('system')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'system' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-slate-200']">
+                  <button @click="setTheme('system')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'system' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200']">
                     <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     Match system
                   </button>
@@ -1012,7 +1010,7 @@
               <button
                 @click="showNotifications = !showNotifications"
                 data-notification-button
-                class="bg-white dark:bg-slate-900 p-1 rounded-full text-gray-400 dark:text-slate-450 hover:text-gray-500 dark:hover:text-slate-350 focus:outline-none focus-visible:outline-none focus:ring-0 relative"
+                class="bg-white dark:bg-[#1E1E1E] p-1 rounded-full text-gray-400 dark:text-slate-450 hover:text-gray-500 dark:hover:text-slate-350 focus:outline-none focus-visible:outline-none focus:ring-0 relative"
               >
                 <span class="sr-only">View notifications</span>
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1028,15 +1026,15 @@
               <div
                 v-if="showNotifications"
                 ref="notificationsRef"
-                class="origin-top-right absolute right-0 mt-3 w-96 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/40 dark:border-slate-800/80 ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
+                class="origin-top-right absolute right-0 mt-3 w-96 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-xl border border-white/40 dark:border-[#2E2E2E] ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
                 <div class="py-0">
-                  <div class="px-6 py-5 bg-gradient-to-br from-gray-50/80 to-white/80 dark:from-slate-850/80 dark:to-slate-900/80 border-b border-gray-100/50 dark:border-slate-800/50 flex justify-between items-center">
+                  <div class="px-6 py-5 bg-gradient-to-br from-gray-50/80 to-white/80 dark:from-[#252525]/85 dark:to-[#1E1E1E]/85 border-b border-gray-100/50 dark:border-[#2E2E2E] flex justify-between items-center">
                     <div>
                       <h3 class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">Intelligence Center</h3>
-                      <p class="text-[11px] text-gray-400 dark:text-slate-500 font-medium">Real-time system activities and alerts</p>
+                      <p class="text-[11px] text-gray-400 dark:text-slate-550 font-medium">Real-time system activities and alerts</p>
                     </div>
-                    <button @click="markAllAsRead" class="text-[9px] font-black text-gray-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-widest bg-gray-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 px-2 py-1 rounded-full transition-all">
+                    <button @click="markAllAsRead" class="text-[9px] font-black text-gray-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-widest bg-gray-100 dark:bg-[#252525] hover:bg-indigo-50 dark:hover:bg-[#2D2D2D]/80 px-2 py-1 rounded-full transition-all">
                       Clear All
                     </button>
                   </div>
@@ -1121,16 +1119,14 @@
                     </span>
                   </div>
                 </button>
-              </div>
-
-              <!-- User dropdown menu -->
+              </div>              <!-- User dropdown menu -->
               <div
                 v-if="showUserMenu"
                 ref="userMenuRef"
-                class="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 focus:outline-none z-50 overflow-hidden"
+                class="origin-top-right absolute right-0 mt-3 w-64 rounded-xl shadow-2xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:outline-none z-50 overflow-hidden"
               >
                 <!-- User Header -->
-                <div class="px-4 py-4 border-b border-gray-200 dark:border-slate-800 flex items-center space-x-3">
+                <div class="px-4 py-4 border-b border-gray-200 dark:border-[#2E2E2E] flex items-center space-x-3">
                   <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
                     {{ authStore.user?.name?.charAt(0).toUpperCase() }}
                   </div>
@@ -1145,7 +1141,7 @@
                 <div class="py-1">
                   <router-link
                     to="/profile"
-                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-850 hover:text-gray-900 dark:hover:text-slate-200 transition-all duration-200"
+                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 hover:text-gray-900 dark:hover:text-slate-200 transition-all duration-200"
                     @click="showUserMenu = false"
                   >
                     <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
@@ -1153,7 +1149,7 @@
                   </router-link>
                   <router-link
                     to="/settings"
-                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-850 hover:text-gray-900 dark:hover:text-slate-200 transition-all duration-200"
+                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 hover:text-gray-900 dark:hover:text-slate-200 transition-all duration-200"
                     @click="showUserMenu = false"
                   >
                     <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
@@ -1162,10 +1158,10 @@
                 </div>
 
                 <!-- Sign Out -->
-                <div class="border-t border-gray-200 py-1">
+                <div class="border-t border-gray-250 dark:border-[#2E2E2E] py-1">
                   <button
                     @click="handleLogout"
-                    class="group w-full flex items-center px-3 py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
+                    class="group w-full flex items-center px-3 py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-200"
                   >
                     <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
                     <span>Secure Sign Out</span>
@@ -1236,7 +1232,7 @@
         <div class="absolute inset-0 cursor-zoom-out" @click="showLogoLightbox = false" aria-hidden="true"></div>
 
         <!-- Lightbox Card -->
-        <div class="relative z-10 max-w-xl max-h-[80vh] p-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-2xl scale-100">
+        <div class="relative z-10 max-w-xl max-h-[80vh] p-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl shadow-2xl scale-100">
           <!-- Close Button -->
           <button
             @click="showLogoLightbox = false"
@@ -1314,11 +1310,11 @@
         aria-labelledby="support-modal-title"
       >
         <!-- Modal Card -->
-        <div class="relative bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[28px] max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="relative bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-[28px] max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
           <!-- Close Button -->
           <button
             @click="showSupportModal = false"
-            class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#2D2D2D]/80 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
           >
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1326,7 +1322,7 @@
           </button>
 
           <!-- Modal Header -->
-          <div class="p-6 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50 to-white dark:from-slate-850 dark:to-slate-900">
+          <div class="p-6 border-b border-gray-100 dark:border-[#2E2E2E] bg-gradient-to-r from-indigo-50 to-white dark:from-[#252525] dark:to-[#1E1E1E]">
             <h2 id="support-modal-title" class="text-lg font-extrabold text-gray-900 dark:text-slate-100 flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
               Support & Help Desk
@@ -1359,7 +1355,7 @@
                 <div class="space-y-3">
                   <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">1. Group Creation & Management</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <h5 class="text-xs font-bold text-gray-700 dark:text-slate-200 mb-1 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Group Name
                       </h5>
@@ -1367,7 +1363,7 @@
                         Create customizable category groups based on product types or lines (e.g., <strong>Electronics</strong>, <strong>Clothing</strong>, <strong>Furniture</strong>, or <strong>Raw Materials</strong>).
                       </p>
                     </div>
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <h5 class="text-xs font-bold text-gray-700 dark:text-slate-200 mb-1 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Parent/Child Groups
                       </h5>
@@ -1382,7 +1378,7 @@
                 <div class="space-y-3 mt-6">
                   <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">2. Bulk Actions & Settings</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <h5 class="text-xs font-bold text-gray-700 dark:text-slate-200 mb-1 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Mass Pricing & Discounts
                       </h5>
@@ -1390,7 +1386,7 @@
                         Apply batch rules, pricing overrides, markups, or seasonal discounts to all products under a group in a single step instead of editing individual items.
                       </p>
                     </div>
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <h5 class="text-xs font-bold text-gray-700 dark:text-slate-200 mb-1 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Tax Assignment
                       </h5>
@@ -1451,7 +1447,7 @@
                 <div class="space-y-3">
                   <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">1. Global Inventory Activity Log</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <h5 class="text-xs font-bold text-gray-700 dark:text-slate-200 mb-1 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> All-in-One Timeline
                       </h5>
@@ -1459,7 +1455,7 @@
                         Displays the transaction history of every single item in the system in a centralized, line-by-line master timeline.
                       </p>
                     </div>
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <h5 class="text-xs font-bold text-gray-700 dark:text-slate-200 mb-1 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Stock In and Out
                       </h5>
@@ -1475,7 +1471,7 @@
                   <h4 class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">2. Detailed Tracking Fields</h4>
                   <p class="text-[11px] text-gray-550 dark:text-slate-400 mb-2">The history logs are organized in a detailed table containing the following key attributes:</p>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <ul class="text-[11px] space-y-2 text-gray-550 dark:text-slate-400 pl-0 list-none">
                         <li class="flex items-start gap-2">
                           <strong class="text-gray-700 dark:text-slate-200 shrink-0 min-w-[100px]">Date & Time:</strong>
@@ -1491,7 +1487,7 @@
                         </li>
                       </ul>
                     </div>
-                    <div class="p-4 bg-gray-50 dark:bg-slate-850 rounded-2xl border border-gray-100 dark:border-slate-800/60">
+                    <div class="p-4 bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2E2E2E]/60">
                       <ul class="text-[11px] space-y-2 text-gray-550 dark:text-slate-400 pl-0 list-none">
                         <li class="flex items-start gap-2">
                           <strong class="text-gray-700 dark:text-slate-200 shrink-0 min-w-[100px]">Qty Changed:</strong>
@@ -1537,21 +1533,21 @@
               <div>
                 <h3 class="text-xs font-bold text-gray-400 dark:text-slate-550 uppercase tracking-widest mb-3">Knowledge Base</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <a href="https://akaunting.com/hc/docs" target="_blank" class="flex items-center gap-3 p-3.5 bg-gray-50 dark:bg-slate-850 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-950">
+                  <a href="https://akaunting.com/hc/docs" target="_blank" class="flex items-center gap-3 p-3.5 bg-gray-50 dark:bg-[#252525] rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-950">
                     <div class="w-9 h-9 bg-indigo-100 dark:bg-indigo-950/50 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">📚</div>
                     <div class="min-w-0">
                       <h4 class="text-xs font-bold text-gray-700 dark:text-slate-200 truncate">Akaunting Docs</h4>
                       <p class="text-[10px] text-gray-400 truncate">Help center manuals</p>
                     </div>
                   </a>
-                  <button @click="showGroupsDoc = true" class="flex items-center text-left gap-3 p-3.5 bg-gray-50 dark:bg-slate-850 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-950 cursor-pointer">
+                  <button @click="showGroupsDoc = true" class="flex items-center text-left gap-3 p-3.5 bg-gray-50 dark:bg-[#252525] rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-950 cursor-pointer">
                     <div class="w-9 h-9 bg-amber-100 dark:bg-amber-950/50 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold shrink-0">📦</div>
                     <div class="min-w-0">
                       <h4 class="text-xs font-bold text-gray-700 dark:text-slate-200 truncate">Groups Manual</h4>
                       <p class="text-[10px] text-gray-400 truncate">Category management guide</p>
                     </div>
                   </button>
-                  <button @click="showHistoriesDoc = true" class="flex items-center text-left gap-3 p-3.5 bg-gray-50 dark:bg-slate-850 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-950 cursor-pointer">
+                  <button @click="showHistoriesDoc = true" class="flex items-center text-left gap-3 p-3.5 bg-gray-50 dark:bg-[#252525] rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-950 cursor-pointer">
                     <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-950/50 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold shrink-0">📜</div>
                     <div class="min-w-0">
                       <h4 class="text-xs font-bold text-gray-700 dark:text-slate-200 truncate">Histories Manual</h4>
@@ -1568,7 +1564,7 @@
                   <div class="grid grid-cols-2 gap-4">
                     <div>
                       <label class="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Department</label>
-                      <select v-model="ticketForm.department" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200">
+                      <select v-model="ticketForm.department" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#252525] border border-gray-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200">
                         <option value="General">General Inquiries</option>
                         <option value="Sales">Sales & Invoices</option>
                         <option value="Inventory">Inventory & Warehouses</option>
@@ -1577,7 +1573,7 @@
                     </div>
                     <div>
                       <label class="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Priority</label>
-                      <select v-model="ticketForm.priority" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200">
+                      <select v-model="ticketForm.priority" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#252525] border border-gray-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200">
                         <option value="low">Low Priority</option>
                         <option value="medium">Medium Priority</option>
                         <option value="high">High Priority</option>
@@ -1586,11 +1582,11 @@
                   </div>
                   <div>
                     <label class="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Subject</label>
-                    <input v-model="ticketForm.subject" required type="text" placeholder="Explain the issue briefly..." class="w-full px-3 py-2 text-xs bg-slate-55 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200" />
+                    <input v-model="ticketForm.subject" required type="text" placeholder="Explain the issue briefly..." class="w-full px-3 py-2 text-xs bg-slate-55 dark:bg-[#252525] border border-gray-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200" />
                   </div>
                   <div>
                     <label class="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Details & Description</label>
-                    <textarea v-model="ticketForm.description" required rows="3" placeholder="Provide background information, replication steps, etc..." class="w-full px-3 py-2 text-xs bg-slate-55 dark:bg-slate-800 border border-gray-250 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200 resize-none"></textarea>
+                    <textarea v-model="ticketForm.description" required rows="3" placeholder="Provide background information, replication steps, etc..." class="w-full px-3 py-2 text-xs bg-slate-55 dark:bg-[#252525] border border-gray-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200 resize-none"></textarea>
                   </div>
                   <div class="flex justify-end">
                     <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-150 shadow-md cursor-pointer">
@@ -1604,7 +1600,7 @@
               <div v-if="submittedTickets.length > 0">
                 <h3 class="text-xs font-bold text-gray-400 dark:text-slate-550 uppercase tracking-widest mb-3">Submitted Tickets</h3>
                 <div class="space-y-3">
-                  <div v-for="ticket in submittedTickets" :key="ticket.id" class="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-xl border border-gray-200/50 dark:border-slate-800 flex items-start justify-between">
+                  <div v-for="ticket in submittedTickets" :key="ticket.id" class="p-3.5 bg-slate-50 dark:bg-[#252525] rounded-xl border border-gray-200/50 dark:border-[#2E2E2E] flex items-start justify-between">
                     <div>
                       <h4 class="text-xs font-bold text-gray-800 dark:text-slate-200">{{ ticket.subject }}</h4>
                       <p class="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">{{ ticket.description }}</p>
