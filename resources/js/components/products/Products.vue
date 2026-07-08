@@ -116,7 +116,7 @@
               v-model="tableFilters.search"
               @input="handleSearchInput"
               placeholder="Search or filter results.."
-              class="w-full pl-11 pr-4 py-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700 transition-all placeholder-gray-400 dark:placeholder-slate-400 text-gray-900 dark:text-slate-300 shadow-sm"
+              class="w-full pl-11 pr-4 py-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 transition-all placeholder-gray-400 dark:placeholder-slate-400 text-gray-900 dark:text-slate-300 shadow-sm"
             />
           </div>
         </div>

@@ -809,7 +809,7 @@
                 @focus="showSearchResults = true"
                 type="text"
                 placeholder="Search features (e.g. Invoices...)"
-                class="block w-full pl-9 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-[#252525] border border-transparent dark:border-[#2E2E2E] rounded-xl focus:bg-white dark:focus:bg-[#1E1E1E] focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-550 transition-all outline-none"
+                class="block w-full pl-9 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-[#252525] border border-transparent dark:border-[#2E2E2E] rounded-xl focus:bg-white dark:focus:bg-[#1E1E1E] focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-550 transition-all outline-none"
               />
               
               <!-- Search Results Dropdown -->

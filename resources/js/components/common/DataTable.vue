@@ -183,7 +183,7 @@
             <select
               v-model="perPage"
               @change="handlePerPageChange"
-              class="pl-4 pr-10 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700 transition-all font-black text-[11px] text-gray-700 dark:text-slate-300 shadow-sm appearance-none cursor-pointer uppercase tracking-tight"
+              class="pl-4 pr-10 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 transition-all font-black text-[11px] text-gray-700 dark:text-slate-300 shadow-sm appearance-none cursor-pointer uppercase tracking-tight"
             >
               <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
             </select>

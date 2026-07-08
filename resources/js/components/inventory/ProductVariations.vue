@@ -63,7 +63,7 @@
           v-model="searchQuery"
           type="text" 
           placeholder="Search or filter results.." 
-          class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-slate-700 dark:focus:border-slate-700 text-sm placeholder-slate-400 transition-all font-medium"
+          class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 text-sm placeholder-slate-400 transition-all font-medium"
         />
         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
