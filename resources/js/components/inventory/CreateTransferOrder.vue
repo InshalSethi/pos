@@ -13,16 +13,36 @@
         <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Create Stock Transfer</h1>
       </div>
 
-      <!-- Error Banner -->
-      <div v-if="errorMsg" class="mb-6 p-4 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl flex items-center justify-between text-xs font-semibold">
-        <span class="flex items-center gap-2">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          {{ errorMsg }}
-        </span>
-        <button @click="errorMsg = ''" class="text-rose-600 hover:text-rose-900 font-bold text-base">&times;</button>
-      </div>
+      <!-- Floating Error Toast Notification -->
+      <transition
+        enter-active-class="transition ease-out duration-300"
+        enter-from-class="transform translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+        enter-to-class="transform translate-y-0 opacity-100 sm:translate-x-0"
+        leave-active-class="transition ease-in duration-100"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-show="errorMsg" class="fixed top-20 right-5 max-w-sm w-full bg-[#0f172a] text-slate-50 shadow-2xl rounded-2xl pointer-events-auto overflow-hidden z-[100] border border-white/5">
+          <div class="px-5 py-4">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="flex-shrink-0">
+                  <svg class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p class="text-xs font-semibold leading-relaxed truncate select-none text-white dark:text-white" style="color: #ffffff !important;">{{ errorMsg }}</p>
+              </div>
+              <button type="button" @click="errorMsg = ''" class="flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all focus:outline-none cursor-pointer">
+                <span class="sr-only">Close</span>
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
 
       <form @submit.prevent="submitTransfer" class="space-y-6 text-xs font-semibold text-slate-700 dark:text-slate-300">
         
@@ -95,18 +115,88 @@
 
           <!-- Add Item Selector -->
           <div class="flex gap-2">
-            <div class="relative flex-1">
-              <select 
-                v-model="selectedProductKey"
-                @change="onProductSelected"
-                class="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold text-xs cursor-pointer"
+            <div class="relative flex-1" id="product-dropdown-container">
+              <!-- Dropdown Trigger Button -->
+              <button 
+                type="button"
+                @click.stop="toggleDropdown"
                 :disabled="!form.source_warehouse_id"
+                class="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold text-xs cursor-pointer disabled:opacity-50 text-left"
               >
-                <option value="">{{ form.source_warehouse_id ? 'Choose a product to transfer...' : 'Please select source warehouse first' }}</option>
-                <option v-for="opt in productOptions" :key="opt.key" :value="opt.key">
-                  {{ opt.label }} (Available: {{ opt.stock_qty }})
-                </option>
-              </select>
+                <span class="truncate">
+                  {{ selectedOptionLabel || (form.source_warehouse_id ? 'Choose a product to transfer...' : 'Please select source warehouse first') }}
+                </span>
+                <svg 
+                  class="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200"
+                  :class="{ 'rotate-180': isDropdownOpen }"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Floating Dropdown Panel -->
+              <transition 
+                enter-active-class="transition ease-out duration-100" 
+                enter-from-class="opacity-0 translate-y-1" 
+                enter-to-class="opacity-100 translate-y-0" 
+                leave-active-class="transition ease-in duration-75" 
+                leave-from-class="opacity-100 translate-y-0" 
+                leave-to-class="opacity-0 translate-y-1"
+              >
+                <div 
+                  v-show="isDropdownOpen" 
+                  class="dropdown-options-scroll absolute left-0 right-0 bottom-full mb-1.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-xl py-1 z-50 max-h-64 overflow-y-auto"
+                >
+                  <!-- Search Filter inside dropdown -->
+                  <div class="px-2 py-1.5 border-b border-slate-100 dark:border-[#2E2E2E] sticky top-0 bg-white dark:bg-[#1E1E1E] z-10">
+                    <input 
+                      v-model="productSearchQuery"
+                      type="text" 
+                      placeholder="Search products..." 
+                      @click.stop
+                      class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-gray-400 dark:placeholder-slate-450"
+                    />
+                  </div>
+
+                  <!-- Options List -->
+                  <div class="py-1">
+                    <div 
+                      v-if="filteredProductOptions.length === 0" 
+                      class="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 text-center italic"
+                    >
+                      No items available
+                    </div>
+                    <div 
+                      v-else
+                      v-for="opt in filteredProductOptions" 
+                      :key="opt.key"
+                      @click.stop="selectOption(opt)"
+                      class="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/85 cursor-pointer flex items-center justify-between gap-4 transition-colors"
+                    >
+                      <div class="flex flex-col min-w-0">
+                        <span class="truncate text-slate-900 dark:text-slate-100">{{ opt.product_name }}</span>
+                        <span v-if="opt.variation_name" class="text-[9px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ opt.variation_name }}</span>
+                        <span class="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">SKU: {{ opt.sku }}</span>
+                      </div>
+                      <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-md">
+                          Qty: {{ opt.stock_qty }}
+                        </span>
+                        <!-- Checkmark / Tick Mark -->
+                        <span v-if="isOptionSelected(opt)" class="text-indigo-650 dark:text-indigo-400">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                        <span v-else class="w-4 h-4"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </transition>
             </div>
             <button 
               type="button" 
@@ -208,7 +298,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
@@ -218,7 +308,6 @@ const warehouses = ref([]);
 const sourceStock = ref([]);
 const productOptions = ref([]);
 const selectedProductKey = ref('');
-
 const submitting = ref(false);
 const errorMsg = ref('');
 
@@ -229,6 +318,66 @@ const form = ref({
   notes: '',
   items: []
 });
+
+// Auto-hide watcher for errorMsg
+watch(errorMsg, (newVal) => {
+  if (newVal) {
+    setTimeout(() => {
+      if (errorMsg.value === newVal) {
+        errorMsg.value = '';
+      }
+    }, 4000);
+  }
+});
+
+const isDropdownOpen = ref(false);
+const productSearchQuery = ref('');
+
+const toggleDropdown = () => {
+  if (!form.value.source_warehouse_id) return;
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const selectOption = (opt) => {
+  selectedProductKey.value = opt.key;
+  addItem();
+  isDropdownOpen.value = false;
+  productSearchQuery.value = '';
+};
+
+const isOptionSelected = (opt) => {
+  return form.value.items.some(item => 
+    item.product_id === opt.product_id && 
+    item.product_variation_id === opt.product_variation_id
+  );
+};
+
+const selectedOptionLabel = computed(() => {
+  if (!selectedProductKey.value) return '';
+  const opt = productOptions.value.find(o => String(o.key) === String(selectedProductKey.value));
+  return opt ? opt.label : '';
+});
+
+const filteredProductOptions = computed(() => {
+  if (!productSearchQuery.value) return productOptions.value;
+  const q = productSearchQuery.value.toLowerCase();
+  return productOptions.value.filter(opt => {
+    return opt.product_name.toLowerCase().includes(q) || 
+           (opt.variation_name && opt.variation_name.toLowerCase().includes(q)) ||
+           opt.sku.toLowerCase().includes(q);
+  });
+});
+
+const handleClickOutside = (event) => {
+  const container = document.getElementById('product-dropdown-container');
+  if (container && !container.contains(event.target)) {
+    isDropdownOpen.value = false;
+  }
+};
+
+
+
+
 
 const isInvalid = computed(() => {
   if (form.value.items.length === 0) return true;
@@ -256,6 +405,8 @@ const onSourceWarehouseChange = async () => {
   // Clear currently selected items since they belong to old source warehouse limits
   form.value.items = [];
   selectedProductKey.value = '';
+  isDropdownOpen.value = false;
+  productSearchQuery.value = '';
   
   try {
     const res = await axios.get(`/api/warehouses/${form.value.source_warehouse_id}`);
@@ -363,8 +514,33 @@ const submitTransfer = async () => {
 
 onMounted(() => {
   fetchWarehouses();
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
 <style scoped>
+/* Custom thin premium scrollbar */
+.dropdown-options-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.dropdown-options-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dropdown-options-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+.dropdown-options-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.65);
+}
+
+/* Firefox compatibility */
+.dropdown-options-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
 </style>

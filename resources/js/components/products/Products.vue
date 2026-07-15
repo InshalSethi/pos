@@ -1121,28 +1121,26 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="toast.show" class="fixed top-5 right-5 max-w-sm w-full bg-white shadow-2xl rounded-2xl pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden z-[100] border-l-4 border-emerald-500">
-        <div class="p-4">
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <div class="p-2 bg-emerald-100 rounded-full">
-                 <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                 </svg>
+      <div v-if="toast.show" class="fixed top-20 right-5 max-w-sm w-full bg-[#0f172a] text-slate-50 shadow-2xl rounded-2xl pointer-events-auto overflow-hidden z-[100] border border-white/5">
+        <div class="px-5 py-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <div class="flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p v-if="toast.title" class="text-xs font-bold leading-normal text-white dark:text-white" style="color: #ffffff !important;">{{ toast.title }}</p>
+                <p class="text-[11px] font-semibold leading-relaxed text-slate-300 dark:text-slate-300" style="color: #cbd5e1 !important;">{{ toast.message }}</p>
               </div>
             </div>
-            <div class="ml-3 w-0 flex-1 pt-0.5">
-              <p class="text-sm font-bold text-gray-900">{{ toast.title }}</p>
-              <p class="mt-1 text-xs text-gray-500 font-medium">{{ toast.message }}</p>
-            </div>
-            <div class="ml-4 flex-shrink-0 flex">
-              <button @click="toast.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
-                <span class="sr-only">Close</span>
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
+            <button type="button" @click="toast.show = false" class="flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all focus:outline-none cursor-pointer">
+              <span class="sr-only">Close</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>

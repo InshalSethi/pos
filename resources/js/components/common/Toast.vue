@@ -10,26 +10,32 @@
         ]"
       >
         <div class="toast-content">
-          <div class="toast-icon">
-            <svg v-if="toast.type === 'success'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-            <svg v-else-if="toast.type === 'error'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-            </svg>
-            <svg v-else-if="toast.type === 'warning'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-            <svg v-else class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="toast-message">
-            {{ toast.message }}
+          <div class="toast-body">
+            <div class="toast-icon">
+              <!-- Success Outline Icon -->
+              <svg v-if="toast.type === 'success'" class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <!-- Error Outline Icon -->
+              <svg v-else-if="toast.type === 'error'" class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <!-- Warning Outline Icon -->
+              <svg v-else-if="toast.type === 'warning'" class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <!-- Info Outline Icon -->
+              <svg v-else class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="toast-message">
+              {{ toast.message }}
+            </div>
           </div>
           <button @click="removeToast(toast.id)" class="toast-close">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -57,105 +63,94 @@ export default {
 <style scoped>
 .toast-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 24px;
+  right: 24px;
   z-index: 9999;
   max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .toast {
-  margin-bottom: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: #0f172a; /* Slate 950 / Very Dark Navy */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px; /* Premium rounded-xl/2xl feel */
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  min-width: 300px;
+  min-width: 320px;
+  max-width: 420px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast-content {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  background: white;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.toast-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-w: 0;
 }
 
 .toast-icon {
   flex-shrink: 0;
-  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toast-message {
   flex: 1;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600; /* Matching font weight from screenshot */
   line-height: 1.4;
+  color: #f8fafc; /* Slate 50 / pure white text */
+  word-break: break-word;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .toast-close {
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-left: 14px;
   padding: 4px;
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 4px;
-  color: #6b7280;
+  border-radius: 6px;
+  color: #64748b; /* Slate 500 */
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toast-close:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #374151;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
 }
 
-/* Toast types */
-.toast-success {
-  border-left: 4px solid #10b981;
+/* Animations */
+.toast-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.toast-success .toast-icon {
-  color: #10b981;
-}
-
-.toast-error {
-  border-left: 4px solid #ef4444;
-}
-
-.toast-error .toast-icon {
-  color: #ef4444;
-}
-
-.toast-warning {
-  border-left: 4px solid #f59e0b;
-}
-
-.toast-warning .toast-icon {
-  color: #f59e0b;
-}
-
-.toast-info {
-  border-left: 4px solid #3b82f6;
-}
-
-.toast-info .toast-icon {
-  color: #3b82f6;
-}
-
-/* Transitions */
-.toast-enter-active,
 .toast-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 .toast-enter-from {
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateY(-12px) scale(0.95);
 }
-
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(100%);
+  transform: scale(0.95);
 }
-
 .toast-move {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 </style>

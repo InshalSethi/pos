@@ -327,16 +327,21 @@
     </div>
 
     <!-- Notifications -->
-    <div class="fixed top-4 right-4 z-50 space-y-2">
+    <div v-if="notifications.length > 0" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm w-full">
       <div
         v-for="(notification, index) in notifications"
         :key="index"
-        :class="[
-          'px-4 py-3 rounded-lg shadow-lg transition-all duration-300',
-          notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        ]"
+        class="bg-[#0f172a] text-slate-50 border border-white/5 px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200"
       >
-        {{ notification.message }}
+        <div class="flex-shrink-0">
+          <svg v-if="notification.type === 'success'" class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg v-else class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <span class="break-words leading-relaxed select-none text-white dark:text-white" style="color: #ffffff !important;">{{ notification.message }}</span>
       </div>
     </div>
   </div>

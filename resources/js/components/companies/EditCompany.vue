@@ -10,11 +10,11 @@
 
     <!-- Success Toast -->
     <transition enter-active-class="transform ease-out duration-300 transition" enter-from-class="trangray-y-2 opacity-0 sm:trangray-y-0 sm:trangray-x-2" enter-to-class="trangray-y-0 opacity-100 sm:trangray-x-0" leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="successMessage" class="fixed bottom-4 right-4 z-50 p-4 rounded-xl bg-gray-900 border border-gray-700 text-white shadow-2xl flex items-center gap-3 w-80">
-        <svg class="h-6 w-6 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div v-if="successMessage" class="fixed bottom-4 right-4 z-50 bg-[#0f172a] text-slate-50 border border-white/5 px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold max-w-sm w-80">
+        <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span class="text-sm font-semibold">{{ successMessage }}</span>
+        <span class="break-words leading-relaxed select-none">{{ successMessage }}</span>
       </div>
     </transition>
 

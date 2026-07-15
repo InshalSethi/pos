@@ -3,7 +3,7 @@
     <div class="w-full max-w-7xl mx-auto">
       
       <!-- Toast Notification System (Top Right) -->
-      <div class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+      <div class="fixed top-20 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
         <transition-group
           enter-active-class="transform ease-out duration-300 transition"
           enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
@@ -15,32 +15,25 @@
           <div 
             v-for="alert in alerts" 
             :key="alert.id"
-            class="pointer-events-auto w-full overflow-hidden rounded-2xl bg-white dark:bg-[#1E1E1E] border shadow-2xl p-4 flex items-start gap-3"
-            :class="[
-              alert.type === 'error' ? 'border-rose-200 dark:border-rose-950/40 bg-rose-50/50 dark:bg-rose-950/20' : 'border-emerald-250 dark:border-emerald-950/40 bg-emerald-50/50 dark:bg-emerald-950/20'
-            ]"
+            class="pointer-events-auto w-full overflow-hidden rounded-2xl bg-[#0f172a] border border-white/5 shadow-2xl p-4 flex items-center gap-3 text-slate-50"
           >
             <div class="flex-shrink-0">
-              <svg v-if="alert.type === 'error'" class="h-6 w-6 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg v-if="alert.type === 'error'" class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <svg v-else class="h-6 w-6 text-emerald-600 dark:text-emerald-450" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg v-else class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div class="flex-1 pt-0.5">
-              <p class="text-xs font-bold" :class="alert.type === 'error' ? 'text-rose-900 dark:text-rose-400' : 'text-emerald-900 dark:text-emerald-400'">
-                {{ alert.title }}
-              </p>
-              <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ alert.message }}
-              </p>
+            <div class="flex-1 min-w-0">
+              <p v-if="alert.title" class="text-xs font-bold leading-normal text-white dark:text-white" style="color: #ffffff !important;">{{ alert.title }}</p>
+              <p class="text-[11px] font-semibold leading-relaxed text-slate-300 dark:text-slate-300" style="color: #cbd5e1 !important;">{{ alert.message }}</p>
             </div>
             <div class="flex-shrink-0 flex">
-              <button @click="removeAlert(alert.id)" class="inline-flex rounded-md text-slate-400 hover:text-slate-500 focus:outline-none dark:text-slate-400">
+              <button @click="removeAlert(alert.id)" class="flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all focus:outline-none cursor-pointer">
                 <span class="sr-only">Close</span>
-                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>

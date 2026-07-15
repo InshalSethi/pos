@@ -1086,9 +1086,11 @@
 
       <!-- Error Notifications -->
       <transition-group name="list" tag="div" class="fixed top-20 right-6 space-y-2 z-[9999] max-w-sm">
-        <div v-for="err in localErrors" :key="err.id" class="bg-slate-900 dark:bg-[#1E1E1E] text-white dark:text-slate-200 border dark:border-[#2E2E2E] px-4 py-3 rounded-lg shadow-lg flex items-center text-sm font-medium animate-in fade-in slide-in-from-top-4 duration-200">
-          <svg class="w-4 h-4 mr-2 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span class="break-words">{{ err.text }}</span>
+        <div v-for="err in localErrors" :key="err.id" class="bg-[#0f172a] text-slate-50 border border-white/5 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200">
+          <svg class="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="break-words leading-relaxed select-none">{{ err.text }}</span>
         </div>
       </transition-group>
     </div>
