@@ -1,12 +1,12 @@
 <template>
-  <div class="w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-[#121212] min-h-screen font-sans">
+  <div class="w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
     <div class="w-full max-w-7xl mx-auto">
       
       <!-- HEADER SECTION -->
       <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
-          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Stock Adjustments</h1>
-          <span class="bg-indigo-150 text-indigo-850 dark:bg-indigo-950/60 dark:text-indigo-300 text-xs px-2.5 py-1 rounded-full font-bold">
+          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Stock Adjustments</h1>
+          <span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-full font-bold">
             {{ pagination.total || 0 }} Logs
           </span>
         </div>
@@ -15,7 +15,7 @@
           <!-- Upload Inventory Trigger -->
           <button
             @click="showUploadModal = true"
-            class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-bold rounded-full shadow-sm transition-all duration-200 text-xs cursor-pointer active:scale-95"
+            class="inline-flex items-center px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 text-slate-700 dark:text-slate-300 font-bold rounded-full shadow-sm transition-all duration-200 text-xs cursor-pointer active:scale-95"
           >
             <svg class="w-4 h-4 mr-1.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
@@ -36,30 +36,28 @@
         </div>
       </div>
 
-
-
       <!-- STATS SUMMARY CARDS -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Card 1: Total Adjustments -->
         <div
           @click="openCardModal('total')"
-          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+          class="bg-white dark:bg-[#1E1E1E] p-5 rounded-3xl border border-slate-200/80 dark:border-[#2E2E2E] shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
         >
-          <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
           </div>
           <div>
             <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Total Logs</span>
-            <span class="text-xl font-black text-slate-800 dark:text-white leading-tight mt-0.5 block">{{ summary.total_adjustments || 0 }}</span>
+            <span class="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight mt-0.5 block">{{ summary.total_adjustments || 0 }}</span>
           </div>
         </div>
 
         <!-- Card 2: Increases -->
         <div
           @click="openCardModal('increase')"
-          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+          class="bg-white dark:bg-[#1E1E1E] p-5 rounded-3xl border border-slate-200/80 dark:border-[#2E2E2E] shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
         >
           <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,14 +66,14 @@
           </div>
           <div>
             <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Increases</span>
-            <span class="text-xl font-black text-slate-800 dark:text-white leading-tight mt-0.5 block">{{ summary.total_increases || 0 }}</span>
+            <span class="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight mt-0.5 block">{{ summary.total_increases || 0 }}</span>
           </div>
         </div>
 
         <!-- Card 3: Decreases -->
         <div
           @click="openCardModal('decrease')"
-          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+          class="bg-white dark:bg-[#1E1E1E] p-5 rounded-3xl border border-slate-200/80 dark:border-[#2E2E2E] shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
         >
           <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,36 +82,36 @@
           </div>
           <div>
             <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Decreases</span>
-            <span class="text-xl font-black text-slate-800 dark:text-white leading-tight mt-0.5 block">{{ summary.total_decreases || 0 }}</span>
+            <span class="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight mt-0.5 block">{{ summary.total_decreases || 0 }}</span>
           </div>
         </div>
 
         <!-- Card 4: Low Stock Products -->
         <div
           @click="openCardModal('low_stock')"
-          class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+          class="bg-white dark:bg-[#1E1E1E] p-5 rounded-3xl border border-slate-200/80 dark:border-[#2E2E2E] shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
         >
-          <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-650 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs">
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
           </div>
           <div>
             <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Low Stock Alerts</span>
-            <span class="text-xl font-black text-slate-800 dark:text-white leading-tight mt-0.5 block">{{ summary.low_stock_products || 0 }}</span>
+            <span class="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight mt-0.5 block">{{ summary.low_stock_products || 0 }}</span>
           </div>
         </div>
       </div>
 
       <!-- MAIN FILTER BAR & ACTIVITY TABLE CARD -->
-      <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/85 dark:border-slate-800 shadow-sm overflow-hidden p-6 space-y-4">
+      <div class="bg-white dark:bg-[#1E1E1E] rounded-3xl border border-slate-200/85 dark:border-[#2E2E2E] shadow-sm overflow-hidden p-6 space-y-4">
         
         <!-- Search, Filter & Date controls -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div class="flex flex-wrap items-center gap-3">
             <!-- Search field -->
             <div class="relative w-full sm:w-64">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 dark:text-slate-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -123,18 +121,18 @@
                 @input="debouncedFetch"
                 type="text"
                 placeholder="Search adjustment number..."
-                class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:border-slate-350 focus:bg-white focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs font-semibold focus:outline-none focus:border-slate-350 focus:bg-white dark:focus:bg-zinc-950 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
               />
             </div>
 
             <!-- Pills/Buttons for Type Filter -->
-            <div class="flex items-center bg-slate-50 dark:bg-slate-850 rounded-xl p-1 border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center bg-slate-50 dark:bg-[#252525] rounded-xl p-1 border border-slate-200 dark:border-[#2E2E2E]">
               <button
                 type="button"
                 @click="setTypeFilter('')"
                 :class="[
                   'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
-                  filters.adjustment_type === '' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-450 dark:text-slate-400 hover:text-slate-650'
+                  filters.adjustment_type === '' ? 'bg-white dark:bg-[#1E1E1E] text-slate-900 dark:text-slate-100 shadow-xs border dark:border-[#2E2E2E]' : 'text-slate-400 dark:text-slate-400 hover:text-slate-600'
                 ]"
               >
                 All
@@ -144,7 +142,7 @@
                 @click="setTypeFilter('increase')"
                 :class="[
                   'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
-                  filters.adjustment_type === 'increase' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-450 shadow-xs' : 'text-slate-450 dark:text-slate-450 hover:text-emerald-650'
+                  filters.adjustment_type === 'increase' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-450 shadow-xs' : 'text-slate-400 dark:text-slate-400 hover:text-emerald-600'
                 ]"
               >
                 Increase
@@ -154,7 +152,7 @@
                 @click="setTypeFilter('decrease')"
                 :class="[
                   'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
-                  filters.adjustment_type === 'decrease' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-450 shadow-xs' : 'text-slate-450 dark:text-slate-450 hover:text-rose-650'
+                  filters.adjustment_type === 'decrease' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 shadow-xs' : 'text-slate-400 dark:text-slate-400 hover:text-rose-600'
                 ]"
               >
                 Decrease
@@ -166,7 +164,7 @@
               v-if="filters.search || filters.adjustment_type"
               type="button"
               @click="clearFilters"
-              class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-350 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-105 hover:bg-slate-200 dark:bg-[#252525] dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-350 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
@@ -178,24 +176,24 @@
             <button
               type="button"
               @click="openCardModal('low_stock')"
-              class="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-955/40 dark:hover:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
               </svg>
               Low Stock Alerts
-              <span class="px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-[10px] font-black text-amber-850 dark:text-amber-350">
+              <span class="px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-[10px] font-black text-amber-850 dark:text-amber-350">
                 {{ summary.low_stock_products || 0 }}
               </span>
             </button>
           </div>
 
-          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
             <span>Show</span>
             <select
               v-model="filters.per_page"
               @change="fetchAdjustments(1)"
-              class="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              class="px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-semibold"
             >
               <option :value="10">10</option>
               <option :value="25">25</option>
@@ -206,53 +204,53 @@
         </div>
 
         <!-- Activity Table -->
-        <div class="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden">
-          <div v-if="loading" class="text-center py-20 bg-white dark:bg-slate-900">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-650 mx-auto"></div>
-            <p class="mt-3 text-slate-550 text-xs font-bold uppercase tracking-wider">Loading stock adjustments...</p>
+        <div class="border border-slate-100 dark:border-[#2E2E2E] rounded-2xl overflow-hidden">
+          <div v-if="loading" class="text-center py-20 bg-white dark:bg-[#1E1E1E]">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+            <p class="mt-3 text-slate-500 text-xs font-bold uppercase tracking-wider dark:text-slate-400">Loading stock adjustments...</p>
           </div>
 
-          <div v-else-if="adjustments.length === 0" class="text-center py-16 px-4 bg-white dark:bg-slate-900">
-            <div class="w-16 h-16 bg-slate-50 dark:bg-slate-850 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800">
-              <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-else-if="adjustments.length === 0" class="text-center py-16 px-4 bg-white dark:bg-[#1E1E1E]">
+            <div class="w-16 h-16 bg-slate-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-[#2E2E2E]">
+              <svg class="w-8 h-8 text-slate-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 class="text-base font-bold text-slate-850 dark:text-slate-200">No adjustments logged</h3>
-            <p class="text-xs text-slate-450 mt-1 max-w-xs mx-auto">You can manually adjust stocks using the "+ New Adjustment" flow above.</p>
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">No adjustments logged</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto dark:text-slate-400">You can manually adjust stocks using the "+ New Adjustment" flow above.</p>
           </div>
 
           <table v-else class="w-full table-auto border-collapse text-xs font-medium">
             <thead>
-              <tr class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200/80 dark:border-slate-800 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <th class="px-6 py-4 text-left">Adjustment #</th>
-                <th class="px-6 py-4 text-left">Product / Variation</th>
-                <th class="px-6 py-4 text-left">Warehouse</th>
-                <th class="px-6 py-4 text-center">Type</th>
-                <th class="px-6 py-4 text-center">Qty Shift</th>
-                <th class="px-6 py-4 text-left">Reason / Cost Impact</th>
-                <th class="px-6 py-4 text-center">Date / Operator</th>
-                <th class="px-6 py-4 text-center w-20">Actions</th>
+              <tr class="bg-slate-50 dark:bg-[#252525] border-b border-slate-200/80 dark:border-[#2E2E2E] text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-6 py-4 text-left font-bold">Adjustment #</th>
+                <th class="px-6 py-4 text-left font-bold">Product / Variation</th>
+                <th class="px-6 py-4 text-left font-bold">Warehouse</th>
+                <th class="px-6 py-4 text-center font-bold">Type</th>
+                <th class="px-6 py-4 text-center font-bold">Qty Shift</th>
+                <th class="px-6 py-4 text-left font-bold">Reason / Cost Impact</th>
+                <th class="px-6 py-4 text-center font-bold">Date / Operator</th>
+                <th class="px-6 py-4 text-center w-20 font-bold">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
-              <tr v-for="adj in adjustments" :key="adj.id" class="hover:bg-slate-50/40 dark:hover:bg-slate-850/10 transition-colors">
+            <tbody class="divide-y divide-slate-101 dark:divide-[#2E2E2E]/60 bg-white dark:bg-[#1E1E1E]">
+              <tr v-for="adj in adjustments" :key="adj.id" class="hover:bg-slate-50/40 dark:hover:bg-[#2D2D2D]/80 transition-colors">
                 <!-- Adjustment No -->
-                <td class="px-6 py-4 font-extrabold text-slate-900 dark:text-white whitespace-nowrap">
+                <td class="px-6 py-4 font-extrabold text-slate-900 dark:text-slate-100 whitespace-nowrap">
                   {{ adj.adjustment_number }}
                 </td>
                 
                 <!-- Product / Variant -->
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-850 bg-slate-50 shrink-0 shadow-xs">
+                    <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 dark:border-[#2E2E2E] bg-slate-50 shrink-0 shadow-xs">
                       <img :src="adj.product?.image || '/placeholder.png'" class="w-full h-full object-cover">
                     </div>
                     <div>
-                      <span class="font-bold text-slate-900 dark:text-white text-xs block leading-tight">{{ adj.product?.name }}</span>
+                      <span class="font-bold text-slate-900 dark:text-slate-100 text-xs block leading-tight">{{ adj.product?.name }}</span>
                       
                       <!-- Variant info badge -->
-                      <span v-if="adj.variation" class="inline-flex mt-1 text-[9px] font-bold text-indigo-750 bg-indigo-50 dark:bg-indigo-950/40 dark:text-indigo-400 px-1.5 py-0.5 rounded">
+                      <span v-if="adj.variation" class="inline-flex mt-1 text-[9px] font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 dark:text-indigo-400 px-1.5 py-0.5 rounded">
                         {{ adj.variation.variation_name_string }}
                       </span>
                     </div>
@@ -270,7 +268,7 @@
                     :class="[
                       'px-2 py-0.5 text-[9px] font-extrabold uppercase rounded-full',
                       adj.adjustment_type === 'increase'
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                        ? 'bg-emerald-55 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
                         : adj.adjustment_type === 'decrease'
                         ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
                         : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400'
@@ -282,7 +280,7 @@
 
                 <!-- Quantity shift details -->
                 <td class="px-6 py-4 text-center whitespace-nowrap">
-                  <div class="font-bold text-slate-850 dark:text-slate-200">
+                  <div class="font-bold text-slate-800 dark:text-slate-200">
                     {{ adj.quantity_before }} &rarr; {{ adj.quantity_after }}
                   </div>
                   <div class="text-[10px] text-slate-400 dark:text-slate-500 font-extrabold mt-0.5">
@@ -293,14 +291,14 @@
                 <!-- Reason / Cost Impact -->
                 <td class="px-6 py-4">
                   <div class="text-slate-800 dark:text-slate-300 font-bold text-xs truncate max-w-[160px]">{{ adj.reason }}</div>
-                  <div class="text-[10px] font-bold mt-0.5" :class="adj.cost_impact >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                  <div class="text-[10px] font-bold mt-0.5" :class="adj.cost_impact >= 0 ? 'text-emerald-600 dark:text-emerald-450' : 'text-rose-605 dark:text-rose-400'">
                     Cost: {{ adj.cost_impact >= 0 ? '+' : '-' }}${{ Math.abs(parseFloat(adj.cost_impact || 0)).toFixed(2) }}
                   </div>
                 </td>
 
                 <!-- Date / Operator -->
                 <td class="px-6 py-4 text-center whitespace-nowrap">
-                  <div class="font-bold text-slate-900 dark:text-white">{{ formatDate(adj.adjustment_date) }}</div>
+                  <div class="font-bold text-slate-900 dark:text-slate-100">{{ formatDate(adj.adjustment_date) }}</div>
                   <div class="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">By: {{ adj.user?.name || 'System' }}</div>
                 </td>
 
@@ -309,7 +307,7 @@
                   <button
                     type="button"
                     @click="showAdjustmentDetailModal(adj)"
-                    class="p-1.5 text-slate-450 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none cursor-pointer"
+                    class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 transition-all focus:outline-none cursor-pointer dark:text-slate-400"
                     title="View Log Details"
                   >
                     <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,8 +322,8 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div v-if="pagination.total > 0" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <div class="text-xs font-bold text-slate-400">
+        <div v-if="pagination.total > 0" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-100 dark:border-[#2E2E2E]">
+          <div class="text-xs font-bold text-slate-400 dark:text-slate-400">
             Showing {{ (pagination.current_page - 1) * pagination.per_page + 1 }} to {{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }} of {{ pagination.total }} entries
           </div>
 
@@ -334,7 +332,7 @@
               type="button"
               :disabled="pagination.current_page === 1"
               @click="fetchAdjustments(pagination.current_page - 1)"
-              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent text-xs font-bold transition-all focus:outline-none cursor-pointer"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#2E2E2E] dark:bg-zinc-950 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-50 disabled:hover:bg-transparent text-xs font-bold transition-all focus:outline-none cursor-pointer"
             >
               Previous
             </button>
@@ -345,7 +343,7 @@
               type="button"
               @click="fetchAdjustments(p)"
               class="w-8 h-8 rounded-lg text-xs font-bold transition-all focus:outline-none cursor-pointer"
-              :class="pagination.current_page === p ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 dark:border-slate-800 text-slate-600 hover:bg-slate-50'"
+              :class="pagination.current_page === p ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 dark:border-[#2E2E2E] dark:bg-zinc-950 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80'"
             >
               {{ p }}
             </button>
@@ -354,7 +352,7 @@
               type="button"
               :disabled="pagination.current_page === pagination.last_page"
               @click="fetchAdjustments(pagination.current_page + 1)"
-              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent text-xs font-bold transition-all focus:outline-none cursor-pointer"
+              class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#2E2E2E] dark:bg-zinc-950 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-50 disabled:hover:bg-transparent text-xs font-bold transition-all focus:outline-none cursor-pointer"
             >
               Next
             </button>
@@ -375,27 +373,27 @@
     >
       <div v-if="showCardModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity" @click="showCardModal = false"></div>
+        <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" @click="showCardModal = false"></div>
 
         <!-- Modal Card container -->
-        <div class="relative bg-white dark:bg-slate-900 w-full max-w-5xl shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all flex flex-col max-h-[90vh]">
+        <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-5xl shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 dark:border-[#2E2E2E] transform transition-all flex flex-col max-h-[90vh]">
           
           <!-- Header -->
-          <div class="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div class="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E] shrink-0">
             <div>
-              <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{{ cardModalTitle }}</h3>
-              <p class="text-indigo-650 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-1">AJAX Search & Pagination Enabled</p>
+              <h3 class="text-2xl font-black text-slate-909 dark:text-slate-100 tracking-tight uppercase">{{ cardModalTitle }}</h3>
+              <p class="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-1">AJAX Search & Pagination Enabled</p>
             </div>
             
             <div class="flex items-center gap-4">
               <!-- Warehouse Selector Dropdown for Low Stock Modal -->
               <div v-if="cardModalType === 'low_stock'" class="flex items-center gap-2">
-                <label for="modalWarehouseSelect" class="text-xs font-bold text-slate-500 dark:text-slate-400">Warehouse:</label>
+                <label for="modalWarehouseSelect" class="text-xs font-bold text-slate-500 dark:text-slate-400 font-semibold">Warehouse:</label>
                 <select
                   id="modalWarehouseSelect"
                   v-model="selectedModalWarehouseId"
                   @change="fetchCardModalData(1)"
-                  class="px-3 py-1.5 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                  class="px-3 py-1.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-semibold"
                 >
                   <option value="">All Warehouses</option>
                   <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
@@ -404,8 +402,8 @@
                 </select>
               </div>
 
-              <button @click="showCardModal = false" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors group cursor-pointer">
-                <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-650" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button @click="showCardModal = false" class="p-2 hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 rounded-full transition-colors group cursor-pointer border-0 bg-transparent">
+                <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
               </button>
@@ -413,10 +411,10 @@
           </div>
 
           <!-- Filters Section -->
-          <div class="px-8 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between gap-4">
+          <div class="px-8 py-4 bg-slate-50/50 dark:bg-zinc-950/50 border-b border-slate-100 dark:border-[#2E2E2E] shrink-0 flex items-center justify-between gap-4">
             <!-- Modal search field -->
             <div class="relative w-full max-w-sm">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 dark:text-slate-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -426,17 +424,17 @@
                 @input="debouncedCardSearch"
                 type="text"
                 placeholder="Search detail rows..."
-                class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:border-slate-350 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                class="w-full pl-9 pr-4 py-2 bg-white dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs font-semibold focus:outline-none focus:border-slate-350 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
               />
             </div>
 
             <!-- Page Size selector -->
-            <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
               <span>Show</span>
               <select
                 v-model="cardModalPagination.per_page"
                 @change="fetchCardModalData(1)"
-                class="px-2.5 py-1.5 bg-white dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                class="px-2.5 py-1.5 bg-white dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-semibold"
               >
                 <option :value="10">10</option>
                 <option :value="25">25</option>
@@ -448,25 +446,25 @@
 
           <!-- Content Table Area -->
           <div class="p-8 overflow-y-auto custom-scrollbar flex-1 min-h-[350px]">
-            <div v-if="cardModalLoading" class="text-center py-20 bg-white dark:bg-slate-900">
-              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
-              <p class="mt-3 text-slate-500 text-xs font-bold uppercase tracking-wider">Loading detailed data...</p>
+            <div v-if="cardModalLoading" class="text-center py-20 bg-white dark:bg-[#1E1E1E]">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-605 mx-auto"></div>
+              <p class="mt-3 text-slate-500 text-xs font-bold uppercase tracking-wider dark:text-slate-400">Loading detailed data...</p>
             </div>
 
-            <div v-else-if="cardModalData.length === 0" class="text-center py-16 px-4 bg-white dark:bg-slate-900">
-              <div class="w-16 h-16 bg-slate-50 dark:bg-slate-850 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800">
-                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-else-if="cardModalData.length === 0" class="text-center py-16 px-4 bg-white dark:bg-[#1E1E1E]">
+              <div class="w-16 h-16 bg-slate-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-[#2E2E2E]">
+                <svg class="w-8 h-8 text-slate-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 class="text-base font-bold text-slate-850 dark:text-slate-200">No matching items found</h3>
-              <p class="text-xs text-slate-450 mt-1 max-w-xs mx-auto">Try refining your search keyword above.</p>
+              <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">No matching items found</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto dark:text-slate-400">Try refining your search keyword above.</p>
             </div>
 
-            <div v-else class="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden">
+            <div v-else class="border border-slate-100 dark:border-[#2E2E2E] rounded-2xl overflow-hidden bg-white dark:bg-[#1E1E1E]">
               <table class="w-full text-left border-collapse">
                 <!-- Header for Logs -->
-                <thead v-if="cardModalType !== 'low_stock'" class="bg-slate-50 dark:bg-slate-850 text-slate-400 uppercase tracking-widest text-[9px] font-black border-b border-slate-100 dark:border-slate-800">
+                <thead v-if="cardModalType !== 'low_stock'" class="bg-slate-50 dark:bg-[#252525] text-slate-400 uppercase tracking-widest text-[9px] font-extrabold border-b border-slate-100 dark:border-[#2E2E2E] dark:text-slate-400">
                   <tr>
                     <th class="py-4 px-5">Date</th>
                     <th class="py-4 px-5">Adjustment No.</th>
@@ -480,7 +478,7 @@
                 </thead>
 
                 <!-- Header for Low Stock -->
-                <thead v-else class="bg-slate-50 dark:bg-slate-850 text-slate-400 uppercase tracking-widest text-[9px] font-black border-b border-slate-100 dark:border-slate-800">
+                <thead v-else class="bg-slate-50 dark:bg-[#252525] text-slate-400 uppercase tracking-widest text-[9px] font-extrabold border-b border-slate-100 dark:border-[#2E2E2E] dark:text-slate-400">
                   <tr>
                     <th class="py-4 px-5">Item Details</th>
                     <th class="py-4 px-5">SKU Code</th>
@@ -491,50 +489,50 @@
                   </tr>
                 </thead>
 
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-850 text-xs font-bold text-slate-700 dark:text-slate-255">
+                <tbody class="divide-y divide-slate-101 dark:divide-[#2E2E2E] text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <!-- Row rendering for logs -->
                   <template v-if="cardModalType !== 'low_stock'">
-                    <tr v-for="log in cardModalData" :key="log.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
-                      <td class="py-4 px-5 text-slate-500 whitespace-nowrap">{{ formatDate(log.adjustment_date) }}</td>
-                      <td class="py-4 px-5 font-black text-slate-900 dark:text-white uppercase">{{ log.adjustment_number }}</td>
+                    <tr v-for="log in cardModalData" :key="log.id" class="hover:bg-slate-50/50 dark:hover:bg-[#2D2D2D]/80 transition-colors">
+                      <td class="py-4 px-5 text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ formatDate(log.adjustment_date) }}</td>
+                      <td class="py-4 px-5 font-black text-slate-900 dark:text-slate-100 uppercase">{{ log.adjustment_number }}</td>
                       <td class="py-4 px-5">
-                        <div class="text-slate-850 dark:text-slate-200 font-extrabold">{{ log.product?.name }}</div>
-                        <div v-if="log.variation" class="text-[10px] text-slate-450 font-bold uppercase tracking-wider mt-0.5">
+                        <div class="text-slate-800 dark:text-slate-200 font-extrabold">{{ log.product?.name }}</div>
+                        <div v-if="log.variation" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 dark:text-slate-400">
                           {{ log.variation.variant_profile_combo }}
                         </div>
                       </td>
-                      <td class="py-4 px-5 text-slate-500">{{ log.warehouse?.name || 'N/A' }}</td>
+                      <td class="py-4 px-5 text-slate-500 dark:text-slate-400">{{ log.warehouse?.name || 'N/A' }}</td>
                       <td class="py-4 px-5 whitespace-nowrap">
                         <span 
                           :class="[
                             'px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-block',
                             log.adjustment_type === 'increase' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                            log.adjustment_type === 'decrease' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
+                            log.adjustment_type === 'decrease' ? 'bg-rose-50 text-rose-707 dark:bg-rose-950/40 dark:text-rose-400' :
                             'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
                           ]"
                         >
                           {{ log.adjustment_type === 'increase' ? 'Increase' : log.adjustment_type === 'decrease' ? 'Decrease' : 'Recount' }}
                         </span>
                       </td>
-                      <td class="py-4 px-5 text-right font-black text-slate-900 dark:text-white">{{ log.quantity_adjusted }}</td>
-                      <td class="py-4 px-5 text-slate-500 max-w-xs truncate">{{ log.reason }}</td>
-                      <td class="py-4 px-5 text-slate-500">{{ log.user?.name || 'System' }}</td>
+                      <td class="py-4 px-5 text-right font-black text-slate-900 dark:text-slate-100">{{ log.quantity_adjusted }}</td>
+                      <td class="py-4 px-5 text-slate-500 dark:text-slate-400 max-w-xs truncate">{{ log.reason }}</td>
+                      <td class="py-4 px-5 text-slate-500 dark:text-slate-400">{{ log.user?.name || 'System' }}</td>
                     </tr>
                   </template>
 
                   <!-- Row rendering for low stock products -->
                   <template v-else>
-                    <tr v-for="product in cardModalData" :key="product.id + '-' + (product.product_variation_id || 'parent') + '-' + product.warehouse_id" class="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors">
+                    <tr v-for="product in cardModalData" :key="product.id + '-' + (product.product_variation_id || 'parent') + '-' + product.warehouse_id" class="hover:bg-slate-50/50 dark:hover:bg-[#2D2D2D]/80 transition-colors">
                       <td class="py-4 px-5">
-                        <div class="text-slate-850 dark:text-slate-200 font-extrabold">{{ product.name }}</div>
+                        <div class="text-slate-800 dark:text-slate-200 font-extrabold">{{ product.name }}</div>
                       </td>
-                      <td class="py-4 px-5 text-slate-555 font-black tracking-wider uppercase">
+                      <td class="py-4 px-5 text-slate-555 font-black tracking-wider uppercase dark:text-slate-400">
                         {{ product.sku }}
                       </td>
-                      <td class="py-4 px-5 text-slate-500">{{ product.category?.name || 'Uncategorized' }}</td>
-                      <td class="py-4 px-5 text-slate-500">{{ product.warehouse_name || 'N/A' }}</td>
-                      <td class="py-4 px-5 text-right font-bold text-slate-400">{{ product.min_stock_level || 0 }}</td>
-                      <td class="py-4 px-5 text-right font-black text-rose-600 dark:text-rose-450">{{ product.stock_quantity || 0 }}</td>
+                      <td class="py-4 px-5 text-slate-500 dark:text-slate-400">{{ product.category?.name || 'Uncategorized' }}</td>
+                      <td class="py-4 px-5 text-slate-500 dark:text-slate-400">{{ product.warehouse_name || 'N/A' }}</td>
+                      <td class="py-4 px-5 text-right font-bold text-slate-400 dark:text-slate-400">{{ product.min_stock_level || 0 }}</td>
+                      <td class="py-4 px-5 text-right font-black text-rose-600 dark:text-rose-400">{{ product.stock_quantity || 0 }}</td>
                     </tr>
                   </template>
                 </tbody>
@@ -543,18 +541,18 @@
           </div>
 
           <!-- Pagination Footer -->
-          <div class="px-8 py-5 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between text-xs font-bold text-slate-450">
+          <div class="px-8 py-5 border-t border-slate-100 dark:border-[#2E2E2E] shrink-0 flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-400">
             <div>
               Showing {{ ((cardModalPagination.current_page - 1) * cardModalPagination.per_page) + 1 }} to 
               {{ Math.min(cardModalPagination.current_page * cardModalPagination.per_page, cardModalPagination.total) }} of 
               {{ cardModalPagination.total }} entries
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 font-bold">
               <button
                 :disabled="cardModalPagination.current_page === 1"
                 @click="fetchCardModalData(cardModalPagination.current_page - 1)"
-                class="px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer"
+                class="px-3 py-2 border border-slate-200 dark:border-[#2E2E2E] dark:bg-zinc-950 rounded-xl hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700 dark:text-slate-300 font-semibold"
               >
                 Previous
               </button>
@@ -566,7 +564,7 @@
                   @click="fetchCardModalData(p)"
                   :class="[
                     'w-9 h-9 flex items-center justify-center rounded-xl border transition-colors cursor-pointer',
-                    p === cardModalPagination.current_page ? 'bg-indigo-650 border-indigo-650 text-white font-extrabold' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-300'
+                    p === cardModalPagination.current_page ? 'bg-indigo-600 border-indigo-600 text-white font-extrabold' : 'border-slate-200 dark:border-[#2E2E2E] dark:bg-zinc-950 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 text-slate-600 dark:text-slate-300'
                   ]"
                 >
                   {{ p }}
@@ -576,7 +574,7 @@
               <button
                 :disabled="cardModalPagination.current_page === cardModalPagination.last_page"
                 @click="fetchCardModalData(cardModalPagination.current_page + 1)"
-                class="px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer"
+                class="px-3 py-2 border border-slate-200 dark:border-[#2E2E2E] dark:bg-zinc-950 rounded-xl hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700 dark:text-slate-300 font-semibold"
               >
                 Next
               </button>
@@ -597,37 +595,37 @@
       leave-to-class="opacity-0"
     >
       <div v-if="showDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="showDetailModal = false"></div>
+        <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" @click="showDetailModal = false"></div>
 
-        <div class="relative bg-white dark:bg-slate-900 w-full max-w-lg p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 z-10 text-xs">
-          <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
-            <h3 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
+        <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-lg p-6 rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-2xl space-y-4 z-10 text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
+            <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
               Adjustment Log Details
             </h3>
-            <button @click="showDetailModal = false" class="text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 font-bold text-lg focus:outline-none">&times;</button>
+            <button @click="showDetailModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-lg focus:outline-none border-0 bg-transparent cursor-pointer dark:text-slate-400">&times;</button>
           </div>
 
-          <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-850">
+          <div class="space-y-4 divide-y divide-slate-101 dark:divide-[#2E2E2E]">
             <!-- Basic info -->
             <div class="grid grid-cols-2 gap-4 pb-3">
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Adjustment #</label>
-                <div class="font-bold text-slate-900 dark:text-white text-sm">{{ detailLog?.adjustment_number }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Adjustment #</label>
+                <div class="font-extrabold text-slate-900 dark:text-slate-100 text-sm">{{ detailLog?.adjustment_number }}</div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Warehouse Location</label>
-                <div class="font-bold text-slate-800 dark:text-slate-200 text-sm">{{ detailLog?.warehouse?.name }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Warehouse Location</label>
+                <div class="font-extrabold text-slate-800 dark:text-slate-200 text-sm">{{ detailLog?.warehouse?.name }}</div>
               </div>
             </div>
 
             <!-- Product details -->
             <div class="py-3 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-50 shrink-0">
+              <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-[#2E2E2E] bg-slate-50 shrink-0">
                 <img :src="detailLog?.product?.image || '/placeholder.png'" class="w-full h-full object-cover">
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Adjusted Product</label>
-                <div class="font-bold text-slate-900 dark:text-white text-xs">{{ detailLog?.product?.name }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Adjusted Product</label>
+                <div class="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{{ detailLog?.product?.name }}</div>
                 <div v-if="detailLog?.variation" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">
                   Variation: {{ detailLog.variation.variation_name_string }}
                 </div>
@@ -637,46 +635,46 @@
             <!-- stock detail -->
             <div class="grid grid-cols-3 gap-4 py-3 text-center">
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Qty Before</label>
-                <div class="font-black text-slate-800 dark:text-white text-sm mt-1">{{ detailLog?.quantity_before }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider text-center dark:text-slate-400">Qty Before</label>
+                <div class="font-black text-slate-800 dark:text-slate-100 text-sm mt-1 text-center">{{ detailLog?.quantity_before }}</div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Qty Adjusted</label>
-                <div class="font-black text-sm mt-1" :class="detailLog?.adjustment_type === 'increase' ? 'text-emerald-600' : 'text-rose-600'">
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider text-center dark:text-slate-400">Qty Adjusted</label>
+                <div class="font-black text-sm mt-1 text-center" :class="detailLog?.adjustment_type === 'increase' ? 'text-emerald-600' : 'text-rose-600'">
                   {{ detailLog?.adjustment_type === 'increase' ? '+' : detailLog?.adjustment_type === 'decrease' ? '-' : '' }}{{ Math.abs(detailLog?.quantity_adjusted) }}
                 </div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Qty After</label>
-                <div class="font-black text-slate-800 dark:text-white text-sm mt-1">{{ detailLog?.quantity_after }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider text-center dark:text-slate-400">Qty After</label>
+                <div class="font-black text-slate-800 dark:text-slate-100 text-sm mt-1 text-center">{{ detailLog?.quantity_after }}</div>
               </div>
             </div>
 
             <!-- details & reasoning -->
             <div class="py-3 space-y-2">
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Reason</label>
-                <div class="font-bold text-slate-900 dark:text-white text-xs">{{ detailLog?.reason }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Reason</label>
+                <div class="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{{ detailLog?.reason }}</div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Notes</label>
-                <div class="font-medium text-slate-700 dark:text-slate-300 leading-relaxed">{{ detailLog?.notes || 'No description notes entered.' }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Notes</label>
+                <div class="font-medium text-slate-700 dark:text-slate-350 leading-relaxed">{{ detailLog?.notes || 'No description notes entered.' }}</div>
               </div>
             </div>
 
             <!-- Batch / Expiry / Impact -->
             <div class="grid grid-cols-3 gap-4 py-3">
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Batch No</label>
-                <div class="font-bold text-slate-800 dark:text-slate-200">{{ detailLog?.batch_number || 'N/A' }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Batch No</label>
+                <div class="font-extrabold text-slate-800 dark:text-slate-200">{{ detailLog?.batch_number || 'N/A' }}</div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Expiry Date</label>
-                <div class="font-bold text-slate-800 dark:text-slate-200">{{ detailLog?.expiry_date ? formatDate(detailLog.expiry_date) : 'N/A' }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Expiry Date</label>
+                <div class="font-extrabold text-slate-800 dark:text-slate-200">{{ detailLog?.expiry_date ? formatDate(detailLog.expiry_date) : 'N/A' }}</div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Cost Impact</label>
-                <div class="font-bold" :class="detailLog?.cost_impact >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Cost Impact</label>
+                <div class="font-extrabold" :class="detailLog?.cost_impact >= 0 ? 'text-emerald-600' : 'text-rose-600'">
                   {{ detailLog?.cost_impact >= 0 ? '+' : '-' }}${{ Math.abs(parseFloat(detailLog?.cost_impact || 0)).toFixed(2) }}
                 </div>
               </div>
@@ -685,11 +683,11 @@
             <!-- Operator and attachments -->
             <div class="grid grid-cols-2 gap-4 py-3">
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Operator</label>
-                <div class="font-bold text-slate-800 dark:text-slate-250">{{ detailLog?.user?.name || 'System' }}</div>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Operator</label>
+                <div class="font-extrabold text-slate-800 dark:text-slate-200">{{ detailLog?.user?.name || 'System' }}</div>
               </div>
               <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider">Attachment</label>
+                <label class="text-[10px] font-bold text-slate-400 block mb-0.5 uppercase tracking-wider dark:text-slate-400">Attachment</label>
                 <div v-if="detailLog?.attachment" class="mt-1">
                   <a :href="detailLog.attachment" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:underline font-bold">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -698,16 +696,16 @@
                     Download Attachment
                   </a>
                 </div>
-                <div v-else class="text-slate-400 italic mt-0.5">No file attached</div>
+                <div v-else class="text-slate-400 italic mt-0.5 dark:text-slate-400">No file attached</div>
               </div>
             </div>
           </div>
 
-          <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-[#2E2E2E]">
             <button
               type="button"
               @click="showDetailModal = false"
-              class="px-5 py-2.5 bg-slate-850 hover:bg-slate-900 text-white font-bold rounded-xl shadow cursor-pointer transition-colors"
+              class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl shadow cursor-pointer transition-colors border-0"
             >
               Close
             </button>
@@ -727,19 +725,19 @@
     >
       <div v-if="showFormModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity" @click="closeFormModal"></div>
+        <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" @click="closeFormModal"></div>
 
         <!-- Form container -->
-        <div class="relative bg-white dark:bg-slate-900 w-full max-w-4xl shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all flex flex-col max-h-[90vh]">
+        <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-4xl shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 dark:border-[#2E2E2E] transform transition-all flex flex-col max-h-[90vh]">
           
           <!-- Header -->
-          <div class="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div class="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E] shrink-0">
             <div>
-              <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Manual Stock Adjustment</h3>
+              <h3 class="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase">Manual Stock Adjustment</h3>
               <p class="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-1">Multi-Warehouse & Variation Enabled</p>
             </div>
-            <button @click="closeFormModal" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors group cursor-pointer">
-              <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button @click="closeFormModal" class="p-2 hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 rounded-full transition-colors group cursor-pointer border-0 bg-transparent">
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
@@ -752,12 +750,12 @@
               
               <!-- STEP 1: Search & Product Selection -->
               <div class="space-y-3">
-                <h4 class="text-xs font-black uppercase tracking-widest text-slate-450 dark:text-slate-500">1. Select Item to Adjust</h4>
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">1. Select Item to Adjust</h4>
                 
                 <div class="relative">
                   <!-- Search input -->
                   <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 dark:text-slate-400">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
@@ -767,14 +765,14 @@
                       @focus="showProductDropdown = true"
                       type="text"
                       placeholder="Search items by SKU, name, or barcode..."
-                      class="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:border-slate-350 focus:bg-white focus:ring-1 focus:ring-indigo-500 transition-all font-bold"
+                      class="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-2xl focus:outline-none focus:border-slate-350 focus:bg-white dark:focus:bg-zinc-950 focus:ring-1 focus:ring-indigo-500 transition-all font-semibold"
                     />
                     <!-- Reset button if selected -->
                     <button
                       v-if="selectedProductDetail"
                       type="button"
                       @click="clearSelectedProduct"
-                      class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
+                      class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold cursor-pointer border-0 bg-transparent dark:text-slate-400"
                     >
                       &times; Clear Selection
                     </button>
@@ -783,25 +781,25 @@
                   <!-- Dropdown options list -->
                   <div
                     v-show="showProductDropdown && filteredProducts.length > 0"
-                    class="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto custom-scrollbar"
+                    class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto custom-scrollbar"
                   >
                     <button
                       v-for="p in filteredProducts"
                       :key="p.id"
                       type="button"
                       @click="selectProduct(p)"
-                      class="w-full text-left px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 border-b border-slate-50 dark:border-slate-850 flex items-center gap-3 transition-colors cursor-pointer"
+                      class="w-full text-left px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 border-b border-slate-50 dark:border-[#2E2E2E] flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent"
                     >
-                      <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-850 bg-slate-50 shrink-0">
+                      <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-[#2E2E2E] bg-slate-50 shrink-0">
                         <img :src="p.image || '/placeholder.png'" class="w-full h-full object-cover">
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-bold text-slate-850 dark:text-slate-200 truncate">{{ p.name }}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">SKU: {{ p.sku }} | Barcode: {{ p.barcode || 'N/A' }}</div>
+                        <div class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ p.name }}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 dark:text-slate-400">SKU: {{ p.sku }} | Barcode: {{ p.barcode || 'N/A' }}</div>
                       </div>
                       <div class="text-right">
-                        <span v-if="p.has_variations" class="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-750 dark:bg-indigo-950/40 dark:text-indigo-400 rounded-full">Variants</span>
-                        <span v-else class="text-[11px] font-black text-slate-800 dark:text-white">Stock: {{ p.stock_quantity }}</span>
+                        <span v-if="p.has_variations" class="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 rounded-full">Variants</span>
+                        <span v-else class="text-[11px] font-black text-slate-800 dark:text-slate-100">Stock: {{ p.stock_quantity }}</span>
                       </div>
                     </button>
                   </div>
@@ -819,7 +817,7 @@
                     </div>
                     <div class="flex-1 space-y-1">
                       <div class="flex flex-wrap items-center gap-2">
-                        <h5 class="text-sm font-black text-slate-900 dark:text-white">{{ selectedProductDetail.name }}</h5>
+                        <h5 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ selectedProductDetail.name }}</h5>
                         
                         <!-- badge -->
                         <span
@@ -831,11 +829,11 @@
                           {{ selectedProductDetail.has_variations ? 'Variants' : 'Standard' }}
                         </span>
                       </div>
-                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-[11px]">
-                        <div>Base Price: <span class="font-bold text-slate-750 dark:text-slate-200">${{ parseFloat(selectedProductDetail.selling_price || 0).toFixed(2) }}</span></div>
-                        <div>Category: <span class="font-bold text-slate-750 dark:text-slate-200">{{ selectedProductDetail.category?.name || 'Uncategorized' }}</span></div>
-                        <div>Base SKU: <span class="font-bold text-slate-750 dark:text-slate-200">{{ selectedProductDetail.sku }}</span></div>
-                        <div v-if="!selectedProductDetail.has_variations">Current Stock: <span class="font-bold text-slate-750 dark:text-slate-250">{{ selectedProductDetail.stock_quantity }}</span></div>
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-[11px] font-semibold">
+                        <div>Base Price: <span class="font-bold text-slate-755 dark:text-slate-200">${{ parseFloat(selectedProductDetail.selling_price || 0).toFixed(2) }}</span></div>
+                        <div>Category: <span class="font-bold text-slate-755 dark:text-slate-200">{{ selectedProductDetail.category?.name || 'Uncategorized' }}</span></div>
+                        <div>Base SKU: <span class="font-bold text-slate-755 dark:text-slate-200">{{ selectedProductDetail.sku }}</span></div>
+                        <div v-if="!selectedProductDetail.has_variations">Current Stock: <span class="font-bold text-slate-755 dark:text-slate-250">{{ selectedProductDetail.stock_quantity }}</span></div>
                       </div>
                     </div>
                   </div>
@@ -849,11 +847,11 @@
                 enter-to-class="opacity-100 translate-y-0"
               >
                 <div v-if="selectedProductDetail" class="space-y-4">
-                  <h4 class="text-xs font-black uppercase tracking-widest text-slate-450 dark:text-slate-500">2. Warehouse Allocation & Adjustments</h4>
+                  <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">2. Warehouse Allocation & Adjustments</h4>
                   
                   <!-- Warehouse Selection Checkboxes -->
-                  <div class="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-150 dark:border-slate-800">
-                    <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Adjust Stock in Warehouses:</label>
+                  <div class="bg-slate-50 dark:bg-[#252525] p-4 rounded-2xl border border-slate-200 dark:border-[#2E2E2E]">
+                    <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2 dark:text-slate-400">Adjust Stock in Warehouses:</label>
                     <div class="flex flex-wrap gap-4">
                       <label
                         v-for="wh in warehouses"
@@ -873,16 +871,16 @@
                   </div>
 
                   <!-- WARNING FOR EMPTY WAREHOUSES -->
-                  <div v-if="checkedWarehouseIds.length === 0" class="text-center py-6 text-slate-400 font-bold bg-slate-50 dark:bg-slate-850 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                  <div v-if="checkedWarehouseIds.length === 0" class="text-center py-6 text-slate-400 font-bold bg-slate-50 dark:bg-[#252525] rounded-2xl border border-dashed border-slate-200 dark:border-[#2E2E2E] dark:text-slate-400">
                     Please check at least one warehouse location above.
                   </div>
 
                   <div v-else>
                     <!-- FLOW A: STANDARD PRODUCT MATRIX -->
-                    <div v-if="!selectedProductDetail.has_variations" class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+                    <div v-if="!selectedProductDetail.has_variations" class="border border-slate-200 dark:border-[#2E2E2E] rounded-2xl overflow-hidden bg-white dark:bg-[#1E1E1E]">
                       <table class="w-full text-left table-auto border-collapse">
                         <thead>
-                          <tr class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                          <tr class="bg-slate-50 dark:bg-[#252525] border-b border-slate-200 dark:border-[#2E2E2E] text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <th class="px-4 py-3">Warehouse Location</th>
                             <th class="px-4 py-3 text-center">Current Qty</th>
                             <th class="px-4 py-3 text-center w-36">Adjustment Type</th>
@@ -890,18 +888,18 @@
                             <th class="px-4 py-3 text-center">Resulting Qty</th>
                           </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        <tbody class="divide-y divide-slate-101 dark:divide-[#2E2E2E] text-xs font-semibold text-slate-700 dark:text-slate-300">
                           <tr v-for="whId in checkedWarehouseIds" :key="whId">
-                            <td class="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                            <td class="px-4 py-3 font-bold text-slate-900 dark:text-slate-100">
                               {{ getWarehouseName(whId) }}
                             </td>
-                            <td class="px-4 py-3 text-center font-bold text-slate-500">
+                            <td class="px-4 py-3 text-center font-bold text-slate-500 dark:text-slate-400">
                               {{ getStandardCurrentStock(whId) }}
                             </td>
                             <td class="px-4 py-2 text-center">
                               <select
                                 v-model="standardAdjustments[whId].adjustment_type"
-                                class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                               >
                                 <option value="increase">Stock Increase</option>
                                 <option value="decrease">Stock Decrease</option>
@@ -914,7 +912,7 @@
                                 type="number"
                                 min="0"
                                 placeholder="0"
-                                class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
                               />
                             </td>
                             <td class="px-4 py-3 text-center font-black text-slate-800 dark:text-slate-200">
@@ -928,12 +926,12 @@
                     <!-- FLOW B: VARIABLE PRODUCT DYNAMIC MATRIX -->
                     <div v-else class="space-y-3">
                       <!-- Global helper for variable product matrix -->
-                      <div class="flex items-center justify-between gap-4 p-3 bg-indigo-50/10 dark:bg-indigo-950/10 rounded-xl border border-indigo-150/40 dark:border-indigo-850">
-                        <span class="font-bold text-slate-750 dark:text-slate-350">Set Adjustment Type for all rows:</span>
+                      <div class="flex items-center justify-between gap-4 p-3 bg-indigo-50/10 dark:bg-indigo-950/10 rounded-xl border border-indigo-150/40 dark:border-[#2E2E2E]">
+                        <span class="font-bold text-slate-755 dark:text-slate-350">Set Adjustment Type for all rows:</span>
                         <select
                           v-model="globalAdjustmentType"
                           @change="applyGlobalAdjustmentType"
-                          class="px-3 py-1.5 bg-white dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-750 rounded-lg text-xs font-black focus:outline-none cursor-pointer"
+                          class="px-3 py-1.5 bg-white dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs font-black focus:outline-none cursor-pointer"
                         >
                           <option value="">-- Apply type globally --</option>
                           <option value="increase">Stock Increase</option>
@@ -942,10 +940,10 @@
                         </select>
                       </div>
 
-                      <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+                      <div class="border border-slate-200 dark:border-[#2E2E2E] rounded-2xl overflow-hidden bg-white dark:bg-[#1E1E1E]">
                         <table class="w-full text-left table-auto border-collapse">
                           <thead>
-                            <tr class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                            <tr class="bg-slate-50 dark:bg-[#252525] border-b border-slate-200 dark:border-[#2E2E2E] text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                               <th class="px-4 py-3">Variant Profile Combo</th>
                               <th class="px-4 py-3">SKU Code</th>
                               <th class="px-4 py-3">Warehouse Location</th>
@@ -955,15 +953,15 @@
                               <th class="px-4 py-3 text-center">Resulting Qty</th>
                             </tr>
                           </thead>
-                          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                          <tbody class="divide-y divide-slate-101 dark:divide-[#2E2E2E] text-xs font-semibold text-slate-700 dark:text-slate-300">
                             <template v-for="variant in selectedProductDetail.variations" :key="variant.id">
                               <tr v-for="whId in checkedWarehouseIds" :key="`${variant.id}-${whId}`">
                                 <!-- Variant combination details -->
-                                <td class="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                                <td class="px-4 py-3 font-bold text-slate-900 dark:text-slate-100">
                                   {{ variant.variation_name_string }}
                                 </td>
                                 <!-- Variant SKU -->
-                                <td class="px-4 py-3 text-slate-500 font-bold whitespace-nowrap">
+                                <td class="px-4 py-3 text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap">
                                   {{ variant.sku }}
                                 </td>
                                 <!-- Warehouse location -->
@@ -971,14 +969,14 @@
                                   {{ getWarehouseName(whId) }}
                                 </td>
                                 <!-- Current Stock -->
-                                <td class="px-4 py-3 text-center font-bold text-slate-550">
+                                <td class="px-4 py-3 text-center font-bold text-slate-500 dark:text-slate-400">
                                   {{ getVariantCurrentStock(variant, whId) }}
                                 </td>
                                 <!-- Adj type -->
                                 <td class="px-4 py-2 text-center">
                                   <select
                                     v-model="variableAdjustments[`${variant.id}-${whId}`].adjustment_type"
-                                    class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                    class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                                   >
                                     <option value="increase">Stock Increase</option>
                                     <option value="decrease">Stock Decrease</option>
@@ -992,11 +990,11 @@
                                     type="number"
                                     min="0"
                                     placeholder="0"
-                                    class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                   />
                                 </td>
                                 <!-- Resulting stock -->
-                                <td class="px-4 py-3 text-center font-black text-slate-850 dark:text-slate-250">
+                                <td class="px-4 py-3 text-center font-black text-slate-855 dark:text-slate-250">
                                   {{ calculateFinalStock(getVariantCurrentStock(variant, whId), variableAdjustments[`${variant.id}-${whId}`].adjustment_type, variableAdjustments[`${variant.id}-${whId}`].quantity_adjusted) }}
                                 </td>
                               </tr>
@@ -1016,16 +1014,16 @@
                 enter-to-class="opacity-100 translate-y-0"
               >
                 <div v-if="selectedProductDetail && checkedWarehouseIds.length > 0" class="space-y-4">
-                  <h4 class="text-xs font-black uppercase tracking-widest text-slate-450 dark:text-slate-500">3. Adjustment Attributes & Documentation</h4>
+                  <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">3. Adjustment Attributes & Documentation</h4>
                   
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Reason -->
                     <div>
-                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Adjustment Reason *</label>
+                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider dark:text-slate-400">Adjustment Reason *</label>
                       <select
                         v-model="metadataForm.reason"
                         required
-                        class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                        class="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white dark:focus:bg-zinc-950 focus:ring-1 focus:ring-indigo-500 font-semibold cursor-pointer"
                       >
                         <option value="" disabled>-- Select Reason --</option>
                         <option value="Damaged goods">Damaged goods</option>
@@ -1040,12 +1038,12 @@
 
                     <!-- Attachment -->
                     <div>
-                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Reference Attachment (PDF/Image)</label>
+                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider dark:text-slate-400">Reference Attachment (PDF/Image)</label>
                       <input
                         type="file"
                         @change="handleFileAttachment"
                         accept=".pdf,.png,.jpg,.jpeg"
-                        class="w-full text-xs text-slate-550 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                        class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer dark:text-slate-400"
                       />
                     </div>
                   </div>
@@ -1053,46 +1051,46 @@
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Batch No -->
                     <div>
-                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Batch Code / Lot ID</label>
+                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider dark:text-slate-400">Batch Code / Lot ID</label>
                       <input
                         v-model="metadataForm.batch_number"
                         type="text"
                         placeholder="e.g. BATCH-A99"
-                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white dark:focus:bg-zinc-950 font-semibold"
                       />
                     </div>
 
                     <!-- Expiry Date -->
                     <div>
-                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Expiry Date (if applicable)</label>
+                      <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider dark:text-slate-400">Expiry Date (if applicable)</label>
                       <input
                         v-model="metadataForm.expiry_date"
                         type="date"
-                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white dark:focus:bg-zinc-950 font-semibold"
                       />
                     </div>
                   </div>
 
                   <!-- Notes -->
                   <div>
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Internal Notes / Description</label>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider dark:text-slate-400">Internal Notes / Description</label>
                     <textarea
                       v-model="metadataForm.notes"
                       rows="2"
                       placeholder="Add supplementary explanations for this adjustment..."
-                      class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-850 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white"
+                      class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-slate-350 focus:bg-white dark:focus:bg-zinc-950 font-medium"
                     ></textarea>
                   </div>
                 </div>
               </transition>
 
               <!-- Footer actions -->
-              <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#2E2E2E]">
                 <button
                   v-if="selectedProductDetail && checkedWarehouseIds.length > 0"
                   type="submit"
                   :disabled="submitting"
-                  class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95"
+                  class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95 border-0"
                 >
                   <svg v-if="submitting" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1117,15 +1115,15 @@
       leave-to-class="opacity-0"
     >
       <div v-if="showUploadModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="showUploadModal = false"></div>
+        <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" @click="showUploadModal = false"></div>
 
-        <div class="relative bg-white dark:bg-slate-900 w-full max-w-lg shadow-2xl rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all">
-          <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-850/50">
+        <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-lg shadow-2xl rounded-3xl overflow-hidden border border-slate-200 dark:border-[#2E2E2E] transform transition-all">
+          <div class="px-6 py-5 border-b border-slate-100 dark:border-[#2E2E2E] flex items-center justify-between bg-slate-50/50 dark:bg-[#252525]/50">
             <div>
-              <h3 class="text-lg font-extrabold text-slate-850 dark:text-white">Upload Adjustment Inventory</h3>
-              <p class="text-xs text-slate-450 mt-1">Import product configurations and stocks from an Excel/CSV file.</p>
+              <h3 class="text-lg font-extrabold text-slate-800 dark:text-slate-100">Upload Adjustment Inventory</h3>
+              <p class="text-xs text-slate-400 mt-1 dark:text-slate-400">Import product configurations and stocks from an Excel/CSV file.</p>
             </div>
-            <button @click="showUploadModal = false" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-250 rounded-full transition-colors cursor-pointer">
+            <button @click="showUploadModal = false" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-250 rounded-full transition-colors cursor-pointer border-0 bg-transparent dark:text-slate-400">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -1137,18 +1135,18 @@
               @drop.prevent="handleFileUpload"
               :class="[
                 'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-200 text-center cursor-pointer',
-                uploadDragging ? 'border-indigo-500 bg-indigo-50/20 scale-[1.01]' : 'border-slate-250 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 hover:bg-slate-100/50 dark:hover:bg-slate-800'
+                uploadDragging ? 'border-indigo-500 bg-indigo-50/20 scale-[1.01]' : 'border-slate-250 dark:border-[#2E2E2E] bg-slate-50 dark:bg-zinc-950 hover:bg-slate-105/50 dark:hover:bg-[#2D2D2D]/80'
               ]"
               @click="$refs.fileInput.click()"
             >
               <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload" accept=".xlsx,.xls,.csv" />
               
               <div v-if="!uploadFile" class="flex flex-col items-center pointer-events-none">
-                <div class="w-12 h-12 bg-white dark:bg-slate-900 rounded-xl shadow-xs flex items-center justify-center mb-3 text-indigo-500 border border-slate-100 dark:border-slate-800">
+                <div class="w-12 h-12 bg-white dark:bg-[#1E1E1E] rounded-xl shadow-xs flex items-center justify-center mb-3 text-indigo-500 border border-slate-100 dark:border-[#2E2E2E]">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
                 <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">Click to select or drag & drop file</h4>
-                <p class="text-[10px] text-slate-400">Microsoft Excel (.xlsx, .xls) or CSV format</p>
+                <p class="text-[10px] text-slate-400 dark:text-slate-400">Microsoft Excel (.xlsx, .xls) or CSV format</p>
               </div>
 
               <div v-else class="flex flex-col items-center">
@@ -1157,7 +1155,7 @@
                 </div>
                 <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 truncate max-w-[200px]">{{ uploadFile.name }}</h4>
                 <p class="text-[10px] text-emerald-600 font-bold">Ready to process</p>
-                <button @click.stop="uploadFile = null" class="mt-3 text-[10px] text-rose-500 hover:text-rose-700 font-bold px-3 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-full cursor-pointer">
+                <button @click.stop="uploadFile = null" class="mt-3 text-[10px] text-rose-500 hover:text-rose-700 font-bold px-3 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-full cursor-pointer border-0">
                   Remove File
                 </button>
               </div>
@@ -1166,7 +1164,7 @@
             <div class="mt-6 flex items-center justify-end gap-2">
               <button
                 @click="showUploadModal = false"
-                class="px-4 py-2.5 text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                class="px-4 py-2.5 text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-202 cursor-pointer border-0 bg-transparent"
               >
                 Cancel
               </button>
@@ -1174,7 +1172,7 @@
                 @click="processUpload"
                 :disabled="!uploadFile || isUploading"
                 :class="[
-                  'px-5 py-2.5 font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer',
+                  'px-5 py-2.5 font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border-0',
                   uploadFile && !isUploading ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
                 ]"
               >

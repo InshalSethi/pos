@@ -1,196 +1,198 @@
 <template>
-  <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 font-sans">
-    
-    <!-- Header Section -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-      <div class="flex items-center gap-3">
-        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Stock Transfers</h1>
-        <span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/55 dark:text-indigo-300 text-xs px-2.5 py-1 rounded-full font-bold">
-          {{ transfers.length }} Orders
+  <div class="w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
+    <div class="w-full max-w-7xl mx-auto">
+      
+      <!-- Header Section -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Stock Transfers</h1>
+          <span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-full font-bold">
+            {{ transfers.length }} Orders
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <router-link 
+            to="/inventory/transfer-orders/create" 
+            class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            New Stock Transfer
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Search Input & Status Filter -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-6">
+        <div class="relative flex-1">
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Search by transfer number..." 
+            class="w-full pl-12 pr-4 py-2.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-200 dark:focus:ring-indigo-500 focus:border-slate-300 dark:focus:border-indigo-500 text-sm placeholder-slate-400 dark:placeholder-slate-500 font-medium dark:text-slate-100"
+          />
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+        <div class="w-full sm:w-48">
+          <select 
+            v-model="statusFilter"
+            class="w-full px-3 py-2.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-200 dark:focus:ring-indigo-500 focus:border-slate-300 dark:focus:border-indigo-500 text-sm font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
+          >
+            <option value="">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent (In Transit)</option>
+            <option value="received">Received (Completed)</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Feedback Banner -->
+      <div v-if="feedbackMsg" :class="feedbackClass" class="mb-6 p-4 rounded-xl border flex items-center justify-between text-sm font-medium transition-all">
+        <span class="flex items-center gap-2">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ feedbackMsg }}
         </span>
+        <button @click="feedbackMsg = ''" class="text-current opacity-70 hover:opacity-100">&times;</button>
       </div>
 
-      <div class="flex items-center gap-3">
-        <router-link 
-          to="/inventory/transfer-orders/create" 
-          class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-          </svg>
-          New Stock Transfer
-        </router-link>
-      </div>
-    </div>
+      <!-- Transfers List Container -->
+      <div class="bg-white dark:bg-[#1E1E1E] rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-sm overflow-hidden">
+        <div v-if="loading" class="text-center py-20">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+          <p class="mt-3 text-slate-500 text-sm font-medium dark:text-slate-400">Loading stock transfers...</p>
+        </div>
 
-    <!-- Search Input & Status Filter -->
-    <div class="flex flex-col sm:flex-row gap-3 mb-6">
-      <div class="relative flex-1">
-        <input 
-          v-model="searchQuery"
-          type="text" 
-          placeholder="Search by transfer number..." 
-          class="w-full pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm placeholder-slate-400 font-medium"
-        />
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+        <div v-else-if="filteredTransfers.length === 0" class="text-center py-16 px-4">
+          <div class="w-16 h-16 bg-slate-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-[#2E2E2E]">
+            <svg class="w-8 h-8 text-slate-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </div>
+          <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">No transfer orders found</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto dark:text-slate-400">Create stock transfers to record and track stock moving between warehouses and physical store branches.</p>
+        </div>
+
+        <div v-else class="overflow-x-auto">
+          <table class="w-full table-auto border-collapse">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-[#252525] border-b border-slate-200 dark:border-[#2E2E2E] text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-6 py-4 text-left font-bold">Transfer Number</th>
+                <th class="px-6 py-4 text-left font-bold">Route (Source &rarr; Dest)</th>
+                <th class="px-6 py-4 text-center font-bold">Date</th>
+                <th class="px-6 py-4 text-center font-bold">Items</th>
+                <th class="px-6 py-4 text-center font-bold">Status</th>
+                <th class="px-6 py-4 text-center w-40 font-bold">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-[#2E2E2E] text-xs font-semibold text-slate-700 dark:text-slate-400">
+              <tr 
+                v-for="to in filteredTransfers" 
+                :key="to.id"
+                class="hover:bg-slate-50/60 dark:hover:bg-[#2D2D2D]/80 transition-colors cursor-pointer"
+                @click="$router.push(`/inventory/transfer-orders/${to.id}`)"
+              >
+                <td class="px-6 py-4">
+                  <span class="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">#{{ to.transfer_number }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900 dark:text-slate-100">{{ to.source_warehouse?.name }}</span>
+                    <span class="text-slate-400 dark:text-slate-400">&rarr;</span>
+                    <span class="font-bold text-slate-900 dark:text-slate-100">{{ to.destination_warehouse?.name }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
+                  {{ to.transfer_date }}
+                </td>
+                <td class="px-6 py-4 text-center font-bold text-slate-900 dark:text-slate-100">
+                  {{ to.items?.length || 0 }} items
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span 
+                    :class="[
+                      'px-2.5 py-1 text-[9px] font-extrabold uppercase rounded-full tracking-wide',
+                      getStatusClass(to.status)
+                    ]"
+                  >
+                    {{ to.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-center" @click.stop>
+                  <div class="flex items-center justify-center gap-1">
+                    <!-- Send Action -->
+                    <button 
+                      v-if="to.status === 'draft'"
+                      type="button" 
+                      @click="sendTransfer(to.id)"
+                      class="px-2 py-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-400 rounded-lg transition-all cursor-pointer"
+                      title="Mark as Sent"
+                    >
+                      Ship
+                    </button>
+
+                    <!-- Receive Action -->
+                    <button 
+                      v-if="to.status === 'sent'"
+                      type="button" 
+                      @click="receiveTransfer(to.id)"
+                      class="px-2 py-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-450 rounded-lg transition-all cursor-pointer"
+                      title="Mark as Received"
+                    >
+                      Receive
+                    </button>
+
+                    <!-- Cancel Action -->
+                    <button 
+                      v-if="['draft', 'sent'].includes(to.status)"
+                      type="button" 
+                      @click="cancelTransfer(to.id)"
+                      class="px-2 py-1 text-[10px] font-extrabold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-400 rounded-lg transition-all cursor-pointer"
+                      title="Cancel Transfer"
+                    >
+                      Cancel
+                    </button>
+
+                    <!-- Delete Action -->
+                    <button 
+                      v-if="to.status === 'draft'"
+                      type="button" 
+                      @click="deleteTransfer(to.id)"
+                      class="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-[#252525] transition-all focus:outline-none cursor-pointer dark:text-slate-400"
+                      title="Delete Draft"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+
+                    <!-- Received Action (Disabled, clickable to show alert) -->
+                    <button 
+                      v-if="to.status === 'received'"
+                      type="button" 
+                      @click="handleReceivedClick"
+                      class="px-2 py-1 text-[10px] font-extrabold text-slate-400 bg-slate-100 dark:bg-[#252525] dark:text-slate-500 rounded-lg transition-all cursor-pointer"
+                      title="Received"
+                    >
+                      Received
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-      <div class="w-full sm:w-48">
-        <select 
-          v-model="statusFilter"
-          class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-slate-600 dark:text-slate-300"
-        >
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="sent">Sent (In Transit)</option>
-          <option value="received">Received (Completed)</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
+
     </div>
-
-    <!-- Feedback Banner -->
-    <div v-if="feedbackMsg" :class="feedbackClass" class="mb-6 p-4 rounded-xl border flex items-center justify-between text-sm font-medium transition-all">
-      <span class="flex items-center gap-2">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        {{ feedbackMsg }}
-      </span>
-      <button @click="feedbackMsg = ''" class="text-current opacity-70 hover:opacity-100">&times;</button>
-    </div>
-
-    <!-- Transfers List Container -->
-    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div v-if="loading" class="text-center py-20">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-3 text-slate-500 text-sm font-medium">Loading stock transfers...</p>
-      </div>
-
-      <div v-else-if="filteredTransfers.length === 0" class="text-center py-16 px-4">
-        <div class="w-16 h-16 bg-slate-50 dark:bg-slate-850 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800">
-          <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
-        </div>
-        <h3 class="text-base font-bold text-slate-800 dark:text-white">No transfer orders found</h3>
-        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Create stock transfers to record and track stock moving between warehouses and physical store branches.</p>
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="w-full table-auto border-collapse">
-          <thead>
-            <tr class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <th class="px-6 py-4 text-left">Transfer Number</th>
-              <th class="px-6 py-4 text-left">Route (Source &rarr; Dest)</th>
-              <th class="px-6 py-4 text-center">Date</th>
-              <th class="px-6 py-4 text-center">Items</th>
-              <th class="px-6 py-4 text-center">Status</th>
-              <th class="px-6 py-4 text-center w-40">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-355">
-            <tr 
-              v-for="to in filteredTransfers" 
-              :key="to.id"
-              class="hover:bg-slate-50/60 dark:hover:bg-slate-850/30 transition-colors cursor-pointer"
-              @click="$router.push(`/inventory/transfer-orders/${to.id}`)"
-            >
-              <td class="px-6 py-4">
-                <span class="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">#{{ to.transfer_number }}</span>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-900 dark:text-white">{{ to.source_warehouse?.name }}</span>
-                  <span class="text-slate-400">&rarr;</span>
-                  <span class="font-bold text-slate-900 dark:text-white">{{ to.destination_warehouse?.name }}</span>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
-                {{ to.transfer_date }}
-              </td>
-              <td class="px-6 py-4 text-center font-bold text-slate-900 dark:text-white">
-                {{ to.items?.length || 0 }} items
-              </td>
-              <td class="px-6 py-4 text-center">
-                <span 
-                  :class="[
-                    'px-2.5 py-1 text-[9px] font-extrabold uppercase rounded-full tracking-wide',
-                    getStatusClass(to.status)
-                  ]"
-                >
-                  {{ to.status }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-center" @click.stop>
-                <div class="flex items-center justify-center gap-1">
-                  <!-- Send Action -->
-                  <button 
-                    v-if="to.status === 'draft'"
-                    type="button" 
-                    @click="sendTransfer(to.id)"
-                    class="px-2 py-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400 rounded-lg transition-all"
-                    title="Mark as Sent"
-                  >
-                    Ship
-                  </button>
-
-                  <!-- Receive Action -->
-                  <button 
-                    v-if="to.status === 'sent'"
-                    type="button" 
-                    @click="receiveTransfer(to.id)"
-                    class="px-2 py-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-lg transition-all"
-                    title="Mark as Received"
-                  >
-                    Receive
-                  </button>
-
-                  <!-- Cancel Action -->
-                  <button 
-                    v-if="['draft', 'sent'].includes(to.status)"
-                    type="button" 
-                    @click="cancelTransfer(to.id)"
-                    class="px-2 py-1 text-[10px] font-extrabold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-400 rounded-lg transition-all"
-                    title="Cancel Transfer"
-                  >
-                    Cancel
-                  </button>
-
-                  <!-- Delete Action -->
-                  <button 
-                    v-if="to.status === 'draft'"
-                    type="button" 
-                    @click="deleteTransfer(to.id)"
-                    class="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none"
-                    title="Delete Draft"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-
-                  <!-- Received Action (Disabled, clickable to show alert) -->
-                  <button 
-                    v-if="to.status === 'received'"
-                    type="button" 
-                    @click="handleReceivedClick"
-                    class="px-2 py-1 text-[10px] font-extrabold text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 rounded-lg transition-all"
-                    title="Received"
-                  >
-                    Received
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -225,7 +227,7 @@ const filteredTransfers = computed(() => {
 const getStatusClass = (status) => {
   switch (status) {
     case 'draft':
-      return 'bg-slate-100 text-slate-800 dark:bg-slate-850 dark:text-slate-400';
+      return 'bg-slate-100 text-slate-800 dark:bg-[#252525] dark:text-slate-400';
     case 'sent':
       return 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200/20';
     case 'received':
@@ -233,7 +235,7 @@ const getStatusClass = (status) => {
     case 'cancelled':
       return 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-400';
     default:
-      return 'bg-slate-100 text-slate-850';
+      return 'bg-slate-100 text-slate-800';
   }
 };
 
@@ -320,3 +322,6 @@ onMounted(() => {
   fetchTransfers();
 });
 </script>
+
+<style scoped>
+</style>
