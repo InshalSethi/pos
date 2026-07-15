@@ -124,7 +124,8 @@
                 class="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold text-xs cursor-pointer disabled:opacity-50 text-left"
               >
                 <span class="truncate">
-                  {{ selectedOptionLabel || (form.source_warehouse_id ? 'Choose a product to transfer...' : 'Please select source warehouse first') }}
+                  <template v-if="selectedProductKeys.length > 0">{{ selectedProductKeys.length }} product{{ selectedProductKeys.length > 1 ? 's' : '' }} selected</template>
+                  <template v-else>{{ form.source_warehouse_id ? 'Choose a product to transfer...' : 'Please select source warehouse first' }}</template>
                 </span>
                 <svg 
                   class="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200"
@@ -173,8 +174,9 @@
                       v-else
                       v-for="opt in filteredProductOptions" 
                       :key="opt.key"
-                      @click.stop="selectOption(opt)"
+                      @click.stop="toggleSelectOption(opt)"
                       class="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/85 cursor-pointer flex items-center justify-between gap-4 transition-colors"
+                      :class="isOptionPending(opt) ? 'bg-indigo-50/60 dark:bg-indigo-950/30' : ''"
                     >
                       <div class="flex flex-col min-w-0">
                         <span class="truncate text-slate-900 dark:text-slate-100">{{ opt.product_name }}</span>
@@ -185,13 +187,19 @@
                         <span class="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-md">
                           Qty: {{ opt.stock_qty }}
                         </span>
-                        <!-- Checkmark / Tick Mark -->
-                        <span v-if="isOptionSelected(opt)" class="text-indigo-650 dark:text-indigo-400">
+                        <!-- Already in table -->
+                        <span v-if="isOptionSelected(opt)" class="text-emerald-500 dark:text-emerald-400">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                           </svg>
                         </span>
-                        <span v-else class="w-4 h-4"></span>
+                        <!-- Pending selection checkbox -->
+                        <span v-else-if="isOptionPending(opt)" class="text-indigo-600 dark:text-indigo-400">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4" />
+                          </svg>
+                        </span>
+                        <span v-else class="w-4 h-4 border border-slate-300 dark:border-slate-600 rounded"></span>
                       </div>
                     </div>
                   </div>
@@ -200,8 +208,8 @@
             </div>
             <button 
               type="button" 
-              @click="addItem"
-              :disabled="!selectedProductKey"
+              @click="addSelectedItems"
+              :disabled="selectedProductKeys.length === 0"
               class="px-4 py-2.5 bg-slate-800 dark:bg-indigo-600 hover:bg-slate-900 dark:hover:bg-indigo-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 cursor-pointer"
             >
               Add
@@ -219,50 +227,54 @@
                   <th class="px-4 py-3 text-center w-16">Remove</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-[#2E2E2E]">
-                <tr v-if="form.items.length === 0">
-                  <td colspan="4" class="px-4 py-8 text-center text-slate-400 italic dark:text-slate-400">No products added yet. Choose a source warehouse and add items to list.</td>
-                </tr>
-                <tr v-for="(item, idx) in form.items" :key="idx" class="hover:bg-slate-50/40 dark:hover:bg-[#2D2D2D]/80">
-                  <!-- Product Details -->
-                  <td class="px-4 py-3">
-                    <div class="font-bold text-slate-900 dark:text-slate-100">{{ item.product_name }}</div>
-                    <div v-if="item.variation_name" class="text-[10px] text-slate-400 font-semibold mt-0.5 dark:text-slate-400">{{ item.variation_name }}</div>
-                    <div class="text-[9px] text-slate-400 mt-0.5 font-medium dark:text-slate-400">SKU: {{ item.sku }}</div>
-                  </td>
-                  <!-- Available Stock -->
-                  <td class="px-4 py-3 text-center font-bold text-slate-600 dark:text-slate-300">
-                    {{ item.available_qty }}
-                  </td>
-                  <!-- Transfer Qty Input with dynamic warning -->
-                  <td class="px-4 py-3 text-center">
-                    <div class="flex flex-col items-center">
-                      <input 
-                        v-model.number="item.quantity"
-                        type="number" 
-                        min="1"
-                        :max="item.available_qty"
-                        class="w-24 px-2 py-1 text-center bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg focus:outline-none font-bold text-xs"
-                        :class="item.quantity > item.available_qty ? 'border-rose-400 text-rose-600 focus:ring-1 focus:ring-rose-400' : 'focus:ring-1 focus:ring-indigo-500'"
-                      />
-                      <span v-if="item.quantity > item.available_qty" class="text-[9px] text-rose-550 font-bold mt-1 tracking-tight">Exceeds Stock!</span>
-                    </div>
-                  </td>
-                  <!-- Remove Button -->
-                  <td class="px-4 py-3 text-center">
-                    <button 
-                      type="button" 
-                      @click="removeItem(idx)"
-                      class="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none cursor-pointer dark:text-slate-400"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
             </table>
+            <div class="items-table-scroll" :class="{ 'max-h-[440px] overflow-y-auto': form.items.length > 10 }">
+              <table class="w-full table-auto border-collapse text-xs">
+                <tbody class="divide-y divide-slate-100 dark:divide-[#2E2E2E]">
+                  <tr v-if="form.items.length === 0">
+                    <td colspan="4" class="px-4 py-8 text-center text-slate-400 italic dark:text-slate-400">No products added yet. Choose a source warehouse and add items to list.</td>
+                  </tr>
+                  <tr v-for="(item, idx) in form.items" :key="idx" class="hover:bg-slate-50/40 dark:hover:bg-[#2D2D2D]/80">
+                    <!-- Product Details -->
+                    <td class="px-4 py-3">
+                      <div class="font-bold text-slate-900 dark:text-slate-100">{{ item.product_name }}</div>
+                      <div v-if="item.variation_name" class="text-[10px] text-slate-400 font-semibold mt-0.5 dark:text-slate-400">{{ item.variation_name }}</div>
+                      <div class="text-[9px] text-slate-400 mt-0.5 font-medium dark:text-slate-400">SKU: {{ item.sku }}</div>
+                    </td>
+                    <!-- Available Stock -->
+                    <td class="px-4 py-3 text-center font-bold text-slate-600 dark:text-slate-300 w-28">
+                      {{ item.available_qty }}
+                    </td>
+                    <!-- Transfer Qty Input with dynamic warning -->
+                    <td class="px-4 py-3 text-center w-36">
+                      <div class="flex flex-col items-center">
+                        <input 
+                          v-model.number="item.quantity"
+                          type="number" 
+                          min="1"
+                          :max="item.available_qty"
+                          class="w-24 px-2 py-1 text-center bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-lg focus:outline-none font-bold text-xs"
+                          :class="item.quantity > item.available_qty ? 'border-rose-400 text-rose-600 focus:ring-1 focus:ring-rose-400' : 'focus:ring-1 focus:ring-indigo-500'"
+                        />
+                        <span v-if="item.quantity > item.available_qty" class="text-[9px] text-rose-550 font-bold mt-1 tracking-tight">Exceeds Stock!</span>
+                      </div>
+                    </td>
+                    <!-- Remove Button -->
+                    <td class="px-4 py-3 text-center w-16">
+                      <button 
+                        type="button" 
+                        @click="removeItem(idx)"
+                        class="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none cursor-pointer dark:text-slate-400"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -308,6 +320,7 @@ const warehouses = ref([]);
 const sourceStock = ref([]);
 const productOptions = ref([]);
 const selectedProductKey = ref('');
+const selectedProductKeys = ref([]);
 const submitting = ref(false);
 const errorMsg = ref('');
 
@@ -338,11 +351,22 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const selectOption = (opt) => {
-  selectedProductKey.value = opt.key;
-  addItem();
-  isDropdownOpen.value = false;
-  productSearchQuery.value = '';
+const toggleSelectOption = (opt) => {
+  // Don't allow selecting items already in the table
+  if (isOptionSelected(opt)) {
+    errorMsg.value = 'Product is already added to transfer list.';
+    return;
+  }
+  const idx = selectedProductKeys.value.indexOf(opt.key);
+  if (idx === -1) {
+    selectedProductKeys.value.push(opt.key);
+  } else {
+    selectedProductKeys.value.splice(idx, 1);
+  }
+};
+
+const isOptionPending = (opt) => {
+  return selectedProductKeys.value.includes(opt.key);
 };
 
 const isOptionSelected = (opt) => {
@@ -353,9 +377,12 @@ const isOptionSelected = (opt) => {
 };
 
 const selectedOptionLabel = computed(() => {
-  if (!selectedProductKey.value) return '';
-  const opt = productOptions.value.find(o => String(o.key) === String(selectedProductKey.value));
-  return opt ? opt.label : '';
+  if (selectedProductKeys.value.length === 0) return '';
+  if (selectedProductKeys.value.length === 1) {
+    const opt = productOptions.value.find(o => String(o.key) === String(selectedProductKeys.value[0]));
+    return opt ? opt.label : '';
+  }
+  return `${selectedProductKeys.value.length} products selected`;
 });
 
 const filteredProductOptions = computed(() => {
@@ -405,6 +432,7 @@ const onSourceWarehouseChange = async () => {
   // Clear currently selected items since they belong to old source warehouse limits
   form.value.items = [];
   selectedProductKey.value = '';
+  selectedProductKeys.value = [];
   isDropdownOpen.value = false;
   productSearchQuery.value = '';
   
@@ -444,40 +472,56 @@ const buildProductOptions = () => {
 
 const onProductSelected = () => {
   if (selectedProductKey.value) {
-    addItem();
+    addSelectedItems();
   }
 };
 
-const addItem = () => {
-  if (!selectedProductKey.value) return;
+const addSelectedItems = () => {
+  if (selectedProductKeys.value.length === 0) return;
   
-  const selectedOpt = productOptions.value.find(opt => String(opt.key) === String(selectedProductKey.value));
-  if (!selectedOpt) return;
+  let addedCount = 0;
+  let skippedCount = 0;
   
-  // Check if item is already added to lists
-  const exists = form.value.items.some(item => 
-    item.product_id === selectedOpt.product_id && 
-    item.product_variation_id === selectedOpt.product_variation_id
-  );
-  
-  if (exists) {
-    errorMsg.value = 'Product is already added to transfer list.';
-    selectedProductKey.value = '';
-    return;
+  for (const key of selectedProductKeys.value) {
+    const selectedOpt = productOptions.value.find(opt => String(opt.key) === String(key));
+    if (!selectedOpt) continue;
+    
+    // Check if item is already added to list
+    const exists = form.value.items.some(item => 
+      item.product_id === selectedOpt.product_id && 
+      item.product_variation_id === selectedOpt.product_variation_id
+    );
+    
+    if (exists) {
+      skippedCount++;
+      continue;
+    }
+    
+    form.value.items.push({
+      product_id: selectedOpt.product_id,
+      product_variation_id: selectedOpt.product_variation_id,
+      product_name: selectedOpt.product_name,
+      variation_name: selectedOpt.variation_name,
+      sku: selectedOpt.sku,
+      available_qty: selectedOpt.stock_qty,
+      quantity: 1
+    });
+    addedCount++;
   }
   
-  form.value.items.push({
-    product_id: selectedOpt.product_id,
-    product_variation_id: selectedOpt.product_variation_id,
-    product_name: selectedOpt.product_name,
-    variation_name: selectedOpt.variation_name,
-    sku: selectedOpt.sku,
-    available_qty: selectedOpt.stock_qty,
-    quantity: 1
-  });
-  
+  // Clear pending selections
+  selectedProductKeys.value = [];
   selectedProductKey.value = '';
-  errorMsg.value = '';
+  isDropdownOpen.value = false;
+  productSearchQuery.value = '';
+  
+  if (skippedCount > 0 && addedCount === 0) {
+    errorMsg.value = 'All selected products are already in the transfer list.';
+  } else if (skippedCount > 0) {
+    errorMsg.value = `${addedCount} added, ${skippedCount} skipped (already in list).`;
+  } else {
+    errorMsg.value = '';
+  }
 };
 
 const removeItem = (idx) => {
@@ -524,22 +568,27 @@ onUnmounted(() => {
 
 <style scoped>
 /* Custom thin premium scrollbar */
-.dropdown-options-scroll::-webkit-scrollbar {
+.dropdown-options-scroll::-webkit-scrollbar,
+.items-table-scroll::-webkit-scrollbar {
   width: 4px;
 }
-.dropdown-options-scroll::-webkit-scrollbar-track {
+.dropdown-options-scroll::-webkit-scrollbar-track,
+.items-table-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
-.dropdown-options-scroll::-webkit-scrollbar-thumb {
+.dropdown-options-scroll::-webkit-scrollbar-thumb,
+.items-table-scroll::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.4);
   border-radius: 9999px;
 }
-.dropdown-options-scroll::-webkit-scrollbar-thumb:hover {
+.dropdown-options-scroll::-webkit-scrollbar-thumb:hover,
+.items-table-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.65);
 }
 
 /* Firefox compatibility */
-.dropdown-options-scroll {
+.dropdown-options-scroll,
+.items-table-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
 }
