@@ -20,7 +20,7 @@
         <div class="flex items-center gap-2">
           <span v-if="form.status === 'active'" class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/40">Active</span>
           <span v-else-if="form.status === 'inactive'" class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-rose-50 dark:bg-rose-955/20 text-rose-700 dark:text-rose-450 border-rose-200 dark:border-rose-900/30">Inactive</span>
-          <span v-else class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-gray-100 dark:bg-[#252525] text-gray-700 dark:text-slate-350 border-gray-300 dark:border-slate-700">Draft</span>
+          <span v-else class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-amber-50 dark:bg-amber-955/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/40">Draft</span>
         </div>
       </div>
     </div>
@@ -33,24 +33,22 @@
           <!-- 1. GENERAL SECTION -->
           <div class="space-y-3">
             <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-2 mb-3 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">General</h2>
-                <!-- Elegant Inline Toggle Switcher -->
-                <div class="flex items-center gap-2 select-none">
-                  <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
-                    <button
-                      v-for="opt in statusOptions"
-                      :key="opt.value"
-                      type="button"
-                      @click="setStatus(opt.value)"
-                      class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
-                      :class="form.status === opt.value
-                        ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
-                        : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
-                    >
-                      {{ opt.label }}
-                    </button>
-                  </div>
+              <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">General</h2>
+              <!-- Elegant Inline Toggle Switcher -->
+              <div class="flex items-center gap-2 select-none">
+                <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
+                  <button
+                    v-for="opt in statusOptions"
+                    :key="opt.value"
+                    type="button"
+                    @click="setStatus(opt.value)"
+                    class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
+                    :class="form.status === opt.value
+                      ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
+                      : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
+                  >
+                    {{ opt.label }}
+                  </button>
                 </div>
               </div>
             </div>
