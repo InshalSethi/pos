@@ -88,15 +88,6 @@
                     </svg>
                     Manage Categories
                   </button>
-                  <button
-                    @click="openDraftsModal(); showOptionsDropdown = false"
-                    class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors flex items-center gap-2 cursor-pointer font-medium"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-amber-500">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-                    </svg>
-                    Drafts Workbench ({{ draftsCount }})
-                  </button>
                 </div>
               </transition>
             </div>
@@ -172,6 +163,17 @@
           >
             <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.on_sale ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
             <span>On Sale Only</span>
+          </button>
+
+          <!-- Drafts Workbench chip -->
+          <button
+            @click="openDraftsModal"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-amber-500">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+            </svg>
+            <span>Draft Items ({{ draftsCount }})</span>
           </button>
 
         </div>
