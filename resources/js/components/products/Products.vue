@@ -262,7 +262,7 @@
                           <span class="font-extrabold text-gray-950 dark:text-slate-200 text-sm truncate max-w-sm sm:max-w-md">{{ item.name }}</span>
                           <span 
                             v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-500/20 dark:border-indigo-500/10 uppercase shrink-0"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wide bg-red-50 text-red-700 border border-red-100 dark:bg-red-500 dark-text-black dark:border-transparent uppercase shrink-0"
                           >
                             Variants
                           </span>
@@ -518,7 +518,7 @@
                             </td>
 
                             <td class="px-4 py-3.5 align-middle text-center">
-                                <span :class="draft.variations_count > 0 ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400' : 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'" 
+                                <span :class="draft.variations_count > 0 ? 'bg-red-50 text-red-700 dark:bg-red-500 dark-text-black' : 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'" 
                                       class="inline-flex items-center px-2.5 py-0.5 rounded-md font-bold text-[10px]">
                                     {{ draft.variations_count > 0 ? 'Variant Product' : 'Simple Product' }}
                                 </span>

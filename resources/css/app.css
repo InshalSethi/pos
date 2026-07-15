@@ -51,6 +51,11 @@ html.dark body {
     color: var(--color-gray-900);
 }
 
+/* Custom utility for black text in dark mode badges */
+html.dark .dark-text-black {
+    color: #000000 !important;
+}
+
 html.dark select,
 html.dark option,
 html.dark input,

@@ -250,7 +250,7 @@
                       <span class="font-bold text-slate-900 dark:text-slate-100 text-xs block leading-tight">{{ adj.product?.name }}</span>
                       
                       <!-- Variant info badge -->
-                      <span v-if="adj.variation" class="inline-flex mt-1 text-[9px] font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 dark:text-indigo-400 px-1.5 py-0.5 rounded">
+                      <span v-if="adj.variation" class="inline-flex mt-1 text-[9px] font-bold text-red-700 bg-red-50 dark:bg-red-500 dark-text-black px-1.5 py-0.5 rounded">
                         {{ adj.variation.variation_name_string }}
                       </span>
                     </div>
@@ -798,7 +798,7 @@
                         <div class="text-[10px] text-slate-400 mt-0.5 dark:text-slate-400">SKU: {{ p.sku }} | Barcode: {{ p.barcode || 'N/A' }}</div>
                       </div>
                       <div class="text-right">
-                        <span v-if="p.has_variations" class="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 rounded-full">Variants</span>
+                         <span v-if="p.has_variations" class="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-red-50 text-red-700 border border-red-100 dark:bg-red-500 dark-text-black dark:border-transparent rounded-full">Variants</span>
                         <span v-else class="text-[11px] font-black text-slate-800 dark:text-slate-100">Stock: {{ p.stock_quantity }}</span>
                       </div>
                     </button>
@@ -823,7 +823,7 @@
                         <span
                           :class="[
                             'px-2 py-0.5 text-[9px] font-extrabold uppercase rounded-full',
-                            selectedProductDetail.has_variations ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                             selectedProductDetail.has_variations ? 'bg-red-50 text-red-700 border border-red-100 dark:bg-red-500 dark-text-black dark:border-transparent' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
                           ]"
                         >
                           {{ selectedProductDetail.has_variations ? 'Variants' : 'Standard' }}
