@@ -166,10 +166,7 @@
               <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.on_sale ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
               <span>On Sale Only</span>
             </button>
-          </div>
 
-          <!-- Right side actions/filters -->
-          <div class="flex flex-wrap items-center gap-2">
             <!-- Inactive Items Toggle chip -->
             <button
               @click="toggleInactiveFilter"
@@ -180,6 +177,21 @@
               <span>Inactive Items</span>
             </button>
 
+            <!-- Clear Filters button -->
+            <button
+              v-show="hasActiveFilters"
+              @click="clearFilters"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-50 dark:bg-rose-955/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100/50 dark:hover:bg-rose-955/35 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+              <span>Clear</span>
+            </button>
+          </div>
+
+          <!-- Right side actions/filters -->
+          <div class="flex flex-wrap items-center gap-2">
             <!-- Draft Items chip -->
             <button
               @click="openDraftsModal"
@@ -1401,6 +1413,25 @@ const handlePriceSortChange = () => {
     tableFilters.value.sort_field = '';
     tableFilters.value.sort_order = '';
   }
+  fetchProductsForTable(1);
+};
+
+const hasActiveFilters = computed(() => {
+  return tableFilters.value.search !== '' ||
+         tableFilters.value.category_id !== '' ||
+         tableFilters.value.price_sort !== '' ||
+         tableFilters.value.on_sale ||
+         tableFilters.value.show_inactive;
+});
+
+const clearFilters = () => {
+  tableFilters.value.search = '';
+  tableFilters.value.category_id = '';
+  tableFilters.value.price_sort = '';
+  tableFilters.value.sort_field = '';
+  tableFilters.value.sort_order = '';
+  tableFilters.value.on_sale = false;
+  tableFilters.value.show_inactive = false;
   fetchProductsForTable(1);
 };
 
