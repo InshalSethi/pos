@@ -214,6 +214,18 @@
             >
               Add
             </button>
+            <button 
+              type="button" 
+              @click="scanning = true"
+              :disabled="!form.source_warehouse_id"
+              class="px-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-[#2E2E2E] hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              title="Scan barcode to add product"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h2M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" />
+              </svg>
+              Barcode
+            </button>
           </div>
 
           <!-- Selected Items Table -->
@@ -307,12 +319,16 @@
       </form>
     </div>
   </div>
+
+  <!-- Barcode Scanner Modal -->
+  <BarcodeScanner v-if="scanning" @scan="onBarcodeScan" @close="scanning = false" />
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import BarcodeScanner from '@/components/common/BarcodeScanner.vue';
 
 const router = useRouter();
 
@@ -322,6 +338,7 @@ const productOptions = ref([]);
 const selectedProductKey = ref('');
 const selectedProductKeys = ref([]);
 const submitting = ref(false);
+const scanning = ref(false);
 const errorMsg = ref('');
 
 const form = ref({
@@ -464,6 +481,7 @@ const buildProductOptions = () => {
       product_name: item.product?.name || 'Unknown Product',
       variation_name: item.variation?.variation_name_string || null,
       sku: item.variation?.sku || item.product?.sku || 'N/A',
+      barcode: item.variation?.barcode || item.product?.barcode || null,
       stock_qty: item.stock_qty,
       label
     };
@@ -526,6 +544,59 @@ const addSelectedItems = () => {
 
 const removeItem = (idx) => {
   form.value.items.splice(idx, 1);
+};
+
+const onBarcodeScan = (barcode) => {
+  scanning.value = false;
+  
+  if (!form.value.source_warehouse_id) {
+    errorMsg.value = 'Please select a source warehouse first.';
+    return;
+  }
+  
+  // Match scanned barcode against product SKUs or barcodes in available stock
+  const matchedOpt = productOptions.value.find(opt => {
+    const skuMatch = opt.sku && opt.sku.toLowerCase() === barcode.toLowerCase();
+    const barcodeMatch = opt.barcode && opt.barcode.toLowerCase() === barcode.toLowerCase();
+    return skuMatch || barcodeMatch;
+  });
+  
+  if (!matchedOpt) {
+    errorMsg.value = `No product found matching barcode: ${barcode}`;
+    return;
+  }
+  
+  // Check if already added
+  const exists = form.value.items.some(item => 
+    item.product_id === matchedOpt.product_id && 
+    item.product_variation_id === matchedOpt.product_variation_id
+  );
+  
+  if (exists) {
+    // Increment quantity of existing item instead of showing error
+    const existingItem = form.value.items.find(item => 
+      item.product_id === matchedOpt.product_id && 
+      item.product_variation_id === matchedOpt.product_variation_id
+    );
+    if (existingItem && existingItem.quantity < existingItem.available_qty) {
+      existingItem.quantity++;
+    } else {
+      errorMsg.value = 'Product already at max stock for transfer.';
+    }
+    return;
+  }
+  
+  form.value.items.push({
+    product_id: matchedOpt.product_id,
+    product_variation_id: matchedOpt.product_variation_id,
+    product_name: matchedOpt.product_name,
+    variation_name: matchedOpt.variation_name,
+    sku: matchedOpt.sku,
+    available_qty: matchedOpt.stock_qty,
+    quantity: 1
+  });
+  
+  errorMsg.value = '';
 };
 
 const submitTransfer = async () => {
