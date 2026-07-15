@@ -6,7 +6,7 @@
     
     <div class="relative group">
       <ListboxButton
-        class="relative w-full pl-3 pr-10 py-2 text-left bg-gray-50/50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl cursor-pointer focus:outline-none focus:ring-0 focus:border-slate-300 dark:focus:border-slate-700 transition-all duration-300 font-medium text-sm text-gray-700 dark:text-slate-300 shadow-inner group-hover:bg-white dark:group-hover:bg-slate-850"
+        class="relative w-full pl-3 pr-10 py-2 text-left bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl cursor-pointer focus:outline-none focus:ring-0 focus:border-slate-300 dark:focus:border-slate-700 transition-all duration-300 font-medium text-sm text-gray-700 dark:text-slate-300 shadow-inner group-hover:bg-slate-50 dark:group-hover:bg-[#2D2D2D]/60"
         :class="[
           focusColor || 'focus:border-slate-300', 
           error ? 'border-red-300 ring-red-500' : '',
@@ -36,7 +36,7 @@
         enter-to-class="opacity-100 scale-100 translate-y-0"
       >
         <ListboxOptions
-          class="absolute left-0 z-30 w-full min-w-full max-h-64 overflow-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-lg dark:shadow-slate-950/80 rounded-xl p-1 focus:outline-none custom-scrollbar"
+          class="absolute left-0 z-30 w-full min-w-full max-h-64 overflow-auto bg-white dark:bg-[#1E1E1E] border border-slate-200/80 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl p-1 focus:outline-none custom-scrollbar"
           :class="dropup ? 'bottom-full mb-1' : 'top-full mt-1'"
         >
           <ListboxOption
@@ -48,8 +48,8 @@
           >
             <li
               :class="[
-                active ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-300' : (option.value === 'add_new_category' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'),
-                option.value === 'add_new_category' ? 'font-bold border-t border-slate-100 dark:border-slate-800 mt-1' : '',
+                active ? 'bg-indigo-50 dark:bg-[#2D2D2D]/60 text-indigo-900 dark:text-indigo-300' : (option.value === 'add_new_category' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'),
+                option.value === 'add_new_category' ? 'font-bold border-t border-slate-100 dark:border-[#2E2E2E] mt-1' : '',
                 'relative cursor-pointer select-none px-3 py-1.5 text-sm rounded-lg transition-all duration-200 font-medium'
               ]"
             >
@@ -69,6 +69,7 @@
       </transition>
     </div>
   </Listbox>
+
 </template>
 
 <script setup>

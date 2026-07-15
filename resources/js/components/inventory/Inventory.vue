@@ -830,10 +830,10 @@
                         </span>
                       </div>
                       <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 text-[11px] font-semibold">
-                        <div>Base Price: <span class="font-bold text-slate-755 dark:text-slate-200">${{ parseFloat(selectedProductDetail.selling_price || 0).toFixed(2) }}</span></div>
-                        <div>Category: <span class="font-bold text-slate-755 dark:text-slate-200">{{ selectedProductDetail.category?.name || 'Uncategorized' }}</span></div>
-                        <div>Base SKU: <span class="font-bold text-slate-755 dark:text-slate-200">{{ selectedProductDetail.sku }}</span></div>
-                        <div v-if="!selectedProductDetail.has_variations">Current Stock: <span class="font-bold text-slate-755 dark:text-slate-250">{{ selectedProductDetail.stock_quantity }}</span></div>
+                        <div>Base Price: <span class="font-bold text-slate-700 dark:text-slate-200">${{ parseFloat(selectedProductDetail.selling_price || 0).toFixed(2) }}</span></div>
+                        <div>Category: <span class="font-bold text-slate-700 dark:text-slate-200">{{ selectedProductDetail.category?.name || 'Uncategorized' }}</span></div>
+                        <div>Base SKU: <span class="font-bold text-slate-700 dark:text-slate-200">{{ selectedProductDetail.sku }}</span></div>
+                        <div v-if="!selectedProductDetail.has_variations">Current Stock: <span class="font-bold text-slate-700 dark:text-slate-200">{{ selectedProductDetail.stock_quantity }}</span></div>
                       </div>
                     </div>
                   </div>
@@ -994,7 +994,7 @@
                                   />
                                 </td>
                                 <!-- Resulting stock -->
-                                <td class="px-4 py-3 text-center font-black text-slate-855 dark:text-slate-250">
+                                <td class="px-4 py-3 text-center font-black text-slate-800 dark:text-slate-200">
                                   {{ calculateFinalStock(getVariantCurrentStock(variant, whId), variableAdjustments[`${variant.id}-${whId}`].adjustment_type, variableAdjustments[`${variant.id}-${whId}`].quantity_adjusted) }}
                                 </td>
                               </tr>
@@ -1123,7 +1123,7 @@
               <h3 class="text-lg font-extrabold text-slate-800 dark:text-slate-100">Upload Adjustment Inventory</h3>
               <p class="text-xs text-slate-400 mt-1 dark:text-slate-400">Import product configurations and stocks from an Excel/CSV file.</p>
             </div>
-            <button @click="showUploadModal = false" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-250 rounded-full transition-colors cursor-pointer border-0 bg-transparent dark:text-slate-400">
+            <button @click="showUploadModal = false" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors cursor-pointer border-0 bg-transparent dark:text-slate-400">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -1135,7 +1135,7 @@
               @drop.prevent="handleFileUpload"
               :class="[
                 'border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-200 text-center cursor-pointer',
-                uploadDragging ? 'border-indigo-500 bg-indigo-50/20 scale-[1.01]' : 'border-slate-250 dark:border-[#2E2E2E] bg-slate-50 dark:bg-zinc-950 hover:bg-slate-105/50 dark:hover:bg-[#2D2D2D]/80'
+                uploadDragging ? 'border-indigo-500 bg-indigo-50/20 scale-[1.01]' : 'border-slate-200 dark:border-[#2E2E2E] bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100/50 dark:hover:bg-[#2D2D2D]/80'
               ]"
               @click="$refs.fileInput.click()"
             >

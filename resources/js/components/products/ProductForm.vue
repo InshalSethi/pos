@@ -757,7 +757,7 @@
                     @click="selectMasterAttribute(sysAttr)"
                     class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 rounded-lg flex items-center justify-between text-slate-700 dark:text-slate-300 transition-colors"
                   >
-                    <span class="text-slate-800 dark:text-slate-250 font-medium">{{ sysAttr.name }}</span>
+                    <span class="text-slate-800 dark:text-slate-200 font-medium">{{ sysAttr.name }}</span>
                     <span class="text-[9px] text-slate-400 dark:text-slate-500 truncate max-w-[60%]">{{ sysAttr.values.map(v => v.value).join(', ') }}</span>
                   </div>
                   <div 
@@ -809,7 +809,8 @@
                       </label>
                     </div>
                   </div>
-                  <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-[#1E1E1E]/20 p-1.5 rounded-2xl border border-slate-200/45 dark:border-[#2E2E2E]">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div v-if="attributes.length > 0" class="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-[#1E1E1E]/20 p-1.5 rounded-2xl border border-slate-200/45 dark:border-[#2E2E2E]">
                     <div v-for="(attr, aIdx) in attributes" :key="aIdx" class="flex flex-col relative" :id="`matrix-select-container-${aIdx}`">
                       <span class="text-[8px] font-black uppercase text-slate-400 dark:text-slate-500 px-1 mb-0.5">Select {{ attr.name }}</span>
                       <button 
@@ -865,12 +866,13 @@
                         </div>
                       </div>
                     </div>
+                    </div>
                     <div class="flex flex-col">
-                      <span class="text-[8px] px-1 mb-0.5 invisible select-none">&nbsp;</span>
+                      <span v-if="attributes.length > 0" class="text-[8px] px-1 mb-0.5 invisible select-none">&nbsp;</span>
                       <button 
                         type="button" 
                         @click="addNewManualRow" 
-                        class="h-[30px] px-3.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow transition-all active:scale-95 flex items-center justify-center"
+                        class="h-[30px] px-3.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow transition-all active:scale-95 flex items-center justify-center cursor-pointer"
                       >
                         + Add Combo
                       </button>
@@ -1098,7 +1100,7 @@
     <div v-if="showOptionsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="showOptionsModal = false"></div>
       <div class="relative w-full max-w-sm p-5 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 space-y-3 z-10 animate-in fade-in zoom-in-95 duration-200">
-        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-250 uppercase tracking-wider">Configure Attribute Group</h4>
+        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Configure Attribute Group</h4>
         <div>
             <label class="text-[10px] font-bold text-slate-450 dark:text-slate-500 block mb-1">Option Name</label>
             <input type="text" v-model="tempAttrName" placeholder="e.g., Color, Size, Storage" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300">

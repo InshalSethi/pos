@@ -316,7 +316,7 @@
                   v-model="taxForm.name"
                   type="text" 
                   placeholder="e.g., VAT, GST 18%, Sales Tax" 
-                  class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-250 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                  class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
                   required
                 />
               </div>
@@ -330,7 +330,7 @@
                     step="0.01"
                     min="0"
                     placeholder="e.g., 18.00" 
-                    class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-250 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
                     required
                   />
                 </div>
@@ -338,7 +338,7 @@
                   <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Value Type *</label>
                   <select 
                     v-model="taxForm.type"
-                    class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-250 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500 cursor-pointer font-semibold"
+                    class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500 cursor-pointer font-semibold"
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="flat">Flat ($)</option>
@@ -410,7 +410,7 @@
                   v-model="tagForm.name"
                   type="text" 
                   placeholder="e.g., Summer-Collection, Imported, Organic" 
-                  class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-250 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                  class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
                   required
                 />
               </div>

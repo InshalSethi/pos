@@ -196,7 +196,7 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 dark:text-slate-400">Action Type</label>
                     <select
                       v-model="bulkAction.action_type"
-                      class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-950 border border-slate-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100 font-semibold"
+                      class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100 font-semibold"
                     >
                       <option value="markup_percentage">Apply Markup Percentage (%)</option>
                       <option value="discount_percentage">Apply Discount Percentage (%)</option>
@@ -213,7 +213,7 @@
                       min="0"
                       v-model="bulkAction.value"
                       placeholder="Enter percentage (e.g. 15)"
-                      class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-950 border border-slate-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100"
+                      class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100"
                     />
                   </div>
 
@@ -222,7 +222,7 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 dark:text-slate-400">Select Tax Group</label>
                     <select
                       v-model="bulkAction.tax_id"
-                      class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-950 border border-slate-250 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100 font-semibold"
+                      class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100 font-semibold"
                     >
                       <option :value="null">Remove Tax Rule</option>
                       <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
