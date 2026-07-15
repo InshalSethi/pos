@@ -113,69 +113,84 @@
         </div>
 
         <!-- Filter Chips Row -->
-        <div class="flex flex-wrap items-center gap-2 mb-6 px-1">
-          <!-- Category dropdown chip -->
-          <div class="relative">
-            <button
-              @click.stop="toggleDropdown('category')"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-            >
-              <span>Category: {{ getCategoryName(tableFilters.category_id) || 'All' }}</span>
-              <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-              <div v-show="dropdownOpen.category" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
-                <div @click="selectCategory('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">All Categories</div>
-                <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">
-                  {{ category.name }}
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-6 px-1">
+          <!-- Left side filters -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Category dropdown chip -->
+            <div class="relative">
+              <button
+                @click.stop="toggleDropdown('category')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              >
+                <span>Category: {{ getCategoryName(tableFilters.category_id) || 'All' }}</span>
+                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
+                <div v-show="dropdownOpen.category" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
+                  <div @click="selectCategory('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">All Categories</div>
+                  <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">
+                    {{ category.name }}
+                  </div>
                 </div>
-              </div>
-            </transition>
+              </transition>
+            </div>
+
+            <!-- Price sort chip -->
+            <div class="relative">
+              <button
+                @click.stop="toggleDropdown('price')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              >
+                <span>Sort: {{ getPriceSortName(tableFilters.price_sort) }}</span>
+                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
+                <div v-show="dropdownOpen.price" class="absolute left-0 mt-1.5 w-44 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50">
+                  <div @click="selectPriceSort('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">Default Sort</div>
+                  <div @click="selectPriceSort('asc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: Low to High</div>
+                  <div @click="selectPriceSort('desc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: High to Low</div>
+                </div>
+              </transition>
+            </div>
+
+            <!-- On sale toggle chip -->
+            <button
+              @click="toggleOnSaleFilter"
+              :class="tableFilters.on_sale ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+            >
+              <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.on_sale ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
+              <span>On Sale Only</span>
+            </button>
           </div>
 
-          <!-- Price sort chip -->
-          <div class="relative">
+          <!-- Right side actions/filters -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Inactive Items Toggle chip -->
             <button
-              @click.stop="toggleDropdown('price')"
+              @click="toggleInactiveFilter"
+              :class="tableFilters.show_inactive ? 'bg-amber-50 dark:bg-amber-955/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/40 hover:bg-amber-100/50 dark:hover:bg-amber-955/35' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+            >
+              <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.show_inactive ? 'bg-amber-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
+              <span>Inactive Items</span>
+            </button>
+
+            <!-- Draft Items chip -->
+            <button
+              @click="openDraftsModal"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
             >
-              <span>Sort: {{ getPriceSortName(tableFilters.price_sort) }}</span>
-              <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-amber-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
               </svg>
+              <span>Draft Items ({{ draftsCount }})</span>
             </button>
-            <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-              <div v-show="dropdownOpen.price" class="absolute left-0 mt-1.5 w-44 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50">
-                <div @click="selectPriceSort('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">Default Sort</div>
-                <div @click="selectPriceSort('asc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: Low to High</div>
-                <div @click="selectPriceSort('desc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: High to Low</div>
-              </div>
-            </transition>
           </div>
-
-          <!-- On sale toggle chip -->
-          <button
-            @click="toggleOnSaleFilter"
-            :class="tableFilters.on_sale ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-          >
-            <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.on_sale ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
-            <span>On Sale Only</span>
-          </button>
-
-          <!-- Drafts Workbench chip -->
-          <button
-            @click="openDraftsModal"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-amber-500">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-            </svg>
-            <span>Draft Items ({{ draftsCount }})</span>
-          </button>
-
         </div>
 
         <!-- Custom Products Data Table -->
@@ -1316,7 +1331,8 @@ const tableFilters = ref({
   sort_order: '',
   category_id: '',
   price_sort: '',
-  on_sale: false
+  on_sale: false,
+  show_inactive: false
 });
 
 // Methods
@@ -1369,6 +1385,11 @@ const handleFilterChange = () => {
 
 const toggleOnSaleFilter = () => {
   tableFilters.value.on_sale = !tableFilters.value.on_sale;
+  fetchProductsForTable(1);
+};
+
+const toggleInactiveFilter = () => {
+  tableFilters.value.show_inactive = !tableFilters.value.show_inactive;
   fetchProductsForTable(1);
 };
 
@@ -1556,8 +1577,10 @@ const fetchProductsForTable = async (page = 1) => {
     const params = {
       page,
       per_page: tablePagination.value.per_page,
-      ...tableFilters.value
+      ...tableFilters.value,
+      is_active: tableFilters.value.show_inactive ? 0 : 1
     };
+    delete params.show_inactive;
 
     // Remove empty parameters
     Object.keys(params).forEach(key => {

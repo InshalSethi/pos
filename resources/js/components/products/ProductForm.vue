@@ -19,6 +19,7 @@
         </div>
         <div class="flex items-center gap-2">
           <span v-if="form.status === 'active'" class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/40">Active</span>
+          <span v-else-if="form.status === 'inactive'" class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-rose-50 dark:bg-rose-955/20 text-rose-700 dark:text-rose-450 border-rose-200 dark:border-rose-900/30">Inactive</span>
           <span v-else class="px-2.5 py-1 rounded-full text-xs font-semibold border bg-gray-100 dark:bg-[#252525] text-gray-700 dark:text-slate-350 border-gray-300 dark:border-slate-700">Draft</span>
         </div>
       </div>
@@ -36,19 +37,20 @@
                 <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">General</h2>
                 <!-- Elegant Inline Toggle Switcher -->
                 <div class="flex items-center gap-2 select-none">
-                  <span class="text-[11px] font-bold transition-colors" :class="form.status === 'draft' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-650'">Draft</span>
-                  <button 
-                    type="button" 
-                    @click="toggleStatus"
-                    class="relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                    :class="form.status === 'active' ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-[#252525]'"
-                  >
-                    <span 
-                      class="pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                      :class="form.status === 'active' ? 'translate-x-3.5' : 'translate-x-0'"
-                    />
-                  </button>
-                  <span class="text-[11px] font-bold transition-colors" :class="form.status === 'active' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-650'">Active</span>
+                  <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
+                    <button
+                      v-for="opt in statusOptions"
+                      :key="opt.value"
+                      type="button"
+                      @click="setStatus(opt.value)"
+                      class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
+                      :class="form.status === opt.value
+                        ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
+                        : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
+                    >
+                      {{ opt.label }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2098,11 +2100,26 @@ const removeRow = (idx) => {
     form.value.variations.splice(idx, 1);
 };
 
-// Toggle Switch logic for status
-const toggleStatus = () => {
-  form.value.status = form.value.status === 'active' ? 'draft' : 'active';
-  // Also save state to localStorage to prevent navigation leaks of incomplete data
-  localStorage.setItem('pos_item_form_status', form.value.status);
+const statusOptions = computed(() => {
+  // If editing an existing product (initialData.id exists)
+  if (props.initialData && props.initialData.id) {
+    if (props.initialData.status === 'active' || props.initialData.status === 'inactive') {
+      return [
+        { value: 'inactive', label: 'Inactive' },
+        { value: 'active', label: 'Active' }
+      ];
+    }
+  }
+  return [
+    { value: 'draft', label: 'Draft' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'active', label: 'Active' }
+  ];
+});
+
+const setStatus = (val) => {
+  form.value.status = val;
+  localStorage.setItem('pos_item_form_status', val);
 };
 
 // Multi-select Category Badge & Tag logic
