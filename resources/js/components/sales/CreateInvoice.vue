@@ -4,25 +4,22 @@
     <!-- Header bar -->
     <div class="bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
       <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-          <div>
-            <h1 class="text-xl font-bold text-slate-800">Create Sales Invoice</h1>
-          </div>
-        </div>
         <div class="flex items-center space-x-4">
           <button
             @click="goBack"
-            class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center space-x-2 border border-slate-200"
+            class="text-slate-500 hover:text-indigo-600 font-bold text-xs transition-colors duration-200 flex items-center space-x-1.5 focus:outline-none cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span>Back to Invoices</span>
           </button>
-          <div class="text-right text-xs">
-            <div class="text-slate-700 font-bold">{{ authStore.user?.name }}</div>
-            <div class="text-slate-450">{{ currentTime }} &nbsp;|&nbsp; {{ currentDate }}</div>
-          </div>
+          <span class="text-slate-350 select-none">|</span>
+          <h1 class="text-xl font-bold text-slate-800">Create Sales Invoice</h1>
+        </div>
+        <div class="text-right text-xs">
+          <div class="text-slate-700 font-bold">{{ authStore.user?.name }}</div>
+          <div class="text-slate-450">{{ currentTime }} &nbsp;|&nbsp; {{ currentDate }}</div>
         </div>
       </div>
     </div>
@@ -498,7 +495,7 @@
           <div class="space-y-4">
             <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Summary & Details</h3>
 
-            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-150 text-xs space-y-2.5">
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-xs space-y-2.5">
               <div class="flex justify-between font-medium text-slate-600">
                 <span>Subtotal:</span>
                 <span class="font-bold text-slate-800">${{ invoiceSubtotal.toFixed(2) }}</span>
@@ -523,7 +520,7 @@
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Payment Method</label>
                 <select
                   v-model="invoiceForm.payment_method"
-                  class="w-full px-2.5 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer"
+                  class="w-full px-2.5 py-2 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer"
                 >
                   <option value="cash">Cash</option>
                   <option value="card">Card</option>
@@ -540,7 +537,7 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  class="w-full px-2.5 py-1.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-850"
+                  class="w-full px-2.5 py-1.5 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-850"
                   :placeholder="invoiceTotal.toFixed(2)"
                 />
               </div>
