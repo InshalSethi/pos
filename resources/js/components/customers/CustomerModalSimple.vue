@@ -109,7 +109,71 @@
                       <button type="button" @click="calPrevMonth" class="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                       </button>
-                      <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-200">{{ calMonthName }} {{ calYear }}</span>
+                      
+                      <div class="flex items-center space-x-1">
+                        <!-- Month Dropdown -->
+                        <div class="relative">
+                          <div v-if="showMonthList" class="fixed inset-0 z-40" @click.stop="showMonthList = false"></div>
+                          <button
+                            type="button"
+                            @click="showMonthList = !showMonthList"
+                            class="flex items-center space-x-0.5 px-1 py-0.5 text-[11px] font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer focus:outline-none"
+                          >
+                            <span>{{ calMonthName.slice(0, 3) }}</span>
+                            <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showMonthList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          <!-- Month Floating List -->
+                          <div
+                            v-if="showMonthList"
+                            class="absolute z-55 left-0 mt-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                          >
+                            <button
+                              v-for="(name, idx) in monthNames"
+                              :key="idx"
+                              type="button"
+                              @click="selectCalMonth(idx)"
+                              class="w-full text-left px-2.5 py-1 text-[10px] font-medium transition-colors cursor-pointer"
+                              :class="calMonth === idx ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+                            >
+                              {{ name.slice(0, 3) }}
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Year Dropdown -->
+                        <div class="relative">
+                          <div v-if="showYearList" class="fixed inset-0 z-40" @click.stop="showYearList = false"></div>
+                          <button
+                            type="button"
+                            @click="showYearList = !showYearList"
+                            class="flex items-center space-x-0.5 px-1 py-0.5 text-[11px] font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer focus:outline-none"
+                          >
+                            <span>{{ calYear }}</span>
+                            <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showYearList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          <!-- Year Floating List -->
+                          <div
+                            v-if="showYearList"
+                            class="absolute z-55 left-1/2 -translate-x-1/2 mt-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                          >
+                            <button
+                              v-for="y in yearOptions"
+                              :key="y"
+                              type="button"
+                              @click="selectCalYear(y)"
+                              class="w-full text-left px-2.5 py-1 text-[10px] font-medium transition-colors cursor-pointer"
+                              :class="calYear === y ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+                            >
+                              {{ y }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
                       <button type="button" @click="calNextMonth" class="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                       </button>
@@ -300,6 +364,18 @@ export default {
     const showCalendar = ref(false);
     const calMonth = ref(new Date().getMonth());
     const calYear = ref(new Date().getFullYear());
+    const showMonthList = ref(false);
+    const showYearList = ref(false);
+
+    const selectCalMonth = (idx) => {
+      calMonth.value = idx;
+      showMonthList.value = false;
+    };
+
+    const selectCalYear = (y) => {
+      calYear.value = y;
+      showYearList.value = false;
+    };
 
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -320,6 +396,15 @@ export default {
     };
 
     const calMonthName = computed(() => monthNames[calMonth.value]);
+
+    const yearOptions = computed(() => {
+      const currentYear = new Date().getFullYear();
+      const yearsList = [];
+      for (let y = currentYear + 5; y >= currentYear - 100; y--) {
+        yearsList.push(y);
+      }
+      return yearsList;
+    });
 
     const calDays = computed(() => {
       const firstDay = new Date(calYear.value, calMonth.value, 1).getDay();
@@ -460,8 +545,37 @@ export default {
       isTodayDay,
       clearCalDate,
       selectToday,
-      formatDisplayDate
+      formatDisplayDate,
+      yearOptions,
+      monthNames,
+      showMonthList,
+      showYearList,
+      selectCalMonth,
+      selectCalYear
     };
   }
 };
 </script>
+
+<style scoped>
+/* Thin scrollbar styling for floating lists */
+.custom-scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 2px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
+}
+.dark .custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #3f3f46; /* zinc-700 */
+}
+.dark .custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #52525b; /* zinc-600 */
+}
+</style>
