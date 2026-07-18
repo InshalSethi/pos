@@ -12,7 +12,7 @@
             </div>
             <div>
               <h1 class="text-2xl font-bold text-gray-900">Customer Management</h1>
-              <p class="text-sm text-gray-500">Manage your customer database and relationships</p>
+              <p class="text-sm text-gray-500">Manage your customer relationships</p>
             </div>
           </div>
           <button

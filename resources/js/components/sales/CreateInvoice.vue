@@ -652,7 +652,7 @@
 
     <!-- Quick Customer Creation Modal -->
     <div v-if="showCustomerModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all duration-300">
-      <div class="relative mx-auto p-6 border border-slate-100 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300">
+      <div class="relative mx-auto p-6 border border-slate-100 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300">
         
         <!-- Sleek Close Icon Button -->
         <button
@@ -677,38 +677,59 @@
               type="text"
               required
               placeholder="e.g. John Doe"
-              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-950 transition-all"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
-              <input
-                v-model="newCustomer.phone"
-                type="text"
-                placeholder="e.g. +1 555 1234"
-                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-950 transition-all"
-              />
-            </div>
             <div>
               <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email</label>
               <input
                 v-model="newCustomer.email"
                 type="email"
                 placeholder="e.g. john@example.com"
-                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-950 transition-all"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
+              <input
+                v-model="newCustomer.phone"
+                type="text"
+                placeholder="e.g. +1 555 1234"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Mobile</label>
+              <input
+                v-model="newCustomer.mobile"
+                type="text"
+                placeholder="e.g. +1 555 5678"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Tax Number / GSTIN</label>
+              <input
+                v-model="newCustomer.tax_number"
+                type="text"
+                placeholder="e.g. GSTIN12345"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Address Details</label>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Address</label>
             <textarea
               v-model="newCustomer.address"
               rows="2"
               placeholder="Street address, suite, apartment..."
-              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-950 transition-all"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
             ></textarea>
           </div>
 
@@ -719,18 +740,52 @@
                 v-model="newCustomer.city"
                 type="text"
                 placeholder="e.g. New York"
-                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-950 transition-all"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
               />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Tax number / GSTIN</label>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">State</label>
               <input
-                v-model="newCustomer.tax_number"
+                v-model="newCustomer.state"
                 type="text"
-                placeholder="e.g. GSTIN12345"
-                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-950 transition-all"
+                placeholder="e.g. California"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
               />
             </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Credit Limit ($)</label>
+              <input
+                v-model="newCustomer.credit_limit"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Status</label>
+              <select
+                v-model="newCustomer.is_active"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-950 transition-all"
+              >
+                <option :value="true">Active</option>
+                <option :value="false">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Notes</label>
+            <textarea
+              v-model="newCustomer.notes"
+              rows="2"
+              placeholder="Additional notes about the customer..."
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+            ></textarea>
           </div>
 
           <div class="flex justify-end space-x-3 pt-3.5 border-t border-slate-100 dark:border-zinc-800 mt-2">
@@ -851,11 +906,16 @@ const invoiceForm = ref({
 
 const newCustomer = ref({
   name: '',
-  phone: '',
   email: '',
+  phone: '',
+  mobile: '',
   address: '',
   city: '',
-  tax_number: ''
+  state: '',
+  tax_number: '',
+  credit_limit: 0,
+  is_active: true,
+  notes: ''
 });
 
 // Current date time
@@ -1178,7 +1238,7 @@ const createCustomer = async () => {
 
 const closeCustomerModal = () => {
   showCustomerModal.value = false;
-  newCustomer.value = { name: '', phone: '', email: '', address: '', city: '', tax_number: '' };
+  newCustomer.value = { name: '', email: '', phone: '', mobile: '', address: '', city: '', state: '', tax_number: '', credit_limit: 0, is_active: true, notes: '' };
 };
 
 // Logo upload simulation
