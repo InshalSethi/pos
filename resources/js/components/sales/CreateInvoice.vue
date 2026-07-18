@@ -1,7 +1,5 @@
 <template>
-  <div class="max-w-full mx-auto bg-slate-50 min-h-screen">
-    <!-- Top Accent Bar -->
-    <div class="h-2 transition-all duration-300" :style="{ backgroundColor: accentColor }"></div>
+  <div class="w-full bg-slate-50 min-h-screen">
 
     <!-- Header bar -->
     <div class="bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
@@ -29,15 +27,11 @@
       </div>
     </div>
 
-    <!-- Main Workspace Layout -->
-    <div class="flex flex-col md:flex-row items-start min-h-[calc(100vh-66px)] bg-slate-50 w-full px-4 gap-6">
+    <!-- Main Workspace Layout: Unified Master Card Container -->
+    <div class="w-full bg-white flex flex-col md:flex-row min-h-[calc(100vh-66px)] border-t border-slate-200">
       
-      <!-- Left Panel: Simulated Physical Invoice Document Sheet (3/4 width) -->
-      <div class="w-full md:w-3/4 py-6 flex flex-col self-stretch">
-        <!-- Physical Paper sheet Card (Simulated A4 Sheet) -->
-        <div class="w-full bg-white shadow-xl rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-8 relative flex-1 mb-0">
-          <!-- Colored Accent Line -->
-          <div class="absolute top-0 left-0 right-0 h-1.5 transition-all duration-300" :style="{ backgroundColor: accentColor }"></div>
+      <!-- Left Panel: Invoice Form (3/4 width) -->
+      <div class="w-full md:w-3/4 p-8 flex flex-col relative">
 
           <!-- Invoice Paper Header -->
           <div class="flex justify-between items-start mb-8">
@@ -383,11 +377,10 @@
               ></textarea>
             </div>
           </div>
-        </div>
       </div>
 
       <!-- Right Panel: Sidebar for Product Catalog Search (1/4 width) -->
-      <div class="w-full md:w-1/4 bg-white border border-slate-200 rounded-2xl p-5 space-y-6 flex flex-col shadow-lg sticky top-20 self-start mt-6">
+      <div class="w-full md:w-1/4 p-6 space-y-6 flex flex-col border-l border-slate-200 bg-white">
           
           <!-- Section 1: Product Selection & Catalog Filters -->
           <div class="space-y-4">
