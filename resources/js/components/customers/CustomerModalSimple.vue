@@ -1,222 +1,181 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto">
-      <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-50" @click="$emit('close')"></div>
-      
-      <!-- Modal -->
-      <div class="flex min-h-full items-center justify-center p-4">
-        <div class="relative w-full max-w-4xl bg-white rounded-lg shadow-xl">
-          <!-- Header -->
-          <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-lg">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                  <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div>
-                  <h3 class="text-xl font-semibold text-white">{{ isEdit ? 'Edit Customer' : 'Add New Customer' }}</h3>
-                  <p class="text-blue-100">{{ isEdit ? 'Update customer information' : 'Create a new customer profile' }}</p>
-                </div>
-              </div>
-              <button @click="$emit('close')" class="text-white hover:text-gray-200 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+    <div v-if="show" class="fixed inset-0 bg-slate-900/40 dark:bg-black/50 backdrop-blur-md overflow-y-auto h-full w-full z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+      <div class="relative mx-auto p-6 border border-slate-100 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300">
+        
+        <!-- Sleek Close Icon Button -->
+        <button
+          type="button"
+          @click="$emit('close')"
+          class="absolute top-4 right-4 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="mb-5 pb-3 border-b border-slate-100 dark:border-zinc-800">
+          <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">{{ isEdit ? 'Edit Customer' : 'Add New Customer' }}</h3>
+        </div>
+
+        <form @submit.prevent="saveCustomer" class="space-y-4">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Full Name *</label>
+            <input
+              v-model="form.name"
+              type="text"
+              required
+              placeholder="e.g. John Doe"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              :class="{ 'border-red-300 dark:border-red-700': errors.name }"
+            />
+            <p v-if="errors.name" class="mt-1 text-[10px] text-red-500">{{ errors.name[0] }}</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email</label>
+              <input
+                v-model="form.email"
+                type="email"
+                placeholder="e.g. john@example.com"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.email }"
+              />
+              <p v-if="errors.email" class="mt-1 text-[10px] text-red-500">{{ errors.email[0] }}</p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
+              <input
+                v-model="form.phone"
+                type="text"
+                placeholder="e.g. +1 555 1234"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.phone }"
+              />
+              <p v-if="errors.phone" class="mt-1 text-[10px] text-red-500">{{ errors.phone[0] }}</p>
             </div>
           </div>
 
-          <!-- Content -->
-          <div class="max-h-[70vh] overflow-y-auto">
-            <form @submit.prevent="saveCustomer" class="p-6">
-              <div class="space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <!-- Basic Information -->
-                  <div class="space-y-4">
-                    <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Basic Information</h4>
-                    
-                    <div>
-                      <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                      <input
-                        id="name"
-                        v-model="form.name"
-                        type="text"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.name }"
-                        required
-                      />
-                      <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name[0] }}</p>
-                    </div>
-
-                    <div>
-                      <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        id="email"
-                        v-model="form.email"
-                        type="email"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.email }"
-                      />
-                      <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email[0] }}</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input
-                          id="phone"
-                          v-model="form.phone"
-                          type="text"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.phone }"
-                        />
-                        <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone[0] }}</p>
-                      </div>
-                      <div>
-                        <label for="mobile" class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                        <input
-                          id="mobile"
-                          v-model="form.mobile"
-                          type="text"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.mobile }"
-                        />
-                        <p v-if="errors.mobile" class="mt-1 text-sm text-red-600">{{ errors.mobile[0] }}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Address Information -->
-                  <div class="space-y-4">
-                    <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Address Information</h4>
-                    
-                    <div>
-                      <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                      <textarea
-                        id="address"
-                        v-model="form.address"
-                        rows="3"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.address }"
-                      ></textarea>
-                      <p v-if="errors.address" class="mt-1 text-sm text-red-600">{{ errors.address[0] }}</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                        <input
-                          id="city"
-                          v-model="form.city"
-                          type="text"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.city }"
-                        />
-                        <p v-if="errors.city" class="mt-1 text-sm text-red-600">{{ errors.city[0] }}</p>
-                      </div>
-                      <div>
-                        <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                        <input
-                          id="state"
-                          v-model="form.state"
-                          type="text"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.state }"
-                        />
-                        <p v-if="errors.state" class="mt-1 text-sm text-red-600">{{ errors.state[0] }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Business Information -->
-                <div class="space-y-4">
-                  <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Business Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label for="tax_number" class="block text-sm font-medium text-gray-700 mb-1">Tax Number</label>
-                      <input
-                        id="tax_number"
-                        v-model="form.tax_number"
-                        type="text"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.tax_number }"
-                      />
-                      <p v-if="errors.tax_number" class="mt-1 text-sm text-red-600">{{ errors.tax_number[0] }}</p>
-                    </div>
-                    <div>
-                      <label for="credit_limit" class="block text-sm font-medium text-gray-700 mb-1">Credit Limit ($)</label>
-                      <input
-                        id="credit_limit"
-                        v-model="form.credit_limit"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.credit_limit }"
-                      />
-                      <p v-if="errors.credit_limit" class="mt-1 text-sm text-red-600">{{ errors.credit_limit[0] }}</p>
-                    </div>
-                    <div>
-                      <label for="is_active" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                      <select
-                        id="is_active"
-                        v-model="form.is_active"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.is_active }"
-                      >
-                        <option :value="true">Active</option>
-                        <option :value="false">Inactive</option>
-                      </select>
-                      <p v-if="errors.is_active" class="mt-1 text-sm text-red-600">{{ errors.is_active[0] }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Notes -->
-                <div>
-                  <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                  <textarea
-                    id="notes"
-                    v-model="form.notes"
-                    rows="3"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.notes }"
-                    placeholder="Additional notes about the customer..."
-                  ></textarea>
-                  <p v-if="errors.notes" class="mt-1 text-sm text-red-600">{{ errors.notes[0] }}</p>
-                </div>
-              </div>
-              
-              <!-- Footer -->
-              <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
-                <button 
-                  type="button" 
-                  @click="$emit('close')" 
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  :disabled="saving" 
-                  class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {{ saving ? 'Saving...' : (isEdit ? 'Update Customer' : 'Create Customer') }}
-                </button>
-              </div>
-            </form>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Mobile</label>
+              <input
+                v-model="form.mobile"
+                type="text"
+                placeholder="e.g. +1 555 5678"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.mobile }"
+              />
+              <p v-if="errors.mobile" class="mt-1 text-[10px] text-red-500">{{ errors.mobile[0] }}</p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Tax Number / GSTIN</label>
+              <input
+                v-model="form.tax_number"
+                type="text"
+                placeholder="e.g. GSTIN12345"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.tax_number }"
+              />
+              <p v-if="errors.tax_number" class="mt-1 text-[10px] text-red-500">{{ errors.tax_number[0] }}</p>
+            </div>
           </div>
-        </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Address</label>
+            <textarea
+              v-model="form.address"
+              rows="2"
+              placeholder="Street address, suite, apartment..."
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              :class="{ 'border-red-300 dark:border-red-700': errors.address }"
+            ></textarea>
+            <p v-if="errors.address" class="mt-1 text-[10px] text-red-500">{{ errors.address[0] }}</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">City</label>
+              <input
+                v-model="form.city"
+                type="text"
+                placeholder="e.g. New York"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.city }"
+              />
+              <p v-if="errors.city" class="mt-1 text-[10px] text-red-500">{{ errors.city[0] }}</p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">State</label>
+              <input
+                v-model="form.state"
+                type="text"
+                placeholder="e.g. California"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.state }"
+              />
+              <p v-if="errors.state" class="mt-1 text-[10px] text-red-500">{{ errors.state[0] }}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Credit Limit ($)</label>
+              <input
+                v-model="form.credit_limit"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.credit_limit }"
+              />
+              <p v-if="errors.credit_limit" class="mt-1 text-[10px] text-red-500">{{ errors.credit_limit[0] }}</p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Status</label>
+              <select
+                v-model="form.is_active"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-950 transition-all"
+                :class="{ 'border-red-300 dark:border-red-700': errors.is_active }"
+              >
+                <option :value="true">Active</option>
+                <option :value="false">Inactive</option>
+              </select>
+              <p v-if="errors.is_active" class="mt-1 text-[10px] text-red-500">{{ errors.is_active[0] }}</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Notes</label>
+            <textarea
+              v-model="form.notes"
+              rows="2"
+              placeholder="Additional notes about the customer..."
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              :class="{ 'border-red-300 dark:border-red-700': errors.notes }"
+            ></textarea>
+            <p v-if="errors.notes" class="mt-1 text-[10px] text-red-500">{{ errors.notes[0] }}</p>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-3.5 border-t border-slate-100 dark:border-zinc-800 mt-2">
+            <button
+              type="button"
+              @click="$emit('close')"
+              class="px-4 h-9 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="!form.name || saving"
+              class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ saving ? 'Saving...' : (isEdit ? 'Update Customer' : 'Add Customer') }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </Teleport>
@@ -335,19 +294,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Loading spinner animation */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-</style>
