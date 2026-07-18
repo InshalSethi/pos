@@ -391,7 +391,13 @@ export default {
 
     const formatDisplayDate = (dateStr) => {
       if (!dateStr) return '';
-      const d = new Date(dateStr + 'T00:00:00');
+      const onlyDate = dateStr.split(' ')[0].split('T')[0];
+      const d = new Date(onlyDate + 'T00:00:00');
+      if (isNaN(d.getTime())) {
+        const fallbackD = new Date(dateStr);
+        if (isNaN(fallbackD.getTime())) return 'Invalid Date';
+        return fallbackD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
@@ -487,6 +493,18 @@ export default {
             form[key] = props.customer[key];
           }
         });
+
+        // Clean up date_of_birth format and sync calendar view
+        if (form.date_of_birth) {
+          const onlyDate = form.date_of_birth.split(' ')[0].split('T')[0];
+          form.date_of_birth = onlyDate; // Normalize to YYYY-MM-DD
+          
+          const d = new Date(onlyDate + 'T00:00:00');
+          if (!isNaN(d.getTime())) {
+            calMonth.value = d.getMonth();
+            calYear.value = d.getFullYear();
+          }
+        }
       }
     };
 
