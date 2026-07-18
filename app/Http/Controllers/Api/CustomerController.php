@@ -23,7 +23,9 @@ class CustomerController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('state', 'like', "%{$search}%");
             });
         }
 
@@ -167,9 +169,13 @@ class CustomerController extends Controller
      */
     public function getStatistics(): JsonResponse
     {
+        $total = Customer::count();
+        $active = Customer::active()->count();
+
         $stats = [
-            'total_customers' => Customer::count(),
-            'active_customers' => Customer::active()->count(),
+            'total_customers' => $total,
+            'active_customers' => $active,
+            'inactive_customers' => $total - $active,
             'customers_with_purchases' => Customer::whereHas('sales')->count(),
             'total_customer_value' => Customer::sum('total_purchases'),
             'average_customer_value' => Customer::avg('total_purchases'),
