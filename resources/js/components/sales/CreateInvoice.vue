@@ -7,11 +7,6 @@
     <div class="bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-3">
-          <div class="p-2.5 rounded-xl text-white transition-all duration-300" :style="{ backgroundColor: accentColor }">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
           <div>
             <h1 class="text-xl font-bold text-slate-800">Create Sales Invoice</h1>
           </div>
@@ -35,12 +30,12 @@
     </div>
 
     <!-- Main Workspace Layout -->
-    <div class="flex flex-col md:flex-row items-start min-h-[calc(100vh-66px)] bg-slate-50">
+    <div class="flex flex-col md:flex-row items-start min-h-[calc(100vh-66px)] bg-slate-50 w-full px-4 gap-6">
       
-      <!-- Left Panel: Simulated Physical Invoice Document Sheet (2/3 width) -->
-      <div class="w-full md:w-2/3 p-6 flex flex-col self-stretch">
+      <!-- Left Panel: Simulated Physical Invoice Document Sheet (3/4 width) -->
+      <div class="w-full md:w-3/4 py-6 flex flex-col self-stretch">
         <!-- Physical Paper sheet Card (Simulated A4 Sheet) -->
-        <div class="w-full max-w-4xl bg-white shadow-xl rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-8 relative mx-auto flex-1 mb-0">
+        <div class="w-full bg-white shadow-xl rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-8 relative flex-1 mb-0">
           <!-- Colored Accent Line -->
           <div class="absolute top-0 left-0 right-0 h-1.5 transition-all duration-300" :style="{ backgroundColor: accentColor }"></div>
 
@@ -133,13 +128,14 @@
               <h3 class="text-xs font-extrabold uppercase text-slate-450 tracking-wider mb-2">Bill To</h3>
               
               <!-- Customer Input Selector -->
-              <div class="relative max-w-sm mb-3">
+              <div class="relative max-w-sm mb-3" id="customer-search-container">
                 <input
                   v-model="customerSearch"
                   type="text"
                   placeholder="Type name to search customer..."
-                  class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  class="w-full px-3 py-1.5 border border-slate-350 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                   @input="debouncedCustomerSearch"
+                  @focus="searchCustomers(customerSearch)"
                 />
                 
                 <!-- Customer Search Dropdown Results -->
@@ -390,8 +386,8 @@
         </div>
       </div>
 
-      <!-- Right Panel: Sidebar for Product Catalog Search & Advanced customisation (1/3 width) -->
-      <div class="w-full md:w-1/3 bg-white border-l border-slate-200 p-5 space-y-6 flex flex-col shadow-lg sticky top-20 self-start">
+      <!-- Right Panel: Sidebar for Product Catalog Search (1/4 width) -->
+      <div class="w-full md:w-1/4 bg-white border border-slate-200 rounded-2xl p-5 space-y-6 flex flex-col shadow-lg sticky top-20 self-start mt-6">
           
           <!-- Section 1: Product Selection & Catalog Filters -->
           <div class="space-y-4">
@@ -416,7 +412,7 @@
               <button
                 type="button"
                 @click="addByBarcode"
-                class="bg-indigo-650 hover:bg-indigo-750 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all"
+                class="bg-indigo-650 hover:bg-indigo-750 text-black px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all"
               >
                 Find
               </button>
@@ -503,68 +499,7 @@
             </div>
           </div>
 
-          <!-- Section 2: Advanced Customs & Extras (Akaunting Logic) -->
-          <div class="space-y-4">
-            <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Advanced Customization</h3>
 
-            <!-- Accent Color Picker -->
-            <div class="text-left space-y-2">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Brand Theme Color</label>
-              <div class="flex flex-wrap gap-2.5 items-center">
-                <button
-                  v-for="color in presetColors"
-                  :key="color.hex"
-                  @click="accentColor = color.hex"
-                  class="w-6 h-6 rounded-full border border-slate-200 transition-all relative flex items-center justify-center shadow-sm hover:scale-110"
-                  :style="{ backgroundColor: color.hex }"
-                  :title="color.name"
-                >
-                  <span v-if="accentColor === color.hex" class="w-2 h-2 rounded-full bg-white shadow"></span>
-                </button>
-                <div class="flex items-center space-x-1.5 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer relative overflow-hidden">
-                  <span class="text-[10px] font-semibold text-slate-600">Custom</span>
-                  <input
-                    v-model="accentColor"
-                    type="color"
-                    class="w-6 h-6 border-0 p-0 cursor-pointer rounded bg-transparent"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Invoice Category -->
-            <div class="text-left space-y-1.5">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Invoice Category</label>
-              <select
-                v-model="invoiceForm.category_id"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer"
-              >
-                <option :value="null">Uncategorized</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Mock Attachments Uploader -->
-            <div class="text-left space-y-1.5">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Upload Attachments</label>
-              <div class="border-2 border-dashed border-slate-300 rounded-xl p-3 text-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer relative">
-                <svg class="mx-auto h-6 w-6 text-slate-450 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span class="text-[10px] font-bold text-slate-600">Click to upload documents (PDF, JPG)</span>
-                <input type="file" multiple @change="onAttachmentUpload" class="absolute inset-0 opacity-0 cursor-pointer" />
-              </div>
-              <!-- Uploaded files list -->
-              <div v-if="attachmentsList.length > 0" class="space-y-1.5 mt-2">
-                <div v-for="(file, index) in attachmentsList" :key="index" class="flex justify-between items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-150 text-[10px]">
-                  <span class="font-semibold text-slate-700 truncate pr-3 max-w-[180px]">{{ file.name }}</span>
-                  <button @click="removeAttachment(index)" class="text-rose-600 hover:text-rose-800 font-bold">Remove</button>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- Section 3: Summary Totals & Calculations -->
           <div class="space-y-4">
@@ -1012,12 +947,7 @@ const loadCategories = async () => {
   }
 };
 
-const searchCustomers = async (query) => {
-  if (query.length < 2) {
-    customerSearchResults.value = [];
-    return;
-  }
-
+const searchCustomers = async (query = '') => {
   try {
     const response = await api.get('/customers', {
       params: { search: query, per_page: 10 }
@@ -1348,6 +1278,11 @@ const handleClickOutside = (event) => {
   const categoryContainer = document.getElementById('category-dropdown-container');
   if (categoryContainer && !categoryContainer.contains(event.target)) {
     isCategoryDropdownOpen.value = false;
+  }
+
+  const customerContainer = document.getElementById('customer-search-container');
+  if (customerContainer && !customerContainer.contains(event.target)) {
+    customerSearchResults.value = [];
   }
 };
 

@@ -57,7 +57,16 @@ class SaleController extends Controller
      */
     public function getNextSaleNumber(): JsonResponse
     {
-        $saleNumber = 'SALE-' . date('Ymd') . '-' . str_pad(Sale::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
+        $lastSale = Sale::orderBy('id', 'desc')->first();
+        $nextNumber = 1;
+        if ($lastSale) {
+            if (preg_match('/INV-(\d+)/i', $lastSale->sale_number, $matches)) {
+                $nextNumber = (int)$matches[1] + 1;
+            } else {
+                $nextNumber = Sale::count() + 1;
+            }
+        }
+        $saleNumber = 'INV-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         return response()->json([
             'success' => true,
             'sale_number' => $saleNumber
