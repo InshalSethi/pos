@@ -99,15 +99,41 @@
 
                 <div class="text-slate-500 font-medium">Warehouse:</div>
                 <div>
-                  <select
-                    v-model="selectedWarehouseId"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-                  >
-                    <option value="all">All Warehouses</option>
-                    <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
-                      {{ wh.name }}
-                    </option>
-                  </select>
+                  <div class="relative" id="warehouse-dropdown-container">
+                    <button
+                      type="button"
+                      @click.stop="isWarehouseDropdownOpen = !isWarehouseDropdownOpen"
+                      class="w-full px-2 py-1 border border-slate-300 rounded text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white text-left flex justify-between items-center text-xs"
+                    >
+                      <span class="truncate">{{ selectedWarehouseName }}</span>
+                      <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    <!-- Warehouse Custom Dropdown List -->
+                    <div
+                      v-if="isWarehouseDropdownOpen"
+                      class="absolute z-50 bottom-full mb-1 w-full bg-white shadow-xl max-h-[185px] rounded-lg border border-slate-200 py-1 text-xs overflow-y-auto custom-scrollbar"
+                    >
+                      <div
+                        @click="selectWarehouse('all')"
+                        class="cursor-pointer py-2 px-3 hover:bg-slate-100 flex justify-between items-center"
+                        :class="{ 'bg-slate-50 font-semibold text-indigo-600': selectedWarehouseId === 'all' }"
+                      >
+                        <span>All Warehouses</span>
+                      </div>
+                      <div
+                        v-for="wh in warehouses"
+                        :key="wh.id"
+                        @click="selectWarehouse(wh.id)"
+                        class="cursor-pointer py-2 px-3 hover:bg-slate-100 flex justify-between items-center border-t border-slate-50"
+                        :class="{ 'bg-slate-50 font-semibold text-indigo-600': selectedWarehouseId === wh.id }"
+                      >
+                        <span>{{ wh.name }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -130,7 +156,7 @@
                 />
                 
                 <!-- Customer Search Dropdown Results -->
-                <div v-if="customerSearchResults.length > 0" class="absolute z-50 mt-1 w-full bg-white shadow-xl max-h-60 rounded-lg border border-slate-200 py-1 text-xs overflow-auto">
+                <div v-if="customerSearchResults.length > 0" class="absolute z-50 bottom-full mb-1 w-full bg-white shadow-xl max-h-[185px] rounded-lg border border-slate-200 py-1 text-xs overflow-y-auto custom-scrollbar">
                   <div
                     v-for="customer in customerSearchResults"
                     :key="customer.id"
@@ -384,28 +410,39 @@
             <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Catalog Search & Selection</h3>
             
             <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-              <span class="text-[10px] text-slate-500 font-bold uppercase">Barcode Scanner</span>
-              <span class="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Active
-              </span>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] text-slate-500 font-bold uppercase">Barcode Scanner</span>
+                <span 
+                  class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-all duration-200"
+                  :class="isBarcodeActive ? 'text-emerald-700 bg-emerald-50' : 'text-slate-500 bg-slate-150'"
+                >
+                  <span class="w-1 h-1 rounded-full" :class="isBarcodeActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"></span>
+                  {{ isBarcodeActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <button
+                type="button"
+                @click="toggleBarcodeScanner"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                :class="isBarcodeActive ? 'bg-emerald-500' : 'bg-slate-300'"
+              >
+                <span
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                  :class="isBarcodeActive ? 'translate-x-4' : 'translate-x-0'"
+                ></span>
+              </button>
             </div>
 
-            <div class="flex space-x-2">
+            <div>
               <input
                 v-model="barcodeInput"
                 type="text"
-                placeholder="Scan barcode or type SKU..."
-                class="flex-1 pl-3 pr-2 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                :disabled="!isBarcodeActive"
+                :placeholder="isBarcodeActive ? 'Scan barcode or type SKU...' : 'Scanner inactive - Toggle ON to scan'"
+                class="w-full pl-3 pr-2 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-all duration-200"
+                :class="isBarcodeActive ? 'border-slate-300 bg-white text-slate-800' : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'"
                 @keydown.enter.prevent="addByBarcode"
               />
-              <button
-                type="button"
-                @click="addByBarcode"
-                class="bg-indigo-650 hover:bg-indigo-750 text-black px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all"
-              >
-                Find
-              </button>
             </div>
 
             <!-- Search items input -->
@@ -764,6 +801,8 @@ const isCategoryDropdownOpen = ref(false);
 const barcodeInput = ref('');
 const warehouses = ref([]);
 const selectedWarehouseId = ref('all');
+const isWarehouseDropdownOpen = ref(false);
+const isBarcodeActive = ref(false);
 const productSearch = ref('');
 const customerSearch = ref('');
 const customerSearchResults = ref([]);
@@ -802,6 +841,13 @@ const newCustomer = ref({
 const currentDateTime = ref('');
 
 // Computed properties
+const selectedWarehouseName = computed(() => {
+  if (selectedWarehouseId.value === 'all') {
+    return 'All Warehouses';
+  }
+  const wh = warehouses.value.find(w => w.id === selectedWarehouseId.value);
+  return wh ? wh.name : 'All Warehouses';
+});
 const filteredProducts = computed(() => {
   let filtered = products.value;
   
@@ -1273,6 +1319,38 @@ const handleClickOutside = (event) => {
   const customerContainer = document.getElementById('customer-search-container');
   if (customerContainer && !customerContainer.contains(event.target)) {
     customerSearchResults.value = [];
+  }
+
+  const warehouseContainer = document.getElementById('warehouse-dropdown-container');
+  if (warehouseContainer && !warehouseContainer.contains(event.target)) {
+    isWarehouseDropdownOpen.value = false;
+  }
+};
+
+const selectWarehouse = (id) => {
+  selectedWarehouseId.value = id;
+  isWarehouseDropdownOpen.value = false;
+};
+
+const toggleBarcodeScanner = async () => {
+  if (!isBarcodeActive.value) {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop());
+        isBarcodeActive.value = true;
+        showNotification('Barcode scanner active (Camera permission granted)', 'success');
+      } else {
+        isBarcodeActive.value = true;
+        showNotification('Barcode scanner active (System permission auto-granted)', 'success');
+      }
+    } catch (err) {
+      showNotification('Permission denied. Cannot activate barcode scanner without camera access.', 'error');
+      isBarcodeActive.value = false;
+    }
+  } else {
+    isBarcodeActive.value = false;
+    showNotification('Barcode scanner deactivated', 'info');
   }
 };
 
