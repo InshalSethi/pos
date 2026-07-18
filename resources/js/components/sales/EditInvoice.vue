@@ -1,56 +1,42 @@
 <template>
-  <div class="max-w-full mx-auto bg-slate-50 min-h-screen">
-    <!-- Top Accent Bar -->
-    <div class="h-2 transition-all duration-300" :style="{ backgroundColor: accentColor }"></div>
+  <div class="w-full bg-slate-50 dark:bg-zinc-950 min-h-screen">
 
     <!-- Header bar -->
-    <div class="bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+    <div class="bg-white dark:bg-[#1E1E1E] border-b border-slate-200 dark:border-[#2E2E2E] px-6 py-4 shadow-sm">
       <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-          <div class="p-2.5 rounded-xl text-white transition-all duration-300" :style="{ backgroundColor: accentColor }">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-xl font-bold text-slate-800">Edit Sales Invoice</h1>
-          </div>
-        </div>
         <div class="flex items-center space-x-4">
           <button
             @click="goBack"
-            class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center space-x-2 border border-slate-200"
+            class="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold text-xs transition-colors duration-200 flex items-center space-x-1.5 focus:outline-none cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span>Back to Invoices</span>
           </button>
-          <div class="text-right text-xs">
-            <div class="text-slate-700 font-bold">{{ authStore.user?.name }}</div>
-            <div class="text-slate-450">{{ currentTime }} &nbsp;|&nbsp; {{ currentDate }}</div>
-          </div>
+          <span class="text-slate-300 dark:text-slate-600 select-none">|</span>
+          <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">Edit Sales Invoice</h1>
+        </div>
+        <div class="text-right text-xs">
+          <div class="text-slate-700 dark:text-slate-300 font-bold">{{ authStore.user?.name }}</div>
+          <div class="text-slate-400 dark:text-slate-500">{{ currentTime }} &nbsp;|&nbsp; {{ currentDate }}</div>
         </div>
       </div>
     </div>
 
-    <!-- Main Workspace Layout -->
-    <div class="flex flex-col md:flex-row items-start min-h-[calc(100vh-66px)] bg-slate-50">
+    <!-- Main Workspace Layout: Unified Master Card Container -->
+    <div class="w-full bg-white dark:bg-[#1E1E1E] flex flex-col md:flex-row min-h-[calc(100vh-66px)] border-t border-slate-200 dark:border-[#2E2E2E]">
       
-      <!-- Left Panel: Simulated Physical Invoice Document Sheet (2/3 width) -->
-      <div class="w-full md:w-2/3 p-6 flex flex-col self-stretch">
-        <!-- Physical Paper sheet Card (Simulated A4 Sheet) -->
-        <div class="w-full max-w-4xl bg-white shadow-xl rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-8 relative mx-auto flex-1 mb-0">
-          <!-- Colored Accent Line -->
-          <div class="absolute top-0 left-0 right-0 h-1.5 transition-all duration-300" :style="{ backgroundColor: accentColor }"></div>
+      <!-- Left Panel: Invoice Form (3/4 width) -->
+      <div class="w-full md:w-3/4 p-8 flex flex-col relative">
 
           <!-- Invoice Paper Header -->
           <div class="flex justify-between items-start mb-8">
             <div class="space-y-3">
               <!-- Interactive Logo Upload -->
-              <div class="w-24 h-24 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-350 relative group overflow-hidden cursor-pointer transition-all">
+              <div class="w-24 h-24 bg-slate-50 dark:bg-zinc-900/60 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-335 dark:border-zinc-700 relative group overflow-hidden cursor-pointer transition-all">
                 <img v-if="logoUrl" :src="logoUrl" class="w-full h-full object-cover" />
-                <div v-else class="text-slate-400 text-center p-2">
+                <div v-else class="text-slate-400 dark:text-zinc-500 text-center p-2">
                   <svg class="mx-auto h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
@@ -60,8 +46,8 @@
               </div>
 
               <!-- Dynamic Company Metadata -->
-              <div class="text-left text-xs text-slate-500 space-y-0.5">
-                <p class="font-bold text-slate-700 text-sm">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
+              <div class="text-left text-xs text-slate-500 dark:text-zinc-400 space-y-0.5">
+                <p class="font-bold text-slate-700 dark:text-zinc-200 text-sm">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
                 <p>{{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
                 <p v-if="activeCompany?.company_phone">{{ activeCompany.company_phone }}</p>
                 <p>{{ activeCompany?.company_email || 'sethiasad1@gmail.com' }}</p>
@@ -73,102 +59,129 @@
               
               <!-- Invoice Details Fields -->
               <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-left max-w-sm ml-auto">
-                <div class="text-slate-500 font-medium">Invoice Number:</div>
+                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Invoice Number:</div>
                 <div>
                   <input
                     v-model="invoiceForm.sale_number"
                     type="text"
                     placeholder="Auto-generating..."
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-700 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
-                <div class="text-slate-500 font-medium">Order Number:</div>
+                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Order Number:</div>
                 <div>
                   <input
                     v-model="invoiceForm.order_number"
                     type="text"
                     placeholder="Enter order reference"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
-                <div class="text-slate-500 font-medium">Invoice Date:</div>
+                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Invoice Date:</div>
                 <div>
                   <input
                     v-model="invoiceForm.sale_date"
                     type="date"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-755 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
-                <div class="text-slate-500 font-medium">Due Date:</div>
+                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Due Date:</div>
                 <div>
                   <input
                     v-model="invoiceForm.due_date"
                     type="date"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-755 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
-                <div class="text-slate-500 font-medium">Warehouse:</div>
+                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Warehouse:</div>
                 <div>
-                  <select
-                    v-model="selectedWarehouseId"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-                  >
-                    <option value="all">All Warehouses</option>
-                    <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
-                      {{ wh.name }}
-                    </option>
-                  </select>
+                  <div class="relative" id="warehouse-dropdown-container">
+                    <button
+                      type="button"
+                      @click.stop="isWarehouseDropdownOpen = !isWarehouseDropdownOpen"
+                      class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs"
+                    >
+                      <span class="truncate">{{ selectedWarehouseName }}</span>
+                      <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    <!-- Warehouse Custom Dropdown List -->
+                    <div
+                      v-if="isWarehouseDropdownOpen"
+                      class="absolute z-50 bottom-full mb-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar"
+                    >
+                      <div
+                        @click="selectWarehouse('all')"
+                        class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
+                        :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === 'all' }"
+                      >
+                        <span>All Warehouses</span>
+                      </div>
+                      <div
+                        v-for="wh in warehouses"
+                        :key="wh.id"
+                        @click="selectWarehouse(wh.id)"
+                        class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center border-t border-slate-50 dark:border-zinc-800"
+                        :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === wh.id }"
+                      >
+                        <span>{{ wh.name }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Bill To Section -->
-          <div class="border-t border-slate-150 py-6 mb-4 flex justify-between items-start">
+          <div class="border-t border-slate-200 dark:border-zinc-800 py-6 mb-4 flex justify-between items-start">
             <div class="w-1/2 text-left">
-              <h3 class="text-xs font-extrabold uppercase text-slate-450 tracking-wider mb-2">Bill To</h3>
+              <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Bill To</h3>
               
               <!-- Customer Input Selector -->
-              <div class="relative max-w-sm mb-3">
+              <div class="relative max-w-sm mb-3" id="customer-search-container">
                 <input
                   v-model="customerSearch"
                   type="text"
                   placeholder="Type name to search customer..."
-                  class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                   @input="debouncedCustomerSearch"
+                  @focus="searchCustomers(customerSearch)"
                 />
                 
                 <!-- Customer Search Dropdown Results -->
-                <div v-if="customerSearchResults.length > 0" class="absolute z-50 mt-1 w-full bg-white shadow-xl max-h-60 rounded-lg border border-slate-200 py-1 text-xs overflow-auto">
+                <div v-if="customerSearchResults.length > 0" class="absolute z-50 bottom-full mb-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
                   <div
                     v-for="customer in customerSearchResults"
                     :key="customer.id"
                     @click="selectCustomer(customer)"
-                    class="cursor-pointer py-2 px-3 hover:bg-slate-100 flex justify-between items-center"
+                    class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
                   >
                     <div>
-                      <span class="font-bold text-slate-800">{{ customer.name }}</span>
-                      <p class="text-[10px] text-slate-500">{{ customer.phone || customer.email }}</p>
+                      <span class="font-bold text-slate-800 dark:text-zinc-200">{{ customer.name }}</span>
+                      <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ customer.phone || customer.email }}</p>
                     </div>
-                    <span v-if="customer.tax_number" class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">TAX: {{ customer.tax_number }}</span>
+                    <span v-if="customer.tax_number" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono">TAX: {{ customer.tax_number }}</span>
                   </div>
                 </div>
               </div>
 
               <!-- Selected Customer Details -->
-              <div v-if="selectedCustomer" class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1 relative max-w-sm">
-                <button @click="clearCustomer" class="absolute top-2 right-2 text-rose-600 hover:text-rose-800 font-semibold text-[10px] hover:underline">Remove</button>
-                <p class="font-bold text-slate-800 text-sm">{{ selectedCustomer.name }}</p>
-                <p v-if="selectedCustomer.phone" class="text-slate-600"><span class="font-semibold text-slate-450">Phone:</span> {{ selectedCustomer.phone }}</p>
-                <p v-if="selectedCustomer.email" class="text-slate-600"><span class="font-semibold text-slate-450">Email:</span> {{ selectedCustomer.email }}</p>
-                <p v-if="selectedCustomer.address" class="text-slate-600 leading-relaxed"><span class="font-semibold text-slate-450">Address:</span> {{ selectedCustomer.address }} {{ selectedCustomer.city ? ', ' + selectedCustomer.city : '' }}</p>
-                <p v-if="selectedCustomer.tax_number" class="text-slate-600"><span class="font-semibold text-slate-450">Tax ID:</span> {{ selectedCustomer.tax_number }}</p>
+              <div v-if="selectedCustomer" class="p-3 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs space-y-1 relative max-w-sm">
+                <button @click="clearCustomer" class="absolute top-2 right-2 text-rose-600 dark:text-rose-450 hover:text-rose-800 dark:hover:text-rose-350 font-semibold text-[10px] hover:underline">Remove</button>
+                <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ selectedCustomer.name }}</p>
+                <p v-if="selectedCustomer.phone" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedCustomer.phone }}</p>
+                <p v-if="selectedCustomer.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedCustomer.email }}</p>
+                <p v-if="selectedCustomer.address" class="text-slate-600 dark:text-zinc-300 leading-relaxed"><span class="font-semibold text-slate-400 dark:text-zinc-500">Address:</span> {{ selectedCustomer.address }} {{ selectedCustomer.city ? ', ' + selectedCustomer.city : '' }}</p>
+                <p v-if="selectedCustomer.tax_number" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Tax ID:</span> {{ selectedCustomer.tax_number }}</p>
               </div>
-              <div v-else class="text-slate-400 text-xs italic">
+              <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic">
                 No customer selected. Type above to assign a recipient.
               </div>
             </div>
@@ -187,39 +200,39 @@
           </div>
 
           <!-- Line Items Table -->
-          <div class="overflow-x-auto overflow-y-auto max-h-[60vh] border border-slate-200 rounded-xl mt-2 relative custom-scrollbar">
+          <div class="overflow-x-auto overflow-y-auto max-h-[60vh] border border-slate-200 dark:border-zinc-800 rounded-xl mt-2 relative custom-scrollbar">
             <table class="w-full text-xs text-left border-collapse">
               <thead class="sticky top-0 z-10 shadow-sm">
-                <tr class="bg-slate-50 border-b border-slate-250 text-slate-450 uppercase font-extrabold tracking-wider">
-                  <th class="py-3 px-3 w-4/12 bg-slate-50">Item Details / Description</th>
-                  <th class="py-3 px-2 w-1/12 text-center bg-slate-50">Qty</th>
-                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50">Price</th>
-                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50">W.S Price</th>
-                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50">Tax</th>
-                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50">Discount</th>
-                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50">Amount</th>
-                  <th class="py-3 px-1 w-[40px] text-center bg-slate-50"></th>
+                <tr class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 uppercase font-extrabold tracking-wider">
+                  <th class="py-3 px-3 w-4/12 bg-slate-50 dark:bg-zinc-900">Item Details / Description</th>
+                  <th class="py-3 px-2 w-1/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
+                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Price</th>
+                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">W.S Price</th>
+                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">Tax</th>
+                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Discount</th>
+                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Amount</th>
+                  <th class="py-3 px-1 w-[40px] text-center bg-slate-50 dark:bg-zinc-900"></th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-150">
+              <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
                 <tr v-if="invoiceItems.length === 0">
-                  <td colspan="8" class="py-16 text-center text-slate-400 italic">
-                    <svg class="mx-auto h-10 w-10 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+                    <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                     <span>No products added. Use the filters & search list on the right to select items.</span>
                   </td>
                 </tr>
 
-                <tr v-for="(item, index) in invoiceItems" :key="index" class="hover:bg-slate-50/50 group align-top">
+                <tr v-for="(item, index) in invoiceItems" :key="index" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top">
                   <!-- Name and Description -->
                   <td class="py-3 px-2">
                     <div class="flex items-center justify-between mb-1">
-                      <div class="font-bold text-slate-800 text-sm">{{ item.name }}</div>
+                      <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.name }}</div>
                       
                       <!-- W.S Toggle Switch -->
                       <label class="inline-flex items-center cursor-pointer select-none">
-                        <span class="text-[9px] font-extrabold uppercase text-slate-500 mr-1.5 tracking-wider">W.S</span>
+                        <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
                         <div class="relative">
                           <input
                             v-model="item.is_wholesale"
@@ -227,16 +240,16 @@
                             class="sr-only peer"
                             @change="updateItemTotal(index)"
                           />
-                          <div class="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                          <div class="w-7 h-4 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
                         </div>
                       </label>
                     </div>
-                    <div class="text-[10px] text-slate-500 font-mono mb-1.5">SKU: {{ item.sku }}</div>
+                    <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mb-1.5">SKU: {{ item.sku }}</div>
                     <textarea
                       v-model="item.description"
                       placeholder="Add line item description / details..."
                       rows="2"
-                      class="w-full bg-slate-50/50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 rounded px-2 py-1 text-slate-650 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
+                      class="w-full bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded px-2 py-1 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
                     ></textarea>
                   </td>
 
@@ -247,10 +260,10 @@
                       type="number"
                       min="1"
                       :max="getProductStock(item.product)"
-                      class="w-14 px-1.5 py-1 text-center border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold"
+                      class="w-14 px-1.5 py-1 text-center border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                       @input="updateItemTotal(index)"
                     />
-                    <div class="text-[9px] text-slate-450 mt-1">Stock: {{ getProductStock(item.product) }}</div>
+                    <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Stock: {{ getProductStock(item.product) }}</div>
                   </td>
 
                   <!-- Unit Price -->
@@ -260,8 +273,8 @@
                       type="number"
                       step="0.01"
                       min="0"
-                      class="w-20 px-1.5 py-1 text-right border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                      :class="item.is_wholesale ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'"
+                      class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                      :class="item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
                       :readonly="item.is_wholesale"
                       @input="updateItemTotal(index)"
                     />
@@ -274,8 +287,8 @@
                       type="number"
                       step="0.01"
                       min="0"
-                      class="w-20 px-1.5 py-1 text-right border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                      :class="!item.is_wholesale ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'"
+                      class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                      :class="!item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
                       :readonly="!item.is_wholesale"
                       @input="updateItemTotal(index)"
                     />
@@ -285,7 +298,7 @@
                   <td class="py-3 px-2 text-center">
                     <select
                       v-model="item.tax_id"
-                      class="w-20 px-1 py-1 border border-slate-350 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                      class="w-20 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                       @change="updateItemTax(item)"
                     >
                       <option :value="null">No Tax</option>
@@ -293,7 +306,7 @@
                         {{ tax.name }} ({{ tax.value }}%)
                       </option>
                     </select>
-                    <div v-if="item.tax_rate" class="text-[9px] text-slate-500 mt-1">Rate: {{ item.tax_rate }}%</div>
+                    <div v-if="item.tax_rate" class="text-[9px] text-slate-500 dark:text-zinc-400 mt-1">Rate: {{ item.tax_rate }}%</div>
                   </td>
 
                   <!-- Line Discount -->
@@ -303,13 +316,13 @@
                       type="number"
                       step="0.01"
                       min="0"
-                      class="w-16 px-1.5 py-1 text-right border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                       @input="updateItemTotal(index)"
                     />
                   </td>
 
                   <!-- Total Line Price -->
-                  <td class="py-3 px-2 text-right font-bold text-slate-800 text-sm">
+                  <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm">
                     ${{ item.total.toFixed(2) }}
                   </td>
 
@@ -317,7 +330,7 @@
                   <td class="py-3 px-1 text-center">
                     <button
                       @click="removeFromInvoice(index)"
-                      class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
+                      class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-455 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer"
                     >
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -326,40 +339,40 @@
                   </td>
                 </tr>
               </tbody>
-              <tfoot v-if="invoiceItems.length > 0" class="bg-slate-50 border-t border-slate-200">
+              <tfoot v-if="invoiceItems.length > 0" class="bg-slate-50 dark:bg-zinc-900/40 border-t border-slate-200 dark:border-zinc-800">
                 <tr>
-                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500">Subtotal</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-bold text-slate-800">${{ invoiceSubtotal.toFixed(2) }}</td>
+                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Subtotal</td>
+                  <td colspan="2" class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">${{ invoiceSubtotal.toFixed(2) }}</td>
                   <td></td>
                 </tr>
                 <tr v-if="totalDiscount > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500">Discount</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-bold text-rose-600">-${{ totalDiscount.toFixed(2) }}</td>
+                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Discount</td>
+                  <td colspan="2" class="py-2 px-2 text-right font-bold text-rose-600 dark:text-rose-400">-${{ totalDiscount.toFixed(2) }}</td>
                   <td></td>
                 </tr>
                 <tr v-if="totalTax > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500">Tax</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-bold text-slate-800">+${{ totalTax.toFixed(2) }}</td>
+                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Tax</td>
+                  <td colspan="2" class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">+${{ totalTax.toFixed(2) }}</td>
                   <td></td>
                 </tr>
-                <tr class="border-t border-slate-350 font-bold bg-slate-100/50">
-                  <td colspan="5" class="py-2.5 px-3 text-right text-slate-800 text-xs">Total Amount</td>
-                  <td colspan="2" class="py-2.5 px-2 text-right text-slate-900 text-sm font-black">${{ invoiceTotal.toFixed(2) }}</td>
+                <tr class="border-t border-slate-300 dark:border-zinc-800 font-bold bg-slate-100/50 dark:bg-zinc-800/30">
+                  <td colspan="5" class="py-2.5 px-3 text-right text-slate-800 dark:text-zinc-200 text-xs">Total Amount</td>
+                  <td colspan="2" class="py-2.5 px-2 text-right text-slate-900 dark:text-zinc-100 text-sm font-black">${{ invoiceTotal.toFixed(2) }}</td>
                   <td></td>
                 </tr>
                 <tr>
-                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500">Amount Paid</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-bold text-emerald-600">${{ (invoiceForm.paid_amount || 0).toFixed(2) }}</td>
+                  <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Amount Paid</td>
+                  <td colspan="2" class="py-2 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ (invoiceForm.paid_amount || 0).toFixed(2) }}</td>
                   <td></td>
                 </tr>
                 <tr v-if="dueAmount > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-rose-600">Remaining Due Amount</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-extrabold text-rose-700 bg-rose-50/80">${{ dueAmount.toFixed(2) }}</td>
+                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-rose-600 dark:text-rose-400">Remaining Due Amount</td>
+                  <td colspan="2" class="py-2 px-2 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/20">${{ dueAmount.toFixed(2) }}</td>
                   <td></td>
                 </tr>
                 <tr v-if="changeAmount > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-emerald-600">Change / Refund</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-extrabold text-emerald-700 bg-emerald-50/80">${{ changeAmount.toFixed(2) }}</td>
+                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-455">Change / Refund</td>
+                  <td colspan="2" class="py-2 px-2 text-right font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/20">${{ changeAmount.toFixed(2) }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -367,59 +380,69 @@
           </div>
 
           <!-- Notes & Footer Layout -->
-          <div class="border-t border-slate-150 pt-6 mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+          <div class="border-t border-slate-200 dark:border-zinc-800 pt-6 mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
             <div>
-              <label class="block text-xs font-bold uppercase text-slate-450 tracking-wider mb-2">Notes to Customer</label>
+              <label class="block text-xs font-bold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Notes to Customer</label>
               <textarea
                 v-model="invoiceForm.notes"
                 rows="3"
-                class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-400"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                 placeholder="Include custom terms, wiring instructions or customer messages..."
               ></textarea>
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase text-slate-450 tracking-wider mb-2">Footer / Terms & Conditions</label>
+              <label class="block text-xs font-bold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Footer / Terms & Conditions</label>
               <textarea
                 v-model="invoiceForm.footer"
                 rows="3"
-                class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-400"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-400 dark:placeholder-zinc-650 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                 placeholder="Include payment terms, legal declarations, or thank you note..."
               ></textarea>
             </div>
           </div>
-        </div>
       </div>
 
-      <!-- Right Panel: Sidebar for Product Catalog Search & Advanced customisation (1/3 width) -->
-      <div class="w-full md:w-1/3 bg-white border-l border-slate-200 p-5 space-y-6 flex flex-col shadow-lg sticky top-20 self-start">
+      <!-- Right Panel: Sidebar for Product Catalog Search (1/4 width) -->
+      <div class="w-full md:w-1/4 p-6 space-y-6 flex flex-col border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#1E1E1E]">
           
           <!-- Section 1: Product Selection & Catalog Filters -->
           <div class="space-y-4">
-            <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Catalog Search & Selection</h3>
+            <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Catalog Search & Selection</h3>
             
-            <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-              <span class="text-[10px] text-slate-500 font-bold uppercase">Barcode Scanner</span>
-              <span class="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Active
-              </span>
+            <div class="flex justify-between items-center bg-slate-50 dark:bg-zinc-900/60 px-3 py-2 rounded-xl border border-slate-100 dark:border-zinc-800">
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase">Barcode Scanner</span>
+                <span 
+                  class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-all duration-200"
+                  :class="isBarcodeActive ? 'text-emerald-700 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-500 dark:text-zinc-400 bg-slate-150 dark:bg-zinc-800'"
+                >
+                  <span class="w-1 h-1 rounded-full" :class="isBarcodeActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400 dark:bg-zinc-650'"></span>
+                  {{ isBarcodeActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <button
+                type="button"
+                @click="toggleBarcodeScanner"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                :class="isBarcodeActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'"
+              >
+                <span
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                  :class="isBarcodeActive ? 'translate-x-4' : 'translate-x-0'"
+                ></span>
+              </button>
             </div>
 
-            <div class="flex space-x-2">
+            <div>
               <input
                 v-model="barcodeInput"
                 type="text"
-                placeholder="Scan barcode or type SKU..."
-                class="flex-1 pl-3 pr-2 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                :disabled="!isBarcodeActive"
+                :placeholder="isBarcodeActive ? 'Scan barcode or type SKU...' : 'Scanner inactive - Toggle ON to scan'"
+                class="w-full pl-3 pr-2 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-all duration-200"
+                :class="isBarcodeActive ? 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200' : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/60 text-slate-450 dark:text-slate-500 cursor-not-allowed'"
                 @keydown.enter.prevent="addByBarcode"
               />
-              <button
-                type="button"
-                @click="addByBarcode"
-                class="bg-indigo-650 hover:bg-indigo-750 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all"
-              >
-                Find
-              </button>
             </div>
 
             <!-- Search items input -->
@@ -428,7 +451,7 @@
                 v-model="productSearch"
                 type="text"
                 placeholder="Search products by title, code..."
-                class="w-full pl-3 pr-8 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                class="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                 @focus="isProductDropdownOpen = true"
               />
               <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
@@ -440,21 +463,21 @@
               <!-- Search Results Dropdown List -->
               <div
                 v-show="isProductDropdownOpen && filteredProducts.length > 0"
-                class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-1.5 border border-slate-200 custom-scrollbar"
+                class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-1.5 custom-scrollbar"
               >
                 <div
                   v-for="product in filteredProducts"
                   :key="product.key"
                   @click="selectProductFromDropdown(product)"
-                  class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 last:border-0 text-left"
+                  class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0 text-left"
                 >
                   <div class="min-w-0 pr-4">
-                    <div class="font-bold text-slate-800 truncate">{{ product.name }}</div>
-                    <div class="text-[10px] text-slate-450">SKU: {{ product.sku }}</div>
+                    <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
+                    <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ product.sku }}</div>
                   </div>
                   <div class="text-right flex-shrink-0">
-                    <span class="font-black text-emerald-600 text-sm block">${{ product.price }}</span>
-                    <span class="text-[10px] text-slate-500">{{ getProductStock(product) }} in stock</span>
+                    <span class="font-black text-emerald-600 dark:text-emerald-400 text-sm block">${{ product.price }}</span>
+                    <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
                   </div>
                 </div>
               </div>
@@ -465,7 +488,7 @@
               <button
                 type="button"
                 @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
-                class="w-full flex items-center justify-between px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold text-slate-700 cursor-pointer text-left"
+                class="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer text-left"
               >
                 <span>{{ categoryDropdownLabel }}</span>
                 <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': isCategoryDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,116 +497,55 @@
               </button>
               <div
                 v-show="isCategoryDropdownOpen"
-                class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-2 custom-scrollbar"
+                class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-2 custom-scrollbar"
               >
-                <label class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-xs">
+                <label class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs">
                   <input
                     type="checkbox"
                     :checked="selectedCategories.length === 0"
                     @change="clearSelectedCategories"
-                    class="rounded text-indigo-600 focus:ring-indigo-500"
+                    class="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-zinc-950 dark:border-zinc-700"
                   />
-                  <span class="font-medium text-slate-700">All Categories</span>
+                  <span class="font-medium text-slate-700 dark:text-zinc-300">All Categories</span>
                 </label>
-                <div class="border-t border-slate-100 my-1"></div>
+                <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
                 <label
                   v-for="category in categories"
                   :key="category.id"
-                  class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-xs"
+                  class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs"
                 >
                   <input
                     type="checkbox"
-                    :value="category.id"
-                    v-model="selectedCategories"
-                    class="rounded text-indigo-600 focus:ring-indigo-500"
+                    :checked="isCategorySelected(category.id)"
+                    @change="toggleCategorySelection(category.id)"
+                    class="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-zinc-950 dark:border-zinc-700"
                   />
-                  <span class="font-medium text-slate-700">{{ category.name }}</span>
+                  <span class="font-medium text-slate-700 dark:text-zinc-300">{{ category.name }}</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <!-- Section 2: Advanced Customs & Extras -->
-          <div class="space-y-4">
-            <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Advanced Customization</h3>
 
-            <!-- Accent Color Picker -->
-            <div class="text-left space-y-2">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Brand Theme Color</label>
-              <div class="flex flex-wrap gap-2.5 items-center">
-                <button
-                  v-for="color in presetColors"
-                  :key="color.hex"
-                  @click="accentColor = color.hex"
-                  class="w-6 h-6 rounded-full border border-slate-200 transition-all relative flex items-center justify-center shadow-sm hover:scale-110"
-                  :style="{ backgroundColor: color.hex }"
-                  :title="color.name"
-                >
-                  <span v-if="accentColor === color.hex" class="w-2 h-2 rounded-full bg-white shadow"></span>
-                </button>
-                <div class="flex items-center space-x-1.5 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer relative overflow-hidden">
-                  <span class="text-[10px] font-semibold text-slate-600">Custom</span>
-                  <input
-                    v-model="accentColor"
-                    type="color"
-                    class="w-6 h-6 border-0 p-0 cursor-pointer rounded bg-transparent"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Invoice Category -->
-            <div class="text-left space-y-1.5">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Invoice Category</label>
-              <select
-                v-model="invoiceForm.category_id"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer"
-              >
-                <option :value="null">Uncategorized</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Mock Attachments Uploader -->
-            <div class="text-left space-y-1.5">
-              <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Upload Attachments</label>
-              <div class="border-2 border-dashed border-slate-300 rounded-xl p-3 text-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer relative">
-                <svg class="mx-auto h-6 w-6 text-slate-450 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span class="text-[10px] font-bold text-slate-600">Click to upload documents (PDF, JPG)</span>
-                <input type="file" multiple @change="onAttachmentUpload" class="absolute inset-0 opacity-0 cursor-pointer" />
-              </div>
-              <!-- Uploaded files list -->
-              <div v-if="attachmentsList.length > 0" class="space-y-1.5 mt-2">
-                <div v-for="(file, index) in attachmentsList" :key="index" class="flex justify-between items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-150 text-[10px]">
-                  <span class="font-semibold text-slate-700 truncate pr-3 max-w-[180px]">{{ file.name }}</span>
-                  <button @click="removeAttachment(index)" class="text-rose-600 hover:text-rose-800 font-bold">Remove</button>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- Section 3: Summary Totals & Calculations -->
           <div class="space-y-4">
-            <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Summary & Details</h3>
+            <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Summary & Details</h3>
 
-            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-150 text-xs space-y-2.5">
-              <div class="flex justify-between font-medium text-slate-600">
+            <div class="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-zinc-800/80 text-xs space-y-2.5">
+              <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Subtotal:</span>
-                <span class="font-bold text-slate-800">${{ invoiceSubtotal.toFixed(2) }}</span>
+                <span class="font-bold text-slate-800 dark:text-zinc-200">${{ invoiceSubtotal.toFixed(2) }}</span>
               </div>
-              <div class="flex justify-between font-medium text-slate-600">
+              <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Line Discounts:</span>
-                <span class="font-bold text-slate-800">-${{ totalDiscount.toFixed(2) }}</span>
+                <span class="font-bold text-slate-800 dark:text-zinc-200">-${{ totalDiscount.toFixed(2) }}</span>
               </div>
-              <div class="flex justify-between font-medium text-slate-600">
+              <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Line Taxes:</span>
-                <span class="font-bold text-slate-800">+${{ totalTax.toFixed(2) }}</span>
+                <span class="font-bold text-slate-800 dark:text-zinc-200">+${{ totalTax.toFixed(2) }}</span>
               </div>
-              <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 border-t border-slate-200 pt-2.5 mt-1">
+              <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100 border-t border-slate-200 dark:border-zinc-800 pt-2.5 mt-1">
                 <span>Total Amount:</span>
                 <span class="text-lg transition-all duration-300" :style="{ color: accentColor }">${{ invoiceTotal.toFixed(2) }}</span>
               </div>
@@ -592,10 +554,10 @@
             <!-- Payment configurations -->
             <div class="grid grid-cols-2 gap-3 text-left">
               <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Payment Method</label>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-1.5 block">Payment Method</label>
                 <select
                   v-model="invoiceForm.payment_method"
-                  class="w-full px-2.5 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer"
+                  class="w-full px-2.5 py-2 border border-slate-200/80 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                 >
                   <option value="cash">Cash</option>
                   <option value="card">Card</option>
@@ -606,77 +568,81 @@
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Amount Paid</label>
+                <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-1.5 block">Amount Paid</label>
                 <input
                   v-model.number="invoiceForm.paid_amount"
                   type="number"
                   step="0.01"
                   min="0"
-                  class="w-full px-2.5 py-1.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-850"
+                  class="w-full px-2.5 py-1.5 border border-slate-200/80 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900"
                   :placeholder="invoiceTotal.toFixed(2)"
                 />
               </div>
             </div>
 
-            <div v-if="changeAmount > 0" class="bg-emerald-50 text-emerald-700 rounded-xl px-3 py-2 border border-emerald-250 text-xs font-bold text-left flex justify-between">
+            <div v-if="changeAmount > 0" class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl px-3 py-2 border border-emerald-250 dark:border-emerald-900/60 text-xs font-bold text-left flex justify-between">
               <span>Change / Refund:</span>
               <span>${{ changeAmount.toFixed(2) }}</span>
             </div>
 
-            <div v-if="dueAmount > 0" class="bg-rose-50 text-rose-700 rounded-xl px-3 py-2 border border-rose-250 text-xs font-bold text-left flex justify-between">
+            <div v-if="dueAmount > 0" class="bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 rounded-xl px-3 py-2 border border-rose-250 dark:border-rose-900/60 text-xs font-bold text-left flex justify-between">
               <span>Remaining Due Amount:</span>
               <span>${{ dueAmount.toFixed(2) }}</span>
             </div>
           </div>
 
         <!-- Sidebar Sticky Footer Actions -->
-        <div class="p-5 border-t border-slate-200 bg-slate-50/80">
-          <div class="space-y-3.5">
+        <div class="p-5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/40">
+          <div class="space-y-3">
+            <!-- Row 1: Primary Action (Save & Print) -->
+            <button
+              @click="saveInvoice(true)"
+              :disabled="invoiceItems.length === 0 || saving"
+              class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="saving && printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              <span>{{ saving && printAfterSave ? 'Saving...' : 'Save & Print' }}</span>
+            </button>
+
+            <!-- Row 2: Secondary Actions (Save Invoice, Save Draft) -->
             <div class="grid grid-cols-2 gap-3">
               <button
                 @click="saveInvoice(false)"
                 :disabled="invoiceItems.length === 0 || saving"
-                class="w-full text-white py-3 px-4 rounded-xl font-bold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
-                :style="{ backgroundColor: accentColor }"
+                class="w-full h-10 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg font-semibold text-sm transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg v-if="saving && !printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <svg v-if="saving && !printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>{{ saving && !printAfterSave ? 'Saving...' : 'Save Invoice' }}</span>
               </button>
               <button
-                @click="saveInvoice(true)"
-                :disabled="invoiceItems.length === 0 || saving"
-                class="w-full bg-emerald-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-emerald-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
-              >
-                <svg v-if="saving && printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <svg v-else class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                <span>{{ saving && printAfterSave ? 'Saving...' : 'Save & Print' }}</span>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <button
                 @click="saveAsDraft"
                 :disabled="invoiceItems.length === 0 || saving"
-                class="bg-amber-600 text-white py-2 px-3 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full h-10 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg font-medium text-sm transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Save Draft
               </button>
-              <button
-                @click="clearInvoice"
-                :disabled="invoiceItems.length === 0"
-                class="bg-rose-600 text-white py-2 px-3 rounded-xl text-xs font-bold hover:bg-rose-700 transition-all cursor-pointer disabled:opacity-50"
-              >
-                Clear All
-              </button>
             </div>
+
+            <!-- Row 3: Danger / Clear All Action -->
+            <button
+              @click="clearInvoice"
+              :disabled="invoiceItems.length === 0"
+              class="w-full h-9 text-rose-600 dark:text-rose-455 hover:bg-rose-50 dark:hover:bg-rose-950/20 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/60 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Clear All</span>
+            </button>
           </div>
         </div>
 
@@ -685,85 +651,157 @@
     </div>
 
     <!-- Quick Customer Creation Modal -->
-    <div v-if="showCustomerModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div class="relative mx-auto p-6 border w-full max-w-md shadow-2xl rounded-2xl bg-white text-left">
-        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-          <h3 class="text-base font-extrabold text-slate-800 uppercase tracking-wide">Add New Customer</h3>
-          <button @click="closeCustomerModal" class="text-slate-400 hover:text-slate-600 text-sm font-bold">Close</button>
+    <div v-if="showCustomerModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all duration-300">
+      <div class="relative mx-auto p-6 border border-slate-100 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300">
+        
+        <!-- Sleek Close Icon Button -->
+        <button
+          type="button"
+          @click="closeCustomerModal"
+          class="absolute top-4 right-4 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="mb-5 pb-3 border-b border-slate-100 dark:border-zinc-800">
+          <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Add New Customer</h3>
         </div>
 
         <form @submit.prevent="createCustomer" class="space-y-4">
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Full Name *</label>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Full Name *</label>
             <input
               v-model="newCustomer.name"
               type="text"
               required
-              class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+              placeholder="e.g. John Doe"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Phone</label>
-              <input
-                v-model="newCustomer.phone"
-                type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Email</label>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email</label>
               <input
                 v-model="newCustomer.email"
                 type="email"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. john@example.com"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
+              <input
+                v-model="newCustomer.phone"
+                type="text"
+                placeholder="e.g. +1 555 1234"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Mobile</label>
+              <input
+                v-model="newCustomer.mobile"
+                type="text"
+                placeholder="e.g. +1 555 5678"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Tax Number / GSTIN</label>
+              <input
+                v-model="newCustomer.tax_number"
+                type="text"
+                placeholder="e.g. GSTIN12345"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Address Details</label>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Address</label>
             <textarea
               v-model="newCustomer.address"
               rows="2"
-              class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+              placeholder="Street address, suite, apartment..."
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
             ></textarea>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">City</label>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">City</label>
               <input
                 v-model="newCustomer.city"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. New York"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
               />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tax number / GSTIN</label>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">State</label>
               <input
-                v-model="newCustomer.tax_number"
+                v-model="newCustomer.state"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. California"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
               />
             </div>
           </div>
 
-          <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Credit Limit ($)</label>
+              <input
+                v-model="newCustomer.credit_limit"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Status</label>
+              <select
+                v-model="newCustomer.is_active"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-950 transition-all"
+              >
+                <option :value="true">Active</option>
+                <option :value="false">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Notes</label>
+            <textarea
+              v-model="newCustomer.notes"
+              rows="2"
+              placeholder="Additional notes about the customer..."
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+            ></textarea>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-3.5 border-t border-slate-100 dark:border-zinc-800 mt-2">
             <button
               type="button"
               @click="closeCustomerModal"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+              class="px-4 h-9 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="!newCustomer.name || creatingCustomer"
-              class="px-4 py-2 bg-indigo-650 hover:bg-indigo-750 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+              class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ creatingCustomer ? 'Creating...' : 'Create Recipient' }}
+              {{ creatingCustomer ? 'Creating...' : 'Add Customer' }}
             </button>
           </div>
         </form>
@@ -840,6 +878,8 @@ const isCategoryDropdownOpen = ref(false);
 const barcodeInput = ref('');
 const warehouses = ref([]);
 const selectedWarehouseId = ref('all');
+const isWarehouseDropdownOpen = ref(false);
+const isBarcodeActive = ref(false);
 const productSearch = ref('');
 const customerSearch = ref('');
 const customerSearchResults = ref([]);
@@ -867,22 +907,36 @@ const invoiceForm = ref({
 
 const newCustomer = ref({
   name: '',
-  phone: '',
   email: '',
+  phone: '',
+  mobile: '',
   address: '',
   city: '',
-  tax_number: ''
+  state: '',
+  tax_number: '',
+  credit_limit: 0,
+  is_active: true,
+  notes: ''
 });
 
 // Current date time
 const currentDateTime = ref('');
 
 // Computed properties
+const selectedWarehouseName = computed(() => {
+  if (selectedWarehouseId.value === 'all') {
+    return 'All Warehouses';
+  }
+  const wh = warehouses.value.find(w => w.id === selectedWarehouseId.value);
+  return wh ? wh.name : 'All Warehouses';
+});
+
 const filteredProducts = computed(() => {
   let filtered = products.value;
   
   if (selectedCategories.value.length > 0) {
-    filtered = filtered.filter(product => selectedCategories.value.includes(product.category_id));
+    const selectedIds = selectedCategories.value.map(id => String(id));
+    filtered = filtered.filter(product => selectedIds.includes(String(product.category_id)));
   }
   
   if (productSearch.value) {
@@ -902,7 +956,7 @@ const categoryDropdownLabel = computed(() => {
     return 'Categories: All Categories';
   }
   const names = selectedCategories.value.map(id => {
-    const cat = categories.value.find(c => c.id === id);
+    const cat = categories.value.find(c => String(c.id) === String(id));
     return cat ? cat.name : '';
   }).filter(Boolean);
   return 'Categories: ' + names.join(', ');
@@ -1011,12 +1065,7 @@ const loadCategories = async () => {
   }
 };
 
-const searchCustomers = async (query) => {
-  if (query.length < 2) {
-    customerSearchResults.value = [];
-    return;
-  }
-
+const searchCustomers = async (query = '') => {
   try {
     const response = await api.get('/customers', {
       params: { search: query, per_page: 10 }
@@ -1172,7 +1221,8 @@ const createCustomer = async () => {
     creatingCustomer.value = true;
     const response = await api.post('/customers', newCustomer.value);
 
-    selectCustomer(response.data);
+    const customer = response.data.customer || response.data;
+    selectCustomer(customer);
     closeCustomerModal();
     showNotification('Customer created successfully', 'success');
   } catch (error) {
@@ -1184,7 +1234,7 @@ const createCustomer = async () => {
 
 const closeCustomerModal = () => {
   showCustomerModal.value = false;
-  newCustomer.value = { name: '', phone: '', email: '', address: '', city: '', tax_number: '' };
+  newCustomer.value = { name: '', email: '', phone: '', mobile: '', address: '', city: '', state: '', tax_number: '', credit_limit: 0, is_active: true, notes: '' };
 };
 
 const onLogoChange = (event) => {
@@ -1331,6 +1381,20 @@ const clearSelectedCategories = () => {
   selectedCategories.value = [];
 };
 
+const isCategorySelected = (categoryId) => {
+  return selectedCategories.value.map(id => String(id)).includes(String(categoryId));
+};
+
+const toggleCategorySelection = (categoryId) => {
+  const idStr = String(categoryId);
+  const index = selectedCategories.value.findIndex(id => String(id) === idStr);
+  if (index > -1) {
+    selectedCategories.value.splice(index, 1);
+  } else {
+    selectedCategories.value.push(categoryId);
+  }
+};
+
 const handleClickOutside = (event) => {
   const productContainer = document.getElementById('product-search-container');
   if (productContainer && !productContainer.contains(event.target)) {
@@ -1341,8 +1405,46 @@ const handleClickOutside = (event) => {
   if (categoryContainer && !categoryContainer.contains(event.target)) {
     isCategoryDropdownOpen.value = false;
   }
+
+  const customerContainer = document.getElementById('customer-search-container');
+  if (customerContainer && !customerContainer.contains(event.target)) {
+    customerSearchResults.value = [];
+  }
+
+  const warehouseContainer = document.getElementById('warehouse-dropdown-container');
+  if (warehouseContainer && !warehouseContainer.contains(event.target)) {
+    isWarehouseDropdownOpen.value = false;
+  }
 };
 
+const selectWarehouse = (id) => {
+  selectedWarehouseId.value = id;
+  isWarehouseDropdownOpen.value = false;
+};
+
+const toggleBarcodeScanner = async () => {
+  if (!isBarcodeActive.value) {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop());
+        isBarcodeActive.value = true;
+        showNotification('Barcode scanner active (Camera permission granted)', 'success');
+      } else {
+        isBarcodeActive.value = true;
+        showNotification('Barcode scanner active (System permission auto-granted)', 'success');
+      }
+    } catch (err) {
+      showNotification('Permission denied. Cannot activate barcode scanner without camera access.', 'error');
+      isBarcodeActive.value = false;
+    }
+  } else {
+    isBarcodeActive.value = false;
+    showNotification('Barcode scanner deactivated', 'info');
+  }
+};
+
+// Utility function
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -1394,6 +1496,12 @@ const loadInvoiceData = async () => {
     if (sale.customer) {
       selectedCustomer.value = sale.customer;
       customerSearch.value = sale.customer.name;
+    }
+
+    if (sale.warehouse_id) {
+      selectedWarehouseId.value = sale.warehouse_id;
+    } else if (sale.sale_items && sale.sale_items.length > 0) {
+      selectedWarehouseId.value = sale.sale_items[0].warehouse_id || 'all';
     }
 
     if (sale.sale_items && sale.sale_items.length > 0) {
