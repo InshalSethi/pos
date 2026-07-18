@@ -651,85 +651,102 @@
     </div>
 
     <!-- Quick Customer Creation Modal -->
-    <div v-if="showCustomerModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div class="relative mx-auto p-6 border w-full max-w-md shadow-2xl rounded-2xl bg-white text-left">
-        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-          <h3 class="text-base font-extrabold text-slate-800 uppercase tracking-wide">Add New Customer</h3>
-          <button @click="closeCustomerModal" class="text-slate-400 hover:text-slate-600 text-sm font-bold">Close</button>
+    <div v-if="showCustomerModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all duration-300">
+      <div class="relative mx-auto p-6 border border-slate-100 w-full max-w-md shadow-2xl rounded-xl bg-white text-left transition-all duration-300">
+        
+        <!-- Sleek Close Icon Button -->
+        <button
+          type="button"
+          @click="closeCustomerModal"
+          class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-lg transition-all"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="mb-5 pb-3 border-b border-slate-100">
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Add New Customer</h3>
         </div>
 
         <form @submit.prevent="createCustomer" class="space-y-4">
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Full Name *</label>
+            <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Full Name *</label>
             <input
               v-model="newCustomer.name"
               type="text"
               required
-              class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+              placeholder="e.g. John Doe"
+              class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 transition-all"
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Phone</label>
+              <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Phone</label>
               <input
                 v-model="newCustomer.phone"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. +1 555 1234"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 transition-all"
               />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Email</label>
+              <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Email</label>
               <input
                 v-model="newCustomer.email"
                 type="email"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. john@example.com"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Address Details</label>
+            <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Address Details</label>
             <textarea
               v-model="newCustomer.address"
               rows="2"
-              class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+              placeholder="Street address, suite, apartment..."
+              class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 transition-all"
             ></textarea>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">City</label>
+              <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">City</label>
               <input
                 v-model="newCustomer.city"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. New York"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 transition-all"
               />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tax number / GSTIN</label>
+              <label class="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1.5">Tax number / GSTIN</label>
               <input
                 v-model="newCustomer.tax_number"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                placeholder="e.g. GSTIN12345"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 transition-all"
               />
             </div>
           </div>
 
-          <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div class="flex justify-end space-x-3 pt-3.5 border-t border-slate-100 mt-2">
             <button
               type="button"
               @click="closeCustomerModal"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+              class="px-4 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="!newCustomer.name || creatingCustomer"
-              class="px-4 py-2 bg-indigo-650 hover:bg-indigo-750 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+              class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ creatingCustomer ? 'Creating...' : 'Create Recipient' }}
+              {{ creatingCustomer ? 'Creating...' : 'Add Customer' }}
             </button>
           </div>
         </form>
@@ -1148,7 +1165,8 @@ const createCustomer = async () => {
     creatingCustomer.value = true;
     const response = await api.post('/customers', newCustomer.value);
 
-    selectCustomer(response.data);
+    const customer = response.data.customer || response.data;
+    selectCustomer(customer);
     closeCustomerModal();
     showNotification('Customer created successfully', 'success');
   } catch (error) {
