@@ -1,40 +1,38 @@
 <template>
   <Teleport to="body">
     <div v-if="show" class="fixed inset-0 bg-slate-900/40 dark:bg-black/50 backdrop-blur-md overflow-y-auto h-full w-full z-[9999] flex items-center justify-center p-4 transition-all duration-300">
-      <div class="relative mx-auto border border-slate-150 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300">
+      <div class="relative mx-auto border border-slate-150 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300 flex flex-col max-h-[90vh]">
         
         <!-- Sleek Close Icon Button -->
         <button
           type="button"
           @click="$emit('close')"
-          class="absolute top-5 right-5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-55 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer"
+          class="absolute top-5 right-5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-55 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer z-50"
         >
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <div v-if="customer" class="p-6 space-y-6">
+        <div v-if="customer" class="flex flex-col flex-1 min-h-0">
           <!-- Header Area -->
-          <div class="flex justify-between items-start pr-8 border-b border-slate-100 dark:border-zinc-800 pb-4">
-            <div>
-              <div class="flex items-center space-x-2">
-                <h3 class="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">{{ customer.name }}</h3>
-                <span
-                  :class="customer.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
-                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
-                >
-                  {{ customer.is_active ? 'Active' : 'Inactive' }}
-                </span>
-              </div>
-              <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1.5">
-                Customer ID: #{{ customer.id }} &middot; Member since {{ formatDate(customer.created_at) }}
-              </p>
+          <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative pr-12">
+            <div class="flex items-center space-x-2">
+              <h3 class="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">{{ customer.name }}</h3>
+              <span
+                :class="customer.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
+              >
+                {{ customer.is_active ? 'Active' : 'Inactive' }}
+              </span>
             </div>
+            <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1.5">
+              Customer ID: #{{ customer.id }} &middot; Member since {{ formatDate(customer.created_at) }}
+            </p>
           </div>
 
           <!-- Content Body -->
-          <div class="space-y-5">
+          <div class="flex-1 overflow-y-auto p-6 space-y-5 pr-4 custom-scrollbar">
             <!-- Personal Details -->
             <div>
               <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Personal Details</h4>

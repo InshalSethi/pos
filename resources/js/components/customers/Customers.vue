@@ -76,6 +76,14 @@
           <div class="flex items-center bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg text-[11px] font-semibold">
             <button
               type="button"
+              @click="statusFilter = ''; loadCustomers(1);"
+              :class="statusFilter === '' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              All
+            </button>
+            <button
+              type="button"
               @click="statusFilter = '1'; loadCustomers(1);"
               :class="statusFilter === '1' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
               class="px-3 py-1 rounded-md transition-all cursor-pointer"
@@ -288,7 +296,7 @@ export default {
     const statistics = ref({});
     const searchQuery = ref('');
     const perPage = ref(15);
-    const statusFilter = ref('1');
+    const statusFilter = ref('');
     const openActionDropdown = ref(null);
 
     const selectedCustomer = ref(null);
