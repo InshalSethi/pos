@@ -48,9 +48,9 @@
               <!-- Dynamic Company Metadata -->
               <div class="text-left text-xs text-slate-500 dark:text-zinc-400 space-y-0.5">
                 <p class="font-bold text-slate-700 dark:text-zinc-200 text-sm">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
-                <p>{{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
                 <p v-if="activeCompany?.company_phone">{{ activeCompany.company_phone }}</p>
                 <p>{{ activeCompany?.company_email || 'sethiasad1@gmail.com' }}</p>
+                <p>{{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
               </div>
             </div>
 
