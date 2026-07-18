@@ -53,8 +53,12 @@ class DoubleEntryAccountingService
 
             // Debit: Accounts Receivable (or Cash if paid)
             $receivableAccount = $sale->payment_method === 'cash' 
-                ? $this->accountingSettings->cash_account_id 
+                ? ($this->accountingSettings->cash_account_id ?: $this->accountingSettings->sales_invoice_receivable_account_id) 
                 : $this->accountingSettings->sales_invoice_receivable_account_id;
+
+            if (!$receivableAccount) {
+                throw new \Exception("No cash or receivable account configured for sales invoices.");
+            }
 
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
@@ -148,8 +152,12 @@ class DoubleEntryAccountingService
 
             // Credit: Accounts Receivable (or Cash if refunded)
             $receivableAccount = $saleReturn->payment_method === 'cash' 
-                ? $this->accountingSettings->cash_account_id 
+                ? ($this->accountingSettings->cash_account_id ?: $this->accountingSettings->sales_return_receivable_account_id) 
                 : $this->accountingSettings->sales_return_receivable_account_id;
+
+            if (!$receivableAccount) {
+                throw new \Exception("No cash or receivable account configured for sales returns.");
+            }
 
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
@@ -268,8 +276,12 @@ class DoubleEntryAccountingService
 
             // Credit: Cash or Accounts Payable
             $creditAccount = $expense->payment_method === 'cash' 
-                ? $this->accountingSettings->cash_account_id 
+                ? ($this->accountingSettings->cash_account_id ?: $this->accountingSettings->expense_payable_account_id) 
                 : $this->accountingSettings->expense_payable_account_id;
+
+            if (!$creditAccount) {
+                throw new \Exception("No cash or payable account configured for expenses.");
+            }
 
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,

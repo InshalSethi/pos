@@ -9,11 +9,11 @@
         <div class="flex items-center space-x-3">
           <div class="p-2.5 rounded-xl text-white transition-all duration-300" :style="{ backgroundColor: accentColor }">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-bold text-slate-800">Create Sales Invoice</h1>
+            <h1 class="text-xl font-bold text-slate-800">Edit Sales Invoice</h1>
           </div>
         </div>
         <div class="flex items-center space-x-4">
@@ -98,7 +98,7 @@
                   <input
                     v-model="invoiceForm.sale_date"
                     type="date"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-750 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-755 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -107,7 +107,7 @@
                   <input
                     v-model="invoiceForm.due_date"
                     type="date"
-                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-750 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-2 py-1 border border-slate-300 rounded text-slate-755 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -503,7 +503,7 @@
             </div>
           </div>
 
-          <!-- Section 2: Advanced Customs & Extras (Akaunting Logic) -->
+          <!-- Section 2: Advanced Customs & Extras -->
           <div class="space-y-4">
             <h3 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider border-b border-slate-100 pb-2 text-left">Advanced Customization</h3>
 
@@ -801,12 +801,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import api from '@/services/api';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const { showToast } = useToast();
 
@@ -989,8 +990,6 @@ const loadProducts = async () => {
       products.value = response.data.items || [];
       warehouses.value = response.data.warehouses || [];
       taxes.value = response.data.taxes || [];
-      
-      // Select default warehouse
       selectedWarehouseId.value = 'all';
     } else {
       products.value = response.data.data || response.data;
@@ -1059,14 +1058,12 @@ const addByBarcode = () => {
 const addToInvoice = (product) => {
   let targetWarehouseId = selectedWarehouseId.value;
   if (!targetWarehouseId || targetWarehouseId === 'all') {
-    // Try to find a warehouse with stock > 0
     const whWithStock = Object.keys(product.warehouse_stocks || {}).find(
       id => (product.warehouse_stocks[id] || 0) > 0
     );
     if (whWithStock) {
       targetWarehouseId = whWithStock;
     } else {
-      // Fallback to default warehouse or first warehouse
       const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0];
       targetWarehouseId = defaultWh ? defaultWh.id : '';
     }
@@ -1100,7 +1097,6 @@ const addToInvoice = (product) => {
       return;
     }
     
-    // Set default tax ID and tax rate
     const defaultTaxId = product.tax_ids && product.tax_ids.length > 0 ? product.tax_ids[0] : null;
     let defaultTaxRate = parseFloat(product.tax_rate || 0);
 
@@ -1154,7 +1150,6 @@ const updateItemTax = (item) => {
 };
 
 const calculateTotal = () => {
-  // Reset paid amount to total if unchanged
   invoiceForm.value.paid_amount = parseFloat(invoiceTotal.value.toFixed(2));
 };
 
@@ -1192,7 +1187,6 @@ const closeCustomerModal = () => {
   newCustomer.value = { name: '', phone: '', email: '', address: '', city: '', tax_number: '' };
 };
 
-// Logo upload simulation
 const onLogoChange = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -1201,7 +1195,6 @@ const onLogoChange = (event) => {
   }
 };
 
-// Attachment upload simulation
 const onAttachmentUpload = (event) => {
   const files = Array.from(event.target.files);
   files.forEach(file => {
@@ -1255,12 +1248,11 @@ const saveInvoice = async (shouldPrint = false) => {
       }))
     };
 
-    const response = await api.sales.create(invoiceData);
+    const response = await api.sales.update(route.params.id, invoiceData);
 
     if (shouldPrint) {
-      showNotification('Invoice created. Opening print dialog...', 'success');
-      // Open invoice in a new tab for printing
-      const invoiceUrl = `/sales/invoices/${response.data.sale.id}?print=1`;
+      showNotification('Invoice updated. Opening print dialog...', 'success');
+      const invoiceUrl = `/sales/invoices/${route.params.id}?print=1`;
       window.open(invoiceUrl, '_blank');
       setTimeout(() => {
         router.push('/sales/invoices');
@@ -1268,12 +1260,12 @@ const saveInvoice = async (shouldPrint = false) => {
     } else {
       showNotification('Invoice saved successfully', 'success');
       setTimeout(() => {
-        router.push(`/sales/invoices/${response.data.sale.id}`);
+        router.push(`/sales/invoices/${route.params.id}`);
       }, 1500);
     }
 
   } catch (error) {
-    showNotification(error.response?.data?.message || 'Error creating invoice', 'error');
+    showNotification(error.response?.data?.message || 'Error updating invoice', 'error');
     console.error('Error:', error);
   } finally {
     saving.value = false;
@@ -1351,7 +1343,6 @@ const handleClickOutside = (event) => {
   }
 };
 
-// Utility function
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -1378,25 +1369,87 @@ const fetchActiveCompany = async () => {
   }
 };
 
-const fetchNextInvoiceNumber = async () => {
+const loadInvoiceData = async () => {
   try {
-    const response = await api.get('/sales/next-number');
-    if (response.data && response.data.success) {
-      invoiceForm.value.sale_number = response.data.sale_number;
+    const response = await api.sales.get(route.params.id);
+    const sale = response.data.sale || response.data;
+    
+    invoiceForm.value.customer_id = sale.customer_id || '';
+    invoiceForm.value.sale_number = sale.sale_number || '';
+    invoiceForm.value.category_id = sale.category_id || null;
+    invoiceForm.value.sale_date = sale.sale_date || '';
+    invoiceForm.value.due_date = sale.due_date || '';
+    invoiceForm.value.order_number = sale.order_number || '';
+    invoiceForm.value.payment_method = sale.payment_method || 'cash';
+    invoiceForm.value.status = sale.status || 'completed';
+    invoiceForm.value.tax_amount = parseFloat(sale.tax_amount) || 0;
+    invoiceForm.value.paid_amount = parseFloat(sale.paid_amount) || 0;
+    invoiceForm.value.notes = sale.notes || '';
+    invoiceForm.value.footer = sale.footer || 'Thank you for your business!';
+    
+    if (sale.color) {
+      accentColor.value = sale.color;
+    }
+
+    if (sale.customer) {
+      selectedCustomer.value = sale.customer;
+      customerSearch.value = sale.customer.name;
+    }
+
+    if (sale.sale_items && sale.sale_items.length > 0) {
+      invoiceItems.value = sale.sale_items.map(item => {
+        const productFlat = products.value.find(p => 
+          p.product_id === item.product_id && 
+          p.product_variation_id === item.product_variation_id
+        ) || {
+          product_id: item.product_id,
+          product_variation_id: item.product_variation_id,
+          name: item.product?.name || 'Product',
+          sku: item.product?.sku || '',
+          price: parseFloat(item.unit_price) || 0,
+          wholesale_price: parseFloat(item.product?.wholesale_price) || 0,
+          track_inventory: false,
+          total_stock: 0,
+          warehouse_stocks: {}
+        };
+
+        const wholesaleVal = parseFloat(item.product?.wholesale_price || 0);
+        const isWholesale = Math.abs(parseFloat(item.unit_price) - wholesaleVal) < 0.01;
+
+        return {
+          product_id: item.product_id,
+          product_variation_id: item.product_variation_id,
+          warehouse_id: item.warehouse_id,
+          name: item.product?.name || 'Product',
+          sku: item.product?.sku || '',
+          price: parseFloat(item.unit_price) || 0,
+          unit_price: parseFloat(item.unit_price) || 0,
+          wholesale_price: wholesaleVal || 0,
+          is_wholesale: isWholesale,
+          discount_amount: parseFloat(item.discount_amount) || 0,
+          quantity: parseInt(item.quantity) || 1,
+          tax_id: item.tax_id || null,
+          tax_rate: parseFloat(item.tax_rate) || 0,
+          description: item.description || '',
+          total: parseFloat(item.total_amount) || 0,
+          product: productFlat
+        };
+      });
     }
   } catch (error) {
-    console.error('Error fetching next invoice number:', error);
+    showNotification('Error loading invoice data', 'error');
+    console.error(error);
   }
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   updateDateTime();
   setInterval(updateDateTime, 1000);
-  loadProducts();
-  loadCategories();
-  fetchNextInvoiceNumber();
-  fetchActiveCompany();
+  await loadProducts();
+  await loadCategories();
+  await loadInvoiceData();
+  await fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);
 });
 

@@ -127,6 +127,10 @@ Route::get('/initiate-new-company', function () {
 // Admin Routes
 require __DIR__.'/admin.php';
 
+Route::get('/sales-invoices/{id}/edit', [\App\Http\Controllers\SalesInvoiceController::class, 'edit'])
+    ->middleware('auth')
+    ->name('sales.invoices.edit');
+
 // 4. Vue.js SPA Catch-all
 Route::fallback(function () {
     return view('app');

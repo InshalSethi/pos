@@ -16,11 +16,15 @@ class SaleItem extends Model
     protected $fillable = [
         'sale_id',
         'product_id',
+        'product_variation_id',
+        'warehouse_id',
         'quantity',
         'unit_price',
         'discount_amount',
         'tax_amount',
         'total_amount',
+        'description',
+        'tax_id',
     ];
 
     protected $casts = [
@@ -39,6 +43,21 @@ class SaleItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variation(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariation::class, 'product_variation_id');
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function tax(): BelongsTo
+    {
+        return $this->belongsTo(Tax::class);
     }
 
     // Accessors

@@ -20,10 +20,14 @@ class Sale extends Model
     protected $fillable = [
         'sale_number',
         'customer_id',
+        'category_id',
         'warehouse_id',
         'user_id',
         'sale_date',
+        'due_date',
+        'order_number',
         'status',
+        'color',
         'subtotal',
         'tax_amount',
         'discount_amount',
@@ -33,12 +37,15 @@ class Sale extends Model
         'payment_method',
         'payment_details',
         'notes',
+        'footer',
+        'attachments',
         'is_refund',
         'original_sale_id',
     ];
 
     protected $casts = [
         'sale_date' => 'datetime',
+        'due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
@@ -53,6 +60,11 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function warehouse(): BelongsTo

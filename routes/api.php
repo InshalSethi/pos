@@ -153,6 +153,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customers/{customer}/transaction-summary', [CustomerLedgerController::class , 'getTransactionSummary']);
 
     // Sales/POS routes
+    Route::get('/sales/status-counts', [SaleController::class, 'getStatusCounts']);
+    Route::get('/sales/next-number', [SaleController::class, 'getNextSaleNumber']);
+    Route::get('/sales/products-with-stock', [SaleController::class, 'productsWithStock']);
     Route::apiResource('sales', SaleController::class);
 
     // Companies routes

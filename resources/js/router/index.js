@@ -27,6 +27,7 @@ import SalesInvoices from '@/components/sales/SalesInvoices.vue';
 import CreateInvoice from '@/components/sales/CreateInvoice.vue';
 import SalesInvoiceView from '@/components/sales/SalesInvoiceView.vue';
 import SalesInvoicePrint from '@/components/sales/SalesInvoicePrint.vue';
+import EditInvoice from '@/components/sales/EditInvoice.vue';
 import SalesReturns from '@/components/sales/SalesReturns.vue';
 import PurchaseOrders from '@/components/purchase/PurchaseOrders.vue';
 import CreatePurchaseOrder from '@/components/purchase/CreatePurchaseOrder.vue';
@@ -204,6 +205,12 @@ const routes = [
         name: 'SalesInvoiceView',
         component: SalesInvoiceView,
         meta: { permission: 'sales.view' }
+      },
+      {
+        path: 'sales/invoices/:id/edit',
+        name: 'EditInvoice',
+        component: EditInvoice,
+        meta: { permission: 'sales.edit' }
       },
       {
         path: 'sales/invoices/:id/print',

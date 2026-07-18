@@ -139,6 +139,10 @@
                   <span class="text-gray-600">Change:</span>
                   <span class="font-medium">{{ formatCurrency(invoice.change_amount) }}</span>
                 </div>
+                <div v-if="parseFloat(invoice.total_amount) - parseFloat(invoice.paid_amount || 0) > 0" class="flex justify-between text-sm text-rose-600 font-semibold">
+                  <span>Remaining Due:</span>
+                  <span>{{ formatCurrency(parseFloat(invoice.total_amount) - parseFloat(invoice.paid_amount || 0)) }}</span>
+                </div>
               </div>
             </div>
           </div>
