@@ -992,15 +992,15 @@
                 class="origin-top-right absolute right-0 top-full mt-3 w-40 rounded-2xl shadow-2xl bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-xl border border-white/40 dark:border-[#2E2E2E] ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
               >
                 <div class="py-1">
-                  <button @click="setTheme('light')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'light' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200']">
+                  <button @click="setTheme('light')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors cursor-pointer', currentThemeSetting === 'light' ? 'text-indigo-600 bg-indigo-50/80 dark:text-white dark:bg-indigo-600/30 font-semibold' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-zinc-800 dark:hover:text-white']">
                     <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     Light
                   </button>
-                  <button @click="setTheme('dark')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'dark' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200']">
+                  <button @click="setTheme('dark')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors cursor-pointer', currentThemeSetting === 'dark' ? 'text-indigo-600 bg-indigo-50/80 dark:text-white dark:bg-indigo-600/30 font-semibold' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-zinc-800 dark:hover:text-white']">
                     <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                     Dark
                   </button>
-                  <button @click="setTheme('system')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors', currentThemeSetting === 'system' ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200']">
+                  <button @click="setTheme('system')" :class="['flex w-full items-center px-4 py-2 text-sm transition-colors cursor-pointer', currentThemeSetting === 'system' ? 'text-indigo-600 bg-indigo-50/80 dark:text-white dark:bg-indigo-600/30 font-semibold' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-zinc-800 dark:hover:text-white']">
                     <svg class="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     Match system
                   </button>

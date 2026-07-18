@@ -1,212 +1,138 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto">
-      <!-- Backdrop -->
-      <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md" @click="$emit('close')"></div>
-      
-      <!-- Modal -->
-      <div class="flex min-h-full items-center justify-center p-4">
-        <div class="relative w-full max-w-6xl bg-white rounded-lg shadow-xl">
-          <!-- Header -->
-          <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-lg">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-4">
-                <div class="flex-shrink-0">
-                  <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div v-if="customer">
-                  <h3 class="text-xl font-semibold text-white">{{ customer.name }}</h3>
-                  <p class="text-blue-100">Customer ID: #{{ customer.id }}</p>
-                </div>
-                <div v-else>
-                  <h3 class="text-xl font-semibold text-white">Customer Details</h3>
-                  <p class="text-blue-100">Loading customer information...</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-3">
-                <span v-if="customer" :class="customer.is_active 
-                  ? 'inline-flex px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800' 
-                  : 'inline-flex px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800'">
+    <div v-if="show" class="fixed inset-0 bg-slate-900/40 dark:bg-black/50 backdrop-blur-md overflow-y-auto h-full w-full z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+      <div class="relative mx-auto border border-slate-150 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300">
+        
+        <!-- Sleek Close Icon Button -->
+        <button
+          type="button"
+          @click="$emit('close')"
+          class="absolute top-5 right-5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-55 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div v-if="customer" class="p-6 space-y-6">
+          <!-- Header Area -->
+          <div class="flex justify-between items-start pr-8 border-b border-slate-100 dark:border-zinc-800 pb-4">
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">{{ customer.name }}</h3>
+                <span
+                  :class="customer.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
+                >
                   {{ customer.is_active ? 'Active' : 'Inactive' }}
                 </span>
-                <button @click="$emit('close')" class="text-white hover:text-gray-200 transition-colors">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
+              <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1.5">
+                Customer ID: #{{ customer.id }} &middot; Member since {{ formatDate(customer.created_at) }}
+              </p>
             </div>
           </div>
 
-          <!-- Content -->
-          <div class="max-h-[70vh] overflow-y-auto">
-            <div v-if="customer" class="p-6">
-              <!-- Customer Stats -->
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-green-600">Total Purchases</p>
-                      <p class="text-lg font-semibold text-green-900">${{ formatNumber(customer.total_purchases) }}</p>
-                    </div>
-                  </div>
+          <!-- Content Body -->
+          <div class="space-y-5">
+            <!-- Personal Details -->
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Personal Details</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Email</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold break-all">{{ customer.email || '-' }}</span>
                 </div>
-
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-blue-600">Credit Limit</p>
-                      <p class="text-lg font-semibold text-blue-900">${{ formatNumber(customer.credit_limit) }}</p>
-                    </div>
-                  </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Phone</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.phone || '-' }}</span>
                 </div>
-
-                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-purple-600">Loyalty Points</p>
-                      <p class="text-lg font-semibold text-purple-900">{{ formatNumber(customer.loyalty_points) }}</p>
-                    </div>
-                  </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Mobile</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.mobile || '-' }}</span>
                 </div>
-
-                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-yellow-600">Member Since</p>
-                      <p class="text-lg font-semibold text-yellow-900">{{ formatDate(customer.created_at) }}</p>
-                    </div>
-                  </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Date of Birth</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.date_of_birth ? formatDate(customer.date_of_birth) : '-' }}</span>
                 </div>
-              </div>
-
-              <!-- Customer Information -->
-              <div class="space-y-6">
-                <!-- Personal Information -->
-                <div class="bg-gray-50 rounded-lg p-6">
-                  <h4 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.name || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Email Address</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.email || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.phone || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Mobile Number</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.mobile || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.date_of_birth ? formatDate(customer.date_of_birth) : '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Gender</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.gender ? customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1) : '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Address Information -->
-                <div class="bg-gray-50 rounded-lg p-6">
-                  <h4 class="text-lg font-medium text-gray-900 mb-4">Address Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                      <label class="block text-sm font-medium text-gray-700">Address</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.address || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">City</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.city || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">State</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.state || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Postal Code</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.postal_code || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Country</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.country || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Business Information -->
-                <div class="bg-gray-50 rounded-lg p-6">
-                  <h4 class="text-lg font-medium text-gray-900 mb-4">Business Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                      <p class="mt-1 text-sm text-gray-900">{{ customer.tax_number || '-' }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Credit Limit</label>
-                      <p class="mt-1 text-sm text-gray-900">${{ formatNumber(customer.credit_limit) }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Notes -->
-                <div v-if="customer.notes" class="bg-gray-50 rounded-lg p-6">
-                  <h4 class="text-lg font-medium text-gray-900 mb-4">Notes</h4>
-                  <p class="text-sm text-gray-900">{{ customer.notes }}</p>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Gender</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold capitalize">{{ customer.gender || '-' }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Loading State -->
-            <div v-else class="flex items-center justify-center py-12">
-              <div class="text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No customer data</h3>
-                <p class="mt-1 text-sm text-gray-500">Unable to load customer details.</p>
+            <div class="border-t border-slate-100 dark:border-zinc-800/80"></div>
+
+            <!-- Address / Location Details -->
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Address & Location</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Address</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.address || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">City</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.city || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">State</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.state || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Postal Code</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.postal_code || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Country</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.country || '-' }}</span>
+                </div>
               </div>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-zinc-800/80"></div>
+
+            <!-- Financial Details -->
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Financial Overview</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Tax Number</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ customer.tax_number || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Credit Limit</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">${{ formatNumber(customer.credit_limit) }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Total Purchases</span>
+                  <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">${{ formatNumber(customer.total_purchases) }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Loyalty Points</span>
+                  <span class="text-xs text-indigo-600 dark:text-indigo-400 font-bold">{{ formatNumber(customer.loyalty_points) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes (Optional) -->
+            <div v-if="customer.notes">
+              <div class="border-t border-slate-100 dark:border-zinc-800/80 my-4"></div>
+              <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Notes</span>
+              <p class="text-xs text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800/40 leading-relaxed italic">
+                {{ customer.notes }}
+              </p>
             </div>
           </div>
         </div>
+
+        <!-- Fallback loading state -->
+        <div v-else class="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-zinc-500">
+          <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600 mb-2"></div>
+          <span class="text-xs">Loading customer details...</span>
+        </div>
+
       </div>
     </div>
   </Teleport>
@@ -248,24 +174,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-</style>
