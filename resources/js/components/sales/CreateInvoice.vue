@@ -516,8 +516,8 @@
                 >
                   <input
                     type="checkbox"
-                    :value="category.id"
-                    v-model="selectedCategories"
+                    :checked="isCategorySelected(category.id)"
+                    @change="toggleCategorySelection(category.id)"
                     class="rounded text-indigo-600 focus:ring-indigo-500"
                   />
                   <span class="font-medium text-slate-700">{{ category.name }}</span>
@@ -593,52 +593,56 @@
 
         <!-- Sidebar Sticky Footer Actions -->
         <div class="p-5 border-t border-slate-200 bg-slate-50/80">
-          <div class="space-y-3.5">
+          <div class="space-y-3">
+            <!-- Row 1: Primary Action (Save & Print) -->
+            <button
+              @click="saveInvoice(true)"
+              :disabled="invoiceItems.length === 0 || saving"
+              class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="saving && printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              <span>{{ saving && printAfterSave ? 'Saving...' : 'Save & Print' }}</span>
+            </button>
+
+            <!-- Row 2: Secondary Actions (Save Invoice, Save Draft) -->
             <div class="grid grid-cols-2 gap-3">
               <button
                 @click="saveInvoice(false)"
                 :disabled="invoiceItems.length === 0 || saving"
-                class="w-full text-white py-3 px-4 rounded-xl font-bold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
-                :style="{ backgroundColor: accentColor }"
+                class="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg v-if="saving && !printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <svg v-if="saving && !printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>{{ saving && !printAfterSave ? 'Saving...' : 'Save Invoice' }}</span>
               </button>
               <button
-                @click="saveInvoice(true)"
-                :disabled="invoiceItems.length === 0 || saving"
-                class="w-full bg-emerald-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-emerald-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
-              >
-                <svg v-if="saving && printAfterSave" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <svg v-else class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                <span>{{ saving && printAfterSave ? 'Saving...' : 'Save & Print' }}</span>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <button
                 @click="saveAsDraft"
                 :disabled="invoiceItems.length === 0 || saving"
-                class="bg-amber-600 text-white py-2 px-3 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full h-10 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg font-medium text-sm transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Save Draft
               </button>
-              <button
-                @click="clearInvoice"
-                :disabled="invoiceItems.length === 0"
-                class="bg-rose-600 text-white py-2 px-3 rounded-xl text-xs font-bold hover:bg-rose-700 transition-all cursor-pointer disabled:opacity-50"
-              >
-                Clear All
-              </button>
             </div>
+
+            <!-- Row 3: Danger / Clear All Action -->
+            <button
+              @click="clearInvoice"
+              :disabled="invoiceItems.length === 0"
+              class="w-full h-9 text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Clear All</span>
+            </button>
           </div>
         </div>
 
@@ -852,7 +856,8 @@ const filteredProducts = computed(() => {
   let filtered = products.value;
   
   if (selectedCategories.value.length > 0) {
-    filtered = filtered.filter(product => selectedCategories.value.includes(product.category_id));
+    const selectedIds = selectedCategories.value.map(id => String(id));
+    filtered = filtered.filter(product => selectedIds.includes(String(product.category_id)));
   }
   
   if (productSearch.value) {
@@ -872,7 +877,7 @@ const categoryDropdownLabel = computed(() => {
     return 'Categories: All Categories';
   }
   const names = selectedCategories.value.map(id => {
-    const cat = categories.value.find(c => c.id === id);
+    const cat = categories.value.find(c => String(c.id) === String(id));
     return cat ? cat.name : '';
   }).filter(Boolean);
   return 'Categories: ' + names.join(', ');
@@ -1303,6 +1308,20 @@ const removeNotification = (id) => {
 
 const clearSelectedCategories = () => {
   selectedCategories.value = [];
+};
+
+const isCategorySelected = (categoryId) => {
+  return selectedCategories.value.map(id => String(id)).includes(String(categoryId));
+};
+
+const toggleCategorySelection = (categoryId) => {
+  const idStr = String(categoryId);
+  const index = selectedCategories.value.findIndex(id => String(id) === idStr);
+  if (index > -1) {
+    selectedCategories.value.splice(index, 1);
+  } else {
+    selectedCategories.value.push(categoryId);
+  }
 };
 
 const handleClickOutside = (event) => {
