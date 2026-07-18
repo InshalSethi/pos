@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto">
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-50" @click="$emit('close')"></div>
+      <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md" @click="$emit('close')"></div>
       
       <!-- Modal -->
       <div class="flex min-h-full items-center justify-center p-4">

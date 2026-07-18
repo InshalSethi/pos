@@ -57,18 +57,40 @@
     <!-- Table Container -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
       <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
-        <!-- Search -->
-        <div class="relative w-96">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          </span>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search by name, email, phone or location"
-            class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
-            @input="debouncedSearch"
-          />
+        <!-- Search & Toggle Group -->
+        <div class="flex items-center space-x-3">
+          <!-- Search -->
+          <div class="relative w-96">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search by name, email, phone or location"
+              class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
+              @input="debouncedSearch"
+            />
+          </div>
+          <!-- Status Switch/Toggle -->
+          <div class="flex items-center bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg text-[11px] font-semibold">
+            <button
+              type="button"
+              @click="statusFilter = '1'; loadCustomers(1);"
+              :class="statusFilter === '1' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              @click="statusFilter = '0'; loadCustomers(1);"
+              :class="statusFilter === '0' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              Inactive
+            </button>
+          </div>
         </div>
         <!-- Showing -->
         <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-zinc-400">
@@ -266,6 +288,7 @@ export default {
     const statistics = ref({});
     const searchQuery = ref('');
     const perPage = ref(15);
+    const statusFilter = ref('1');
     const openActionDropdown = ref(null);
 
     const selectedCustomer = ref(null);
@@ -279,6 +302,7 @@ export default {
       try {
         const params = { page, per_page: perPage.value };
         if (searchQuery.value) params.search = searchQuery.value;
+        if (statusFilter.value !== '') params.is_active = statusFilter.value;
 
         const response = await api.get('/customers', { params });
         customers.value = response.data;
@@ -391,7 +415,7 @@ export default {
     });
 
     return {
-      loading, customers, statistics, searchQuery, perPage, openActionDropdown,
+      loading, customers, statistics, searchQuery, perPage, statusFilter, openActionDropdown,
       selectedCustomer, showCreateModal, showEditModal, showViewModal, showLedgerModal,
       visiblePages, loadCustomers, debouncedSearch, changePage, toggleActionDropdown,
       handleCreateCustomer, viewCustomer, editCustomer, viewLedger, deleteCustomer,
