@@ -47,10 +47,11 @@
 
               <!-- Dynamic Company Metadata -->
               <div class="text-left text-xs text-slate-500 dark:text-zinc-400 space-y-0.5">
-                <p class="font-bold text-slate-700 dark:text-zinc-200 text-sm">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
-                <p v-if="activeCompany?.company_phone">{{ activeCompany.company_phone }}</p>
-                <p>{{ activeCompany?.company_email || 'sethiasad1@gmail.com' }}</p>
-                <p>{{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
+                <p class="font-bold text-slate-700 dark:text-zinc-200 text-sm mb-1.5">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
+                <h4 class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider pt-1.5 pb-0.5">Email, phone and Adress</h4>
+                <p v-if="activeCompany?.company_phone"><span class="font-semibold text-slate-400 dark:text-zinc-500">phone number:</span> {{ activeCompany.company_phone }}</p>
+                <p><span class="font-semibold text-slate-400 dark:text-zinc-500">email:</span> {{ activeCompany?.company_email || 'sethiasad1@gmail.com' }}</p>
+                <p><span class="font-semibold text-slate-400 dark:text-zinc-500">Adress:</span> {{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
               </div>
             </div>
 
