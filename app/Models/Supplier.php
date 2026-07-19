@@ -33,12 +33,14 @@ class Supplier extends Model
         'notes',
         'is_active',
         'credit_limit',
+        'advance_balance',
         'payment_terms_days',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'credit_limit' => 'decimal:2',
+        'advance_balance' => 'decimal:2',
     ];
 
     // Relationships
@@ -159,6 +161,27 @@ class Supplier extends Model
                    ->where('status', 'pending')
                    ->where('expected_delivery_date', '<', now()->subDays($this->payment_terms_days))
                    ->exists();
+    }
+
+    /**
+     * Credit the supplier's advance balance (overpayment on a PO).
+     */
+    public function creditAdvance(float $amount): void
+    {
+        $this->increment('advance_balance', $amount);
+    }
+
+    /**
+     * Debit the supplier's advance balance (apply advance to a new PO).
+     * Returns the actual amount debited.
+     */
+    public function debitAdvance(float $amount): float
+    {
+        $actualDebit = min($amount, (float) $this->advance_balance);
+        if ($actualDebit > 0) {
+            $this->decrement('advance_balance', $actualDebit);
+        }
+        return $actualDebit;
     }
 
     // Static methods

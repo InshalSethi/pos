@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Services\DoubleEntryAccountingService;
 use App\Services\WarehouseInventoryService;
 use Illuminate\Http\Request;
@@ -129,6 +130,8 @@ class PurchaseOrderController extends Controller
             'notes' => 'nullable|string',
             'terms_and_conditions' => 'nullable|string',
             'amount_paid' => 'nullable|numeric|min:0',
+            'use_advance_balance' => 'nullable|boolean',
+            'advance_applied' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -171,7 +174,20 @@ class PurchaseOrderController extends Controller
 
             $amountPaid = $request->get('amount_paid', 0);
             $grandTotal = $totalAmount;
-            $dueAmount = max(0, $grandTotal - $amountPaid);
+
+            // --- ADVANCE BALANCE APPLICATION ---
+            $advanceApplied = 0;
+            $supplier = Supplier::find($request->supplier_id);
+            if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0) {
+                $requestedAdvance = (float) ($request->advance_applied ?? $supplier->advance_balance);
+                $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $grandTotal);
+            }
+
+            $effectivePaid = $amountPaid + $advanceApplied;
+            $dueAmount = max(0, $grandTotal - $effectivePaid);
+
+            // Check for overpayment → store as advance
+            $overpayment = max(0, $effectivePaid - $grandTotal);
 
             // Create purchase order
             $purchaseOrder = PurchaseOrder::create([
@@ -186,7 +202,7 @@ class PurchaseOrderController extends Controller
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $totalAmount,
                 'grand_total' => $grandTotal,
-                'amount_paid' => $amountPaid,
+                'amount_paid' => $effectivePaid - $overpayment,
                 'due_amount' => $dueAmount,
                 'notes' => $request->notes,
                 'terms_and_conditions' => $request->terms_and_conditions,
@@ -205,6 +221,16 @@ class PurchaseOrderController extends Controller
                     'total_cost' => $totalCost,
                     'notes' => $item['notes'] ?? null,
                 ]);
+            }
+
+            // --- DEBIT ADVANCE if advance was applied ---
+            if ($advanceApplied > 0 && $supplier) {
+                $supplier->debitAdvance($advanceApplied);
+            }
+
+            // --- CAPTURE OVERPAYMENT into advance balance ---
+            if ($overpayment > 0 && $supplier) {
+                $supplier->creditAdvance($overpayment);
             }
 
             DB::commit();

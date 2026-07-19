@@ -127,7 +127,8 @@
               <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Contact</th>
               <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Location</th>
               <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Terms</th>
-              <th class="py-3 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Credit</th>
+              <th class="py-3 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Credit Limit</th>
+              <th class="py-3 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Advance</th>
               <th class="py-3 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Due Amount</th>
               <th class="py-3 px-4 text-center bg-slate-50 dark:bg-zinc-800/50">Status</th>
               <th class="py-3 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
@@ -135,7 +136,7 @@
           </thead>
           <tbody class="divide-y divide-slate-100/70 dark:divide-zinc-800">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="8" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+              <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
                 <div class="flex flex-col items-center justify-center space-y-2">
                   <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600"></div>
                   <span class="text-xs font-semibold">Loading suppliers...</span>
@@ -143,7 +144,7 @@
               </td>
             </tr>
             <tr v-else-if="!suppliers.data || suppliers.data.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+              <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
@@ -177,9 +178,24 @@
               <td class="py-3.5 px-4 align-middle text-slate-700 dark:text-zinc-200 text-xs bg-white dark:bg-zinc-900">
                 {{ item.payment_terms_days ? item.payment_terms_days + ' days' : '-' }}
               </td>
-              <!-- Credit -->
+              <!-- Credit Limit -->
               <td class="py-3.5 px-4 text-right font-semibold text-slate-700 dark:text-zinc-200 text-sm align-middle bg-white dark:bg-zinc-900">
                 ${{ formatNumber(item.credit_limit || 0) }}
+              </td>
+              <!-- Advance -->
+              <td class="py-3.5 px-4 text-right font-bold text-sm align-middle bg-white dark:bg-zinc-900">
+                <span
+                  v-if="parseFloat(item.advance_balance || 0) > 0"
+                  class="text-amber-600 dark:text-amber-400"
+                >
+                  ${{ formatNumber(item.advance_balance) }}
+                </span>
+                <span
+                  v-else
+                  class="text-slate-400 dark:text-zinc-500 font-medium"
+                >
+                  0.00
+                </span>
               </td>
               <!-- Due Amount -->
               <td class="py-3.5 px-4 text-right font-bold text-sm align-middle bg-white dark:bg-zinc-900">

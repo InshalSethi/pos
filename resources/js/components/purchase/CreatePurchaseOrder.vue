@@ -394,13 +394,30 @@
                   class="w-20 px-2 py-1 border border-slate-200 dark:border-zinc-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 text-xs"
                 />
               </div>
+              <!-- Advance Balance Checkbox -->
+              <div v-if="selectedSupplier && parseFloat(selectedSupplier.advance_balance || 0) > 0" class="bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2 border border-amber-200 dark:border-amber-900/60 text-xs mt-1">
+                <label class="flex items-center justify-between cursor-pointer">
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      v-model="useAdvanceBalance"
+                      class="rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <span class="font-bold text-amber-800 dark:text-amber-300">Use Advance Balance</span>
+                  </div>
+                  <span class="font-extrabold text-amber-700 dark:text-amber-400">${{ parseFloat(selectedSupplier.advance_balance || 0).toFixed(2) }}</span>
+                </label>
+                <div v-if="useAdvanceBalance" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                  Applying ${{ advanceToApply.toFixed(2) }} from advance → New effective due: ${{ effectiveDueAmount.toFixed(2) }}
+                </div>
+              </div>
               <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100">
                 <span>Due Amount:</span>
                 <span 
                   class="text-base font-black transition-all"
-                  :class="dueAmount > 0 ? 'text-rose-600 dark:text-rose-450' : 'text-emerald-600 dark:text-emerald-450'"
+                  :class="effectiveDueAmount > 0 ? 'text-rose-600 dark:text-rose-450' : 'text-emerald-600 dark:text-emerald-450'"
                 >
-                  ${{ dueAmount.toFixed(2) }}
+                  ${{ effectiveDueAmount.toFixed(2) }}
                 </span>
               </div>
             </div>
@@ -769,6 +786,7 @@ const products = ref([]);
 const suppliers = ref([]);
 const orderItems = ref([]);
 const selectedSupplier = ref(null);
+const useAdvanceBalance = ref(false);
 const isProductDropdownOpen = ref(false);
 const barcodeInput = ref('');
 const isBarcodeActive = ref(false);
@@ -849,6 +867,20 @@ const dueAmount = computed(() => {
   const total = orderTotal.value || 0;
   const paid = parseFloat(orderForm.value.amount_paid) || 0;
   return Math.max(0, total - paid);
+});
+
+const advanceToApply = computed(() => {
+  if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
+  const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
+  return Math.min(advanceBal, Math.max(0, orderTotal.value));
+});
+
+const effectiveDueAmount = computed(() => {
+  const baseDue = dueAmount.value;
+  if (useAdvanceBalance.value) {
+    return Math.max(0, baseDue - advanceToApply.value);
+  }
+  return baseDue;
 });
 
 const currentDate = computed(() => {
@@ -963,6 +995,13 @@ const selectSupplier = (supplier) => {
   orderForm.value.supplier_id = supplier.id;
   supplierSearch.value = supplier.name;
   supplierSearchResults.value = [];
+  useAdvanceBalance.value = false;
+  // Fetch fresh advance_balance from API
+  api.get(`/suppliers/${supplier.id}`).then(res => {
+    if (res.data && res.data.advance_balance !== undefined) {
+      selectedSupplier.value = { ...selectedSupplier.value, advance_balance: res.data.advance_balance };
+    }
+  }).catch(() => {});
 };
 
 const clearSupplier = () => {
@@ -970,6 +1009,7 @@ const clearSupplier = () => {
   orderForm.value.supplier_id = '';
   supplierSearch.value = '';
   supplierSearchResults.value = [];
+  useAdvanceBalance.value = false;
 };
 
 const createSupplier = async () => {
@@ -1041,6 +1081,8 @@ const saveOrder = async () => {
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
       amount_paid: orderForm.value.amount_paid || 0,
+      use_advance_balance: useAdvanceBalance.value,
+      advance_applied: advanceToApply.value,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       items: orderItems.value.map(item => ({

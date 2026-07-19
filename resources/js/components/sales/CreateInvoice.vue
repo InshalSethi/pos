@@ -581,14 +581,37 @@
               </div>
             </div>
 
-            <div v-if="changeAmount > 0" class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl px-3 py-2 border border-emerald-250 dark:border-emerald-900/60 text-xs font-bold text-left flex justify-between">
+            <!-- Wallet Credit Option -->
+            <div v-if="selectedCustomer && parseFloat(selectedCustomer.wallet_balance || 0) > 0" class="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-3 py-2.5 border border-amber-200 dark:border-amber-900/60 text-xs">
+              <label class="flex items-center justify-between cursor-pointer">
+                <div class="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    v-model="useWalletCredit"
+                    class="rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span class="font-bold text-amber-800 dark:text-amber-300">Use Wallet Credit</span>
+                </div>
+                <span class="font-extrabold text-amber-700 dark:text-amber-400">${{ parseFloat(selectedCustomer.wallet_balance || 0).toFixed(2) }}</span>
+              </label>
+              <div v-if="useWalletCredit" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                Applying ${{ walletCreditToApply.toFixed(2) }} from wallet → New effective due: ${{ effectiveDueAmount.toFixed(2) }}
+              </div>
+            </div>
+
+            <div v-if="changeAmount > 0 && !useWalletCredit" class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl px-3 py-2 border border-emerald-250 dark:border-emerald-900/60 text-xs font-bold text-left flex justify-between">
               <span>Change / Refund:</span>
               <span>${{ changeAmount.toFixed(2) }}</span>
             </div>
 
-            <div v-if="dueAmount > 0" class="bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 rounded-xl px-3 py-2 border border-rose-250 dark:border-rose-900/60 text-xs font-bold text-left flex justify-between">
+            <div v-if="changeAmount > 0 && useWalletCredit" class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl px-3 py-2 border border-emerald-250 dark:border-emerald-900/60 text-xs font-bold text-left flex justify-between">
+              <span>Overpayment → Wallet:</span>
+              <span>${{ changeAmount.toFixed(2) }}</span>
+            </div>
+
+            <div v-if="effectiveDueAmount > 0" class="bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 rounded-xl px-3 py-2 border border-rose-250 dark:border-rose-900/60 text-xs font-bold text-left flex justify-between">
               <span>Remaining Due Amount:</span>
-              <span>${{ dueAmount.toFixed(2) }}</span>
+              <span>${{ effectiveDueAmount.toFixed(2) }}</span>
             </div>
           </div>
 
@@ -889,6 +912,7 @@ const printAfterSave = ref(false);
 const creatingCustomer = ref(false);
 const showCustomerModal = ref(false);
 const notifications = ref([]);
+const useWalletCredit = ref(false);
 
 const invoiceForm = ref({
   customer_id: '',
@@ -992,6 +1016,21 @@ const changeAmount = computed(() => {
 
 const dueAmount = computed(() => {
   return Math.max(0, invoiceTotal.value - (invoiceForm.value.paid_amount || 0));
+});
+
+const walletCreditToApply = computed(() => {
+  if (!useWalletCredit.value || !selectedCustomer.value) return 0;
+  const walletBal = parseFloat(selectedCustomer.value.wallet_balance || 0);
+  const currentDue = dueAmount.value;
+  return Math.min(walletBal, Math.max(0, invoiceTotal.value));
+});
+
+const effectiveDueAmount = computed(() => {
+  const baseDue = dueAmount.value;
+  if (useWalletCredit.value) {
+    return Math.max(0, baseDue - walletCreditToApply.value);
+  }
+  return baseDue;
 });
 
 const currentDate = computed(() => {
@@ -1212,6 +1251,13 @@ const selectCustomer = (customer) => {
   invoiceForm.value.customer_id = customer.id;
   customerSearch.value = customer.name;
   customerSearchResults.value = [];
+  useWalletCredit.value = false;
+  // Fetch fresh wallet_balance from API
+  api.get(`/customers/${customer.id}`).then(res => {
+    if (res.data && res.data.wallet_balance !== undefined) {
+      selectedCustomer.value = { ...selectedCustomer.value, wallet_balance: res.data.wallet_balance };
+    }
+  }).catch(() => {});
 };
 
 const clearCustomer = () => {
@@ -1219,6 +1265,7 @@ const clearCustomer = () => {
   invoiceForm.value.customer_id = '';
   customerSearch.value = '';
   customerSearchResults.value = [];
+  useWalletCredit.value = false;
 };
 
 const createCustomer = async () => {
@@ -1288,6 +1335,8 @@ const saveInvoice = async (shouldPrint = false) => {
       discount_amount: totalDiscount.value,
       total_amount: invoiceTotal.value,
       paid_amount: invoiceForm.value.paid_amount || invoiceTotal.value,
+      use_wallet_credit: useWalletCredit.value,
+      wallet_credit_applied: walletCreditToApply.value,
       payment_method: invoiceForm.value.payment_method,
       notes: invoiceForm.value.notes,
       footer: invoiceForm.value.footer,

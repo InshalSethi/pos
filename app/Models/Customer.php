@@ -33,6 +33,7 @@ class Customer extends Model
         'notes',
         'is_active',
         'credit_limit',
+        'wallet_balance',
         'total_purchases',
         'loyalty_points',
     ];
@@ -41,6 +42,7 @@ class Customer extends Model
         'date_of_birth' => 'date',
         'is_active' => 'boolean',
         'credit_limit' => 'decimal:2',
+        'wallet_balance' => 'decimal:2',
         'total_purchases' => 'decimal:2',
         'loyalty_points' => 'decimal:2',
     ];
@@ -171,6 +173,39 @@ class Customer extends Model
             return true;
         }
         return false;
+    }
+
+    /**
+     * Credit the customer's wallet balance (overpayment or return credit).
+     */
+    public function creditWallet(float $amount): void
+    {
+        $this->increment('wallet_balance', $amount);
+    }
+
+    /**
+     * Debit the customer's wallet balance (apply wallet credit to an invoice).
+     * Returns the actual amount debited (may be less than requested if balance insufficient).
+     */
+    public function debitWallet(float $amount): float
+    {
+        $actualDebit = min($amount, (float) $this->wallet_balance);
+        if ($actualDebit > 0) {
+            $this->decrement('wallet_balance', $actualDebit);
+        }
+        return $actualDebit;
+    }
+
+    /**
+     * Check if a credit-based purchase is allowed under the credit limit.
+     * Validates that outstanding balance + new amount does not exceed credit_limit.
+     */
+    public function canPurchaseOnCredit(float $newInvoiceAmount): bool
+    {
+        if ($this->credit_limit <= 0) {
+            return true; // No credit limit set, allow purchase
+        }
+        return $this->is_active && ($this->getOutstandingBalance() + $newInvoiceAmount <= $this->credit_limit);
     }
 
     // Static methods

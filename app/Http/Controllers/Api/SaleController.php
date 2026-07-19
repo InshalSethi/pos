@@ -195,6 +195,8 @@ class SaleController extends Controller
             'grand_tax_rate' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'required|numeric|min:0',
+            'use_wallet_credit' => 'nullable|boolean',
+            'wallet_credit_applied' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
@@ -306,6 +308,35 @@ class SaleController extends Controller
             $totalAmount = $subtotal - $totalDiscount + $totalTax;
             $changeAmount = max(0, $request->paid_amount - $totalAmount);
 
+            // --- WALLET CREDIT APPLICATION ---
+            $walletCreditApplied = 0;
+            $customer = null;
+            if ($request->customer_id) {
+                $customer = Customer::find($request->customer_id);
+            }
+
+            if ($customer && $request->boolean('use_wallet_credit') && (float) $customer->wallet_balance > 0) {
+                $requestedWalletCredit = (float) ($request->wallet_credit_applied ?? $customer->wallet_balance);
+                $walletCreditApplied = min($requestedWalletCredit, (float) $customer->wallet_balance, $totalAmount);
+            }
+
+            // Effective amount covered = cash paid + wallet credit
+            $effectivePaid = $request->paid_amount + $walletCreditApplied;
+            $changeAmount = max(0, $effectivePaid - $totalAmount);
+
+            // --- CREDIT LIMIT ENFORCEMENT ---
+            if ($customer && $customer->credit_limit > 0) {
+                $dueOnThisInvoice = max(0, $totalAmount - $effectivePaid);
+                if ($dueOnThisInvoice > 0) {
+                    $outstandingBalance = $customer->getOutstandingBalance();
+                    if (($outstandingBalance + $dueOnThisInvoice) > $customer->credit_limit) {
+                        return response()->json([
+                            'message' => 'Transaction Denied: Customer credit limit exceeded. Outstanding: $' . number_format($outstandingBalance, 2) . ', This invoice due: $' . number_format($dueOnThisInvoice, 2) . ', Credit limit: $' . number_format($customer->credit_limit, 2) . '.'
+                        ], 422);
+                    }
+                }
+            }
+
             // Generate sale number
             $saleNumber = $request->sale_number;
             
@@ -333,13 +364,13 @@ class SaleController extends Controller
                 'sale_date' => $request->sale_date ?? today()->toDateString(),
                 'due_date' => $request->due_date,
                 'order_number' => $request->order_number,
-                'status' => $request->paid_amount < $totalAmount ? 'pending' : 'completed',
+                'status' => ($request->paid_amount + $walletCreditApplied) < $totalAmount ? 'pending' : 'completed',
                 'color' => $request->color,
                 'subtotal' => $subtotal,
                 'tax_amount' => $totalTax,
                 'discount_amount' => $totalDiscount,
                 'total_amount' => $totalAmount,
-                'paid_amount' => $request->paid_amount,
+                'paid_amount' => $request->paid_amount + $walletCreditApplied,
                 'change_amount' => $changeAmount,
                 'payment_method' => $request->payment_method,
                 'notes' => $request->notes,
@@ -415,9 +446,23 @@ class SaleController extends Controller
 
             // Update customer total purchases
             if ($request->customer_id) {
-                $customer = Customer::find($request->customer_id);
+                if (!$customer) {
+                    $customer = Customer::find($request->customer_id);
+                }
                 if ($customer) {
                     $customer->increment('total_purchases', $totalAmount);
+
+                    // --- DEBIT WALLET if wallet credit was applied ---
+                    if ($walletCreditApplied > 0) {
+                        $customer->debitWallet($walletCreditApplied);
+                    }
+
+                    // --- CAPTURE OVERPAYMENT into wallet ---
+                    if ($changeAmount > 0) {
+                        $customer->creditWallet($changeAmount);
+                        // Zero out the change since it's been stored as wallet credit
+                        $sale->update(['change_amount' => 0]);
+                    }
                 }
             }
 
@@ -1007,7 +1052,12 @@ class SaleController extends Controller
             // Update customer total purchases
             if ($originalSale->customer_id) {
                 $customer = Customer::find($originalSale->customer_id);
-                $customer->decrement('total_purchases', $totalReturnAmount);
+                if ($customer) {
+                    $customer->decrement('total_purchases', $totalReturnAmount);
+                    if ($request->refund_method === 'store_credit') {
+                        $customer->creditWallet($totalReturnAmount);
+                    }
+                }
             }
 
             // Create accounting entries for return
