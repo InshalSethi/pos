@@ -165,6 +165,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'show']);
     Route::post('/companies/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'update']);
     Route::post('/sales/{sale}/refund', [SaleController::class , 'refund']);
+    Route::get('/sales/returns/status-counts', [SaleController::class , 'getReturnStatusCounts']);
     Route::post('/sales/returns', [SaleController::class , 'processReturn']);
     Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);
 

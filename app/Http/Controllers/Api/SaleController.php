@@ -23,7 +23,7 @@ class SaleController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:sales.view')->only(['index', 'show', 'getStatusCounts']);
+        $this->middleware('permission:sales.view')->only(['index', 'show', 'getStatusCounts', 'getReturnStatusCounts']);
         $this->middleware('permission:sales.create')->only(['store']);
         $this->middleware('permission:sales.edit')->only(['update']);
         $this->middleware('permission:sales.delete')->only(['destroy']);
@@ -49,6 +49,26 @@ class SaleController extends Controller
             'due' => $due,
             'recurring' => $recurring,
             'overdue' => $overdue,
+        ]);
+    }
+
+    /**
+     * Get the count of sales returns grouped by refund/payment method.
+     */
+    public function getReturnStatusCounts(): JsonResponse
+    {
+        $all = Sale::where('is_refund', true)->count();
+        $cash = Sale::where('is_refund', true)->where('payment_method', 'cash')->count();
+        $card = Sale::where('is_refund', true)->where('payment_method', 'card')->count();
+        $storeCredit = Sale::where('is_refund', true)->where('payment_method', 'store_credit')->count();
+        $exchange = Sale::where('is_refund', true)->where('payment_method', 'exchange')->count();
+
+        return response()->json([
+            'all' => $all,
+            'cash' => $cash,
+            'card' => $card,
+            'store_credit' => $storeCredit,
+            'exchange' => $exchange,
         ]);
     }
 
@@ -145,6 +165,11 @@ class SaleController extends Controller
         // Filter by refund status
         if ($request->has('is_refund')) {
             $query->where('is_refund', $request->boolean('is_refund'));
+        }
+
+        // Filter by payment method
+        if ($request->has('payment_method') && $request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
         }
 
         // Sorting

@@ -1,125 +1,383 @@
 <template>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Sales Returns</h1>
+  <div class="w-full max-w-full py-8 px-4 sm:px-6 lg:px-8 dark:bg-zinc-950">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Sales Returns</h1>
+      <button
+        @click="createReturn"
+        class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 animate-button cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+        </svg>
+        <span>Process Return</span>
+      </button>
+    </div>
+
+    <!-- Tabs Bar -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 dark:border-zinc-800 mb-6 pb-0.5 space-y-4 sm:space-y-0">
+      <div class="flex flex-wrap gap-x-6 gap-y-2">
         <button
-          @click="showCreateModal = true"
-          class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="setActiveTab(tab.id)"
+          class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
+          :class="isTabActive(tab.id) ? 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
         >
-          Process Return
+          <span>{{ tab.label }}</span>
+          <span
+            class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+            :class="isTabActive(tab.id) ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'"
+          >
+            {{ counts[tab.id] || 0 }}
+          </span>
         </button>
       </div>
 
-      <!-- Filters -->
-      <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search returns..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              @input="debouncedSearch"
-            />
+      <div class="flex items-center space-x-2">
+        <!-- Sort Button -->
+        <button 
+          @click="handleSort('sale_date')"
+          class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+          </svg>
+          Sort Date
+        </button>
+
+        <!-- Filter Button -->
+        <div class="relative">
+          <button
+            @click.stop="toggleFilterDropdown"
+            class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
+            :class="{ 'border-rose-600 text-rose-600 bg-rose-50/10': selectedFilters.length > 0 }"
+          >
+            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" :class="{ 'text-rose-600': selectedFilters.length > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
+            </svg>
+            <span>Filter</span>
+            <span v-if="selectedFilters.length > 0" class="ml-1.5 text-[10px] font-bold bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full">
+              {{ selectedFilters.length }}
+            </span>
+          </button>
+
+          <!-- Filter Dropdown List -->
+          <div
+            v-if="showFilterDropdown"
+            class="absolute right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
+          >
+            <button
+              v-for="option in ['cash', 'card', 'store_credit', 'exchange']"
+              :key="option"
+              @click.stop="toggleFilterOption(option)"
+              class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors cursor-pointer"
+              :class="selectedFilters.includes(option) ? 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50/20 dark:bg-rose-900/20' : 'text-slate-700 dark:text-zinc-300'"
+            >
+              <span>{{ formatRefundLabel(option) }}</span>
+              <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+            </button>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Original Invoice</label>
-            <input
-              v-model="originalInvoice"
-              type="text"
-              placeholder="Original invoice number..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              @input="debouncedSearch"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-            <input
-              v-model="dateFrom"
-              type="date"
-              @change="fetchReturns"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-            <input
-              v-model="dateTo"
-              type="date"
-              @change="fetchReturns"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
+        </div>
+
+        <!-- Clear Button -->
+        <button
+          v-if="selectedFilters.length > 0 || searchQuery !== '' || dateFrom !== '' || dateTo !== '' || originalInvoice !== ''"
+          @click="clearAllFilters"
+          class="inline-flex items-center px-3 py-1.5 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-xs font-semibold shadow-sm transition-all focus:outline-none cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Extra Filter Bar (Dates and Original Invoice search) -->
+    <div class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-center">
+      <div class="flex items-center space-x-2">
+        <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Original Invoice:</label>
+        <input
+          v-model="originalInvoice"
+          type="text"
+          placeholder="Original Invoice #..."
+          class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none text-slate-700 dark:text-zinc-200"
+          @input="debouncedSearch"
+        />
+      </div>
+      <div class="flex items-center space-x-2">
+        <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Date From:</label>
+        <input
+          v-model="dateFrom"
+          type="date"
+          class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none text-slate-700 dark:text-zinc-200"
+          @change="fetchReturns(1)"
+        />
+      </div>
+      <div class="flex items-center space-x-2">
+        <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Date To:</label>
+        <input
+          v-model="dateTo"
+          type="date"
+          class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none text-slate-700 dark:text-zinc-200"
+          @change="fetchReturns(1)"
+        />
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
+        <!-- Search -->
+        <div class="relative w-96">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search by return number or customer name"
+            class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
+            @input="debouncedSearch"
+          />
+        </div>
+
+        <!-- Showing selection counts -->
+        <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-zinc-400">
+          <span>Showing</span>
+          <select
+            v-model="perPage"
+            @change="handlePerPageChange"
+            class="border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer bg-white dark:bg-zinc-800 dark:text-zinc-200"
+          >
+            <option :value="10">10</option>
+            <option :value="15">15</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+          </select>
+          <span>of {{ totalItems }} results</span>
         </div>
       </div>
 
       <!-- Returns Table -->
-      <DataTable
-        title="Sales Returns"
-        subtitle="Manage and track all sales returns"
-        :columns="tableColumns"
-        :data="returns"
-        :loading="loading"
-        :pagination="pagination"
-        :initial-search="searchQuery"
-        :initial-per-page="perPage"
-        :default-per-page="15"
-        storage-key="sales-returns-table-state"
-        empty-message="No returns found"
-        empty-sub-message="Try adjusting your search or filter criteria."
-        @search="handleTableSearch"
-        @sort="handleSort"
-        @page-change="handlePageChange"
-        @per-page-change="handlePerPageChange"
-      >
-        <!-- Custom column content -->
-        <template #column-return_amount="{ item }">
-          ${{ Math.abs(item.total_amount) }}
-        </template>
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
+              <th class="py-3.5 px-4 w-[40px] text-center bg-slate-50 dark:bg-zinc-800/50">
+                <input type="checkbox" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer w-3.5 h-3.5" />
+              </th>
+              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_number')">
+                <div class="flex items-center space-x-1">
+                  <span>Return #</span>
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+                  </svg>
+                </div>
+              </th>
+              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Original Invoice</th>
+              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Client/Customer</th>
+              <th class="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('total_amount')">
+                <div class="flex items-center justify-end space-x-1">
+                  <span>Refund Amount</span>
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+                  </svg>
+                </div>
+              </th>
+              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Refund Method</th>
+              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_date')">
+                <div class="flex items-center space-x-1">
+                  <span>Return Date</span>
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+                  </svg>
+                </div>
+              </th>
+              <th class="py-3.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50">Status</th>
+              <th class="py-3.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100/70 dark:divide-zinc-800">
+            <tr v-if="loading" class="bg-white dark:bg-zinc-900">
+              <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-rose-600"></div>
+                  <span class="text-xs font-semibold">Loading returns...</span>
+                </div>
+              </td>
+            </tr>
+            <tr v-else-if="returns.length === 0" class="bg-white dark:bg-zinc-900">
+              <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+                <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                </svg>
+                <span>No returns found. Create your first sales return.</span>
+              </td>
+            </tr>
+            <tr v-else v-for="item in returns" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+              <!-- Checkbox -->
+              <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
+                <input type="checkbox" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer w-3.5 h-3.5" />
+              </td>
 
-        <template #column-status="{ item }">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            Returned
-          </span>
-        </template>
+              <!-- Return Number -->
+              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 font-mono text-xs">
+                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-rose-600 cursor-pointer" @click="viewReturn(item)">
+                  {{ item.sale_number }}
+                </div>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                  Created: {{ formatDate(item.created_at) }}
+                </div>
+              </td>
 
-        <template #column-actions="{ item }">
-          <div class="flex space-x-2">
-            <button @click="viewReturn(item)" class="text-indigo-600 hover:text-indigo-900" title="View Return">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
-            <button @click="printReturn(item)" class="text-green-600 hover:text-green-900" title="Print Return">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-              </svg>
-            </button>
-            <button @click="deleteReturn(item.id)" class="text-red-600 hover:text-red-900" title="Delete Return">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-        </template>
+              <!-- Original Invoice -->
+              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 font-semibold text-slate-700 dark:text-zinc-300">
+                {{ item.original_sale?.sale_number || 'N/A' }}
+              </td>
 
-        <!-- Action buttons in header -->
-        <template #actions>
+              <!-- Client/Customer -->
+              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
+                  {{ item.customer?.name || 'Walk-in Customer' }}
+                </div>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center mt-0.5 space-x-1">
+                  <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+                  </svg>
+                  <span>{{ item.customer?.city || 'Default Branch' }}</span>
+                </div>
+              </td>
+
+              <!-- Refund Amount -->
+              <td class="py-4 px-4 text-right font-bold text-rose-600 dark:text-rose-400 text-sm align-middle bg-white dark:bg-zinc-900">
+                {{ formatCurrency(Math.abs(item.total_amount)) }}
+              </td>
+
+              <!-- Refund Method -->
+              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-medium">
+                <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px]">
+                  {{ formatRefundLabel(item.payment_method) }}
+                </span>
+              </td>
+
+              <!-- Return Date -->
+              <td class="py-4 px-4 text-slate-600 dark:text-zinc-300 text-sm align-middle bg-white dark:bg-zinc-900">
+                {{ formatDate(item.sale_date) }}
+              </td>
+
+              <!-- Status Badge -->
+              <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">
+                  Returned
+                </span>
+              </td>
+
+              <!-- Action Menu Dropdown -->
+              <td class="py-4 px-4 text-center relative align-middle bg-white dark:bg-zinc-900">
+                <button
+                  @click.stop="toggleActionDropdown(item.id)"
+                  class="text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all focus:outline-none cursor-pointer"
+                >
+                  <svg class="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" d="M12 5a2 2 0 100-4 2 2 0 000 4zm0 9a2 2 0 100-4 2 2 0 000 4zm0 9a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+                
+                <!-- Action Dropdown Overlay -->
+                <div
+                  v-if="openActionDropdown === item.id"
+                  class="absolute right-4 mt-1 w-32 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in"
+                >
+                  <button @click="viewReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span>View</span>
+                  </button>
+                  <button @click="printReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    <span>Print</span>
+                  </button>
+                  <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
+                  <button @click="deleteReturn(item.id)" class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <div class="flex-1 flex justify-between sm:hidden">
           <button
-            @click="createReturn"
-            class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+            @click="previousPage"
+            :disabled="currentPage === 1"
+            class="relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50"
           >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-            </svg>
-            Process Return
+            Previous
           </button>
-        </template>
-      </DataTable>
+          <button
+            @click="nextPage"
+            :disabled="currentPage === pagination.last_page"
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
+          <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
+            <!-- Prev -->
+            <button
+              @click="previousPage"
+              :disabled="currentPage === 1"
+              class="relative inline-flex items-center px-2.5 py-2 rounded-l-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            
+            <!-- Page Numbers -->
+            <template v-for="(page, idx) in paginationRange" :key="idx">
+              <span
+                v-if="page === '...'"
+                class="relative inline-flex items-center px-3.5 py-2 border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-slate-400 dark:text-zinc-500 select-none"
+              >
+                ...
+              </span>
+              <button
+                v-else
+                @click="goToPage(page)"
+                class="relative inline-flex items-center px-3.5 py-2 border text-xs font-bold transition-all cursor-pointer"
+                :class="currentPage === page ? 'z-10 bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-600 text-slate-800 dark:text-zinc-100' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+              >
+                {{ page }}
+              </button>
+            </template>
+            
+            <!-- Next -->
+            <button
+              @click="nextPage"
+              :disabled="currentPage === pagination.last_page"
+              class="relative inline-flex items-center px-2.5 py-2 rounded-r-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </nav>
+        </div>
+      </div>
     </div>
 
     <!-- Sales Return Modal -->
@@ -133,12 +391,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { debounce } from '@/utils/debounce';
 import SalesReturnModal from './SalesReturnModal.vue';
-import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -153,14 +410,19 @@ const dateTo = ref('');
 const showCreateModal = ref(false);
 const selectedOriginalSaleId = ref(null);
 const loading = ref(false);
+const openActionDropdown = ref(null);
+const showFilterDropdown = ref(false);
+const currentTab = ref('all');
+
+// Sorting
+const sortBy = ref('sale_date');
+const sortOrder = ref('desc');
 
 // Pagination
 const currentPage = ref(1);
 const perPage = ref(15);
 const totalItems = ref(0);
-const totalPages = computed(() => Math.ceil(totalItems.value / perPage.value));
 
-// DataTable pagination
 const pagination = ref({
   current_page: 1,
   last_page: 1,
@@ -170,95 +432,111 @@ const pagination = ref({
   to: 0
 });
 
-// Table columns configuration
-const tableColumns = ref([
-  {
-    key: 'sale_number',
-    label: 'Return #',
-    sortable: true,
-    align: 'left',
-    class: 'text-gray-500 font-mono text-xs'
-  },
-  {
-    key: 'original_sale.sale_number',
-    label: 'Original Invoice',
-    sortable: true,
-    align: 'left'
-  },
-  {
-    key: 'customer.name',
-    label: 'Customer',
-    sortable: true,
-    align: 'left'
-  },
-  {
-    key: 'sale_date',
-    label: 'Date',
-    sortable: true,
-    type: 'date',
-    align: 'left'
-  },
-  {
-    key: 'return_amount',
-    label: 'Return Amount',
-    sortable: true,
-    align: 'right'
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    sortable: false,
-    align: 'center'
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    sortable: false,
-    align: 'left'
-  }
-]);
-
-// Table filters
-const filters = ref({
-  search: '',
-  sort_field: '',
-  sort_order: ''
+// Counts for each tab state
+const counts = ref({
+  all: 0,
+  cash: 0,
+  card: 0,
+  store_credit: 0,
+  exchange: 0
 });
 
-// Computed
-const visiblePages = computed(() => {
-  const pages = [];
-  const start = Math.max(1, currentPage.value - 2);
-  const end = Math.min(totalPages.value, currentPage.value + 2);
+const tabs = [
+  { id: 'all', label: 'All Returns' },
+  { id: 'cash', label: 'Cash' },
+  { id: 'card', label: 'Card Refund' },
+  { id: 'store_credit', label: 'Store Credit' },
+  { id: 'exchange', label: 'Exchange' }
+];
 
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
+const selectedFilters = ref([]);
+
+const isTabActive = (tabId) => {
+  return currentTab.value === tabId;
+};
+
+const toggleFilterDropdown = () => {
+  showFilterDropdown.value = !showFilterDropdown.value;
+};
+
+const toggleFilterOption = (option) => {
+  const index = selectedFilters.value.indexOf(option);
+  if (index > -1) {
+    selectedFilters.value.splice(index, 1);
+    if (currentTab.value === option) {
+      currentTab.value = 'all';
+      fetchReturns(1);
+    }
+  } else {
+    selectedFilters.value.push(option);
   }
+};
 
-  return pages;
+const clearAllFilters = () => {
+  selectedFilters.value = [];
+  currentTab.value = 'all';
+  searchQuery.value = '';
+  originalInvoice.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
+  fetchReturns(1);
+};
+
+// Computed
+const paginationRange = computed(() => {
+  const range = [];
+  const lastPage = pagination.value.last_page || 1;
+  const current = currentPage.value;
+
+  if (lastPage <= 6) {
+    for (let i = 1; i <= lastPage; i++) range.push(i);
+  } else {
+    if (current <= 3) {
+      range.push(1, 2, 3, '...', lastPage);
+    } else if (current >= lastPage - 2) {
+      range.push(1, '...', lastPage - 2, lastPage - 1, lastPage);
+    } else {
+      range.push(1, '...', current, '...', lastPage);
+    }
+  }
+  return range;
 });
 
 // Methods
+const fetchReturnStatusCounts = async () => {
+  try {
+    const response = await axios.get('/api/sales/returns/status-counts');
+    counts.value = response.data;
+  } catch (error) {
+    console.error('Error fetching return counts:', error);
+  }
+};
+
 const fetchReturns = async (page = 1) => {
   loading.value = true;
+  currentPage.value = page;
   try {
     const params = {
       page,
-      per_page: pagination.value.per_page,
+      per_page: perPage.value,
       search: searchQuery.value,
       original_invoice: originalInvoice.value,
       date_from: dateFrom.value,
       date_to: dateTo.value,
       is_refund: true,
-      ...filters.value
+      sort_by: sortBy.value,
+      sort_order: sortOrder.value,
     };
 
-    // Remove empty parameters
-    Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null) {
-        delete params[key];
-      }
-    });
+    // Apply active tab filter
+    if (currentTab.value !== 'all') {
+      params.payment_method = currentTab.value;
+    }
+
+    // Apply multiple filters if selected in dropdown
+    if (selectedFilters.value.length > 0) {
+      params.payment_method = selectedFilters.value.join(',');
+    }
 
     const response = await axios.get('/api/sales', { params });
     returns.value = response.data.data;
@@ -273,6 +551,8 @@ const fetchReturns = async (page = 1) => {
       from: response.data.from,
       to: response.data.to
     };
+
+    await fetchReturnStatusCounts();
   } catch (error) {
     console.error('Error fetching returns:', error);
   } finally {
@@ -281,42 +561,61 @@ const fetchReturns = async (page = 1) => {
 };
 
 const debouncedSearch = debounce(() => {
-  currentPage.value = 1;
-  fetchReturns();
+  fetchReturns(1);
 }, 300);
 
-// DataTable event handlers
-const handleTableSearch = (searchQuery) => {
-  filters.value.search = searchQuery;
+const handleSort = (field) => {
+  if (sortBy.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortBy.value = field;
+    sortOrder.value = 'desc';
+  }
   fetchReturns(1);
 };
 
-const handleSort = (sortData) => {
-  filters.value.sort_field = sortData.field;
-  filters.value.sort_order = sortData.order;
+const handlePerPageChange = () => {
   fetchReturns(1);
 };
 
-const handlePageChange = (page) => {
-  fetchReturns(page);
+const setActiveTab = (tabId) => {
+  currentTab.value = tabId;
+  fetchReturns(1);
 };
 
-const handlePerPageChange = (perPage) => {
-  pagination.value.per_page = perPage;
-  fetchReturns(1);
+const toggleActionDropdown = (id) => {
+  openActionDropdown.value = openActionDropdown.value === id ? null : id;
+};
+
+const closeAllDropdowns = () => {
+  openActionDropdown.value = null;
+  showFilterDropdown.value = false;
 };
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString();
+  if (!dateString) return '-';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
+const formatCurrency = (val) => {
+  const num = parseFloat(val);
+  if (isNaN(num)) return '$0.00';
+  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+};
+
+const formatRefundLabel = (method) => {
+  if (!method) return 'N/A';
+  if (method === 'store_credit') return 'Store Credit';
+  return method.charAt(0).toUpperCase() + method.slice(1);
+};
+
+// Actions
 const viewReturn = (returnItem) => {
-  // Navigate to return view
   window.open(`/sales/returns/${returnItem.id}`, '_blank');
 };
 
 const printReturn = (returnItem) => {
-  // Print return receipt
   window.open(`/sales/returns/${returnItem.id}/print`, '_blank');
 };
 
@@ -324,34 +623,30 @@ const deleteReturn = async (returnId) => {
   if (confirm('Are you sure you want to delete this return?')) {
     try {
       await axios.delete(`/api/sales/${returnId}`);
-      fetchReturns();
+      fetchReturns(currentPage.value);
     } catch (error) {
       console.error('Error deleting return:', error);
     }
   }
 };
 
-// Pagination methods
 const previousPage = () => {
   if (currentPage.value > 1) {
-    currentPage.value--;
-    fetchReturns();
+    fetchReturns(currentPage.value - 1);
   }
 };
 
 const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-    fetchReturns();
+  if (currentPage.value < pagination.value.last_page) {
+    fetchReturns(currentPage.value + 1);
   }
 };
 
 const goToPage = (page) => {
-  currentPage.value = page;
-  fetchReturns();
+  fetchReturns(page);
 };
 
-// Create return method
+// Create return methods
 const createReturn = () => {
   showCreateModal.value = true;
 };
@@ -363,7 +658,7 @@ const closeModal = () => {
 
 const handleReturnSaved = () => {
   closeModal();
-  fetchReturns();
+  fetchReturns(currentPage.value);
 };
 
 // Check for original_invoice query parameter
@@ -376,7 +671,40 @@ const checkQueryParams = () => {
 
 // Lifecycle
 onMounted(() => {
-  fetchReturns();
+  fetchReturns(1);
   checkQueryParams();
+  document.addEventListener('click', closeAllDropdowns);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeAllDropdowns);
 });
 </script>
+
+<style scoped>
+.shadow-soft {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.animate-button:hover {
+  transform: translateY(-0.5px);
+}
+.animate-button:active {
+  transform: translateY(0.5px);
+}
+</style>

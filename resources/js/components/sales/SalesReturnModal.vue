@@ -1,260 +1,407 @@
 <template>
-  <div v-if="show" class="modal-overlay" @click="closeModal">
-    <div class="modal-content" @click.stop>
-      <!-- Enhanced Header -->
-      <div class="modal-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+  <Teleport to="body">
+    <div v-if="show" class="fixed inset-0 bg-slate-900/40 dark:bg-black/50 backdrop-blur-md overflow-y-auto h-full w-full z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+      <div class="relative mx-auto border border-slate-100 dark:border-zinc-800 w-full max-w-2xl min-h-[450px] shadow-2xl rounded-xl bg-white dark:bg-zinc-900 text-left transition-all duration-300 flex flex-col max-h-[90vh]" @click.stop>
+        
+        <!-- Header -->
+        <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative">
+          <button
+            type="button"
+            @click="closeModal"
+            class="absolute top-5 right-5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </div>
-          <div class="header-text">
-            <h3>Process Sales Return</h3>
-            <p>Create a return for a previous sale</p>
-          </div>
+          </button>
+          <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Process Sales Return</h3>
+          <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Create a return for a previous sale</p>
         </div>
-        <button @click="closeModal" class="btn-close" type="button">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
 
-      <form @submit.prevent="processSalesReturn" novalidate>
-        <div class="modal-body">
-          <!-- Original Sale Selection -->
-          <div class="form-section">
-            <h4 class="section-title">Original Sale Information</h4>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="original_sale_search" class="required">Search Original Sale</label>
-                <div class="search-container">
+        <!-- Form -->
+        <form @submit.prevent="processSalesReturn" class="flex flex-col flex-1 min-h-0" novalidate>
+          <div class="flex-1 overflow-y-auto p-6 space-y-6 pr-4 custom-scrollbar">
+            
+            <!-- Original Sale Selection -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5 required">Search Original Sale</label>
+                <div class="relative">
                   <input
                     id="original_sale_search"
                     v-model="saleSearchQuery"
                     type="text"
                     placeholder="Enter sale number or customer name..."
-                    class="form-control"
-                    :class="{ 'is-invalid': errors.original_sale_id }"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-750': errors.original_sale_id }"
                     @input="searchSales"
                   />
-                  <div v-if="searchResults.length > 0" class="search-results">
+                  
+                  <!-- Search Results Dropdown -->
+                  <div v-if="searchResults.length > 0" class="absolute z-50 left-0 right-0 mt-1.5 rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 max-h-48 overflow-y-auto py-1 custom-scrollbar-thin">
                     <div
                       v-for="sale in searchResults"
                       :key="sale.id"
                       @click="selectOriginalSale(sale)"
-                      class="search-result-item"
+                      class="px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0"
                     >
-                      <div class="result-main">
-                        <span class="sale-number">{{ sale.sale_number }}</span>
-                        <span class="sale-amount">{{ formatCurrency(sale.total_amount) }}</span>
+                      <div class="text-left">
+                        <span class="font-bold text-slate-800 dark:text-zinc-105">{{ sale.sale_number }}</span>
+                        <p class="text-[10px] text-slate-400 dark:text-zinc-500">{{ sale.customer?.name || 'Walk-in Customer' }} | {{ formatDate(sale.sale_date) }}</p>
                       </div>
-                      <div class="result-details">
-                        <span class="customer">{{ sale.customer?.name || 'Walk-in Customer' }}</span>
-                        <span class="date">{{ formatDate(sale.sale_date) }}</span>
-                      </div>
+                      <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ formatCurrency(sale.total_amount) }}</span>
                     </div>
                   </div>
                 </div>
-                <div v-if="errors.original_sale_id" class="invalid-feedback">{{ errors.original_sale_id[0] }}</div>
+                <p v-if="errors.original_sale_id" class="mt-1 text-[10px] text-red-505">{{ errors.original_sale_id[0] }}</p>
               </div>
 
-              <div v-if="originalSale" class="form-group">
-                <label>Selected Sale</label>
-                <div class="selected-sale">
-                  <div class="sale-info">
-                    <h5>{{ originalSale.sale_number }}</h5>
-                    <p>{{ originalSale.customer?.name || 'Walk-in Customer' }}</p>
-                    <p>{{ formatDate(originalSale.sale_date) }} - {{ formatCurrency(originalSale.total_amount) }}</p>
-                  </div>
-                  <button type="button" @click="clearOriginalSale" class="btn btn-sm btn-secondary">
-                    Clear
-                  </button>
+              <!-- Selected Sale Info Card -->
+              <div v-if="originalSale" class="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl border border-indigo-100 dark:border-indigo-900/30 text-xs flex justify-between items-center">
+                <div class="space-y-1 text-left">
+                  <span class="font-bold text-indigo-900 dark:text-indigo-300 text-sm">{{ originalSale.sale_number }}</span>
+                  <p class="text-slate-650 dark:text-zinc-400"><span class="font-semibold text-slate-400 dark:text-zinc-500">Customer:</span> {{ originalSale.customer?.name || 'Walk-in Customer' }}</p>
+                  <p class="text-slate-650 dark:text-zinc-400"><span class="font-semibold text-slate-400 dark:text-zinc-500">Date:</span> {{ formatDate(originalSale.sale_date) }} | <span class="font-semibold text-slate-400 dark:text-zinc-500">Total:</span> {{ formatCurrency(originalSale.total_amount) }}</p>
                 </div>
+                <button type="button" @click="clearOriginalSale" class="text-rose-600 hover:text-rose-800 dark:text-rose-450 dark:hover:text-rose-350 font-bold text-[10px] hover:underline cursor-pointer">Clear</button>
               </div>
             </div>
-          </div>
 
-          <!-- Return Information -->
-          <div v-if="originalSale" class="form-section">
-            <h4 class="section-title">Return Details</h4>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="return_date" class="required">Return Date</label>
-                <input
-                  id="return_date"
-                  v-model="form.return_date"
-                  type="date"
-                  class="form-control"
-                  :class="{ 'is-invalid': errors.return_date }"
-                />
-                <div v-if="errors.return_date" class="invalid-feedback">{{ errors.return_date[0] }}</div>
+            <!-- Return Details -->
+            <div v-if="originalSale" class="space-y-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
+              <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Return Details</h4>
+              <div class="grid grid-cols-2 gap-4">
+                
+                <!-- Return Date with Custom Calendar Popover opening upside -->
+                <div class="text-left relative">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5 required">Return Date</label>
+                  <div class="relative">
+                    <div v-if="showCalendar" class="fixed inset-0 z-40" @click.stop="showCalendar = false"></div>
+                    <button
+                      type="button"
+                      @click="showCalendar = !showCalendar"
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs bg-white dark:bg-zinc-950 transition-all flex items-center gap-2 text-left cursor-pointer"
+                      :class="[form.return_date ? 'text-slate-800 dark:text-zinc-200' : 'text-slate-400 dark:text-zinc-500', { 'border-red-300 dark:border-red-750': errors.return_date }]"
+                    >
+                      <svg class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="font-medium">{{ form.return_date ? formatDisplayDate(form.return_date) : 'Select date' }}</span>
+                    </button>
+
+                    <!-- Custom Calendar Popover (upside) -->
+                    <div v-if="showCalendar" class="absolute z-50 left-0 bottom-full mb-1.5 w-64 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-3 select-none">
+                      <!-- Month/Year Nav -->
+                      <div class="flex items-center justify-between mb-2.5">
+                        <button type="button" @click="calPrevMonth" class="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
+                          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        
+                        <div class="flex items-center space-x-1">
+                          <!-- Month Dropdown -->
+                          <div class="relative">
+                            <div v-if="showMonthList" class="fixed inset-0 z-40" @click.stop="showMonthList = false"></div>
+                            <button
+                              type="button"
+                              @click="showMonthList = !showMonthList"
+                              class="flex items-center space-x-0.5 px-1 py-0.5 text-[11px] font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer focus:outline-none"
+                            >
+                              <span>{{ calMonthName.slice(0, 3) }}</span>
+                              <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showMonthList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <!-- Month Floating List (upside) -->
+                            <div
+                              v-if="showMonthList"
+                              class="absolute z-55 left-0 bottom-full mb-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                            >
+                              <button
+                                v-for="(name, idx) in monthNames"
+                                :key="idx"
+                                type="button"
+                                @click="selectCalMonth(idx)"
+                                class="w-full text-left px-2.5 py-1 text-[10px] font-medium transition-colors cursor-pointer"
+                                :class="calMonth === idx ? 'text-rose-600 dark:text-rose-455 bg-rose-50 dark:bg-rose-905/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+                              >
+                                {{ name.slice(0, 3) }}
+                              </button>
+                            </div>
+                          </div>
+
+                          <!-- Year Dropdown -->
+                          <div class="relative">
+                            <div v-if="showYearList" class="fixed inset-0 z-40" @click.stop="showYearList = false"></div>
+                            <button
+                              type="button"
+                              @click="showYearList = !showYearList"
+                              class="flex items-center space-x-0.5 px-1 py-0.5 text-[11px] font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer focus:outline-none"
+                            >
+                              <span>{{ calYear }}</span>
+                              <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showYearList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <!-- Year Floating List (upside) -->
+                            <div
+                              v-if="showYearList"
+                              class="absolute z-55 left-1/2 -translate-x-1/2 bottom-full mb-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                            >
+                              <button
+                                v-for="y in yearOptions"
+                                :key="y"
+                                type="button"
+                                @click="selectCalYear(y)"
+                                class="w-full text-left px-2.5 py-1 text-[10px] font-medium transition-colors cursor-pointer"
+                                :class="calYear === y ? 'text-rose-600 dark:text-rose-455 bg-rose-50 dark:bg-rose-905/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+                              >
+                                {{ y }}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button type="button" @click="calNextMonth" class="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
+                          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                      </div>
+                      <!-- Day Headers -->
+                      <div class="grid grid-cols-7 mb-1">
+                        <span v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d" class="text-center text-[9px] font-bold text-slate-400 dark:text-zinc-650 uppercase py-1">{{ d }}</span>
+                      </div>
+                      <!-- Day Grid -->
+                      <div class="grid grid-cols-7">
+                        <button
+                          v-for="(day, i) in calDays" :key="i"
+                          type="button"
+                          @click="day.val && selectCalDay(day.val)"
+                          :disabled="!day.val"
+                          class="h-7 w-full rounded-lg text-[11px] font-medium transition-all cursor-pointer disabled:cursor-default disabled:opacity-0"
+                          :class="day.val && isSelectedDay(day.val) ? 'bg-rose-600 text-white font-bold' : day.val && isTodayDay(day.val) ? 'text-rose-600 dark:text-rose-400 font-bold hover:bg-rose-50 dark:hover:bg-rose-900/20' : day.val ? 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800' : ''"
+                        >{{ day.val || '' }}</button>
+                      </div>
+                      <!-- Quick Actions -->
+                      <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                        <button type="button" @click="clearCalDate" class="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors cursor-pointer">Clear</button>
+                        <button type="button" @click="selectToday" class="text-[10px] font-semibold text-rose-650 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer">Today</button>
+                      </div>
+                    </div>
+                  </div>
+                  <p v-if="errors.return_date" class="mt-1 text-[10px] text-red-505">{{ errors.return_date[0] }}</p>
+                </div>
+
+                <!-- Custom Return Reason Dropdown opening upside -->
+                <div class="text-left relative">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5 required">Return Reason</label>
+                  <div class="relative">
+                    <div v-if="showReasonDropdown" class="fixed inset-0 z-40" @click.stop="showReasonDropdown = false"></div>
+                    <button
+                      type="button"
+                      @click="showReasonDropdown = !showReasonDropdown"
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs bg-white dark:bg-zinc-950 transition-all flex items-center justify-between text-left cursor-pointer"
+                      :class="[form.return_reason ? 'text-slate-800 dark:text-zinc-200' : 'text-slate-400 dark:text-zinc-500', { 'border-red-300 dark:border-red-750': errors.return_reason }]"
+                    >
+                      <span class="font-medium">{{ form.return_reason ? formatReason(form.return_reason) : 'Select Reason' }}</span>
+                      <svg class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showReasonDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    <div
+                      v-if="showReasonDropdown"
+                      class="absolute z-50 left-0 right-0 bottom-full mb-1.5 rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 overflow-hidden"
+                    >
+                      <button type="button" @click="selectReason('defective')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.return_reason === 'defective' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Defective Product</button>
+                      <button type="button" @click="selectReason('wrong_item')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.return_reason === 'wrong_item' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Wrong Item</button>
+                      <button type="button" @click="selectReason('customer_change_mind')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.return_reason === 'customer_change_mind' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Customer Changed Mind</button>
+                      <button type="button" @click="selectReason('damaged_shipping')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.return_reason === 'damaged_shipping' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Damaged in Shipping</button>
+                      <button type="button" @click="selectReason('not_as_described')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-855 text-slate-655 dark:text-zinc-300" :class="form.return_reason === 'not_as_described' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Not as Described</button>
+                      <button type="button" @click="selectReason('other')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.return_reason === 'other' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Other</button>
+                    </div>
+                  </div>
+                  <p v-if="errors.return_reason" class="mt-1 text-[10px] text-red-550">{{ errors.return_reason[0] }}</p>
+                </div>
+
               </div>
 
-              <div class="form-group">
-                <label for="return_reason" class="required">Return Reason</label>
-                <select
-                  id="return_reason"
-                  v-model="form.return_reason"
-                  class="form-control"
-                  :class="{ 'is-invalid': errors.return_reason }"
-                >
-                  <option value="">Select reason</option>
-                  <option value="defective">Defective Product</option>
-                  <option value="wrong_item">Wrong Item</option>
-                  <option value="customer_change_mind">Customer Changed Mind</option>
-                  <option value="damaged_shipping">Damaged in Shipping</option>
-                  <option value="not_as_described">Not as Described</option>
-                  <option value="other">Other</option>
-                </select>
-                <div v-if="errors.return_reason" class="invalid-feedback">{{ errors.return_reason[0] }}</div>
-              </div>
-
-              <div class="form-group full-width">
-                <label for="return_notes">Return Notes</label>
+              <div class="text-left">
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Return Notes</label>
                 <textarea
                   id="return_notes"
                   v-model="form.return_notes"
-                  class="form-control"
-                  rows="3"
+                  rows="2"
                   placeholder="Additional notes about the return..."
+                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
                 ></textarea>
               </div>
             </div>
-          </div>
 
-          <!-- Return Items -->
-          <div v-if="originalSale && originalSale.sale_items" class="form-section">
-            <div class="section-header">
-              <h4 class="section-title">Items to Return</h4>
-              <div class="section-actions">
-                <button type="button" @click="selectAllItems" class="btn btn-sm btn-secondary">
-                  Select All
-                </button>
-                <button type="button" @click="clearAllItems" class="btn btn-sm btn-secondary">
-                  Clear All
-                </button>
+            <!-- Items to Return -->
+            <div v-if="originalSale && originalSale.sale_items" class="space-y-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Items to Return</h4>
+                <div class="flex space-x-2">
+                  <button type="button" @click="selectAllItems" class="text-[10px] font-bold text-slate-450 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors cursor-pointer">Select All</button>
+                  <span class="text-slate-200 dark:text-zinc-800">|</span>
+                  <button type="button" @click="clearAllItems" class="text-[10px] font-bold text-slate-455 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors cursor-pointer">Clear All</button>
+                </div>
               </div>
-            </div>
-            
-            <div class="items-container">
-              <div v-for="(item, index) in originalSale.sale_items" :key="item.id" class="item-row">
-                <div class="item-grid">
-                  <div class="item-info">
-                    <div class="item-checkbox">
-                      <input
-                        :id="`item_${item.id}`"
-                        v-model="form.return_items[item.id].selected"
-                        type="checkbox"
-                        @change="updateItemSelection(item.id)"
-                      />
-                      <label :for="`item_${item.id}`" class="checkbox-label">
-                        <strong>{{ item.product?.name || 'Unknown Product' }}</strong>
-                        <div class="item-details">
-                          SKU: {{ item.product?.sku || 'N/A' }} | 
-                          Original Qty: {{ item.quantity }} | 
-                          Unit Price: {{ formatCurrency(item.unit_price) }}
+
+              <div class="space-y-3">
+                <div v-for="(item, index) in originalSale.sale_items" :key="item.id" class="p-3.5 bg-slate-50 dark:bg-zinc-950/30 rounded-xl border border-slate-100 dark:border-zinc-800">
+                  <template v-if="form.return_items && form.return_items[item.id]">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div class="flex items-start space-x-2.5 flex-1 text-left">
+                        <input
+                          :id="`item_${item.id}`"
+                          v-model="form.return_items[item.id].selected"
+                          type="checkbox"
+                          class="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer w-4 h-4 mt-0.5"
+                          @change="updateItemSelection(item.id)"
+                        />
+                        <label :for="`item_${item.id}`" class="cursor-pointer text-xs">
+                          <strong class="font-bold text-slate-800 dark:text-zinc-200 block">{{ item.product?.name || 'Unknown Product' }}</strong>
+                          <span class="text-[10px] text-slate-400 dark:text-zinc-500">
+                            SKU: {{ item.product?.sku || 'N/A' }} | 
+                            Price: {{ formatCurrency(item.unit_price) }}
+                          </span>
+                        </label>
+                      </div>
+
+                      <div v-if="form.return_items[item.id].selected" class="flex items-center space-x-4">
+                        <div class="flex flex-col w-14 text-center">
+                          <span class="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Sold Qty</span>
+                          <span class="text-xs font-bold text-slate-700 dark:text-zinc-300 py-1">
+                            {{ item.quantity }}
+                          </span>
                         </div>
-                      </label>
+
+                        <div class="flex flex-col w-20 text-left">
+                          <span class="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Return Qty</span>
+                          <input
+                            :id="`qty_${item.id}`"
+                            v-model.number="form.return_items[item.id].quantity"
+                            type="number"
+                            :min="1"
+                            :max="item.quantity"
+                            class="px-2 py-1 border border-slate-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs font-bold text-center text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-955"
+                            @input="onQuantityChange(item.id, item.unit_price)"
+                          />
+                        </div>
+
+                        <div class="flex flex-col text-left w-28">
+                          <span class="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Return Amt</span>
+                          <div class="relative flex items-center">
+                            <span class="absolute left-2 text-xs text-slate-450 dark:text-zinc-500 font-medium">$</span>
+                            <input
+                              :id="`amt_${item.id}`"
+                              v-model.number="form.return_items[item.id].return_amount"
+                              type="number"
+                              step="0.01"
+                              :min="0"
+                              :max="item.unit_price * form.return_items[item.id].quantity"
+                              class="w-[100px] pl-5 pr-2 py-1 border border-slate-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs font-bold text-slate-855 dark:text-zinc-200 bg-white dark:bg-zinc-955"
+                              @input="onReturnAmountInput(item.id, item.unit_price * form.return_items[item.id].quantity)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Return Summary / Refund Method -->
+            <div v-if="originalSale" class="space-y-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
+              <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Summary & Refund</h4>
+              
+              <div class="grid grid-cols-2 gap-4">
+                
+                <!-- Custom Refund Method Dropdown opening upside -->
+                <div class="text-left relative">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5 required">Refund Method</label>
+                  <div class="relative">
+                    <div v-if="showRefundDropdown" class="fixed inset-0 z-40" @click.stop="showRefundDropdown = false"></div>
+                    <button
+                      type="button"
+                      @click="showRefundDropdown = !showRefundDropdown"
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs bg-white dark:bg-zinc-950 transition-all flex items-center justify-between text-left cursor-pointer"
+                      :class="[form.refund_method ? 'text-slate-800 dark:text-zinc-200' : 'text-slate-400 dark:text-zinc-500', { 'border-red-300 dark:border-red-750': errors.refund_method }]"
+                    >
+                      <span class="font-medium">{{ form.refund_method ? formatRefundMethod(form.refund_method) : 'Select Refund Method' }}</span>
+                      <svg class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showRefundDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    <div
+                      v-if="showRefundDropdown"
+                      class="absolute z-50 left-0 right-0 bottom-full mb-1.5 rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 overflow-hidden"
+                    >
+                      <button type="button" @click="selectRefundMethod('cash')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'cash' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Cash</button>
+                      <button type="button" @click="selectRefundMethod('card')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'card' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Card Refund</button>
+                      <button type="button" @click="selectRefundMethod('store_credit')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'store_credit' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Store Credit</button>
+                      <button type="button" @click="selectRefundMethod('exchange')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'exchange' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Exchange</button>
                     </div>
                   </div>
-                  
-                  <div v-if="form.return_items[item.id].selected" class="return-quantity">
-                    <label :for="`qty_${item.id}`">Return Qty</label>
-                    <input
-                      :id="`qty_${item.id}`"
-                      v-model.number="form.return_items[item.id].quantity"
-                      type="number"
-                      :min="1"
-                      :max="item.quantity"
-                      class="form-control"
-                      @input="calculateReturnTotal"
-                    />
-                  </div>
-                  
-                  <div v-if="form.return_items[item.id].selected" class="return-total">
-                    <label>Return Amount</label>
-                    <div class="total-display">
-                      {{ formatCurrency(form.return_items[item.id].return_amount) }}
-                    </div>
+                  <p v-if="errors.refund_method" class="mt-1 text-[10px] text-red-505">{{ errors.refund_method[0] }}</p>
+                </div>
+
+                <div class="text-left">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Total Refund</label>
+                  <div class="px-3 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-lg text-xs font-bold text-rose-650 dark:text-rose-400 text-left flex items-center h-[34px]">
+                    {{ formatCurrency(form.total_return_amount) }}
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
 
-          <!-- Return Summary -->
-          <div v-if="originalSale" class="form-section">
-            <h4 class="section-title">Return Summary</h4>
-            <div class="totals-container">
-              <div class="totals-grid">
-                <div class="form-group">
-                  <label>Total Return Amount</label>
-                  <input
-                    v-model="form.total_return_amount"
-                    type="text"
-                    class="form-control total-field"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="refund_method" class="required">Refund Method</label>
-                  <select
-                    id="refund_method"
-                    v-model="form.refund_method"
-                    class="form-control"
-                    :class="{ 'is-invalid': errors.refund_method }"
-                  >
-                    <option value="">Select refund method</option>
-                    <option value="cash">Cash</option>
-                    <option value="card">Card Refund</option>
-                    <option value="store_credit">Store Credit</option>
-                    <option value="exchange">Exchange</option>
-                  </select>
-                  <div v-if="errors.refund_method" class="invalid-feedback">{{ errors.refund_method[0] }}</div>
-                </div>
+          <!-- Footer Buttons -->
+          <div class="flex justify-between items-center p-6 border-t border-slate-100 dark:border-zinc-800 shrink-0 bg-slate-50 dark:bg-zinc-900/50">
+            <div class="flex items-center space-x-4">
+              <div class="flex flex-col text-left">
+                <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Return Amount</span>
+                <span class="text-sm font-black text-rose-650 dark:text-rose-400">{{ formatCurrency(form.total_return_amount) }}</span>
+              </div>
+              <div class="flex flex-col border-l border-slate-200 dark:border-zinc-800 pl-4 text-left">
+                <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Items</span>
+                <span class="text-sm font-bold text-slate-800 dark:text-zinc-200">{{ selectedItemsCount }}</span>
               </div>
             </div>
+            <div class="flex space-x-3">
+              <button
+                type="button"
+                @click="closeModal"
+                class="px-4 h-9 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                :disabled="processing"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="processing || !canProcessReturn"
+                class="px-4 h-9 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <svg v-if="processing" class="w-3.5 h-3.5 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ processing ? 'Processing...' : 'Process Return' }}</span>
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
 
-        <div class="modal-footer">
-          <div class="footer-summary">
-            <div class="summary-item">
-              <span class="summary-label">Return Amount:</span>
-              <span class="summary-value">{{ formatCurrency(form.total_return_amount) }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">Items:</span>
-              <span class="summary-value">{{ selectedItemsCount }}</span>
-            </div>
-          </div>
-          <div class="footer-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary" :disabled="processing">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Cancel
-            </button>
-            <button type="submit" :disabled="processing || !canProcessReturn" class="btn btn-primary">
-              <svg v-if="processing" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
-              {{ processing ? 'Processing...' : 'Process Return' }}
-            </button>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script>
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, onUnmounted } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
@@ -282,6 +429,18 @@ export default {
     const searchResults = ref([]);
     const originalSale = ref(null);
     const searchTimeout = ref(null);
+
+    // Custom calendar and dropdown toggles
+    const showCalendar = ref(false);
+    const calMonth = ref(new Date().getMonth());
+    const calYear = ref(new Date().getFullYear());
+    const showMonthList = ref(false);
+    const showYearList = ref(false);
+
+    const showReasonDropdown = ref(false);
+    const showRefundDropdown = ref(false);
+
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     const form = reactive({
       original_sale_id: '',
@@ -317,6 +476,12 @@ export default {
       saleSearchQuery.value = '';
       searchResults.value = [];
       errors.value = {};
+      
+      showCalendar.value = false;
+      showReasonDropdown.value = false;
+      showRefundDropdown.value = false;
+      calMonth.value = new Date().getMonth();
+      calYear.value = new Date().getFullYear();
     };
 
     const searchSales = () => {
@@ -413,11 +578,38 @@ export default {
       calculateReturnTotal();
     };
 
+    const onQuantityChange = (itemId, unitPrice) => {
+      const item = form.return_items[itemId];
+      if (item) {
+        if (item.quantity < 1) {
+          item.quantity = 1;
+        }
+        const maxQty = originalSale.value.sale_items.find(i => i.id === itemId)?.quantity || 1;
+        if (item.quantity > maxQty) {
+          item.quantity = maxQty;
+        }
+        item.return_amount = unitPrice * item.quantity;
+        calculateReturnTotal();
+      }
+    };
+
+    const onReturnAmountInput = (itemId, maxVal) => {
+      const item = form.return_items[itemId];
+      if (item) {
+        let val = item.return_amount;
+        if (val > maxVal) {
+          item.return_amount = maxVal;
+        } else if (val < 0 || isNaN(val)) {
+          item.return_amount = 0;
+        }
+        calculateReturnTotal();
+      }
+    };
+
     const calculateReturnTotal = () => {
       let total = 0;
       Object.values(form.return_items).forEach(item => {
         if (item.selected) {
-          item.return_amount = item.unit_price * item.quantity;
           total += item.return_amount;
         }
       });
@@ -430,6 +622,118 @@ export default {
 
     const formatCurrency = (amount) => {
       return currencyStore.formatPrice(amount || 0);
+    };
+
+    // Calendar Popover Methods
+    const selectCalMonth = (idx) => {
+      calMonth.value = idx;
+      showMonthList.value = false;
+    };
+
+    const selectCalYear = (y) => {
+      calYear.value = y;
+      showYearList.value = false;
+    };
+
+    const formatDisplayDate = (dateStr) => {
+      if (!dateStr) return '';
+      const onlyDate = dateStr.split(' ')[0].split('T')[0];
+      const d = new Date(onlyDate + 'T00:00:00');
+      if (isNaN(d.getTime())) {
+        const fallbackD = new Date(dateStr);
+        if (isNaN(fallbackD.getTime())) return 'Invalid Date';
+        return fallbackD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const calMonthName = computed(() => monthNames[calMonth.value]);
+
+    const yearOptions = computed(() => {
+      const currentYear = new Date().getFullYear();
+      const yearsList = [];
+      for (let y = currentYear + 5; y >= currentYear - 100; y--) {
+        yearsList.push(y);
+      }
+      return yearsList;
+    });
+
+    const calDays = computed(() => {
+      const firstDay = new Date(calYear.value, calMonth.value, 1).getDay();
+      const daysInMonth = new Date(calYear.value, calMonth.value + 1, 0).getDate();
+      const days = [];
+      for (let i = 0; i < firstDay; i++) days.push({ val: null });
+      for (let d = 1; d <= daysInMonth; d++) days.push({ val: d });
+      return days;
+    });
+
+    const calPrevMonth = () => {
+      if (calMonth.value === 0) { calMonth.value = 11; calYear.value--; }
+      else calMonth.value--;
+    };
+    const calNextMonth = () => {
+      if (calMonth.value === 11) { calMonth.value = 0; calYear.value++; }
+      else calMonth.value++;
+    };
+
+    const selectCalDay = (day) => {
+      const m = String(calMonth.value + 1).padStart(2, '0');
+      const d = String(day).padStart(2, '0');
+      form.return_date = `${calYear.value}-${m}-${d}`;
+      showCalendar.value = false;
+    };
+
+    const isSelectedDay = (day) => {
+      if (!form.return_date) return false;
+      const [sy, sm, sd] = form.return_date.split('-').map(Number);
+      return sy === calYear.value && sm === calMonth.value + 1 && sd === day;
+    };
+
+    const isTodayDay = (day) => {
+      const t = new Date();
+      return t.getFullYear() === calYear.value && t.getMonth() === calMonth.value && t.getDate() === day;
+    };
+
+    const clearCalDate = () => { form.return_date = ''; showCalendar.value = false; };
+    const selectToday = () => {
+      const t = new Date();
+      calMonth.value = t.getMonth(); calYear.value = t.getFullYear();
+      selectCalDay(t.getDate());
+    };
+
+    // Reason & Refund Select custom handlers
+    const selectReason = (val) => {
+      form.return_reason = val;
+      showReasonDropdown.value = false;
+    };
+
+    const formatReason = (val) => {
+      if (!val) return '';
+      const map = {
+        defective: 'Defective Product',
+        wrong_item: 'Wrong Item',
+        customer_change_mind: 'Customer Changed Mind',
+        damaged_shipping: 'Damaged in Shipping',
+        not_as_described: 'Not as Described',
+        other: 'Other'
+      };
+      return map[val] || val;
+    };
+
+    const selectRefundMethod = (val) => {
+      form.refund_method = val;
+      showRefundDropdown.value = false;
+    };
+
+    const formatRefundMethod = (val) => {
+      if (!val) return '';
+      const map = {
+        cash: 'Cash',
+        card: 'Card Refund',
+        store_credit: 'Store Credit',
+        exchange: 'Exchange'
+      };
+      return map[val] || val;
     };
 
     const validateForm = () => {
@@ -521,11 +825,18 @@ export default {
 
     watch(() => props.show, (newVal) => {
       if (newVal) {
+        document.body.style.overflow = 'hidden';
         resetForm();
         if (props.originalSaleId) {
           // Will be handled by the originalSaleId watcher
         }
+      } else {
+        document.body.style.overflow = '';
       }
+    });
+
+    onUnmounted(() => {
+      document.body.style.overflow = '';
     });
 
     return {
@@ -544,533 +855,89 @@ export default {
       updateItemSelection,
       selectAllItems,
       clearAllItems,
+      onQuantityChange,
+      onReturnAmountInput,
       calculateReturnTotal,
       formatDate,
       formatCurrency,
       validateForm,
       processSalesReturn,
-      closeModal
+      closeModal,
+      
+      // Custom calendar / dropdown helpers
+      showCalendar,
+      calMonth,
+      calYear,
+      calMonthName,
+      calDays,
+      calPrevMonth,
+      calNextMonth,
+      selectCalDay,
+      isSelectedDay,
+      isTodayDay,
+      clearCalDate,
+      selectToday,
+      formatDisplayDate,
+      yearOptions,
+      monthNames,
+      showMonthList,
+      showYearList,
+      selectCalMonth,
+      selectCalYear,
+      
+      showReasonDropdown,
+      selectReason,
+      formatReason,
+      showRefundDropdown,
+      selectRefundMethod,
+      formatRefundMethod
     };
   }
 };
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
+/* Thin scrollbar styling for floating lists */
+.custom-scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
-
-.modal-content {
-  background: white;
-  border-radius: 16px;
-  width: 95%;
-  max-width: 1200px;
-  max-height: 95vh;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  color: white;
-  padding: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-icon {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.header-text h3 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.header-text p {
-  margin: 4px 0 0 0;
-  opacity: 0.9;
-  font-size: 14px;
-}
-
-.btn-close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 8px;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.btn-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
-}
-
-.modal-body {
-  padding: 24px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.modal-footer {
-  padding: 24px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.footer-summary {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-}
-
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.summary-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: #374151;
-}
-
-.footer-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-/* Form Sections */
-.form-section {
-  margin-bottom: 32px;
-  padding: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fafbfc;
-}
-
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 20px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group.full-width {
-  grid-column: 1 / -1;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.form-group label.required::after {
-  content: ' *';
-  color: #ef4444;
-}
-
-.form-control {
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  background: #ffffff;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-.form-control:hover {
-  border-color: #d1d5db;
-}
-
-.form-control.is-invalid {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.invalid-feedback {
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 6px;
-  font-weight: 500;
-}
-
-/* Search Container */
-.search-container {
-  position: relative;
-}
-
-.search-results {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.search-result-item {
-  padding: 12px 16px;
-  cursor: pointer;
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s ease;
-}
-
-.search-result-item:hover {
-  background-color: #f9fafb;
-}
-
-.search-result-item:last-child {
-  border-bottom: none;
-}
-
-.result-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.sale-number {
-  font-weight: 600;
-  color: #374151;
-}
-
-.sale-amount {
-  font-weight: 600;
-  color: #059669;
-}
-
-.result-details {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-/* Selected Sale */
-.selected-sale {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: #f0f9ff;
-  border: 2px solid #0ea5e9;
-  border-radius: 8px;
-}
-
-.sale-info h5 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #0c4a6e;
-}
-
-.sale-info p {
-  margin: 0;
-  font-size: 12px;
-  color: #0369a1;
-}
-
-/* Items Container */
-.items-container {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.item-row {
-  margin-bottom: 16px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #f9fafb;
-}
-
-.item-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 16px;
-  align-items: center;
-}
-
-.item-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.item-checkbox input[type="checkbox"] {
-  margin-top: 4px;
-  width: 16px;
-  height: 16px;
-}
-
-.checkbox-label {
-  flex: 1;
-  cursor: pointer;
-}
-
-.item-details {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-.return-quantity label,
-.return-total label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 4px;
-}
-
-.total-display {
-  padding: 8px 12px;
-  background: #f3f4f6;
-  border-radius: 6px;
-  font-weight: 600;
-  color: #374151;
-  text-align: center;
-}
-
-/* Totals */
-.totals-container {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.totals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.total-field {
-  font-weight: 600;
-  font-size: 16px;
-  background: #fef2f2 !important;
-  border-color: #dc2626 !important;
-}
-
-/* Button Styling */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  min-width: 120px;
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.btn-sm {
-  padding: 8px 16px;
-  font-size: 12px;
-  min-width: auto;
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 2px;
 }
-
-.btn-primary {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
 }
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+.dark .custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #3f3f46; /* zinc-700 */
 }
-
-.btn-secondary {
-  background: #f3f4f6;
-  color: #6b7280;
-  border: 2px solid #e5e7eb;
+.dark .custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #52525b; /* zinc-600 */
 }
 
-.btn-secondary:hover {
-  background: #e5e7eb;
-  color: #374151;
-  transform: translateY(-1px);
+/* Custom scrollbar for the modal body */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.btn:disabled:hover {
-  transform: none !important;
-  box-shadow: none !important;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 3px;
 }
-
-/* Animations */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
 }
-
-.animate-spin {
-  animation: spin 1s linear infinite;
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f46; /* zinc-700 */
 }
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .modal-content {
-    width: 98%;
-    max-height: 98vh;
-    margin: 1vh;
-  }
-
-  .modal-header {
-    padding: 16px;
-  }
-
-  .header-text h3 {
-    font-size: 20px;
-  }
-
-  .modal-body {
-    padding: 16px;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .item-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .totals-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-footer {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .footer-summary {
-    justify-content: center;
-    gap: 32px;
-  }
-
-  .footer-actions {
-    flex-direction: column-reverse;
-    gap: 8px;
-  }
-
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .section-actions {
-    justify-content: center;
-  }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #52525b; /* zinc-600 */
 }
 </style>
