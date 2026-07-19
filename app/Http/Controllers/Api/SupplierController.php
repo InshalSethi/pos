@@ -26,7 +26,13 @@ class SupplierController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Supplier::query();
+        $query = Supplier::query()->select('suppliers.*');
+
+        $query->addSelect([
+            'due_amount' => \App\Models\PurchaseOrder::selectRaw('COALESCE(SUM(due_amount), 0)')
+                ->whereColumn('supplier_id', 'suppliers.id')
+                ->where('status', '!=', 'cancelled')
+        ]);
 
         // Search functionality
         if ($request->has('search')) {

@@ -1,448 +1,280 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header Section -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-6">
-          <div class="flex items-center space-x-4">
-            <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-              </svg>
-            </div>
-            <div>
-              <h1 class="text-2xl font-bold text-gray-900">Supplier Management</h1>
-              <p class="text-sm text-gray-500">Manage your supplier network and partnerships</p>
-            </div>
+  <div class="w-full max-w-full py-8 px-4 sm:px-6 lg:px-8 dark:bg-zinc-950 min-h-screen">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Supplier Management</h1>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Manage your supplier database and relationships</p>
+      </div>
+      <button
+        @click="handleCreateSupplier"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        <span>Add Supplier</span>
+      </button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Total Suppliers</p>
+            <p class="text-2xl font-extrabold text-slate-800 dark:text-zinc-100 mt-1">{{ formatNumber(statistics.total_suppliers || 0) }}</p>
           </div>
-          <button
-            @click="showCreateModal = true"
-            class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            Add Supplier
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Active Suppliers</p>
+            <p class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{{ formatNumber(statistics.active_suppliers || 0) }}</p>
+          </div>
+          <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Inactive Suppliers</p>
+            <p class="text-2xl font-extrabold text-rose-500 dark:text-rose-400 mt-1">{{ formatNumber((statistics.total_suppliers || 0) - (statistics.active_suppliers || 0)) }}</p>
+          </div>
+          <div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-rose-500 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
+        <!-- Search & Toggle Group -->
+        <div class="flex items-center space-x-3">
+          <!-- Search -->
+          <div class="relative w-96">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search by name, company, email, phone or location"
+              class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
+              @input="debouncedSearch"
+            />
+          </div>
+          <!-- Status Switch/Toggle -->
+          <div class="flex items-center bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg text-[11px] font-semibold">
+            <button
+              type="button"
+              @click="statusFilter = ''; loadSuppliers(1);"
+              :class="statusFilter === '' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              @click="statusFilter = '1'; loadSuppliers(1);"
+              :class="statusFilter === '1' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              @click="statusFilter = '0'; loadSuppliers(1);"
+              :class="statusFilter === '0' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              Inactive
+            </button>
+          </div>
+        </div>
+        <!-- Showing -->
+        <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-zinc-400">
+          <span>Showing</span>
+          <select
+            v-model="perPage"
+            @change="loadSuppliers(1)"
+            class="border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer bg-white dark:bg-zinc-800 dark:text-zinc-200"
+          >
+            <option :value="15">15</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+          </select>
+          <span>of {{ suppliers.total || 0 }} results</span>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
+              <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Supplier</th>
+              <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Contact</th>
+              <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Location</th>
+              <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Terms</th>
+              <th class="py-3 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Credit</th>
+              <th class="py-3 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Due Amount</th>
+              <th class="py-3 px-4 text-center bg-slate-50 dark:bg-zinc-800/50">Status</th>
+              <th class="py-3 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100/70 dark:divide-zinc-800">
+            <tr v-if="loading" class="bg-white dark:bg-zinc-900">
+              <td colspan="8" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600"></div>
+                  <span class="text-xs font-semibold">Loading suppliers...</span>
+                </div>
+              </td>
+            </tr>
+            <tr v-else-if="!suppliers.data || suppliers.data.length === 0" class="bg-white dark:bg-zinc-900">
+              <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+                <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>No suppliers found. Get started by adding your first supplier.</span>
+              </td>
+            </tr>
+            <tr v-else v-for="item in suppliers.data" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+              <!-- Supplier -->
+              <td class="py-3.5 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                    <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400">{{ getInitials(item.name) }}</span>
+                  </div>
+                  <div>
+                    <button @click="viewLedger(item)" class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer text-left">{{ item.name }}</button>
+                    <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">{{ item.company_name || 'No company' }} | ID: #{{ item.id }}</div>
+                  </div>
+                </div>
+              </td>
+              <!-- Contact -->
+              <td class="py-3.5 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div class="text-slate-700 dark:text-zinc-200 text-xs">{{ item.email || '-' }}</div>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">{{ item.phone || '-' }}</div>
+              </td>
+              <!-- Location -->
+              <td class="py-3.5 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div class="text-slate-700 dark:text-zinc-200 text-xs">{{ item.city || '-' }}</div>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">{{ item.state || '-' }}</div>
+              </td>
+              <!-- Terms -->
+              <td class="py-3.5 px-4 align-middle text-slate-700 dark:text-zinc-200 text-xs bg-white dark:bg-zinc-900">
+                {{ item.payment_terms_days ? item.payment_terms_days + ' days' : '-' }}
+              </td>
+              <!-- Credit -->
+              <td class="py-3.5 px-4 text-right font-semibold text-slate-700 dark:text-zinc-200 text-sm align-middle bg-white dark:bg-zinc-900">
+                ${{ formatNumber(item.credit_limit || 0) }}
+              </td>
+              <!-- Due Amount -->
+              <td class="py-3.5 px-4 text-right font-bold text-sm align-middle bg-white dark:bg-zinc-900">
+                <span
+                  v-if="parseFloat(item.due_amount || 0) > 0"
+                  class="text-rose-600 dark:text-rose-450"
+                >
+                  ${{ formatNumber(item.due_amount) }}
+                </span>
+                <span
+                  v-else
+                  class="text-slate-400 dark:text-zinc-500 font-medium"
+                >
+                  0.00
+                </span>
+              </td>
+              <!-- Status -->
+              <td class="py-3.5 px-4 text-center align-middle bg-white dark:bg-zinc-900">
+                <span
+                  :class="item.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                >
+                  {{ item.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <!-- Action -->
+              <td class="py-3.5 px-4 text-center relative align-middle bg-white dark:bg-zinc-900">
+                <button
+                  @click.stop="toggleActionDropdown(item.id)"
+                  class="text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all focus:outline-none cursor-pointer"
+                >
+                  <svg class="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 5a2 2 0 100-4 2 2 0 000 4zm0 9a2 2 0 100-4 2 2 0 000 4zm0 9a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                </button>
+                <div
+                  v-if="openActionDropdown === item.id"
+                  class="absolute right-4 mt-1 w-32 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in text-left"
+                >
+                  <button @click="viewSupplier(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>View</span>
+                  </button>
+                  <button @click="editSupplier(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>Edit</span>
+                  </button>
+                  <button @click="viewLedger(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Ledger</span>
+                  </button>
+                  <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
+                  <button @click="deleteSupplier(item)" class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <div class="text-xs text-slate-500 dark:text-zinc-400">
+          Page {{ suppliers.current_page || 1 }} of {{ suppliers.last_page || 1 }}
+        </div>
+        <div class="flex items-center space-x-1">
+          <button
+            @click="changePage(suppliers.current_page - 1)"
+            :disabled="suppliers.current_page === 1"
+            class="relative inline-flex items-center px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+          >
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <template v-for="page in visiblePages" :key="page">
+            <button
+              @click="changePage(page)"
+              class="relative inline-flex items-center px-3 py-1.5 border text-xs font-bold transition-all cursor-pointer rounded-lg"
+              :class="page === suppliers.current_page ? 'z-10 bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-600 text-slate-800 dark:text-zinc-100' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+            >
+              {{ page }}
+            </button>
+          </template>
+          <button
+            @click="changePage(suppliers.current_page + 1)"
+            :disabled="suppliers.current_page === suppliers.last_page"
+            class="relative inline-flex items-center px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+          >
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Statistics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Total Suppliers</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatNumber(statistics.total_suppliers || 0) }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Active Suppliers</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatNumber(statistics.active_suppliers || 0) }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">With Orders</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatNumber(statistics.suppliers_with_orders || 0) }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Total Value</p>
-              <p class="text-2xl font-semibold text-gray-900">${{ formatNumber(statistics.total_supplier_value || 0) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filters and Search -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Search Suppliers</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                v-model="searchQuery"
-                type="text"
-                class="block w-full pl-10 pr-3 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-300 dark:border-[#2E2E2E] rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 dark:text-slate-300 placeholder-gray-400"
-                placeholder="Search by name, company, email, phone..."
-                @input="debouncedSearch"
-              />
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              v-model="statusFilter"
-              @change="loadSuppliers"
-              class="block w-full px-3 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-300 dark:border-[#2E2E2E] dark:text-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700"
-            >
-              <option value="">All Status</option>
-              <option value="1">Active</option>
-              <option value="0">Inactive</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Per Page</label>
-            <select
-              v-model="perPage"
-              @change="loadSuppliers"
-              class="block w-full px-3 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-300 dark:border-[#2E2E2E] dark:text-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700"
-            >
-              <option value="15">15 per page</option>
-              <option value="25">25 per page</option>
-              <option value="50">50 per page</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Supplier Cards/Table -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <!-- Loading State -->
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <div class="flex items-center space-x-2">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-            <span class="text-gray-600">Loading suppliers...</span>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="suppliers.data && suppliers.data.length === 0" class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No suppliers found</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by creating your first supplier.</p>
-          <div class="mt-6">
-            <button
-              @click="showCreateModal = true"
-              class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
-            >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Supplier
-            </button>
-          </div>
-        </div>
-
-        <!-- Desktop Table View -->
-        <div v-else class="hidden lg:block">
-          <DataTable
-            title="Suppliers"
-            subtitle="Manage your supplier network and partnerships"
-            :columns="tableColumns"
-            :data="suppliers.data || []"
-            :loading="loading"
-            :pagination="pagination"
-            :initial-search="searchQuery"
-            :initial-per-page="perPage"
-            :default-per-page="15"
-            storage-key="suppliers-table-state"
-            empty-message="No suppliers found"
-            empty-sub-message="Get started by creating your first supplier."
-            @search="handleTableSearch"
-            @sort="handleSort"
-            @page-change="handlePageChange"
-            @per-page-change="handlePerPageChange"
-          >
-            <!-- Custom column content -->
-            <template #column-supplier="{ item }">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10">
-                  <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <span class="text-sm font-medium text-green-600">{{ getInitials(item.name) }}</span>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium">
-                    <button
-                      @click="viewLedger(item)"
-                      class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer"
-                      title="View Supplier Ledger"
-                    >
-                      {{ item.name }}
-                    </button>
-                  </div>
-                  <div class="text-sm text-gray-500">{{ item.company_name || 'No company' }}</div>
-                </div>
-              </div>
-            </template>
-
-            <template #column-contact="{ item }">
-              <div>
-                <div class="text-sm text-gray-900">{{ item.email || '-' }}</div>
-                <div class="text-sm text-gray-500">{{ item.phone || '-' }}</div>
-              </div>
-            </template>
-
-            <template #column-location="{ item }">
-              <div>
-                <div class="text-sm text-gray-900">{{ item.city || '-' }}</div>
-                <div class="text-sm text-gray-500">{{ item.state || '-' }}</div>
-              </div>
-            </template>
-
-            <template #column-terms="{ item }">
-              {{ item.payment_terms_days ? item.payment_terms_days + ' days' : '-' }}
-            </template>
-
-            <template #column-status="{ item }">
-              <span :class="item.is_active
-                ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
-                : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
-                {{ item.is_active ? 'Active' : 'Inactive' }}
-              </span>
-            </template>
-
-            <template #column-actions="{ item }">
-              <div class="flex items-center justify-end space-x-2">
-                <button
-                  @click="viewSupplier(item)"
-                  class="text-green-600 hover:text-green-900 p-1 rounded-md hover:bg-green-50"
-                  title="View Details"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <button
-                  @click="editSupplier(item)"
-                  class="text-yellow-600 hover:text-yellow-900 p-1 rounded-md hover:bg-yellow-50"
-                  title="Edit Supplier"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  @click="deleteSupplier(item)"
-                  class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
-                  title="Delete Supplier"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </template>
-
-            <!-- Action buttons in header -->
-            <template #actions>
-              <button
-                @click="showCreateModal = true"
-                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
-              >
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Supplier
-              </button>
-            </template>
-          </DataTable>
-        </div>
-
-        <!-- Mobile Card View -->
-        <div class="lg:hidden">
-          <div class="space-y-4 p-4">
-            <div
-              v-for="supplier in suppliers.data"
-              :key="supplier.id"
-              class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex items-center space-x-3">
-                  <div class="flex-shrink-0 h-10 w-10">
-                    <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                      <span class="text-sm font-medium text-green-600">{{ getInitials(supplier.name) }}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-medium">
-                      <button
-                        @click="viewLedger(supplier)"
-                        class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer"
-                        title="View Supplier Ledger"
-                      >
-                        {{ supplier.name }}
-                      </button>
-                    </h3>
-                    <p class="text-sm text-gray-500">{{ supplier.company_name || 'No company' }}</p>
-                  </div>
-                </div>
-                <span :class="supplier.is_active
-                  ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
-                  : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
-                  {{ supplier.is_active ? 'Active' : 'Inactive' }}
-                </span>
-              </div>
-
-              <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span class="text-gray-500">Email:</span>
-                  <span class="ml-1 text-gray-900">{{ supplier.email || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">Phone:</span>
-                  <span class="ml-1 text-gray-900">{{ supplier.phone || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">City:</span>
-                  <span class="ml-1 text-gray-900">{{ supplier.city || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">Terms:</span>
-                  <span class="ml-1 text-gray-900">{{ supplier.payment_terms_days ? supplier.payment_terms_days + ' days' : '-' }}</span>
-                </div>
-              </div>
-
-              <div class="mt-4 flex justify-end space-x-2">
-                <button
-                  @click="viewSupplier(supplier)"
-                  class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100"
-                >
-                  View
-                </button>
-                <button
-                  @click="editSupplier(supplier)"
-                  class="inline-flex items-center px-3 py-1 text-xs font-medium text-yellow-600 bg-yellow-50 rounded-md hover:bg-yellow-100"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="deleteSupplier(supplier)"
-                  class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="suppliers.last_page > 1" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-          <div class="flex items-center justify-between">
-            <div class="flex-1 flex justify-between sm:hidden">
-              <button
-                @click="changePage(suppliers.current_page - 1)"
-                :disabled="suppliers.current_page === 1"
-                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                @click="changePage(suppliers.current_page + 1)"
-                :disabled="suppliers.current_page === suppliers.last_page"
-                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p class="text-sm text-gray-700">
-                  Showing
-                  <span class="font-medium">{{ ((suppliers.current_page - 1) * suppliers.per_page) + 1 }}</span>
-                  to
-                  <span class="font-medium">{{ Math.min(suppliers.current_page * suppliers.per_page, suppliers.total) }}</span>
-                  of
-                  <span class="font-medium">{{ suppliers.total }}</span>
-                  results
-                </p>
-              </div>
-              <div>
-                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    @click="changePage(suppliers.current_page - 1)"
-                    :disabled="suppliers.current_page === 1"
-                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-
-                  <button
-                    v-for="page in visiblePages"
-                    :key="page"
-                    @click="changePage(page)"
-                    :class="[
-                      'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                      page === suppliers.current_page
-                        ? 'z-10 bg-green-50 border-green-500 text-green-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                    ]"
-                  >
-                    {{ page }}
-                  </button>
-
-                  <button
-                    @click="changePage(suppliers.current_page + 1)"
-                    :disabled="suppliers.current_page === suppliers.last_page"
-                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Supplier Modal -->
+    <!-- Modals -->
     <SupplierModal
       v-if="showCreateModal || showEditModal"
       :show="showCreateModal || showEditModal"
@@ -452,16 +284,15 @@
       @saved="handleSupplierSaved"
     />
 
-    <!-- Supplier View Modal -->
     <SupplierViewModal
       v-if="showViewModal"
       :show="showViewModal"
       :supplier="selectedSupplier"
-      @close="closeViewModal"
+      @close="closeModal"
     />
 
-    <!-- Supplier Ledger Modal -->
     <SupplierLedger
+      v-if="showLedgerModal"
       :show="showLedgerModal"
       :supplier="selectedSupplier"
       @close="closeModal"
@@ -470,12 +301,11 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { debounce } from '@/utils/debounce';
 import SupplierModal from './SupplierModal.vue';
 import SupplierViewModal from './SupplierViewModal.vue';
 import SupplierLedger from './SupplierLedger.vue';
-import DataTable from '@/components/common/DataTable.vue';
 import { useToast } from '@/composables/useToast';
 import api from '@/services/api';
 
@@ -484,121 +314,36 @@ export default {
   components: {
     SupplierModal,
     SupplierViewModal,
-    SupplierLedger,
-    DataTable
+    SupplierLedger
   },
   setup() {
     const { showToast } = useToast();
-    
+
     const loading = ref(false);
-    const suppliers = ref({ data: [], current_page: 1, last_page: 1 });
+    const suppliers = ref({ data: [], current_page: 1, last_page: 1, total: 0 });
     const statistics = ref({});
     const searchQuery = ref('');
-    const statusFilter = ref('');
     const perPage = ref(15);
+    const statusFilter = ref('');
+    const openActionDropdown = ref(null);
 
-    // DataTable pagination
-    const pagination = ref({
-      current_page: 1,
-      last_page: 1,
-      per_page: 15,
-      total: 0,
-      from: 0,
-      to: 0
-    });
-
-    // Table columns configuration
-    const tableColumns = ref([
-      {
-        key: 'supplier',
-        label: 'Supplier',
-        sortable: true,
-        align: 'left'
-      },
-      {
-        key: 'contact',
-        label: 'Contact',
-        sortable: false,
-        align: 'left'
-      },
-      {
-        key: 'location',
-        label: 'Location',
-        sortable: true,
-        align: 'left'
-      },
-      {
-        key: 'terms',
-        label: 'Terms',
-        sortable: true,
-        align: 'left'
-      },
-      {
-        key: 'credit_limit',
-        label: 'Credit',
-        sortable: true,
-        type: 'currency',
-        align: 'right'
-      },
-      {
-        key: 'status',
-        label: 'Status',
-        sortable: true,
-        align: 'center'
-      },
-      {
-        key: 'actions',
-        label: 'Actions',
-        sortable: false,
-        align: 'right'
-      }
-    ]);
-
-    // Table filters
-    const filters = ref({
-      search: '',
-      sort_field: '',
-      sort_order: ''
-    });
-
+    const selectedSupplier = ref(null);
     const showCreateModal = ref(false);
     const showEditModal = ref(false);
     const showViewModal = ref(false);
     const showLedgerModal = ref(false);
-    const selectedSupplier = ref(null);
 
     const loadSuppliers = async (page = 1) => {
       loading.value = true;
       try {
-        const params = {
-          page,
-          per_page: pagination.value.per_page,
-          search: searchQuery.value,
-          is_active: statusFilter.value,
-          ...filters.value
-        };
-
-        // Remove empty parameters
-        Object.keys(params).forEach(key => {
-          if (params[key] === '' || params[key] === null) {
-            delete params[key];
-          }
-        });
+        const params = { page, per_page: perPage.value };
+        if (searchQuery.value) params.search = searchQuery.value;
+        if (statusFilter.value !== '') params.is_active = statusFilter.value;
 
         const response = await api.get('/suppliers', { params });
         suppliers.value = response.data;
-
-        // Update pagination
-        pagination.value = {
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          per_page: response.data.per_page,
-          total: response.data.total,
-          from: response.data.from,
-          to: response.data.to
-        };
       } catch (error) {
-        showToast('Error loading suppliers', 'error');
+        showToast('Error loading suppliers: ' + (error.response?.data?.message || error.message), 'error');
       } finally {
         loading.value = false;
       }
@@ -613,30 +358,7 @@ export default {
       }
     };
 
-    const debouncedSearch = debounce(() => {
-      loadSuppliers(1);
-    }, 300);
-
-    // DataTable event handlers
-    const handleTableSearch = (searchQuery) => {
-      filters.value.search = searchQuery;
-      loadSuppliers(1);
-    };
-
-    const handleSort = (sortData) => {
-      filters.value.sort_field = sortData.field;
-      filters.value.sort_order = sortData.order;
-      loadSuppliers(1);
-    };
-
-    const handlePageChange = (page) => {
-      loadSuppliers(page);
-    };
-
-    const handlePerPageChange = (perPage) => {
-      pagination.value.per_page = perPage;
-      loadSuppliers(1);
-    };
+    const debouncedSearch = debounce(() => { loadSuppliers(1); }, 300);
 
     const changePage = (page) => {
       if (page >= 1 && page <= suppliers.value.last_page) {
@@ -648,46 +370,57 @@ export default {
       const current = suppliers.value.current_page;
       const last = suppliers.value.last_page;
       const pages = [];
-      
       for (let i = Math.max(1, current - 2); i <= Math.min(last, current + 2); i++) {
         pages.push(i);
       }
-      
       return pages;
     });
+
+    const toggleActionDropdown = (id) => {
+      openActionDropdown.value = openActionDropdown.value === id ? null : id;
+    };
+
+    const closeAllDropdowns = () => { openActionDropdown.value = null; };
+
+    const handleCreateSupplier = () => {
+      selectedSupplier.value = null;
+      showCreateModal.value = true;
+    };
 
     const viewSupplier = (supplier) => {
       selectedSupplier.value = supplier;
       showViewModal.value = true;
+      openActionDropdown.value = null;
+    };
+
+    const editSupplier = (supplier) => {
+      selectedSupplier.value = { ...supplier };
+      showEditModal.value = true;
+      openActionDropdown.value = null;
     };
 
     const viewLedger = (supplier) => {
       selectedSupplier.value = supplier;
       showLedgerModal.value = true;
+      openActionDropdown.value = null;
     };
 
-    const editSupplier = (supplier) => {
-      console.log('=== EDIT SUPPLIER CLICKED ===');
-      console.log('Original supplier object:', supplier);
-      console.log('Supplier keys:', Object.keys(supplier));
-      console.log('Supplier name:', supplier.name);
-      console.log('Supplier email:', supplier.email);
+    const closeModal = () => {
+      showCreateModal.value = false;
+      showEditModal.value = false;
+      showViewModal.value = false;
+      showLedgerModal.value = false;
+      selectedSupplier.value = null;
+    };
 
-      selectedSupplier.value = { ...supplier };
-      console.log('selectedSupplier after copy:', selectedSupplier.value);
-      console.log('selectedSupplier keys:', Object.keys(selectedSupplier.value));
-
-      showEditModal.value = true;
-      console.log('showEditModal set to:', showEditModal.value);
-
-      // Add a small delay to see if modal opens
-      setTimeout(() => {
-        console.log('After timeout - showEditModal:', showEditModal.value);
-        console.log('After timeout - selectedSupplier:', selectedSupplier.value);
-      }, 500);
+    const handleSupplierSaved = () => {
+      loadSuppliers(suppliers.value.current_page);
+      loadStatistics();
+      closeModal();
     };
 
     const deleteSupplier = async (supplier) => {
+      openActionDropdown.value = null;
       if (confirm(`Are you sure you want to delete supplier "${supplier.name}"?`)) {
         try {
           await api.delete(`/suppliers/${supplier.id}`);
@@ -700,156 +433,43 @@ export default {
       }
     };
 
-    const closeModal = () => {
-      showCreateModal.value = false;
-      showEditModal.value = false;
-      showLedgerModal.value = false;
-      selectedSupplier.value = null;
-    };
-
-    const closeViewModal = () => {
-      showViewModal.value = false;
-      showLedgerModal.value = false;
-      selectedSupplier.value = null;
-    };
-
-    const handleSupplierSaved = () => {
-      closeModal();
-      loadSuppliers(suppliers.value.current_page);
-      loadStatistics();
-    };
-
-    const formatNumber = (value) => {
-      return new Intl.NumberFormat().format(value || 0);
-    };
+    const formatNumber = (value) => new Intl.NumberFormat().format(value || 0);
 
     const getInitials = (name) => {
       if (!name) return '?';
-      return name
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase())
-        .slice(0, 2)
-        .join('');
+      return name.split(' ').map(w => w.charAt(0).toUpperCase()).slice(0, 2).join('');
     };
 
     onMounted(() => {
       loadSuppliers();
       loadStatistics();
+      document.addEventListener('click', closeAllDropdowns);
+    });
+
+    onUnmounted(() => {
+      document.removeEventListener('click', closeAllDropdowns);
     });
 
     return {
-      loading,
-      suppliers,
-      statistics,
-      searchQuery,
-      statusFilter,
-      perPage,
-      pagination,
-      tableColumns,
-      filters,
-      showCreateModal,
-      showEditModal,
-      showViewModal,
-      selectedSupplier,
-      visiblePages,
-      loadSuppliers,
-      debouncedSearch,
-      changePage,
-      handleTableSearch,
-      handleSort,
-      handlePageChange,
-      handlePerPageChange,
-      viewSupplier,
-      viewLedger,
-      editSupplier,
-      deleteSupplier,
-      closeModal,
-      closeViewModal,
-      handleSupplierSaved,
-      formatNumber,
-      getInitials,
-      showLedgerModal
+      loading, suppliers, statistics, searchQuery, perPage, statusFilter, openActionDropdown,
+      selectedSupplier, showCreateModal, showEditModal, showViewModal, showLedgerModal,
+      visiblePages, loadSuppliers, debouncedSearch, changePage, toggleActionDropdown,
+      handleCreateSupplier, viewSupplier, editSupplier, viewLedger, deleteSupplier,
+      closeModal, handleSupplierSaved, formatNumber, getInitials
     };
   }
 };
 </script>
 
 <style scoped>
-/* Custom animations and transitions */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.shadow-soft {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
-
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
 }
-
-/* Custom scrollbar for tables */
-.overflow-x-auto::-webkit-scrollbar {
-  height: 8px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-.overflow-x-auto::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Hover effects for interactive elements */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Focus styles for accessibility */
-.focus-ring:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.5);
-}
-
-/* Loading animation */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 640px) {
-  .mobile-padding {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-}
-
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-
-  .print-full-width {
-    width: 100% !important;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

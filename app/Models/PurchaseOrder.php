@@ -29,6 +29,9 @@ class PurchaseOrder extends Model
         'tax_amount',
         'shipping_cost',
         'total_amount',
+        'grand_total',
+        'amount_paid',
+        'due_amount',
         'notes',
         'terms_and_conditions',
     ];
@@ -41,6 +44,9 @@ class PurchaseOrder extends Model
         'tax_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
+        'due_amount' => 'decimal:2',
     ];
 
     // Relationships

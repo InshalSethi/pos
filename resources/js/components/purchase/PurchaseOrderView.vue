@@ -229,8 +229,7 @@ const editOrder = () => {
 };
 
 const receiveOrder = () => {
-  // Navigate to receive order functionality
-  showToast('Receive order functionality coming soon', 'info');
+  router.push(`/purchase/orders/${route.params.id}/receive`);
 };
 
 onMounted(() => {

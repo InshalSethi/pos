@@ -184,6 +184,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/suppliers/{supplier}/statement', [SupplierLedgerController::class , 'getStatement']);
     Route::get('/suppliers/{supplier}/transaction-summary', [SupplierLedgerController::class , 'getTransactionSummary']);
 
+    Route::get('/purchase-orders/status-counts', [PurchaseOrderController::class, 'getStatusCounts']);
+    Route::get('/purchase-orders/next-number', [PurchaseOrderController::class, 'getNextPurchaseOrderNumber']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class , 'receive']);
 

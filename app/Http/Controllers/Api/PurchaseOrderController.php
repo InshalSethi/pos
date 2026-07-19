@@ -17,11 +17,35 @@ class PurchaseOrderController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:purchases.view')->only(['index', 'show']);
+        $this->middleware('permission:purchases.view')->only(['index', 'show', 'getStatusCounts', 'getNextPurchaseOrderNumber']);
         $this->middleware('permission:purchases.create')->only(['store']);
         $this->middleware('permission:purchases.edit')->only(['update', 'receive']);
         $this->middleware('permission:purchases.delete')->only(['destroy']);
         $this->middleware('permission:purchases.approve')->only(['approve']);
+    }
+
+    /**
+     * Get the count of purchase orders grouped by status.
+     */
+    public function getStatusCounts(): JsonResponse
+    {
+        $all = PurchaseOrder::count();
+        $draft = PurchaseOrder::where('status', 'draft')->count();
+        $sent = PurchaseOrder::where('status', 'sent')->count();
+        $confirmed = PurchaseOrder::where('status', 'confirmed')->count();
+        $partiallyReceived = PurchaseOrder::where('status', 'partially_received')->count();
+        $received = PurchaseOrder::where('status', 'received')->count();
+        $cancelled = PurchaseOrder::where('status', 'cancelled')->count();
+
+        return response()->json([
+            'all' => $all,
+            'draft' => $draft,
+            'sent' => $sent,
+            'confirmed' => $confirmed,
+            'partially_received' => $partiallyReceived,
+            'received' => $received,
+            'cancelled' => $cancelled,
+        ]);
     }
 
     /**
@@ -75,7 +99,7 @@ class PurchaseOrderController extends Controller
         $sortOrder = $request->get('sort_order', 'desc');
 
         // Validate sort fields
-        $allowedSortFields = ['order_date', 'po_number', 'total_amount', 'status', 'expected_delivery_date', 'created_at'];
+        $allowedSortFields = ['order_date', 'po_number', 'total_amount', 'due_amount', 'status', 'expected_delivery_date', 'created_at'];
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
@@ -104,6 +128,7 @@ class PurchaseOrderController extends Controller
             'items.*.notes' => 'nullable|string',
             'notes' => 'nullable|string',
             'terms_and_conditions' => 'nullable|string',
+            'amount_paid' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -129,7 +154,24 @@ class PurchaseOrderController extends Controller
             $totalAmount = $subtotal + $taxAmount + $shippingCost;
 
             // Generate PO number
-            $poNumber = 'PO-' . date('Ymd') . '-' . str_pad(PurchaseOrder::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
+            if ($request->has('po_number') && $request->po_number) {
+                $poNumber = $request->po_number;
+            } else {
+                $lastOrder = PurchaseOrder::orderBy('id', 'desc')->first();
+                $nextNumber = 1;
+                if ($lastOrder) {
+                    if (preg_match('/BIll-(\d+)/i', $lastOrder->po_number, $matches)) {
+                        $nextNumber = (int)$matches[1] + 1;
+                    } else {
+                        $nextNumber = PurchaseOrder::count() + 1;
+                    }
+                }
+                $poNumber = 'BIll-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            }
+
+            $amountPaid = $request->get('amount_paid', 0);
+            $grandTotal = $totalAmount;
+            $dueAmount = max(0, $grandTotal - $amountPaid);
 
             // Create purchase order
             $purchaseOrder = PurchaseOrder::create([
@@ -143,6 +185,9 @@ class PurchaseOrderController extends Controller
                 'tax_amount' => $taxAmount,
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $totalAmount,
+                'grand_total' => $grandTotal,
+                'amount_paid' => $amountPaid,
+                'due_amount' => $dueAmount,
                 'notes' => $request->notes,
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
@@ -213,6 +258,7 @@ class PurchaseOrderController extends Controller
             'notes' => 'nullable|string',
             'terms_and_conditions' => 'nullable|string',
             'status' => 'nullable|in:draft,sent,confirmed',
+            'amount_paid' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -237,6 +283,10 @@ class PurchaseOrderController extends Controller
 
             $totalAmount = $subtotal + $taxAmount + $shippingCost;
 
+            $amountPaid = $request->get('amount_paid', 0);
+            $grandTotal = $totalAmount;
+            $dueAmount = max(0, $grandTotal - $amountPaid);
+
             // Update purchase order
             $purchaseOrder->update([
                 'supplier_id' => $request->supplier_id,
@@ -246,6 +296,9 @@ class PurchaseOrderController extends Controller
                 'tax_amount' => $taxAmount,
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $totalAmount,
+                'grand_total' => $grandTotal,
+                'amount_paid' => $amountPaid,
+                'due_amount' => $dueAmount,
                 'notes' => $request->notes,
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
@@ -407,5 +460,26 @@ class PurchaseOrderController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get the next available purchase order number.
+     */
+    public function getNextPurchaseOrderNumber(): JsonResponse
+    {
+        $lastOrder = PurchaseOrder::orderBy('id', 'desc')->first();
+        $nextNumber = 1;
+        if ($lastOrder) {
+            if (preg_match('/BIll-(\d+)/i', $lastOrder->po_number, $matches)) {
+                $nextNumber = (int)$matches[1] + 1;
+            } else {
+                $nextNumber = PurchaseOrder::count() + 1;
+            }
+        }
+        $poNumber = 'BIll-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        return response()->json([
+            'success' => true,
+            'po_number' => $poNumber
+        ]);
     }
 }

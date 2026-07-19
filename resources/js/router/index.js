@@ -33,6 +33,7 @@ import PurchaseOrders from '@/components/purchase/PurchaseOrders.vue';
 import CreatePurchaseOrder from '@/components/purchase/CreatePurchaseOrder.vue';
 import EditPurchaseOrder from '@/components/purchase/EditPurchaseOrder.vue';
 import PurchaseOrderView from '@/components/purchase/PurchaseOrderView.vue';
+import ReceivePurchaseOrder from '@/components/purchase/ReceivePurchaseOrder.vue';
 import PurchaseReturns from '@/components/purchase/PurchaseReturns.vue';
 import Expenses from '@/components/expenses/Expenses.vue';
 import Employees from '@/components/employees/Employees.vue';
@@ -246,6 +247,12 @@ const routes = [
         path: 'purchase/orders/:id/edit',
         name: 'EditPurchaseOrder',
         component: EditPurchaseOrder,
+        meta: { permission: 'purchases.edit' }
+      },
+      {
+        path: 'purchase/orders/:id/receive',
+        name: 'ReceivePurchaseOrder',
+        component: ReceivePurchaseOrder,
         meta: { permission: 'purchases.edit' }
       },
       {

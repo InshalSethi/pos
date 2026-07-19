@@ -15,7 +15,13 @@ class CustomerController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Customer::query();
+        $query = Customer::query()->select('customers.*');
+
+        $query->addSelect([
+            'due_amount' => \App\Models\Sale::selectRaw('COALESCE(SUM(total_amount - paid_amount), 0)')
+                ->whereColumn('customer_id', 'customers.id')
+                ->where('status', 'pending')
+        ]);
 
         // Search functionality
         if ($request->has('search')) {
