@@ -1860,30 +1860,77 @@ const tempAttrValues = ref('');
 
 const selectedCombo = ref({});
 
-// Populate selectedCombo and ensure attribute values exist from existing variations when editing
-if (form.value && form.value.has_variations && form.value.variations && form.value.variations.length > 0) {
-  form.value.variations.forEach(variation => {
-    const parts = (variation.name_string || '').split(' / ').map(p => p.trim());
-    attributes.value.forEach((attr, idx) => {
-      const val = parts[idx];
-      if (val) {
-        if (!attr.values) {
-          attr.values = [];
+const hydrateAttributesAndCombos = () => {
+  let attrs = sanitizeAttributes(props.initialData?.attributes);
+
+  const variations = form.value?.variations || [];
+  if (form.value?.has_variations && variations.length > 0) {
+    const colValuesMap = {};
+    variations.forEach(v => {
+      const nameStr = v.variation_name_string || v.name_string || '';
+      const parts = nameStr.split(' / ').map(p => p.trim());
+      parts.forEach((part, colIdx) => {
+        if (part) {
+          if (!colValuesMap[colIdx]) colValuesMap[colIdx] = new Set();
+          colValuesMap[colIdx].add(part);
         }
-        if (!attr.values.some(v => v.toLowerCase() === val.toLowerCase())) {
+      });
+    });
+
+    const numCols = Object.keys(colValuesMap).length;
+
+    if (attrs.length < numCols) {
+      for (let colIdx = attrs.length; colIdx < numCols; colIdx++) {
+        const valuesArr = Array.from(colValuesMap[colIdx] || []);
+        let matchedName = null;
+        if (Array.isArray(systemAttributes.value)) {
+          const sysMatch = systemAttributes.value.find(sys => {
+            const sysVals = (sys.values || []).map(v => (typeof v === 'object' ? v.value : v).toLowerCase());
+            return valuesArr.some(v => sysVals.includes(v.toLowerCase()));
+          });
+          if (sysMatch) {
+            matchedName = sysMatch.name;
+          }
+        }
+
+        if (!matchedName) {
+          matchedName = `Option ${colIdx + 1}`;
+        }
+
+        attrs.push({
+          name: matchedName,
+          values: valuesArr,
+          valuesString: valuesArr.join(', '),
+          showSearch: false,
+          showValuesDropdown: false,
+          newValueInput: ''
+        });
+      }
+    }
+
+    attrs.forEach((attr, colIdx) => {
+      if (!attr.values) attr.values = [];
+      if (!selectedCombo.value[attr.name]) selectedCombo.value[attr.name] = [];
+
+      const colValues = Array.from(colValuesMap[colIdx] || []);
+      colValues.forEach(val => {
+        const existingValInAttr = attr.values.find(v => v.toLowerCase() === val.toLowerCase());
+        if (!existingValInAttr) {
           attr.values.push(val);
         }
-        if (!selectedCombo.value[attr.name]) {
-          selectedCombo.value[attr.name] = [];
+        const valToPush = existingValInAttr || val;
+        if (!selectedCombo.value[attr.name].includes(valToPush)) {
+          selectedCombo.value[attr.name].push(valToPush);
         }
-        const existingVal = attr.values.find(v => v.toLowerCase() === val.toLowerCase());
-        if (existingVal && !selectedCombo.value[attr.name].includes(existingVal)) {
-          selectedCombo.value[attr.name].push(existingVal);
-        }
-      }
+      });
     });
-  });
-}
+  }
+
+  attributes.value = attrs;
+};
+
+// Initial hydration call
+hydrateAttributesAndCombos();
 
 const showMasterAttrDropdown = ref(false);
 const masterAttrSearchQuery = ref('');
@@ -2377,7 +2424,8 @@ onMounted(async () => {
     availableWarehouses.value = whResponse?.data || [];
     systemAttributes.value = attrResponse?.data || [];
     
-    // No fallback — if no warehouses exist, dropdown will show "No warehouse created"
+    // Re-hydrate attributes once systemAttributes are loaded
+    hydrateAttributesAndCombos();
 
     if ((!form.value.warehouse_ids || form.value.warehouse_ids.length === 0) && availableWarehouses.value.length > 0) {
       const defaultWh = availableWarehouses.value.find(w => w.is_default) || availableWarehouses.value[0];
@@ -2391,8 +2439,57 @@ onMounted(async () => {
   }
 });
 
+const getInitialProductImages = (data) => {
+  if (!data) return [];
+  const list = [];
+  const addUrl = (rawUrl) => {
+    if (!rawUrl || typeof rawUrl !== 'string') return;
+    if (rawUrl.includes('Temp') || rawUrl.includes('.tmp')) return;
+    const fullUrl = rawUrl.startsWith('/') || rawUrl.startsWith('http') ? rawUrl : '/' + rawUrl;
+    if (!list.some(item => item.preview === fullUrl)) {
+      list.push({
+        file: null,
+        preview: fullUrl,
+        isExisting: true,
+        url: fullUrl
+      });
+    }
+  };
+
+  if (Array.isArray(data.images) && data.images.length > 0) {
+    data.images.forEach(img => {
+      if (typeof img === 'string') {
+        addUrl(img);
+      } else if (img && typeof img === 'object') {
+        addUrl(img.url || img.path || img.preview || img.image);
+      }
+    });
+  } else if (Array.isArray(data.media) && data.media.length > 0) {
+    data.media.forEach(m => {
+      if (m && typeof m === 'object') {
+        addUrl(m.url || m.path || m.original_url);
+      } else if (typeof m === 'string') {
+        addUrl(m);
+      }
+    });
+  } else if (data.image_url || data.image) {
+    addUrl(data.image_url || data.image);
+  }
+
+  return list;
+};
+
 // ===== Multi-Image + Image Editor Logic =====
-const productImages = ref([]); // Array of { file: File|Blob, preview: string }
+const productImages = ref(getInitialProductImages(props.initialData)); // Array of { file: File|Blob|null, preview: string, isExisting?: boolean, url?: string }
+
+watch(() => props.initialData, (newData) => {
+  if (newData && Object.keys(newData).length > 0) {
+    form.value = sanitizeInitialData(newData);
+    productImages.value = getInitialProductImages(newData);
+    hydrateAttributesAndCombos();
+    syncFormImages();
+  }
+}, { deep: true });
 const primaryImageIndex = ref(0);
 const tempPrimaryIndex = ref(0);
 const showImageEditor = ref(false);
@@ -2636,9 +2733,10 @@ const syncFormImages = () => {
     if (primaryImageIndex.value >= productImages.value.length) {
       primaryImageIndex.value = 0;
     }
-    form.value.image = productImages.value[primaryImageIndex.value].file;
-    form.value.image_url = productImages.value[primaryImageIndex.value].preview;
-    form.value.images = productImages.value.map(img => img.file);
+    const primaryImg = productImages.value[primaryImageIndex.value];
+    form.value.image = primaryImg.file ? primaryImg.file : (primaryImg.isExisting ? primaryImg.url : null);
+    form.value.image_url = primaryImg.preview;
+    form.value.images = productImages.value.map(img => img.file || img.url || img.preview);
     form.value.primary_image_index = primaryImageIndex.value;
   } else {
     form.value.image = null;

@@ -293,11 +293,28 @@ class ProductController extends Controller
                 $data['has_variations'] = false;
             }
 
-            if ($request->hasFile('image')) {
+            $storedImages = [];
+            if ($request->has('images') && is_array($request->images)) {
+                foreach ($request->images as $idx => $imgItem) {
+                    if ($request->hasFile("images.{$idx}")) {
+                        $path = $request->file("images.{$idx}")->store('product-images', 'public');
+                        $storedImages[] = '/storage/' . $path;
+                    } elseif (is_string($imgItem) && !empty($imgItem)) {
+                        $storedImages[] = $imgItem;
+                    }
+                }
+            }
+
+            if (count($storedImages) > 0) {
+                $data['images'] = $storedImages;
+                $data['image'] = $storedImages[0];
+            } elseif ($request->hasFile('image')) {
                 $path = $request->file('image')->store('product-images', 'public');
                 $data['image'] = '/storage/' . $path;
+                $data['images'] = ['/storage/' . $path];
             } else {
                 $data['image'] = null;
+                $data['images'] = [];
             }
 
             $product = Product::create($data);
@@ -736,21 +753,37 @@ class ProductController extends Controller
                 $data['has_variations'] = false;
             }
 
-            if ($request->hasFile('image')) {
+            $storedImages = [];
+            if ($request->has('images') && is_array($request->images)) {
+                foreach ($request->images as $idx => $imgItem) {
+                    if ($request->hasFile("images.{$idx}")) {
+                        $path = $request->file("images.{$idx}")->store('product-images', 'public');
+                        $storedImages[] = '/storage/' . $path;
+                    } elseif (is_string($imgItem) && !empty($imgItem)) {
+                        $storedImages[] = $imgItem;
+                    }
+                }
+            }
+
+            if (count($storedImages) > 0) {
+                $data['images'] = $storedImages;
+                $data['image'] = $storedImages[0];
+            } elseif ($request->hasFile('image')) {
                 if ($product->image) {
                     $oldPath = str_replace('/storage/', '', $product->image);
                     Storage::disk('public')->delete($oldPath);
                 }
                 $path = $request->file('image')->store('product-images', 'public');
                 $data['image'] = '/storage/' . $path;
-            } elseif ($request->input('image') === '') {
+                $data['images'] = ['/storage/' . $path];
+            } elseif ($request->input('image') === '' || ($request->has('images') && is_array($request->images) && count($request->images) === 0)) {
                 if ($product->image) {
                     $oldPath = str_replace('/storage/', '', $product->image);
                     Storage::disk('public')->delete($oldPath);
                 }
                 $data['image'] = null;
+                $data['images'] = [];
             } else {
-                // Keep the existing image if no new image was uploaded and it was not explicitly cleared
                 unset($data['image']);
             }
 
