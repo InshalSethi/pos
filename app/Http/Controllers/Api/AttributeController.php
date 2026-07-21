@@ -51,6 +51,47 @@ class AttributeController extends Controller
         return response()->json($attribute->load('values'), 201);
     }
 
+    public function update(Request $request, $id)
+    {
+        $companyId = auth()->user()->current_company_id;
+        $attribute = Attribute::where('company_id', $companyId)->where('id', $id)->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'values' => 'required|array|min:1',
+            'values.*' => 'required|string|max:255',
+        ]);
+
+        // Check if another attribute with same name already exists for this company
+        $exists = Attribute::where('company_id', $companyId)
+            ->where('name', $request->name)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'An attribute with this name already exists.'
+            ], 422);
+        }
+
+        $attribute->update([
+            'name' => $request->name,
+        ]);
+
+        // Sync values: delete old values and re-create updated values
+        $attribute->values()->delete();
+
+        foreach ($request->values as $val) {
+            if (trim($val) !== '') {
+                $attribute->values()->create([
+                    'value' => trim($val),
+                ]);
+            }
+        }
+
+        return response()->json($attribute->load('values'));
+    }
+
     public function destroy($id)
     {
         $companyId = auth()->user()->current_company_id;

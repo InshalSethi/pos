@@ -150,28 +150,40 @@
                   <div class="flex flex-col">
                     <span>{{ attr.name }}</span>
                     <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 tracking-tight mt-0.5">
-                      {{ attr.values.map(v => v.value).join(', ') }}
+                      {{ (attr.values || []).map(v => v.value).join(', ') }}
                     </span>
                   </div>
                 </td>
                 <!-- Values Column (Right-aligned count) -->
                 <td class="px-6 py-4 align-middle text-right font-bold text-slate-600 text-sm dark:text-slate-400">
                   <span class="bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-full text-xs font-bold border border-slate-200/40 dark:border-[#2E2E2E]/40">
-                    {{ attr.values.length }}
+                    {{ (attr.values || []).length }}
                   </span>
                 </td>
                 <!-- Actions -->
                 <td class="px-6 py-4 align-middle text-center">
-                  <button 
-                    type="button" 
-                    @click="deleteAttribute(attr.id)"
-                    class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all focus:outline-none cursor-pointer dark:text-slate-400"
-                    title="Delete Variant"
-                  >
-                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  <div class="flex items-center justify-center gap-1">
+                    <button 
+                      type="button" 
+                      @click="editAttribute(attr)"
+                      class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all focus:outline-none cursor-pointer"
+                      title="Edit Variant"
+                    >
+                      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="deleteAttribute(attr.id)"
+                      class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all focus:outline-none cursor-pointer dark:text-slate-400"
+                      title="Delete Variant"
+                    >
+                      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -195,7 +207,7 @@
           <!-- Modal Box -->
           <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-md p-6 rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-2xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
             <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
-              <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Configure Global Variant</h3>
+              <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{{ isEditing ? 'Edit Global Variant' : 'Configure Global Variant' }}</h3>
               <button @click="closeModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-lg focus:outline-none dark:text-slate-400">&times;</button>
             </div>
 
@@ -244,7 +256,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Add Variant
+                  {{ isEditing ? 'Update Variant' : 'Add Variant' }}
                 </button>
               </div>
             </form>
@@ -280,6 +292,8 @@ const feedbackClass = ref('');
 
 // Modal State
 const showModal = ref(false);
+const isEditing = ref(false);
+const editingId = ref(null);
 const modalError = ref('');
 const modalForm = ref({
   name: '',
@@ -288,11 +302,12 @@ const modalForm = ref({
 
 // Computed filtering
 const filteredAttributes = computed(() => {
+  if (!attributes.value) return [];
   if (!searchQuery.value.trim()) return attributes.value;
   const q = searchQuery.value.toLowerCase().trim();
   return attributes.value.filter(attr => {
-    const matchesName = attr.name.toLowerCase().includes(q);
-    const matchesValues = attr.values.some(v => v.value.toLowerCase().includes(q));
+    const matchesName = attr.name ? attr.name.toLowerCase().includes(q) : false;
+    const matchesValues = (attr.values || []).some(v => v.value && v.value.toLowerCase().includes(q));
     return matchesName || matchesValues;
   });
 });
@@ -312,6 +327,8 @@ const toggleSelectAll = () => {
 
 // Open/Close Modal
 const openModal = () => {
+  isEditing.value = false;
+  editingId.value = null;
   modalForm.value = {
     name: '',
     valuesRaw: ''
@@ -320,8 +337,21 @@ const openModal = () => {
   showModal.value = true;
 };
 
+const editAttribute = (attr) => {
+  isEditing.value = true;
+  editingId.value = attr.id;
+  modalForm.value = {
+    name: attr.name,
+    valuesRaw: (attr.values || []).map(v => v.value).join(', ')
+  };
+  modalError.value = '';
+  showModal.value = true;
+};
+
 const closeModal = () => {
   showModal.value = false;
+  isEditing.value = false;
+  editingId.value = null;
 };
 
 // Fetch variants
@@ -338,7 +368,7 @@ const fetchVariants = async () => {
   }
 };
 
-// Submit New Variant
+// Submit Variant (Create or Update)
 const submitVariant = async () => {
   if (!modalForm.value.name.trim() || !modalForm.value.valuesRaw.trim()) {
     modalError.value = 'Please complete all required fields.';
@@ -359,20 +389,30 @@ const submitVariant = async () => {
   modalError.value = '';
 
   try {
-    await axios.post('/api/attributes', {
-      name: modalForm.value.name.trim(),
-      values: values
-    });
+    if (isEditing.value && editingId.value) {
+      await axios.put(`/api/attributes/${editingId.value}`, {
+        name: modalForm.value.name.trim(),
+        values: values
+      });
+      showFeedback('Variant updated successfully.', 'bg-emerald-50 text-emerald-800 border-emerald-200');
+    } else {
+      await axios.post('/api/attributes', {
+        name: modalForm.value.name.trim(),
+        values: values
+      });
+      showFeedback('Variant added successfully.', 'bg-emerald-50 text-emerald-800 border-emerald-200');
+    }
 
-    showFeedback('Variant added successfully.', 'bg-emerald-50 text-emerald-800 border-emerald-200');
     closeModal();
     fetchVariants();
   } catch (err) {
-    console.error('Failed to create variant:', err);
+    console.error('Failed to save variant:', err);
     if (err.response?.status === 422) {
       modalError.value = err.response.data.message || 'Validation error.';
     } else {
-      modalError.value = 'An error occurred while creating the variant.';
+      modalError.value = isEditing.value 
+        ? 'An error occurred while updating the variant.' 
+        : 'An error occurred while creating the variant.';
     }
   } finally {
     submitting.value = false;
