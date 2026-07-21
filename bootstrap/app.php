@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+
         $middleware->append(\App\Http\Middleware\SetSystemTimezone::class);
         $middleware->append(\App\Http\Middleware\PreventBackHistory::class);
         
@@ -22,7 +26,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetUserLocalizationContext::class,
             \App\Http\Middleware\SetTenantLocalization::class,
-            \App\Http\Middleware\EnsureOnboardingIsCompleted::class,
         ]);
 
         $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {

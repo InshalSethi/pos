@@ -18,6 +18,8 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'test@example.com',
             'password' => Hash::make('password123'),
+            'onboarding_completed' => true,
+            'current_company_id' => 1,
         ]);
 
         $response = $this->postJson('/api/login', [
@@ -39,6 +41,8 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'test@example.com',
             'password' => Hash::make('password123'),
+            'onboarding_completed' => true,
+            'current_company_id' => 1,
         ]);
 
         $response = $this->postJson('/api/login', [

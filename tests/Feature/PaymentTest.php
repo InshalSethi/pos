@@ -75,7 +75,7 @@ class PaymentTest extends TestCase
 
         // Create supplier
         $this->supplier = Supplier::create([
-            'display_name' => 'Test Supplier',
+            'name' => 'Test Supplier',
             'company_name' => 'Test Supplier Inc.',
             'email' => 'supplier@test.com',
             'phone' => '123-456-7890',

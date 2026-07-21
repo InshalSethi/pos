@@ -42,6 +42,12 @@ axios.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
+        if (error.response?.status === 403) {
+            if (error.response.data?.redirect) {
+                window.location.href = error.response.data.redirect;
+                return Promise.reject(error);
+            }
+        }
         return Promise.reject(error);
     }
 );

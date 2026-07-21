@@ -322,6 +322,14 @@ router.beforeEach(async (to, from, next) => {
     await authStore.initializeAuth();
   }
 
+  // Redirect to company setup if setup is not complete
+  if (authStore.isAuthenticated && (authStore.user.company_id === null || !authStore.user.is_setup_completed)) {
+    if (to.path !== '/login' && to.path !== '/register' && to.path !== '/company-setup') {
+      window.location.href = '/company-setup';
+      return;
+    }
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {

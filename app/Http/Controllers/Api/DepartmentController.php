@@ -7,6 +7,7 @@ use App\Models\Department;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
@@ -49,9 +50,15 @@ class DepartmentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:departments,code',
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('departments', 'code')->where('company_id', $companyId),
+            ],
             'description' => 'nullable|string',
             'manager_id' => 'nullable|exists:employees,id',
             'parent_department_id' => 'nullable|exists:departments,id',
@@ -89,9 +96,15 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, Department $department): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:departments,code,' . $department->id,
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('departments', 'code')->ignore($department->id)->where('company_id', $companyId),
+            ],
             'description' => 'nullable|string',
             'manager_id' => 'nullable|exists:employees,id',
             'parent_department_id' => 'nullable|exists:departments,id',

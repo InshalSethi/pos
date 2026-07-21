@@ -19,29 +19,49 @@
                 {{-- <x-application-logo /> --}}
             </div>
 
-            {{-- Home Button — forks to correct modal based on user lifecycle path --}}
-            <button
-                type="button"
-                @click="hasActiveCompany ? (showExistingUserModal = true) : (showFreshUserModal = true)"
-                class="pointer-events-auto flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl
-                       text-slate-700 dark:text-zinc-300
-                       bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
-                       hover:bg-white dark:hover:bg-zinc-800
-                       border border-slate-200 dark:border-zinc-800 shadow-sm
-                       active:scale-95 transition-all duration-150
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                aria-label="Return to Home"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                     stroke-width="1.75" stroke="currentColor" class="w-4 h-4" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12
-                             M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875
-                             c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21
-                             h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                </svg>
-                <span>Home</span>
-            </button>
+            {{-- Home / Cancel Button — forks to correct action based on user lifecycle path --}}
+            @if(!$hasExistingActiveCompany)
+                <button
+                    type="button"
+                    @click="showFreshUserModal = true"
+                    class="pointer-events-auto flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl
+                           text-rose-600 dark:text-rose-400
+                           bg-rose-50/80 dark:bg-rose-950/30 backdrop-blur-md
+                           hover:bg-rose-100/80 dark:hover:bg-rose-950/55
+                           border border-rose-200/50 dark:border-rose-900/50 shadow-xs
+                           active:scale-95 transition-all duration-150
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                    aria-label="Cancel Setup"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span>Cancel Setup</span>
+                </button>
+            @else
+                <button
+                    type="button"
+                    @click="showExistingUserModal = true"
+                    class="pointer-events-auto flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl
+                           text-slate-700 dark:text-zinc-300
+                           bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
+                           hover:bg-white dark:hover:bg-zinc-800
+                           border border-slate-200 dark:border-zinc-800 shadow-sm
+                           active:scale-95 transition-all duration-150
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    aria-label="Return to Home"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                         stroke-width="1.75" stroke="currentColor" class="w-4 h-4" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12
+                                 M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875
+                                 c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21
+                                 h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+                    </svg>
+                    <span>Home</span>
+                </button>
+            @endif
         </div>
 
 
@@ -108,22 +128,16 @@
                         Continue Setup
                     </button>
 
-                    {{-- A2: Full account teardown via secure POST --}}
-                    <form
-                        action="{{ route('onboarding.abort-registration') }}"
-                        method="POST"
-                        class="flex-1"
+                    {{-- A2: Full account teardown via GET route --}}
+                    <a
+                        href="{{ route('company.setup.cancel') }}"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold text-white text-center
+                               bg-rose-500 hover:bg-rose-600 active:bg-rose-700
+                               rounded-xl shadow-sm transition-colors duration-150
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                     >
-                        @csrf
-                        <button
-                            type="submit"
-                            class="w-full px-4 py-2.5 text-sm font-semibold text-white
-                                   bg-rose-500 hover:bg-rose-600 active:bg-rose-700
-                                   rounded-xl shadow-sm transition-colors duration-150
-                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
-                            Cancel Setup
-                        </button>
-                    </form>
+                        Cancel Setup
+                    </a>
 
                 </div>
             </div>

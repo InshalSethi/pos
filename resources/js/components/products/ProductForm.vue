@@ -624,7 +624,7 @@
                         <span>{{ getRowWarehouseLabel([whId]) }}</span>
                         <button type="button" @click.stop="toggleTopWarehouseSelection(whId)" class="hover:text-red-350 font-bold focus:outline-none">&times;</button>
                       </div>
-                      <span v-if="(!form.warehouse_ids || form.warehouse_ids.length === 0)" class="text-slate-400 dark:text-slate-550 text-xs">Assign Warehouse(s)</span>
+                      <span v-if="(!form.warehouse_ids || form.warehouse_ids.length === 0)" class="text-slate-400 dark:text-slate-550 text-xs">{{ warehouseOptions.length === 0 ? 'No warehouse created' : 'Assign Warehouse(s)' }}</span>
                       
                       <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
@@ -643,6 +643,10 @@
                         <span v-if="(form.warehouse_ids || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-455">
                           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                         </span>
+                      </div>
+                      <div v-if="warehouseOptions.length === 0" class="px-3 py-3 text-xs text-slate-400 dark:text-slate-550 italic text-center">
+                        <svg class="w-5 h-5 mx-auto mb-1 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                        No warehouse created
                       </div>
                     </div>
                   </div>
@@ -1562,9 +1566,7 @@ const getInitialWarehouses = () => {
       }
     ];
   }
-  return [
-    { id: 1, name: 'Main Warehouse', is_default: true, opening_stock: 0, reorder_level: 0 }
-  ];
+  return [];
 };
 
 const warehouses = ref(getInitialWarehouses());
@@ -2375,15 +2377,7 @@ onMounted(async () => {
     availableWarehouses.value = whResponse?.data || [];
     systemAttributes.value = attrResponse?.data || [];
     
-    // Fallback if no warehouses exist yet in company settings
-    if (availableWarehouses.value.length === 0) {
-      availableWarehouses.value = [
-        { id: 1, name: 'Main Warehouse', is_default: true },
-        { id: 2, name: 'Secondary Warehouse', is_default: false },
-        { id: 3, name: 'Store Front', is_default: false },
-        { id: 4, name: 'Online Store Depot', is_default: false }
-      ];
-    }
+    // No fallback — if no warehouses exist, dropdown will show "No warehouse created"
 
     if ((!form.value.warehouse_ids || form.value.warehouse_ids.length === 0) && availableWarehouses.value.length > 0) {
       const defaultWh = availableWarehouses.value.find(w => w.is_default) || availableWarehouses.value[0];

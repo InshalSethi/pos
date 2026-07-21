@@ -308,6 +308,52 @@ class OnboardingWizard extends Component
             if (!$user->companies()->where('company_id', $company->id)->exists()) {
                 $user->companies()->attach($company->id, ['role' => 'owner']);
             }
+
+            // ── Baseline Seeding ──
+            // Seed Default Branch Warehouse
+            \App\Models\Warehouse::firstOrCreate([
+                'company_id' => $company->id,
+                'is_default' => true,
+            ], [
+                'name' => 'Default Branch Warehouse',
+                'email' => $company->company_email ?: $user->email,
+                'phone' => $company->company_phone ?: '',
+                'address' => $company->business_address ?: '',
+                'is_active' => true,
+                'is_saleable' => true,
+            ]);
+
+            // Seed Default Cash Vault Bank Account
+            $cashAccount = \App\Models\Account::where('account_code', '1010')
+                ->orWhere('account_name', 'like', '%Cash%')
+                ->first();
+
+            if (!$cashAccount) {
+                $cashAccount = \App\Models\Account::create([
+                    'account_code' => '1010',
+                    'account_name' => 'Cash on Hand',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'is_active' => true,
+                    'is_system_account' => true,
+                    'opening_balance' => 0.00,
+                    'current_balance' => 0.00,
+                ]);
+            }
+
+            \App\Models\BankAccount::firstOrCreate([
+                'company_id' => $company->id,
+                'account_name' => 'Default Cash Vault',
+            ], [
+                'bank_name' => 'Cash Account',
+                'account_number' => 'CASH-001',
+                'account_type' => 'checking',
+                'chart_account_id' => $cashAccount->id,
+                'is_active' => true,
+                'is_default' => true,
+                'opening_balance' => 0.00,
+                'opening_date' => now()->format('Y-m-d'),
+            ]);
         });
 
         // Clear the bypass session token now that setup is complete.
@@ -358,10 +404,7 @@ class OnboardingWizard extends Component
 
         session()->flash('success', 'Onboarding completed successfully! Welcome to Aura.');
 
-        // Regenerate session token to prevent CSRF/session fixation on privilege escalation
-        session()->regenerate();
-
-        return redirect()->intended('/');
+        return redirect()->to('/');
     }
 
 

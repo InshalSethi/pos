@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -60,10 +61,15 @@ class SupplierController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:suppliers,email',
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('suppliers', 'email')->where('company_id', $companyId),
+            ],
             'phone' => 'nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -108,10 +114,15 @@ class SupplierController extends Controller
      */
     public function update(Request $request, Supplier $supplier): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:suppliers,email,' . $supplier->id,
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('suppliers', 'email')->ignore($supplier->id)->where('company_id', $companyId),
+            ],
             'phone' => 'nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'address' => 'nullable|string',

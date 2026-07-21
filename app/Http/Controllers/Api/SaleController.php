@@ -366,16 +366,16 @@ class SaleController extends Controller
             $saleNumber = $request->sale_number;
             
             // If sale number is provided but already exists, clear it to auto-generate
-            if ($saleNumber && Sale::withoutGlobalScopes()->where('sale_number', $saleNumber)->exists()) {
+            if ($saleNumber && Sale::where('sale_number', $saleNumber)->exists()) {
                 $saleNumber = null;
             }
             
             if (!$saleNumber) {
-                $counter = Sale::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1;
+                $counter = Sale::whereDate('created_at', today())->count() + 1;
                 do {
                     $saleNumber = 'SALE-' . date('Ymd') . '-' . str_pad($counter, 4, '0', STR_PAD_LEFT);
                     $counter++;
-                } while (Sale::withoutGlobalScopes()->where('sale_number', $saleNumber)->exists());
+                } while (Sale::where('sale_number', $saleNumber)->exists());
             }
 
             // Create sale
@@ -777,7 +777,7 @@ class SaleController extends Controller
 
             // Sale number stays the same, or updates if a unique one is provided
             $saleNumber = $request->sale_number ?? $sale->sale_number;
-            if ($saleNumber !== $sale->sale_number && Sale::withoutGlobalScopes()->where('sale_number', $saleNumber)->exists()) {
+            if ($saleNumber !== $sale->sale_number && Sale::where('sale_number', $saleNumber)->exists()) {
                 return response()->json([
                     'message' => 'The invoice number already exists.'
                 ], 422);
@@ -1008,8 +1008,33 @@ class SaleController extends Controller
         try {
             DB::beginTransaction();
 
+            $companyId = auth()->user()->current_company_id;
+            $reason = $request->input('return_reason');
+            $normalizedReason = $reason ? strtolower(trim($reason)) : null;
+
+            // Reason Routing Configuration Array
+            $cleanKeys = [
+                'wrong_item',
+                'customer_change_mind',
+                'not_as_described',
+                'wrong item',
+                'customer changed mind',
+                'not as described'
+            ];
+
             $totalReturnAmount = 0;
             $returnItems = [];
+
+            // Generate return sale number beforehand for stock history reference
+            $returnSaleNumber = 'RETURN-' . date('Ymd') . '-' . str_pad(
+                Sale::whereDate('created_at', today())->where('is_refund', true)->count() + 1,
+                4,
+                '0',
+                STR_PAD_LEFT
+            );
+
+            $inventoryService = new WarehouseInventoryService();
+            $firstTargetWarehouseId = null;
 
             // Validate and prepare return items
             foreach ($request->return_items as $returnItem) {
@@ -1025,8 +1050,51 @@ class SaleController extends Controller
 
                 $totalReturnAmount += $returnItem['return_amount'];
 
+                // Determine target warehouse based on return reason mapping
+                if ($normalizedReason && in_array($normalizedReason, $cleanKeys)) {
+                    // Main Clean Inventory -> Original Branch Warehouse where is_saleable = true
+                    $targetWarehouseId = $originalItem->warehouse_id;
+
+                    // Ensure this warehouse exists and is explicitly marked as saleable
+                    $warehouse = Warehouse::find($targetWarehouseId);
+                    if ($warehouse && !$warehouse->is_saleable) {
+                        $warehouse->update(['is_saleable' => true]);
+                    }
+                } else {
+                    // Damaged & Opened Buffer -> Virtual Warehouse Container where is_saleable = false
+                    // Unrecognized, empty or null reasons default to this buffer as a safety guardrail
+                    $virtualWarehouse = Warehouse::where('company_id', $companyId)
+                        ->where('is_saleable', false)
+                        ->first();
+
+                    if (!$virtualWarehouse) {
+                        $virtualWarehouse = Warehouse::create([
+                            'company_id' => $companyId,
+                            'name' => 'Damaged & Opened Buffer',
+                            'is_default' => false,
+                            'is_active' => true,
+                            'is_saleable' => false,
+                        ]);
+                    }
+                    $targetWarehouseId = $virtualWarehouse->id;
+
+                    // Log the routing event
+                    \Illuminate\Support\Facades\Log::info("Sales return item routed to virtual warehouse buffer.", [
+                        'product_id' => $originalItem->product_id,
+                        'quantity' => $returnItem['quantity'],
+                        'reason' => $reason,
+                        'virtual_warehouse_id' => $targetWarehouseId
+                    ]);
+                }
+
+                if (!$firstTargetWarehouseId) {
+                    $firstTargetWarehouseId = $targetWarehouseId;
+                }
+
                 $returnItems[] = [
                     'product_id' => $originalItem->product_id,
+                    'product_variation_id' => $originalItem->product_variation_id,
+                    'warehouse_id' => $targetWarehouseId,
                     'quantity' => -$returnItem['quantity'], // Negative for returns
                     'unit_price' => $originalItem->unit_price,
                     'discount_amount' => 0,
@@ -1034,25 +1102,27 @@ class SaleController extends Controller
                     'total_amount' => -$returnItem['return_amount'], // Negative for returns
                 ];
 
-                // Update inventory
+                // Update inventory using WarehouseInventoryService
                 $product = Product::find($originalItem->product_id);
                 if ($product && $product->track_inventory) {
-                    $product->increment('stock_quantity', $returnItem['quantity']);
+                    $inventoryService->adjustStock(
+                        $targetWarehouseId,
+                        $originalItem->product_id,
+                        $originalItem->product_variation_id,
+                        $returnItem['quantity'],
+                        $companyId,
+                        'Sales Return',
+                        $returnSaleNumber
+                    );
                 }
             }
 
-            // Create return sale
-            $returnSaleNumber = 'RETURN-' . date('Ymd') . '-' . str_pad(
-                Sale::whereDate('created_at', today())->where('is_refund', true)->count() + 1,
-                4,
-                '0',
-                STR_PAD_LEFT
-            );
-
+            // Create return sale record
             $returnSale = Sale::create([
                 'sale_number' => $returnSaleNumber,
                 'customer_id' => $originalSale->customer_id,
                 'user_id' => Auth::id(),
+                'warehouse_id' => $firstTargetWarehouseId,
                 'sale_date' => $request->return_date,
                 'status' => 'completed',
                 'subtotal' => -$totalReturnAmount,

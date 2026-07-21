@@ -34,19 +34,32 @@ return new class extends Migration {
         });
 
         // 3. Backfill company_id for existing records
-        DB::statement('
-            UPDATE attribute_values av 
-            JOIN attributes a ON av.attribute_id = a.id 
-            SET av.company_id = a.company_id 
-            WHERE av.company_id IS NULL
-        ');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('
+                UPDATE attribute_values 
+                SET company_id = (SELECT company_id FROM attributes WHERE attributes.id = attribute_values.attribute_id)
+                WHERE company_id IS NULL
+            ');
+            DB::statement('
+                UPDATE product_variations 
+                SET company_id = (SELECT company_id FROM products WHERE products.id = product_variations.product_id)
+                WHERE company_id IS NULL
+            ');
+        } else {
+            DB::statement('
+                UPDATE attribute_values av 
+                JOIN attributes a ON av.attribute_id = a.id 
+                SET av.company_id = a.company_id 
+                WHERE av.company_id IS NULL
+            ');
 
-        DB::statement('
-            UPDATE product_variations pv 
-            JOIN products p ON pv.product_id = p.id 
-            SET pv.company_id = p.company_id 
-            WHERE pv.company_id IS NULL
-        ');
+            DB::statement('
+                UPDATE product_variations pv 
+                JOIN products p ON pv.product_id = p.id 
+                SET pv.company_id = p.company_id 
+                WHERE pv.company_id IS NULL
+            ');
+        }
 
         // 4. Enforce NOT NULL on backfilled columns and index them
         Schema::table('attribute_values', function (Blueprint $table) {

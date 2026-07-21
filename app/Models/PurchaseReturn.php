@@ -9,15 +9,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Traits\BelongsToCompany;
+
 class PurchaseReturn extends Model
 {
+    use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'return_number',
         'purchase_order_id',
         'supplier_id',
+
         'user_id',
         'return_date',
         'reason',

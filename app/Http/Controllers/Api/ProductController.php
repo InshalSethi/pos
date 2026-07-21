@@ -174,6 +174,7 @@ class ProductController extends Controller
         }
 
         $status = $request->input('status', 'active');
+        $companyId = auth()->user()->current_company_id;
 
         // Accidental Activation Guard & Draft vs Active Rule definition
         if ($status === 'draft') {
@@ -181,9 +182,9 @@ class ProductController extends Controller
                 // Auto-generate a unique draft SKU to satisfy DB constraints
                 $request->merge(['sku' => 'DRAFT-' . strtoupper(uniqid())]);
             }
-            $skuRule = 'nullable|string|unique:products,sku';
+            $skuRule = ['nullable', 'string', Rule::unique('products', 'sku')->where('company_id', $companyId)];
         } else {
-            $skuRule = ['required', 'string', 'regex:/^(?!DRAFT-)/i', 'unique:products,sku'];
+            $skuRule = ['required', 'string', 'regex:/^(?!DRAFT-)/i', Rule::unique('products', 'sku')->where('company_id', $companyId)];
         }
 
         $validator = Validator::make($request->all(), [
@@ -209,7 +210,11 @@ class ProductController extends Controller
             ],
             'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
-            'barcode' => 'nullable|string|unique:products,barcode',
+            'barcode' => [
+                'nullable',
+                'string',
+                Rule::unique('products', 'barcode')->where('company_id', $companyId)
+            ],
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
@@ -612,6 +617,7 @@ class ProductController extends Controller
         }
 
         $status = $request->input('status', 'active');
+        $companyId = auth()->user()->current_company_id;
 
         // Accidental Activation Guard & Draft vs Active Rule definition
         if ($status === 'draft') {
@@ -619,9 +625,9 @@ class ProductController extends Controller
                 // If they update a draft and left SKU blank, preserve or generate one if missing
                 $request->merge(['sku' => $product->sku ?: 'DRAFT-' . strtoupper(uniqid())]);
             }
-            $skuRule = 'nullable|string|unique:products,sku,' . $product->id;
+            $skuRule = ['nullable', 'string', Rule::unique('products', 'sku')->ignore($product->id)->where('company_id', $companyId)];
         } else {
-            $skuRule = ['required', 'string', 'regex:/^(?!DRAFT-)/i', 'unique:products,sku,' . $product->id];
+            $skuRule = ['required', 'string', 'regex:/^(?!DRAFT-)/i', Rule::unique('products', 'sku')->ignore($product->id)->where('company_id', $companyId)];
         }
 
         $validator = Validator::make($request->all(), [
@@ -647,7 +653,11 @@ class ProductController extends Controller
             ],
             'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
-            'barcode' => 'nullable|string|unique:products,barcode,' . $product->id,
+            'barcode' => [
+                'nullable',
+                'string',
+                Rule::unique('products', 'barcode')->ignore($product->id)->where('company_id', $companyId)
+            ],
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
@@ -996,10 +1006,15 @@ class ProductController extends Controller
 
             foreach ($products as $index => $productData) {
                 try {
-                    // Validate product data
+                    $companyId = auth()->user()->current_company_id;
                     $productValidator = Validator::make($productData, [
                         'name' => 'required|string|max:255',
-                        'sku' => 'required|string|max:100|unique:products,sku',
+                        'sku' => [
+                            'required',
+                            'string',
+                            'max:100',
+                            Rule::unique('products', 'sku')->where('company_id', $companyId)
+                        ],
                         'selling_price' => 'required|numeric|min:0',
                         'cost_price' => 'nullable|numeric|min:0',
                         'stock_quantity' => 'nullable|integer|min:0',

@@ -7,6 +7,7 @@ use App\Models\Position;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class PositionController extends Controller
 {
@@ -57,9 +58,15 @@ class PositionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:positions,code',
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('positions', 'code')->where('company_id', $companyId),
+            ],
             'description' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
             'level' => 'required|in:entry,junior,mid,senior,lead,manager,director,executive',
@@ -101,9 +108,15 @@ class PositionController extends Controller
      */
     public function update(Request $request, Position $position): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:positions,code,' . $position->id,
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('positions', 'code')->ignore($position->id)->where('company_id', $companyId),
+            ],
             'description' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
             'level' => 'required|in:entry,junior,mid,senior,lead,manager,director,executive',

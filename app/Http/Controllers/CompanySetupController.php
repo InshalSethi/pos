@@ -77,6 +77,36 @@ class CompanySetupController extends Controller
             ]);
         }
 
+        // Render fresh setup wizard view if user has company_id = NULL
+        if (is_null($user->company_id)) {
+            $company = Company::create([
+                'user_id'           => $user->id,
+                'company_name'      => 'Untitled Draft Workspace',
+                'company_email'     => $user->email,
+                'company_phone'     => '',
+                'owner_role'        => 'Owner/CEO',
+                'team_size'         => 'Just Me',
+                'intended_tasks'    => [],
+                'business_type'     => '',
+                'business_scale'    => 'Single Outlet',
+                'country'           => 'United States',
+                'system_language'   => 'en',
+                'base_currency'     => 'USD',
+                'timezone_offset'   => 'UTC',
+                'fiscal_year_start' => date('Y-01-01'),
+                'status'            => 'draft',
+                'draft_step'        => 1,
+            ]);
+
+            session(['creating_subsequent_company' => true]);
+
+            return view('company-setup', [
+                'company'                  => $company,
+                'currentStep'              => 1,
+                'hasExistingActiveCompany' => $hasExistingActiveCompany,
+            ]);
+        }
+
         // ── Fallback: Block unparameterized direct access ─────────────
         return redirect('/');
     }
@@ -99,30 +129,7 @@ class CompanySetupController extends Controller
 
         // ── PATH A: Fresh User — Full Account Teardown ────────────────
         if (!$hasActiveCompany) {
-            try {
-                \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request) {
-                    \Illuminate\Support\Facades\Auth::logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-
-                    Company::where('user_id', $user->id)->delete(); // Wipe all drafts
-                    $user->delete();                                  // Drop user record
-                });
-
-            } catch (\Throwable $e) {
-                \Log::error('abortRegistration teardown failed', [
-                    'user_id' => $user->id,
-                    'error'   => $e->getMessage(),
-                ]);
-
-                return redirect('/register')->withErrors([
-                    'abort' => 'Teardown failed. Please try again or contact support.'
-                ]);
-            }
-
-            return redirect('/register')->with(
-                'status', 'Registration cancelled. All your data has been permanently removed.'
-            );
+            return redirect()->route('company.setup.cancel');
         }
 
         // ── PATH B: Existing Tenant — Purge Single Draft Only ─────────

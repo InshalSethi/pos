@@ -7,6 +7,7 @@ use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
@@ -65,8 +66,14 @@ class AccountController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
-            'account_code' => 'required|string|max:20|unique:chart_of_accounts,account_code',
+            'account_code' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('chart_of_accounts', 'account_code')->where('company_id', $companyId),
+            ],
             'account_name' => 'required|string|max:255',
             'account_type' => 'required|in:asset,liability,equity,revenue,expense',
             'account_subtype' => 'required|in:current_asset,fixed_asset,other_asset,current_liability,long_term_liability,other_liability,equity,operating_revenue,other_revenue,cost_of_goods_sold,operating_expense,other_expense',
@@ -127,8 +134,14 @@ class AccountController extends Controller
             ], 422);
         }
 
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
-            'account_code' => 'required|string|max:20|unique:chart_of_accounts,account_code,' . $account->id,
+            'account_code' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('chart_of_accounts', 'account_code')->ignore($account->id)->where('company_id', $companyId),
+            ],
             'account_name' => 'required|string|max:255',
             'account_type' => 'required|in:asset,liability,equity,revenue,expense',
             'account_subtype' => 'required|in:current_asset,fixed_asset,other_asset,current_liability,long_term_liability,other_liability,equity,operating_revenue,other_revenue,cost_of_goods_sold,operating_expense,other_expense',

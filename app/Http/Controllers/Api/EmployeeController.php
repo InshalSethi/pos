@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
@@ -95,11 +96,16 @@ class EmployeeController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:employees,email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('employees', 'email')->where('company_id', $companyId),
+            ],
             'phone' => 'nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -194,11 +200,16 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, Employee $employee): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:employees,email,' . $employee->id,
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('employees', 'email')->ignore($employee->id)->where('company_id', $companyId),
+            ],
             'phone' => 'nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'address' => 'nullable|string',

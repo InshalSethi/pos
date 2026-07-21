@@ -33,6 +33,13 @@ class AuthController extends Controller
             ]);
         }
 
+        if (!$user->onboarding_completed || is_null($user->current_company_id)) {
+            $user->delete();
+            throw ValidationException::withMessages([
+                'email' => ['no account created'],
+            ]);
+        }
+
         // Create token
         $token = $user->createToken('auth-token')->plainTextToken;
 

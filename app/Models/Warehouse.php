@@ -22,11 +22,13 @@ class Warehouse extends Model
         'address',
         'is_default',
         'is_active',
+        'is_saleable',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
         'is_active' => 'boolean',
+        'is_saleable' => 'boolean',
     ];
 
     public function inventories(): HasMany

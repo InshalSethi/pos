@@ -164,12 +164,13 @@ onMounted(async () => {
 
   const token = route.query.token;
   const errorParam = route.query.error;
+  const redirectParam = route.query.redirect;
 
   if (token) {
     loading.value = true;
     try {
       await authStore.setToken(token); // Store mein token save karega
-      window.location.href = '/'; // Trigger backend middleware check
+      window.location.href = redirectParam || '/'; // Trigger backend middleware check
     } catch (err) {
       error.value = 'Failed to sync Google session';
     } finally {
@@ -179,12 +180,16 @@ onMounted(async () => {
 
   if (errorParam) {
     error.value = errorParam;
+    // Clear error from URL query to prevent persistence on refresh
+    const query = { ...route.query };
+    delete query.error;
+    router.replace({ query });
   }
 });
 
 const loginWithGoogle = () => {
   // Laravel Backend Redirect
-  window.location.href = "http://127.0.0.1:8001/api/auth/google/redirect";
+  window.location.href = "/auth/google/redirect?flow=login";
 };
 
 const handleLogin = async () => {

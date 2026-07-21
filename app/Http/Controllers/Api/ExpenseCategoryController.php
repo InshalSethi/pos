@@ -7,6 +7,7 @@ use App\Models\ExpenseCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ExpenseCategoryController extends Controller
 {
@@ -69,10 +70,16 @@ class ExpenseCategoryController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'code' => 'nullable|string|max:50|unique:expense_categories,code',
+            'code' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('expense_categories', 'code')->where('company_id', $companyId),
+            ],
             'parent_category_id' => 'nullable|exists:expense_categories,id',
             'is_active' => 'boolean',
         ]);
@@ -108,10 +115,16 @@ class ExpenseCategoryController extends Controller
      */
     public function update(Request $request, ExpenseCategory $expenseCategory): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'code' => 'nullable|string|max:50|unique:expense_categories,code,' . $expenseCategory->id,
+            'code' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('expense_categories', 'code')->ignore($expenseCategory->id)->where('company_id', $companyId),
+            ],
             'parent_category_id' => 'nullable|exists:expense_categories,id',
             'is_active' => 'boolean',
         ]);

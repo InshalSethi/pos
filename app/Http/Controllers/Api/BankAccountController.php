@@ -9,6 +9,7 @@ use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class BankAccountController extends Controller
 {
@@ -57,10 +58,16 @@ class BankAccountController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'account_name' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50|unique:bank_accounts,account_number',
+            'account_number' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('bank_accounts', 'account_number')->where('company_id', $companyId),
+            ],
             'account_type' => 'required|in:checking,savings,credit_card,line_of_credit,other',
             'chart_account_id' => 'required|exists:chart_of_accounts,id',
             'routing_number' => 'nullable|string|max:20',
@@ -115,10 +122,16 @@ class BankAccountController extends Controller
      */
     public function update(Request $request, BankAccount $bankAccount): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
         $validator = Validator::make($request->all(), [
             'account_name' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50|unique:bank_accounts,account_number,' . $bankAccount->id,
+            'account_number' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('bank_accounts', 'account_number')->ignore($bankAccount->id)->where('company_id', $companyId),
+            ],
             'account_type' => 'required|in:checking,savings,credit_card,line_of_credit,other',
             'chart_account_id' => 'required|exists:chart_of_accounts,id',
             'routing_number' => 'nullable|string|max:20',

@@ -18,6 +18,7 @@ class Sale extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'sale_number',
         'customer_id',
         'category_id',

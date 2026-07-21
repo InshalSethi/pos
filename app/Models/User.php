@@ -36,6 +36,9 @@ class User extends Authenticatable
         'google_id',
         'current_company_id',
         'onboarding_completed',
+        'company_id',
+        'is_setup_completed',
+        'avatar',
     ];
 
     /**
@@ -74,7 +77,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['role_name'];
+    protected $appends = ['role_name', 'company_id', 'is_setup_completed'];
 
     /**
      * Get the name of the primary role.
@@ -82,6 +85,49 @@ class User extends Authenticatable
     public function getRoleNameAttribute()
     {
         return $this->roles->first() ? $this->roles->first()->name : '';
+    }
+
+    /**
+     * Get company_id mapping to current_company_id.
+     */
+    public function getCompanyIdAttribute()
+    {
+        return $this->current_company_id;
+    }
+
+    /**
+     * Set company_id mapping to current_company_id.
+     */
+    public function setCompanyIdAttribute($value)
+    {
+        $this->attributes['current_company_id'] = $value;
+        $this->current_company_id = $value;
+    }
+
+    /**
+     * Get is_setup_completed mapping to onboarding_completed.
+     */
+    public function getIsSetupCompletedAttribute()
+    {
+        return (bool) ($this->onboarding_completed ?? false);
+    }
+
+    /**
+     * Set is_setup_completed mapping to onboarding_completed.
+     */
+    public function setIsSetupCompletedAttribute($value)
+    {
+        $this->attributes['onboarding_completed'] = $value;
+        $this->onboarding_completed = $value;
+    }
+
+    /**
+     * Set avatar mapping to profile_image.
+     */
+    public function setAvatarAttribute($value)
+    {
+        $this->attributes['profile_image'] = $value;
+        $this->profile_image = $value;
     }
 
     public function settings(): HasOne

@@ -15,6 +15,12 @@ class SetSystemTimezone
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (app()->environment('testing')) {
+            config(['app.timezone' => 'UTC']);
+            date_default_timezone_set('UTC');
+            return $next($request);
+        }
+
         $rawTimezone = setting('system_timezone', 'Asia/Karachi');
 
         // Map short-codes to valid IANA identifiers
