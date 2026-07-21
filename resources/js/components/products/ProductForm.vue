@@ -246,87 +246,141 @@
  
               <!-- Right Column: Item Pictures -->
               <div class="md:col-span-1 flex flex-col justify-end">
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  Item Pictures
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
-                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
-                      Upload up to 8 images. Crop, rotate, zoom, and select the primary image.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
-                    </span>
-                  </span>
-                </label>
-
-                <div class="flex flex-wrap gap-2.5 items-center">
-                  <!-- Square Image Preview Tiles -->
-                  <div 
-                    v-for="(img, pIdx) in productImages" 
-                    :key="pIdx"
-                    class="relative aspect-square w-[110px] h-[110px] border border-slate-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden group bg-slate-50/50 dark:bg-[#1E1E1E]/20 flex items-center justify-center shrink-0 shadow-xs transition-all"
-                    :class="pIdx === primaryImageIndex ? 'ring-2 ring-indigo-500 border-indigo-500' : 'opacity-85 hover:opacity-100'"
-                  >
-                    <img :src="img.preview" class="w-full h-full object-cover">
-
-                    <!-- Star Overlay Badge for Primary Image -->
-                    <button 
-                      type="button"
-                      @click.stop="primaryImageIndex = pIdx; syncFormImages();"
-                      class="absolute top-1.5 left-1.5 z-10 p-1 rounded-full bg-slate-900/70 backdrop-blur-xs text-amber-400 select-none shadow hover:scale-110 transition-transform cursor-pointer"
-                      title="Primary Image (Click to set)"
-                    >
-                      <svg class="w-3.5 h-3.5 fill-amber-400 text-amber-400" viewBox="0 0 24 24">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Item Pictures
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                    </button>
+                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                        Upload up to 8 images. Crop, rotate, zoom, and select the primary image.
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      </span>
+                    </span>
+                  </label>
 
-                    <!-- Action Hover Controls -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2 gap-1.5">
-                      <!-- View -->
-                      <button type="button" @click="openGalleryViewer(pIdx)" class="p-1 text-sky-400 hover:text-sky-300 hover:scale-125 transition-all focus:outline-none drop-shadow cursor-pointer" title="View Image">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                      </button>
-                      
-                      <!-- Edit/Crop -->
-                      <button type="button" @click="openEditorForExisting(pIdx)" class="p-1 text-emerald-400 hover:text-emerald-300 hover:scale-125 transition-all focus:outline-none drop-shadow cursor-pointer" title="Edit/Crop Image">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                      </button>
-                      
-                      <!-- Remove -->
-                      <button type="button" @click="removeProductImage(pIdx)" class="p-1 text-pink-500 hover:text-pink-400 hover:scale-125 transition-all focus:outline-none drop-shadow cursor-pointer" title="Remove Image">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Square Add Image Dropzone Tile (if < 8 images) -->
-                  <div 
-                    v-if="productImages.length < 8 && productImages.length > 0"
-                    @click="$refs.imageInputRef.click()"
-                    class="aspect-square w-[110px] h-[110px] flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-[#2E2E2E] rounded-xl bg-slate-50/50 dark:bg-[#1E1E1E]/25 hover:bg-slate-100 dark:hover:bg-slate-900/40 hover:border-indigo-400 transition-all cursor-pointer shrink-0"
-                    title="Upload another picture"
+                  <!-- Manage Link / Count badge -->
+                  <button 
+                    v-if="productImages.length > 0" 
+                    type="button" 
+                    @click="showMediaManagerModal = true"
+                    class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer transition-colors"
                   >
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-1">Add Image</span>
-                  </div>
+                    Manage ({{ productImages.length }})
+                  </button>
+                </div>
 
-                  <!-- Empty State Square Dropzone Tile when 0 images -->
+                <!-- Single Row Preview Container -->
+                <div class="flex items-center gap-2 max-w-full overflow-hidden select-none">
+                  <!-- Case 0: 0 images uploaded -->
                   <div 
                     v-if="productImages.length === 0"
                     @click="$refs.imageInputRef.click()" 
-                    class="aspect-square w-[110px] h-[110px] flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-[#2E2E2E] rounded-xl p-3 bg-slate-50/50 dark:bg-[#1E1E1E]/25 hover:bg-slate-100 dark:hover:bg-slate-900/40 hover:border-indigo-400 transition-all cursor-pointer shrink-0"
+                    class="aspect-square w-20 h-20 sm:w-22 sm:h-22 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-[#2E2E2E] rounded-xl p-2 bg-slate-50/50 dark:bg-[#1E1E1E]/25 hover:bg-slate-100 dark:hover:bg-slate-900/40 hover:border-indigo-400 transition-all cursor-pointer shrink-0"
                   >
-                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-1 text-center leading-tight">Upload</span>
-                    <span class="text-[8px] text-slate-400 dark:text-slate-500 mt-0.5">Max 8</span>
+                    <span class="text-[8px] text-slate-400 dark:text-slate-500">Max 8</span>
                   </div>
+
+                  <!-- Case 1: 3 or fewer images uploaded -->
+                  <template v-else-if="productImages.length <= 3">
+                    <!-- Preview Tiles -->
+                    <div 
+                      v-for="(img, pIdx) in productImages" 
+                      :key="pIdx"
+                      class="relative aspect-square w-20 h-20 sm:w-22 sm:h-22 border border-slate-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden group bg-slate-50/50 dark:bg-[#1E1E1E]/20 flex items-center justify-center shrink-0 shadow-xs transition-all"
+                      :class="pIdx === primaryImageIndex ? 'ring-2 ring-indigo-500 border-indigo-500' : 'opacity-90 hover:opacity-100'"
+                    >
+                      <img :src="getImageUrl(img)" class="w-full h-full object-cover">
+
+                      <!-- Star Badge for Primary Image -->
+                      <button 
+                        type="button"
+                        @click.stop="primaryImageIndex = pIdx; syncFormImages();"
+                        class="absolute top-1 left-1 z-10 p-0.5 rounded-full bg-slate-900/75 backdrop-blur-xs text-amber-400 select-none shadow hover:scale-110 transition-transform cursor-pointer"
+                        title="Primary Image (Click to set)"
+                      >
+                        <svg class="w-3 h-3 fill-amber-400 text-amber-400" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Action Hover Controls -->
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-1.5 gap-1">
+                        <button type="button" @click="openGalleryViewer(pIdx)" class="p-0.5 text-sky-400 hover:text-sky-300 hover:scale-125 transition-all focus:outline-none drop-shadow cursor-pointer" title="View">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                        <button type="button" @click="openEditorForExisting(pIdx)" class="p-0.5 text-emerald-400 hover:text-emerald-300 hover:scale-125 transition-all focus:outline-none drop-shadow cursor-pointer" title="Edit/Crop">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button type="button" @click="removeProductImage(pIdx)" class="p-0.5 text-pink-500 hover:text-pink-400 hover:scale-125 transition-all focus:outline-none drop-shadow cursor-pointer" title="Remove">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Add Image Dropzone Tile (if < 8) -->
+                    <div 
+                      v-if="productImages.length < 8"
+                      @click="$refs.imageInputRef.click()"
+                      class="aspect-square w-20 h-20 sm:w-22 sm:h-22 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-[#2E2E2E] rounded-xl bg-slate-50/50 dark:bg-[#1E1E1E]/25 hover:bg-slate-100 dark:hover:bg-slate-900/40 hover:border-indigo-400 transition-all cursor-pointer shrink-0"
+                      title="Upload picture"
+                    >
+                      <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                      </svg>
+                      <span class="text-[8px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">Add</span>
+                    </div>
+                  </template>
+
+                  <!-- Case 2: More than 3 images uploaded -->
+                  <template v-else>
+                    <!-- First 2 Images normally -->
+                    <div 
+                      v-for="(img, pIdx) in productImages.slice(0, 2)" 
+                      :key="pIdx"
+                      class="relative aspect-square w-20 h-20 sm:w-22 sm:h-22 border border-slate-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden group bg-slate-50/50 dark:bg-[#1E1E1E]/20 flex items-center justify-center shrink-0 shadow-xs transition-all"
+                      :class="pIdx === primaryImageIndex ? 'ring-2 ring-indigo-500 border-indigo-500' : 'opacity-90 hover:opacity-100'"
+                    >
+                      <img :src="getImageUrl(img)" class="w-full h-full object-cover">
+
+                      <button 
+                        type="button"
+                        @click.stop="primaryImageIndex = pIdx; syncFormImages();"
+                        class="absolute top-1 left-1 z-10 p-0.5 rounded-full bg-slate-900/75 backdrop-blur-xs text-amber-400 select-none shadow hover:scale-110 transition-transform cursor-pointer"
+                        title="Primary Image"
+                      >
+                        <svg class="w-3 h-3 fill-amber-400 text-amber-400" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                      </button>
+
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-1.5 gap-1">
+                        <button type="button" @click="openGalleryViewer(pIdx)" class="p-0.5 text-sky-400 hover:text-sky-300 focus:outline-none cursor-pointer" title="View"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                        <button type="button" @click="openEditorForExisting(pIdx)" class="p-0.5 text-emerald-400 hover:text-emerald-300 focus:outline-none cursor-pointer" title="Edit"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                        <button type="button" @click="removeProductImage(pIdx)" class="p-0.5 text-pink-500 hover:text-pink-400 focus:outline-none cursor-pointer" title="Remove"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                      </div>
+                    </div>
+
+                    <!-- 3rd Slot: +More Tile Overlay -->
+                    <div 
+                      @click="showMediaManagerModal = true"
+                      class="relative aspect-square w-20 h-20 sm:w-22 sm:h-22 border border-slate-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden group cursor-pointer shrink-0 shadow-xs"
+                      title="Click to view and manage all images"
+                    >
+                      <img :src="getImageUrl(productImages[2])" class="w-full h-full object-cover">
+                      <div class="absolute inset-0 bg-slate-955/80 backdrop-blur-xs group-hover:bg-slate-955/85 transition-all flex flex-col items-center justify-center text-white">
+                        <span class="text-sm font-black tracking-tight">+{{ productImages.length - 2 }}</span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-300">More</span>
+                      </div>
+                    </div>
+                  </template>
 
                   <input ref="imageInputRef" type="file" @change="onImageFilePicked" class="hidden" accept="image/*" multiple>
                 </div>
@@ -1177,6 +1231,96 @@
       </div>
     </div>
 
+    <!-- Manage Media Modal -->
+    <Teleport to="body">
+      <div v-if="showMediaManagerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+        <div class="absolute inset-0" @click="showMediaManagerModal = false"></div>
+        <div class="relative w-full max-w-3xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10 animate-in zoom-in-95 duration-200">
+          
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-slate-100 dark:border-[#2E2E2E] flex items-center justify-between bg-slate-50/50 dark:bg-[#252525]/50">
+            <div>
+              <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Manage Item Media</h3>
+              <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Set primary photo, crop, or remove item pictures ({{ productImages.length }} of 8 uploaded)</p>
+            </div>
+            <button @click="showMediaManagerModal = false" type="button" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-xl leading-none transition-colors cursor-pointer">
+              &times;
+            </button>
+          </div>
+
+          <!-- Modal Body Grid -->
+          <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <!-- Media Cards -->
+              <div 
+                v-for="(img, mIdx) in productImages" 
+                :key="mIdx" 
+                class="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-[#2E2E2E] group bg-slate-100 dark:bg-zinc-900 shadow-sm"
+                :class="mIdx === primaryImageIndex ? 'ring-2 ring-indigo-500 border-indigo-500' : ''"
+              >
+                <img :src="getImageUrl(img)" class="w-full h-full object-cover">
+                
+                <!-- Star Primary Badge -->
+                <button 
+                  type="button" 
+                  @click="primaryImageIndex = mIdx; syncFormImages();"
+                  class="absolute top-2 left-2 z-10 p-1.5 rounded-full bg-slate-900/80 text-amber-400 shadow-md hover:scale-110 transition-transform cursor-pointer"
+                  :title="mIdx === primaryImageIndex ? 'Primary Image' : 'Set as Primary Image'"
+                >
+                  <svg class="w-4 h-4" :class="mIdx === primaryImageIndex ? 'fill-amber-400 text-amber-400' : 'text-slate-400 fill-none'" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.246.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 10.1c-.773-.564-.374-1.81.588-1.81h4.907a1 1 0 00.95-.69l1.519-4.674z"/>
+                  </svg>
+                </button>
+                
+                <div v-if="mIdx === primaryImageIndex" class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9px] font-black uppercase tracking-wider shadow">
+                  Primary
+                </div>
+
+                <!-- Action Overlay -->
+                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button type="button" @click="openGalleryViewer(mIdx)" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-sky-300 transition-all backdrop-blur-xs cursor-pointer" title="View Image">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </button>
+                  <button type="button" @click="openEditorForExisting(mIdx)" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-emerald-300 transition-all backdrop-blur-xs cursor-pointer" title="Edit/Crop">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  </button>
+                  <button type="button" @click="removeProductImage(mIdx)" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-rose-400 transition-all backdrop-blur-xs cursor-pointer" title="Remove Image">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Upload Tile inside Modal -->
+              <div 
+                v-if="productImages.length < 8" 
+                @click="$refs.modalImageInputRef.click()"
+                class="aspect-square rounded-xl border-2 border-dashed border-slate-200 dark:border-[#2E2E2E] hover:border-indigo-500 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-indigo-50/20 transition-all"
+              >
+                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Add Photos</span>
+                <span class="text-[10px] text-slate-400">Up to 8 max</span>
+                <input ref="modalImageInputRef" type="file" @change="onImageFilePicked" class="hidden" accept="image/*" multiple>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-6 py-3.5 border-t border-slate-100 dark:border-[#2E2E2E] flex justify-between items-center bg-slate-50/50 dark:bg-[#252525]/50">
+            <button type="button" @click="$refs.modalImageInputRef.click()" v-if="productImages.length < 8" class="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-900/30 cursor-pointer">
+              + Upload More
+            </button>
+            <div class="flex items-center gap-2 ml-auto">
+              <button type="button" @click="showMediaManagerModal = false" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Add New Unit Modal -->
     <div v-if="showUnitModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
       <div class="absolute inset-0" @click="closeUnitModal"></div>
@@ -1322,7 +1466,7 @@
 
         <!-- Cropper Canvas -->
         <div class="relative flex-1 overflow-hidden bg-slate-900 flex items-center justify-center min-h-[300px] max-h-[45vh]">
-          <img ref="cropperImageRef" :src="editorImageSrc" crossorigin="anonymous" @load="onCropperImgLoad" class="max-w-full max-h-full block">
+          <img ref="cropperImageRef" :src="getImageUrl(editorImageSrc)" @load="onCropperImgLoad" class="max-w-full max-h-full block">
           <!-- Main focused area Star Overlay -->
           <button 
             type="button"
@@ -1350,7 +1494,7 @@
               class="relative w-14 h-14 rounded-lg overflow-hidden cursor-pointer flex-shrink-0 border-2 transition-all duration-150 group"
               :class="bIdx === editorActiveIdx ? 'border-emerald-500 ring-2 ring-emerald-500/30 scale-105' : 'border-slate-200 dark:border-[#2E2E2E] hover:border-slate-300 dark:hover:border-slate-700 opacity-60 hover:opacity-90'"
             >
-              <img :src="bImg.thumbSrc" class="w-full h-full object-cover">
+              <img :src="getImageUrl(bImg.thumbSrc || bImg.originalSrc)" class="w-full h-full object-cover">
               <div v-if="bIdx === editorActiveIdx" class="absolute inset-0 bg-emerald-500/10"></div>
               
               <!-- Star icon on bottom thumbnail -->
@@ -1467,7 +1611,7 @@
 
           <!-- Focused Image Container -->
           <div class="w-full h-[55vh] flex items-center justify-center px-14">
-            <img :src="productImages[galleryViewerIndex]?.preview" class="max-w-full max-h-full object-contain rounded-lg shadow-xl">
+            <img :src="getImageUrl(productImages[galleryViewerIndex])" class="max-w-full max-h-full object-contain rounded-lg shadow-xl">
           </div>
 
           <!-- Right Arrow (attached closely inside card edges) -->
@@ -1489,7 +1633,7 @@
             class="w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-2 transition-all flex-shrink-0"
             :class="idx === galleryViewerIndex ? 'border-white scale-110' : 'border-transparent opacity-50 hover:opacity-80'"
           >
-            <img :src="img.preview" class="w-full h-full object-cover">
+            <img :src="getImageUrl(img)" class="w-full h-full object-cover">
           </div>
         </div>
       </div>
@@ -2449,6 +2593,27 @@ onMounted(async () => {
   }
 });
 
+const getImageUrl = (img) => {
+  if (!img) return '';
+  if (typeof img === 'string') {
+    if (img.startsWith('blob:') || img.startsWith('data:') || img.startsWith('http://') || img.startsWith('https://')) {
+      return img;
+    }
+    return img.startsWith('/') ? img : '/' + img;
+  }
+  const src = img.preview || img.url || img.path || img.src || '';
+  if (typeof src === 'string' && src) {
+    if (src.startsWith('blob:') || src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) {
+      return src;
+    }
+    return src.startsWith('/') ? src : '/' + src;
+  }
+  if (img.file instanceof File || img.file instanceof Blob) {
+    return URL.createObjectURL(img.file);
+  }
+  return '';
+};
+
 const getInitialProductImages = (data) => {
   if (!data) return [];
   const list = [];
@@ -2493,6 +2658,8 @@ const getInitialProductImages = (data) => {
 const primaryImageIndex = ref(0);
 const tempPrimaryIndex = ref(0);
 const productImages = ref(getInitialProductImages(props.initialData)); // Array of { file: File|Blob|null, preview: string, isExisting?: boolean, url?: string }
+const showMediaManagerModal = ref(false);
+const modalImageInputRef = ref(null);
 
 const syncFormImages = () => {
   if (productImages.value.length > 0) {
