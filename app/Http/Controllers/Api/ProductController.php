@@ -607,7 +607,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product): JsonResponse
     {
-        foreach (['variations', 'tags', 'taxes', 'attributes', 'warehouses', 'warehouse_ids'] as $key) {
+        foreach (['variations', 'tags', 'taxes', 'attributes', 'warehouses', 'warehouse_ids', 'images'] as $key) {
             if (is_string($request->input($key))) {
                 $decoded = json_decode($request->input($key), true);
                 if (json_last_error() === JSON_ERROR_NONE) {
@@ -759,10 +759,23 @@ class ProductController extends Controller
                     if ($request->hasFile("images.{$idx}")) {
                         $path = $request->file("images.{$idx}")->store('product-images', 'public');
                         $storedImages[] = '/storage/' . $path;
-                    } elseif (is_string($imgItem) && !empty($imgItem)) {
+                    } elseif (is_string($imgItem) && !empty($imgItem) && $imgItem !== 'null' && $imgItem !== 'undefined') {
                         $storedImages[] = $imgItem;
                     }
                 }
+            } elseif ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    if ($file->isValid()) {
+                        $path = $file->store('product-images', 'public');
+                        $storedImages[] = '/storage/' . $path;
+                    }
+                }
+            }
+
+            // Fallback if image parameter was passed as single string URL
+            if (count($storedImages) === 0 && $request->filled('image') && is_string($request->input('image')) && $request->input('image') !== 'null' && $request->input('image') !== 'undefined') {
+                $singleImg = $request->input('image');
+                $storedImages[] = $singleImg;
             }
 
             if (count($storedImages) > 0) {
@@ -784,7 +797,9 @@ class ProductController extends Controller
                 $data['image'] = null;
                 $data['images'] = [];
             } else {
+                // Preserve existing product images if no images payload was submitted
                 unset($data['image']);
+                unset($data['images']);
             }
 
             $product->update($data);

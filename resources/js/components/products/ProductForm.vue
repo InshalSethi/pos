@@ -1312,7 +1312,7 @@
 
         <!-- Cropper Canvas -->
         <div class="relative flex-1 overflow-hidden bg-slate-900 flex items-center justify-center min-h-[300px] max-h-[45vh]">
-          <img ref="cropperImageRef" :src="editorImageSrc" class="max-w-full max-h-full block">
+          <img ref="cropperImageRef" :src="editorImageSrc" crossorigin="anonymous" @load="onCropperImgLoad" class="max-w-full max-h-full block">
           <!-- Main focused area Star Overlay -->
           <button 
             type="button"
@@ -2480,7 +2480,29 @@ const getInitialProductImages = (data) => {
 };
 
 // ===== Multi-Image + Image Editor Logic =====
+const primaryImageIndex = ref(0);
+const tempPrimaryIndex = ref(0);
 const productImages = ref(getInitialProductImages(props.initialData)); // Array of { file: File|Blob|null, preview: string, isExisting?: boolean, url?: string }
+
+const syncFormImages = () => {
+  if (productImages.value.length > 0) {
+    if (primaryImageIndex.value >= productImages.value.length) {
+      primaryImageIndex.value = 0;
+    }
+    const primaryImg = productImages.value[primaryImageIndex.value];
+    form.value.image = primaryImg.file ? primaryImg.file : (primaryImg.isExisting ? primaryImg.url : null);
+    form.value.image_url = primaryImg.preview;
+    form.value.images = productImages.value
+      .map(img => img.file || img.url || img.preview)
+      .filter(src => src !== null && src !== undefined && src !== 'null' && src !== 'undefined' && src !== '');
+    form.value.primary_image_index = primaryImageIndex.value;
+  } else {
+    form.value.image = null;
+    form.value.image_url = null;
+    form.value.images = [];
+    form.value.primary_image_index = 0;
+  }
+};
 
 watch(() => props.initialData, (newData) => {
   if (newData && Object.keys(newData).length > 0) {
@@ -2489,9 +2511,7 @@ watch(() => props.initialData, (newData) => {
     hydrateAttributesAndCombos();
     syncFormImages();
   }
-}, { deep: true });
-const primaryImageIndex = ref(0);
-const tempPrimaryIndex = ref(0);
+}, { deep: true, immediate: true });
 const showImageEditor = ref(false);
 const editorImageSrc = ref('');
 const editorTargetIndex = ref(-1); // -1 = adding new batch, >= 0 = editing existing cohort
@@ -2536,8 +2556,10 @@ const onImageFilePicked = (event) => {
   if (imageInputRef.value) imageInputRef.value.value = '';
 };
 
-const openEditorForExisting = (idx) => {
-  editorTargetIndex.value = idx;
+const openEditorForExisting = (idx = 0) => {
+  if (!productImages.value || productImages.value.length === 0) return;
+  const targetIdx = Math.max(0, Math.min(idx, productImages.value.length - 1));
+  editorTargetIndex.value = targetIdx;
   
   // Load ALL existing product images into the batch for easy navigation
   editorBatchImages.value = productImages.value.map((img, index) => {
@@ -2546,15 +2568,19 @@ const openEditorForExisting = (idx) => {
       originalSrc: img.preview,
       croppedBlob: null,
       thumbSrc: img.preview,
-      isExisting: true,
+      isExisting: !!img.isExisting,
       existingIndex: index
     };
   });
 
-  editorActiveIdx.value = idx;
+  editorActiveIdx.value = targetIdx;
   tempPrimaryIndex.value = primaryImageIndex.value;
-  editorImageSrc.value = editorBatchImages.value[idx].originalSrc;
+  editorImageSrc.value = editorBatchImages.value[targetIdx].originalSrc;
   showImageEditor.value = true;
+  initCropper();
+};
+
+const onCropperImgLoad = () => {
   initCropper();
 };
 
@@ -2563,22 +2589,37 @@ const initCropper = async () => {
   destroyCropper();
   await nextTick();
   
-  if (cropperImageRef.value) {
-    cropperInstance = new Cropper(cropperImageRef.value, {
-      viewMode: 1,
-      dragMode: 'move',
-      aspectRatio: NaN,
-      autoCropArea: 0.9,
-      responsive: true,
-      restore: false,
-      guides: true,
-      center: true,
-      highlight: true,
-      cropBoxMovable: true,
-      cropBoxResizable: true,
-      toggleDragModeOnDblclick: true,
-      background: true,
-    });
+  const imgEl = cropperImageRef.value;
+  if (!imgEl || !imgEl.src) return;
+
+  const startCropper = () => {
+    destroyCropper();
+    if (!cropperImageRef.value) return;
+    try {
+      cropperInstance = new Cropper(cropperImageRef.value, {
+        viewMode: 1,
+        dragMode: 'move',
+        aspectRatio: NaN,
+        autoCropArea: 0.9,
+        responsive: true,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: true,
+        background: true,
+        checkOrientation: false,
+        checkCrossOrigin: false,
+      });
+    } catch (e) {
+      console.warn('Failed to initialize Cropper instance:', e);
+    }
+  };
+
+  if (imgEl.complete && imgEl.naturalWidth > 0) {
+    startCropper();
   }
 };
 
@@ -2621,23 +2662,32 @@ const saveCurrentCrop = () => {
       resolve();
       return;
     }
-    cropperInstance.getCroppedCanvas({
-      maxWidth: 1200,
-      maxHeight: 1200,
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: 'high',
-    }).toBlob((blob) => {
-      if (blob) {
-        const activeImg = editorBatchImages.value[editorActiveIdx.value];
-        // Clean up previous crop blob/URL if any to avoid leak
-        if (activeImg.croppedBlob && activeImg.thumbSrc.startsWith('blob:') && activeImg.thumbSrc !== activeImg.originalSrc) {
-          URL.revokeObjectURL(activeImg.thumbSrc);
-        }
-        activeImg.croppedBlob = blob;
-        activeImg.thumbSrc = URL.createObjectURL(blob);
+    try {
+      const canvas = cropperInstance.getCroppedCanvas({
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+      });
+      if (!canvas) {
+        resolve();
+        return;
       }
+      canvas.toBlob((blob) => {
+        if (blob && editorBatchImages.value[editorActiveIdx.value]) {
+          const activeImg = editorBatchImages.value[editorActiveIdx.value];
+          if (activeImg.croppedBlob && activeImg.thumbSrc.startsWith('blob:') && activeImg.thumbSrc !== activeImg.originalSrc) {
+            URL.revokeObjectURL(activeImg.thumbSrc);
+          }
+          activeImg.croppedBlob = blob;
+          activeImg.thumbSrc = URL.createObjectURL(blob);
+        }
+        resolve();
+      }, 'image/jpeg', 0.9);
+    } catch (e) {
+      console.warn('Cropping canvas export failed, preserving original image:', e);
       resolve();
-    }, 'image/jpeg', 0.9);
+    }
   });
 };
 
@@ -2726,24 +2776,6 @@ const removeProductImage = (idx) => {
     primaryImageIndex.value -= 1;
   }
   syncFormImages();
-};
-
-const syncFormImages = () => {
-  if (productImages.value.length > 0) {
-    if (primaryImageIndex.value >= productImages.value.length) {
-      primaryImageIndex.value = 0;
-    }
-    const primaryImg = productImages.value[primaryImageIndex.value];
-    form.value.image = primaryImg.file ? primaryImg.file : (primaryImg.isExisting ? primaryImg.url : null);
-    form.value.image_url = primaryImg.preview;
-    form.value.images = productImages.value.map(img => img.file || img.url || img.preview);
-    form.value.primary_image_index = primaryImageIndex.value;
-  } else {
-    form.value.image = null;
-    form.value.image_url = null;
-    form.value.images = [];
-    form.value.primary_image_index = 0;
-  }
 };
 
 // ===== Gallery Viewer Lightbox =====

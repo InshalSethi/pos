@@ -65,10 +65,11 @@ const handleUpdate = async (formData) => {
       if (['variations', 'tags', 'taxes', 'attributes', 'warehouses', 'warehouse_ids'].includes(key)) {
         data.append(key, JSON.stringify(value));
       } else if (key === 'images' && Array.isArray(value)) {
-        if (value.length === 0) {
+        const validItems = value.filter(item => item !== null && item !== undefined && item !== 'null' && item !== 'undefined' && item !== '');
+        if (validItems.length === 0) {
           data.append('images', '');
         } else {
-          value.forEach((item, index) => {
+          validItems.forEach((item, index) => {
             data.append(`images[${index}]`, item);
           });
         }
@@ -84,9 +85,9 @@ const handleUpdate = async (formData) => {
         });
       } else if (typeof value === 'boolean') { // Handle booleans explicitly for FormData
         data.append(key, value ? '1' : '0');
-      } else if (value === null && key === 'image') {
+      } else if ((value === null || value === 'null' || value === 'undefined') && key === 'image') {
         data.append(key, '');
-      } else if (value !== null && value !== '') {
+      } else if (value !== null && value !== undefined && value !== 'null' && value !== 'undefined' && value !== '') {
         data.append(key, value);
       }
     });
