@@ -9,12 +9,33 @@ axios.defaults.headers.common['Accept'] = 'application/json';
 // Set base URL
 axios.defaults.baseURL = window.location.origin;
 
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and active company context
 axios.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('auth_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        let companyId = localStorage.getItem('current_company_id') || localStorage.getItem('company_id');
+
+        try {
+            // Lazy load Pinia auth store if active
+            const activePinia = window.__pinia;
+            if (activePinia && activePinia.state.value?.auth?.user?.current_company_id) {
+                companyId = activePinia.state.value.auth.user.current_company_id;
+            }
+        } catch (e) {
+            // Pinia store not initialized yet
+        }
+
+        if (!companyId || companyId === 'undefined' || companyId === 'null') {
+            companyId = 1;
+        }
+
+        if (companyId && companyId !== 'undefined' && companyId !== 'null') {
+            config.headers['X-Company-ID'] = companyId;
+            config.headers['X-Workspace-ID'] = companyId;
         }
         return config;
     },

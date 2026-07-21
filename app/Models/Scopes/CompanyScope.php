@@ -14,8 +14,22 @@ class CompanyScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        if (auth()->check() && auth()->user()->current_company_id) {
-            $builder->where($model->getTable() . '.company_id', auth()->user()->current_company_id);
+        $companyId = null;
+
+        $headerCompany = request()->header('X-Company-ID');
+        $headerWorkspace = request()->header('X-Workspace-ID');
+
+        if (!empty($headerCompany) && $headerCompany !== 'undefined' && $headerCompany !== 'null' && is_numeric($headerCompany)) {
+            $companyId = (int) $headerCompany;
+        } elseif (!empty($headerWorkspace) && $headerWorkspace !== 'undefined' && $headerWorkspace !== 'null' && is_numeric($headerWorkspace)) {
+            $companyId = (int) $headerWorkspace;
+        } elseif (auth()->check()) {
+            $user = auth()->user();
+            $companyId = $user->current_company_id ?: ($user->company_id ?? null);
+        }
+
+        if ($companyId) {
+            $builder->where($model->getTable() . '.company_id', $companyId);
         }
     }
 }

@@ -11,14 +11,31 @@ const api = axios.create({
   }
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and company context
 api.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore();
-    const token = authStore.token || localStorage.getItem('auth_token');
+    let token = localStorage.getItem('auth_token');
+    let companyId = localStorage.getItem('current_company_id') || localStorage.getItem('company_id');
+
+    try {
+      const authStore = useAuthStore();
+      token = authStore.token || token;
+      companyId = authStore.currentCompanyId || authStore.user?.current_company_id || companyId;
+    } catch (e) {
+      // Pinia store not ready yet
+    }
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (!companyId || companyId === 'undefined' || companyId === 'null') {
+      companyId = 1;
+    }
+
+    if (companyId && companyId !== 'undefined' && companyId !== 'null') {
+      config.headers['X-Company-ID'] = companyId;
+      config.headers['X-Workspace-ID'] = companyId;
     }
 
     // Add CSRF token if available

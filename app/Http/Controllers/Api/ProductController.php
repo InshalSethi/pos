@@ -89,7 +89,7 @@ class ProductController extends Controller
         }])->withCount('variations')->where('status', '!=', 'draft');
 
         // Search functionality
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -99,18 +99,21 @@ class ProductController extends Controller
         }
 
         // Filter by category
-        if ($request->has('category_id')) {
+        if ($request->filled('category_id')) {
             $query->where('category_id', $request->get('category_id'));
         }
 
         // Filter by tag
-        if ($request->has('tag')) {
+        if ($request->filled('tag')) {
             $query->whereJsonContains('tags', $request->get('tag'));
         }
 
         // Filter by active status
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+        if ($request->filled('is_active')) {
+            $val = $request->input('is_active');
+            if ($val !== 'all' && $val !== 'both') {
+                $query->where('is_active', $request->boolean('is_active'));
+            }
         }
 
         // Filter by on sale

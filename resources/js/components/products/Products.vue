@@ -250,7 +250,14 @@
                         </svg>
                       </div>
                       <p class="text-base font-bold text-gray-900 dark:text-slate-200 mb-1">No products found</p>
-                      <p class="text-xs text-gray-400 dark:text-slate-500 font-medium">Get started by adding your first product, or adjusting your filters.</p>
+                      <p class="text-xs text-gray-400 dark:text-slate-500 font-medium mb-3">Get started by adding your first product, or adjusting your filters.</p>
+                      <button 
+                        v-if="hasActiveFilters" 
+                        @click="clearFilters" 
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer"
+                      >
+                        Reset Filters
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -271,7 +278,11 @@
                   <td class="px-6 py-4.5 sm:py-5 align-middle">
                     <div class="flex items-center gap-3">
                       <!-- Product Image Thumbnail -->
-                      <div class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center">
+                      <div 
+                        @click="openLightbox(item)"
+                        class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center cursor-pointer hover:scale-105 transition-transform group/thumb shadow-xs"
+                        title="Click to view image gallery"
+                      >
                         <div v-if="Number(item.discount_value) > 0" class="absolute top-0 right-0 z-10 pointer-events-none select-none">
                           <div class="absolute transform rotate-45 bg-rose-600 text-white text-[6px] font-black uppercase text-center tracking-widest py-0.5 w-[50px] -right-[15px] top-[4px] shadow-xs border-b border-white/20">Sale</div>
                         </div>
@@ -281,7 +292,7 @@
                           :alt="item.name"
                           class="h-full w-full object-cover"
                         />
-                        <span v-else class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase">
+                        <span v-else class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase select-none">
                           {{ item.name ? item.name.substring(0, 1) : 'P' }}
                         </span>
                       </div>
@@ -1145,6 +1156,75 @@
         </div>
       </div>
     </transition>
+
+    <!-- Table Item Image Lightbox Gallery Modal -->
+    <Teleport to="body">
+      <div 
+        v-if="showLightbox" 
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150"
+        @click.self="closeLightbox"
+      >
+        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center group/lightbox w-full">
+          <!-- Top Header Bar / Badge & Close -->
+          <div class="absolute -top-12 left-0 right-0 z-50 flex justify-between items-center px-2">
+            <div class="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-lg border border-white/10">
+              <span class="truncate max-w-[240px]">{{ lightboxTitle }}</span>
+              <span v-if="lightboxImages.length > 1" class="text-slate-400 font-medium">| {{ lightboxIndex + 1 }} of {{ lightboxImages.length }}</span>
+            </div>
+            <button 
+              type="button" 
+              @click="closeLightbox" 
+              class="p-2 text-white/80 hover:text-white bg-slate-900/90 hover:bg-slate-900 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/10 cursor-pointer"
+              title="Close Gallery (Esc)"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Main Image Canvas -->
+          <div class="relative flex items-center justify-center max-h-[80vh] overflow-hidden rounded-2xl shadow-2xl border border-white/10 bg-slate-950 w-full">
+            <img 
+              :src="lightboxImages[lightboxIndex]" 
+              :alt="lightboxTitle"
+              class="max-h-[80vh] max-w-full object-contain select-none transition-all duration-200"
+            />
+
+            <!-- Left Navigation Arrow -->
+            <button 
+              v-if="lightboxImages.length > 1"
+              type="button" 
+              @click.stop="prevLightboxImage" 
+              class="absolute left-3 top-1/2 -translate-y-1/2 p-3 text-white bg-slate-900/75 hover:bg-slate-900 hover:scale-110 rounded-full transition-all backdrop-blur-md shadow-xl border border-white/10 cursor-pointer"
+              title="Previous Image (Left Arrow)"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+
+            <!-- Right Navigation Arrow -->
+            <button 
+              v-if="lightboxImages.length > 1"
+              type="button" 
+              @click.stop="nextLightboxImage" 
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-3 text-white bg-slate-900/75 hover:bg-slate-900 hover:scale-110 rounded-full transition-all backdrop-blur-md shadow-xl border border-white/10 cursor-pointer"
+              title="Next Image (Right Arrow)"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <!-- Bottom Thumbnail Dots -->
+          <div v-if="lightboxImages.length > 1" class="flex items-center gap-2 mt-4 px-4 py-2 bg-slate-900/80 backdrop-blur-md rounded-full border border-white/10">
+            <button 
+              v-for="(img, idx) in lightboxImages" 
+              :key="idx"
+              @click="lightboxIndex = idx"
+              class="w-2.5 h-2.5 rounded-full transition-all cursor-pointer"
+              :class="idx === lightboxIndex ? 'bg-emerald-400 scale-125' : 'bg-white/40 hover:bg-white/70'"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -1168,9 +1248,56 @@ const showSalesPurchaseDropdown = ref(false);
 const showOptionsDropdown = ref(false);
 
 // Reactive data
+const loading = ref(false);
 const products = ref([]);
 const categories = ref([]);
-const loading = ref(false);
+// Lightbox State
+const showLightbox = ref(false);
+const lightboxImages = ref([]);
+const lightboxIndex = ref(0);
+const lightboxTitle = ref('');
+
+const openLightbox = (item) => {
+  const imgs = [];
+  if (Array.isArray(item.images) && item.images.length > 0) {
+    item.images.forEach(img => {
+      if (typeof img === 'string' && img && img !== 'null' && img !== 'undefined') {
+        imgs.push(img.startsWith('/') || img.startsWith('http') ? img : '/' + img);
+      }
+    });
+  } else if (item.image && item.image !== 'null' && item.image !== 'undefined') {
+    imgs.push(item.image.startsWith('/') || item.image.startsWith('http') ? item.image : '/' + item.image);
+  }
+  
+  if (imgs.length === 0) return;
+  
+  lightboxImages.value = imgs;
+  lightboxIndex.value = 0;
+  lightboxTitle.value = item.name || 'Product Image';
+  showLightbox.value = true;
+};
+
+const closeLightbox = () => {
+  showLightbox.value = false;
+};
+
+const nextLightboxImage = () => {
+  if (lightboxImages.value.length <= 1) return;
+  lightboxIndex.value = (lightboxIndex.value + 1) % lightboxImages.value.length;
+};
+
+const prevLightboxImage = () => {
+  if (lightboxImages.value.length <= 1) return;
+  lightboxIndex.value = (lightboxIndex.value - 1 + lightboxImages.value.length) % lightboxImages.value.length;
+};
+
+const handleLightboxKeydown = (e) => {
+  if (!showLightbox.value) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowRight') nextLightboxImage();
+  if (e.key === 'ArrowLeft') prevLightboxImage();
+};
+
 const showViewModal = ref(false);
 const showCategoryModal = ref(false);
 const showImportModal = ref(false);
@@ -1605,33 +1732,42 @@ const fetchProductsForTable = async (page = 1) => {
   try {
     const params = {
       page,
-      per_page: tablePagination.value.per_page,
+      per_page: tablePagination.value?.per_page || 15,
       ...tableFilters.value,
-      is_active: tableFilters.value.show_inactive ? 0 : 1
     };
+
+    if (tableFilters.value.show_inactive) {
+      params.is_active = 0;
+    } else {
+      delete params.is_active;
+    }
+
     delete params.show_inactive;
+    delete params.price_sort;
 
     // Remove empty parameters
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null) {
+      if (params[key] === '' || params[key] === null || params[key] === false) {
         delete params[key];
       }
     });
 
     const response = await axios.get('/api/products', { params });
-    products.value = response.data.data;
+    console.log('[Items Index] Products API response:', response.data);
+    products.value = response.data.data || [];
 
     // Update table pagination
     tablePagination.value = {
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-      from: response.data.from,
-      to: response.data.to
+      current_page: response.data.current_page || 1,
+      last_page: response.data.last_page || 1,
+      per_page: response.data.per_page || 15,
+      total: response.data.total || 0,
+      from: response.data.from || 0,
+      to: response.data.to || 0
     };
   } catch (error) {
     console.error('Error fetching products for table:', error);
+    products.value = [];
   } finally {
     loading.value = false;
   }
@@ -1886,14 +2022,28 @@ const formatFileSize = (bytes) => {
 
 
 // Lifecycle
+watch(
+  () => authStore.currentCompanyId || authStore.user?.current_company_id,
+  (newCompanyId, oldCompanyId) => {
+    if (newCompanyId && newCompanyId !== oldCompanyId) {
+      console.log('[Products] Company context changed, re-fetching products:', newCompanyId);
+      fetchCategories();
+      fetchProductsForTable(1);
+      fetchDraftsData();
+    }
+  }
+);
+
 onMounted(() => {
   fetchCategories();
   fetchProductsForTable();
   fetchDraftsData();
   document.addEventListener('click', closeDropdowns);
+  window.addEventListener('keydown', handleLightboxKeydown);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', closeDropdowns);
+  window.removeEventListener('keydown', handleLightboxKeydown);
 });
 </script>

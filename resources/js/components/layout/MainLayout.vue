@@ -1901,6 +1901,11 @@ const fetchCompanies = async () => {
 const switchCompany = async (companyId) => {
   try {
     await axios.post('/api/companies/switch', { company_id: companyId });
+    localStorage.setItem('current_company_id', companyId);
+    localStorage.setItem('company_id', companyId);
+    if (authStore.user) {
+      authStore.user.current_company_id = companyId;
+    }
     window.location.href = '/';
   } catch (error) {
     console.error('Failed to switch company', error);

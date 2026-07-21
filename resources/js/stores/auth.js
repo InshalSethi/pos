@@ -24,6 +24,11 @@ export const useAuthStore = defineStore('auth', () => {
     return roles.value.includes(role);
   });
 
+  const currentCompanyId = computed(() => {
+    const cid = user.value?.current_company_id || user.value?.company_id || localStorage.getItem('current_company_id') || localStorage.getItem('company_id') || 1;
+    return cid;
+  });
+
   // Actions
   const login = async (credentials) => {
     try {
@@ -38,6 +43,11 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = response.data.user;
         permissions.value = response.data.permissions || [];
         roles.value = response.data.roles || [];
+
+        if (response.data.user?.current_company_id) {
+          localStorage.setItem('current_company_id', response.data.user.current_company_id);
+          localStorage.setItem('company_id', response.data.user.current_company_id);
+        }
 
         // Seed currency store from company context (instant, no extra API call)
         if (response.data.company_context?.base_currency) {
@@ -98,6 +108,11 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.data.user;
       permissions.value = response.data.permissions || [];
       roles.value = response.data.roles || [];
+
+      if (response.data.user?.current_company_id) {
+        localStorage.setItem('current_company_id', response.data.user.current_company_id);
+        localStorage.setItem('company_id', response.data.user.current_company_id);
+      }
 
       // Seed currency store from company context (instant, no extra API call)
       if (response.data.company_context?.base_currency) {
@@ -230,6 +245,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     hasPermission,
     hasRole,
+    currentCompanyId,
 
     // Actions
     login,
