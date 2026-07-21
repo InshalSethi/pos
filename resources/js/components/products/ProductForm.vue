@@ -814,22 +814,22 @@
                     </div>
                   </div>
                   <div class="flex flex-wrap items-center gap-2">
-                    <div v-if="attributes.length > 0" class="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-[#1E1E1E]/20 p-1.5 rounded-2xl border border-slate-200/45 dark:border-[#2E2E2E]">
+                    <div v-if="attributes.length > 0" class="flex flex-wrap items-center gap-2 bg-slate-50 dark:bg-[#1E1E1E]/20 p-1.5 rounded-2xl border border-slate-200/45 dark:border-[#2E2E2E]">
                     <div v-for="(attr, aIdx) in attributes" :key="aIdx" class="flex flex-col relative" :id="`matrix-select-container-${aIdx}`">
-                      <span class="text-[8px] font-black uppercase text-slate-400 dark:text-slate-500 px-1 mb-0.5">Select {{ attr.name }}</span>
+                      <span class="text-[8px] font-black uppercase text-slate-400 dark:text-slate-500 px-1 mb-0.5 whitespace-nowrap">Select {{ attr.name }}</span>
                       <button 
                         type="button"
                         @click="toggleMatrixDropdown(aIdx)"
-                        class="min-w-[100px] max-w-[200px] h-[30px] px-2.5 py-1 border border-slate-200 dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] rounded-xl text-xs font-semibold transition-all outline-none flex items-center justify-between gap-1.5 cursor-pointer pr-7 text-left relative"
+                        class="min-w-[125px] h-[32px] px-3 py-1 border border-slate-200 dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E] rounded-xl text-xs font-semibold transition-all outline-none flex items-center justify-between gap-1.5 cursor-pointer pr-8 text-left relative whitespace-nowrap"
                       >
-                        <div class="truncate flex items-center gap-1 max-w-[85%]">
-                          <span v-if="(!selectedCombo[attr.name] || selectedCombo[attr.name].length === 0)" class="text-slate-400 dark:text-slate-550 text-[11px]">Choose</span>
-                          <span v-else class="text-slate-700 dark:text-slate-300">
+                        <div class="flex items-center gap-1 min-w-0 flex-1">
+                          <span v-if="(!selectedCombo[attr.name] || selectedCombo[attr.name].length === 0)" class="text-slate-400 dark:text-slate-550 text-[11px] truncate">Choose</span>
+                          <span v-else class="text-slate-700 dark:text-slate-300 truncate font-semibold">
                             {{ getMatrixSelectLabel(attr.name) }}
                           </span>
                         </div>
-                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
                         </span>
                       </button>
 
