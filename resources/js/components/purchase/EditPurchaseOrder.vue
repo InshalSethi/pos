@@ -165,60 +165,103 @@
                       </td>
                     </tr>
 
-                    <tr v-for="(item, index) in orderItems" :key="index" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top">
-                      <!-- Name and SKU -->
-                      <td class="py-3 px-3">
-                        <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm mb-0.5">{{ item.product ? item.product.name : 'Product' }}</div>
-                        <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mb-1">SKU: {{ item.product ? item.product.sku : '' }}</div>
-                        <textarea
-                          v-model="item.notes"
-                          placeholder="Add line item description / details..."
-                          rows="1"
-                          class="w-full bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded px-2 py-1 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
-                        ></textarea>
-                      </td>
+                    <template v-for="(item, index) in orderItems" :key="index">
+                      <!-- Main Row: Name, SKU, Qty, Unit Cost, Total Cost -->
+                      <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top border-t border-slate-100 dark:border-zinc-800/60 first:border-0">
+                        <!-- Name and SKU -->
+                        <td class="pt-3 pb-1 px-3">
+                          <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm mb-0.5">{{ item.product ? item.product.name : 'Product' }}</div>
+                          <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
+                            <span class="whitespace-nowrap">SKU: {{ item.product ? item.product.sku : '' }}</span>
+                          </div>
+                        </td>
 
-                      <!-- Qty -->
-                      <td class="py-3 px-2 text-center">
-                        <input
-                          v-model.number="item.quantity_ordered"
-                          type="number"
-                          min="1"
-                          class="w-16 px-1.5 py-1 text-center border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                          @input="updateItemTotal(index)"
-                        />
-                        <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Stock: {{ getProductStock(item.product) }}</div>
-                      </td>
+                        <!-- Qty -->
+                        <td class="pt-3 pb-1 px-2 text-center">
+                          <input
+                            v-model.number="item.quantity_ordered"
+                            type="number"
+                            min="1"
+                            class="w-16 px-1.5 py-1 text-center border rounded focus:outline-none focus:ring-1 font-bold text-xs transition-all duration-200"
+                            :class="[
+                              isItemStockExceeded(item)
+                                ? 'border-rose-500 bg-rose-500/10 text-rose-600 dark:text-rose-400 focus:ring-rose-500 ring-1 ring-rose-500/50'
+                                : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:ring-indigo-500'
+                            ]"
+                            @input="onItemQtyChange(index)"
+                          />
+                          <div
+                            class="text-[9px] font-bold mt-1 tracking-tight"
+                            :class="[
+                              isItemStockExceeded(item)
+                                ? 'text-rose-600 dark:text-rose-400 font-extrabold flex items-center justify-center gap-0.5'
+                                : 'text-slate-400 dark:text-zinc-500'
+                            ]"
+                          >
+                            <span v-if="isItemStockExceeded(item)" class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            Stock: {{ getItemAvailableStock(item) }}
+                          </div>
+                        </td>
 
-                      <!-- Unit Cost -->
-                      <td class="py-3 px-2 text-right">
-                        <input
-                          v-model.number="item.unit_cost"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          class="w-24 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                          @input="updateItemTotal(index)"
-                        />
-                      </td>
+                        <!-- Unit Cost -->
+                        <td class="pt-3 pb-1 px-2 text-right">
+                          <input
+                            v-model.number="item.unit_cost"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            class="w-24 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                            @input="updateItemTotal(index)"
+                          />
+                        </td>
 
-                      <!-- Total Cost -->
-                      <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm align-middle">
-                        {{ currencySymbol }}{{ item.total_cost.toFixed(2) }}
-                      </td>
+                        <!-- Total Cost -->
+                        <td class="pt-3 pb-1 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm align-middle">
+                          {{ currencySymbol }}{{ item.total_cost.toFixed(2) }}
+                        </td>
 
-                      <!-- Remove Button -->
-                      <td class="py-3 px-1 text-center align-middle">
-                        <button
-                          @click="removeFromOrder(index)"
-                          class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer border-0 bg-transparent"
-                        >
-                          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
+                        <!-- Remove Button -->
+                        <td class="pt-3 pb-1 px-1 text-center align-middle">
+                          <button
+                            @click="removeFromOrder(index)"
+                            class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer border-0 bg-transparent"
+                          >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+
+                      <!-- Full-Width Sub-Row: Expanded Description Box & Inline Warehouse Dropdown -->
+                      <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group">
+                        <td colspan="5" class="pt-1 pb-3 px-3">
+                          <div class="flex flex-row items-center gap-3 w-full">
+                            <!-- Description Box (expands horizontally across the whole row space) -->
+                            <textarea
+                              v-model="item.notes"
+                              placeholder="Add line item description / details..."
+                              rows="1"
+                              class="flex-1 min-w-0 h-[38px] bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-2 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[11px] leading-tight resize-y"
+                            ></textarea>
+
+                            <!-- Warehouse Dropdown (Inline Right) -->
+                            <div v-if="warehouses.length > 0" class="shrink-0 flex items-center gap-1.5">
+                              <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider shrink-0">WH:</span>
+                              <select
+                                v-model="item.warehouse_id"
+                                @change="onItemWarehouseChange(index)"
+                                class="h-[38px] px-2.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer max-w-[210px] truncate"
+                              >
+                                <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
+                                  {{ wh.name }} (Stock: {{ getProductWarehouseStock(item.product, wh.id) }})
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>
@@ -1618,9 +1661,57 @@ const updateDateTime = () => {
   currentDateTime.value = `${date}, ${time}`;
 };
 
-const getProductStock = (product) => {
+const warehouses = ref([]);
+
+const getProductWarehouseStock = (product, warehouseId) => {
   if (!product) return 0;
-  return product.stock_quantity ?? product.quantity ?? 0;
+  if (!product.track_inventory && product.track_inventory !== undefined) return '∞';
+  if (!warehouseId) return product.stock_quantity ?? product.total_stock ?? 0;
+  return product.warehouse_stocks?.[warehouseId] ?? product.stock_quantity ?? 0;
+};
+
+const getItemAvailableStock = (item) => {
+  if (!item || !item.product) return '∞';
+  const whId = item.warehouse_id;
+  if (!whId) return item.product.stock_quantity ?? item.product.total_stock ?? 0;
+  return item.product.warehouse_stocks?.[whId] ?? item.product.stock_quantity ?? 0;
+};
+
+const isItemStockExceeded = (item) => {
+  if (!item || !item.product) return false;
+  const stock = getItemAvailableStock(item);
+  if (typeof stock !== 'number') return false;
+  const qty = parseFloat(item.quantity_ordered) || 0;
+  return qty > stock;
+};
+
+const validateItemStock = (item, notify = false) => {
+  if (!item || !item.product) return;
+  const stock = getItemAvailableStock(item);
+  if (typeof stock !== 'number') return;
+
+  const qty = parseFloat(item.quantity_ordered) || 0;
+  if (qty > stock && notify) {
+    const whObj = warehouses.value.find(w => String(w.id) === String(item.warehouse_id));
+    const whName = whObj ? whObj.name : 'Selected Warehouse';
+    showNotification(`Warning: Requested quantity (${qty}) exceeds available stock (${stock}) in ${whName}`, 'error');
+  }
+};
+
+const onItemQtyChange = (index) => {
+  const item = orderItems.value[index];
+  if (item) {
+    validateItemStock(item, true);
+    updateItemTotal(index);
+  }
+};
+
+const onItemWarehouseChange = (index) => {
+  const item = orderItems.value[index];
+  if (item) {
+    validateItemStock(item, true);
+    updateItemTotal(index);
+  }
 };
 
 const fetchPurchaseOrder = async () => {

@@ -158,131 +158,173 @@
                     </td>
                   </tr>
 
-                  <tr v-for="(item, index) in invoiceItems" :key="index" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top">
-                    <!-- Name and Description -->
-                    <td class="py-3 px-2">
-                      <div class="flex items-center justify-between mb-1">
-                        <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.name }}</div>
-                        
-                        <!-- W.S Toggle Switch -->
-                        <label class="inline-flex items-center cursor-pointer select-none">
-                          <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
-                          <div class="relative">
-                            <input
-                              v-model="item.is_wholesale"
-                              type="checkbox"
-                              class="sr-only peer"
-                              @change="updateItemTotal(index)"
-                            />
-                            <div class="w-7 h-4 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
-                          </div>
-                        </label>
-                      </div>
-                      <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mb-1.5">SKU: {{ item.sku }}</div>
-                      <textarea
-                        v-model="item.description"
-                        placeholder="Add line item description / details..."
-                        rows="2"
-                        class="w-full bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded px-2 py-1 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
-                      ></textarea>
-                    </td>
+                  <template v-for="(item, index) in invoiceItems" :key="index">
+                    <!-- Main Row: Product Title, SKU & Numerical Values -->
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top border-t border-slate-100 dark:border-zinc-800/60 first:border-0">
+                      <!-- Name and SKU -->
+                      <td class="pt-3 pb-1 px-3">
+                        <div class="flex items-center justify-between mb-0.5">
+                          <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.name }}</div>
+                          
+                          <!-- W.S Toggle Switch -->
+                          <label class="inline-flex items-center cursor-pointer select-none">
+                            <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
+                            <div class="relative">
+                              <input
+                                v-model="item.is_wholesale"
+                                type="checkbox"
+                                class="sr-only peer"
+                                @change="updateItemTotal(index)"
+                              />
+                              <div class="w-7 h-4 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                            </div>
+                          </label>
+                        </div>
+                        <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
+                          <span class="whitespace-nowrap">SKU: {{ item.sku }}</span>
+                        </div>
+                      </td>
 
-                    <!-- Qty -->
-                    <td class="py-3 px-2 text-center">
-                      <input
-                        v-model.number="item.quantity"
-                        type="number"
-                        min="1"
-                        :max="getProductStock(item.product)"
-                        class="w-14 px-1.5 py-1 text-center border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                        @input="updateItemTotal(index)"
-                      />
-                      <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Stock: {{ getProductStock(item.product) }}</div>
-                    </td>
-
-                    <!-- Unit Price -->
-                    <td class="py-3 px-2 text-right">
-                      <input
-                        v-model.number="item.unit_price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                        :class="item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
-                        :readonly="item.is_wholesale"
-                        @input="updateItemTotal(index)"
-                      />
-                    </td>
-
-                    <!-- W.S Price -->
-                    <td class="py-3 px-2 text-right">
-                      <input
-                        v-model.number="item.wholesale_price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                        :class="!item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
-                        :readonly="!item.is_wholesale"
-                        @input="updateItemTotal(index)"
-                      />
-                    </td>
-
-                    <!-- Line Tax selector -->
-                    <td class="py-3 px-2 text-center">
-                      <select
-                        v-model="item.tax_id"
-                        class="w-20 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                        @change="updateItemTax(item)"
-                      >
-                        <option :value="null">No Tax</option>
-                        <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
-                          {{ tax.name }} ({{ tax.value }}%)
-                        </option>
-                      </select>
-                      <div v-if="item.tax_rate" class="text-[9px] text-slate-500 dark:text-zinc-400 mt-1">Rate: {{ item.tax_rate }}%</div>
-                    </td>
-
-                    <!-- Line Discount -->
-                    <td class="py-3 px-2 text-right">
-                      <div class="flex items-center justify-end space-x-1">
-                        <button
-                          type="button"
-                          @click="toggleLineDiscountType(item, index)"
-                          class="h-7 px-1.5 text-[10px] font-black rounded border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
-                          :title="(item.discount_type || 'percentage') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
-                        >
-                          {{ (item.discount_type || 'percentage') === 'fixed' ? currencySymbol : '%' }}
-                        </button>
+                      <!-- Qty -->
+                      <td class="pt-3 pb-1 px-2 text-center">
                         <input
-                          v-model.number="item.discount_amount"
+                          v-model.number="item.quantity"
+                          type="number"
+                          min="1"
+                          class="w-16 px-1.5 py-1 text-center border rounded focus:outline-none focus:ring-1 font-bold text-xs transition-all duration-200"
+                          :class="[
+                            isItemStockExceeded(item)
+                              ? 'border-rose-500 bg-rose-500/10 text-rose-600 dark:text-rose-400 focus:ring-rose-500 ring-1 ring-rose-500/50'
+                              : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:ring-indigo-500'
+                          ]"
+                          @input="onItemQtyChange(index)"
+                        />
+                        <div
+                          class="text-[9px] font-bold mt-1 tracking-tight"
+                          :class="[
+                            isItemStockExceeded(item)
+                              ? 'text-rose-600 dark:text-rose-400 font-extrabold flex items-center justify-center gap-0.5'
+                              : 'text-slate-400 dark:text-zinc-500'
+                          ]"
+                        >
+                          <span v-if="isItemStockExceeded(item)" class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                          Stock: {{ getItemAvailableStock(item) }}
+                        </div>
+                      </td>
+
+                      <!-- Unit Price -->
+                      <td class="pt-3 pb-1 px-2 text-right">
+                        <input
+                          v-model.number="item.unit_price"
                           type="number"
                           step="0.01"
                           min="0"
-                          class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                          :placeholder="(item.discount_type || 'percentage') === 'fixed' ? '0' : '0%'"
+                          class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                          :class="item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
+                          :readonly="item.is_wholesale"
                           @input="updateItemTotal(index)"
                         />
-                      </div>
-                    </td>
+                      </td>
 
-                    <!-- Total Line Price -->
-                    <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm">
-                      {{ currencySymbol }}{{ item.total.toFixed(2) }}
-                    </td>
+                      <!-- W.S Price -->
+                      <td class="pt-3 pb-1 px-2 text-right">
+                        <input
+                          v-model.number="item.wholesale_price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                          :class="!item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
+                          :readonly="!item.is_wholesale"
+                          @input="updateItemTotal(index)"
+                        />
+                      </td>
 
-                    <!-- Remove Button -->
-                    <td class="py-3 px-1 text-center">
-                      <button
-                        @click="removeFromInvoice(index)"
-                        class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
+                      <!-- Line Tax selector -->
+                      <td class="pt-3 pb-1 px-2 text-center">
+                        <select
+                          v-model="item.tax_id"
+                          class="w-20 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                          @change="updateItemTax(item)"
+                        >
+                          <option :value="null">No Tax</option>
+                          <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
+                            {{ tax.name }} ({{ tax.value }}%)
+                          </option>
+                        </select>
+                        <div v-if="item.tax_rate" class="text-[9px] text-slate-500 dark:text-zinc-400 mt-1">Rate: {{ item.tax_rate }}%</div>
+                      </td>
+
+                      <!-- Line Discount -->
+                      <td class="pt-3 pb-1 px-2 text-right">
+                        <div class="flex items-center justify-end space-x-1">
+                          <button
+                            type="button"
+                            @click="toggleLineDiscountType(item, index)"
+                            class="h-7 px-1.5 text-[10px] font-black rounded border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                            :title="(item.discount_type || 'percentage') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                          >
+                            {{ (item.discount_type || 'percentage') === 'fixed' ? currencySymbol : '%' }}
+                          </button>
+                          <input
+                            v-model.number="item.discount_amount"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                            :placeholder="(item.discount_type || 'percentage') === 'fixed' ? '0' : '0%'"
+                            @input="updateItemTotal(index)"
+                          />
+                        </div>
+                      </td>
+
+                      <!-- Total Line Price -->
+                      <td class="pt-3 pb-1 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm">
+                        {{ currencySymbol }}{{ item.total.toFixed(2) }}
+                      </td>
+
+                      <!-- Remove Button -->
+                      <td class="pt-3 pb-1 px-1 text-center">
+                        <button
+                          @click="removeFromInvoice(index)"
+                          class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer"
+                        >
+                          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+
+                    <!-- Full-Width Sub-Row: Expanded Description Box & Inline Warehouse Dropdown -->
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group">
+                      <td colspan="8" class="pt-1 pb-3 px-3">
+                        <div class="flex flex-row items-center gap-3 w-full">
+                          <!-- Description Box (expands horizontally across the whole row space) -->
+                          <textarea
+                            v-model="item.description"
+                            placeholder="Add line item description / details..."
+                            rows="1"
+                            class="flex-1 min-w-0 h-[38px] bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-2 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[11px] leading-tight resize-y"
+                          ></textarea>
+
+                          <!-- Warehouse Dropdown (Inline Right) -->
+                          <div v-if="warehouses.length > 0" class="shrink-0 flex items-center gap-1.5">
+                            <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider shrink-0">WH:</span>
+                            <select
+                              v-model="item.warehouse_id"
+                              @change="onItemWarehouseChange(index)"
+                              class="h-[38px] px-2.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer max-w-[210px] truncate"
+                            >
+                              <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
+                                {{ wh.name }} (Stock: {{ getProductWarehouseStock(item.product, wh.id) }})
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
@@ -1913,7 +1955,57 @@ const updateDateTime = () => {
 const getProductStock = (product) => {
   if (!product || !product.track_inventory) return '∞';
   if (!selectedWarehouseId.value || selectedWarehouseId.value === 'all') return product.total_stock;
-  return product.warehouse_stocks[selectedWarehouseId.value] ?? 0;
+  return product.warehouse_stocks?.[selectedWarehouseId.value] ?? 0;
+};
+
+const getProductWarehouseStock = (product, warehouseId) => {
+  if (!product) return 0;
+  if (!product.track_inventory) return '∞';
+  if (!warehouseId) return product.total_stock ?? 0;
+  return product.warehouse_stocks?.[warehouseId] ?? 0;
+};
+
+const getItemAvailableStock = (item) => {
+  if (!item || !item.product) return '∞';
+  if (!item.product.track_inventory) return '∞';
+  const whId = item.warehouse_id;
+  if (!whId) return item.product.total_stock ?? 0;
+  return item.product.warehouse_stocks?.[whId] ?? 0;
+};
+
+const isItemStockExceeded = (item) => {
+  if (!item || !item.product || !item.product.track_inventory) return false;
+  const stock = getItemAvailableStock(item);
+  if (typeof stock !== 'number') return false;
+  return item.quantity > stock;
+};
+
+const validateItemStock = (item, notify = false) => {
+  if (!item || !item.product || !item.product.track_inventory) return;
+  const stock = getItemAvailableStock(item);
+  if (typeof stock !== 'number') return;
+
+  if (item.quantity > stock && notify) {
+    const whObj = warehouses.value.find(w => String(w.id) === String(item.warehouse_id));
+    const whName = whObj ? whObj.name : 'Selected Warehouse';
+    showNotification(`Warning: Requested quantity (${item.quantity}) exceeds available stock (${stock}) in ${whName}`, 'error');
+  }
+};
+
+const onItemQtyChange = (index) => {
+  const item = invoiceItems.value[index];
+  if (item) {
+    validateItemStock(item, true);
+    updateItemTotal(index);
+  }
+};
+
+const onItemWarehouseChange = (index) => {
+  const item = invoiceItems.value[index];
+  if (item) {
+    validateItemStock(item, true);
+    updateItemTotal(index);
+  }
 };
 
 const loadProducts = async () => {
