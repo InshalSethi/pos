@@ -259,11 +259,13 @@ class WarehouseController extends Controller
             ], 422);
         }
 
-        // Check if there is stock in this warehouse
-        $hasStock = Inventory::where('warehouse_id', $warehouse->id)->where('stock_qty', '>', 0)->exists();
-        if ($hasStock) {
+        // Strict Stock Check: Verify if any stock quantities or inventory lines exist in this warehouse
+        $hasActiveQty = Inventory::where('warehouse_id', $warehouse->id)->where('stock_qty', '>', 0)->exists();
+        $hasStockLines = Inventory::where('warehouse_id', $warehouse->id)->exists();
+
+        if ($hasActiveQty || $hasStockLines) {
             return response()->json([
-                'message' => 'Cannot delete warehouse with active stock. Transfer or adjust stock first.'
+                'message' => 'Cannot delete warehouse. Stock items are still present in this location. Please transfer or adjust all stock before deleting this warehouse.'
             ], 422);
         }
 

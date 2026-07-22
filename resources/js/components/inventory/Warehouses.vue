@@ -897,7 +897,7 @@ const showToast = (type, message) => {
     if (toast.value?.message === message) {
       toast.value = null;
     }
-  }, 4000);
+  }, 6000);
 };
 
 onMounted(() => {
