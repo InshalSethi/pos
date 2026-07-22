@@ -82,69 +82,33 @@
                 </div>
               </div>
 
-              <!-- Gold Metallic Category Dropdown Icon Button -->
-              <div class="relative shrink-0" id="category-dropdown-container">
+              <!-- Gold Metallic Advance Search Button with Tooltip -->
+              <div class="relative shrink-0 group">
                 <button
                   type="button"
-                  @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
-                  title="Filter by Category"
+                  @click="openAdvanceSearchModal"
                   class="relative flex items-center justify-center w-10 h-10 rounded-full shrink-0 shadow-lg shadow-amber-950/30 hover:shadow-amber-500/20 active:scale-95 transition-all duration-200 cursor-pointer border border-amber-300/40 bg-gradient-to-b from-[#fbe396] via-[#dcae42] to-[#b38728] hover:from-[#fff0ad] hover:via-[#e2b74b] hover:to-[#be9130]"
                 >
-                  <!-- Filter Icon (Screenshot 2 exact 4 horizontal diminishing lines) -->
+                  <!-- Filter Icon -->
                   <svg class="w-4.5 h-4.5 text-[#1e1708]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M6 10h12M8 14h8M10 18h4" />
                   </svg>
                   
-                  <!-- Selected Badge -->
+                  <!-- Active Filter Indicator Badge -->
                   <span
-                    v-if="selectedCategories.length > 0"
+                    v-if="hasActiveAdvanceFilters"
                     class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-white dark:border-zinc-900 shadow-sm"
                   >
-                    {{ selectedCategories.length }}
+                    !
                   </span>
                 </button>
 
-                <!-- Popover Category Menu (Compact & Premium) -->
-                <div
-                  v-show="isCategoryDropdownOpen"
-                  class="absolute right-0 mt-2 bg-white dark:bg-[#14181d]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-xl shadow-2xl z-50 p-1.5 min-w-[190px] max-w-[220px] max-h-64 overflow-y-auto custom-scrollbar text-[11px]"
-                >
-                  <!-- Caret Arrow pointing up to the gold button -->
-                  <div class="absolute -top-1 right-3.5 w-2.5 h-2.5 bg-white dark:bg-[#14181d] border-t border-l border-slate-200 dark:border-slate-700/60 rotate-45 z-10"></div>
-
-                  <div class="relative z-20 space-y-0.5">
-                    <div class="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800/60 mb-1">
-                      Categories
-                    </div>
-
-                    <!-- All Categories -->
-                    <button
-                      type="button"
-                      @click="clearSelectedCategories"
-                      class="w-full px-2.5 py-1.5 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer"
-                      :class="selectedCategories.length === 0 ? 'bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-350 font-semibold border border-indigo-500/30' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 font-medium'"
-                    >
-                      <span class="truncate">All Categories</span>
-                      <svg v-if="selectedCategories.length === 0" class="w-3 h-3 shrink-0 ml-1 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
-
-                    <!-- Individual Category Options -->
-                    <button
-                      v-for="category in categories"
-                      :key="category.id"
-                      type="button"
-                      @click="toggleCategorySelection(category.id)"
-                      class="w-full px-2.5 py-1.5 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer"
-                      :class="isCategorySelected(category.id) ? 'bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-350 font-semibold border border-indigo-500/30' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 font-medium'"
-                    >
-                      <span class="truncate">{{ category.name }}</span>
-                      <svg v-if="isCategorySelected(category.id)" class="w-3 h-3 shrink-0 ml-1 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
+                <!-- Tooltip: Advance Searching -->
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
+                  <div class="bg-slate-900/95 dark:bg-[#1e252d] text-slate-100 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/80 tracking-wide">
+                    Advance Searching
                   </div>
+                  <div class="w-2 h-2 bg-slate-900 dark:bg-[#1e252d] rotate-45 -mt-1 border-r border-b border-slate-700/80"></div>
                 </div>
               </div>
             </div>
@@ -846,6 +810,280 @@
       </div>
     </div>
 
+    <!-- Advance Searching Modal -->
+    <transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+        <div class="relative w-full max-w-5xl bg-[#14181d] text-slate-100 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-[#161a20]">
+            <h3 class="text-base font-extrabold text-slate-100 tracking-tight flex items-center gap-2">
+              <span>Advanced Item Search</span>
+            </h3>
+            <button
+              type="button"
+              @click="closeAdvanceSearchModal"
+              class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer border-0 bg-transparent"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 overflow-y-auto space-y-5 custom-scrollbar flex-1 text-left">
+            
+            <!-- 1. Main Search Bar (Top) -->
+            <div class="relative w-full">
+              <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                v-model="advanceFilters.query"
+                type="text"
+                placeholder="Search by Name or Description"
+                class="w-full pl-11 pr-4 py-3 bg-[#111418] border border-slate-700/80 focus:border-sky-400 focus:ring-1 focus:ring-sky-400 rounded-xl text-xs font-medium text-slate-100 placeholder-slate-500 shadow-inner focus:outline-none transition-all"
+              />
+            </div>
+
+            <!-- 2. Additional Search Criteria Section -->
+            <div class="space-y-3 pt-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-300">Additional Search Criteria</span>
+                <button
+                  type="button"
+                  v-if="hasActiveAdvanceFilters"
+                  @click="clearAdvanceFilters"
+                  class="text-[10px] font-bold text-rose-400 hover:text-rose-300 underline cursor-pointer bg-transparent border-0"
+                >
+                  Reset Filters
+                </button>
+              </div>
+
+              <!-- Multi-Criteria Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                
+                <!-- Search by SKU -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-400 font-medium">Search by SKU</label>
+                  <input
+                    v-model="advanceFilters.sku"
+                    type="text"
+                    placeholder="Search by SKU"
+                    class="flex-1 px-3 py-2 bg-[#111418] border border-slate-700/80 focus:border-sky-400 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none"
+                  />
+                </div>
+
+                <!-- Search by Tags -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-400 font-medium">Search by Tags</label>
+                  <div class="flex-1 relative">
+                    <div
+                      @click="toggleTagDropdown"
+                      class="min-h-[38px] px-2.5 py-1.5 bg-[#111418] border border-slate-700/80 rounded-xl flex items-center justify-between cursor-pointer flex-wrap gap-1"
+                    >
+                      <div class="flex flex-wrap items-center gap-1">
+                        <span v-if="advanceFilters.tags.length === 0" class="text-slate-500 text-xs">Search by Tags</span>
+                        <span
+                          v-for="t in advanceFilters.tags"
+                          :key="t"
+                          class="bg-slate-800 text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-700 flex items-center gap-1"
+                        >
+                          {{ t }}
+                          <span @click.stop="removeAdvanceTag(t)" class="hover:text-rose-400 cursor-pointer font-bold">×</span>
+                        </span>
+                      </div>
+                      <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <!-- Tag Options Menu -->
+                    <div v-show="isTagDropdownOpen" class="absolute left-0 right-0 mt-1 bg-[#161a20] border border-slate-700 rounded-xl shadow-2xl z-30 max-h-40 overflow-y-auto p-1 text-xs">
+                      <div
+                        v-for="t in availableTags"
+                        :key="t"
+                        @click="toggleAdvanceTag(t)"
+                        class="px-2.5 py-1.5 hover:bg-slate-800/80 rounded-lg cursor-pointer flex items-center justify-between text-slate-200"
+                        :class="advanceFilters.tags.includes(t) ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : ''"
+                      >
+                        <span>{{ t }}</span>
+                        <span v-if="advanceFilters.tags.includes(t)" class="text-indigo-400">✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Search by Categories -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-400 font-medium">Search by Categories</label>
+                  <div class="flex-1 relative">
+                    <div
+                      @click="toggleCategoryDropdownModal"
+                      class="min-h-[38px] px-2.5 py-1.5 bg-[#111418] border border-slate-700/80 rounded-xl flex items-center justify-between cursor-pointer flex-wrap gap-1"
+                    >
+                      <div class="flex flex-wrap items-center gap-1">
+                        <span v-if="advanceFilters.categories.length === 0" class="text-slate-500 text-xs">Search by Categories</span>
+                        <span
+                          v-for="cId in advanceFilters.categories"
+                          :key="cId"
+                          class="bg-slate-800 text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-700 flex items-center gap-1"
+                        >
+                          {{ getCategoryNameById(cId) }}
+                          <span @click.stop="removeAdvanceCategory(cId)" class="hover:text-rose-400 cursor-pointer font-bold">×</span>
+                        </span>
+                      </div>
+                      <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <!-- Category Options Menu -->
+                    <div v-show="isCategorySelectModalOpen" class="absolute left-0 right-0 mt-1 bg-[#161a20] border border-slate-700 rounded-xl shadow-2xl z-30 max-h-40 overflow-y-auto p-1 text-xs">
+                      <div
+                        v-for="cat in categories"
+                        :key="cat.id"
+                        @click="toggleAdvanceCategory(cat.id)"
+                        class="px-2.5 py-1.5 hover:bg-slate-800/80 rounded-lg cursor-pointer flex items-center justify-between text-slate-200"
+                        :class="advanceFilters.categories.includes(cat.id) ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : ''"
+                      >
+                        <span>{{ cat.name }}</span>
+                        <span v-if="advanceFilters.categories.includes(cat.id)" class="text-indigo-400">✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Search by Tax -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-400 font-medium">Search by Tax</label>
+                  <div class="flex-1 relative">
+                    <div
+                      @click="toggleTaxDropdown"
+                      class="min-h-[38px] px-2.5 py-1.5 bg-[#111418] border border-slate-700/80 rounded-xl flex items-center justify-between cursor-pointer flex-wrap gap-1"
+                    >
+                      <div class="flex flex-wrap items-center gap-1">
+                        <span v-if="advanceFilters.taxes.length === 0" class="text-slate-500 text-xs">Search by Tax</span>
+                        <span
+                          v-for="tx in advanceFilters.taxes"
+                          :key="tx"
+                          class="bg-slate-800 text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-700 flex items-center gap-1"
+                        >
+                          {{ getTaxLabel(tx) }}
+                          <span @click.stop="removeAdvanceTaxItem(tx)" class="hover:text-rose-400 cursor-pointer font-bold">×</span>
+                        </span>
+                      </div>
+                      <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <!-- Tax Options Menu -->
+                    <div v-show="isTaxDropdownOpen" class="absolute left-0 right-0 mt-1 bg-[#161a20] border border-slate-700 rounded-xl shadow-2xl z-30 max-h-40 overflow-y-auto p-1 text-xs">
+                      <div
+                        v-for="tax in taxes"
+                        :key="tax.id"
+                        @click="toggleAdvanceTax(tax.id)"
+                        class="px-2.5 py-1.5 hover:bg-slate-800/80 rounded-lg cursor-pointer flex items-center justify-between text-slate-200"
+                        :class="advanceFilters.taxes.includes(tax.id) ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : ''"
+                      >
+                        <span>{{ tax.name }} ({{ tax.value }}%)</span>
+                        <span v-if="advanceFilters.taxes.includes(tax.id)" class="text-indigo-400">✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Search by Price -->
+                <div class="flex items-center gap-3 md:col-span-2">
+                  <label class="w-32 shrink-0 text-slate-400 font-medium">Search by Price</label>
+                  <div class="flex-1 flex items-center gap-3">
+                    <span class="text-slate-500 font-medium">min</span>
+                    <div class="relative w-32">
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-500 text-xs">$</span>
+                      <input
+                        v-model="advanceFilters.minPrice"
+                        type="number"
+                        placeholder="0"
+                        class="w-full pl-6 pr-2 py-1.5 bg-[#111418] border border-slate-700/80 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-400"
+                      />
+                    </div>
+                    <span class="text-slate-500 font-medium">- max</span>
+                    <div class="relative w-32">
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-500 text-xs">$</span>
+                      <input
+                        v-model="advanceFilters.maxPrice"
+                        type="number"
+                        placeholder="9999"
+                        class="w-full pl-6 pr-2 py-1.5 bg-[#111418] border border-slate-700/80 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- 3. Search Results Table -->
+            <div class="border border-slate-800/80 rounded-xl overflow-hidden bg-[#111418]">
+              <div class="max-h-64 overflow-y-auto custom-scrollbar">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-[#181d23] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-800">
+                    <tr>
+                      <th class="py-2.5 px-3">SKU</th>
+                      <th class="py-2.5 px-3">Item Details / Description</th>
+                      <th class="py-2.5 px-3">Category</th>
+                      <th class="py-2.5 px-3">Tags</th>
+                      <th class="py-2.5 px-3">Tax</th>
+                      <th class="py-2.5 px-3 text-right">Price</th>
+                      <th class="py-2.5 px-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/60 text-slate-200">
+                    <tr v-if="advanceFilteredProducts.length === 0">
+                      <td colspan="7" class="py-10 text-center text-slate-500 italic">
+                        No products match the selected advance search criteria.
+                      </td>
+                    </tr>
+                    <tr
+                      v-for="product in advanceFilteredProducts.slice(0, 100)"
+                      :key="product.key"
+                      class="hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-400">{{ product.sku }}</td>
+                      <td class="py-2.5 px-3 font-bold text-slate-100">{{ product.name }}</td>
+                      <td class="py-2.5 px-3 text-slate-300">{{ product.category }}</td>
+                      <td class="py-2.5 px-3 text-slate-400">
+                        <span v-if="product.tags && product.tags.length">{{ Array.isArray(product.tags) ? product.tags.join(', ') : product.tags }}</span>
+                        <span v-else class="text-slate-600">—</span>
+                      </td>
+                      <td class="py-2.5 px-3 text-slate-400">{{ product.tax_rate ? product.tax_rate + '%' : 'No Tax' }}</td>
+                      <td class="py-2.5 px-3 text-right font-extrabold text-emerald-400">${{ product.price }}</td>
+                      <td class="py-2.5 px-3 text-center">
+                        <button
+                          type="button"
+                          @click="addAdvanceProductToInvoice(product)"
+                          class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-lg text-[11px] shadow-sm transition-all cursor-pointer border-0"
+                        >
+                          + Add
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="px-4 py-2 bg-[#181d23] border-t border-slate-800 text-[10px] text-slate-400 font-semibold flex items-center justify-between">
+                <span>Showing {{ Math.min(advanceFilteredProducts.length, 100) }} of {{ advanceFilteredProducts.length }} items</span>
+                <span class="text-slate-500">Click "+ Add" to append items directly to invoice</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- Success/Error Notifications -->
     <div v-if="notifications.length > 0" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm w-full">
       <div
@@ -918,6 +1156,192 @@ const selectedWarehouseId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
 const isBarcodeActive = ref(true);
 const isAllWholesale = ref(false);
+
+// Advance Search Modal State
+const isAdvanceSearchModalOpen = ref(false);
+const isTagDropdownOpen = ref(false);
+const isCategorySelectModalOpen = ref(false);
+const isTaxDropdownOpen = ref(false);
+
+const advanceFilters = ref({
+  query: '',
+  sku: '',
+  categories: [],
+  tags: [],
+  taxes: [],
+  minPrice: null,
+  maxPrice: null
+});
+
+const openAdvanceSearchModal = () => {
+  isAdvanceSearchModalOpen.value = true;
+};
+
+const closeAdvanceSearchModal = () => {
+  isAdvanceSearchModalOpen.value = false;
+  isTagDropdownOpen.value = false;
+  isCategorySelectModalOpen.value = false;
+  isTaxDropdownOpen.value = false;
+};
+
+const clearAdvanceFilters = () => {
+  advanceFilters.value = {
+    query: '',
+    sku: '',
+    categories: [],
+    tags: [],
+    taxes: [],
+    minPrice: null,
+    maxPrice: null
+  };
+};
+
+const hasActiveAdvanceFilters = computed(() => {
+  const f = advanceFilters.value;
+  return !!(f.query || f.sku || f.categories.length > 0 || f.tags.length > 0 || f.taxes.length > 0 || f.minPrice || f.maxPrice);
+});
+
+const availableTags = computed(() => {
+  const set = new Set();
+  products.value.forEach(p => {
+    if (Array.isArray(p.tags)) {
+      p.tags.forEach(t => set.add(t));
+    }
+  });
+  if (set.size === 0) {
+    ['Apple', 'New', 'Featured', 'Best Seller', 'Sale', 'Trending', 'Clearance'].forEach(t => set.add(t));
+  }
+  return Array.from(set);
+});
+
+const getCategoryNameById = (id) => {
+  const cat = categories.value.find(c => String(c.id) === String(id));
+  return cat ? cat.name : id;
+};
+
+const getTaxLabel = (taxId) => {
+  const tx = taxes.value.find(t => String(t.id) === String(taxId));
+  return tx ? `${tx.name} (${tx.value}%)` : `Tax ${taxId}`;
+};
+
+const toggleTagDropdown = () => {
+  isTagDropdownOpen.value = !isTagDropdownOpen.value;
+  isCategorySelectModalOpen.value = false;
+  isTaxDropdownOpen.value = false;
+};
+
+const toggleCategoryDropdownModal = () => {
+  isCategorySelectModalOpen.value = !isCategorySelectModalOpen.value;
+  isTagDropdownOpen.value = false;
+  isTaxDropdownOpen.value = false;
+};
+
+const toggleTaxDropdown = () => {
+  isTaxDropdownOpen.value = !isTaxDropdownOpen.value;
+  isTagDropdownOpen.value = false;
+  isCategorySelectModalOpen.value = false;
+};
+
+const toggleAdvanceTag = (tag) => {
+  const idx = advanceFilters.value.tags.indexOf(tag);
+  if (idx > -1) {
+    advanceFilters.value.tags.splice(idx, 1);
+  } else {
+    advanceFilters.value.tags.push(tag);
+  }
+};
+
+const removeAdvanceTag = (tag) => {
+  const idx = advanceFilters.value.tags.indexOf(tag);
+  if (idx > -1) {
+    advanceFilters.value.tags.splice(idx, 1);
+  }
+};
+
+const toggleAdvanceCategory = (catId) => {
+  const idx = advanceFilters.value.categories.indexOf(catId);
+  if (idx > -1) {
+    advanceFilters.value.categories.splice(idx, 1);
+  } else {
+    advanceFilters.value.categories.push(catId);
+  }
+};
+
+const removeAdvanceCategory = (catId) => {
+  const idx = advanceFilters.value.categories.indexOf(catId);
+  if (idx > -1) {
+    advanceFilters.value.categories.splice(idx, 1);
+  }
+};
+
+const toggleAdvanceTax = (taxId) => {
+  const idx = advanceFilters.value.taxes.indexOf(taxId);
+  if (idx > -1) {
+    advanceFilters.value.taxes.splice(idx, 1);
+  } else {
+    advanceFilters.value.taxes.push(taxId);
+  }
+};
+
+const removeAdvanceTaxItem = (taxId) => {
+  const idx = advanceFilters.value.taxes.indexOf(taxId);
+  if (idx > -1) {
+    advanceFilters.value.taxes.splice(idx, 1);
+  }
+};
+
+const advanceFilteredProducts = computed(() => {
+  let list = products.value;
+
+  const f = advanceFilters.value;
+
+  if (f.query) {
+    const q = f.query.toLowerCase();
+    list = list.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q))
+    );
+  }
+
+  if (f.sku) {
+    const s = f.sku.toLowerCase();
+    list = list.filter(p => p.sku && p.sku.toLowerCase().includes(s));
+  }
+
+  if (f.categories.length > 0) {
+    const selectedCatIds = f.categories.map(id => String(id));
+    list = list.filter(p => selectedCatIds.includes(String(p.category_id)));
+  }
+
+  if (f.tags.length > 0) {
+    list = list.filter(p => {
+      const pTags = Array.isArray(p.tags) ? p.tags : [];
+      return f.tags.some(t => pTags.includes(t));
+    });
+  }
+
+  if (f.taxes.length > 0) {
+    list = list.filter(p => {
+      return f.taxes.some(taxId => p.tax_ids && p.tax_ids.includes(taxId));
+    });
+  }
+
+  if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) {
+    list = list.filter(p => (p.price || 0) >= parseFloat(f.minPrice));
+  }
+
+  if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) {
+    list = list.filter(p => (p.price || 0) <= parseFloat(f.maxPrice));
+  }
+
+  return list;
+});
+
+const addAdvanceProductToInvoice = (product) => {
+  addToInvoice(product);
+  showNotification(`Added "${product.name}" to invoice`, 'success');
+};
 
 const toggleAllWholesale = () => {
   const targetState = isAllWholesale.value;
