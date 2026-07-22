@@ -112,185 +112,190 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Line Items Table -->
-          <div class="overflow-x-auto overflow-y-auto max-h-[60vh] border border-slate-200 dark:border-zinc-800 rounded-xl mt-2 relative custom-scrollbar">
-            <table class="w-full text-xs text-left border-collapse">
-              <thead class="sticky top-0 z-10 shadow-sm">
-                <tr class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 uppercase font-extrabold tracking-wider">
-                  <th class="py-3 px-3 w-4/12 bg-slate-50 dark:bg-zinc-900">Item Details / Description</th>
-                  <th class="py-3 px-2 w-1/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
-                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Price</th>
-                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <span>W.S Price</span>
-                      <label class="inline-flex items-center cursor-pointer select-none" title="Apply Wholesale Price to All Items">
-                        <input
-                          type="checkbox"
-                          v-model="isAllWholesale"
-                          @change="toggleAllWholesale"
-                          class="sr-only peer"
-                        />
-                        <div class="w-6 h-3.5 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
-                      </label>
-                    </div>
-                  </th>
-                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">Tax</th>
-                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Discount</th>
-                  <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Amount</th>
-                  <th class="py-3 px-1 w-[40px] text-center bg-slate-50 dark:bg-zinc-900"></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
-                <tr v-if="invoiceItems.length === 0">
-                  <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
-                    <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                    </svg>
-                    <span>No products added. Use the filters & search list on the right to select items.</span>
-                  </td>
-                </tr>
-
-                <tr v-for="(item, index) in invoiceItems" :key="index" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top">
-                  <!-- Name and Description -->
-                  <td class="py-3 px-2">
-                    <div class="flex items-center justify-between mb-1">
-                      <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.name }}</div>
-                      
-                      <!-- W.S Toggle Switch -->
-                      <label class="inline-flex items-center cursor-pointer select-none">
-                        <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
-                        <div class="relative">
+          </div>          <!-- Line Items Section Card -->
+          <div class="border border-slate-200 dark:border-zinc-800 rounded-xl mt-2 overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+            <!-- 1. Scrollable Line Items Table (Header & Body ONLY) -->
+            <div class="overflow-x-auto overflow-y-auto max-h-[380px] relative custom-scrollbar">
+              <table class="w-full text-xs text-left border-collapse">
+                <thead class="sticky top-0 z-10 shadow-xs">
+                  <tr class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 uppercase font-extrabold tracking-wider">
+                    <th class="py-3 px-3 w-4/12 bg-slate-50 dark:bg-zinc-900">Item Details / Description</th>
+                    <th class="py-3 px-2 w-1/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
+                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Price</th>
+                    <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">
+                      <div class="flex items-center justify-center gap-1.5">
+                        <span>W.S Price</span>
+                        <label class="inline-flex items-center cursor-pointer select-none" title="Apply Wholesale Price to All Items">
                           <input
-                            v-model="item.is_wholesale"
                             type="checkbox"
+                            v-model="isAllWholesale"
+                            @change="toggleAllWholesale"
                             class="sr-only peer"
-                            @change="updateItemTotal(index)"
                           />
-                          <div class="w-7 h-4 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
-                        </div>
-                      </label>
-                    </div>
-                    <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mb-1.5">SKU: {{ item.sku }}</div>
-                    <textarea
-                      v-model="item.description"
-                      placeholder="Add line item description / details..."
-                      rows="2"
-                      class="w-full bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded px-2 py-1 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
-                    ></textarea>
-                  </td>
+                          <div class="w-6 h-3.5 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                        </label>
+                      </div>
+                    </th>
+                    <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">Tax</th>
+                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Discount</th>
+                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Amount</th>
+                    <th class="py-3 px-1 w-[40px] text-center bg-slate-50 dark:bg-zinc-900"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
+                  <tr v-if="invoiceItems.length === 0">
+                    <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+                      <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                      <span>No products added. Use the filters & search list on the right to select items.</span>
+                    </td>
+                  </tr>
 
-                  <!-- Qty -->
-                  <td class="py-3 px-2 text-center">
-                    <input
-                      v-model.number="item.quantity"
-                      type="number"
-                      min="1"
-                      :max="getProductStock(item.product)"
-                      class="w-14 px-1.5 py-1 text-center border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                      @input="updateItemTotal(index)"
-                    />
-                    <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Stock: {{ getProductStock(item.product) }}</div>
-                  </td>
+                  <tr v-for="(item, index) in invoiceItems" :key="index" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top">
+                    <!-- Name and Description -->
+                    <td class="py-3 px-2">
+                      <div class="flex items-center justify-between mb-1">
+                        <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.name }}</div>
+                        
+                        <!-- W.S Toggle Switch -->
+                        <label class="inline-flex items-center cursor-pointer select-none">
+                          <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
+                          <div class="relative">
+                            <input
+                              v-model="item.is_wholesale"
+                              type="checkbox"
+                              class="sr-only peer"
+                              @change="updateItemTotal(index)"
+                            />
+                            <div class="w-7 h-4 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                          </div>
+                        </label>
+                      </div>
+                      <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mb-1.5">SKU: {{ item.sku }}</div>
+                      <textarea
+                        v-model="item.description"
+                        placeholder="Add line item description / details..."
+                        rows="2"
+                        class="w-full bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded px-2 py-1 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
+                      ></textarea>
+                    </td>
 
-                  <!-- Unit Price -->
-                  <td class="py-3 px-2 text-right">
-                    <input
-                      v-model.number="item.unit_price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                      :class="item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
-                      :readonly="item.is_wholesale"
-                      @input="updateItemTotal(index)"
-                    />
-                  </td>
-
-                  <!-- W.S Price -->
-                  <td class="py-3 px-2 text-right">
-                    <input
-                      v-model.number="item.wholesale_price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                      :class="!item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
-                      :readonly="!item.is_wholesale"
-                      @input="updateItemTotal(index)"
-                    />
-                  </td>
-
-                  <!-- Line Tax selector -->
-                  <td class="py-3 px-2 text-center">
-                    <select
-                      v-model="item.tax_id"
-                      class="w-20 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                      @change="updateItemTax(item)"
-                    >
-                      <option :value="null">No Tax</option>
-                      <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
-                        {{ tax.name }} ({{ tax.value }}%)
-                      </option>
-                    </select>
-                    <div v-if="item.tax_rate" class="text-[9px] text-slate-500 dark:text-zinc-400 mt-1">Rate: {{ item.tax_rate }}%</div>
-                  </td>
-
-                  <!-- Line Discount -->
-                  <td class="py-3 px-2 text-right">
-                    <div class="flex items-center justify-end space-x-1">
-                      <button
-                        type="button"
-                        @click="toggleLineDiscountType(item, index)"
-                        class="h-7 px-1.5 text-[10px] font-black rounded border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
-                        :title="(item.discount_type || 'percentage') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
-                      >
-                        {{ (item.discount_type || 'percentage') === 'fixed' ? currencySymbol : '%' }}
-                      </button>
+                    <!-- Qty -->
+                    <td class="py-3 px-2 text-center">
                       <input
-                        v-model.number="item.discount_amount"
+                        v-model.number="item.quantity"
+                        type="number"
+                        min="1"
+                        :max="getProductStock(item.product)"
+                        class="w-14 px-1.5 py-1 text-center border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                        @input="updateItemTotal(index)"
+                      />
+                      <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Stock: {{ getProductStock(item.product) }}</div>
+                    </td>
+
+                    <!-- Unit Price -->
+                    <td class="py-3 px-2 text-right">
+                      <input
+                        v-model.number="item.unit_price"
                         type="number"
                         step="0.01"
                         min="0"
-                        class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                        :placeholder="(item.discount_type || 'percentage') === 'fixed' ? '0' : '0%'"
+                        class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                        :class="item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
+                        :readonly="item.is_wholesale"
                         @input="updateItemTotal(index)"
                       />
-                    </div>
-                  </td>
+                    </td>
 
-                  <!-- Total Line Price -->
-                  <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm">
-                    {{ currencySymbol }}{{ item.total.toFixed(2) }}
-                  </td>
+                    <!-- W.S Price -->
+                    <td class="py-3 px-2 text-right">
+                      <input
+                        v-model.number="item.wholesale_price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                        :class="!item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
+                        :readonly="!item.is_wholesale"
+                        @input="updateItemTotal(index)"
+                      />
+                    </td>
 
-                  <!-- Remove Button -->
-                  <td class="py-3 px-1 text-center">
-                    <button
-                      @click="removeFromInvoice(index)"
-                      class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot v-if="invoiceItems.length > 0" class="bg-slate-50 dark:bg-zinc-900/40 border-t border-slate-200 dark:border-zinc-800">
+                    <!-- Line Tax selector -->
+                    <td class="py-3 px-2 text-center">
+                      <select
+                        v-model="item.tax_id"
+                        class="w-20 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                        @change="updateItemTax(item)"
+                      >
+                        <option :value="null">No Tax</option>
+                        <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
+                          {{ tax.name }} ({{ tax.value }}%)
+                        </option>
+                      </select>
+                      <div v-if="item.tax_rate" class="text-[9px] text-slate-500 dark:text-zinc-400 mt-1">Rate: {{ item.tax_rate }}%</div>
+                    </td>
+
+                    <!-- Line Discount -->
+                    <td class="py-3 px-2 text-right">
+                      <div class="flex items-center justify-end space-x-1">
+                        <button
+                          type="button"
+                          @click="toggleLineDiscountType(item, index)"
+                          class="h-7 px-1.5 text-[10px] font-black rounded border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                          :title="(item.discount_type || 'percentage') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                        >
+                          {{ (item.discount_type || 'percentage') === 'fixed' ? currencySymbol : '%' }}
+                        </button>
+                        <input
+                          v-model.number="item.discount_amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                          :placeholder="(item.discount_type || 'percentage') === 'fixed' ? '0' : '0%'"
+                          @input="updateItemTotal(index)"
+                        />
+                      </div>
+                    </td>
+
+                    <!-- Total Line Price -->
+                    <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm">
+                      {{ currencySymbol }}{{ item.total.toFixed(2) }}
+                    </td>
+
+                    <!-- Remove Button -->
+                    <td class="py-3 px-1 text-center">
+                      <button
+                        @click="removeFromInvoice(index)"
+                        class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 2. Static Summary Totals & Payment Section (Pinned below table, outside overflow scroll) -->
+            <table v-if="invoiceItems.length > 0" class="w-full text-xs text-left border-collapse border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40">
+              <tfoot class="bg-slate-50 dark:bg-zinc-900/40">
                 <!-- 1. Subtotal -->
                 <tr>
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Subtotal</td>
                   <td colspan="2" class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ invoiceSubtotal.toFixed(2) }}</td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
 
                 <!-- 2. Total Amount -->
                 <tr class="bg-slate-100/50 dark:bg-zinc-800/30 font-bold border-t border-slate-200 dark:border-zinc-800">
                   <td colspan="5" class="py-2 px-3 text-right text-slate-800 dark:text-zinc-200 text-xs">Total Amount</td>
                   <td colspan="2" class="py-2 px-2 text-right text-slate-900 dark:text-zinc-100 text-sm font-black">{{ currencySymbol }}{{ invoiceSubtotal.toFixed(2) }}</td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
 
                 <!-- 3. Taxes (manual field) -->
@@ -316,7 +321,7 @@
                       />
                     </div>
                   </td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
 
                 <!-- 4. Discount (manual field) -->
@@ -342,19 +347,19 @@
                       />
                     </div>
                   </td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
 
                 <!-- 5. Grand Total -->
                 <tr class="border-t border-b border-slate-300 dark:border-zinc-700 bg-indigo-50/40 dark:bg-indigo-950/20 font-black">
                   <td colspan="5" class="py-3 px-3 text-right text-slate-900 dark:text-zinc-100 text-xs uppercase tracking-wider">Grand Total</td>
                   <td colspan="2" class="py-3 px-2 text-right text-indigo-600 dark:text-indigo-400 text-base font-black">{{ currencySymbol }}{{ grandTotal.toFixed(2) }}</td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
 
                 <!-- 6. Payment Method & Receiving Amount -->
                 <tr class="bg-slate-50/90 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
-                  <td colspan="7" class="p-3">
+                  <td colspan="8" class="p-3">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                       <div>
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Method</label>
@@ -385,19 +390,18 @@
                       </div>
                     </div>
                   </td>
-                  <td></td>
                 </tr>
 
                 <!-- 7. Remaining Due / Change -->
                 <tr v-if="dueAmount > 0">
                   <td colspan="5" class="py-2 px-3 text-right font-extrabold text-rose-600 dark:text-rose-400">Remaining Due Amount</td>
                   <td colspan="2" class="py-2 px-2 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/20">{{ currencySymbol }}{{ dueAmount.toFixed(2) }}</td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
-                <tr v-if="changeAmount > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-450">Change / Refund</td>
+                <tr v-else-if="changeAmount > 0">
+                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">Change / Refund to Customer</td>
                   <td colspan="2" class="py-2 px-2 text-right font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/20">{{ currencySymbol }}{{ changeAmount.toFixed(2) }}</td>
-                  <td></td>
+                  <td class="w-[40px]"></td>
                 </tr>
               </tfoot>
             </table>
