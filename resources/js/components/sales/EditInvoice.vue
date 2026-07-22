@@ -310,18 +310,20 @@
                             class="flex-1 min-w-0 h-[38px] bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-2 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[11px] leading-tight resize-y"
                           ></textarea>
 
-                          <!-- Warehouse Dropdown (Inline Right) -->
-                          <div v-if="warehouses.length > 0" class="shrink-0 flex items-center gap-1.5">
+                          <!-- Warehouse Dropdown (Custom Floating Dropup Inline Right) -->
+                          <div v-if="warehouses.length > 0" class="shrink-0 flex items-center gap-1.5 relative" :id="`item-wh-dropdown-${index}`">
                             <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider shrink-0">WH:</span>
-                            <select
-                              v-model="item.warehouse_id"
-                              @change="onItemWarehouseChange(index)"
-                              class="h-[38px] px-2.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer max-w-[210px] truncate"
+                            
+                            <button
+                              type="button"
+                              @click.stop="toggleItemWarehouseDropdown(index, $event)"
+                              class="h-[38px] px-2.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer flex items-center justify-between gap-1.5 min-w-[170px] max-w-[220px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
                             >
-                              <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
-                                {{ wh.name }} (Stock: {{ getProductWarehouseStock(item.product, wh.id) }})
-                              </option>
-                            </select>
+                              <span class="truncate">{{ getSelectedWarehouseName(item.product, item.warehouse_id) }} (Stock: {{ getProductWarehouseStock(item.product, item.warehouse_id) }})</span>
+                              <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': openWarehouseItemIndex === index }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                       </td>
@@ -411,18 +413,20 @@
                 <tr class="bg-slate-50/90 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
                   <td colspan="8" class="p-3">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                      <div>
+                      <!-- Payment Method Custom Dropup Trigger -->
+                      <div class="relative w-full">
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Method</label>
-                        <select
-                          v-model="invoiceForm.payment_method"
-                          class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        
+                        <button
+                          type="button"
+                          @click.stop="togglePaymentDropdown($event)"
+                          class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer flex justify-between items-center shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
                         >
-                          <option value="cash">Cash</option>
-                          <option value="card">Card</option>
-                          <option value="bank_transfer">Bank Transfer</option>
-                          <option value="mobile_payment">Mobile Payment</option>
-                          <option value="mixed">Mixed</option>
-                        </select>
+                          <span class="capitalize">{{ getSelectedPaymentMethodLabel(invoiceForm.payment_method) }}</span>
+                          <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isPaymentDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
                       </div>
                       <div>
                         <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Receiving Amount</label>
@@ -1295,6 +1299,73 @@
         </button>
       </div>
     </div>
+    <!-- Teleported Floating Line Item Warehouse Dropdown Menu -->
+    <teleport to="body">
+      <transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
+      >
+        <div
+          v-if="openWarehouseItemIndex !== null && invoiceItems[openWarehouseItemIndex]"
+          :style="{ top: warehouseDropdownPos.top, bottom: warehouseDropdownPos.bottom, left: warehouseDropdownPos.left }"
+          class="fixed z-[9999] w-64 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
+        >
+          <div class="px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800">
+            Select Warehouse
+          </div>
+          <div
+            v-for="wh in warehouses"
+            :key="wh.id"
+            @click.stop="selectItemWarehouse(openWarehouseItemIndex, wh.id)"
+            class="px-3 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
+            :class="invoiceItems[openWarehouseItemIndex]?.warehouse_id === wh.id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300'"
+          >
+            <span class="truncate">{{ wh.name }}</span>
+            <span
+              class="text-[10px] font-mono shrink-0 px-1.5 py-0.5 rounded font-semibold ml-2"
+              :class="getProductWarehouseStock(invoiceItems[openWarehouseItemIndex]?.product, wh.id) > 0 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'"
+            >
+              Stock: {{ getProductWarehouseStock(invoiceItems[openWarehouseItemIndex]?.product, wh.id) }}
+            </span>
+          </div>
+        </div>
+      </transition>
+    </teleport>
+
+    <!-- Teleported Floating Payment Method Dropdown Menu -->
+    <teleport to="body">
+      <transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
+      >
+        <div
+          v-if="isPaymentDropdownOpen"
+          :style="{ top: paymentDropdownPos.top, bottom: paymentDropdownPos.bottom, left: paymentDropdownPos.left, width: paymentDropdownPos.width }"
+          class="fixed z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-52 overflow-y-auto custom-scrollbar backdrop-blur-md"
+        >
+          <div
+            v-for="pm in paymentMethodsList"
+            :key="pm.value"
+            @click.stop="selectPaymentMethod(pm.value)"
+            class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
+            :class="invoiceForm.payment_method === pm.value ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
+          >
+            <span>{{ pm.label }}</span>
+            <svg v-if="invoiceForm.payment_method === pm.value" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
@@ -1351,6 +1422,106 @@ const barcodeInput = ref('');
 const warehouses = ref([]);
 const selectedWarehouseId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
+
+const openWarehouseItemIndex = ref(null);
+const isPaymentDropdownOpen = ref(false);
+
+const paymentMethodsList = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'mobile_payment', label: 'Mobile Payment' },
+  { value: 'mixed', label: 'Mixed' }
+];
+
+const warehouseDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px' });
+const paymentDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px', width: '200px' });
+
+const getSelectedWarehouseName = (product, id) => {
+  if (!id) return 'Select Warehouse';
+  const wh = warehouses.value.find(w => w.id == id);
+  return wh ? wh.name : 'Select Warehouse';
+};
+
+const getSelectedPaymentMethodLabel = (val) => {
+  const found = paymentMethodsList.find(p => p.value === val);
+  return found ? found.label : (val || 'Cash');
+};
+
+const toggleItemWarehouseDropdown = (index, event) => {
+  if (openWarehouseItemIndex.value === index) {
+    openWarehouseItemIndex.value = null;
+    return;
+  }
+  
+  isPaymentDropdownOpen.value = false;
+  openWarehouseItemIndex.value = index;
+
+  nextTick(() => {
+    const btn = event?.currentTarget;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
+    const leftVal = Math.max(10, Math.min(window.innerWidth - 266, rect.right - 256));
+
+    warehouseDropdownPos.value = {
+      top: 'auto',
+      bottom: `${bottomVal}px`,
+      left: `${leftVal}px`
+    };
+  });
+};
+
+const togglePaymentDropdown = (event) => {
+  if (isPaymentDropdownOpen.value) {
+    isPaymentDropdownOpen.value = false;
+    return;
+  }
+  openWarehouseItemIndex.value = null;
+  isPaymentDropdownOpen.value = true;
+
+  nextTick(() => {
+    const btn = event?.currentTarget;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const menuHeight = 180;
+
+    const leftVal = Math.max(10, Math.min(window.innerWidth - rect.width - 10, rect.left));
+
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+      const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
+      paymentDropdownPos.value = {
+        top: 'auto',
+        bottom: `${bottomVal}px`,
+        left: `${leftVal}px`,
+        width: `${rect.width}px`
+      };
+    } else {
+      const topVal = rect.bottom + 2;
+      paymentDropdownPos.value = {
+        top: `${topVal}px`,
+        bottom: 'auto',
+        left: `${leftVal}px`,
+        width: `${rect.width}px`
+      };
+    }
+  });
+};
+
+const selectItemWarehouse = (index, whId) => {
+  if (invoiceItems.value[index]) {
+    invoiceItems.value[index].warehouse_id = whId;
+    onItemWarehouseChange(index);
+  }
+  openWarehouseItemIndex.value = null;
+};
+
+const selectPaymentMethod = (val) => {
+  invoiceForm.value.payment_method = val;
+  isPaymentDropdownOpen.value = false;
+};
 const isBarcodeActive = ref(true);
 const isAllWholesale = ref(false);
 
@@ -2486,6 +2657,18 @@ const handleClickOutside = (event) => {
   if (warehouseContainer && !warehouseContainer.contains(event.target)) {
     isWarehouseDropdownOpen.value = false;
   }
+
+  const paymentMethodContainer = document.getElementById('payment-method-dropdown-container');
+  if (paymentMethodContainer && !paymentMethodContainer.contains(event.target)) {
+    isPaymentDropdownOpen.value = false;
+  }
+
+  if (openWarehouseItemIndex.value !== null) {
+    const itemWhContainer = document.getElementById(`item-wh-dropdown-${openWarehouseItemIndex.value}`);
+    if (itemWhContainer && !itemWhContainer.contains(event.target)) {
+      openWarehouseItemIndex.value = null;
+    }
+  }
 };
 
 const selectWarehouse = (id) => {
@@ -2635,6 +2818,11 @@ const loadTaxes = async () => {
   }
 };
 
+const handleWindowScrollOrResize = () => {
+  openWarehouseItemIndex.value = null;
+  isPaymentDropdownOpen.value = false;
+};
+
 // Lifecycle
 onMounted(async () => {
   updateDateTime();
@@ -2645,11 +2833,15 @@ onMounted(async () => {
   await loadInvoiceData();
   await fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('scroll', handleWindowScrollOrResize, true);
+  window.addEventListener('resize', handleWindowScrollOrResize);
   window.addEventListener('keydown', handleGlobalBarcodeScan);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('scroll', handleWindowScrollOrResize, true);
+  window.removeEventListener('resize', handleWindowScrollOrResize);
   window.removeEventListener('keydown', handleGlobalBarcodeScan);
 });
 </script>
