@@ -239,14 +239,25 @@
 
                   <!-- Line Discount -->
                   <td class="py-3 px-2 text-right">
-                    <input
-                      v-model.number="item.discount_amount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                      @input="updateItemTotal(index)"
-                    />
+                    <div class="flex items-center justify-end space-x-1">
+                      <button
+                        type="button"
+                        @click="toggleLineDiscountType(item, index)"
+                        class="h-7 px-1.5 text-[10px] font-black rounded border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                        :title="(item.discount_type || 'fixed') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                      >
+                        {{ (item.discount_type || 'fixed') === 'fixed' ? currencySymbol : '%' }}
+                      </button>
+                      <input
+                        v-model.number="item.discount_amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                        :placeholder="(item.discount_type || 'fixed') === 'fixed' ? '0' : '0%'"
+                        @input="updateItemTotal(index)"
+                      />
+                    </div>
                   </td>
 
                   <!-- Total Line Price -->
@@ -1785,16 +1796,27 @@ const invoiceSubtotal = computed(() => {
 });
 
 const totalDiscount = computed(() => {
-  return invoiceItems.value.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
+  return invoiceItems.value.reduce((sum, item) => {
+    const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+    const itemSubtotal = item.quantity * basePrice;
+    const rawDiscount = item.discount_amount || 0;
+    const effDiscount = (item.discount_type === 'percentage')
+      ? (itemSubtotal * rawDiscount) / 100
+      : rawDiscount;
+    return sum + effDiscount;
+  }, 0);
 });
 
 const totalTax = computed(() => {
   return invoiceItems.value.reduce((sum, item) => {
     const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
     const itemSubtotal = item.quantity * basePrice;
-    const itemDiscount = item.discount_amount || 0;
+    const rawDiscount = item.discount_amount || 0;
+    const effDiscount = (item.discount_type === 'percentage')
+      ? (itemSubtotal * rawDiscount) / 100
+      : rawDiscount;
     const taxRate = item.tax_rate || 0;
-    return sum + ((itemSubtotal - itemDiscount) * (taxRate / 100));
+    return sum + (Math.max(0, itemSubtotal - effDiscount) * (taxRate / 100));
   }, 0);
 });
 
@@ -2017,6 +2039,7 @@ const addToInvoice = (product) => {
       unit_price: parseFloat(product.price),
       wholesale_price: product.wholesale_price || 0,
       is_wholesale: defaultIsWholesale,
+      discount_type: 'fixed',
       discount_amount: 0,
       quantity: 1,
       tax_id: defaultTaxId,
@@ -2040,15 +2063,24 @@ const removeFromInvoice = (index) => {
   calculateTotal();
 };
 
+const toggleLineDiscountType = (item, index) => {
+  item.discount_type = (item.discount_type || 'fixed') === 'fixed' ? 'percentage' : 'fixed';
+  updateItemTotal(index);
+};
+
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
   const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
   const itemSubtotal = item.quantity * basePrice;
-  const itemDiscount = item.discount_amount || 0;
+  const rawDiscount = item.discount_amount || 0;
+  const effectiveDiscount = (item.discount_type === 'percentage')
+    ? (itemSubtotal * rawDiscount) / 100
+    : rawDiscount;
   const taxRate = item.tax_rate || 0;
   
-  item.total = itemSubtotal - itemDiscount + ((itemSubtotal - itemDiscount) * (taxRate / 100));
+  const taxableAmount = Math.max(0, itemSubtotal - effectiveDiscount);
+  item.total = Math.max(0, taxableAmount + (taxableAmount * (taxRate / 100)));
   
   if (invoiceItems.value.length > 0) {
     isAllWholesale.value = invoiceItems.value.every(i => i.is_wholesale);
