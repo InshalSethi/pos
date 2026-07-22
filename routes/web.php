@@ -116,10 +116,11 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureCompanySetup::class])->gro
     Route::get('/sales-invoices/{id}/edit', [\App\Http\Controllers\SalesInvoiceController::class, 'edit'])
         ->name('sales.invoices.edit');
 
-    // 4. Vue.js SPA Catch-all
-    Route::fallback(function () {
-        return view('app');
-    });
+});
+
+// 4. Vue.js SPA Catch-all
+Route::fallback(function () {
+    return view('app');
 });
 
 // Admin Routes

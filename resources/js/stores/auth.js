@@ -14,14 +14,16 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value && !!user.value);
 
   const hasPermission = computed(() => (permission) => {
-    if (roles.value.includes('admin') || roles.value.includes('owner')) {
+    const userRoles = roles.value.map(r => String(r).toLowerCase());
+    if (userRoles.includes('admin') || userRoles.includes('owner')) {
       return true;
     }
     return permissions.value.includes(permission);
   });
 
   const hasRole = computed(() => (role) => {
-    return roles.value.includes(role);
+    const userRoles = roles.value.map(r => String(r).toLowerCase());
+    return userRoles.includes(String(role).toLowerCase());
   });
 
   const currentCompanyId = computed(() => {

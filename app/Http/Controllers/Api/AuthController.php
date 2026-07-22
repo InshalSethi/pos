@@ -60,9 +60,12 @@ class AuthController extends Controller
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
         $roles = $user->getRoleNames()->toArray();
         if ($user->current_company_id) {
-            $companyPivot = $user->companies()->where('company_id', $user->current_company_id)->first();
-            if ($companyPivot && $companyPivot->pivot->role === 'owner') {
-                $roles[] = 'owner';
+            $companyPivot = $user->companies()->where('companies.id', $user->current_company_id)->first();
+            if ($companyPivot && $companyPivot->pivot && $companyPivot->pivot->role) {
+                $pivotRole = strtolower($companyPivot->pivot->role);
+                if (!in_array($pivotRole, $roles)) {
+                    $roles[] = $pivotRole;
+                }
             }
         }
 
@@ -141,9 +144,12 @@ class AuthController extends Controller
             $permissions = $user->getAllPermissions()->pluck('name')->toArray();
             $roles = $user->getRoleNames()->toArray();
             if ($user->current_company_id) {
-                $companyPivot = $user->companies()->where('company_id', $user->current_company_id)->first();
-                if ($companyPivot && $companyPivot->pivot->role === 'owner') {
-                    $roles[] = 'owner';
+                $companyPivot = $user->companies()->where('companies.id', $user->current_company_id)->first();
+                if ($companyPivot && $companyPivot->pivot && $companyPivot->pivot->role) {
+                    $pivotRole = strtolower($companyPivot->pivot->role);
+                    if (!in_array($pivotRole, $roles)) {
+                        $roles[] = $pivotRole;
+                    }
                 }
             }
 
@@ -165,9 +171,12 @@ class AuthController extends Controller
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
         $roles = $user->getRoleNames()->toArray();
         if ($user->current_company_id) {
-            $companyPivot = $user->companies()->where('company_id', $user->current_company_id)->first();
-            if ($companyPivot && $companyPivot->pivot->role === 'owner') {
-                $roles[] = 'owner';
+            $companyPivot = $user->companies()->where('companies.id', $user->current_company_id)->first();
+            if ($companyPivot && $companyPivot->pivot && $companyPivot->pivot->role) {
+                $pivotRole = strtolower($companyPivot->pivot->role);
+                if (!in_array($pivotRole, $roles)) {
+                    $roles[] = $pivotRole;
+                }
             }
         }
 
