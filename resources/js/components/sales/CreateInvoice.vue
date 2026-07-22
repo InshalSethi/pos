@@ -405,54 +405,114 @@
                   <td class="w-[40px]"></td>
                 </tr>
 
-                <!-- 6. Payment Method & Receiving Amount -->
+                <!-- 6. Multi-Select Payment Details & Dynamic Receiving Amount Inputs -->
                 <tr class="bg-slate-50/90 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
-                  <td colspan="8" class="p-3">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                      <!-- Payment Method Custom Dropup Trigger -->
-                      <div class="relative w-full">
-                        <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Method</label>
-                        
-                        <button
-                          type="button"
-                          @click.stop="togglePaymentDropdown($event)"
-                          class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer flex justify-between items-center shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
-                        >
-                          <span class="capitalize">{{ getSelectedPaymentMethodLabel(invoiceForm.payment_method) }}</span>
-                          <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isPaymentDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
+                  <td colspan="8" class="p-4">
+                    <div class="space-y-3 text-left h-auto">
+                      <div class="flex items-center justify-between border-b border-slate-200/80 dark:border-zinc-800 pb-2">
+                        <h4 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Payment Details</h4>
+                        <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900/60">
+                          {{ selectedPaymentMethods.length }} Method(s) Selected
+                        </span>
                       </div>
 
-                      <div>
-                        <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Receiving Amount</label>
-                        <div class="relative">
-                          <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs font-bold">{{ currencySymbol }}</span>
-                          <input
-                            v-model.number="invoiceForm.paid_amount"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            class="w-full pl-7 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            :placeholder="grandTotal.toFixed(2)"
-                          />
+                      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start h-auto">
+                        <!-- Left Col: Payment Method Multi-Select Dropup Selector -->
+                        <div class="md:col-span-4 space-y-1">
+                          <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs mb-1">Payment Method(s):</label>
+                          <div class="relative w-full" id="payment-method-dropdown-container">
+                            <button
+                              type="button"
+                              @click.stop="isPaymentDropdownOpen = !isPaymentDropdownOpen"
+                              class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10"
+                            >
+                              <span class="truncate">{{ getSelectedPaymentMethodsLabel() }}</span>
+                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isPaymentDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+
+                            <!-- Payment Methods Dropup List (Solid Dark Theme) -->
+                            <div
+                              v-if="isPaymentDropdownOpen"
+                              class="absolute bottom-full mb-2 left-0 w-full bg-zinc-900 shadow-2xl rounded-xl border border-zinc-700/80 py-1 text-xs overflow-hidden z-[9999]"
+                            >
+                              <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 border-b border-zinc-800 bg-zinc-950 flex justify-between items-center select-none">
+                                <span>Select Payment Method(s)</span>
+                                <span class="text-indigo-400 font-black">
+                                  {{ selectedPaymentMethods.length }} Selected
+                                </span>
+                              </div>
+                              <div
+                                v-for="pm in availablePaymentMethods"
+                                :key="pm.id"
+                                @click.stop="togglePaymentMethod(pm.id)"
+                                class="px-3 py-2.5 cursor-pointer flex items-center justify-between transition-colors border-b border-zinc-800/60 last:border-0 select-none"
+                                :class="selectedPaymentMethods.includes(pm.id) ? 'bg-zinc-800 text-indigo-400 font-extrabold' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800/60'"
+                              >
+                                <div class="flex items-center gap-2.5 truncate">
+                                  <input
+                                    type="checkbox"
+                                    :checked="selectedPaymentMethods.includes(pm.id)"
+                                    class="w-4 h-4 rounded border-zinc-600 text-indigo-500 focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                                  />
+                                  <span class="truncate font-semibold">{{ pm.label }}</span>
+                                </div>
+                                <span v-if="selectedPaymentMethods.includes(pm.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-300 bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-500/40 shadow-2xs shrink-0 ml-2">
+                                  Active
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Middle Col: Dynamic Receiving Amount Input Fields Grid (Stacked flex-col gap-2.5) -->
+                        <div class="md:col-span-5 space-y-1 h-auto flex flex-col justify-start">
+                          <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs mb-1">Receiving Amount(s):</label>
+                          <div class="space-y-2.5 flex flex-col h-auto">
+                            <div
+                              v-for="methodId in selectedPaymentMethods"
+                              :key="methodId"
+                              class="flex items-center justify-between gap-2 h-10 bg-white dark:bg-zinc-900/90 px-3 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
+                            >
+                              <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate">
+                                Receiving Amount ({{ getPaymentMethodLabel(methodId) }}):
+                              </label>
+                              <div class="relative w-36 shrink-0">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                <input
+                                  v-model.number="paymentAmounts[methodId]"
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Right Col: Total Received Summary Stats -->
+                        <div class="md:col-span-3 space-y-1 h-auto flex flex-col justify-start">
+                          <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs mb-1">Payment Summary:</label>
+                          <div class="p-2.5 px-3.5 rounded-xl bg-slate-100/90 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs space-y-1.5 flex flex-col justify-center min-h-[40px] shadow-2xs">
+                            <div class="flex justify-between items-center font-bold text-slate-700 dark:text-zinc-300">
+                              <span>Total Received:</span>
+                              <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{{ currencySymbol }}{{ totalReceivedAmount.toFixed(2) }}</span>
+                            </div>
+                            <div v-if="totalReceivedAmount >= (useWalletCredit && effectiveDueAmount !== undefined ? effectiveDueAmount : grandTotal)" class="flex justify-between items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 pt-1 border-t border-slate-200/60 dark:border-zinc-800">
+                              <span>Change / Excess:</span>
+                              <span class="font-extrabold">{{ currencySymbol }}{{ (totalReceivedAmount - (useWalletCredit && effectiveDueAmount !== undefined ? effectiveDueAmount : grandTotal)).toFixed(2) }}</span>
+                            </div>
+                            <div v-else class="flex justify-between items-center text-[11px] font-semibold text-amber-600 dark:text-amber-400 pt-1 border-t border-slate-200/60 dark:border-zinc-800">
+                              <span>Remaining Due:</span>
+                              <span class="font-extrabold">{{ currencySymbol }}{{ ((useWalletCredit && effectiveDueAmount !== undefined ? effectiveDueAmount : grandTotal) - totalReceivedAmount).toFixed(2) }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </td>
-                </tr>
-
-                <!-- 7. Remaining Due / Change -->
-                <tr v-if="dueAmount > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-rose-600 dark:text-rose-400">Remaining Due Amount</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/20">{{ currencySymbol }}{{ dueAmount.toFixed(2) }}</td>
-                  <td class="w-[40px]"></td>
-                </tr>
-                <tr v-else-if="changeAmount > 0">
-                  <td colspan="5" class="py-2 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">Change / Refund to Customer</td>
-                  <td colspan="2" class="py-2 px-2 text-right font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/20">{{ currencySymbol }}{{ changeAmount.toFixed(2) }}</td>
-                  <td class="w-[40px]"></td>
                 </tr>
               </tfoot>
             </table>
@@ -1942,6 +2002,60 @@ const showCustomerModal = ref(false);
 const notifications = ref([]);
 const useWalletCredit = ref(false);
 
+const availablePaymentMethods = [
+  { id: 'cash', label: 'Cash' },
+  { id: 'card', label: 'Card' },
+  { id: 'bank_transfer', label: 'Bank Transfer' },
+  { id: 'mobile_payment', label: 'Mobile Payment' }
+];
+
+const selectedPaymentMethods = ref(['cash']);
+const paymentAmounts = ref({
+  cash: 0,
+  card: 0,
+  bank_transfer: 0,
+  mobile_payment: 0
+});
+
+const getPaymentMethodLabel = (methodId) => {
+  const pm = availablePaymentMethods.find(m => m.id === methodId);
+  return pm ? pm.label : methodId;
+};
+
+const getSelectedPaymentMethodsLabel = () => {
+  if (selectedPaymentMethods.value.length === 0) return 'Select Payment Method(s)';
+  return selectedPaymentMethods.value.map(id => getPaymentMethodLabel(id)).join(', ');
+};
+
+const togglePaymentMethod = (methodId) => {
+  const idx = selectedPaymentMethods.value.indexOf(methodId);
+  
+  if (idx > -1) {
+    if (selectedPaymentMethods.value.length === 1) return;
+    selectedPaymentMethods.value.splice(idx, 1);
+    paymentAmounts.value[methodId] = 0;
+  } else {
+    selectedPaymentMethods.value.push(methodId);
+    
+    const existingSum = selectedPaymentMethods.value
+      .filter(id => id !== methodId)
+      .reduce((sum, id) => sum + (parseFloat(paymentAmounts.value[id]) || 0), 0);
+    
+    const targetTotal = (useWalletCredit.value && effectiveDueAmount.value !== undefined)
+      ? effectiveDueAmount.value
+      : (grandTotal.value || 0);
+
+    const remaining = Math.max(0, targetTotal - existingSum);
+    paymentAmounts.value[methodId] = parseFloat(remaining.toFixed(2));
+  }
+};
+
+const totalReceivedAmount = computed(() => {
+  return selectedPaymentMethods.value.reduce((sum, methodId) => {
+    return sum + (parseFloat(paymentAmounts.value[methodId]) || 0);
+  }, 0);
+});
+
 const invoiceForm = ref({
   customer_id: '',
   sale_number: '',
@@ -2605,10 +2719,14 @@ const saveInvoice = async (shouldPrint = false) => {
       tax_amount: totalTax.value,
       discount_amount: totalDiscount.value,
       total_amount: invoiceTotal.value,
-      paid_amount: invoiceForm.value.paid_amount || invoiceTotal.value,
+      paid_amount: totalReceivedAmount.value,
       use_wallet_credit: useWalletCredit.value,
       wallet_credit_applied: walletCreditToApply.value,
-      payment_method: invoiceForm.value.payment_method,
+      payment_method: selectedPaymentMethods.value.length === 1 ? selectedPaymentMethods.value[0] : 'mixed',
+      payments: selectedPaymentMethods.value.map(methodId => ({
+        method: methodId,
+        amount: parseFloat(paymentAmounts.value[methodId]) || 0
+      })),
       notes: invoiceForm.value.notes,
       footer: invoiceForm.value.footer,
       attachments: attachmentsList.value.length > 0 ? attachmentsList.value : null,

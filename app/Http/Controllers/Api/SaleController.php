@@ -220,8 +220,11 @@ class SaleController extends Controller
             'items.*.description' => 'nullable|string',
             'grand_discount_amount' => 'nullable|numeric|min:0',
             'grand_tax_rate' => 'nullable|numeric|min:0',
-            'payment_method' => 'required|in:cash,card,bank_transfer,mobile_payment,mixed',
-            'paid_amount' => 'required|numeric|min:0',
+            'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
+            'paid_amount' => 'nullable|numeric|min:0',
+            'payments' => 'nullable|array',
+            'payments.*.method' => 'required|string',
+            'payments.*.amount' => 'required|numeric|min:0',
             'use_wallet_credit' => 'nullable|boolean',
             'wallet_credit_applied' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
@@ -385,6 +388,39 @@ class SaleController extends Controller
                 } while (Sale::where('sale_number', $saleNumber)->exists());
             }
 
+            $rawPayments = $request->input('payments', []);
+            $payments = [];
+            if (is_array($rawPayments) && count($rawPayments) > 0) {
+                foreach ($rawPayments as $p) {
+                    if (isset($p['method']) && isset($p['amount'])) {
+                        $payments[] = [
+                            'method' => (string)$p['method'],
+                            'amount' => (float)$p['amount'],
+                        ];
+                    }
+                }
+            }
+
+            if (empty($payments) && $request->payment_method) {
+                $payments[] = [
+                    'method' => $request->payment_method,
+                    'amount' => (float)($request->paid_amount ?? 0)
+                ];
+            }
+
+            $totalPaidFromPayments = array_reduce($payments, fn($sum, $p) => $sum + (float)$p['amount'], 0);
+            $effectiveDirectPaid = count($payments) > 0 ? $totalPaidFromPayments : (float)($request->paid_amount ?? 0);
+
+            $primaryPaymentMethod = $request->payment_method ?? 'cash';
+            if (count($payments) > 1) {
+                $primaryPaymentMethod = 'mixed';
+            } elseif (count($payments) === 1) {
+                $primaryPaymentMethod = $payments[0]['method'];
+            }
+
+            $effectiveTotalPaid = $effectiveDirectPaid + $walletCreditApplied;
+            $changeAmount = max(0, $effectiveTotalPaid - $totalAmount);
+
             // Create sale
             $sale = Sale::create([
                 'company_id' => $companyId,
@@ -396,15 +432,16 @@ class SaleController extends Controller
                 'sale_date' => $request->sale_date ?? today()->toDateString(),
                 'due_date' => $request->due_date,
                 'order_number' => $request->order_number,
-                'status' => ($request->paid_amount + $walletCreditApplied) < $totalAmount ? 'pending' : 'completed',
+                'status' => $effectiveTotalPaid < $totalAmount ? 'pending' : 'completed',
                 'color' => $request->color,
                 'subtotal' => $subtotal,
                 'tax_amount' => $totalTax,
                 'discount_amount' => $totalDiscount,
                 'total_amount' => $totalAmount,
-                'paid_amount' => $request->paid_amount + $walletCreditApplied,
+                'paid_amount' => $effectiveTotalPaid,
                 'change_amount' => $changeAmount,
-                'payment_method' => $request->payment_method,
+                'payment_method' => $primaryPaymentMethod,
+                'payment_details' => $payments,
                 'notes' => $request->notes,
                 'footer' => $request->footer,
                 'attachments' => $request->attachments ? json_encode($request->attachments) : null,
@@ -599,8 +636,11 @@ class SaleController extends Controller
             'items.*.description' => 'nullable|string',
             'grand_discount_amount' => 'nullable|numeric|min:0',
             'grand_tax_rate' => 'nullable|numeric|min:0',
-            'payment_method' => 'required|in:cash,card,bank_transfer,mobile_payment,mixed',
-            'paid_amount' => 'required|numeric|min:0',
+            'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
+            'paid_amount' => 'nullable|numeric|min:0',
+            'payments' => 'nullable|array',
+            'payments.*.method' => 'required|string',
+            'payments.*.amount' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
@@ -821,6 +861,36 @@ class SaleController extends Controller
             }
 
             // Update Sale details with new computed financial values
+            $rawPayments = $request->input('payments', []);
+            $payments = [];
+            if (is_array($rawPayments) && count($rawPayments) > 0) {
+                foreach ($rawPayments as $p) {
+                    if (isset($p['method']) && isset($p['amount'])) {
+                        $payments[] = [
+                            'method' => (string)$p['method'],
+                            'amount' => (float)$p['amount'],
+                        ];
+                    }
+                }
+            }
+
+            if (empty($payments) && $request->payment_method) {
+                $payments[] = [
+                    'method' => $request->payment_method,
+                    'amount' => (float)($request->paid_amount ?? 0)
+                ];
+            }
+
+            $totalPaidFromPayments = array_reduce($payments, fn($sum, $p) => $sum + (float)$p['amount'], 0);
+            $effectiveDirectPaid = count($payments) > 0 ? $totalPaidFromPayments : (float)($request->paid_amount ?? $sale->paid_amount);
+
+            $primaryPaymentMethod = $request->payment_method ?? $sale->payment_method;
+            if (count($payments) > 1) {
+                $primaryPaymentMethod = 'mixed';
+            } elseif (count($payments) === 1) {
+                $primaryPaymentMethod = $payments[0]['method'];
+            }
+
             $sale->update([
                 'sale_number' => $saleNumber,
                 'customer_id' => $request->customer_id,
@@ -830,14 +900,15 @@ class SaleController extends Controller
                 'due_date' => $request->due_date,
                 'order_number' => $request->order_number,
                 'color' => $request->color,
-                'status' => $request->paid_amount < $totalAmount ? 'pending' : (($request->status ?? $sale->status) === 'pending' ? 'completed' : ($request->status ?? $sale->status)),
+                'status' => $effectiveDirectPaid < $totalAmount ? 'pending' : (($request->status ?? $sale->status) === 'pending' ? 'completed' : ($request->status ?? $sale->status)),
                 'subtotal' => $subtotal,
                 'tax_amount' => $totalTax,
                 'discount_amount' => $totalDiscount,
                 'total_amount' => $totalAmount,
-                'paid_amount' => $request->paid_amount,
-                'change_amount' => $changeAmount,
-                'payment_method' => $request->payment_method,
+                'paid_amount' => $effectiveDirectPaid,
+                'change_amount' => max(0, $effectiveDirectPaid - $totalAmount),
+                'payment_method' => $primaryPaymentMethod,
+                'payment_details' => $payments,
                 'notes' => $request->notes,
                 'footer' => $request->footer,
                 'attachments' => $request->attachments ? json_encode($request->attachments) : null,
