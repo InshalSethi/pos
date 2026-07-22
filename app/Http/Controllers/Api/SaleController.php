@@ -209,7 +209,9 @@ class SaleController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.product_variation_id' => 'nullable|exists:product_variations,id',
-            'items.*.warehouse_id' => 'required|exists:warehouses,id',
+            'items.*.warehouse_id' => 'nullable|exists:warehouses,id',
+            'items.*.warehouse_ids' => 'nullable|array',
+            'items.*.warehouse_ids.*' => 'exists:warehouses,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
@@ -267,19 +269,24 @@ class SaleController extends Controller
             foreach ($request->items as $item) {
                 $product = Product::find($item['product_id']);
                 $variationId = $item['product_variation_id'] ?? null;
-                $itemWarehouseId = $item['warehouse_id'];
+                $targetWarehouseIds = isset($item['warehouse_ids']) && is_array($item['warehouse_ids']) && count($item['warehouse_ids']) > 0
+                    ? $item['warehouse_ids']
+                    : (isset($item['warehouse_id']) && $item['warehouse_id'] ? [$item['warehouse_id']] : []);
 
-                // Verify stock availability in specific warehouse if tracking is enabled
+                if (empty($targetWarehouseIds) && $warehouseId) {
+                    $targetWarehouseIds = [$warehouseId];
+                }
+
+                // Verify stock availability across selected warehouses if tracking is enabled
                 if ($product->track_inventory) {
-                    $inventory = Inventory::where('warehouse_id', $itemWarehouseId)
+                    $availableQty = Inventory::whereIn('warehouse_id', $targetWarehouseIds)
                         ->where('product_id', $product->id)
                         ->where('product_variation_id', $variationId)
-                        ->first();
+                        ->sum('stock_qty');
                     
-                    $availableQty = $inventory ? $inventory->stock_qty : 0;
                     if ($availableQty < $item['quantity']) {
                         return response()->json([
-                            'message' => "Insufficient stock for '{$product->name}' in the selected warehouse. Available: {$availableQty}, Requested: {$item['quantity']}."
+                            'message' => "Requested quantity {$item['quantity']} exceeds combined available stock {$availableQty} across selected warehouses for '{$product->name}'."
                         ], 422);
                     }
                 }
@@ -408,7 +415,14 @@ class SaleController extends Controller
             foreach ($request->items as $item) {
                 $product = Product::find($item['product_id']);
                 $variationId = $item['product_variation_id'] ?? null;
-                $itemWarehouseId = $item['warehouse_id'];
+                $targetWarehouseIds = isset($item['warehouse_ids']) && is_array($item['warehouse_ids']) && count($item['warehouse_ids']) > 0
+                    ? $item['warehouse_ids']
+                    : (isset($item['warehouse_id']) && $item['warehouse_id'] ? [$item['warehouse_id']] : []);
+
+                if (empty($targetWarehouseIds) && $warehouseId) {
+                    $targetWarehouseIds = [$warehouseId];
+                }
+                $itemWarehouseId = $targetWarehouseIds[0] ?? $warehouseId;
 
                 // Determine tax rate: manual override or fallback
                 $taxPercentage = 0;
@@ -458,9 +472,32 @@ class SaleController extends Controller
                     'tax_id' => $item['tax_id'] ?? null,
                 ]);
 
-                // Update warehouse inventory
+                // Update warehouse inventory across selected warehouses
                 if ($product->track_inventory) {
-                    $inventoryService->adjustStock($itemWarehouseId, $product->id, $variationId, -$item['quantity'], $companyId, 'Invoice', $sale->sale_number);
+                    $remainingQty = $item['quantity'];
+                    foreach ($targetWarehouseIds as $whId) {
+                        if ($remainingQty <= 0) break;
+
+                        $inv = Inventory::where('warehouse_id', $whId)
+                            ->where('product_id', $product->id)
+                            ->where('product_variation_id', $variationId)
+                            ->first();
+
+                        $currentStock = $inv ? $inv->stock_qty : 0;
+                        if ($currentStock > 0 || count($targetWarehouseIds) === 1) {
+                            $deductQty = (count($targetWarehouseIds) === 1)
+                                ? $remainingQty
+                                : min($currentStock, $remainingQty);
+
+                            if ($deductQty > 0) {
+                                $inventoryService->adjustStock($whId, $product->id, $variationId, -$deductQty, $companyId, 'Invoice', $sale->sale_number);
+                                $remainingQty -= $deductQty;
+                            }
+                        }
+                    }
+                    if ($remainingQty > 0 && !empty($targetWarehouseIds)) {
+                        $inventoryService->adjustStock($targetWarehouseIds[0], $product->id, $variationId, -$remainingQty, $companyId, 'Invoice', $sale->sale_number);
+                    }
                     try {
                         $this->verifyStockThresholds($product->id, $variationId);
                     } catch (\Throwable $th) {

@@ -319,7 +319,7 @@
                               @click.stop="toggleItemWarehouseDropdown(index, $event)"
                               class="h-[38px] px-2.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer flex items-center justify-between gap-1.5 min-w-[170px] max-w-[220px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
                             >
-                              <span class="truncate">{{ getSelectedWarehouseName(item.product, item.warehouse_id) }} (Stock: {{ getProductWarehouseStock(item.product, item.warehouse_id) }})</span>
+                              <span class="truncate">{{ getSelectedWarehouseLabel(item) }}</span>
                               <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': openWarehouseItemIndex === index }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                               </svg>
@@ -1312,19 +1312,29 @@
         <div
           v-if="openWarehouseItemIndex !== null && invoiceItems[openWarehouseItemIndex]"
           :style="{ top: warehouseDropdownPos.top, bottom: warehouseDropdownPos.bottom, left: warehouseDropdownPos.left }"
-          class="fixed z-[9999] w-64 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
+          class="fixed z-[9999] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-64 overflow-y-auto custom-scrollbar backdrop-blur-md"
         >
-          <div class="px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800">
-            Select Warehouse
+          <div class="px-3 py-2 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/40">
+            <span>Select Warehouse(s)</span>
+            <span class="text-indigo-600 dark:text-indigo-400 font-bold">
+              Selected: {{ (invoiceItems[openWarehouseItemIndex]?.warehouse_ids || (invoiceItems[openWarehouseItemIndex]?.warehouse_id ? [invoiceItems[openWarehouseItemIndex].warehouse_id] : [])).length }} | Combined Stock: {{ getItemAvailableStock(invoiceItems[openWarehouseItemIndex]) }}
+            </span>
           </div>
           <div
             v-for="wh in warehouses"
             :key="wh.id"
-            @click.stop="selectItemWarehouse(openWarehouseItemIndex, wh.id)"
-            class="px-3 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
-            :class="invoiceItems[openWarehouseItemIndex]?.warehouse_id === wh.id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300'"
+            @click.stop="toggleWarehouseSelection(openWarehouseItemIndex, wh.id)"
+            class="px-3 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
+            :class="isWarehouseSelected(openWarehouseItemIndex, wh.id) ? 'bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-zinc-300'"
           >
-            <span class="truncate">{{ wh.name }}</span>
+            <div class="flex items-center gap-2 truncate">
+              <input
+                type="checkbox"
+                :checked="isWarehouseSelected(openWarehouseItemIndex, wh.id)"
+                class="w-3.5 h-3.5 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
+              />
+              <span class="truncate">{{ wh.name }}</span>
+            </div>
             <span
               class="text-[10px] font-mono shrink-0 px-1.5 py-0.5 rounded font-semibold ml-2"
               :class="getProductWarehouseStock(invoiceItems[openWarehouseItemIndex]?.product, wh.id) > 0 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'"
@@ -2141,9 +2151,12 @@ const getProductWarehouseStock = (product, warehouseId) => {
 const getItemAvailableStock = (item) => {
   if (!item || !item.product) return '∞';
   if (!item.product.track_inventory) return '∞';
-  const whId = item.warehouse_id;
-  if (!whId) return item.product.total_stock ?? 0;
-  return item.product.warehouse_stocks?.[whId] ?? 0;
+  const whIds = (Array.isArray(item.warehouse_ids) && item.warehouse_ids.length > 0)
+    ? item.warehouse_ids
+    : (item.warehouse_id ? [item.warehouse_id] : []);
+
+  if (whIds.length === 0) return item.product.total_stock ?? 0;
+  return whIds.reduce((sum, whId) => sum + (item.product.warehouse_stocks?.[whId] ?? 0), 0);
 };
 
 const isItemStockExceeded = (item) => {
@@ -2159,10 +2172,61 @@ const validateItemStock = (item, notify = false) => {
   if (typeof stock !== 'number') return;
 
   if (item.quantity > stock && notify) {
-    const whObj = warehouses.value.find(w => String(w.id) === String(item.warehouse_id));
-    const whName = whObj ? whObj.name : 'Selected Warehouse';
-    showNotification(`Warning: Requested quantity (${item.quantity}) exceeds available stock (${stock}) in ${whName}`, 'error');
+    showNotification(`Requested quantity ${item.quantity} exceeds combined available stock ${stock} across selected warehouses`, 'error');
   }
+};
+
+const toggleWarehouseSelection = (itemIndex, whId) => {
+  const item = invoiceItems.value[itemIndex];
+  if (!item) return;
+
+  if (!Array.isArray(item.warehouse_ids)) {
+    item.warehouse_ids = item.warehouse_id ? [item.warehouse_id] : [];
+  }
+
+  const strId = Number(whId);
+  const existingIdx = item.warehouse_ids.findIndex(id => Number(id) === strId);
+  if (existingIdx > -1) {
+    item.warehouse_ids.splice(existingIdx, 1);
+  } else {
+    item.warehouse_ids.push(whId);
+  }
+
+  item.warehouse_id = item.warehouse_ids[0] || null;
+  item.combined_stock = getItemAvailableStock(item);
+  item.warehouses = item.warehouse_ids.map(id => ({
+    warehouse_id: id,
+    stock: getProductWarehouseStock(item.product, id)
+  }));
+
+  validateItemStock(item, true);
+};
+
+const isWarehouseSelected = (itemIndex, whId) => {
+  const item = invoiceItems.value[itemIndex];
+  if (!item) return false;
+  if (!Array.isArray(item.warehouse_ids)) {
+    return Number(item.warehouse_id) === Number(whId);
+  }
+  return item.warehouse_ids.some(id => Number(id) === Number(whId));
+};
+
+const getSelectedWarehouseLabel = (item) => {
+  if (!item) return 'Select Warehouse(s)';
+  const ids = (Array.isArray(item.warehouse_ids) && item.warehouse_ids.length > 0)
+    ? item.warehouse_ids
+    : (item.warehouse_id ? [item.warehouse_id] : []);
+
+  if (ids.length === 0) return 'Select Warehouse(s) (Stock: 0)';
+
+  const combinedStock = getItemAvailableStock(item);
+  const firstWh = warehouses.value.find(w => Number(w.id) === Number(ids[0]));
+  const firstName = firstWh ? firstWh.name : 'Warehouse';
+
+  if (ids.length === 1) {
+    return `${firstName} (Stock: ${combinedStock})`;
+  }
+  return `${firstName} +${ids.length - 1} (${ids.length} WH) (Stock: ${combinedStock})`;
 };
 
 const onItemQtyChange = (index) => {
@@ -2370,10 +2434,14 @@ const addToInvoice = (product) => {
     const itemSubtotal = basePrice * 1;
     const itemTax = (itemSubtotal * (defaultTaxRate / 100));
 
-    invoiceItems.value.push({
+    const targetWarehouseIds = targetWarehouseId ? [targetWarehouseId] : (warehouses.value.length > 0 ? [warehouses.value[0].id] : []);
+
+    const newItem = {
       product_id: product.product_id,
       product_variation_id: product.product_variation_id,
-      warehouse_id: targetWarehouseId,
+      warehouse_id: targetWarehouseIds[0] || null,
+      warehouse_ids: targetWarehouseIds,
+      warehouses: targetWarehouseIds.map(whId => ({ warehouse_id: whId, stock: getProductWarehouseStock(product, whId) })),
       name: product.name,
       sku: product.sku,
       price: product.price,
@@ -2388,7 +2456,9 @@ const addToInvoice = (product) => {
       description: '',
       total: itemSubtotal + itemTax,
       product: product
-    });
+    };
+    newItem.combined_stock = getItemAvailableStock(newItem);
+    invoiceItems.value.push(newItem);
   }
 
   calculateTotal();
