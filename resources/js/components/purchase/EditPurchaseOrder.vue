@@ -88,7 +88,7 @@
                         <div class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ product.sku }}</div>
                       </div>
                       <div class="text-right flex-shrink-0">
-                        <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm block">${{ product.cost_price || product.selling_price }}</span>
+                        <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm block">{{ currencySymbol }}{{ product.cost_price || product.selling_price }}</span>
                         <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
                       </div>
                     </div>
@@ -196,7 +196,7 @@
 
                     <!-- Total Cost -->
                     <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm align-middle">
-                      ${{ item.total_cost.toFixed(2) }}
+                      {{ currencySymbol }}{{ item.total_cost.toFixed(2) }}
                     </td>
 
                     <!-- Remove Button -->
@@ -213,34 +213,104 @@
                   </tr>
                 </tbody>
                 <tfoot v-if="orderItems.length > 0" class="bg-slate-50 dark:bg-zinc-900/40 border-t border-slate-200 dark:border-zinc-800">
+                  <!-- 1. Subtotal -->
                   <tr>
                     <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Subtotal</td>
-                    <td class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">${{ orderSubtotal.toFixed(2) }}</td>
+                    <td class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ orderSubtotal.toFixed(2) }}</td>
                     <td></td>
                   </tr>
-                  <tr v-if="orderForm.tax_amount > 0">
-                    <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Tax</td>
-                    <td class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">+${{ orderForm.tax_amount.toFixed(2) }}</td>
+
+                  <!-- 2. Total Amount -->
+                  <tr class="bg-slate-100/50 dark:bg-zinc-800/30 font-bold border-t border-slate-200 dark:border-zinc-800">
+                    <td colspan="3" class="py-2 px-3 text-right text-slate-800 dark:text-zinc-200 text-xs">Total Amount</td>
+                    <td class="py-2 px-2 text-right text-slate-900 dark:text-zinc-100 text-sm font-black">{{ currencySymbol }}{{ orderSubtotal.toFixed(2) }}</td>
                     <td></td>
                   </tr>
-                  <tr v-if="orderForm.shipping_cost > 0">
-                    <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Shipping Cost</td>
-                    <td class="py-2 px-2 text-right font-bold text-slate-800 dark:text-zinc-200">+${{ orderForm.shipping_cost.toFixed(2) }}</td>
+
+                  <!-- 3. Taxes (manual field) -->
+                  <tr>
+                    <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Taxes (Manual)</td>
+                    <td class="py-1.5 px-2 text-right">
+                      <div class="flex items-center justify-end space-x-1">
+                        <span class="text-slate-400 dark:text-zinc-500 text-[11px] font-mono">+{{ currencySymbol }}</span>
+                        <input
+                          v-model.number="orderForm.tax_amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="w-24 px-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </td>
                     <td></td>
                   </tr>
-                  <tr class="border-t border-slate-300 dark:border-zinc-800 font-bold bg-slate-100/50 dark:bg-zinc-800/30">
-                    <td colspan="3" class="py-2.5 px-3 text-right text-slate-800 dark:text-zinc-200 text-xs">Total Amount</td>
-                    <td class="py-2.5 px-2 text-right text-slate-900 dark:text-zinc-100 text-sm font-black">${{ orderTotal.toFixed(2) }}</td>
+
+                  <!-- 4. Discount (manual field) -->
+                  <tr>
+                    <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Discount (Manual)</td>
+                    <td class="py-1.5 px-2 text-right">
+                      <div class="flex items-center justify-end space-x-1">
+                        <span class="text-slate-400 dark:text-zinc-500 text-[11px] font-mono">-{{ currencySymbol }}</span>
+                        <input
+                          v-model.number="orderForm.discount_amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="w-24 px-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </td>
                     <td></td>
                   </tr>
-                  <tr v-if="orderForm.amount_paid > 0">
-                    <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Amount Paid</td>
-                    <td class="py-2 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ (orderForm.amount_paid || 0).toFixed(2) }}</td>
+
+                  <!-- 5. Grand Total -->
+                  <tr class="border-t border-b border-slate-300 dark:border-zinc-700 bg-indigo-50/40 dark:bg-indigo-950/20 font-black">
+                    <td colspan="3" class="py-3 px-3 text-right text-slate-900 dark:text-zinc-100 text-xs uppercase tracking-wider">Grand Total</td>
+                    <td class="py-2.5 px-2 text-right text-indigo-600 dark:text-indigo-400 text-base font-black">{{ currencySymbol }}{{ grandTotal.toFixed(2) }}</td>
                     <td></td>
                   </tr>
+
+                  <!-- 6. Payment Method & Receiving Amount -->
+                  <tr class="bg-slate-50/90 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
+                    <td colspan="5" class="p-3">
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                        <div>
+                          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Method</label>
+                          <select
+                            v-model="orderForm.payment_method"
+                            class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          >
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="mobile_payment">Mobile Payment</option>
+                            <option value="mixed">Mixed</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Receiving Amount</label>
+                          <div class="relative">
+                            <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs font-bold">{{ currencySymbol }}</span>
+                            <input
+                              v-model.number="orderForm.amount_paid"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              class="w-full pl-7 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              :placeholder="grandTotal.toFixed(2)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- 7. Remaining Due -->
                   <tr v-if="effectiveDueAmount > 0">
                     <td colspan="3" class="py-2 px-3 text-right font-extrabold text-rose-600 dark:text-rose-400">Remaining Due Amount</td>
-                    <td class="py-2 px-2 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/20">${{ effectiveDueAmount.toFixed(2) }}</td>
+                    <td class="py-2 px-2 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/20">{{ currencySymbol }}{{ effectiveDueAmount.toFixed(2) }}</td>
                     <td></td>
                   </tr>
                 </tfoot>
@@ -276,7 +346,7 @@
             <!-- Section 0: Purchase Order Metadata Details -->
             <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-left">
               <div class="flex items-center justify-between">
-                <h2 class="text-xl font-black uppercase tracking-wider transition-all duration-300" :style="{ color: accentColor }">PURCHASE ORDER</h2>
+                <h2 class="text-xl font-black uppercase tracking-wider transition-all duration-300" :style="{ color: accentColor }">EDIT PURCHASE ORDER</h2>
               </div>
 
               <!-- Metadata Form Fields -->
@@ -288,8 +358,84 @@
                     v-model="orderForm.po_number"
                     type="text"
                     readonly
-                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900/50 font-semibold focus:outline-none text-xs"
+                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-slate-100 dark:bg-zinc-800/60 font-semibold text-xs"
                   />
+                </div>
+
+                <!-- BILL TO / SUPPLIER DETAILS SECTION (Moved under Order Number) -->
+                <div class="space-y-2 pt-1 pb-1 border-t border-b border-slate-100 dark:border-zinc-800/60">
+                  <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
+                  
+                  <!-- Attached Supplier Search & Add Supplier Input Group -->
+                  <div class="relative w-full" id="supplier-search-container">
+                    <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                      <div class="pl-2.5 pr-1 text-slate-400 dark:text-zinc-500 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+                      <input
+                        v-model="supplierSearch"
+                        type="text"
+                        placeholder="Search supplier name or phone..."
+                        class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
+                        @input="debouncedSupplierSearch"
+                        @focus="searchSuppliers(supplierSearch)"
+                      />
+                      <button
+                        type="button"
+                        @click="showSupplierModal = true"
+                        title="Add New Supplier"
+                        class="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-200 flex items-center justify-center space-x-1 shrink-0 cursor-pointer border-0"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <!-- Supplier Search Dropdown Results -->
+                    <div v-if="supplierSearchResults.length > 0" class="absolute z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 shadow-2xl max-h-[220px] rounded-xl border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
+                      <div
+                        v-for="supplier in supplierSearchResults"
+                        :key="supplier.id"
+                        @click="selectSupplier(supplier)"
+                        class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
+                      >
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                          <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            {{ supplier.name.charAt(0).toUpperCase() }}
+                          </div>
+                          <div class="min-w-0">
+                            <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ supplier.name }}</span>
+                            <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ supplier.phone || supplier.email }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Selected Supplier Details Card -->
+                  <div v-if="selectedSupplier" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
+                    <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer">
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Remove
+                    </button>
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                        {{ selectedSupplier.name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="min-w-0">
+                        <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
+                        <p v-if="selectedSupplier.phone" class="text-[11px] text-slate-500 dark:text-zinc-400">{{ selectedSupplier.phone }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
+                    No supplier selected. Search above to assign.
+                  </div>
                 </div>
 
                 <!-- Order Date & Expected Delivery Date -->
@@ -314,85 +460,6 @@
               </div>
             </div>
 
-            <!-- Section 1: Supplier Details (Bill To / Vendor Selection) -->
-            <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-left">
-              <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Supplier Details</h3>
-              
-              <!-- Attached Supplier Search & Add Supplier Input Group -->
-              <div class="relative w-full" id="supplier-search-container">
-                <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <div class="pl-2.5 pr-1 text-slate-400 dark:text-zinc-500 shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <input
-                    v-model="supplierSearch"
-                    type="text"
-                    placeholder="Search supplier name or phone..."
-                    class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
-                    @input="debouncedSupplierSearch"
-                    @focus="searchSuppliers(supplierSearch)"
-                  />
-                  <button
-                    type="button"
-                    @click="showSupplierModal = true"
-                    title="Add New Supplier"
-                    class="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-200 flex items-center justify-center space-x-1 shrink-0 cursor-pointer border-0"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <!-- Supplier Search Dropdown Results -->
-                <div v-if="supplierSearchResults.length > 0" class="absolute z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 shadow-2xl max-h-[220px] rounded-xl border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
-                  <div
-                    v-for="supplier in supplierSearchResults"
-                    :key="supplier.id"
-                    @click="selectSupplier(supplier)"
-                    class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
-                  >
-                    <div class="flex items-center space-x-2.5 min-w-0">
-                      <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
-                        {{ supplier.name.charAt(0).toUpperCase() }}
-                      </div>
-                      <div class="min-w-0">
-                        <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ supplier.name }}</span>
-                        <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ supplier.phone || supplier.email }}</p>
-                      </div>
-                    </div>
-                    <span v-if="supplier.company_name" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono shrink-0 ml-2">{{ supplier.company_name }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Selected Supplier Details Card -->
-              <div v-if="selectedSupplier" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
-                <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer">
-                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Remove
-                </button>
-                <div class="flex items-center space-x-2">
-                  <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                    {{ selectedSupplier.name.charAt(0).toUpperCase() }}
-                  </div>
-                  <div class="min-w-0">
-                    <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
-                    <p v-if="selectedSupplier.company_name" class="text-[11px] text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Company:</span> {{ selectedSupplier.company_name }}</p>
-                  </div>
-                </div>
-                <p v-if="selectedSupplier.phone" class="text-slate-600 dark:text-zinc-300 pt-0.5"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedSupplier.phone }}</p>
-                <p v-if="selectedSupplier.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedSupplier.email }}</p>
-              </div>
-              <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic text-left">
-                No supplier selected. Search above to assign a vendor.
-              </div>
-            </div>
-
             <!-- Section 3: Summary Totals & Calculations -->
             <div class="space-y-4">
               <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Summary & Details</h3>
@@ -400,66 +467,44 @@
               <div class="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-zinc-800/80 text-xs space-y-2.5">
                 <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                   <span>Subtotal:</span>
-                  <span class="font-bold text-slate-800 dark:text-zinc-200">${{ orderSubtotal.toFixed(2) }}</span>
+                  <span class="font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ orderSubtotal.toFixed(2) }}</span>
                 </div>
-                <div class="flex justify-between items-center font-medium text-slate-600 dark:text-zinc-400">
-                  <span>Tax Amount:</span>
-                  <input
-                    v-model.number="orderForm.tax_amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="w-20 px-2 py-1 border border-slate-200 dark:border-zinc-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 text-xs"
-                  />
+                <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
+                  <span>Total Amount:</span>
+                  <span class="font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ orderSubtotal.toFixed(2) }}</span>
                 </div>
-                <div class="flex justify-between items-center font-medium text-slate-600 dark:text-zinc-400">
-                  <span>Shipping Cost:</span>
-                  <input
-                    v-model.number="orderForm.shipping_cost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="w-20 px-2 py-1 border border-slate-200 dark:border-zinc-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 text-xs"
-                  />
+                <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
+                  <span>Taxes (Manual):</span>
+                  <span class="font-bold text-slate-800 dark:text-zinc-200">+{{ currencySymbol }}{{ (orderForm.tax_amount || 0).toFixed(2) }}</span>
+                </div>
+                <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
+                  <span>Discount (Manual):</span>
+                  <span class="font-bold text-slate-800 dark:text-zinc-200">-{{ currencySymbol }}{{ (orderForm.discount_amount || 0).toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100 border-t border-slate-200 dark:border-zinc-800 pt-2.5 mt-1">
-                  <span>Total Amount:</span>
-                  <span class="text-lg transition-all duration-300 font-black" :style="{ color: accentColor }">${{ orderTotal.toFixed(2) }}</span>
-                </div>
-                <div class="flex justify-between items-center font-medium text-slate-600 dark:text-zinc-400 border-t border-slate-200 dark:border-zinc-800 pt-2.5">
-                  <span>Amount Paid:</span>
-                  <input
-                    v-model.number="orderForm.amount_paid"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="w-20 px-2 py-1 border border-slate-200 dark:border-zinc-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 text-xs"
-                  />
-                </div>
-
-                <!-- Advance Balance Option -->
-                <div v-if="selectedSupplier && parseFloat(selectedSupplier.advance_balance || 0) > 0" class="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-3 py-2.5 border border-amber-200 dark:border-amber-900/60 text-xs">
-                  <label class="flex items-center justify-between cursor-pointer">
-                    <div class="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        v-model="useAdvanceBalance"
-                        class="rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
-                      />
-                      <span class="font-bold text-amber-800 dark:text-amber-300">Use Advance Balance</span>
-                    </div>
-                    <span class="font-extrabold text-amber-700 dark:text-amber-400">${{ parseFloat(selectedSupplier.advance_balance || 0).toFixed(2) }}</span>
-                  </label>
-                  <div v-if="useAdvanceBalance" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                    Applying ${{ advanceToApply.toFixed(2) }} from advance → New effective due: ${{ effectiveDueAmount.toFixed(2) }}
-                  </div>
-                </div>
-
-                <div v-if="effectiveDueAmount > 0" class="bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 rounded-xl px-3 py-2 border border-rose-250 dark:border-rose-900/60 text-xs font-bold text-left flex justify-between">
-                  <span>Remaining Due Amount:</span>
-                  <span>${{ effectiveDueAmount.toFixed(2) }}</span>
+                  <span>Grand Total:</span>
+                  <span class="text-lg transition-all duration-300 font-black" :style="{ color: accentColor }">{{ currencySymbol }}{{ grandTotal.toFixed(2) }}</span>
                 </div>
               </div>
+
+              <!-- Advance Balance Option -->
+              <div v-if="selectedSupplier && parseFloat(selectedSupplier.advance_balance || 0) > 0" class="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-3 py-2.5 border border-amber-200 dark:border-amber-900/60 text-xs">
+                <label class="flex items-center justify-between cursor-pointer">
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      v-model="useAdvanceBalance"
+                      class="rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <span class="font-bold text-amber-800 dark:text-amber-300">Use Advance Balance</span>
+                  </div>
+                  <span class="font-extrabold text-amber-700 dark:text-amber-400">{{ currencySymbol }}{{ parseFloat(selectedSupplier.advance_balance || 0).toFixed(2) }}</span>
+                </label>
+                <div v-if="useAdvanceBalance" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                  Applying {{ currencySymbol }}{{ advanceToApply.toFixed(2) }} from advance → New effective due: {{ currencySymbol }}{{ effectiveDueAmount.toFixed(2) }}
+                </div>
+              </div>
+            </div>
 
               <!-- Status configurations -->
               <div class="text-left">
@@ -507,10 +552,7 @@
                 </button>
               </div>
             </div>
-          </div>
-
         </div>
-
       </div>
     </div>
 
@@ -731,7 +773,7 @@
           <div v-show="activeSupplierTab === 'business'" class="space-y-4 animate-in fade-in duration-200">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Credit Limit ($)</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Credit Limit ({{ currencySymbol }})</label>
                 <input
                   v-model="newSupplier.credit_limit"
                   type="number"
@@ -970,7 +1012,7 @@
                   <div class="flex-1 flex items-center gap-3">
                     <span class="text-slate-500 dark:text-slate-500 font-medium">min</span>
                     <div class="relative w-32">
-                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">$</span>
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">{{ currencySymbol }}</span>
                       <input
                         v-model="advanceFilters.minPrice"
                         type="number"
@@ -980,7 +1022,7 @@
                     </div>
                     <span class="text-slate-500 dark:text-slate-500 font-medium">- max</span>
                     <div class="relative w-32">
-                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">$</span>
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">{{ currencySymbol }}</span>
                       <input
                         v-model="advanceFilters.maxPrice"
                         type="number"
@@ -1034,7 +1076,7 @@
                         <span v-if="product.tags && product.tags.length">{{ Array.isArray(product.tags) ? product.tags.join(', ') : product.tags }}</span>
                         <span v-else class="text-slate-400 dark:text-slate-600">—</span>
                       </td>
-                      <td class="py-2.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">${{ product.cost_price || product.selling_price || product.price }}</td>
+                      <td class="py-2.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">{{ currencySymbol }}{{ product.cost_price || product.selling_price || product.price }}</td>
                       <td class="py-2.5 px-3 text-center">
                         <button
                           type="button"
@@ -1095,11 +1137,23 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+const activeCompany = ref(null);
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || activeCompany.value?.currency_symbol || activeCompany.value?.currency || activeCompany.value?.base_currency || 'PKR';
+});
+
+const formatCurrency = (amount, decimals = 2) => {
+  const num = parseFloat(amount) || 0;
+  return `${currencySymbol.value}${num.toFixed(decimals)}`;
+};
 
 // Accent colors
 const accentColor = ref('#4f46e5');
@@ -1163,7 +1217,9 @@ const orderForm = ref({
   order_date: '',
   expected_delivery_date: '',
   status: 'draft',
+  payment_method: 'cash',
   tax_amount: 0,
+  discount_amount: 0,
   shipping_cost: 0,
   amount_paid: 0,
   notes: '',
@@ -1461,15 +1517,20 @@ const orderSubtotal = computed(() => {
   }, 0);
 });
 
-const orderTotal = computed(() => {
-  const subtotal = orderSubtotal.value || 0;
-  const tax = parseFloat(orderForm.value.tax_amount) || 0;
+const grandTotal = computed(() => {
+  const sub = orderSubtotal.value || 0;
+  const manualTaxVal = parseFloat(orderForm.value.tax_amount) || 0;
+  const manualDisVal = parseFloat(orderForm.value.discount_amount) || 0;
   const shipping = parseFloat(orderForm.value.shipping_cost) || 0;
-  return subtotal + tax + shipping;
+  return Math.max(0, sub + manualTaxVal + shipping - manualDisVal);
+});
+
+const orderTotal = computed(() => {
+  return grandTotal.value;
 });
 
 const dueAmount = computed(() => {
-  const total = orderTotal.value || 0;
+  const total = grandTotal.value || 0;
   const paid = parseFloat(orderForm.value.amount_paid) || 0;
   return Math.max(0, total - paid);
 });
@@ -1477,7 +1538,7 @@ const dueAmount = computed(() => {
 const advanceToApply = computed(() => {
   if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
   const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
-  return Math.min(advanceBal, Math.max(0, orderTotal.value));
+  return Math.min(advanceBal, Math.max(0, grandTotal.value));
 });
 
 const effectiveDueAmount = computed(() => {
@@ -1487,6 +1548,10 @@ const effectiveDueAmount = computed(() => {
   }
   return baseDue;
 });
+
+watch(grandTotal, (newGrandTotal) => {
+  orderForm.value.amount_paid = parseFloat(newGrandTotal.toFixed(2));
+}, { immediate: true });
 
 const currentDate = computed(() => {
   return currentDateTime.value.split(',')[0] || '';
@@ -1818,10 +1883,27 @@ function debounce(func, wait) {
   };
 }
 
+const fetchActiveCompany = async () => {
+  try {
+    const response = await api.get('/companies/active');
+    if (response.data && response.data.company) {
+      activeCompany.value = response.data.company;
+      const comp = response.data.company;
+      const code = comp.currency_symbol || comp.currency || comp.base_currency;
+      if (code) {
+        currencyStore.seedFromCompany(code);
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching active company:', error);
+  }
+};
+
 // Lifecycle
 onMounted(() => {
   updateDateTime();
   setInterval(updateDateTime, 1000);
+  fetchActiveCompany();
   fetchPurchaseOrder();
   loadProducts();
   loadCategories();

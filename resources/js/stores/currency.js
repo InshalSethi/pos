@@ -12,6 +12,7 @@ const CURRENCY_SYMBOL_MAP = {
     SAR: 'ر.س', CAD: 'CA$', AUD: 'A$', INR: '₹',  CNY: '¥',
     TRY: '₺',  KWD: 'د.ك', QAR: 'ر.ق', OMR: 'ر.ع.', BHD: '.د.ب',
     JPY: '¥',  SGD: 'S$',  NZD: 'NZ$', CHF: 'Fr',  MYR: 'RM',
+    RS: 'Rs',  'RS.': 'Rs.',
 };
 
 export const useCurrencyStore = defineStore('currency', () => {
@@ -34,18 +35,22 @@ export const useCurrencyStore = defineStore('currency', () => {
      * Currency symbol — resolved in priority order:
      *  1. Active currency object from /api/currencies (most accurate)
      *  2. Tenant code from company_context seed (instant, no API wait)
-     *  3. Hard-coded '$' fallback
+     *  3. Hard-coded 'PKR' or '₨' fallback
      */
     const symbol = computed(() => {
         if (activeCurrency.value?.symbol) return activeCurrency.value.symbol;
-        if (tenantCurrencyCode.value)     return CURRENCY_SYMBOL_MAP[tenantCurrencyCode.value] ?? tenantCurrencyCode.value;
-        return '$';
+        if (tenantCurrencyCode.value) {
+            const raw = tenantCurrencyCode.value.trim();
+            const upper = raw.toUpperCase();
+            return CURRENCY_SYMBOL_MAP[upper] ?? raw;
+        }
+        return '₨';
     });
 
     /** The active ISO 4217 code (e.g. 'PKR') */
     const currencyCode = computed(() => {
         if (activeCurrency.value?.code) return activeCurrency.value.code;
-        return tenantCurrencyCode.value ?? 'USD';
+        return tenantCurrencyCode.value ?? 'PKR';
     });
 
     const exchangeRate = computed(() => parseFloat(activeCurrency.value?.exchange_rate ?? 1));
