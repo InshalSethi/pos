@@ -244,9 +244,9 @@
                         type="button"
                         @click="toggleLineDiscountType(item, index)"
                         class="h-7 px-1.5 text-[10px] font-black rounded border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
-                        :title="(item.discount_type || 'fixed') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                        :title="(item.discount_type || 'percentage') === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
                       >
-                        {{ (item.discount_type || 'fixed') === 'fixed' ? currencySymbol : '%' }}
+                        {{ (item.discount_type || 'percentage') === 'fixed' ? currencySymbol : '%' }}
                       </button>
                       <input
                         v-model.number="item.discount_amount"
@@ -254,7 +254,7 @@
                         step="0.01"
                         min="0"
                         class="w-16 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                        :placeholder="(item.discount_type || 'fixed') === 'fixed' ? '0' : '0%'"
+                        :placeholder="(item.discount_type || 'percentage') === 'fixed' ? '0' : '0%'"
                         @input="updateItemTotal(index)"
                       />
                     </div>
@@ -1719,9 +1719,9 @@ const invoiceForm = ref({
   order_number: '',
   payment_method: 'cash',
   status: 'completed',
-  tax_type: 'fixed',
+  tax_type: 'percentage',
   tax_amount: 0,
-  discount_type: 'fixed',
+  discount_type: 'percentage',
   discount_amount: 0,
   paid_amount: 0,
   notes: '',
@@ -2039,7 +2039,7 @@ const addToInvoice = (product) => {
       unit_price: parseFloat(product.price),
       wholesale_price: product.wholesale_price || 0,
       is_wholesale: defaultIsWholesale,
-      discount_type: 'fixed',
+      discount_type: 'percentage',
       discount_amount: 0,
       quantity: 1,
       tax_id: defaultTaxId,
@@ -2064,7 +2064,7 @@ const removeFromInvoice = (index) => {
 };
 
 const toggleLineDiscountType = (item, index) => {
-  item.discount_type = (item.discount_type || 'fixed') === 'fixed' ? 'percentage' : 'fixed';
+  item.discount_type = (item.discount_type || 'percentage') === 'fixed' ? 'percentage' : 'fixed';
   updateItemTotal(index);
 };
 
