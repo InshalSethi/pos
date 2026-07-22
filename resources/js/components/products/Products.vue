@@ -3,13 +3,25 @@
     <div class="w-full max-w-7xl mx-auto">
         <!-- Header -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 flex-wrap">
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Items</h1>
             <button @click="isFavorite = !isFavorite" class="transition-colors duration-200 focus:outline-none cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" :fill="isFavorite ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" :class="isFavorite ? 'text-amber-400 w-6 h-6' : 'text-gray-300 dark:text-slate-600 w-6 h-6 hover:text-amber-400'">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499c.172-.468.83-.468 1.002 0l2.378 6.441a1 1 0 00.95.69h6.467c.502 0 .709.65.312.962l-5.23 4.125a1 1 0 00-.363 1.118l2.378 6.441c.172.468-.37.86-.787.562l-5.23-4.125a1 1 0 00-1.18 0l-5.23 4.125c-.417.298-.959-.094-.788-.562l2.378-6.441a1 1 0 00-.363-1.118L2.25 11.592c-.398-.312-.19-.962.312-.962h6.467a1 1 0 00.95-.69L11.48 3.5z" />
               </svg>
             </button>
+
+            <!-- Total Inventory Items Message -->
+            <div
+              v-if="tablePagination && tablePagination.total !== undefined"
+              class="inline-flex items-center gap-2 px-3.5 py-1 bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold shadow-xs tracking-wide ml-1"
+            >
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>{{ tablePagination.total.toLocaleString() }} Items in Inventory</span>
+            </div>
           </div>
           
           <div class="flex items-center gap-3 self-end sm:self-auto">

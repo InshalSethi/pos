@@ -57,7 +57,7 @@
                   class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#181e24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto py-2 custom-scrollbar backdrop-blur-md"
                 >
                   <div
-                    v-for="product in filteredProducts"
+                    v-for="product in displayedProducts"
                     :key="product.key"
                     @click="selectProductFromDropdown(product)"
                     class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
@@ -70,6 +70,14 @@
                       <span class="font-black text-emerald-600 dark:text-emerald-400 text-sm block">${{ product.price }}</span>
                       <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
                     </div>
+                  </div>
+
+                  <!-- Footer note when more than 50 items match -->
+                  <div
+                    v-if="filteredProducts.length > 50"
+                    class="px-4 py-2 text-center text-[10px] font-semibold text-slate-400 dark:text-zinc-500 bg-slate-50/80 dark:bg-zinc-900/80 border-t border-slate-100 dark:border-zinc-800/60 sticky bottom-0 backdrop-blur-sm select-none"
+                  >
+                    Showing top 50 of {{ filteredProducts.length }} items — Type to search more...
                   </div>
                 </div>
               </div>
@@ -1020,6 +1028,10 @@ const filteredProducts = computed(() => {
   }
   
   return filtered;
+});
+
+const displayedProducts = computed(() => {
+  return filteredProducts.value.slice(0, 50);
 });
 
 const categoryDropdownLabel = computed(() => {

@@ -331,17 +331,18 @@
                 />
               </div>
 
-              <!-- Search items input -->
-              <div class="relative" id="product-search-container">
+              <!-- Search items input & Category Filter Icon -->
+            <div class="flex items-center gap-2.5 relative w-full">
+              <div class="relative flex-1" id="product-search-container">
                 <input
                   v-model="productSearch"
                   type="text"
                   placeholder="Search products by title, SKU..."
-                  class="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                  class="w-full pl-4 pr-9 py-2 bg-white dark:bg-[#12161b]/90 border border-slate-300 dark:border-sky-500/40 focus:border-sky-400 rounded-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium shadow-[0_0_15px_rgba(56,189,248,0.15)] focus:shadow-[0_0_20px_rgba(56,189,248,0.3)] focus:outline-none transition-all duration-300"
                   @focus="isProductDropdownOpen = true"
                 />
-                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                  <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 dark:text-sky-300">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -349,27 +350,101 @@
                 <!-- Search Results Dropdown List -->
                 <div
                   v-show="isProductDropdownOpen && filteredProducts.length > 0"
-                  class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-1.5 custom-scrollbar"
+                  class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#181e24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto py-2 custom-scrollbar backdrop-blur-md"
                 >
                   <div
-                    v-for="product in filteredProducts"
+                    v-for="product in displayedProducts"
                     :key="product.id"
                     @click="selectProductFromDropdown(product)"
-                    class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0 text-left"
+                    class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
                   >
                     <div class="min-w-0 pr-4">
                       <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
-                      <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ product.sku }}</div>
+                      <div class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ product.sku }}</div>
                     </div>
                     <div class="text-right flex-shrink-0">
                       <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm block">${{ product.cost_price || product.selling_price }}</span>
                       <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ product.stock_quantity }} in stock</span>
                     </div>
                   </div>
+
+                  <!-- Footer note when more than 50 items match -->
+                  <div
+                    v-if="filteredProducts.length > 50"
+                    class="px-4 py-2 text-center text-[10px] font-semibold text-slate-400 dark:text-zinc-500 bg-slate-50/80 dark:bg-zinc-900/80 border-t border-slate-100 dark:border-zinc-800/60 sticky bottom-0 backdrop-blur-sm select-none"
+                  >
+                    Showing top 50 of {{ filteredProducts.length }} items — Type to search more...
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gold Metallic Category Dropdown Icon Button -->
+              <div class="relative shrink-0" id="category-dropdown-container">
+                <button
+                  type="button"
+                  @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
+                  title="Filter by Category"
+                  class="relative flex items-center justify-center w-9 h-9 rounded-full shrink-0 shadow-lg shadow-amber-950/30 hover:shadow-amber-500/20 active:scale-95 transition-all duration-200 cursor-pointer border border-amber-300/40 bg-gradient-to-b from-[#fbe396] via-[#dcae42] to-[#b38728] hover:from-[#fff0ad] hover:via-[#e2b74b] hover:to-[#be9130]"
+                >
+                  <!-- Filter Icon -->
+                  <svg class="w-4 h-4 text-[#1e1708]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M6 10h12M8 14h8M10 18h4" />
+                  </svg>
+                  
+                  <!-- Selected Badge -->
+                  <span
+                    v-if="selectedCategories.length > 0"
+                    class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-white dark:border-zinc-900 shadow-sm"
+                  >
+                    {{ selectedCategories.length }}
+                  </span>
+                </button>
+
+                <!-- Popover Category Menu (Compact & Premium) -->
+                <div
+                  v-show="isCategoryDropdownOpen"
+                  class="absolute right-0 mt-2 bg-white dark:bg-[#14181d]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-xl shadow-2xl z-50 p-1.5 min-w-[190px] max-w-[220px] max-h-64 overflow-y-auto custom-scrollbar text-[11px]"
+                >
+                  <!-- Caret Arrow pointing up to the gold button -->
+                  <div class="absolute -top-1 right-3 w-2.5 h-2.5 bg-white dark:bg-[#14181d] border-t border-l border-slate-200 dark:border-slate-700/60 rotate-45 z-10"></div>
+
+                  <div class="relative z-20 space-y-0.5">
+                    <div class="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800/60 mb-1">
+                      Categories
+                    </div>
+
+                    <!-- All Categories -->
+                    <button
+                      type="button"
+                      @click="clearSelectedCategories"
+                      class="w-full px-2.5 py-1.5 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer border-0"
+                      :class="selectedCategories.length === 0 ? 'bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-350 font-semibold border border-indigo-500/30' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 font-medium'"
+                    >
+                      <span class="truncate">All Categories</span>
+                      <svg v-if="selectedCategories.length === 0" class="w-3 h-3 shrink-0 ml-1 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+
+                    <!-- Individual Category Options -->
+                    <button
+                      v-for="category in categories"
+                      :key="category.id"
+                      type="button"
+                      @click="toggleCategorySelection(category.id)"
+                      class="w-full px-2.5 py-1.5 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer border-0"
+                      :class="isCategorySelected(category.id) ? 'bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-350 font-semibold border border-indigo-500/30' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 font-medium'"
+                    >
+                      <span class="truncate">{{ category.name }}</span>
+                      <svg v-if="isCategorySelected(category.id)" class="w-3 h-3 shrink-0 ml-1 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-
+          </div>
             <!-- Section 2: Summary Totals & Calculations -->
             <div class="space-y-4 text-left">
               <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Summary & Cost details</h3>
@@ -787,6 +862,9 @@ const activeCompany = ref(null);
 // Reactive data
 const purchaseOrder = ref(null);
 const products = ref([]);
+const categories = ref([]);
+const selectedCategories = ref([]);
+const isCategoryDropdownOpen = ref(false);
 const suppliers = ref([]);
 const orderItems = ref([]);
 const selectedSupplier = ref(null);
@@ -842,14 +920,27 @@ const newSupplier = ref({
 
 // Computed properties
 const filteredProducts = computed(() => {
-  if (!productSearch.value) return products.value;
+  let filtered = products.value;
 
-  const search = productSearch.value.toLowerCase();
-  return products.value.filter(product =>
-    product.name.toLowerCase().includes(search) ||
-    product.sku.toLowerCase().includes(search) ||
-    (product.barcode && product.barcode.toLowerCase().includes(search))
-  );
+  if (selectedCategories.value.length > 0) {
+    const selectedIds = selectedCategories.value.map(id => String(id));
+    filtered = filtered.filter(product => selectedIds.includes(String(product.category_id)));
+  }
+
+  if (productSearch.value) {
+    const search = productSearch.value.toLowerCase();
+    filtered = filtered.filter(product =>
+      product.name.toLowerCase().includes(search) ||
+      product.sku.toLowerCase().includes(search) ||
+      (product.barcode && product.barcode.toLowerCase().includes(search))
+    );
+  }
+
+  return filtered;
+});
+
+const displayedProducts = computed(() => {
+  return filteredProducts.value.slice(0, 50);
 });
 
 const orderSubtotal = computed(() => {
@@ -1161,10 +1252,42 @@ const removeNotification = (id) => {
   }
 };
 
+const loadCategories = async () => {
+  try {
+    const response = await api.get('/categories');
+    categories.value = response.data.data || response.data;
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+};
+
+const clearSelectedCategories = () => {
+  selectedCategories.value = [];
+};
+
+const isCategorySelected = (categoryId) => {
+  return selectedCategories.value.map(id => String(id)).includes(String(categoryId));
+};
+
+const toggleCategorySelection = (categoryId) => {
+  const idStr = String(categoryId);
+  const index = selectedCategories.value.findIndex(id => String(id) === idStr);
+  if (index > -1) {
+    selectedCategories.value.splice(index, 1);
+  } else {
+    selectedCategories.value.push(categoryId);
+  }
+};
+
 const handleClickOutside = (event) => {
   const productContainer = document.getElementById('product-search-container');
   if (productContainer && !productContainer.contains(event.target)) {
     isProductDropdownOpen.value = false;
+  }
+
+  const categoryContainer = document.getElementById('category-dropdown-container');
+  if (categoryContainer && !categoryContainer.contains(event.target)) {
+    isCategoryDropdownOpen.value = false;
   }
 
   const supplierContainer = document.getElementById('supplier-search-container');
@@ -1228,6 +1351,7 @@ onMounted(() => {
   setInterval(updateDateTime, 1000);
   fetchPurchaseOrder();
   loadProducts();
+  loadCategories();
   loadSuppliers();
   fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);

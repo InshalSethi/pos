@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
         // Seed products
         $this->command->info('Seeding products...');
         $this->call(ProductSeeder::class);
+        $this->call(DummyItemsSeeder::class);
 
         // Seed departments and positions (required for employees)
         $this->command->info('Seeding departments and positions...');
