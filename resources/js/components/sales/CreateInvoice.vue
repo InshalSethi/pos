@@ -158,7 +158,20 @@
                   <th class="py-3 px-3 w-4/12 bg-slate-50 dark:bg-zinc-900">Item Details / Description</th>
                   <th class="py-3 px-2 w-1/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
                   <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Price</th>
-                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">W.S Price</th>
+                  <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <span>W.S Price</span>
+                      <label class="inline-flex items-center cursor-pointer select-none" title="Apply Wholesale Price to All Items">
+                        <input
+                          type="checkbox"
+                          v-model="isAllWholesale"
+                          @change="toggleAllWholesale"
+                          class="sr-only peer"
+                        />
+                        <div class="w-6 h-3.5 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                      </label>
+                    </div>
+                  </th>
                   <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">Tax</th>
                   <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Discount</th>
                   <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Amount</th>
@@ -904,6 +917,20 @@ const warehouses = ref([]);
 const selectedWarehouseId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
 const isBarcodeActive = ref(true);
+const isAllWholesale = ref(false);
+
+const toggleAllWholesale = () => {
+  const targetState = isAllWholesale.value;
+  invoiceItems.value.forEach((item) => {
+    item.is_wholesale = targetState;
+    const basePrice = targetState ? (item.wholesale_price || 0) : (item.unit_price || 0);
+    const itemSubtotal = item.quantity * basePrice;
+    const itemDiscount = item.discount_amount || 0;
+    const taxRate = item.tax_rate || 0;
+    item.total = itemSubtotal - itemDiscount + ((itemSubtotal - itemDiscount) * (taxRate / 100));
+  });
+  calculateTotal();
+};
 
 let barcodeBuffer = '';
 let lastKeyTime = 0;
@@ -1252,6 +1279,11 @@ const addToInvoice = (product) => {
     const defaultTaxId = product.tax_ids && product.tax_ids.length > 0 ? product.tax_ids[0] : null;
     let defaultTaxRate = parseFloat(product.tax_rate || 0);
 
+    const defaultIsWholesale = isAllWholesale.value;
+    const basePrice = defaultIsWholesale ? (product.wholesale_price || 0) : parseFloat(product.price);
+    const itemSubtotal = basePrice * 1;
+    const itemTax = (itemSubtotal * (defaultTaxRate / 100));
+
     invoiceItems.value.push({
       product_id: product.product_id,
       product_variation_id: product.product_variation_id,
@@ -1261,13 +1293,13 @@ const addToInvoice = (product) => {
       price: product.price,
       unit_price: parseFloat(product.price),
       wholesale_price: product.wholesale_price || 0,
-      is_wholesale: false,
+      is_wholesale: defaultIsWholesale,
       discount_amount: 0,
       quantity: 1,
       tax_id: defaultTaxId,
       tax_rate: defaultTaxRate,
       description: '',
-      total: parseFloat(product.price),
+      total: itemSubtotal + itemTax,
       product: product
     });
   }
@@ -1277,17 +1309,28 @@ const addToInvoice = (product) => {
 
 const removeFromInvoice = (index) => {
   invoiceItems.value.splice(index, 1);
+  if (invoiceItems.value.length === 0) {
+    isAllWholesale.value = false;
+  } else {
+    isAllWholesale.value = invoiceItems.value.every(i => i.is_wholesale);
+  }
   calculateTotal();
 };
 
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
+  if (!item) return;
   const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
   const itemSubtotal = item.quantity * basePrice;
   const itemDiscount = item.discount_amount || 0;
   const taxRate = item.tax_rate || 0;
   
   item.total = itemSubtotal - itemDiscount + ((itemSubtotal - itemDiscount) * (taxRate / 100));
+  
+  if (invoiceItems.value.length > 0) {
+    isAllWholesale.value = invoiceItems.value.every(i => i.is_wholesale);
+  }
+
   calculateTotal();
 };
 
@@ -1588,6 +1631,15 @@ const fetchActiveCompany = async () => {
   }
 };
 
+const loadTaxes = async () => {
+  try {
+    const response = await api.get('/taxes');
+    taxes.value = response.data.data || response.data;
+  } catch (error) {
+    console.error('Error loading taxes:', error);
+  }
+};
+
 const fetchNextInvoiceNumber = async () => {
   try {
     const response = await api.get('/sales/next-number');
@@ -1605,6 +1657,7 @@ onMounted(() => {
   setInterval(updateDateTime, 1000);
   loadProducts();
   loadCategories();
+  loadTaxes();
   fetchNextInvoiceNumber();
   fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);
