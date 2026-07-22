@@ -993,18 +993,18 @@
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
-      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-        <div class="relative w-full max-w-5xl bg-white dark:bg-[#14181d] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-modal-backdrop backdrop-blur-sm overflow-y-auto" style="background-color: rgba(0, 0, 0, 0.75) !important;">
+        <div class="relative w-full max-w-5xl bg-[#1E1E1E] text-slate-100 border border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
           
           <!-- Modal Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-[#161a20]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-[#2E2E2E] bg-[#252525]">
             <h3 class="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
               <span>Advanced Item Search</span>
             </h3>
             <button
               type="button"
               @click="closeAdvanceSearchModal"
-              class="p-1.5 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/80 transition-all cursor-pointer border-0 bg-transparent"
+              class="p-1.5 rounded-lg text-slate-400 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-zinc-800 transition-all cursor-pointer border-0 bg-transparent"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1017,7 +1017,7 @@
             
             <!-- 1. Main Search Bar (Top) -->
             <div class="relative w-full">
-              <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-400">
+              <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 dark:text-zinc-400">
                 <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -1026,14 +1026,14 @@
                 v-model="advanceFilters.query"
                 type="text"
                 placeholder="Search by Name or Description"
-                class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all"
+                class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 transition-all"
               />
             </div>
 
             <!-- 2. Additional Search Criteria Section -->
             <div class="space-y-3 pt-1">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Additional Search Criteria</span>
+                <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">Additional Search Criteria</span>
                 <button
                   type="button"
                   v-if="hasActiveAdvanceFilters"
@@ -1049,28 +1049,28 @@
                 
                 <!-- Search by SKU -->
                 <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by SKU</label>
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by SKU</label>
                   <input
                     v-model="advanceFilters.sku"
                     type="text"
                     placeholder="Search by SKU"
-                    class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500"
+                    class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500"
                   />
                 </div>
 
                 <!-- Search by Tags -->
                 <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Tags</label>
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Tags</label>
                   <div class="flex-1 relative">
                     <div
                       @click="focusTagInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
                     >
                       <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                         <span
                           v-for="t in advanceFilters.tags"
                           :key="t"
-                          class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0"
+                          class="bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-[#2E2E2E] flex items-center gap-1 shrink-0"
                         >
                           {{ t }}
                           <span @click.stop="removeAdvanceTag(t)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
@@ -1087,15 +1087,15 @@
                           @keydown.enter.prevent="selectHighlightedTag"
                           @keydown.esc.prevent="isTagDropdownOpen = false"
                           @keydown.delete="handleTagDeleteKey"
-                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 py-0.5"
                           style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
                         />
                       </div>
-                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                     <!-- Tag Options Menu -->
-                    <div v-show="isTagDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#161a20] border border-slate-200 dark:border-slate-700/90 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
-                      <div v-if="filteredAvailableTags.length === 0" class="px-3 py-2 text-slate-400 dark:text-slate-500 text-xs italic text-center">
+                    <div v-show="isTagDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
+                      <div v-if="filteredAvailableTags.length === 0" class="px-3 py-2 text-slate-400 dark:text-zinc-500 text-xs italic text-center">
                         No tags found
                       </div>
                       <div
@@ -1105,8 +1105,8 @@
                         @mouseenter="tagHighlightedIndex = idx"
                         class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
                         :class="[
-                          advanceFilters.tags.includes(t) ? 'bg-indigo-50 dark:bg-indigo-600/25 text-indigo-600 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-slate-200',
-                          tagHighlightedIndex === idx ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                          advanceFilters.tags.includes(t) ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-zinc-200',
+                          tagHighlightedIndex === idx ? 'bg-slate-100 dark:bg-zinc-800' : 'hover:bg-slate-100 dark:hover:bg-zinc-800/60'
                         ]"
                       >
                         <span>{{ t }}</span>
@@ -1118,17 +1118,17 @@
 
                 <!-- Search by Categories -->
                 <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Categories</label>
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Categories</label>
                   <div class="flex-1 relative">
                     <div
                       @click="focusCategoryInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
                     >
                       <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                         <span
                           v-for="cId in advanceFilters.categories"
                           :key="cId"
-                          class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0"
+                          class="bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-[#2E2E2E] flex items-center gap-1 shrink-0"
                         >
                           {{ getCategoryNameById(cId) }}
                           <span @click.stop="removeAdvanceCategory(cId)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
@@ -1145,15 +1145,15 @@
                           @keydown.enter.prevent="selectHighlightedCategory"
                           @keydown.esc.prevent="isCategorySelectModalOpen = false"
                           @keydown.delete="handleCategoryDeleteKey"
-                          class="flex-1 min-w-[100px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          class="flex-1 min-w-[100px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 py-0.5"
                           style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
                         />
                       </div>
-                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                     <!-- Category Options Menu -->
-                    <div v-show="isCategorySelectModalOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#161a20] border border-slate-200 dark:border-slate-700/90 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
-                      <div v-if="filteredAvailableCategories.length === 0" class="px-3 py-2 text-slate-400 dark:text-slate-500 text-xs italic text-center">
+                    <div v-show="isCategorySelectModalOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
+                      <div v-if="filteredAvailableCategories.length === 0" class="px-3 py-2 text-slate-400 dark:text-zinc-500 text-xs italic text-center">
                         No categories found
                       </div>
                       <div
@@ -1163,8 +1163,8 @@
                         @mouseenter="categoryHighlightedIndex = idx"
                         class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
                         :class="[
-                          advanceFilters.categories.includes(cat.id) ? 'bg-indigo-50 dark:bg-indigo-600/25 text-indigo-600 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-slate-200',
-                          categoryHighlightedIndex === idx ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                          advanceFilters.categories.includes(cat.id) ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-zinc-200',
+                          categoryHighlightedIndex === idx ? 'bg-slate-100 dark:bg-zinc-800' : 'hover:bg-slate-100 dark:hover:bg-zinc-800/60'
                         ]"
                       >
                         <span>{{ cat.name }}</span>
@@ -1176,17 +1176,17 @@
 
                 <!-- Search by Tax -->
                 <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Tax</label>
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Tax</label>
                   <div class="flex-1 relative">
                     <div
                       @click="focusTaxInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
                     >
                       <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                         <span
                           v-for="tx in advanceFilters.taxes"
                           :key="tx"
-                          class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0"
+                          class="bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-[#2E2E2E] flex items-center gap-1 shrink-0"
                         >
                           {{ getTaxLabel(tx) }}
                           <span @click.stop="removeAdvanceTaxItem(tx)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
@@ -1203,15 +1203,15 @@
                           @keydown.enter.prevent="selectHighlightedTax"
                           @keydown.esc.prevent="isTaxDropdownOpen = false"
                           @keydown.delete="handleTaxDeleteKey"
-                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 py-0.5"
                           style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
                         />
                       </div>
-                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                     <!-- Tax Options Menu -->
-                    <div v-show="isTaxDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#161a20] border border-slate-200 dark:border-slate-700/90 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
-                      <div v-if="filteredAvailableTaxes.length === 0" class="px-3 py-2 text-slate-400 dark:text-slate-500 text-xs italic text-center">
+                    <div v-show="isTaxDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
+                      <div v-if="filteredAvailableTaxes.length === 0" class="px-3 py-2 text-slate-400 dark:text-zinc-500 text-xs italic text-center">
                         No taxes found
                       </div>
                       <div
@@ -1221,8 +1221,8 @@
                         @mouseenter="taxHighlightedIndex = idx"
                         class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
                         :class="[
-                          advanceFilters.taxes.includes(tax.id) ? 'bg-indigo-50 dark:bg-indigo-600/25 text-indigo-600 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-slate-200',
-                          taxHighlightedIndex === idx ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                          advanceFilters.taxes.includes(tax.id) ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-zinc-200',
+                          taxHighlightedIndex === idx ? 'bg-slate-100 dark:bg-zinc-800' : 'hover:bg-slate-100 dark:hover:bg-zinc-800/60'
                         ]"
                       >
                         <span>{{ tax.name }} ({{ tax.value }}%)</span>
@@ -1234,26 +1234,26 @@
 
                 <!-- Search by Price -->
                 <div class="flex items-center gap-3 md:col-span-2">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Price</label>
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Price</label>
                   <div class="flex-1 flex items-center gap-3">
-                    <span class="text-slate-500 dark:text-slate-500 font-medium">min</span>
+                    <span class="text-slate-500 dark:text-zinc-400 font-medium">min</span>
                     <div class="relative w-32">
-                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">{{ currencySymbol }}</span>
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs">{{ currencySymbol }}</span>
                       <input
                         v-model="advanceFilters.minPrice"
                         type="number"
                         placeholder="0"
-                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
+                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
                       />
                     </div>
-                    <span class="text-slate-500 dark:text-slate-500 font-medium">- max</span>
+                    <span class="text-slate-500 dark:text-zinc-400 font-medium">- max</span>
                     <div class="relative w-32">
-                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">{{ currencySymbol }}</span>
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs">{{ currencySymbol }}</span>
                       <input
                         v-model="advanceFilters.maxPrice"
                         type="number"
                         placeholder="9999"
-                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
+                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
                       />
                     </div>
                   </div>
@@ -1263,10 +1263,10 @@
             </div>
 
             <!-- 3. Search Results Table -->
-            <div class="border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden bg-white dark:bg-[#111418]">
+            <div class="border border-slate-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden bg-white dark:bg-[#12161b]">
               <div class="max-h-64 overflow-y-auto custom-scrollbar">
                 <table class="w-full text-xs text-left">
-                  <thead class="bg-slate-100 dark:bg-[#181d23] text-slate-500 dark:text-slate-400 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+                  <thead class="bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-zinc-400 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200 dark:border-[#2E2E2E]">
                     <tr>
                       <th class="py-2.5 px-3">SKU</th>
                       <th class="py-2.5 px-3">Item Details / Description</th>
@@ -1277,33 +1277,33 @@
                       <th class="py-2.5 px-3 text-center">Action</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60 text-slate-800 dark:text-slate-200">
+                  <tbody class="divide-y divide-slate-200 dark:divide-[#2E2E2E] text-slate-800 dark:text-slate-200">
                     <tr v-if="!hasActiveAdvanceFilters">
-                      <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500 italic">
-                        <svg class="mx-auto h-7 w-7 text-slate-400 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <td colspan="7" class="py-12 text-center text-slate-400 dark:text-zinc-500 italic">
+                        <svg class="mx-auto h-7 w-7 text-slate-400 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         <span>Start typing in search box or select a filter criteria above to search items...</span>
                       </td>
                     </tr>
                     <tr v-else-if="advanceFilteredProducts.length === 0">
-                      <td colspan="7" class="py-10 text-center text-slate-400 dark:text-slate-500 italic">
+                      <td colspan="7" class="py-10 text-center text-slate-400 dark:text-zinc-500 italic">
                         No products match the selected advance search criteria.
                       </td>
                     </tr>
                     <tr
                       v-for="product in advanceFilteredProducts.slice(0, 100)"
                       :key="product.key"
-                      class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
                     >
-                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ product.sku }}</td>
+                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-zinc-400">{{ product.sku }}</td>
                       <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">{{ product.name }}</td>
-                      <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">{{ product.category }}</td>
-                      <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400">
+                      <td class="py-2.5 px-3 text-slate-600 dark:text-zinc-300">{{ product.category }}</td>
+                      <td class="py-2.5 px-3 text-slate-500 dark:text-zinc-400">
                         <span v-if="product.tags && product.tags.length">{{ Array.isArray(product.tags) ? product.tags.join(', ') : product.tags }}</span>
-                        <span v-else class="text-slate-400 dark:text-slate-600">—</span>
+                        <span v-else class="text-slate-400 dark:text-zinc-600">—</span>
                       </td>
-                      <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400">{{ product.tax_rate ? product.tax_rate + '%' : 'No Tax' }}</td>
+                      <td class="py-2.5 px-3 text-slate-500 dark:text-zinc-400">{{ product.tax_rate ? product.tax_rate + '%' : 'No Tax' }}</td>
                       <td class="py-2.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">{{ currencySymbol }}{{ product.price }}</td>
                       <td class="py-2.5 px-3 text-center">
                         <button
@@ -1318,11 +1318,11 @@
                   </tbody>
                 </table>
               </div>
-              <div v-if="hasActiveAdvanceFilters" class="px-4 py-2 bg-slate-50 dark:bg-[#181d23] border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-between">
+              <div v-if="hasActiveAdvanceFilters" class="px-4 py-2 bg-slate-50 dark:bg-[#252525] border-t border-slate-200 dark:border-[#2E2E2E] text-[10px] text-slate-500 dark:text-zinc-400 font-semibold flex items-center justify-between">
                 <span>Showing {{ Math.min(advanceFilteredProducts.length, 100) }} of {{ advanceFilteredProducts.length }} items</span>
-                <span class="text-slate-400 dark:text-slate-500">Click "+ Add" to append items directly to invoice</span>
+                <span class="text-slate-400 dark:text-zinc-500">Click "+ Add" to append items directly to invoice</span>
               </div>
-              <div v-else class="px-4 py-2 bg-slate-50 dark:bg-[#181d23] border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500 font-semibold text-center">
+              <div v-else class="px-4 py-2 bg-slate-50 dark:bg-[#252525] border-t border-slate-200 dark:border-[#2E2E2E] text-[10px] text-slate-400 dark:text-zinc-500 font-semibold text-center">
                 Enter search query or select any filter above to view items
               </div>
             </div>

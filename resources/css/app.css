@@ -47,8 +47,14 @@ html.dark {
 }
 
 html.dark body {
-    background-color: var(--color-gray-50);
+    background-color: #121212 !important;
     color: var(--color-gray-900);
+}
+
+/* Explicit Modal Backdrop Overlay Override (Bypasses theme color inversion) */
+.bg-modal-backdrop,
+.modal-backdrop-dark {
+    background-color: rgba(0, 0, 0, 0.75) !important;
 }
 
 /* Custom utility for black text in dark mode badges */
