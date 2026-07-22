@@ -16,7 +16,7 @@
       <div>
         <h3 class="text-sm font-bold text-rose-900">Error loading purchase order</h3>
         <p class="mt-1 text-xs text-rose-700">{{ error }}</p>
-        <button @click="goBack" class="mt-3 px-3 py-1.5 bg-rose-600 text-white font-bold text-[11px] rounded-lg hover:bg-rose-750 transition-all cursor-pointer">Back to Orders</button>
+        <button @click="goBack" class="mt-3 px-3 py-1.5 bg-rose-600 text-white font-bold text-[11px] rounded-lg hover:bg-rose-750 transition-all cursor-pointer border-0">Back to Orders</button>
       </div>
     </div>
 
@@ -28,12 +28,12 @@
           <div class="flex items-center space-x-4">
             <button
               @click="goBack"
-              class="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold text-xs transition-colors duration-200 flex items-center space-x-1.5 focus:outline-none cursor-pointer bg-transparent border-0"
+              class="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold text-xs transition-colors duration-200 flex items-center space-x-1.5 focus:outline-none cursor-pointer border-0 bg-transparent"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span>Back to Orders</span>
+              <span>Back</span>
             </button>
             <span class="text-slate-300 dark:text-slate-600 select-none">|</span>
             <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">Edit Purchase Order</h1>
@@ -51,121 +51,87 @@
         <!-- Left Panel: Purchase Order Form (3/4 width) -->
         <div class="w-full md:w-3/4 p-8 flex flex-col relative">
 
-            <!-- PO Paper Header -->
-            <div class="flex justify-between items-start mb-8">
-              <div class="space-y-3">
-                <!-- Company Logo -->
-                <div class="w-24 h-24 bg-slate-50 dark:bg-zinc-900/60 rounded-xl flex items-center justify-center border border-slate-200 dark:border-zinc-800 relative overflow-hidden">
-                  <img v-if="logoUrl" :src="logoUrl" class="w-full h-full object-cover" />
-                  <div v-else class="text-slate-400 dark:text-zinc-500 text-center p-2">
-                    <svg class="mx-auto h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            <!-- Catalog Search & Selection Section -->
+            <div class="pb-6 mb-4 space-y-3">
+              <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider text-left">Catalog Search & Selection</h3>
+              
+              <div class="flex items-center gap-3 relative w-full">
+                <!-- Search items input (takes full width minus gold category icon button) -->
+                <div class="relative flex-1" id="product-search-container">
+                  <input
+                    v-model="productSearch"
+                    type="text"
+                    placeholder="Search products by title, code or barcode..."
+                    class="w-full pl-5 pr-11 py-2.5 bg-white dark:bg-[#12161b]/90 border border-slate-300 dark:border-sky-500/40 focus:border-sky-400 rounded-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium shadow-[0_0_15px_rgba(56,189,248,0.15)] focus:shadow-[0_0_20px_rgba(56,189,248,0.3)] focus:outline-none transition-all duration-300"
+                    @focus="isProductDropdownOpen = true"
+                    @keydown.enter.prevent="handleProductSearchEnter"
+                  />
+                  <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 dark:text-sky-300">
+                    <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                </div>
-
-                <!-- Company Details -->
-                <div class="text-left text-xs text-slate-500 dark:text-zinc-400 space-y-0.5">
-                  <p class="font-bold text-slate-700 dark:text-zinc-200 text-sm mb-1.5">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
-                  <h4 class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider pt-1.5 pb-0.5">Email, phone and Address</h4>
-                  <p v-if="activeCompany?.company_phone"><span class="font-semibold text-slate-400 dark:text-zinc-500">phone number:</span> {{ activeCompany.company_phone }}</p>
-                  <p><span class="font-semibold text-slate-400 dark:text-zinc-500">email:</span> {{ activeCompany?.company_email || 'sethiasad1@gmail.com' }}</p>
-                  <p><span class="font-semibold text-slate-400 dark:text-zinc-500">Address:</span> {{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
-                </div>
-              </div>
-
-              <div class="text-right">
-                <h2 class="text-2xl font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Purchase Order</h2>
-                
-                <!-- PO Details Fields -->
-                <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-left max-w-sm ml-auto">
-                  <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">PO Number:</div>
-                  <div>
-                    <input
-                      v-model="purchaseOrder.po_number"
-                      type="text"
-                      readonly
-                      class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900/50 font-semibold focus:outline-none"
-                    />
-                  </div>
-
-                  <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Order Date:</div>
-                  <div>
-                    <input
-                      v-model="orderForm.order_date"
-                      type="date"
-                      class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Expected Delivery:</div>
-                  <div>
-                    <input
-                      v-model="orderForm.expected_delivery_date"
-                      type="date"
-                      class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Bill To / Supplier Section -->
-            <div class="border-t border-slate-200 dark:border-zinc-800 py-6 mb-4 flex justify-between items-start">
-              <div class="w-1/2 text-left">
-                <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Supplier details</h3>
-                
-                <!-- Supplier Search input -->
-                <div class="relative max-w-sm mb-3" id="supplier-search-container">
-                  <input
-                    v-model="supplierSearch"
-                    type="text"
-                    placeholder="Search supplier..."
-                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                    @input="debouncedSupplierSearch"
-                    @focus="searchSuppliers(supplierSearch)"
-                  />
                   
-                  <!-- Dropdown Search list -->
-                  <div v-if="supplierSearchResults.length > 0" class="absolute z-50 bottom-full mb-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
+                  <!-- Search Results Dropdown List -->
+                  <div
+                    v-show="isProductDropdownOpen && filteredProducts.length > 0"
+                    class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#181e24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto py-2 custom-scrollbar backdrop-blur-md"
+                  >
                     <div
-                      v-for="supplier in supplierSearchResults"
-                      :key="supplier.id"
-                      @click="selectSupplier(supplier)"
-                      class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
+                      v-for="product in displayedProducts"
+                      :key="product.id"
+                      @click="selectProductFromDropdown(product)"
+                      class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
                     >
-                      <div>
-                        <span class="font-bold text-slate-800 dark:text-zinc-200">{{ supplier.name }}</span>
-                        <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ supplier.phone || supplier.email }}</p>
+                      <div class="min-w-0 pr-4">
+                        <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
+                        <div class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ product.sku }}</div>
                       </div>
-                      <span v-if="supplier.company_name" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono">{{ supplier.company_name }}</span>
+                      <div class="text-right flex-shrink-0">
+                        <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm block">${{ product.cost_price || product.selling_price }}</span>
+                        <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
+                      </div>
+                    </div>
+
+                    <!-- Footer note when more than 50 items match -->
+                    <div
+                      v-if="filteredProducts.length > 50"
+                      class="px-4 py-2 text-center text-[10px] font-semibold text-slate-400 dark:text-zinc-500 bg-slate-50/80 dark:bg-zinc-900/80 border-t border-slate-100 dark:border-zinc-800/60 sticky bottom-0 backdrop-blur-sm select-none"
+                    >
+                      Showing top 50 of {{ filteredProducts.length }} items — Type to search more...
                     </div>
                   </div>
                 </div>
 
-                <!-- Selected Supplier info box -->
-                <div v-if="selectedSupplier" class="p-3 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs space-y-1 relative max-w-sm">
-                  <button @click="clearSupplier" class="absolute top-2 right-2 text-rose-600 dark:text-rose-450 hover:text-rose-800 dark:hover:text-rose-350 font-semibold text-[10px] hover:underline bg-transparent border-0 cursor-pointer">Remove</button>
-                  <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ selectedSupplier.name }}</p>
-                  <p v-if="selectedSupplier.company_name" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Company:</span> {{ selectedSupplier.company_name }}</p>
-                  <p v-if="selectedSupplier.phone" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedSupplier.phone }}</p>
-                  <p v-if="selectedSupplier.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedSupplier.email }}</p>
-                </div>
-                <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic">
-                  No supplier selected. Type above to assign a vendor.
-                </div>
-              </div>
+                <!-- Gold Metallic Advance Search Button with Tooltip -->
+                <div class="relative shrink-0 group">
+                  <button
+                    type="button"
+                    @click="openAdvanceSearchModal"
+                    class="relative flex items-center justify-center w-10 h-10 rounded-full shrink-0 shadow-lg shadow-amber-950/30 hover:shadow-amber-500/20 active:scale-95 transition-all duration-200 cursor-pointer border border-amber-300/40 bg-gradient-to-b from-[#fbe396] via-[#dcae42] to-[#b38728] hover:from-[#fff0ad] hover:via-[#e2b74b] hover:to-[#be9130]"
+                  >
+                    <!-- Filter Icon -->
+                    <svg class="w-4.5 h-4.5 text-[#1e1708]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M6 10h12M8 14h8M10 18h4" />
+                    </svg>
+                    
+                    <!-- Active Filter Indicator Badge -->
+                    <span
+                      v-if="hasActiveAdvanceFilters"
+                      class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-white dark:border-zinc-900 shadow-sm"
+                    >
+                      !
+                    </span>
+                  </button>
 
-              <div class="text-right">
-                <button
-                  @click="showSupplierModal = true"
-                  class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center space-x-1 border-0 cursor-pointer"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Add Supplier</span>
-                </button>
+                  <!-- Tooltip: Advance Searching -->
+                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
+                    <div class="bg-slate-900/95 dark:bg-[#1e252d] text-slate-100 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/80 tracking-wide">
+                      Advance Searching
+                    </div>
+                    <div class="w-2 h-2 bg-slate-900 dark:bg-[#1e252d] rotate-45 -mt-1 border-r border-b border-slate-700/80"></div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -174,10 +140,10 @@
               <table class="w-full text-xs text-left border-collapse">
                 <thead class="sticky top-0 z-10 shadow-sm">
                   <tr class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 uppercase font-extrabold tracking-wider">
-                    <th class="py-3 px-3 w-6/12 bg-slate-50 dark:bg-zinc-900">Item Details / SKU</th>
+                    <th class="py-3 px-3 w-5/12 bg-slate-50 dark:bg-zinc-900">Item Details / SKU</th>
                     <th class="py-3 px-2 w-2/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
-                    <th class="py-3 px-2 w-2/12 text-right bg-slate-50 dark:bg-zinc-900">Unit Cost</th>
-                    <th class="py-3 px-2 w-2/12 text-right bg-slate-50 dark:bg-zinc-900">Total Cost</th>
+                    <th class="py-3 px-2 w-2.5/12 text-right bg-slate-50 dark:bg-zinc-900">Unit Cost</th>
+                    <th class="py-3 px-2 w-2.5/12 text-right bg-slate-50 dark:bg-zinc-900">Total Cost</th>
                     <th class="py-3 px-1 w-[40px] text-center bg-slate-50 dark:bg-zinc-900"></th>
                   </tr>
                 </thead>
@@ -187,15 +153,21 @@
                       <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
-                      <span>No products added. Use the filters & search list on the right to select items.</span>
+                      <span>No products added. Use search above to select items.</span>
                     </td>
                   </tr>
 
                   <tr v-for="(item, index) in orderItems" :key="index" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top">
                     <!-- Name and SKU -->
                     <td class="py-3 px-3">
-                      <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.product.name }}</div>
-                      <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">SKU: {{ item.product.sku }}</div>
+                      <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm mb-0.5">{{ item.product ? item.product.name : 'Product' }}</div>
+                      <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mb-1">SKU: {{ item.product ? item.product.sku : '' }}</div>
+                      <textarea
+                        v-model="item.notes"
+                        placeholder="Add line item description / details..."
+                        rows="1"
+                        class="w-full bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded px-2 py-1 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[10px]"
+                      ></textarea>
                     </td>
 
                     <!-- Qty -->
@@ -207,7 +179,7 @@
                         class="w-16 px-1.5 py-1 text-center border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                         @input="updateItemTotal(index)"
                       />
-                      <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Current Stock: {{ item.product.stock_quantity }}</div>
+                      <div class="text-[9px] text-slate-400 dark:text-zinc-500 mt-1">Stock: {{ getProductStock(item.product) }}</div>
                     </td>
 
                     <!-- Unit Cost -->
@@ -222,7 +194,7 @@
                       />
                     </td>
 
-                    <!-- Total Line Cost -->
+                    <!-- Total Cost -->
                     <td class="py-3 px-2 text-right font-bold text-slate-800 dark:text-zinc-200 text-sm align-middle">
                       ${{ item.total_cost.toFixed(2) }}
                     </td>
@@ -231,7 +203,7 @@
                     <td class="py-3 px-1 text-center align-middle">
                       <button
                         @click="removeFromOrder(index)"
-                        class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer bg-transparent border-0"
+                        class="text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-450 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer border-0 bg-transparent"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -261,6 +233,16 @@
                     <td class="py-2.5 px-2 text-right text-slate-900 dark:text-zinc-100 text-sm font-black">${{ orderTotal.toFixed(2) }}</td>
                     <td></td>
                   </tr>
+                  <tr v-if="orderForm.amount_paid > 0">
+                    <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Amount Paid</td>
+                    <td class="py-2 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ (orderForm.amount_paid || 0).toFixed(2) }}</td>
+                    <td></td>
+                  </tr>
+                  <tr v-if="effectiveDueAmount > 0">
+                    <td colspan="3" class="py-2 px-3 text-right font-extrabold text-rose-600 dark:text-rose-400">Remaining Due Amount</td>
+                    <td class="py-2 px-2 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/20">${{ effectiveDueAmount.toFixed(2) }}</td>
+                    <td></td>
+                  </tr>
                 </tfoot>
               </table>
             </div>
@@ -268,7 +250,7 @@
             <!-- Notes & Footer Layout -->
             <div class="border-t border-slate-200 dark:border-zinc-800 pt-6 mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
               <div>
-                <label class="block text-xs font-bold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Notes to supplier</label>
+                <label class="block text-xs font-bold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Notes to Supplier</label>
                 <textarea
                   v-model="orderForm.notes"
                   rows="3"
@@ -288,166 +270,132 @@
             </div>
         </div>
 
-        <!-- Right Panel: Sidebar for Product Catalog Search (1/4 width) -->
+        <!-- Right Panel: Sidebar for Document Metadata, Supplier & Actions (1/4 width) -->
         <div class="w-full md:w-1/4 p-6 space-y-6 flex flex-col border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#1E1E1E]">
             
-            <!-- Section 1: Product Selection & Catalog Filters -->
-            <div class="space-y-4 text-left">
-              <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Catalog Search & Selection</h3>
-              
-              <div class="flex justify-between items-center bg-slate-50 dark:bg-zinc-900/60 px-3 py-2 rounded-xl border border-slate-100 dark:border-zinc-800">
-                <div class="flex items-center space-x-2">
-                  <span class="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase">Barcode Scanner</span>
-                  <span 
-                    class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-all duration-200"
-                    :class="isBarcodeActive ? 'text-emerald-700 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-500 dark:text-zinc-400 bg-slate-150 dark:bg-zinc-800'"
-                  >
-                    <span class="w-1 h-1 rounded-full" :class="isBarcodeActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400 dark:bg-zinc-650'"></span>
-                    {{ isBarcodeActive ? 'Active' : 'Inactive' }}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  @click="toggleBarcodeScanner"
-                  class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                  :class="isBarcodeActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'"
-                >
-                  <span
-                    class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                    :class="isBarcodeActive ? 'translate-x-4' : 'translate-x-0'"
-                  ></span>
-                </button>
+            <!-- Section 0: Purchase Order Metadata Details -->
+            <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-left">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-black uppercase tracking-wider transition-all duration-300" :style="{ color: accentColor }">PURCHASE ORDER</h2>
               </div>
 
-              <div>
-                <input
-                  v-model="barcodeInput"
-                  type="text"
-                  :disabled="!isBarcodeActive"
-                  :placeholder="isBarcodeActive ? 'Scan barcode or type SKU...' : 'Scanner inactive - Toggle ON to scan'"
-                  class="w-full pl-3 pr-2 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-all duration-200"
-                  :class="isBarcodeActive ? 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200' : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/60 text-slate-450 dark:text-slate-500 cursor-not-allowed'"
-                  @keydown.enter.prevent="addByBarcode"
-                />
-              </div>
-
-              <!-- Search items input & Category Filter Icon -->
-            <div class="flex items-center gap-2.5 relative w-full">
-              <div class="relative flex-1" id="product-search-container">
-                <input
-                  v-model="productSearch"
-                  type="text"
-                  placeholder="Search products by title, SKU..."
-                  class="w-full pl-4 pr-9 py-2 bg-white dark:bg-[#12161b]/90 border border-slate-300 dark:border-sky-500/40 focus:border-sky-400 rounded-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium shadow-[0_0_15px_rgba(56,189,248,0.15)] focus:shadow-[0_0_20px_rgba(56,189,248,0.3)] focus:outline-none transition-all duration-300"
-                  @focus="isProductDropdownOpen = true"
-                />
-                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 dark:text-sky-300">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+              <!-- Metadata Form Fields -->
+              <div class="space-y-2.5 text-xs">
+                <!-- PO Number -->
+                <div>
+                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">PO Number:</label>
+                  <input
+                    v-model="orderForm.po_number"
+                    type="text"
+                    readonly
+                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900/50 font-semibold focus:outline-none text-xs"
+                  />
                 </div>
-                
-                <!-- Search Results Dropdown List -->
-                <div
-                  v-show="isProductDropdownOpen && filteredProducts.length > 0"
-                  class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#181e24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto py-2 custom-scrollbar backdrop-blur-md"
-                >
-                  <div
-                    v-for="product in displayedProducts"
-                    :key="product.id"
-                    @click="selectProductFromDropdown(product)"
-                    class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
-                  >
-                    <div class="min-w-0 pr-4">
-                      <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
-                      <div class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ product.sku }}</div>
-                    </div>
-                    <div class="text-right flex-shrink-0">
-                      <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm block">${{ product.cost_price || product.selling_price }}</span>
-                      <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ product.stock_quantity }} in stock</span>
-                    </div>
+
+                <!-- Order Date & Expected Delivery Date -->
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Order Date:</label>
+                    <input
+                      v-model="orderForm.order_date"
+                      type="date"
+                      class="w-full px-2 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                    />
                   </div>
-
-                  <!-- Footer note when more than 50 items match -->
-                  <div
-                    v-if="filteredProducts.length > 50"
-                    class="px-4 py-2 text-center text-[10px] font-semibold text-slate-400 dark:text-zinc-500 bg-slate-50/80 dark:bg-zinc-900/80 border-t border-slate-100 dark:border-zinc-800/60 sticky bottom-0 backdrop-blur-sm select-none"
-                  >
-                    Showing top 50 of {{ filteredProducts.length }} items — Type to search more...
-                  </div>
-                </div>
-              </div>
-
-              <!-- Gold Metallic Category Dropdown Icon Button -->
-              <div class="relative shrink-0" id="category-dropdown-container">
-                <button
-                  type="button"
-                  @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
-                  title="Filter by Category"
-                  class="relative flex items-center justify-center w-9 h-9 rounded-full shrink-0 shadow-lg shadow-amber-950/30 hover:shadow-amber-500/20 active:scale-95 transition-all duration-200 cursor-pointer border border-amber-300/40 bg-gradient-to-b from-[#fbe396] via-[#dcae42] to-[#b38728] hover:from-[#fff0ad] hover:via-[#e2b74b] hover:to-[#be9130]"
-                >
-                  <!-- Filter Icon -->
-                  <svg class="w-4 h-4 text-[#1e1708]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M6 10h12M8 14h8M10 18h4" />
-                  </svg>
-                  
-                  <!-- Selected Badge -->
-                  <span
-                    v-if="selectedCategories.length > 0"
-                    class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-white dark:border-zinc-900 shadow-sm"
-                  >
-                    {{ selectedCategories.length }}
-                  </span>
-                </button>
-
-                <!-- Popover Category Menu (Compact & Premium) -->
-                <div
-                  v-show="isCategoryDropdownOpen"
-                  class="absolute right-0 mt-2 bg-white dark:bg-[#14181d]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-xl shadow-2xl z-50 p-1.5 min-w-[190px] max-w-[220px] max-h-64 overflow-y-auto custom-scrollbar text-[11px]"
-                >
-                  <!-- Caret Arrow pointing up to the gold button -->
-                  <div class="absolute -top-1 right-3 w-2.5 h-2.5 bg-white dark:bg-[#14181d] border-t border-l border-slate-200 dark:border-slate-700/60 rotate-45 z-10"></div>
-
-                  <div class="relative z-20 space-y-0.5">
-                    <div class="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800/60 mb-1">
-                      Categories
-                    </div>
-
-                    <!-- All Categories -->
-                    <button
-                      type="button"
-                      @click="clearSelectedCategories"
-                      class="w-full px-2.5 py-1.5 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer border-0"
-                      :class="selectedCategories.length === 0 ? 'bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-350 font-semibold border border-indigo-500/30' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 font-medium'"
-                    >
-                      <span class="truncate">All Categories</span>
-                      <svg v-if="selectedCategories.length === 0" class="w-3 h-3 shrink-0 ml-1 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
-
-                    <!-- Individual Category Options -->
-                    <button
-                      v-for="category in categories"
-                      :key="category.id"
-                      type="button"
-                      @click="toggleCategorySelection(category.id)"
-                      class="w-full px-2.5 py-1.5 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer border-0"
-                      :class="isCategorySelected(category.id) ? 'bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-350 font-semibold border border-indigo-500/30' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 font-medium'"
-                    >
-                      <span class="truncate">{{ category.name }}</span>
-                      <svg v-if="isCategorySelected(category.id)" class="w-3 h-3 shrink-0 ml-1 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
+                  <div>
+                    <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Expected Delivery:</label>
+                    <input
+                      v-model="orderForm.expected_delivery_date"
+                      type="date"
+                      class="w-full px-2 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                    />
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-            <!-- Section 2: Summary Totals & Calculations -->
-            <div class="space-y-4 text-left">
-              <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Summary & Cost details</h3>
+
+            <!-- Section 1: Supplier Details (Bill To / Vendor Selection) -->
+            <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-left">
+              <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Supplier Details</h3>
+              
+              <!-- Attached Supplier Search & Add Supplier Input Group -->
+              <div class="relative w-full" id="supplier-search-container">
+                <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <div class="pl-2.5 pr-1 text-slate-400 dark:text-zinc-500 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <input
+                    v-model="supplierSearch"
+                    type="text"
+                    placeholder="Search supplier name or phone..."
+                    class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
+                    @input="debouncedSupplierSearch"
+                    @focus="searchSuppliers(supplierSearch)"
+                  />
+                  <button
+                    type="button"
+                    @click="showSupplierModal = true"
+                    title="Add New Supplier"
+                    class="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-200 flex items-center justify-center space-x-1 shrink-0 cursor-pointer border-0"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <!-- Supplier Search Dropdown Results -->
+                <div v-if="supplierSearchResults.length > 0" class="absolute z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 shadow-2xl max-h-[220px] rounded-xl border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
+                  <div
+                    v-for="supplier in supplierSearchResults"
+                    :key="supplier.id"
+                    @click="selectSupplier(supplier)"
+                    class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
+                  >
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                      <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
+                        {{ supplier.name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="min-w-0">
+                        <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ supplier.name }}</span>
+                        <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ supplier.phone || supplier.email }}</p>
+                      </div>
+                    </div>
+                    <span v-if="supplier.company_name" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono shrink-0 ml-2">{{ supplier.company_name }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selected Supplier Details Card -->
+              <div v-if="selectedSupplier" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
+                <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Remove
+                </button>
+                <div class="flex items-center space-x-2">
+                  <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                    {{ selectedSupplier.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
+                    <p v-if="selectedSupplier.company_name" class="text-[11px] text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Company:</span> {{ selectedSupplier.company_name }}</p>
+                  </div>
+                </div>
+                <p v-if="selectedSupplier.phone" class="text-slate-600 dark:text-zinc-300 pt-0.5"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedSupplier.phone }}</p>
+                <p v-if="selectedSupplier.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedSupplier.email }}</p>
+              </div>
+              <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic text-left">
+                No supplier selected. Search above to assign a vendor.
+              </div>
+            </div>
+
+            <!-- Section 3: Summary Totals & Calculations -->
+            <div class="space-y-4">
+              <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Summary & Details</h3>
 
               <div class="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-zinc-800/80 text-xs space-y-2.5">
                 <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
@@ -476,7 +424,7 @@
                 </div>
                 <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100 border-t border-slate-200 dark:border-zinc-800 pt-2.5 mt-1">
                   <span>Total Amount:</span>
-                  <span class="text-lg text-indigo-600 dark:text-indigo-400 font-black">${{ orderTotal.toFixed(2) }}</span>
+                  <span class="text-lg transition-all duration-300 font-black" :style="{ color: accentColor }">${{ orderTotal.toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between items-center font-medium text-slate-600 dark:text-zinc-400 border-t border-slate-200 dark:border-zinc-800 pt-2.5">
                   <span>Amount Paid:</span>
@@ -488,14 +436,28 @@
                     class="w-20 px-2 py-1 border border-slate-200 dark:border-zinc-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 text-xs"
                   />
                 </div>
-                <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100">
-                  <span>Due Amount:</span>
-                  <span 
-                    class="text-base font-black transition-all"
-                    :class="dueAmount > 0 ? 'text-rose-600 dark:text-rose-450' : 'text-emerald-600 dark:text-emerald-450'"
-                  >
-                    ${{ dueAmount.toFixed(2) }}
-                  </span>
+
+                <!-- Advance Balance Option -->
+                <div v-if="selectedSupplier && parseFloat(selectedSupplier.advance_balance || 0) > 0" class="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-3 py-2.5 border border-amber-200 dark:border-amber-900/60 text-xs">
+                  <label class="flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        v-model="useAdvanceBalance"
+                        class="rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer"
+                      />
+                      <span class="font-bold text-amber-800 dark:text-amber-300">Use Advance Balance</span>
+                    </div>
+                    <span class="font-extrabold text-amber-700 dark:text-amber-400">${{ parseFloat(selectedSupplier.advance_balance || 0).toFixed(2) }}</span>
+                  </label>
+                  <div v-if="useAdvanceBalance" class="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                    Applying ${{ advanceToApply.toFixed(2) }} from advance → New effective due: ${{ effectiveDueAmount.toFixed(2) }}
+                  </div>
+                </div>
+
+                <div v-if="effectiveDueAmount > 0" class="bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 rounded-xl px-3 py-2 border border-rose-250 dark:border-rose-900/60 text-xs font-bold text-left flex justify-between">
+                  <span>Remaining Due Amount:</span>
+                  <span>${{ effectiveDueAmount.toFixed(2) }}</span>
                 </div>
               </div>
 
@@ -509,6 +471,8 @@
                   <option value="draft">Draft</option>
                   <option value="sent">Sent</option>
                   <option value="confirmed">Confirmed</option>
+                  <option value="received">Received</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
             </div>
@@ -527,25 +491,19 @@
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <svg v-else class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
                 <span>{{ saving ? 'Updating PO...' : 'Update Purchase Order' }}</span>
               </button>
 
-              <!-- Row 2: Secondary Actions -->
-              <div class="grid grid-cols-2 gap-3">
-                <button
-                  @click="goBack"
-                  class="w-full h-10 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg font-semibold text-sm transition-all flex items-center justify-center cursor-pointer border-0"
-                >
-                  <span>Cancel</span>
-                </button>
+              <!-- Row 2: Secondary Action (Clear All) -->
+              <div class="grid grid-cols-1 gap-3">
                 <button
                   @click="clearOrder"
                   :disabled="orderItems.length === 0"
-                  class="w-full h-10 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-rose-600 dark:text-rose-400 rounded-lg font-semibold text-sm transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
+                  class="w-full h-9 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-rose-600 dark:text-rose-400 rounded-lg font-semibold text-xs transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
                 >
-                  <span>Clear All</span>
+                  <span>Clear Items</span>
                 </button>
               </div>
             </div>
@@ -816,6 +774,294 @@
       </div>
     </div>
 
+    <!-- Advance Searching Modal -->
+    <transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+        <div class="relative w-full max-w-5xl bg-white dark:bg-[#14181d] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-[#161a20]">
+            <h3 class="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+              <span>Advanced Item Search</span>
+            </h3>
+            <button
+              type="button"
+              @click="closeAdvanceSearchModal"
+              class="p-1.5 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/80 transition-all cursor-pointer border-0 bg-transparent"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 overflow-y-auto space-y-5 custom-scrollbar flex-1 text-left">
+            
+            <!-- 1. Main Search Bar (Top) -->
+            <div class="relative w-full">
+              <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-400">
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                v-model="advanceFilters.query"
+                type="text"
+                placeholder="Search by Name or Description"
+                class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all"
+              />
+            </div>
+
+            <!-- 2. Additional Search Criteria Section -->
+            <div class="space-y-3 pt-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Additional Search Criteria</span>
+                <button
+                  type="button"
+                  v-if="hasActiveAdvanceFilters"
+                  @click="clearAdvanceFilters"
+                  class="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 underline cursor-pointer bg-transparent border-0"
+                >
+                  Reset Filters
+                </button>
+              </div>
+
+              <!-- Multi-Criteria Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                
+                <!-- Search by SKU -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by SKU</label>
+                  <input
+                    v-model="advanceFilters.sku"
+                    type="text"
+                    placeholder="Search by SKU"
+                    class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500"
+                  />
+                </div>
+
+                <!-- Search by Tags -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Tags</label>
+                  <div class="flex-1 relative">
+                    <div
+                      @click="focusTagInput"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
+                    >
+                      <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+                        <span
+                          v-for="t in advanceFilters.tags"
+                          :key="t"
+                          class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0"
+                        >
+                          {{ t }}
+                          <span @click.stop="removeAdvanceTag(t)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
+                        </span>
+
+                        <input
+                          ref="tagInputRef"
+                          v-model="tagSearchQuery"
+                          type="text"
+                          placeholder="Search by Tags"
+                          @focus="openTagDropdown"
+                          @keydown.down.prevent="navigateTagOptions(1)"
+                          @keydown.up.prevent="navigateTagOptions(-1)"
+                          @keydown.enter.prevent="selectHighlightedTag"
+                          @keydown.esc.prevent="isTagDropdownOpen = false"
+                          @keydown.delete="handleTagDeleteKey"
+                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
+                        />
+                      </div>
+                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <!-- Tag Options Menu -->
+                    <div v-show="isTagDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#161a20] border border-slate-200 dark:border-slate-700/90 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
+                      <div v-if="filteredAvailableTags.length === 0" class="px-3 py-2 text-slate-400 dark:text-slate-500 text-xs italic text-center">
+                        No tags found
+                      </div>
+                      <div
+                        v-for="(t, idx) in filteredAvailableTags"
+                        :key="t"
+                        @click="toggleAdvanceTag(t)"
+                        @mouseenter="tagHighlightedIndex = idx"
+                        class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
+                        :class="[
+                          advanceFilters.tags.includes(t) ? 'bg-indigo-50 dark:bg-indigo-600/25 text-indigo-600 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-slate-200',
+                          tagHighlightedIndex === idx ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        ]"
+                      >
+                        <span>{{ t }}</span>
+                        <span v-if="advanceFilters.tags.includes(t)" class="text-indigo-600 dark:text-indigo-400 font-bold">✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Search by Categories -->
+                <div class="flex items-center gap-3">
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Categories</label>
+                  <div class="flex-1 relative">
+                    <div
+                      @click="focusCategoryInput"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
+                    >
+                      <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+                        <span
+                          v-for="cId in advanceFilters.categories"
+                          :key="cId"
+                          class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0"
+                        >
+                          {{ getCategoryNameById(cId) }}
+                          <span @click.stop="removeAdvanceCategory(cId)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
+                        </span>
+
+                        <input
+                          ref="categoryInputRef"
+                          v-model="categorySearchQuery"
+                          type="text"
+                          placeholder="Search by Categories"
+                          @focus="openCategoryDropdown"
+                          @keydown.down.prevent="navigateCategoryOptions(1)"
+                          @keydown.up.prevent="navigateCategoryOptions(-1)"
+                          @keydown.enter.prevent="selectHighlightedCategory"
+                          @keydown.esc.prevent="isCategorySelectModalOpen = false"
+                          @keydown.delete="handleCategoryDeleteKey"
+                          class="flex-1 min-w-[100px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
+                        />
+                      </div>
+                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <!-- Category Options Menu -->
+                    <div v-show="isCategorySelectModalOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#161a20] border border-slate-200 dark:border-slate-700/90 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
+                      <div v-if="filteredAvailableCategories.length === 0" class="px-3 py-2 text-slate-400 dark:text-slate-500 text-xs italic text-center">
+                        No categories found
+                      </div>
+                      <div
+                        v-for="(cat, idx) in filteredAvailableCategories"
+                        :key="cat.id"
+                        @click="toggleAdvanceCategory(cat.id)"
+                        @mouseenter="categoryHighlightedIndex = idx"
+                        class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
+                        :class="[
+                          advanceFilters.categories.includes(cat.id) ? 'bg-indigo-50 dark:bg-indigo-600/25 text-indigo-600 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-slate-200',
+                          categoryHighlightedIndex === idx ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        ]"
+                      >
+                        <span>{{ cat.name }}</span>
+                        <span v-if="advanceFilters.categories.includes(cat.id)" class="text-indigo-600 dark:text-indigo-400 font-bold">✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Search by Price -->
+                <div class="flex items-center gap-3 md:col-span-2">
+                  <label class="w-32 shrink-0 text-slate-500 dark:text-slate-400 font-medium">Search by Price</label>
+                  <div class="flex-1 flex items-center gap-3">
+                    <span class="text-slate-500 dark:text-slate-500 font-medium">min</span>
+                    <div class="relative w-32">
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">$</span>
+                      <input
+                        v-model="advanceFilters.minPrice"
+                        type="number"
+                        placeholder="0"
+                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
+                      />
+                    </div>
+                    <span class="text-slate-500 dark:text-slate-500 font-medium">- max</span>
+                    <div class="relative w-32">
+                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-slate-500 text-xs">$</span>
+                      <input
+                        v-model="advanceFilters.maxPrice"
+                        type="number"
+                        placeholder="9999"
+                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- 3. Search Results Table -->
+            <div class="border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden bg-white dark:bg-[#111418]">
+              <div class="max-h-64 overflow-y-auto custom-scrollbar">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-100 dark:bg-[#181d23] text-slate-500 dark:text-slate-400 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th class="py-2.5 px-3">SKU</th>
+                      <th class="py-2.5 px-3">Item Details / Description</th>
+                      <th class="py-2.5 px-3">Category</th>
+                      <th class="py-2.5 px-3">Tags</th>
+                      <th class="py-2.5 px-3 text-right">Cost / Price</th>
+                      <th class="py-2.5 px-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60 text-slate-800 dark:text-slate-200">
+                    <tr v-if="!hasActiveAdvanceFilters">
+                      <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500 italic">
+                        <svg class="mx-auto h-7 w-7 text-slate-400 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <span>Start typing in search box or select a filter criteria above to search items...</span>
+                      </td>
+                    </tr>
+                    <tr v-else-if="advanceFilteredProducts.length === 0">
+                      <td colspan="6" class="py-10 text-center text-slate-400 dark:text-slate-500 italic">
+                        No products match the selected advance search criteria.
+                      </td>
+                    </tr>
+                    <tr
+                      v-for="product in advanceFilteredProducts.slice(0, 100)"
+                      :key="product.id"
+                      class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ product.sku }}</td>
+                      <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">{{ product.name }}</td>
+                      <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">{{ getCategoryNameById(product.category_id) }}</td>
+                      <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400">
+                        <span v-if="product.tags && product.tags.length">{{ Array.isArray(product.tags) ? product.tags.join(', ') : product.tags }}</span>
+                        <span v-else class="text-slate-400 dark:text-slate-600">—</span>
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">${{ product.cost_price || product.selling_price || product.price }}</td>
+                      <td class="py-2.5 px-3 text-center">
+                        <button
+                          type="button"
+                          @click="addAdvanceProductToOrder(product)"
+                          class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-lg text-[11px] shadow-sm transition-all cursor-pointer border-0"
+                        >
+                          + Add
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div v-if="hasActiveAdvanceFilters" class="px-4 py-2 bg-slate-50 dark:bg-[#181d23] border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-between">
+                <span>Showing {{ Math.min(advanceFilteredProducts.length, 100) }} of {{ advanceFilteredProducts.length }} items</span>
+                <span class="text-slate-400 dark:text-slate-500">Click "+ Add" to append items directly to purchase order</span>
+              </div>
+              <div v-else class="px-4 py-2 bg-slate-50 dark:bg-[#181d23] border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500 font-semibold text-center">
+                Enter search query or select any filter above to view items
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- Success/Error Notifications -->
     <div v-if="notifications.length > 0" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm w-full">
       <div
@@ -846,7 +1092,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import api from '@/services/api';
@@ -855,22 +1101,19 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// Reactive customisations
-const logoUrl = ref('');
-const activeCompany = ref(null);
+// Accent colors
+const accentColor = ref('#4f46e5');
 
 // Reactive data
 const purchaseOrder = ref(null);
 const products = ref([]);
 const categories = ref([]);
-const selectedCategories = ref([]);
-const isCategoryDropdownOpen = ref(false);
 const suppliers = ref([]);
+const taxes = ref([]);
 const orderItems = ref([]);
 const selectedSupplier = ref(null);
+const useAdvanceBalance = ref(false);
 const isProductDropdownOpen = ref(false);
-const barcodeInput = ref('');
-const isBarcodeActive = ref(false);
 const productSearch = ref('');
 const supplierSearch = ref('');
 const supplierSearchResults = ref([]);
@@ -885,8 +1128,38 @@ const notifications = ref([]);
 // Current date time
 const currentDateTime = ref('');
 
+// Advance Search Modal State
+const isAdvanceSearchModalOpen = ref(false);
+const isTagDropdownOpen = ref(false);
+const isCategorySelectModalOpen = ref(false);
+const isTaxDropdownOpen = ref(false);
+
+const advanceFilters = ref({
+  query: '',
+  sku: '',
+  categories: [],
+  tags: [],
+  taxes: [],
+  minPrice: null,
+  maxPrice: null
+});
+
+// Combobox Search Queries & Options Navigation States
+const tagSearchQuery = ref('');
+const tagHighlightedIndex = ref(0);
+const tagInputRef = ref(null);
+
+const categorySearchQuery = ref('');
+const categoryHighlightedIndex = ref(0);
+const categoryInputRef = ref(null);
+
+const taxSearchQuery = ref('');
+const taxHighlightedIndex = ref(0);
+const taxInputRef = ref(null);
+
 const orderForm = ref({
   supplier_id: '',
+  po_number: '',
   order_date: '',
   expected_delivery_date: '',
   status: 'draft',
@@ -918,14 +1191,251 @@ const newSupplier = ref({
   is_active: true
 });
 
+// Advance Search Helpers
+const openAdvanceSearchModal = () => {
+  isAdvanceSearchModalOpen.value = true;
+};
+
+const closeAdvanceSearchModal = () => {
+  isAdvanceSearchModalOpen.value = false;
+  isTagDropdownOpen.value = false;
+  isCategorySelectModalOpen.value = false;
+  isTaxDropdownOpen.value = false;
+  tagSearchQuery.value = '';
+  categorySearchQuery.value = '';
+  taxSearchQuery.value = '';
+};
+
+const clearAdvanceFilters = () => {
+  advanceFilters.value = {
+    query: '',
+    sku: '',
+    categories: [],
+    tags: [],
+    taxes: [],
+    minPrice: null,
+    maxPrice: null
+  };
+  tagSearchQuery.value = '';
+  categorySearchQuery.value = '';
+  taxSearchQuery.value = '';
+};
+
+const hasActiveAdvanceFilters = computed(() => {
+  const f = advanceFilters.value;
+  return !!(
+    (f.query && f.query.trim()) ||
+    (f.sku && f.sku.trim()) ||
+    f.categories.length > 0 ||
+    f.tags.length > 0 ||
+    f.taxes.length > 0 ||
+    (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) ||
+    (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice))
+  );
+});
+
+const availableTags = computed(() => {
+  const set = new Set();
+  products.value.forEach(p => {
+    if (Array.isArray(p.tags)) {
+      p.tags.forEach(t => set.add(t));
+    }
+  });
+  if (set.size === 0) {
+    ['Apple', 'New', 'Featured', 'Best Seller', 'Sale', 'Trending', 'Clearance'].forEach(t => set.add(t));
+  }
+  return Array.from(set);
+});
+
+const filteredAvailableTags = computed(() => {
+  const query = tagSearchQuery.value.trim().toLowerCase();
+  if (!query) return availableTags.value;
+  return availableTags.value.filter(t => t.toLowerCase().includes(query));
+});
+
+const filteredAvailableCategories = computed(() => {
+  const query = categorySearchQuery.value.trim().toLowerCase();
+  if (!query) return categories.value;
+  return categories.value.filter(cat => cat.name && cat.name.toLowerCase().includes(query));
+});
+
+const filteredAvailableTaxes = computed(() => {
+  const query = taxSearchQuery.value.trim().toLowerCase();
+  if (!query) return taxes.value;
+  return taxes.value.filter(t => 
+    (t.name && t.name.toLowerCase().includes(query)) ||
+    String(t.value).includes(query)
+  );
+});
+
+const getCategoryNameById = (id) => {
+  const cat = categories.value.find(c => String(c.id) === String(id));
+  return cat ? cat.name : id;
+};
+
+const focusTagInput = () => {
+  if (tagInputRef.value) tagInputRef.value.focus();
+  openTagDropdown();
+};
+
+const openTagDropdown = () => {
+  isTagDropdownOpen.value = true;
+  isCategorySelectModalOpen.value = false;
+  isTaxDropdownOpen.value = false;
+  tagHighlightedIndex.value = 0;
+};
+
+const navigateTagOptions = (direction) => {
+  if (!isTagDropdownOpen.value) { openTagDropdown(); return; }
+  const count = filteredAvailableTags.value.length;
+  if (count === 0) return;
+  tagHighlightedIndex.value = (tagHighlightedIndex.value + direction + count) % count;
+};
+
+const selectHighlightedTag = () => {
+  if (!isTagDropdownOpen.value) return;
+  const count = filteredAvailableTags.value.length;
+  if (count > 0 && tagHighlightedIndex.value >= 0 && tagHighlightedIndex.value < count) {
+    const selectedTag = filteredAvailableTags.value[tagHighlightedIndex.value];
+    toggleAdvanceTag(selectedTag);
+    tagSearchQuery.value = '';
+  }
+};
+
+const handleTagDeleteKey = () => {
+  if (tagSearchQuery.value === '' && advanceFilters.value.tags.length > 0) {
+    advanceFilters.value.tags.pop();
+  }
+};
+
+const toggleAdvanceTag = (tag) => {
+  const idx = advanceFilters.value.tags.indexOf(tag);
+  if (idx > -1) {
+    advanceFilters.value.tags.splice(idx, 1);
+  } else {
+    advanceFilters.value.tags.push(tag);
+  }
+  tagSearchQuery.value = '';
+};
+
+const removeAdvanceTag = (tag) => {
+  const idx = advanceFilters.value.tags.indexOf(tag);
+  if (idx > -1) {
+    advanceFilters.value.tags.splice(idx, 1);
+  }
+};
+
+const focusCategoryInput = () => {
+  if (categoryInputRef.value) categoryInputRef.value.focus();
+  openCategoryDropdown();
+};
+
+const openCategoryDropdown = () => {
+  isCategorySelectModalOpen.value = true;
+  isTagDropdownOpen.value = false;
+  isTaxDropdownOpen.value = false;
+  categoryHighlightedIndex.value = 0;
+};
+
+const navigateCategoryOptions = (direction) => {
+  if (!isCategorySelectModalOpen.value) { openCategoryDropdown(); return; }
+  const count = filteredAvailableCategories.value.length;
+  if (count === 0) return;
+  categoryHighlightedIndex.value = (categoryHighlightedIndex.value + direction + count) % count;
+};
+
+const selectHighlightedCategory = () => {
+  if (!isCategorySelectModalOpen.value) return;
+  const count = filteredAvailableCategories.value.length;
+  if (count > 0 && categoryHighlightedIndex.value >= 0 && categoryHighlightedIndex.value < count) {
+    const selectedCat = filteredAvailableCategories.value[categoryHighlightedIndex.value];
+    toggleAdvanceCategory(selectedCat.id);
+    categorySearchQuery.value = '';
+  }
+};
+
+const handleCategoryDeleteKey = () => {
+  if (categorySearchQuery.value === '' && advanceFilters.value.categories.length > 0) {
+    advanceFilters.value.categories.pop();
+  }
+};
+
+const toggleAdvanceCategory = (catId) => {
+  const idx = advanceFilters.value.categories.indexOf(catId);
+  if (idx > -1) {
+    advanceFilters.value.categories.splice(idx, 1);
+  } else {
+    advanceFilters.value.categories.push(catId);
+  }
+  categorySearchQuery.value = '';
+};
+
+const removeAdvanceCategory = (catId) => {
+  const idx = advanceFilters.value.categories.indexOf(catId);
+  if (idx > -1) {
+    advanceFilters.value.categories.splice(idx, 1);
+  }
+};
+
+const advanceFilteredProducts = computed(() => {
+  if (!hasActiveAdvanceFilters.value) {
+    return [];
+  }
+
+  let list = products.value;
+  const f = advanceFilters.value;
+
+  if (f.query && f.query.trim()) {
+    const q = f.query.trim().toLowerCase();
+    list = list.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q))
+    );
+  }
+
+  if (f.sku && f.sku.trim()) {
+    const s = f.sku.trim().toLowerCase();
+    list = list.filter(p => p.sku && p.sku.toLowerCase().includes(s));
+  }
+
+  if (f.categories.length > 0) {
+    const selectedCatIds = f.categories.map(id => String(id));
+    list = list.filter(p => selectedCatIds.includes(String(p.category_id)));
+  }
+
+  if (f.tags.length > 0) {
+    list = list.filter(p => {
+      const pTags = Array.isArray(p.tags) ? p.tags : [];
+      return f.tags.some(t => pTags.includes(t));
+    });
+  }
+
+  if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) {
+    list = list.filter(p => (p.cost_price || p.selling_price || p.price || 0) >= parseFloat(f.minPrice));
+  }
+
+  if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) {
+    list = list.filter(p => (p.cost_price || p.selling_price || p.price || 0) <= parseFloat(f.maxPrice));
+  }
+
+  return list;
+});
+
+const addAdvanceProductToOrder = (product) => {
+  addToOrder(product);
+  showNotification(`Added "${product.name}" to order`, 'success');
+};
+
+const handleProductSearchEnter = () => {
+  if (displayedProducts.value.length > 0) {
+    selectProductFromDropdown(displayedProducts.value[0]);
+  }
+};
+
 // Computed properties
 const filteredProducts = computed(() => {
   let filtered = products.value;
-
-  if (selectedCategories.value.length > 0) {
-    const selectedIds = selectedCategories.value.map(id => String(id));
-    filtered = filtered.filter(product => selectedIds.includes(String(product.category_id)));
-  }
 
   if (productSearch.value) {
     const search = productSearch.value.toLowerCase();
@@ -964,6 +1474,20 @@ const dueAmount = computed(() => {
   return Math.max(0, total - paid);
 });
 
+const advanceToApply = computed(() => {
+  if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
+  const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
+  return Math.min(advanceBal, Math.max(0, orderTotal.value));
+});
+
+const effectiveDueAmount = computed(() => {
+  const baseDue = dueAmount.value;
+  if (useAdvanceBalance.value) {
+    return Math.max(0, baseDue - advanceToApply.value);
+  }
+  return baseDue;
+});
+
 const currentDate = computed(() => {
   return currentDateTime.value.split(',')[0] || '';
 });
@@ -980,37 +1504,51 @@ const updateDateTime = () => {
   currentDateTime.value = `${date}, ${time}`;
 };
 
+const getProductStock = (product) => {
+  if (!product) return 0;
+  return product.stock_quantity ?? product.quantity ?? 0;
+};
+
 const fetchPurchaseOrder = async () => {
   try {
     loading.value = true;
     const response = await api.get(`/purchase-orders/${route.params.id}`);
-    purchaseOrder.value = response.data;
+    purchaseOrder.value = response.data.data || response.data;
+
+    const po = purchaseOrder.value;
 
     // Populate form data
     orderForm.value = {
-      supplier_id: purchaseOrder.value.supplier_id,
-      order_date: purchaseOrder.value.order_date,
-      expected_delivery_date: purchaseOrder.value.expected_delivery_date || '',
-      status: purchaseOrder.value.status,
-      tax_amount: parseFloat(purchaseOrder.value.tax_amount) || 0,
-      shipping_cost: parseFloat(purchaseOrder.value.shipping_cost) || 0,
-      amount_paid: parseFloat(purchaseOrder.value.amount_paid) || 0,
-      notes: purchaseOrder.value.notes || '',
-      terms_and_conditions: purchaseOrder.value.terms_and_conditions || 'Standard purchase order conditions apply.'
+      supplier_id: po.supplier_id,
+      po_number: po.po_number,
+      order_date: po.order_date ? po.order_date.split('T')[0] : '',
+      expected_delivery_date: po.expected_delivery_date ? po.expected_delivery_date.split('T')[0] : '',
+      status: po.status,
+      tax_amount: parseFloat(po.tax_amount) || 0,
+      shipping_cost: parseFloat(po.shipping_cost) || 0,
+      amount_paid: parseFloat(po.amount_paid) || 0,
+      notes: po.notes || '',
+      terms_and_conditions: po.terms_and_conditions || 'Standard purchase order conditions apply.'
     };
 
     // Set selected supplier
-    selectedSupplier.value = purchaseOrder.value.supplier;
-    supplierSearch.value = purchaseOrder.value.supplier?.name || '';
+    if (po.supplier) {
+      selectedSupplier.value = po.supplier;
+      supplierSearch.value = po.supplier.name || '';
+    }
 
     // Populate order items
-    orderItems.value = purchaseOrder.value.purchase_order_items.map(item => ({
-      product: item.product,
-      product_id: item.product_id,
-      quantity_ordered: item.quantity_ordered,
-      unit_cost: parseFloat(item.unit_cost),
-      total_cost: parseFloat(item.total_cost)
-    }));
+    const rawItems = po.purchase_order_items || po.items || [];
+    if (Array.isArray(rawItems)) {
+      orderItems.value = rawItems.map(item => ({
+        product: item.product || { id: item.product_id, name: item.product_name || 'Product', sku: item.product_sku || '' },
+        product_id: item.product_id,
+        quantity_ordered: parseFloat(item.quantity_ordered) || 1,
+        unit_cost: parseFloat(item.unit_cost) || 0,
+        total_cost: parseFloat(item.total_cost) || (parseFloat(item.quantity_ordered || 1) * parseFloat(item.unit_cost || 0)),
+        notes: item.notes || ''
+      }));
+    }
 
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load purchase order';
@@ -1064,24 +1602,6 @@ const selectProductFromDropdown = (product) => {
   isProductDropdownOpen.value = false;
 };
 
-const addByBarcode = () => {
-  const code = barcodeInput.value.trim();
-  if (!code) return;
-
-  const matchedProduct = products.value.find(p => 
-    (p.barcode && p.barcode.toLowerCase() === code.toLowerCase()) || 
-    (p.sku && p.sku.toLowerCase() === code.toLowerCase())
-  );
-
-  if (matchedProduct) {
-    addToOrder(matchedProduct);
-    barcodeInput.value = '';
-    showNotification(`Added "${matchedProduct.name}" to order`, 'success');
-  } else {
-    showNotification(`No product found with barcode/SKU: ${code}`, 'error');
-  }
-};
-
 const addToOrder = (product) => {
   const existingItem = orderItems.value.find(item => item.product.id === product.id);
 
@@ -1094,7 +1614,8 @@ const addToOrder = (product) => {
       product_id: product.id,
       quantity_ordered: 1,
       unit_cost: parseFloat(product.cost_price || product.selling_price || 0),
-      total_cost: parseFloat(product.cost_price || product.selling_price || 0)
+      total_cost: parseFloat(product.cost_price || product.selling_price || 0),
+      notes: ''
     });
   }
 };
@@ -1115,6 +1636,13 @@ const selectSupplier = (supplier) => {
   orderForm.value.supplier_id = supplier.id;
   supplierSearch.value = supplier.name;
   supplierSearchResults.value = [];
+  useAdvanceBalance.value = false;
+  // Fetch fresh advance_balance from API
+  api.get(`/suppliers/${supplier.id}`).then(res => {
+    if (res.data && res.data.advance_balance !== undefined) {
+      selectedSupplier.value = { ...selectedSupplier.value, advance_balance: res.data.advance_balance };
+    }
+  }).catch(() => {});
 };
 
 const clearSupplier = () => {
@@ -1122,6 +1650,7 @@ const clearSupplier = () => {
   orderForm.value.supplier_id = '';
   supplierSearch.value = '';
   supplierSearchResults.value = [];
+  useAdvanceBalance.value = false;
 };
 
 const createSupplier = async () => {
@@ -1186,19 +1715,22 @@ const updateOrder = async () => {
   try {
     const orderData = {
       supplier_id: orderForm.value.supplier_id,
+      po_number: orderForm.value.po_number || purchaseOrder.value?.po_number || null,
       order_date: orderForm.value.order_date,
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
       status: orderForm.value.status,
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
       amount_paid: orderForm.value.amount_paid || 0,
+      use_advance_balance: useAdvanceBalance.value,
+      advance_applied: advanceToApply.value,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       items: orderItems.value.map(item => ({
         product_id: item.product_id,
         quantity_ordered: item.quantity_ordered,
         unit_cost: item.unit_cost,
-        notes: null
+        notes: item.notes || null
       }))
     };
 
@@ -1261,60 +1793,15 @@ const loadCategories = async () => {
   }
 };
 
-const clearSelectedCategories = () => {
-  selectedCategories.value = [];
-};
-
-const isCategorySelected = (categoryId) => {
-  return selectedCategories.value.map(id => String(id)).includes(String(categoryId));
-};
-
-const toggleCategorySelection = (categoryId) => {
-  const idStr = String(categoryId);
-  const index = selectedCategories.value.findIndex(id => String(id) === idStr);
-  if (index > -1) {
-    selectedCategories.value.splice(index, 1);
-  } else {
-    selectedCategories.value.push(categoryId);
-  }
-};
-
 const handleClickOutside = (event) => {
   const productContainer = document.getElementById('product-search-container');
   if (productContainer && !productContainer.contains(event.target)) {
     isProductDropdownOpen.value = false;
   }
 
-  const categoryContainer = document.getElementById('category-dropdown-container');
-  if (categoryContainer && !categoryContainer.contains(event.target)) {
-    isCategoryDropdownOpen.value = false;
-  }
-
   const supplierContainer = document.getElementById('supplier-search-container');
   if (supplierContainer && !supplierContainer.contains(event.target)) {
     supplierSearchResults.value = [];
-  }
-};
-
-const toggleBarcodeScanner = async () => {
-  if (!isBarcodeActive.value) {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop());
-        isBarcodeActive.value = true;
-        showNotification('Barcode scanner active (Camera permission granted)', 'success');
-      } else {
-        isBarcodeActive.value = true;
-        showNotification('Barcode scanner active (System permission auto-granted)', 'success');
-      }
-    } catch (err) {
-      showNotification('Permission denied. Cannot activate barcode scanner without camera access.', 'error');
-      isBarcodeActive.value = false;
-    }
-  } else {
-    isBarcodeActive.value = false;
-    showNotification('Barcode scanner deactivated', 'info');
   }
 };
 
@@ -1331,20 +1818,6 @@ function debounce(func, wait) {
   };
 }
 
-const fetchActiveCompany = async () => {
-  try {
-    const response = await api.get('/companies/active');
-    if (response.data && response.data.company) {
-      activeCompany.value = response.data.company;
-      if (activeCompany.value.company_logo) {
-        logoUrl.value = `/storage/${activeCompany.value.company_logo}`;
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching active company:', error);
-  }
-};
-
 // Lifecycle
 onMounted(() => {
   updateDateTime();
@@ -1353,7 +1826,6 @@ onMounted(() => {
   loadProducts();
   loadCategories();
   loadSuppliers();
-  fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);
 });
 
