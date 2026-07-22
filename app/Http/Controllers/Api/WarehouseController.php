@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Warehouse;
 use App\Models\Inventory;
+use App\Models\Counter;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -39,7 +40,7 @@ class WarehouseController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $warehouses = $query->orderBy('name')->get();
+        $warehouses = $query->with('counters')->orderBy('name')->get();
 
         return response()->json($warehouses);
     }
@@ -60,11 +61,20 @@ class WarehouseController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
+            'code' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:255',
             'is_default' => 'boolean',
             'is_active' => 'boolean',
+            'counters' => 'nullable|array',
+            'counters.*.name' => 'required|string|max:255',
+            'counters.*.counter_number' => 'nullable|string|max:100',
+            'counters.*.status' => 'nullable|string|in:active,inactive',
         ]);
 
         if ($validator->fails()) {
@@ -95,7 +105,23 @@ class WarehouseController extends Controller
             $warehouse->is_default = $isDefault;
             $warehouse->save();
 
+            if ($request->has('counters') && is_array($request->counters)) {
+                foreach ($request->counters as $counterData) {
+                    if (!empty($counterData['name'])) {
+                        Counter::create([
+                            'company_id' => $companyId,
+                            'warehouse_id' => $warehouse->id,
+                            'name' => $counterData['name'],
+                            'counter_number' => $counterData['counter_number'] ?? null,
+                            'status' => $counterData['status'] ?? 'active',
+                        ]);
+                    }
+                }
+            }
+
             \Illuminate\Support\Facades\DB::commit();
+
+            $warehouse->load('counters');
 
             return response()->json([
                 'message' => 'Warehouse created successfully',
@@ -112,11 +138,14 @@ class WarehouseController extends Controller
      */
     public function show(Warehouse $warehouse): JsonResponse
     {
-        $warehouse->load(['inventories' => function ($query) {
-            $query->whereHas('product', function ($pQuery) {
-                $pQuery->where('status', '!=', 'draft');
-            })->with(['product.category', 'variation']);
-        }]);
+        $warehouse->load([
+            'counters',
+            'inventories' => function ($query) {
+                $query->whereHas('product', function ($pQuery) {
+                    $pQuery->where('status', '!=', 'draft');
+                })->with(['product.category', 'variation']);
+            }
+        ]);
 
         return response()->json($warehouse);
     }
@@ -137,11 +166,20 @@ class WarehouseController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
+            'code' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:255',
             'is_default' => 'boolean',
             'is_active' => 'boolean',
+            'counters' => 'nullable|array',
+            'counters.*.name' => 'required|string|max:255',
+            'counters.*.counter_number' => 'nullable|string|max:100',
+            'counters.*.status' => 'nullable|string|in:active,inactive',
         ]);
 
         if ($validator->fails()) {
@@ -172,7 +210,32 @@ class WarehouseController extends Controller
 
             $warehouse->update(array_merge($request->all(), ['is_default' => $isDefault]));
 
+            if ($request->has('counters') && is_array($request->counters)) {
+                $keepIds = [];
+                foreach ($request->counters as $counterData) {
+                    if (!empty($counterData['name'])) {
+                        $counter = null;
+                        if (!empty($counterData['id'])) {
+                            $counter = Counter::where('warehouse_id', $warehouse->id)->find($counterData['id']);
+                        }
+                        if (!$counter) {
+                            $counter = new Counter();
+                            $counter->warehouse_id = $warehouse->id;
+                            $counter->company_id = $companyId;
+                        }
+                        $counter->name = $counterData['name'];
+                        $counter->counter_number = $counterData['counter_number'] ?? null;
+                        $counter->status = $counterData['status'] ?? 'active';
+                        $counter->save();
+                        $keepIds[] = $counter->id;
+                    }
+                }
+                Counter::where('warehouse_id', $warehouse->id)->whereNotIn('id', $keepIds)->delete();
+            }
+
             \Illuminate\Support\Facades\DB::commit();
+
+            $warehouse->load('counters');
 
             return response()->json([
                 'message' => 'Warehouse updated successfully',

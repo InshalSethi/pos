@@ -161,25 +161,66 @@
             </div>
 
             <!-- Parameters Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-[#2E2E2E] rounded-2xl">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block tracking-wider dark:text-slate-400">Facility Address</span>
-                <span class="text-xs text-slate-700 dark:text-slate-300 font-bold block mt-1.5">
-                  {{ selectedWarehouse.address || 'Not Provided' }}
-                </span>
-                <span class="text-[10px] text-gray-400 block mt-0.5 dark:text-slate-400">
-                  {{ selectedWarehouse.city }} {{ selectedWarehouse.state }} {{ selectedWarehouse.zip_code }}
-                </span>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-[#2E2E2E] rounded-2xl flex flex-col justify-between">
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase block tracking-wider dark:text-slate-400">Facility Address</span>
+                  <span class="text-xs text-slate-700 dark:text-slate-300 font-bold block mt-1.5">
+                    {{ selectedWarehouse.address || 'Not Provided' }}
+                  </span>
+                  <span class="text-[10px] text-gray-400 block mt-0.5 dark:text-slate-400">
+                    {{ selectedWarehouse.city }} {{ selectedWarehouse.state }} {{ selectedWarehouse.zip_code }}
+                  </span>
+                </div>
               </div>
 
-              <div class="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-[#2E2E2E] rounded-2xl">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block tracking-wider dark:text-slate-400">Operations Contact</span>
-                <span class="text-xs text-slate-700 dark:text-slate-300 font-bold block mt-1.5">
-                  Phone: {{ selectedWarehouse.phone || 'None' }}
-                </span>
-                <span class="text-[10px] text-gray-400 block mt-0.5 dark:text-slate-400">
-                  Email: {{ selectedWarehouse.email || 'None' }}
-                </span>
+              <div class="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-[#2E2E2E] rounded-2xl flex flex-col justify-between">
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase block tracking-wider dark:text-slate-400">Operations Contact</span>
+                  <span class="text-xs text-slate-700 dark:text-slate-300 font-bold block mt-1.5">
+                    Phone: {{ selectedWarehouse.phone || 'None' }}
+                  </span>
+                  <span class="text-[10px] text-gray-400 block mt-0.5 dark:text-slate-400">
+                    Email: {{ selectedWarehouse.email || 'None' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Assigned / Sales Counters Card -->
+              <div class="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-[#2E2E2E] rounded-2xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase block tracking-wider dark:text-slate-400">Sales Counters</span>
+                    <span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-full">
+                      {{ (selectedWarehouse.counters || []).filter(c => c.status === 'active').length }} Active
+                    </span>
+                  </div>
+                  
+                  <div v-if="selectedWarehouse.counters && selectedWarehouse.counters.length > 0" class="mt-2.5 space-y-1.5 max-h-[114px] overflow-y-auto custom-thin-scroll pr-1">
+                    <div
+                      v-for="counter in selectedWarehouse.counters"
+                      :key="counter.id"
+                      class="flex items-center justify-between p-2 bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-[#2E2E2E] rounded-xl text-xs"
+                    >
+                      <div class="flex items-center gap-1.5 truncate">
+                        <span class="text-xs">🖥️</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200 truncate">{{ counter.name }}</span>
+                        <span v-if="counter.counter_number" class="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-[#252525] text-slate-500 rounded font-semibold shrink-0">
+                          {{ counter.counter_number }}
+                        </span>
+                      </div>
+                      <span
+                        class="px-1.5 py-0.5 text-[8px] font-black rounded uppercase tracking-wider shrink-0"
+                        :class="counter.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600' : 'bg-slate-100 dark:bg-[#252525] text-slate-400'"
+                      >
+                        {{ counter.status || 'active' }}
+                      </span>
+                    </div>
+                  </div>
+                  <div v-else class="mt-3 text-[10px] text-gray-400 dark:text-slate-400 italic">
+                    No counters configured for this facility.
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -399,6 +440,127 @@
               </div>
             </div>
 
+            <!-- Sales Counters Dynamic Inputs -->
+            <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-[#2E2E2E]">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Assigned Sales Counters</h3>
+                  <p class="text-[9px] text-gray-400 dark:text-slate-400">Configure POS billing counters assigned to this facility.</p>
+                </div>
+                <button
+                  type="button"
+                  @click="addCounterField"
+                  class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-extrabold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                  Add Counter
+                </button>
+              </div>
+
+              <div v-if="warehouseForm.counters && warehouseForm.counters.length > 0" class="space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1 pt-1" @click="openCounterDropdownIndex = null">
+                <div
+                  v-for="(counter, idx) in warehouseForm.counters"
+                  :key="idx"
+                  class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-zinc-950 border border-slate-200/70 dark:border-[#2E2E2E] rounded-xl relative"
+                >
+                  <div class="flex-1">
+                    <input
+                      v-model="counter.name"
+                      type="text"
+                      placeholder="Counter Name (e.g. Main Counter)"
+                      required
+                      class="w-full px-2.5 py-1 text-xs bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+                    />
+                  </div>
+                  <div class="w-24">
+                    <input
+                      v-model="counter.counter_number"
+                      type="text"
+                      placeholder="Code (C-01)"
+                      class="w-full px-2.5 py-1 text-xs bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+                    />
+                  </div>
+                  
+                  <!-- Floating Premium Status Dropdown (Teleported to Body to avoid container clipping) -->
+                  <div class="relative w-28 shrink-0">
+                    <button
+                      type="button"
+                      @click.stop="toggleCounterStatusDropdown(idx, $event)"
+                      class="w-full px-2.5 py-1 text-xs bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] hover:border-indigo-500/60 dark:hover:border-indigo-500/60 rounded-lg outline-none flex items-center justify-between text-slate-800 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+                    >
+                      <div class="flex items-center gap-1.5 truncate">
+                        <span class="w-2 h-2 rounded-full shrink-0" :class="counter.status === 'active' ? 'bg-emerald-500 shadow-xs shadow-emerald-500/50' : 'bg-slate-400'"></span>
+                        <span class="font-medium capitalize text-[11px]">{{ counter.status || 'active' }}</span>
+                      </div>
+                      <svg
+                        class="w-3 h-3 text-slate-400 transition-transform duration-200"
+                        :class="{ 'rotate-180': openCounterDropdownIndex === idx }"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    <!-- Teleported Menu escaping parent overflow completely -->
+                    <Teleport to="body">
+                      <div
+                        v-if="openCounterDropdownIndex === idx"
+                        class="fixed inset-0 z-[9998]"
+                        @click.stop="openCounterDropdownIndex = null"
+                      ></div>
+
+                      <div
+                        v-if="openCounterDropdownIndex === idx"
+                        :style="dropdownPosStyle"
+                        class="fixed bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl p-1 z-[9999] animate-in fade-in zoom-in-95 duration-150"
+                        @click.stop
+                      >
+                        <button
+                          type="button"
+                          @click.stop="setCounterStatus(idx, 'active')"
+                          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left"
+                          :class="counter.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-[#252525] text-slate-700 dark:text-slate-300'"
+                        >
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Active</span>
+                          </div>
+                          <svg v-if="counter.status === 'active'" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+
+                        <button
+                          type="button"
+                          @click.stop="setCounterStatus(idx, 'inactive')"
+                          class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left mt-0.5"
+                          :class="counter.status === 'inactive' ? 'bg-slate-100 dark:bg-[#252525] text-slate-900 dark:text-slate-100 font-bold' : 'hover:bg-slate-50 dark:hover:bg-[#252525] text-slate-700 dark:text-slate-300'"
+                        >
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            <span>Inactive</span>
+                          </div>
+                          <svg v-if="counter.status === 'inactive'" class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                      </div>
+                    </Teleport>
+                  </div>
+
+                  <button
+                    type="button"
+                    @click="removeCounterField(idx)"
+                    class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-all cursor-pointer shrink-0"
+                    title="Remove counter"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div v-else class="py-2.5 px-4 text-center bg-slate-50 dark:bg-zinc-950 border border-dashed border-slate-200 dark:border-[#2E2E2E] rounded-xl">
+                <p class="text-[10px] text-gray-400 dark:text-slate-400">No counters configured. Click "Add Counter" to assign billing counters.</p>
+              </div>
+            </div>
+
             <!-- Toggles primary & active -->
             <div class="space-y-2.5 pt-2 border-t border-slate-100 dark:border-[#2E2E2E]">
               <!-- Primary toggle -->
@@ -481,6 +643,45 @@ const showModal = ref(false);
 const editingWarehouse = ref(null);
 const saving = ref(false);
 const toast = ref(null);
+const openCounterDropdownIndex = ref(null);
+const dropdownPosStyle = ref({});
+
+const toggleCounterStatusDropdown = (index, event) => {
+  if (openCounterDropdownIndex.value === index) {
+    openCounterDropdownIndex.value = null;
+    return;
+  }
+  openCounterDropdownIndex.value = index;
+
+  if (event && event.currentTarget) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dropdownHeight = 68;
+    const spaceAbove = rect.top;
+
+    if (spaceAbove > dropdownHeight + 10) {
+      // Position directly above button (no gap, matching width and left alignment)
+      dropdownPosStyle.value = {
+        top: `${rect.top - dropdownHeight - 2}px`,
+        left: `${rect.left}px`,
+        width: `${rect.width}px`
+      };
+    } else {
+      // Position directly below button
+      dropdownPosStyle.value = {
+        top: `${rect.bottom + 2}px`,
+        left: `${rect.left}px`,
+        width: `${rect.width}px`
+      };
+    }
+  }
+};
+
+const setCounterStatus = (index, status) => {
+  if (warehouseForm.value.counters && warehouseForm.value.counters[index]) {
+    warehouseForm.value.counters[index].status = status;
+  }
+  openCounterDropdownIndex.value = null;
+};
 
 const warehouseForm = ref({
   name: '',
@@ -493,8 +694,28 @@ const warehouseForm = ref({
   phone: '',
   email: '',
   is_primary: false,
-  is_active: true
+  is_active: true,
+  counters: []
 });
+
+const addCounterField = () => {
+  const nextNum = (warehouseForm.value.counters ? warehouseForm.value.counters.length : 0) + 1;
+  if (!warehouseForm.value.counters) {
+    warehouseForm.value.counters = [];
+  }
+  warehouseForm.value.counters.push({
+    id: null,
+    name: `Counter ${nextNum}`,
+    counter_number: `C-0${nextNum}`,
+    status: 'active'
+  });
+};
+
+const removeCounterField = (index) => {
+  if (warehouseForm.value.counters) {
+    warehouseForm.value.counters.splice(index, 1);
+  }
+};
 
 // Load directory list
 const fetchWarehouses = async () => {
@@ -509,6 +730,14 @@ const fetchWarehouses = async () => {
       last_page: 1,
       total: warehouses.value.length
     };
+    if (warehouses.value.length > 0 && !selectedWarehouse.value) {
+      selectWarehouse(warehouses.value[0]);
+    } else if (selectedWarehouse.value) {
+      const match = warehouses.value.find(w => w.id === selectedWarehouse.value.id);
+      if (match) {
+        selectedWarehouse.value = match;
+      }
+    }
   } catch (error) {
     showToast('error', 'Failed to load warehouses locations.');
   }
@@ -530,7 +759,12 @@ const debouncedFetch = () => {
 
 // Select a warehouse and fetch its inventory list
 const selectWarehouse = async (warehouse) => {
-  selectedWarehouse.value = warehouse;
+  try {
+    const res = await axios.get(`/api/warehouses/${warehouse.id}`);
+    selectedWarehouse.value = res.data;
+  } catch (e) {
+    selectedWarehouse.value = warehouse;
+  }
   inventoryPage.value = 1;
   inventorySearch.value = '';
   await fetchWarehouseInventory();
@@ -587,7 +821,10 @@ const openCreateModal = () => {
     phone: '',
     email: '',
     is_primary: false,
-    is_active: true
+    is_active: true,
+    counters: [
+      { id: null, name: 'Counter 1', counter_number: 'C-01', status: 'active' }
+    ]
   };
   showModal.value = true;
 };
@@ -596,16 +833,22 @@ const openEditModal = (warehouse) => {
   editingWarehouse.value = warehouse;
   warehouseForm.value = {
     name: warehouse.name,
-    code: warehouse.code,
-    address: warehouse.address,
-    city: warehouse.city,
-    state: warehouse.state,
-    zip_code: warehouse.zip_code,
-    country: warehouse.country,
-    phone: warehouse.phone,
-    email: warehouse.email,
+    code: warehouse.code || '',
+    address: warehouse.address || '',
+    city: warehouse.city || '',
+    state: warehouse.state || '',
+    zip_code: warehouse.zip_code || '',
+    country: warehouse.country || '',
+    phone: warehouse.phone || '',
+    email: warehouse.email || '',
     is_primary: !!warehouse.is_primary,
-    is_active: !!warehouse.is_active
+    is_active: !!warehouse.is_active,
+    counters: (warehouse.counters || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      counter_number: c.counter_number || '',
+      status: c.status || 'active'
+    }))
   };
   showModal.value = true;
 };
@@ -681,5 +924,22 @@ onMounted(() => {
 }
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+.custom-thin-scroll::-webkit-scrollbar {
+  width: 2px !important;
+}
+.custom-thin-scroll::-webkit-scrollbar-button {
+  display: none !important;
+}
+.custom-thin-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.custom-thin-scroll::-webkit-scrollbar-thumb {
+  background: #4b5563 !important;
+  border-radius: 9999px !important;
+}
+.custom-thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6b7280 !important;
 }
 </style>

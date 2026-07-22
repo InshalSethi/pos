@@ -17,9 +17,14 @@ class Warehouse extends Model
     protected $fillable = [
         'company_id',
         'name',
+        'code',
         'email',
         'phone',
         'address',
+        'city',
+        'state',
+        'zip_code',
+        'country',
         'is_default',
         'is_active',
         'is_saleable',
@@ -34,5 +39,10 @@ class Warehouse extends Model
     public function inventories(): HasMany
     {
         return $this->hasMany(Inventory::class);
+    }
+
+    public function counters(): HasMany
+    {
+        return $this->hasMany(Counter::class);
     }
 }
