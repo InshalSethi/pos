@@ -287,14 +287,21 @@
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Taxes (Manual)</td>
                   <td colspan="2" class="py-1.5 px-2 text-right">
                     <div class="flex items-center justify-end space-x-1">
-                      <span class="text-slate-400 dark:text-zinc-500 text-[11px] font-mono">+{{ currencySymbol }}</span>
+                      <button
+                        type="button"
+                        @click="invoiceForm.tax_type = invoiceForm.tax_type === 'fixed' ? 'percentage' : 'fixed'"
+                        class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                        :title="invoiceForm.tax_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                      >
+                        {{ invoiceForm.tax_type === 'fixed' ? currencySymbol : '%' }}
+                      </button>
                       <input
                         v-model.number="invoiceForm.tax_amount"
                         type="number"
                         step="0.01"
                         min="0"
                         class="w-24 px-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        placeholder="0.00"
+                        :placeholder="invoiceForm.tax_type === 'fixed' ? '0.00' : '0%'"
                       />
                     </div>
                   </td>
@@ -306,14 +313,21 @@
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Discount (Manual)</td>
                   <td colspan="2" class="py-1.5 px-2 text-right">
                     <div class="flex items-center justify-end space-x-1">
-                      <span class="text-slate-400 dark:text-zinc-500 text-[11px] font-mono">-{{ currencySymbol }}</span>
+                      <button
+                        type="button"
+                        @click="invoiceForm.discount_type = invoiceForm.discount_type === 'fixed' ? 'percentage' : 'fixed'"
+                        class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                        :title="invoiceForm.discount_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                      >
+                        {{ invoiceForm.discount_type === 'fixed' ? currencySymbol : '%' }}
+                      </button>
                       <input
                         v-model.number="invoiceForm.discount_amount"
                         type="number"
                         step="0.01"
                         min="0"
                         class="w-24 px-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        placeholder="0.00"
+                        :placeholder="invoiceForm.discount_type === 'fixed' ? '0.00' : '0%'"
                       />
                     </div>
                   </td>
@@ -588,11 +602,17 @@
               </div>
               <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Taxes (Manual):</span>
-                <span class="font-bold text-slate-800 dark:text-zinc-200">+{{ currencySymbol }}{{ (invoiceForm.tax_amount || 0).toFixed(2) }}</span>
+                <span class="font-bold text-slate-800 dark:text-zinc-200">
+                  +{{ currencySymbol }}{{ calculatedManualTax.toFixed(2) }}
+                  <span v-if="invoiceForm.tax_type === 'percentage'" class="text-[10px] text-indigo-500 dark:text-indigo-400 font-extrabold">({{ invoiceForm.tax_amount || 0 }}%)</span>
+                </span>
               </div>
               <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Discount (Manual):</span>
-                <span class="font-bold text-slate-800 dark:text-zinc-200">-{{ currencySymbol }}{{ (invoiceForm.discount_amount || 0).toFixed(2) }}</span>
+                <span class="font-bold text-slate-800 dark:text-zinc-200">
+                  -{{ currencySymbol }}{{ calculatedManualDiscount.toFixed(2) }}
+                  <span v-if="invoiceForm.discount_type === 'percentage'" class="text-[10px] text-indigo-500 dark:text-indigo-400 font-extrabold">({{ invoiceForm.discount_amount || 0 }}%)</span>
+                </span>
               </div>
               <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100 border-t border-slate-200 dark:border-zinc-800 pt-2.5 mt-1">
                 <span>Grand Total:</span>
@@ -1687,7 +1707,10 @@ const invoiceForm = ref({
   order_number: '',
   payment_method: 'cash',
   status: 'completed',
+  tax_type: 'fixed',
   tax_amount: 0,
+  discount_type: 'fixed',
+  discount_amount: 0,
   paid_amount: 0,
   notes: '',
   footer: 'Thank you for your business!'
@@ -1761,11 +1784,25 @@ const invoiceSubtotal = computed(() => {
   }, 0);
 });
 
+const calculatedManualTax = computed(() => {
+  const taxVal = parseFloat(invoiceForm.value.tax_amount) || 0;
+  if (invoiceForm.value.tax_type === 'percentage') {
+    return (invoiceSubtotal.value * taxVal) / 100;
+  }
+  return taxVal;
+});
+
+const calculatedManualDiscount = computed(() => {
+  const disVal = parseFloat(invoiceForm.value.discount_amount) || 0;
+  if (invoiceForm.value.discount_type === 'percentage') {
+    return (invoiceSubtotal.value * disVal) / 100;
+  }
+  return disVal;
+});
+
 const grandTotal = computed(() => {
   const sub = invoiceSubtotal.value || 0;
-  const manualTaxVal = parseFloat(invoiceForm.value.tax_amount) || 0;
-  const manualDisVal = parseFloat(invoiceForm.value.discount_amount) || 0;
-  return Math.max(0, sub + manualTaxVal - manualDisVal);
+  return Math.max(0, sub + calculatedManualTax.value - calculatedManualDiscount.value);
 });
 
 const invoiceTotal = computed(() => {

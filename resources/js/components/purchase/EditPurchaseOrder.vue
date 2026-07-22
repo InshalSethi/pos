@@ -232,14 +232,21 @@
                     <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Taxes (Manual)</td>
                     <td class="py-1.5 px-2 text-right">
                       <div class="flex items-center justify-end space-x-1">
-                        <span class="text-slate-400 dark:text-zinc-500 text-[11px] font-mono">+{{ currencySymbol }}</span>
+                        <button
+                          type="button"
+                          @click="orderForm.tax_type = orderForm.tax_type === 'fixed' ? 'percentage' : 'fixed'"
+                          class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                          :title="orderForm.tax_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                        >
+                          {{ orderForm.tax_type === 'fixed' ? currencySymbol : '%' }}
+                        </button>
                         <input
                           v-model.number="orderForm.tax_amount"
                           type="number"
                           step="0.01"
                           min="0"
                           class="w-24 px-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          placeholder="0.00"
+                          :placeholder="orderForm.tax_type === 'fixed' ? '0.00' : '0%'"
                         />
                       </div>
                     </td>
@@ -251,14 +258,21 @@
                     <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Discount (Manual)</td>
                     <td class="py-1.5 px-2 text-right">
                       <div class="flex items-center justify-end space-x-1">
-                        <span class="text-slate-400 dark:text-zinc-500 text-[11px] font-mono">-{{ currencySymbol }}</span>
+                        <button
+                          type="button"
+                          @click="orderForm.discount_type = orderForm.discount_type === 'fixed' ? 'percentage' : 'fixed'"
+                          class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
+                          :title="orderForm.discount_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
+                        >
+                          {{ orderForm.discount_type === 'fixed' ? currencySymbol : '%' }}
+                        </button>
                         <input
                           v-model.number="orderForm.discount_amount"
                           type="number"
                           step="0.01"
                           min="0"
                           class="w-24 px-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          placeholder="0.00"
+                          :placeholder="orderForm.discount_type === 'fixed' ? '0.00' : '0%'"
                         />
                       </div>
                     </td>
@@ -475,11 +489,17 @@
                 </div>
                 <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                   <span>Taxes (Manual):</span>
-                  <span class="font-bold text-slate-800 dark:text-zinc-200">+{{ currencySymbol }}{{ (orderForm.tax_amount || 0).toFixed(2) }}</span>
+                  <span class="font-bold text-slate-800 dark:text-zinc-200">
+                    +{{ currencySymbol }}{{ calculatedManualTax.toFixed(2) }}
+                    <span v-if="orderForm.tax_type === 'percentage'" class="text-[10px] text-indigo-500 dark:text-indigo-400 font-extrabold">({{ orderForm.tax_amount || 0 }}%)</span>
+                  </span>
                 </div>
                 <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                   <span>Discount (Manual):</span>
-                  <span class="font-bold text-slate-800 dark:text-zinc-200">-{{ currencySymbol }}{{ (orderForm.discount_amount || 0).toFixed(2) }}</span>
+                  <span class="font-bold text-slate-800 dark:text-zinc-200">
+                    -{{ currencySymbol }}{{ calculatedManualDiscount.toFixed(2) }}
+                    <span v-if="orderForm.discount_type === 'percentage'" class="text-[10px] text-indigo-500 dark:text-indigo-400 font-extrabold">({{ orderForm.discount_amount || 0 }}%)</span>
+                  </span>
                 </div>
                 <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100 border-t border-slate-200 dark:border-zinc-800 pt-2.5 mt-1">
                   <span>Grand Total:</span>
@@ -1218,7 +1238,9 @@ const orderForm = ref({
   expected_delivery_date: '',
   status: 'draft',
   payment_method: 'cash',
+  tax_type: 'fixed',
   tax_amount: 0,
+  discount_type: 'fixed',
   discount_amount: 0,
   shipping_cost: 0,
   amount_paid: 0,
@@ -1517,12 +1539,26 @@ const orderSubtotal = computed(() => {
   }, 0);
 });
 
+const calculatedManualTax = computed(() => {
+  const taxVal = parseFloat(orderForm.value.tax_amount) || 0;
+  if (orderForm.value.tax_type === 'percentage') {
+    return (orderSubtotal.value * taxVal) / 100;
+  }
+  return taxVal;
+});
+
+const calculatedManualDiscount = computed(() => {
+  const disVal = parseFloat(orderForm.value.discount_amount) || 0;
+  if (orderForm.value.discount_type === 'percentage') {
+    return (orderSubtotal.value * disVal) / 100;
+  }
+  return disVal;
+});
+
 const grandTotal = computed(() => {
   const sub = orderSubtotal.value || 0;
-  const manualTaxVal = parseFloat(orderForm.value.tax_amount) || 0;
-  const manualDisVal = parseFloat(orderForm.value.discount_amount) || 0;
   const shipping = parseFloat(orderForm.value.shipping_cost) || 0;
-  return Math.max(0, sub + manualTaxVal + shipping - manualDisVal);
+  return Math.max(0, sub + calculatedManualTax.value + shipping - calculatedManualDiscount.value);
 });
 
 const orderTotal = computed(() => {
