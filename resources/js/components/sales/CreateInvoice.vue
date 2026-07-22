@@ -1041,7 +1041,15 @@
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800/60 text-slate-200">
-                    <tr v-if="advanceFilteredProducts.length === 0">
+                    <tr v-if="!hasActiveAdvanceFilters">
+                      <td colspan="7" class="py-12 text-center text-slate-500 italic">
+                        <svg class="mx-auto h-7 w-7 text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <span>Start typing in search box or select a filter criteria above to search items...</span>
+                      </td>
+                    </tr>
+                    <tr v-else-if="advanceFilteredProducts.length === 0">
                       <td colspan="7" class="py-10 text-center text-slate-500 italic">
                         No products match the selected advance search criteria.
                       </td>
@@ -1073,9 +1081,12 @@
                   </tbody>
                 </table>
               </div>
-              <div class="px-4 py-2 bg-[#181d23] border-t border-slate-800 text-[10px] text-slate-400 font-semibold flex items-center justify-between">
+              <div v-if="hasActiveAdvanceFilters" class="px-4 py-2 bg-[#181d23] border-t border-slate-800 text-[10px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>Showing {{ Math.min(advanceFilteredProducts.length, 100) }} of {{ advanceFilteredProducts.length }} items</span>
                 <span class="text-slate-500">Click "+ Add" to append items directly to invoice</span>
+              </div>
+              <div v-else class="px-4 py-2 bg-[#181d23] border-t border-slate-800 text-[10px] text-slate-500 font-semibold text-center">
+                Enter search query or select any filter above to view items
               </div>
             </div>
 
@@ -1198,7 +1209,15 @@ const clearAdvanceFilters = () => {
 
 const hasActiveAdvanceFilters = computed(() => {
   const f = advanceFilters.value;
-  return !!(f.query || f.sku || f.categories.length > 0 || f.tags.length > 0 || f.taxes.length > 0 || f.minPrice || f.maxPrice);
+  return !!(
+    (f.query && f.query.trim()) ||
+    (f.sku && f.sku.trim()) ||
+    f.categories.length > 0 ||
+    f.tags.length > 0 ||
+    f.taxes.length > 0 ||
+    (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) ||
+    (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice))
+  );
 });
 
 const availableTags = computed(() => {
@@ -1291,12 +1310,16 @@ const removeAdvanceTaxItem = (taxId) => {
 };
 
 const advanceFilteredProducts = computed(() => {
+  if (!hasActiveAdvanceFilters.value) {
+    return [];
+  }
+
   let list = products.value;
 
   const f = advanceFilters.value;
 
-  if (f.query) {
-    const q = f.query.toLowerCase();
+  if (f.query && f.query.trim()) {
+    const q = f.query.trim().toLowerCase();
     list = list.filter(p =>
       (p.name && p.name.toLowerCase().includes(q)) ||
       (p.description && p.description.toLowerCase().includes(q)) ||
@@ -1304,8 +1327,8 @@ const advanceFilteredProducts = computed(() => {
     );
   }
 
-  if (f.sku) {
-    const s = f.sku.toLowerCase();
+  if (f.sku && f.sku.trim()) {
+    const s = f.sku.trim().toLowerCase();
     list = list.filter(p => p.sku && p.sku.toLowerCase().includes(s));
   }
 
