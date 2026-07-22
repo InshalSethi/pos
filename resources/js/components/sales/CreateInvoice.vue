@@ -30,62 +30,91 @@
       <!-- Left Panel: Invoice Form (3/4 width) -->
       <div class="w-full md:w-3/4 p-8 flex flex-col relative">
 
-          <!-- Bill To Section -->
-          <div class="pb-6 mb-4">
-            <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2 text-left">Bill To</h3>
+          <!-- Catalog Search & Selection Section -->
+          <div class="pb-6 mb-4 space-y-3">
+            <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider text-left">Catalog Search & Selection</h3>
             
-            <!-- Merged Customer Search & Add Customer Input Group -->
-            <div class="relative max-w-md mb-3" id="customer-search-container">
-              <div class="flex items-center w-full rounded-lg overflow-hidden border border-slate-300 dark:border-zinc-700 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white dark:bg-zinc-900 transition-all">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <!-- Search items input (2 cols wide on desktop) -->
+              <div class="relative md:col-span-2" id="product-search-container">
                 <input
-                  v-model="customerSearch"
+                  v-model="productSearch"
                   type="text"
-                  placeholder="Type name to search customer..."
-                  class="flex-1 px-3 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500"
-                  @input="debouncedCustomerSearch"
-                  @focus="searchCustomers(customerSearch)"
+                  placeholder="Search products by title, code or barcode..."
+                  class="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                  @focus="isProductDropdownOpen = true"
+                  @keydown.enter.prevent="handleProductSearchEnter"
                 />
-                <button
-                  type="button"
-                  @click="showCustomerModal = true"
-                  title="Add Customer"
-                  class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold shadow-sm transition-all flex items-center space-x-1 shrink-0 h-full border-l border-emerald-700/30 cursor-pointer"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                  <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span></span>
-                </button>
-              </div>
-              
-              <!-- Customer Search Dropdown Results -->
-              <div v-if="customerSearchResults.length > 0" class="absolute z-50 mt-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
+                </div>
+                
+                <!-- Search Results Dropdown List -->
                 <div
-                  v-for="customer in customerSearchResults"
-                  :key="customer.id"
-                  @click="selectCustomer(customer)"
-                  class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
+                  v-show="isProductDropdownOpen && filteredProducts.length > 0"
+                  class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-1.5 custom-scrollbar"
                 >
-                  <div>
-                    <span class="font-bold text-slate-800 dark:text-zinc-200">{{ customer.name }}</span>
-                    <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ customer.phone || customer.email }}</p>
+                  <div
+                    v-for="product in filteredProducts"
+                    :key="product.key"
+                    @click="selectProductFromDropdown(product)"
+                    class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0 text-left"
+                  >
+                    <div class="min-w-0 pr-4">
+                      <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
+                      <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ product.sku }}</div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                      <span class="font-black text-emerald-600 dark:text-emerald-400 text-sm block">${{ product.price }}</span>
+                      <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
+                    </div>
                   </div>
-                  <span v-if="customer.tax_number" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono">TAX: {{ customer.tax_number }}</span>
                 </div>
               </div>
-            </div>
 
-            <!-- Selected Customer Details -->
-            <div v-if="selectedCustomer" class="p-3 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs space-y-1 relative max-w-md text-left">
-              <button @click="clearCustomer" class="absolute top-2 right-2 text-rose-600 dark:text-rose-450 hover:text-rose-800 dark:hover:text-rose-350 font-semibold text-[10px] hover:underline">Remove</button>
-              <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ selectedCustomer.name }}</p>
-              <p v-if="selectedCustomer.phone" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedCustomer.phone }}</p>
-              <p v-if="selectedCustomer.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedCustomer.email }}</p>
-              <p v-if="selectedCustomer.address" class="text-slate-600 dark:text-zinc-300 leading-relaxed"><span class="font-semibold text-slate-400 dark:text-zinc-500">Address:</span> {{ selectedCustomer.address }} {{ selectedCustomer.city ? ', ' + selectedCustomer.city : '' }}</p>
-              <p v-if="selectedCustomer.tax_number" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Tax ID:</span> {{ selectedCustomer.tax_number }}</p>
-            </div>
-            <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic text-left">
-              No customer selected. Type above to assign a recipient.
+              <!-- Custom Category Selection (1 col wide on desktop) -->
+              <div class="relative md:col-span-1" id="category-dropdown-container">
+                <button
+                  type="button"
+                  @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
+                  class="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer text-left"
+                >
+                  <span class="truncate">{{ categoryDropdownLabel }}</span>
+                  <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-1" :class="{ 'rotate-180': isCategoryDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div
+                  v-show="isCategoryDropdownOpen"
+                  class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-2 custom-scrollbar"
+                >
+                  <label class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      :checked="selectedCategories.length === 0"
+                      @change="clearSelectedCategories"
+                      class="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-zinc-950 dark:border-zinc-700"
+                    />
+                    <span class="font-medium text-slate-700 dark:text-zinc-300">All Categories</span>
+                  </label>
+                  <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
+                  <label
+                    v-for="category in categories"
+                    :key="category.id"
+                    class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="isCategorySelected(category.id)"
+                      @change="toggleCategorySelection(category.id)"
+                      class="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-zinc-950 dark:border-zinc-700"
+                    />
+                    <span class="font-medium text-slate-700 dark:text-zinc-300">{{ category.name }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -387,89 +416,83 @@
             </div>
           </div>
 
-          <!-- Section 1: Product Selection & Catalog Filters -->
-          <div class="space-y-4">
-            <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Catalog Search & Selection</h3>
-
-            <!-- Search items input -->
-            <div class="relative" id="product-search-container">
-              <input
-                v-model="productSearch"
-                type="text"
-                placeholder="Search products by title, code or barcode..."
-                class="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                @focus="isProductDropdownOpen = true"
-                @keydown.enter.prevent="handleProductSearchEnter"
-              />
-              <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+          <!-- Section 1: Bill To (Customer Selection) -->
+          <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-left">
+            <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
+            
+            <!-- Premium Attached Customer Search & Add Customer Input Group -->
+            <div class="relative w-full" id="customer-search-container">
+              <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                <div class="pl-2.5 pr-1 text-slate-400 dark:text-zinc-500 shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input
+                  v-model="customerSearch"
+                  type="text"
+                  placeholder="Search customer name or phone..."
+                  class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
+                  @input="debouncedCustomerSearch"
+                  @focus="searchCustomers(customerSearch)"
+                />
+                <button
+                  type="button"
+                  @click="showCustomerModal = true"
+                  title="Add New Customer"
+                  class="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-200 flex items-center justify-center space-x-1 shrink-0 cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
               </div>
               
-              <!-- Search Results Dropdown List -->
-              <div
-                v-show="isProductDropdownOpen && filteredProducts.length > 0"
-                class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-1.5 custom-scrollbar"
-              >
+              <!-- Customer Search Dropdown Results -->
+              <div v-if="customerSearchResults.length > 0" class="absolute z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 shadow-2xl max-h-[220px] rounded-xl border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
                 <div
-                  v-for="product in filteredProducts"
-                  :key="product.key"
-                  @click="selectProductFromDropdown(product)"
-                  class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0 text-left"
+                  v-for="customer in customerSearchResults"
+                  :key="customer.id"
+                  @click="selectCustomer(customer)"
+                  class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
                 >
-                  <div class="min-w-0 pr-4">
-                    <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
-                    <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ product.sku }}</div>
+                  <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
+                      {{ customer.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0">
+                      <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ customer.name }}</span>
+                      <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ customer.phone || customer.email }}</p>
+                    </div>
                   </div>
-                  <div class="text-right flex-shrink-0">
-                    <span class="font-black text-emerald-600 dark:text-emerald-400 text-sm block">${{ product.price }}</span>
-                    <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
-                  </div>
+                  <span v-if="customer.tax_number" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono shrink-0 ml-2">TAX: {{ customer.tax_number }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Custom Category Selection -->
-            <div class="relative" id="category-dropdown-container">
-              <button
-                type="button"
-                @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
-                class="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer text-left"
-              >
-                <span>{{ categoryDropdownLabel }}</span>
-                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': isCategoryDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            <!-- Selected Customer Details Card -->
+            <div v-if="selectedCustomer" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
+              <button @click="clearCustomer" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
+                Remove
               </button>
-              <div
-                v-show="isCategoryDropdownOpen"
-                class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-2 custom-scrollbar"
-              >
-                <label class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs">
-                  <input
-                    type="checkbox"
-                    :checked="selectedCategories.length === 0"
-                    @change="clearSelectedCategories"
-                    class="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-zinc-950 dark:border-zinc-700"
-                  />
-                  <span class="font-medium text-slate-700 dark:text-zinc-300">All Categories</span>
-                </label>
-                <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
-                <label
-                  v-for="category in categories"
-                  :key="category.id"
-                  class="flex items-center space-x-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="isCategorySelected(category.id)"
-                    @change="toggleCategorySelection(category.id)"
-                    class="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-zinc-950 dark:border-zinc-700"
-                  />
-                  <span class="font-medium text-slate-700 dark:text-zinc-300">{{ category.name }}</span>
-                </label>
+              <div class="flex items-center space-x-2">
+                <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                  {{ selectedCustomer.name.charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedCustomer.name }}</p>
+                  <p v-if="selectedCustomer.phone" class="text-[11px] text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedCustomer.phone }}</p>
+                </div>
               </div>
+              <p v-if="selectedCustomer.email" class="text-slate-600 dark:text-zinc-300 pt-0.5"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedCustomer.email }}</p>
+              <p v-if="selectedCustomer.address" class="text-slate-600 dark:text-zinc-300 leading-relaxed"><span class="font-semibold text-slate-400 dark:text-zinc-500">Address:</span> {{ selectedCustomer.address }} {{ selectedCustomer.city ? ', ' + selectedCustomer.city : '' }}</p>
+              <p v-if="selectedCustomer.tax_number" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Tax ID:</span> {{ selectedCustomer.tax_number }}</p>
+            </div>
+            <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic text-left">
+              No customer selected. Search above to assign.
             </div>
           </div>
 
