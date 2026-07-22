@@ -279,20 +279,25 @@
                     <div class="flex items-center gap-3">
                       <!-- Product Image Thumbnail -->
                       <div 
-                        @click="openLightbox(item)"
-                        class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center cursor-pointer hover:scale-105 transition-transform group/thumb shadow-xs"
+                        @click.stop="openLightbox(item)"
+                        class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center cursor-pointer hover:scale-110 transition-all group/thumb shadow-xs select-none"
                         title="Click to view image gallery"
                       >
                         <div v-if="Number(item.discount_value) > 0" class="absolute top-0 right-0 z-10 pointer-events-none select-none">
                           <div class="absolute transform rotate-45 bg-rose-600 text-white text-[6px] font-black uppercase text-center tracking-widest py-0.5 w-[50px] -right-[15px] top-[4px] shadow-xs border-b border-white/20">Sale</div>
                         </div>
                         <img
-                          v-if="item.image && !item.image.includes('Temp') && !item.image.includes('.tmp')"
-                          :src="item.image.startsWith('/') ? item.image : '/' + item.image"
+                          v-if="getProductDisplayImage(item)"
+                          :src="getProductDisplayImage(item)"
                           :alt="item.name"
-                          class="h-full w-full object-cover"
+                          class="h-full w-full object-cover cursor-pointer"
+                          @click.stop="openLightbox(item)"
                         />
-                        <span v-else class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase select-none">
+                        <span 
+                          v-else 
+                          @click.stop="openLightbox(item)"
+                          class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase select-none cursor-pointer"
+                        >
                           {{ item.name ? item.name.substring(0, 1) : 'P' }}
                         </span>
                       </div>
@@ -1158,73 +1163,73 @@
     </transition>
 
     <!-- Table Item Image Lightbox Gallery Modal -->
-    <Teleport to="body">
-      <div 
-        v-if="showLightbox" 
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150"
-        @click.self="closeLightbox"
-      >
-        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center group/lightbox w-full">
-          <!-- Top Header Bar / Badge & Close -->
-          <div class="absolute -top-12 left-0 right-0 z-50 flex justify-between items-center px-2">
-            <div class="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-lg border border-white/10">
-              <span class="truncate max-w-[240px]">{{ lightboxTitle }}</span>
-              <span v-if="lightboxImages.length > 1" class="text-slate-400 font-medium">| {{ lightboxIndex + 1 }} of {{ lightboxImages.length }}</span>
-            </div>
-            <button 
-              type="button" 
-              @click="closeLightbox" 
-              class="p-2 text-white/80 hover:text-white bg-slate-900/90 hover:bg-slate-900 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/10 cursor-pointer"
-              title="Close Gallery (Esc)"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+    <div 
+      v-if="showLightbox" 
+      class="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-150 select-none"
+      @click.self="closeLightbox"
+    >
+      <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center group/lightbox w-full">
+        <!-- Top Header Bar / Badge & Close -->
+        <div class="w-full flex justify-between items-center mb-3 px-1">
+          <div class="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white text-xs font-bold shadow-lg border border-white/10">
+            <span class="truncate max-w-[260px]">{{ lightboxTitle }}</span>
+            <span v-if="lightboxImages.length > 1" class="text-slate-400 font-medium">| {{ lightboxIndex + 1 }} of {{ lightboxImages.length }}</span>
           </div>
+          <button 
+            type="button" 
+            @click="closeLightbox" 
+            class="p-2 text-white/80 hover:text-white bg-slate-900/90 hover:bg-slate-900 rounded-full transition-all backdrop-blur-md shadow-lg border border-white/10 cursor-pointer"
+            title="Close Gallery (Esc)"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
 
-          <!-- Main Image Canvas -->
-          <div class="relative flex items-center justify-center max-h-[80vh] overflow-hidden rounded-2xl shadow-2xl border border-white/10 bg-slate-950 w-full">
-            <img 
-              :src="lightboxImages[lightboxIndex]" 
-              :alt="lightboxTitle"
-              class="max-h-[80vh] max-w-full object-contain select-none transition-all duration-200"
-            />
+        <!-- Main Image Canvas -->
+        <div class="relative flex items-center justify-center max-h-[80vh] max-w-[90vw] overflow-hidden rounded-2xl shadow-2xl border border-white/10 bg-slate-950/90 w-full">
+          <img 
+            :src="lightboxImages[lightboxIndex]" 
+            :alt="lightboxTitle"
+            class="max-h-[80vh] max-w-[90vw] object-contain select-none transition-all duration-200"
+          />
 
-            <!-- Left Navigation Arrow -->
-            <button 
-              v-if="lightboxImages.length > 1"
-              type="button" 
-              @click.stop="prevLightboxImage" 
-              class="absolute left-3 top-1/2 -translate-y-1/2 p-3 text-white bg-slate-900/75 hover:bg-slate-900 hover:scale-110 rounded-full transition-all backdrop-blur-md shadow-xl border border-white/10 cursor-pointer"
-              title="Previous Image (Left Arrow)"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
-            </button>
+          <!-- Left Navigation Arrow -->
+          <button 
+            v-if="lightboxImages.length > 1"
+            type="button" 
+            @click.stop="prevLightboxImage" 
+            class="absolute left-3 top-1/2 -translate-y-1/2 p-3 text-white bg-slate-900/80 hover:bg-slate-900 hover:scale-110 rounded-full transition-all backdrop-blur-md shadow-xl border border-white/10 cursor-pointer"
+            title="Previous Image (Left Arrow)"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
+          </button>
 
-            <!-- Right Navigation Arrow -->
-            <button 
-              v-if="lightboxImages.length > 1"
-              type="button" 
-              @click.stop="nextLightboxImage" 
-              class="absolute right-3 top-1/2 -translate-y-1/2 p-3 text-white bg-slate-900/75 hover:bg-slate-900 hover:scale-110 rounded-full transition-all backdrop-blur-md shadow-xl border border-white/10 cursor-pointer"
-              title="Next Image (Right Arrow)"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          </div>
+          <!-- Right Navigation Arrow -->
+          <button 
+            v-if="lightboxImages.length > 1"
+            type="button" 
+            @click.stop="nextLightboxImage" 
+            class="absolute right-3 top-1/2 -translate-y-1/2 p-3 text-white bg-slate-900/80 hover:bg-slate-900 hover:scale-110 rounded-full transition-all backdrop-blur-md shadow-xl border border-white/10 cursor-pointer"
+            title="Next Image (Right Arrow)"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
 
-          <!-- Bottom Thumbnail Dots -->
-          <div v-if="lightboxImages.length > 1" class="flex items-center gap-2 mt-4 px-4 py-2 bg-slate-900/80 backdrop-blur-md rounded-full border border-white/10">
-            <button 
-              v-for="(img, idx) in lightboxImages" 
-              :key="idx"
-              @click="lightboxIndex = idx"
-              class="w-2.5 h-2.5 rounded-full transition-all cursor-pointer"
-              :class="idx === lightboxIndex ? 'bg-emerald-400 scale-125' : 'bg-white/40 hover:bg-white/70'"
-            ></button>
+        <!-- Bottom Thumbnail Dots / Strip -->
+        <div v-if="lightboxImages.length > 1" class="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/10 max-w-full overflow-x-auto scrollbar-hidden">
+          <div 
+            v-for="(img, idx) in lightboxImages" 
+            :key="idx"
+            @click="lightboxIndex = idx"
+            class="w-10 h-10 rounded-xl overflow-hidden cursor-pointer border-2 transition-all shrink-0"
+            :class="idx === lightboxIndex ? 'border-emerald-400 scale-110' : 'border-transparent opacity-60 hover:opacity-100'"
+          >
+            <img :src="img" class="w-full h-full object-cover">
           </div>
         </div>
       </div>
-    </Teleport>
+    </div>
   </div>
 </template>
 
@@ -1257,24 +1262,91 @@ const lightboxImages = ref([]);
 const lightboxIndex = ref(0);
 const lightboxTitle = ref('');
 
-const openLightbox = (item) => {
-  const imgs = [];
-  if (Array.isArray(item.images) && item.images.length > 0) {
-    item.images.forEach(img => {
-      if (typeof img === 'string' && img && img !== 'null' && img !== 'undefined') {
-        imgs.push(img.startsWith('/') || img.startsWith('http') ? img : '/' + img);
+const getImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  if (url.includes('Temp') || url.includes('.tmp')) return '';
+  return url.startsWith('/') || url.startsWith('http') ? url : '/' + url;
+};
+
+const getProductDisplayImage = (item) => {
+  if (!item) return '';
+  if (item.image && typeof item.image === 'string' && !item.image.includes('Temp') && !item.image.includes('.tmp')) {
+    return getImageUrl(item.image);
+  }
+  if (item.images) {
+    let imagesArr = item.images;
+    if (typeof imagesArr === 'string') {
+      try {
+        imagesArr = JSON.parse(imagesArr);
+      } catch (e) {}
+    }
+    if (Array.isArray(imagesArr) && imagesArr.length > 0) {
+      const first = imagesArr[0];
+      const src = typeof first === 'string' ? first : (first.url || first.preview || first.path || first.image || '');
+      if (src && !src.includes('Temp') && !src.includes('.tmp')) {
+        return getImageUrl(src);
       }
-    });
-  } else if (item.image && item.image !== 'null' && item.image !== 'undefined') {
-    imgs.push(item.image.startsWith('/') || item.image.startsWith('http') ? item.image : '/' + item.image);
+    }
+  }
+  return '';
+};
+
+const openLightbox = (item) => {
+  console.log('[openLightbox] CALLED WITH ITEM:', item);
+  if (!item) {
+    console.error('[openLightbox] No item provided!');
+    return;
+  }
+  const imgs = [];
+  
+  const processImageValue = (val) => {
+    if (!val) return;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed || trimmed === 'null' || trimmed === 'undefined' || trimmed === '[]') return;
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(p => processImageValue(p));
+          return;
+        }
+      } catch (e) {}
+      const formatted = getImageUrl(trimmed);
+      if (formatted && !imgs.includes(formatted)) {
+        imgs.push(formatted);
+      }
+    } else if (Array.isArray(val)) {
+      val.forEach(v => processImageValue(v));
+    } else if (typeof val === 'object') {
+      const src = val.url || val.path || val.preview || val.image || val.src || '';
+      if (src) processImageValue(src);
+    }
+  };
+
+  if (item.images) {
+    processImageValue(item.images);
+  }
+  if (item.image) {
+    processImageValue(item.image);
   }
   
-  if (imgs.length === 0) return;
+  const displayImg = getProductDisplayImage(item);
+  if (displayImg && !imgs.includes(displayImg)) {
+    imgs.unshift(displayImg);
+  }
+  
+  console.log('[openLightbox] Extracted imgs array:', imgs);
+
+  if (imgs.length === 0) {
+    console.warn('[openLightbox] No valid images found for item:', item.name);
+    return;
+  }
   
   lightboxImages.value = imgs;
   lightboxIndex.value = 0;
   lightboxTitle.value = item.name || 'Product Image';
   showLightbox.value = true;
+  console.log('[openLightbox] showLightbox set to TRUE. Title:', lightboxTitle.value, 'Images:', lightboxImages.value);
 };
 
 const closeLightbox = () => {
@@ -1297,6 +1369,14 @@ const handleLightboxKeydown = (e) => {
   if (e.key === 'ArrowRight') nextLightboxImage();
   if (e.key === 'ArrowLeft') prevLightboxImage();
 };
+
+watch(showLightbox, (val) => {
+  if (val) {
+    window.addEventListener('keydown', handleLightboxKeydown);
+  } else {
+    window.removeEventListener('keydown', handleLightboxKeydown);
+  }
+});
 
 const showViewModal = ref(false);
 const showCategoryModal = ref(false);

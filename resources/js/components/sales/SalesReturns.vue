@@ -20,6 +20,7 @@
         <button
           v-for="tab in tabs"
           :key="tab.id"
+          v-show="tab.id === 'all' || selectedFilters.includes(tab.id)"
           @click="setActiveTab(tab.id)"
           class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
           :class="isTabActive(tab.id) ? 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
@@ -51,13 +52,14 @@
           <button
             @click.stop="toggleFilterDropdown"
             class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
-            :class="{ 'border-rose-600 text-rose-600 bg-rose-50/10': selectedFilters.length > 0 }"
+            :class="{ 'border-rose-600 text-rose-600 dark:text-rose-400 bg-rose-50/10': selectedFilters.length > 0 }"
           >
-            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" :class="{ 'text-rose-600': selectedFilters.length > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" :class="{ 'text-rose-600 dark:text-rose-400': selectedFilters.length > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
             </svg>
             <span>Filter</span>
-            <span v-if="selectedFilters.length > 0" class="ml-1.5 text-[10px] font-bold bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full">
+            <!-- Selected Filter Indicator -->
+            <span v-if="selectedFilters.length > 0" class="ml-1.5 text-[10px] font-bold bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-full">
               {{ selectedFilters.length }}
             </span>
           </button>
@@ -75,14 +77,14 @@
               :class="selectedFilters.includes(option) ? 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50/20 dark:bg-rose-900/20' : 'text-slate-700 dark:text-zinc-300'"
             >
               <span>{{ formatRefundLabel(option) }}</span>
-              <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
               </svg>
             </button>
           </div>
         </div>
 
-        <!-- Clear Button -->
+        <!-- Clear Button (shows when any filter applies) -->
         <button
           v-if="selectedFilters.length > 0 || searchQuery !== '' || dateFrom !== '' || dateTo !== '' || originalInvoice !== ''"
           @click="clearAllFilters"
@@ -96,37 +98,48 @@
       </div>
     </div>
 
-    <!-- Extra Filter Bar (Dates and Original Invoice search) -->
-    <div class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-center">
-      <div class="flex items-center space-x-2">
-        <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Original Invoice:</label>
-        <input
-          v-model="originalInvoice"
-          type="text"
-          placeholder="Original Invoice #..."
-          class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none text-slate-700 dark:text-zinc-200"
-          @input="debouncedSearch"
-        />
+    <!-- Collapsible Date & Invoice Filter Bar -->
+    <transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform -translate-y-2 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform -translate-y-2 opacity-0"
+    >
+      <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || originalInvoice !== ''" class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between shadow-sm">
+        <div class="flex flex-wrap gap-4 items-center">
+          <div class="flex items-center space-x-2">
+            <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Original Invoice:</label>
+            <input
+              v-model="originalInvoice"
+              type="text"
+              placeholder="Original Invoice #..."
+              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700 dark:text-zinc-200"
+              @input="debouncedSearch"
+            />
+          </div>
+          <div class="flex items-center space-x-2">
+            <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Date From:</label>
+            <input
+              v-model="dateFrom"
+              type="date"
+              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700 dark:text-zinc-200"
+              @change="fetchReturns(1)"
+            />
+          </div>
+          <div class="flex items-center space-x-2">
+            <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Date To:</label>
+            <input
+              v-model="dateTo"
+              type="date"
+              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700 dark:text-zinc-200"
+              @change="fetchReturns(1)"
+            />
+          </div>
+        </div>
       </div>
-      <div class="flex items-center space-x-2">
-        <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Date From:</label>
-        <input
-          v-model="dateFrom"
-          type="date"
-          class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none text-slate-700 dark:text-zinc-200"
-          @change="fetchReturns(1)"
-        />
-      </div>
-      <div class="flex items-center space-x-2">
-        <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Date To:</label>
-        <input
-          v-model="dateTo"
-          type="date"
-          class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none text-slate-700 dark:text-zinc-200"
-          @change="fetchReturns(1)"
-        />
-      </div>
-    </div>
+    </transition>
 
     <!-- Table Container -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
