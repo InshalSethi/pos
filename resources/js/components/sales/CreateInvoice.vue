@@ -12,7 +12,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span>Back to Invoices</span>
+            <span>Back</span>
           </button>
           <span class="text-slate-300 dark:text-slate-600 select-none">|</span>
           <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">Create Sales Invoice</h1>
@@ -409,51 +409,16 @@
           <!-- Section 1: Product Selection & Catalog Filters -->
           <div class="space-y-4">
             <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Catalog Search & Selection</h3>
-            
-            <div class="flex justify-between items-center bg-slate-50 dark:bg-zinc-900/60 px-3 py-2 rounded-xl border border-slate-100 dark:border-zinc-800">
-              <div class="flex items-center space-x-2">
-                <span class="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase">Barcode Scanner</span>
-                <span 
-                  class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-all duration-200"
-                  :class="isBarcodeActive ? 'text-emerald-700 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-500 dark:text-zinc-400 bg-slate-150 dark:bg-zinc-800'"
-                >
-                  <span class="w-1 h-1 rounded-full" :class="isBarcodeActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400 dark:bg-zinc-650'"></span>
-                  {{ isBarcodeActive ? 'Active' : 'Inactive' }}
-                </span>
-              </div>
-              <button
-                type="button"
-                @click="toggleBarcodeScanner"
-                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                :class="isBarcodeActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'"
-              >
-                <span
-                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                  :class="isBarcodeActive ? 'translate-x-4' : 'translate-x-0'"
-                ></span>
-              </button>
-            </div>
-
-            <div>
-              <input
-                v-model="barcodeInput"
-                type="text"
-                :disabled="!isBarcodeActive"
-                :placeholder="isBarcodeActive ? 'Scan barcode or type SKU...' : 'Scanner inactive - Toggle ON to scan'"
-                class="w-full pl-3 pr-2 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-all duration-200"
-                :class="isBarcodeActive ? 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200' : 'border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/60 text-slate-400 dark:text-slate-500 cursor-not-allowed'"
-                @keydown.enter.prevent="addByBarcode"
-              />
-            </div>
 
             <!-- Search items input -->
             <div class="relative" id="product-search-container">
               <input
                 v-model="productSearch"
                 type="text"
-                placeholder="Search products by title, code..."
+                placeholder="Search products by title, code or barcode..."
                 class="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                 @focus="isProductDropdownOpen = true"
+                @keydown.enter.prevent="handleProductSearchEnter"
               />
               <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                 <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -902,7 +867,62 @@ const barcodeInput = ref('');
 const warehouses = ref([]);
 const selectedWarehouseId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
-const isBarcodeActive = ref(false);
+const isBarcodeActive = ref(true);
+
+let barcodeBuffer = '';
+let lastKeyTime = 0;
+
+const handleGlobalBarcodeScan = (event) => {
+  if (!isBarcodeActive.value) return;
+
+  const isInputTarget = event.target && ['INPUT', 'TEXTAREA'].includes(event.target.tagName);
+
+  const currentTime = Date.now();
+  if (currentTime - lastKeyTime > 80) {
+    barcodeBuffer = '';
+  }
+  lastKeyTime = currentTime;
+
+  if (event.key === 'Enter') {
+    if (barcodeBuffer.length >= 2) {
+      const code = barcodeBuffer.trim();
+      const matchedProduct = products.value.find(p => 
+        (p.barcode && p.barcode.toLowerCase() === code.toLowerCase()) || 
+        (p.sku && p.sku.toLowerCase() === code.toLowerCase())
+      );
+
+      if (matchedProduct) {
+        addToInvoice(matchedProduct);
+        showNotification(`Added "${matchedProduct.name}" to invoice`, 'success');
+        barcodeBuffer = '';
+        if (isInputTarget) event.target.blur();
+        event.preventDefault();
+      }
+    }
+    barcodeBuffer = '';
+  } else if (event.key.length === 1) {
+    barcodeBuffer += event.key;
+  }
+};
+
+const handleProductSearchEnter = () => {
+  const query = productSearch.value.trim().toLowerCase();
+  if (!query) return;
+
+  const matchedProduct = products.value.find(p => 
+    (p.barcode && p.barcode.toLowerCase() === query) || 
+    (p.sku && p.sku.toLowerCase() === query)
+  ) || filteredProducts.value[0];
+
+  if (matchedProduct) {
+    addToInvoice(matchedProduct);
+    productSearch.value = '';
+    isProductDropdownOpen.value = false;
+    showNotification(`Added "${matchedProduct.name}" to invoice`, 'success');
+  } else {
+    showNotification(`No product found matching: ${productSearch.value}`, 'error');
+  }
+};
 const productSearch = ref('');
 const customerSearch = ref('');
 const customerSearchResults = ref([]);
@@ -1548,10 +1568,12 @@ onMounted(() => {
   fetchNextInvoiceNumber();
   fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('keydown', handleGlobalBarcodeScan);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('keydown', handleGlobalBarcodeScan);
 });
 </script>
 
