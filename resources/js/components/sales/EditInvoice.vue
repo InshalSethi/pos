@@ -43,7 +43,7 @@
                   placeholder="Search products by title, code or barcode..."
                   class="w-full pl-5 pr-11 py-2.5 bg-white dark:bg-[#12161b]/90 border border-slate-300 dark:border-sky-500/40 focus:border-sky-400 rounded-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium shadow-[0_0_15px_rgba(56,189,248,0.15)] focus:shadow-[0_0_20px_rgba(56,189,248,0.3)] focus:outline-none transition-all duration-300"
                   @focus="isProductDropdownOpen = true"
-                  @keydown.enter.prevent="handleProductSearchEnter"
+                  @keydown="handleProductSearchKeydown"
                 />
                 <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 dark:text-sky-300">
                   <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,10 +57,16 @@
                   class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#181e24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto py-2 custom-scrollbar backdrop-blur-md"
                 >
                   <div
-                    v-for="product in displayedProducts"
+                    v-for="(product, idx) in displayedProducts"
                     :key="product.key"
+                    :ref="el => setProductItemRef(el, idx)"
                     @click="selectProductFromDropdown(product)"
-                    class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
+                    @mouseenter="highlightedProductIndex = idx"
+                    class="px-4 py-2.5 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
+                    :class="{
+                      'bg-indigo-50/90 dark:bg-zinc-800/90 text-indigo-900 dark:text-indigo-200 border-l-4 border-l-indigo-600 dark:border-l-indigo-400 font-bold': highlightedProductIndex === idx,
+                      'hover:bg-slate-50 dark:hover:bg-zinc-800/80': highlightedProductIndex !== idx
+                    }"
                   >
                     <div class="min-w-0 pr-4">
                       <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
@@ -1251,7 +1257,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
@@ -1956,10 +1962,81 @@ const debouncedCustomerSearch = debounce(() => {
   searchCustomers(customerSearch.value);
 }, 300);
 
+const highlightedProductIndex = ref(-1);
+const productItemRefs = ref({});
+
+const setProductItemRef = (el, idx) => {
+  if (el) {
+    productItemRefs.value[idx] = el;
+  }
+};
+
+const scrollToHighlightedItem = () => {
+  nextTick(() => {
+    const el = productItemRefs.value[highlightedProductIndex.value];
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  });
+};
+
+watch(displayedProducts, (newProducts) => {
+  if (newProducts.length > 0 && productSearch.value.trim() !== '') {
+    highlightedProductIndex.value = 0;
+  } else {
+    highlightedProductIndex.value = -1;
+  }
+}, { immediate: true });
+
+const handleProductSearchKeydown = (event) => {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    if (!isProductDropdownOpen.value) {
+      isProductDropdownOpen.value = true;
+    }
+    if (displayedProducts.value.length === 0) return;
+    if (highlightedProductIndex.value < displayedProducts.value.length - 1) {
+      highlightedProductIndex.value++;
+    } else {
+      highlightedProductIndex.value = 0;
+    }
+    scrollToHighlightedItem();
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    if (!isProductDropdownOpen.value) {
+      isProductDropdownOpen.value = true;
+    }
+    if (displayedProducts.value.length === 0) return;
+    if (highlightedProductIndex.value > 0) {
+      highlightedProductIndex.value--;
+    } else {
+      highlightedProductIndex.value = displayedProducts.value.length - 1;
+    }
+    scrollToHighlightedItem();
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    if (isProductDropdownOpen.value && displayedProducts.value.length > 0) {
+      const targetIndex = (highlightedProductIndex.value >= 0 && highlightedProductIndex.value < displayedProducts.value.length)
+        ? highlightedProductIndex.value
+        : 0;
+      const selectedProduct = displayedProducts.value[targetIndex];
+      selectProductFromDropdown(selectedProduct);
+    } else {
+      addByBarcode();
+    }
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    isProductDropdownOpen.value = false;
+    highlightedProductIndex.value = -1;
+  }
+};
+
 const selectProductFromDropdown = (product) => {
   addToInvoice(product);
   productSearch.value = '';
   isProductDropdownOpen.value = false;
+  highlightedProductIndex.value = -1;
+  productItemRefs.value = {};
 };
 
 const addByBarcode = () => {
