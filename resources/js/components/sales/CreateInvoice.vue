@@ -852,7 +852,7 @@
                 v-model="advanceFilters.query"
                 type="text"
                 placeholder="Search by Name or Description"
-                class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:outline-none transition-all"
+                class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all"
               />
             </div>
 
@@ -880,7 +880,7 @@
                     v-model="advanceFilters.sku"
                     type="text"
                     placeholder="Search by SKU"
-                    class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
+                    class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500"
                   />
                 </div>
 
@@ -890,7 +890,7 @@
                   <div class="flex-1 relative">
                     <div
                       @click="focusTagInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-500 dark:focus-within:ring-sky-400 transition-all"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
                     >
                       <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                         <span
@@ -913,7 +913,8 @@
                           @keydown.enter.prevent="selectHighlightedTag"
                           @keydown.esc.prevent="isTagDropdownOpen = false"
                           @keydown.delete="handleTagDeleteKey"
-                          class="flex-1 min-w-[80px] bg-transparent border-0 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none py-0.5"
+                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
                         />
                       </div>
                       <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -947,7 +948,7 @@
                   <div class="flex-1 relative">
                     <div
                       @click="focusCategoryInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-500 dark:focus-within:ring-sky-400 transition-all"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
                     >
                       <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                         <span
@@ -970,7 +971,8 @@
                           @keydown.enter.prevent="selectHighlightedCategory"
                           @keydown.esc.prevent="isCategorySelectModalOpen = false"
                           @keydown.delete="handleCategoryDeleteKey"
-                          class="flex-1 min-w-[100px] bg-transparent border-0 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none py-0.5"
+                          class="flex-1 min-w-[100px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
                         />
                       </div>
                       <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -1004,7 +1006,7 @@
                   <div class="flex-1 relative">
                     <div
                       @click="focusTaxInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-500 dark:focus-within:ring-sky-400 transition-all"
+                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
                     >
                       <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                         <span
@@ -1027,7 +1029,8 @@
                           @keydown.enter.prevent="selectHighlightedTax"
                           @keydown.esc.prevent="isTaxDropdownOpen = false"
                           @keydown.delete="handleTaxDeleteKey"
-                          class="flex-1 min-w-[80px] bg-transparent border-0 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none py-0.5"
+                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 py-0.5"
+                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
                         />
                       </div>
                       <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -1066,7 +1069,7 @@
                         v-model="advanceFilters.minPrice"
                         type="number"
                         placeholder="0"
-                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400"
+                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
                       />
                     </div>
                     <span class="text-slate-500 dark:text-slate-500 font-medium">- max</span>
@@ -1076,7 +1079,7 @@
                         v-model="advanceFilters.maxPrice"
                         type="number"
                         placeholder="9999"
-                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400"
+                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#111418] border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
                       />
                     </div>
                   </div>
