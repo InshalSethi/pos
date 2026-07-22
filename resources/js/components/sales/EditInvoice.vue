@@ -30,173 +30,62 @@
       <!-- Left Panel: Invoice Form (3/4 width) -->
       <div class="w-full md:w-3/4 p-8 flex flex-col relative">
 
-          <!-- Invoice Paper Header -->
-          <div class="flex justify-between items-start mb-8">
-            <div class="space-y-3">
-              <!-- Interactive Logo Upload -->
-              <div class="w-24 h-24 bg-slate-50 dark:bg-zinc-900/60 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-335 dark:border-zinc-700 relative group overflow-hidden cursor-pointer transition-all">
-                <img v-if="logoUrl" :src="logoUrl" class="w-full h-full object-cover" />
-                <div v-else class="text-slate-400 dark:text-zinc-500 text-center p-2">
-                  <svg class="mx-auto h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  <span class="text-[9px] font-bold uppercase mt-1 block">Add Logo</span>
-                </div>
-                <input type="file" @change="onLogoChange" class="absolute inset-0 opacity-0 cursor-pointer" />
-              </div>
-
-              <!-- Dynamic Company Metadata -->
-              <div class="text-left text-xs text-slate-500 dark:text-zinc-400 space-y-0.5">
-                <p class="font-bold text-slate-700 dark:text-zinc-200 text-sm mb-1.5">{{ activeCompany?.company_name || 'Sethi Enterprises' }}</p>
-                <h4 class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider pt-1.5 pb-0.5">Email, phone and Adress</h4>
-                <p v-if="activeCompany?.company_phone"><span class="font-semibold text-slate-400 dark:text-zinc-500">phone number:</span> {{ activeCompany.company_phone }}</p>
-                <p><span class="font-semibold text-slate-400 dark:text-zinc-500">email:</span> {{ activeCompany?.company_email || 'sethiasad1@gmail.com' }}</p>
-                <p><span class="font-semibold text-slate-400 dark:text-zinc-500">Adress:</span> {{ activeCompany?.business_address || 'Enterprise Workspace Inc.' }}</p>
-              </div>
-            </div>
-
-            <div class="text-right">
-              <h2 class="text-2xl font-black uppercase tracking-wider transition-all duration-300" :style="{ color: accentColor }">Invoice</h2>
-              
-              <!-- Invoice Details Fields -->
-              <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-left max-w-sm ml-auto">
-                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Invoice Number:</div>
-                <div>
-                  <input
-                    v-model="invoiceForm.sale_number"
-                    type="text"
-                    placeholder="Auto-generating..."
-                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Order Number:</div>
-                <div>
-                  <input
-                    v-model="invoiceForm.order_number"
-                    type="text"
-                    placeholder="Enter order reference"
-                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Invoice Date:</div>
-                <div>
-                  <input
-                    v-model="invoiceForm.sale_date"
-                    type="date"
-                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Due Date:</div>
-                <div>
-                  <input
-                    v-model="invoiceForm.due_date"
-                    type="date"
-                    class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div class="text-slate-500 dark:text-zinc-400 font-medium flex items-center">Warehouse:</div>
-                <div>
-                  <div class="relative" id="warehouse-dropdown-container">
-                    <button
-                      type="button"
-                      @click.stop="isWarehouseDropdownOpen = !isWarehouseDropdownOpen"
-                      class="w-full px-2 py-1 border border-slate-300 dark:border-zinc-700 rounded text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs"
-                    >
-                      <span class="truncate">{{ selectedWarehouseName }}</span>
-                      <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    <!-- Warehouse Custom Dropdown List -->
-                    <div
-                      v-if="isWarehouseDropdownOpen"
-                      class="absolute z-50 bottom-full mb-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar"
-                    >
-                      <div
-                        @click="selectWarehouse('all')"
-                        class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
-                        :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === 'all' }"
-                      >
-                        <span>All Warehouses</span>
-                      </div>
-                      <div
-                        v-for="wh in warehouses"
-                        :key="wh.id"
-                        @click="selectWarehouse(wh.id)"
-                        class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center border-t border-slate-50 dark:border-zinc-800"
-                        :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === wh.id }"
-                      >
-                        <span>{{ wh.name }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Bill To Section -->
-          <div class="border-t border-slate-200 dark:border-zinc-800 py-6 mb-4 flex justify-between items-start">
-            <div class="w-1/2 text-left">
-              <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2">Bill To</h3>
-              
-              <!-- Customer Input Selector -->
-              <div class="relative max-w-sm mb-3" id="customer-search-container">
+          <div class="pb-6 mb-4">
+            <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2 text-left">Bill To</h3>
+            
+            <!-- Merged Customer Search & Add Customer Input Group -->
+            <div class="relative max-w-md mb-3" id="customer-search-container">
+              <div class="flex items-center w-full rounded-lg overflow-hidden border border-slate-300 dark:border-zinc-700 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white dark:bg-zinc-900 transition-all">
                 <input
                   v-model="customerSearch"
                   type="text"
                   placeholder="Type name to search customer..."
-                  class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                  class="flex-1 px-3 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500"
                   @input="debouncedCustomerSearch"
                   @focus="searchCustomers(customerSearch)"
                 />
-                
-                <!-- Customer Search Dropdown Results -->
-                <div v-if="customerSearchResults.length > 0" class="absolute z-50 bottom-full mb-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
-                  <div
-                    v-for="customer in customerSearchResults"
-                    :key="customer.id"
-                    @click="selectCustomer(customer)"
-                    class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
-                  >
-                    <div>
-                      <span class="font-bold text-slate-800 dark:text-zinc-200">{{ customer.name }}</span>
-                      <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ customer.phone || customer.email }}</p>
-                    </div>
-                    <span v-if="customer.tax_number" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono">TAX: {{ customer.tax_number }}</span>
+                <button
+                  type="button"
+                  @click="showCustomerModal = true"
+                  title="Add Customer"
+                  class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold shadow-sm transition-all flex items-center space-x-1 shrink-0 h-full border-l border-emerald-700/30 cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span></span>
+                </button>
+              </div>
+              
+              <!-- Customer Search Dropdown Results -->
+              <div v-if="customerSearchResults.length > 0" class="absolute z-50 mt-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
+                <div
+                  v-for="customer in customerSearchResults"
+                  :key="customer.id"
+                  @click="selectCustomer(customer)"
+                  class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
+                >
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-zinc-200">{{ customer.name }}</span>
+                    <p class="text-[10px] text-slate-500 dark:text-zinc-400">{{ customer.phone || customer.email }}</p>
                   </div>
+                  <span v-if="customer.tax_number" class="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono">TAX: {{ customer.tax_number }}</span>
                 </div>
-              </div>
-
-              <!-- Selected Customer Details -->
-              <div v-if="selectedCustomer" class="p-3 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs space-y-1 relative max-w-sm">
-                <button @click="clearCustomer" class="absolute top-2 right-2 text-rose-600 dark:text-rose-450 hover:text-rose-800 dark:hover:text-rose-350 font-semibold text-[10px] hover:underline">Remove</button>
-                <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ selectedCustomer.name }}</p>
-                <p v-if="selectedCustomer.phone" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedCustomer.phone }}</p>
-                <p v-if="selectedCustomer.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedCustomer.email }}</p>
-                <p v-if="selectedCustomer.address" class="text-slate-600 dark:text-zinc-300 leading-relaxed"><span class="font-semibold text-slate-400 dark:text-zinc-500">Address:</span> {{ selectedCustomer.address }} {{ selectedCustomer.city ? ', ' + selectedCustomer.city : '' }}</p>
-                <p v-if="selectedCustomer.tax_number" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Tax ID:</span> {{ selectedCustomer.tax_number }}</p>
-              </div>
-              <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic">
-                No customer selected. Type above to assign a recipient.
               </div>
             </div>
 
-            <div class="text-right">
-              <button
-                @click="showCustomerModal = true"
-                class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center space-x-1"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Add Customer</span>
-              </button>
+            <!-- Selected Customer Details -->
+            <div v-if="selectedCustomer" class="p-3 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs space-y-1 relative max-w-md text-left">
+              <button @click="clearCustomer" class="absolute top-2 right-2 text-rose-600 dark:text-rose-450 hover:text-rose-800 dark:hover:text-rose-350 font-semibold text-[10px] hover:underline">Remove</button>
+              <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ selectedCustomer.name }}</p>
+              <p v-if="selectedCustomer.phone" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Phone:</span> {{ selectedCustomer.phone }}</p>
+              <p v-if="selectedCustomer.email" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Email:</span> {{ selectedCustomer.email }}</p>
+              <p v-if="selectedCustomer.address" class="text-slate-600 dark:text-zinc-300 leading-relaxed"><span class="font-semibold text-slate-400 dark:text-zinc-500">Address:</span> {{ selectedCustomer.address }} {{ selectedCustomer.city ? ', ' + selectedCustomer.city : '' }}</p>
+              <p v-if="selectedCustomer.tax_number" class="text-slate-600 dark:text-zinc-300"><span class="font-semibold text-slate-400 dark:text-zinc-500">Tax ID:</span> {{ selectedCustomer.tax_number }}</p>
+            </div>
+            <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic text-left">
+              No customer selected. Type above to assign a recipient.
             </div>
           </div>
 
@@ -403,9 +292,101 @@
           </div>
       </div>
 
-      <!-- Right Panel: Sidebar for Product Catalog Search (1/4 width) -->
+      <!-- Right Panel: Sidebar for Product Catalog Search & Metadata (1/4 width) -->
       <div class="w-full md:w-1/4 p-6 space-y-6 flex flex-col border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#1E1E1E]">
           
+          <!-- Section 0: Invoice Metadata Details -->
+          <div class="space-y-3 pb-4 border-b border-slate-100 dark:border-zinc-800 text-left">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-black uppercase tracking-wider transition-all duration-300" :style="{ color: accentColor }">INVOICE</h2>
+            </div>
+
+            <!-- Metadata Form Fields -->
+            <div class="space-y-2.5 text-xs">
+              <!-- Invoice Number -->
+              <div>
+                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Invoice Number:</label>
+                <input
+                  v-model="invoiceForm.sale_number"
+                  type="text"
+                  placeholder="Auto-generating..."
+                  class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                />
+              </div>
+
+              <!-- Order Number -->
+              <div>
+                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Order Number:</label>
+                <input
+                  v-model="invoiceForm.order_number"
+                  type="text"
+                  placeholder="Enter order reference"
+                  class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                />
+              </div>
+
+              <!-- Invoice Date & Due Date -->
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Invoice Date:</label>
+                  <input
+                    v-model="invoiceForm.sale_date"
+                    type="date"
+                    class="w-full px-2 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                  />
+                </div>
+                <div>
+                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Due Date:</label>
+                  <input
+                    v-model="invoiceForm.due_date"
+                    type="date"
+                    class="w-full px-2 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                  />
+                </div>
+              </div>
+
+              <!-- Warehouse -->
+              <div>
+                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Warehouse:</label>
+                <div class="relative" id="warehouse-dropdown-container">
+                  <button
+                    type="button"
+                    @click.stop="isWarehouseDropdownOpen = !isWarehouseDropdownOpen"
+                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs"
+                  >
+                    <span class="truncate">{{ selectedWarehouseName }}</span>
+                    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <!-- Warehouse Custom Dropdown List -->
+                  <div
+                    v-if="isWarehouseDropdownOpen"
+                    class="absolute z-50 mt-1 w-full bg-white dark:bg-zinc-900 shadow-xl max-h-[185px] rounded-lg border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar"
+                  >
+                    <div
+                      @click="selectWarehouse('all')"
+                      class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
+                      :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === 'all' }"
+                    >
+                      <span>All Warehouses</span>
+                    </div>
+                    <div
+                      v-for="wh in warehouses"
+                      :key="wh.id"
+                      @click="selectWarehouse(wh.id)"
+                      class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center border-t border-slate-50 dark:border-zinc-800"
+                      :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === wh.id }"
+                    >
+                      <span>{{ wh.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Section 1: Product Selection & Catalog Filters -->
           <div class="space-y-4">
             <h3 class="text-xs font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2 text-left">Catalog Search & Selection</h3>
