@@ -323,6 +323,7 @@ import SupplierModal from './SupplierModal.vue';
 import SupplierViewModal from './SupplierViewModal.vue';
 import SupplierLedger from './SupplierLedger.vue';
 import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 import api from '@/services/api';
 
 export default {
@@ -334,6 +335,7 @@ export default {
   },
   setup() {
     const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     const loading = ref(false);
     const suppliers = ref({ data: [], current_page: 1, last_page: 1, total: 0 });
@@ -437,7 +439,14 @@ export default {
 
     const deleteSupplier = async (supplier) => {
       openActionDropdown.value = null;
-      if (confirm(`Are you sure you want to delete supplier "${supplier.name}"?`)) {
+      const confirmed = await confirm({
+        title: 'Delete Supplier?',
+        message: `Are you sure you want to delete supplier "${supplier.name}"?`,
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel',
+        type: 'danger'
+      });
+      if (confirmed) {
         try {
           await api.delete(`/suppliers/${supplier.id}`);
           showToast('Supplier deleted successfully', 'success');

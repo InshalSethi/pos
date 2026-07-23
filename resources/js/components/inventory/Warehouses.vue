@@ -26,11 +26,7 @@
         </div>
       </div>
 
-      <!-- Alert / Toast Messages -->
-      <div v-if="toast" class="p-4 rounded-xl border flex items-center justify-between text-xs font-semibold animate-in fade-in slide-in-from-top duration-300" :class="toast.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-900/50' : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-900/50'">
-        <span>{{ toast.message }}</span>
-        <button @click="toast = null" class="text-gray-400 hover:text-gray-600 font-bold dark:text-slate-400">&times;</button>
-      </div>
+
 
       <!-- Main Layout Pane -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -619,6 +615,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 // States
 const warehouses = ref([]);
@@ -874,12 +872,24 @@ const saveWarehouse = async () => {
   }
 };
 
+const { confirm } = useConfirm();
+
 const deleteWarehouse = async (warehouse) => {
   if (warehouse.is_primary) {
     showToast('error', 'Cannot delete primary operational facility.');
     return;
   }
-  if (!confirm(`Are you sure you want to delete warehouse "${warehouse.name}"? This will erase all location stock logs!`)) return;
+
+  const confirmed = await confirm({
+    title: 'Delete Storage Facility?',
+    message: `Are you sure you want to delete warehouse "${warehouse.name}"? This will erase all location stock logs!`,
+    confirmText: 'Yes, Delete',
+    cancelText: 'Cancel',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
   try {
     await axios.delete(`/api/warehouses/${warehouse.id}`);
     showToast('success', 'Facility removed.');
@@ -891,13 +901,14 @@ const deleteWarehouse = async (warehouse) => {
   }
 };
 
-const showToast = (type, message) => {
-  toast.value = { type, message };
-  setTimeout(() => {
-    if (toast.value?.message === message) {
-      toast.value = null;
-    }
-  }, 6000);
+const { showToast: triggerToast } = useToast();
+
+const showToast = (typeOrMsg, msgOrType) => {
+  if (typeOrMsg === 'error' || typeOrMsg === 'success' || typeOrMsg === 'warning' || typeOrMsg === 'info') {
+    triggerToast(msgOrType, typeOrMsg);
+  } else {
+    triggerToast(typeOrMsg, msgOrType || 'info');
+  }
 };
 
 onMounted(() => {

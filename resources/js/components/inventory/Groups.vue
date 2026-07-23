@@ -25,11 +25,7 @@
         </div>
       </div>
 
-      <!-- Alert / Toast Messages -->
-      <div v-if="toast" class="p-4 rounded-xl border flex items-center justify-between text-xs font-semibold animate-in fade-in slide-in-from-top duration-300" :class="toast.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-900/50' : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-900/50'">
-        <span>{{ toast.message }}</span>
-        <button @click="toast = null" class="text-gray-400 hover:text-gray-600 font-bold dark:text-slate-400">&times;</button>
-      </div>
+
 
       <!-- Main Content Area: Split Pane -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -423,6 +419,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 // States
 const groups = ref([]);
@@ -590,8 +588,18 @@ const saveGroup = async () => {
   }
 };
 
+const { confirm } = useConfirm();
+
 const deleteGroup = async (group) => {
-  if (!confirm(`Are you sure you want to delete the group "${group.name}"?`)) return;
+  const confirmed = await confirm({
+    title: 'Delete Inventory Group?',
+    message: `Are you sure you want to delete the group "${group.name}"?`,
+    confirmText: 'Yes, Delete',
+    cancelText: 'Cancel',
+    type: 'danger'
+  });
+  if (!confirmed) return;
+
   try {
     await axios.delete(`/api/categories/${group.id}`);
     showToast('success', 'Group removed successfully.');
@@ -618,7 +626,14 @@ const runBulkAction = async () => {
     ? `Apply tax rule changes to all products under "${selectedGroup.value.name}"?`
     : `Execute bulk price updates for products under "${selectedGroup.value.name}"? This action modifies active catalog selling prices.`;
 
-  if (!confirm(confirmMsg)) return;
+  const confirmed = await confirm({
+    title: 'Confirm Bulk Action',
+    message: confirmMsg,
+    confirmText: 'Execute Action',
+    cancelText: 'Cancel',
+    type: 'warning'
+  });
+  if (!confirmed) return;
 
   loadingBulkAction.value = true;
   try {
@@ -636,14 +651,15 @@ const runBulkAction = async () => {
   }
 };
 
+const { showToast: triggerToast } = useToast();
+
 // Helper: Toast alerts
-const showToast = (type, message) => {
-  toast.value = { type, message };
-  setTimeout(() => {
-    if (toast.value?.message === message) {
-      toast.value = null;
-    }
-  }, 4000);
+const showToast = (typeOrMsg, msgOrType) => {
+  if (typeOrMsg === 'error' || typeOrMsg === 'success' || typeOrMsg === 'warning' || typeOrMsg === 'info') {
+    triggerToast(msgOrType, typeOrMsg);
+  } else {
+    triggerToast(typeOrMsg, msgOrType || 'info');
+  }
 };
 
 onMounted(() => {

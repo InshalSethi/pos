@@ -2,6 +2,7 @@
   <div id="app">
     <router-view />
     <Toast />
+    <ConfirmModal />
     <ModalsContainer />
   </div>
 </template>
@@ -12,6 +13,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { ModalsContainer } from 'vue-final-modal';
 import Toast from '@/components/common/Toast.vue';
+import ConfirmModal from '@/components/common/ConfirmModal.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
