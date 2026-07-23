@@ -468,7 +468,7 @@
     <!-- Drafts Workbench Modal -->
     <div v-if="isDraftsModalOpen"
          @click.self="isDraftsModalOpen = false"
-         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md">
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
         
         <div class="w-full max-w-5xl bg-white dark:bg-[#1E1E1E] border border-slate-200/80 dark:border-[#2E2E2E]/80 rounded-[28px] p-6 shadow-2xl flex flex-col max-h-[85vh] transition-all">
             
@@ -616,7 +616,7 @@
     </div>
 
     <!-- Import Products Modal -->
-    <div v-if="showImportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div v-if="showImportModal" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full z-50 transition-all">
       <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
@@ -709,7 +709,7 @@
 
 
     <!-- Bulk Sale Modal -->
-    <div v-if="showBulkSaleModal" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm overflow-y-auto h-full w-full z-50 transition-all">
+    <div v-if="showBulkSaleModal" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full z-50 transition-all">
       <div class="relative top-20 mx-auto p-8 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white transform transition-all">
         <div class="mt-2">
           <div class="flex justify-between items-center mb-6">
@@ -770,7 +770,7 @@
     </div>
 
     <!-- View Product Modal -->
-    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all">
       <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
 
         <!-- Header -->
@@ -904,7 +904,7 @@
 
 
     <!-- Category Management Modal -->
-    <div v-if="showCategoryModal" class="fixed inset-0 overflow-y-auto h-full w-full" style="z-index: 9999; background-color: rgba(0, 0, 0, 0.5);">
+    <div v-if="showCategoryModal" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full transition-all" style="z-index: 9999;">
       <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
           <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -1031,7 +1031,7 @@
     <BarcodePrinter v-if="showBarcodeModal" :product="printingProduct" @close="showBarcodeModal = false" />
 
     <!-- Variations Modal -->
-    <div v-if="showVariationsModal && selectedVariationsProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div v-if="showVariationsModal && selectedVariationsProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
         <div class="absolute inset-0" @click="showVariationsModal = false"></div>
         <div class="relative w-full max-w-6xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
             
@@ -1253,11 +1253,23 @@ import { debounce } from '@/utils/debounce';
 import BarcodePrinter from '@/components/common/BarcodePrinter.vue';
 import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
+import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 const router = useRouter();
 
 const authStore = useAuthStore();
 const currencyStore = useCurrencyStore();
+const { showToast: triggerToast } = useToast();
+const { confirm } = useConfirm();
+
+const showToast = (typeOrMsg, msgOrType) => {
+  if (typeOrMsg === 'error' || typeOrMsg === 'success' || typeOrMsg === 'warning' || typeOrMsg === 'info') {
+    triggerToast(msgOrType, typeOrMsg);
+  } else {
+    triggerToast(typeOrMsg, msgOrType || 'info');
+  }
+};
 
 // New Reactive states for Dropdowns and Favoriting
 const isFavorite = ref(false);
@@ -1432,7 +1444,14 @@ const toggleSelectAllDrafts = () => {
 
 const deleteSelectedDrafts = async () => {
   if (selectedDraftIds.value.length === 0) return;
-  if (!confirm('Are you absolutely sure you want to permanently delete the ' + selectedDraftIds.value.length + ' selected draft item(s)?')) return;
+  const confirmed = await confirm({
+    title: 'Delete Draft Items?',
+    message: `Are you absolutely sure you want to permanently delete the ${selectedDraftIds.value.length} selected draft item(s)?`,
+    confirmText: 'Yes, Delete',
+    cancelText: 'Cancel',
+    type: 'danger'
+  });
+  if (!confirmed) return;
 
   try {
     const response = await axios.post('/api/products/drafts/bulk-destroy', {
@@ -1440,12 +1459,12 @@ const deleteSelectedDrafts = async () => {
     });
     if (response.data && response.data.success) {
       selectedDraftIds.value = [];
+      showToast('success', 'Draft items deleted successfully');
       await fetchDraftsData();
       await fetchProductsForTable();
     }
   } catch (error) {
-    console.error('Error deleting drafts:', error);
-    alert(error.response?.data?.message || 'Failed to delete selected drafts');
+    showToast('error', error.response?.data?.message || 'Failed to delete selected drafts');
   }
 };
 const printingProduct = ref(null);
@@ -1724,16 +1743,22 @@ const printBarcode = (product) => {
 };
 
 const deleteProduct = async (product) => {
-  if (!confirm(`Are you sure you want to delete ${product.name}?`)) {
-    return;
-  }
+  const confirmed = await confirm({
+    title: 'Delete Product?',
+    message: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
+    confirmText: 'Yes, Delete',
+    cancelText: 'Cancel',
+    type: 'danger'
+  });
+  if (!confirmed) return;
 
   try {
     await axios.delete(`/api/products/${product.id}`);
+    showToast('success', 'Product deleted successfully');
     fetchProductsForTable();
     fetchDraftsData();
   } catch (error) {
-    alert(error.response?.data?.message || 'An error occurred');
+    showToast('error', error.response?.data?.message || 'An error occurred while deleting product');
   }
 };
 
@@ -1898,10 +1923,10 @@ const createCategory = async () => {
     const response = await axios.post('/api/categories', categoryForm.value);
     categories.value.push(response.data.category);
     categoryForm.value = { name: '', description: '', parent_id: '' };
-    alert('Category created successfully!');
+    showToast('success', 'Category created successfully!');
   } catch (error) {
     console.error('Error creating category:', error);
-    alert('Failed to create category');
+    showToast('error', 'Failed to create category');
   } finally {
     creatingCategory.value = false;
   }
@@ -1933,10 +1958,10 @@ const updateCategory = async () => {
     }
     categoryForm.value = { name: '', description: '', parent_id: '' };
     editingCategoryData.value = null;
-    alert('Category updated successfully!');
+    showToast('success', 'Category updated successfully!');
   } catch (error) {
     console.error('Error updating category:', error);
-    alert('Failed to update category');
+    showToast('error', 'Failed to update category');
   } finally {
     editingCategory.value = false;
   }
@@ -1948,17 +1973,22 @@ const cancelEdit = () => {
 };
 
 const deleteCategory = async (category) => {
-  if (!confirm(`Are you sure you want to delete the category "${category.name}"?`)) {
-    return;
-  }
+  const confirmed = await confirm({
+    title: 'Delete Category?',
+    message: `Are you sure you want to delete the category "${category.name}"?`,
+    confirmText: 'Yes, Delete',
+    cancelText: 'Cancel',
+    type: 'danger'
+  });
+  if (!confirmed) return;
 
   try {
     await axios.delete(`/api/categories/${category.id}`);
     categories.value = categories.value.filter(c => c.id !== category.id);
-    alert('Category deleted successfully!');
+    showToast('success', 'Category deleted successfully!');
   } catch (error) {
     console.error('Error deleting category:', error);
-    alert('Failed to delete category');
+    showToast('error', 'Failed to delete category');
   }
 };
 

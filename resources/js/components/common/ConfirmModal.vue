@@ -2,17 +2,17 @@
   <Teleport to="body">
     <div
       v-if="confirmState.isOpen"
-      class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200"
+      class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all duration-200 animate-in fade-in"
       @click.self="handleCancel"
     >
-      <div class="relative bg-[#141414] dark:bg-[#141414] border border-slate-800 dark:border-[#2E2E2E] rounded-[28px] max-w-sm w-full p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">
+      <div class="relative bg-white dark:bg-[#141414] border border-slate-200/80 dark:border-[#2E2E2E] rounded-[28px] max-w-sm w-full p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">
         
         <!-- Header Icon Badge -->
         <div class="mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shrink-0"
           :class="[
             confirmState.type === 'danger' ? 'bg-rose-500/10 border border-rose-500/20 text-rose-500 shadow-rose-500/10' :
-            confirmState.type === 'warning' ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400 shadow-amber-500/10' :
-            'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shadow-indigo-500/10'
+            confirmState.type === 'warning' ? 'bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400 shadow-amber-500/10' :
+            'bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 shadow-indigo-500/10'
           ]"
         >
           <!-- Trash Icon for Danger -->
@@ -30,12 +30,12 @@
         </div>
 
         <!-- Title -->
-        <h3 class="text-base font-black text-slate-100 dark:text-slate-100 tracking-wide mb-1.5">
+        <h3 class="text-base font-black text-slate-900 dark:text-slate-100 tracking-wide mb-1.5">
           {{ confirmState.title || 'Confirm Action' }}
         </h3>
 
         <!-- Message -->
-        <p class="text-xs text-slate-400 dark:text-slate-400 leading-relaxed mb-6 px-2">
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-6 px-2">
           {{ confirmState.message }}
         </p>
 
@@ -44,7 +44,7 @@
           <button
             type="button"
             @click="handleCancel"
-            class="flex-1 px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer border border-slate-700/50"
+            class="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer border border-slate-200 dark:border-slate-700/50"
           >
             {{ confirmState.cancelText || 'Cancel' }}
           </button>

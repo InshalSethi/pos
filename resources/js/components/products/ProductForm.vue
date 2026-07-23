@@ -1167,7 +1167,7 @@
     <BarcodeScanner v-if="scanning" @scan="onScan" @close="scanning = false" />
 
     <!-- Options & Attributes Modal -->
-    <div v-if="showOptionsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
+    <div v-if="showOptionsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
       <div class="absolute inset-0" @click="showOptionsModal = false"></div>
       <div class="relative w-full max-w-sm p-5 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 space-y-3 z-10 animate-in fade-in zoom-in-95 duration-200">
         <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Configure Attribute Group</h4>
@@ -1187,7 +1187,7 @@
     </div>
 
     <!-- Add New Category Modal -->
-    <div v-if="showCategoryModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
+    <div v-if="showCategoryModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
       <div class="absolute inset-0" @click="closeCategoryModal"></div>
       <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl dark:shadow-slate-950/80 space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
         <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
@@ -1233,7 +1233,7 @@
 
     <!-- Manage Media Modal -->
     <Teleport to="body">
-      <div v-if="showMediaManagerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+      <div v-if="showMediaManagerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
         <div class="absolute inset-0" @click="showMediaManagerModal = false"></div>
         <div class="relative w-full max-w-3xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10 animate-in zoom-in-95 duration-200">
           
@@ -1322,7 +1322,7 @@
     </Teleport>
 
     <!-- Add New Unit Modal -->
-    <div v-if="showUnitModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
+    <div v-if="showUnitModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
       <div class="absolute inset-0" @click="closeUnitModal"></div>
       <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
         <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
@@ -1363,7 +1363,7 @@
     </div>
 
     <!-- Add New Tax Modal -->
-    <div v-if="showTaxModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-955/60 backdrop-blur-sm transition-opacity">
+    <div v-if="showTaxModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
       <div class="absolute inset-0" @click="closeTaxModal"></div>
       <div class="relative w-full max-w-lg p-8 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl space-y-6 z-10 animate-in fade-in zoom-in-95 duration-200">
         <div class="flex justify-between items-center">
@@ -1417,7 +1417,7 @@
     </div>
 
     <!-- Create Variation Modal -->
-    <div v-if="showVariationModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-955/60 backdrop-blur-sm transition-opacity">
+    <div v-if="showVariationModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
       <div class="absolute inset-0" @click="closeVariationModal"></div>
       <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
         <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
