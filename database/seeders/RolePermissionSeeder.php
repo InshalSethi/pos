@@ -166,7 +166,7 @@ class RolePermissionSeeder extends Seeder
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
         // Assign permissions to roles (sync to avoid duplicates)
-        $adminRole->syncPermissions(Permission::all());
+        $adminRole->syncPermissions(Permission::where('guard_name', 'web')->get());
 
         // Sub-admin has same permissions as manager
         $subAdminRole->syncPermissions([

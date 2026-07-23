@@ -309,6 +309,12 @@ class OnboardingWizard extends Component
                 $user->companies()->attach($company->id, ['role' => 'owner']);
             }
 
+            if (!$user->hasRole('admin')) {
+                $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+                $adminRole->syncPermissions(\Spatie\Permission\Models\Permission::where('guard_name', 'web')->get());
+                $user->assignRole($adminRole);
+            }
+
             // ── Baseline Seeding ──
             // Seed Default Branch Warehouse
             \App\Models\Warehouse::firstOrCreate([

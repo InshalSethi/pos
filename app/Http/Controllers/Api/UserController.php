@@ -25,8 +25,17 @@ class UserController extends Controller
      */
     public function statistics(): JsonResponse
     {
-        $total = User::count();
-        $active = User::where('is_active', true)->count();
+        $companyId = auth()->user()->current_company_id;
+
+        $baseQuery = User::where(function ($q) use ($companyId) {
+            $q->where('current_company_id', $companyId)
+              ->orWhereHas('companies', function ($cq) use ($companyId) {
+                  $cq->where('companies.id', $companyId);
+              });
+        });
+
+        $total = (clone $baseQuery)->count();
+        $active = (clone $baseQuery)->where('is_active', true)->count();
 
         return response()->json([
             'total_users' => $total,
@@ -39,8 +48,15 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = User::with('roles');
+        $companyId = auth()->user()->current_company_id;
 
+        $query = User::with('roles')
+            ->where(function ($q) use ($companyId) {
+                $q->where('current_company_id', $companyId)
+                  ->orWhereHas('companies', function ($cq) use ($companyId) {
+                      $cq->where('companies.id', $companyId);
+                  });
+            });
 
         // Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -48,7 +64,6 @@ class UserController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
-
             });
         }
 
@@ -105,6 +120,8 @@ class UserController extends Controller
             ], 422);
         }
 
+        $companyId = auth()->user()->current_company_id;
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -113,7 +130,13 @@ class UserController extends Controller
             'address' => $request->address,
             'notes' => $request->notes,
             'is_active' => $request->get('is_active', true),
+            'current_company_id' => $companyId,
+            'onboarding_completed' => true,
         ]);
+
+        if ($companyId) {
+            $user->companies()->attach($companyId, ['role' => $request->role]);
+        }
 
         $user->assignRole($request->role);
         $user->load('roles');
@@ -129,6 +152,12 @@ class UserController extends Controller
      */
     public function show(User $user): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($user->current_company_id !== $companyId && !$user->companies()->where('companies.id', $companyId)->exists()) {
+            return response()->json(['message' => 'Unauthorized access to user.'], 403);
+        }
+
         $user->load('roles', 'permissions');
 
         return response()->json($user);
@@ -139,6 +168,12 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($user->current_company_id !== $companyId && !$user->companies()->where('companies.id', $companyId)->exists()) {
+            return response()->json(['message' => 'Unauthorized to update this user.'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
@@ -192,6 +227,12 @@ class UserController extends Controller
             ], 422);
         }
 
+        $companyId = auth()->user()->current_company_id;
+
+        if ($user->current_company_id !== $companyId && !$user->companies()->where('companies.id', $companyId)->exists()) {
+            return response()->json(['message' => 'Unauthorized to delete this user.'], 403);
+        }
+
         $user->delete();
 
         return response()->json([
@@ -200,11 +241,21 @@ class UserController extends Controller
     }
 
     /**
-     * Get all available roles
+     * Get all available roles for current company
      */
     public function roles(): JsonResponse
     {
-        $roles = Role::all();
+        $companyId = auth()->user()->current_company_id;
+        $systemRoleNames = ['admin', 'manager', 'cashier', 'employee', 'user'];
+
+        $roles = Role::where('guard_name', 'web')
+            ->where(function ($q) use ($companyId, $systemRoleNames) {
+                $q->where('company_id', $companyId)
+                  ->orWhere(function ($sq) use ($systemRoleNames) {
+                      $sq->whereNull('company_id')
+                         ->whereIn('name', $systemRoleNames);
+                  });
+            })->orderBy('name')->get();
 
         return response()->json($roles);
     }

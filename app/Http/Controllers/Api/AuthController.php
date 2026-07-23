@@ -105,9 +105,14 @@ class AuthController extends Controller
                 'onboarding_completed' => false,
             ]);
 
-            // Assign default role
-            \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
-            $user->assignRole('user');
+            // Assign default admin role with all permissions
+            if (\Spatie\Permission\Models\Permission::where('guard_name', 'web')->count() === 0) {
+                (new \Database\Seeders\RolePermissionSeeder())->run();
+            }
+
+            $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+            $adminRole->syncPermissions(\Spatie\Permission\Models\Permission::where('guard_name', 'web')->get());
+            $user->assignRole($adminRole);
 
             // Create default user settings
             UserSettings::create([

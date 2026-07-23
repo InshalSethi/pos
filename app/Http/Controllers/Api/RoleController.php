@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -13,21 +14,40 @@ class RoleController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:users.view')->only(['index', 'show']);
-        $this->middleware('permission:users.create')->only(['store']);
-        $this->middleware('permission:users.edit')->only(['update']);
-        $this->middleware('permission:users.delete')->only(['destroy']);
+        $this->middleware('permission:roles.view|users.view')->only(['index', 'show']);
+        $this->middleware('permission:roles.create|users.create')->only(['store']);
+        $this->middleware('permission:roles.edit|users.edit')->only(['update']);
+        $this->middleware('permission:roles.delete|users.delete')->only(['destroy']);
     }
 
     /**
-     * Display a listing of roles.
+     * Display a listing of roles for current selected company.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Role::with('permissions');
+        $companyId = auth()->user()->current_company_id;
+
+        // Ensure default admin role exists for web guard and has full permissions
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        if ($adminRole->permissions()->count() === 0) {
+            $adminRole->syncPermissions(Permission::where('guard_name', 'web')->get());
+        }
+
+        // Only standard system default roles are shared across companies
+        $systemRoleNames = ['admin', 'manager', 'cashier', 'employee', 'user'];
+
+        $query = Role::with('permissions')
+            ->where('guard_name', 'web')
+            ->where(function ($q) use ($companyId, $systemRoleNames) {
+                $q->where('company_id', $companyId)
+                  ->orWhere(function ($sq) use ($systemRoleNames) {
+                      $sq->whereNull('company_id')
+                         ->whereIn('name', $systemRoleNames);
+                  });
+            });
 
         // Search functionality
-        if ($request->has('search')) {
+        if ($request->has('search') && $request->get('search') != '') {
             $search = $request->get('search');
             $query->where('name', 'like', "%{$search}%");
         }
@@ -38,12 +58,21 @@ class RoleController extends Controller
     }
 
     /**
-     * Store a newly created role.
+     * Store a newly created role for current selected company.
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
+
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:roles,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('roles')->where(function ($q) use ($companyId) {
+                    return $q->where('company_id', $companyId);
+                }),
+            ],
             'permissions' => 'array',
             'permissions.*' => 'exists:permissions,name',
         ]);
@@ -55,10 +84,17 @@ class RoleController extends Controller
             ], 422);
         }
 
-        $role = Role::create(['name' => $request->name]);
+        $role = Role::create([
+            'name' => $request->name,
+            'company_id' => $companyId,
+            'guard_name' => 'web',
+        ]);
 
-        if ($request->has('permissions')) {
-            $role->givePermissionTo($request->permissions);
+        if ($request->has('permissions') && !empty($request->permissions)) {
+            $permissionModels = Permission::where('guard_name', 'web')
+                ->whereIn('name', (array) $request->permissions)
+                ->get();
+            $role->syncPermissions($permissionModels);
         }
 
         $role->load('permissions');
@@ -74,6 +110,12 @@ class RoleController extends Controller
      */
     public function show(Role $role): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
+
+        if (!is_null($role->company_id) && $role->company_id != $companyId) {
+            return response()->json(['message' => 'Unauthorized access to role.'], 403);
+        }
+
         $role->load('permissions');
         return response()->json($role);
     }
@@ -83,8 +125,21 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
+
+        if (!is_null($role->company_id) && $role->company_id != $companyId) {
+            return response()->json(['message' => 'Unauthorized to update this role.'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('roles')->ignore($role->id)->where(function ($q) use ($companyId) {
+                    return $q->where('company_id', $companyId);
+                }),
+            ],
             'permissions' => 'array',
             'permissions.*' => 'exists:permissions,name',
         ]);
@@ -99,7 +154,10 @@ class RoleController extends Controller
         $role->update(['name' => $request->name]);
 
         if ($request->has('permissions')) {
-            $role->syncPermissions($request->permissions);
+            $permissionModels = Permission::where('guard_name', 'web')
+                ->whereIn('name', (array) $request->permissions)
+                ->get();
+            $role->syncPermissions($permissionModels);
         }
 
         $role->load('permissions');
@@ -115,12 +173,18 @@ class RoleController extends Controller
      */
     public function destroy(Role $role): JsonResponse
     {
-        // Prevent deleting system roles
+        $companyId = auth()->user()->current_company_id;
+
+        // Prevent deleting system default roles
         $systemRoles = ['admin', 'manager', 'cashier', 'user'];
-        if (in_array($role->name, $systemRoles)) {
+        if (is_null($role->company_id) || in_array(strtolower($role->name), $systemRoles)) {
             return response()->json([
-                'message' => 'Cannot delete system role'
+                'message' => 'Cannot delete system default role'
             ], 422);
+        }
+
+        if ($role->company_id != $companyId) {
+            return response()->json(['message' => 'Unauthorized to delete this role.'], 403);
         }
 
         // Check if role is assigned to users
@@ -142,7 +206,7 @@ class RoleController extends Controller
      */
     public function permissions(): JsonResponse
     {
-        $permissions = Permission::all()->groupBy(function ($permission) {
+        $permissions = Permission::where('guard_name', 'web')->get()->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
 
