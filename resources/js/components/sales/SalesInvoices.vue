@@ -211,9 +211,17 @@
                 {{ parseFloat(item.paid_amount) > 0 ? formatCurrency(item.paid_amount) : '-' }}
               </td>
 
-              <!-- Due Amount -->
-              <td class="py-4 px-4 text-right font-semibold text-rose-500 dark:text-rose-400 text-sm align-middle bg-white dark:bg-zinc-900">
-                {{ getDueAmount(item) > 0 ? formatCurrency(getDueAmount(item)) : '-' }}
+              <!-- Due / Return Amount -->
+              <td class="py-4 px-4 text-right text-xs align-middle bg-white dark:bg-zinc-900">
+                <span v-if="getBalanceState(item).type === 'due'" class="font-semibold text-rose-600 dark:text-rose-400">
+                  {{ formatCurrency(getBalanceState(item).amount) }}
+                </span>
+                <span v-else-if="getBalanceState(item).type === 'return'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800" title="Overpayment Change / Return Amount">
+                  Return: {{ formatCurrency(getBalanceState(item).amount) }}
+                </span>
+                <span v-else class="text-slate-400 dark:text-zinc-500 font-medium">
+                  -
+                </span>
               </td>
 
               <!-- Due Date -->
@@ -338,10 +346,12 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import { debounce } from '@/utils/debounce';
 import axios from 'axios';
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
 const router = useRouter();
 
 // Reactive data
@@ -536,19 +546,54 @@ const formatShortDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
+
 const formatCurrency = (val) => {
   const num = parseFloat(val);
-  if (isNaN(num)) return '$0.00';
-  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  if (isNaN(num)) return currencySymbol.value + '0.00';
+  return currencySymbol.value + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+};
+
+const getBalanceState = (item) => {
+  const total = parseFloat(item.total_amount) || 0;
+  const paid = parseFloat(item.paid_amount) || 0;
+  const diff = paid - total;
+
+  if (diff < -0.01) {
+    // Case A: Underpayment -> Customer owes money
+    return {
+      type: 'due',
+      amount: Math.abs(diff),
+      label: 'Due'
+    };
+  } else if (diff > 0.01) {
+    // Case B: Overpayment -> Change due / Return amount to customer
+    return {
+      type: 'return',
+      amount: diff,
+      label: 'Return'
+    };
+  } else {
+    // Case C: Exact Payment
+    return {
+      type: 'paid',
+      amount: 0,
+      label: 'Paid'
+    };
+  }
 };
 
 const getDueAmount = (item) => {
-  return Math.max(0, parseFloat(item.total_amount) - parseFloat(item.paid_amount || 0));
+  return getBalanceState(item).type === 'due' ? getBalanceState(item).amount : 0;
 };
 
 const getStatusLabel = (item) => {
-  if (item.status === 'completed') return 'Paid';
-  if (item.status === 'pending') {
+  const total = parseFloat(item.total_amount) || 0;
+  const paid = parseFloat(item.paid_amount) || 0;
+  if (item.status === 'completed' || paid >= total) return 'Paid';
+  if (item.status === 'pending' || paid < total) {
     const dueDate = item.due_date ? new Date(item.due_date) : null;
     if (dueDate && dueDate < new Date().setHours(0,0,0,0)) {
       return 'Overdue';

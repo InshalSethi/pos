@@ -198,6 +198,7 @@ class SaleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'nullable|exists:customers,id',
+            'customer_name' => 'nullable|string|max:255',
             'sale_number' => 'nullable|string|max:100',
             'warehouse_id' => 'nullable|exists:warehouses,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -335,19 +336,58 @@ class SaleController extends Controller
             if ($request->has('grand_discount_amount')) {
                 $totalDiscount += (float)$request->grand_discount_amount;
             }
-            if ($request->has('grand_tax_rate')) {
-                $grandTaxPercentage = (float)$request->grand_tax_rate;
-                $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
+
+            // Tax Toggle Status (enable_tax or is_tax_enabled)
+            $isTaxEnabled = true;
+            if ($request->has('enable_tax')) {
+                $isTaxEnabled = $request->boolean('enable_tax');
+            } elseif ($request->has('is_tax_enabled')) {
+                $isTaxEnabled = $request->boolean('is_tax_enabled');
+            }
+
+            if (!$isTaxEnabled) {
+                $totalTax = 0;
+            } else {
+                if ($request->has('tax_amount') && $request->tax_amount !== null) {
+                    $totalTax = (float) $request->tax_amount;
+                } elseif ($request->has('grand_tax_rate')) {
+                    $grandTaxPercentage = (float)$request->grand_tax_rate;
+                    $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
+                }
             }
 
             $totalAmount = $subtotal - $totalDiscount + $totalTax;
             $changeAmount = max(0, $request->paid_amount - $totalAmount);
 
+            // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name) ---
+            $customerId = $request->customer_id;
+            if (!$customerId && $request->filled('customer_name')) {
+                $typedName = trim($request->customer_name);
+                if ($typedName !== '') {
+                    $existingCustomer = Customer::where('company_id', $companyId)
+                        ->where(function($q) use ($typedName) {
+                            $q->where('name', $typedName)
+                              ->orWhere('phone', $typedName);
+                        })->first();
+
+                    if ($existingCustomer) {
+                        $customerId = $existingCustomer->id;
+                    } else {
+                        $newCustomer = Customer::create([
+                            'company_id' => $companyId,
+                            'name' => $typedName,
+                            'is_active' => true,
+                        ]);
+                        $customerId = $newCustomer->id;
+                    }
+                }
+            }
+
             // --- WALLET CREDIT APPLICATION ---
             $walletCreditApplied = 0;
             $customer = null;
-            if ($request->customer_id) {
-                $customer = Customer::find($request->customer_id);
+            if ($customerId) {
+                $customer = Customer::find($customerId);
             }
 
             if ($customer && $request->boolean('use_wallet_credit') && (float) $customer->wallet_balance > 0) {
@@ -425,7 +465,7 @@ class SaleController extends Controller
             $sale = Sale::create([
                 'company_id' => $companyId,
                 'sale_number' => $saleNumber,
-                'customer_id' => $request->customer_id,
+                'customer_id' => $customerId,
                 'category_id' => $request->category_id,
                 'warehouse_id' => $warehouseId,
                 'user_id' => auth()->id(),
@@ -615,6 +655,7 @@ class SaleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'nullable|exists:customers,id',
+            'customer_name' => 'nullable|string|max:255',
             'sale_number' => 'nullable|string|max:100',
             'warehouse_id' => 'nullable|exists:warehouses,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -844,9 +885,24 @@ class SaleController extends Controller
             if ($request->has('grand_discount_amount')) {
                 $totalDiscount += (float)$request->grand_discount_amount;
             }
-            if ($request->has('grand_tax_rate')) {
-                $grandTaxPercentage = (float)$request->grand_tax_rate;
-                $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
+
+            // Tax Toggle Status (enable_tax or is_tax_enabled)
+            $isTaxEnabled = true;
+            if ($request->has('enable_tax')) {
+                $isTaxEnabled = $request->boolean('enable_tax');
+            } elseif ($request->has('is_tax_enabled')) {
+                $isTaxEnabled = $request->boolean('is_tax_enabled');
+            }
+
+            if (!$isTaxEnabled) {
+                $totalTax = 0;
+            } else {
+                if ($request->has('tax_amount') && $request->tax_amount !== null) {
+                    $totalTax = (float) $request->tax_amount;
+                } elseif ($request->has('grand_tax_rate')) {
+                    $grandTaxPercentage = (float)$request->grand_tax_rate;
+                    $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
+                }
             }
 
             $totalAmount = $subtotal - $totalDiscount + $totalTax;
@@ -891,9 +947,33 @@ class SaleController extends Controller
                 $primaryPaymentMethod = $payments[0]['method'];
             }
 
+            // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name) ---
+            $customerId = $request->customer_id;
+            if (!$customerId && $request->filled('customer_name')) {
+                $typedName = trim($request->customer_name);
+                if ($typedName !== '') {
+                    $existingCustomer = Customer::where('company_id', $companyId)
+                        ->where(function($q) use ($typedName) {
+                            $q->where('name', $typedName)
+                              ->orWhere('phone', $typedName);
+                        })->first();
+
+                    if ($existingCustomer) {
+                        $customerId = $existingCustomer->id;
+                    } else {
+                        $newCustomer = Customer::create([
+                            'company_id' => $companyId,
+                            'name' => $typedName,
+                            'is_active' => true,
+                        ]);
+                        $customerId = $newCustomer->id;
+                    }
+                }
+            }
+
             $sale->update([
                 'sale_number' => $saleNumber,
-                'customer_id' => $request->customer_id,
+                'customer_id' => $customerId,
                 'category_id' => $request->category_id,
                 'warehouse_id' => $warehouseId,
                 'sale_date' => $request->sale_date ?? $sale->sale_date,
@@ -915,8 +995,8 @@ class SaleController extends Controller
             ]);
 
             // Increment customer total purchases with the new updated total (financial reporting ledger update)
-            if ($request->customer_id) {
-                $customer = Customer::find($request->customer_id);
+            if ($customerId) {
+                $customer = Customer::find($customerId);
                 if ($customer) {
                     $customer->increment('total_purchases', $totalAmount);
                 }

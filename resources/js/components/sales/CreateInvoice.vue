@@ -702,8 +702,24 @@
                     </div>
                   </div>
                 </div>
+                <div v-else-if="customerSearch && customerSearch.trim()" class="p-2.5 bg-blue-50/60 dark:bg-blue-950/30 rounded-xl border border-blue-200/80 dark:border-blue-900/40 text-xs flex items-center justify-between transition-all">
+                  <div class="flex items-center space-x-2 min-w-0">
+                    <div class="w-6 h-6 rounded-full bg-blue-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-xs">
+                      {{ customerSearch.trim().charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0 text-left">
+                      <p class="font-bold text-blue-900 dark:text-blue-200 text-xs truncate">{{ customerSearch.trim() }}</p>
+                      <p class="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Custom Customer (Auto-saved on print)</p>
+                    </div>
+                  </div>
+                  <button @click="clearCustomer" type="button" class="text-slate-400 hover:text-rose-500 p-1 border-0 bg-transparent cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
                 <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
-                  No customer selected. Search above to assign.
+                  No customer selected. Type custom name or search above.
                 </div>
               </div>
 
@@ -2235,7 +2251,7 @@ const invoiceSubtotal = computed(() => {
 });
 
 const totalDiscount = computed(() => {
-  return invoiceItems.value.reduce((sum, item) => {
+  const itemDiscountSum = invoiceItems.value.reduce((sum, item) => {
     const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
     const itemSubtotal = item.quantity * basePrice;
     const rawDiscount = item.discount_amount || 0;
@@ -2244,10 +2260,11 @@ const totalDiscount = computed(() => {
       : rawDiscount;
     return sum + effDiscount;
   }, 0);
+  return itemDiscountSum + calculatedManualDiscount.value;
 });
 
 const totalTax = computed(() => {
-  return invoiceItems.value.reduce((sum, item) => {
+  const itemTaxSum = invoiceItems.value.reduce((sum, item) => {
     const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
     const itemSubtotal = item.quantity * basePrice;
     const rawDiscount = item.discount_amount || 0;
@@ -2257,6 +2274,7 @@ const totalTax = computed(() => {
     const taxRate = item.tax_rate || 0;
     return sum + (Math.max(0, itemSubtotal - effDiscount) * (taxRate / 100));
   }, 0);
+  return itemTaxSum + totalAutoRequiredTax.value + calculatedManualTax.value;
 });
 
 const calculatedManualTax = computed(() => {
@@ -2315,7 +2333,7 @@ const calculatedManualDiscount = computed(() => {
 
 const grandTotal = computed(() => {
   const sub = invoiceSubtotal.value || 0;
-  return Math.max(0, sub + totalAutoRequiredTax.value + calculatedManualTax.value - calculatedManualDiscount.value);
+  return Math.max(0, sub + totalTax.value - totalDiscount.value);
 });
 
 const invoiceTotal = computed(() => {
@@ -2838,6 +2856,7 @@ const saveInvoice = async (shouldPrint = false) => {
 
     const invoiceData = {
       customer_id: invoiceForm.value.customer_id || null,
+      customer_name: customerSearch.value ? customerSearch.value.trim() : null,
       sale_number: invoiceForm.value.sale_number || null,
       category_id: invoiceForm.value.category_id || null,
       warehouse_id: selectedWarehouseId.value === 'all' ? null : selectedWarehouseId.value,
