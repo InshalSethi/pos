@@ -40,7 +40,11 @@ class WarehouseController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $warehouses = $query->with('counters')->orderBy('name')->get();
+        $warehouses = $query->with(['counters' => function ($q) {
+            $q->where('status', 'active');
+        }])->withCount(['counters' => function ($q) {
+            $q->where('status', 'active');
+        }])->orderBy('name')->get();
 
         return response()->json($warehouses);
     }

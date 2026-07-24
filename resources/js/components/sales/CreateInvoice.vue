@@ -630,6 +630,68 @@
                 />
               </div>
 
+              <!-- Warehouse / Counter Number -->
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold">Warehouse / Counter Number:</label>
+                  <button
+                    type="button"
+                    @click="showWarehouseSwitcherModal = true"
+                    class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center space-x-1 cursor-pointer"
+                    title="Click to switch active warehouse"
+                  >
+                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+                    </svg>
+                    <span>{{ getSelectedWarehouseNameLabel() }}</span>
+                  </button>
+                </div>
+                <div class="relative flex items-center w-full" id="counter-dropdown-container">
+                  <button
+                    type="button"
+                    @click="showWarehouseSwitcherModal = true"
+                    class="absolute left-2.5 z-10 text-slate-400 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                    title="Click to switch warehouse"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    @click.stop="toggleCounterDropdown($event)"
+                    class="w-full pl-9 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium cursor-pointer flex justify-between items-center h-[34px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
+                  >
+                    <span class="truncate">{{ getSelectedCounterLabel() }}</span>
+                    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isCounterDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Salesman -->
+              <div>
+                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Salesman:</label>
+                <div class="relative flex items-center w-full" id="salesman-dropdown-container">
+                  <span class="absolute left-2.5 z-10 text-slate-400 dark:text-zinc-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </span>
+                  <button
+                    type="button"
+                    @click.stop="toggleSalesmanDropdown($event)"
+                    class="w-full pl-9 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium cursor-pointer flex justify-between items-center h-[34px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
+                  >
+                    <span class="truncate">{{ getSelectedSalesmanLabel() }}</span>
+                    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isSalesmanDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
               <!-- BILL TO SECTION (Moved directly under Order Number) -->
               <div class="space-y-2 pt-1 pb-1 border-t border-b border-slate-100 dark:border-zinc-800/60">
                 <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
@@ -1544,6 +1606,150 @@
         </div>
       </transition>
     </teleport>
+
+    <!-- Teleported Floating Counter Dropdown Menu -->
+    <teleport to="body">
+      <transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
+      >
+        <div
+          v-if="isCounterDropdownOpen"
+          :style="{ top: counterDropdownPos.top, bottom: counterDropdownPos.bottom, left: counterDropdownPos.left, width: counterDropdownPos.width }"
+          class="fixed z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
+        >
+          <div
+            @click.stop="selectCounter('')"
+            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
+            :class="!invoiceForm.counter_id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
+          >
+            <span>Select Counter / Terminal</span>
+          </div>
+          <div
+            v-for="counter in availableCounters"
+            :key="counter.id"
+            @click.stop="selectCounter(counter.id)"
+            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
+            :class="invoiceForm.counter_id == counter.id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
+          >
+            <div class="flex items-center space-x-2 truncate">
+              <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span class="truncate">{{ counter.name }} {{ counter.counter_number ? `(#${counter.counter_number})` : '' }}</span>
+            </div>
+            <svg v-if="invoiceForm.counter_id == counter.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+      </transition>
+    </teleport>
+
+    <!-- Teleported Floating Salesman Dropdown Menu -->
+    <teleport to="body">
+      <transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
+      >
+        <div
+          v-if="isSalesmanDropdownOpen"
+          :style="{ top: salesmanDropdownPos.top, bottom: salesmanDropdownPos.bottom, left: salesmanDropdownPos.left, width: salesmanDropdownPos.width }"
+          class="fixed z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
+        >
+          <div
+            @click.stop="selectSalesman('')"
+            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
+            :class="!invoiceForm.salesman_id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
+          >
+            <span>Select Sales Representative</span>
+          </div>
+          <div
+            v-for="emp in salesmen"
+            :key="emp.id"
+            @click.stop="selectSalesman(emp.id)"
+            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
+            :class="invoiceForm.salesman_id == emp.id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
+          >
+            <div class="flex items-center space-x-2 truncate">
+              <div class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold text-[9px] flex items-center justify-center shrink-0">
+                {{ (emp.full_name || emp.first_name || 'S').charAt(0).toUpperCase() }}
+              </div>
+              <span class="truncate">{{ emp.full_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }} {{ emp.employee_number ? `(${emp.employee_number})` : '' }}</span>
+            </div>
+            <svg v-if="invoiceForm.salesman_id == emp.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+      </transition>
+    </teleport>
+
+    <!-- Quick Warehouse Switcher Modal -->
+    <div v-if="showWarehouseSwitcherModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all duration-300">
+      <div class="relative mx-auto p-6 border border-slate-100 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-left transition-all duration-300 space-y-4">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-100">Select Warehouse</h3>
+              <p class="text-[11px] text-slate-400 dark:text-zinc-500">Filter available counters & POS terminals</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="showWarehouseSwitcherModal = false"
+            class="text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-1.5 rounded-lg transition-all"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+          <div
+            v-for="wh in warehouses"
+            :key="wh.id"
+            @click="selectActiveWarehouse(wh)"
+            class="p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between"
+            :class="[
+              selectedWarehouseId === wh.id 
+                ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 shadow-sm font-bold' 
+                : 'border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300'
+            ]"
+          >
+            <div class="flex items-center space-x-3 min-w-0">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="selectedWarehouseId === wh.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+                </svg>
+              </div>
+              <div class="min-w-0 text-left">
+                <span class="text-xs font-bold block truncate">{{ wh.name }}</span>
+                <span class="text-[10px] text-slate-400 dark:text-zinc-500 block truncate">{{ wh.counters_count ?? (wh.counters || []).length }} counter(s) available</span>
+              </div>
+            </div>
+            <span v-if="wh.is_default" class="px-2 py-0.5 text-[9px] font-black uppercase rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+              Default
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1597,8 +1803,37 @@ const isProductDropdownOpen = ref(false);
 const isCategoryDropdownOpen = ref(false);
 const barcodeInput = ref('');
 const warehouses = ref([]);
+const salesmen = ref([]);
+const showWarehouseSwitcherModal = ref(false);
 const selectedWarehouseId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
+
+const availableCounters = computed(() => {
+  if (!selectedWarehouseId.value || selectedWarehouseId.value === 'all') {
+    return warehouses.value.flatMap(w => w.counters || []);
+  }
+  const wh = warehouses.value.find(w => String(w.id) === String(selectedWarehouseId.value));
+  return wh ? (wh.counters || []) : [];
+});
+
+const getSelectedWarehouseNameLabel = () => {
+  if (!selectedWarehouseId.value || selectedWarehouseId.value === 'all') return 'All Warehouses';
+  const wh = warehouses.value.find(w => String(w.id) === String(selectedWarehouseId.value));
+  return wh ? wh.name : 'Select Warehouse';
+};
+
+const selectActiveWarehouse = (wh) => {
+  selectedWarehouseId.value = wh.id;
+  invoiceForm.value.warehouse_id = wh.id;
+  showWarehouseSwitcherModal.value = false;
+  
+  const counters = wh.counters || [];
+  if (counters.length > 0) {
+    invoiceForm.value.counter_id = counters[0].id;
+  } else {
+    invoiceForm.value.counter_id = '';
+  }
+};
 
 const openWarehouseItemIndex = ref(null);
 const isPaymentDropdownOpen = ref(false);
@@ -1613,6 +1848,113 @@ const paymentMethodsList = [
 
 const warehouseDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px' });
 const paymentDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px', width: '200px' });
+const counterDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px', width: '200px' });
+const isCounterDropdownOpen = ref(false);
+
+const salesmanDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px', width: '200px' });
+const isSalesmanDropdownOpen = ref(false);
+
+const toggleCounterDropdown = (event) => {
+  if (isCounterDropdownOpen.value) {
+    isCounterDropdownOpen.value = false;
+    return;
+  }
+  isSalesmanDropdownOpen.value = false;
+  isPaymentDropdownOpen.value = false;
+  openWarehouseItemIndex.value = null;
+  isCounterDropdownOpen.value = true;
+
+  nextTick(() => {
+    const btn = event?.currentTarget;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const menuHeight = 220;
+    const leftVal = Math.max(10, Math.min(window.innerWidth - rect.width - 10, rect.left));
+
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+      const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
+      counterDropdownPos.value = {
+        top: 'auto',
+        bottom: `${bottomVal}px`,
+        left: `${leftVal}px`,
+        width: `${rect.width}px`
+      };
+    } else {
+      const topVal = rect.bottom + 2;
+      counterDropdownPos.value = {
+        top: `${topVal}px`,
+        bottom: 'auto',
+        left: `${leftVal}px`,
+        width: `${rect.width}px`
+      };
+    }
+  });
+};
+
+const toggleSalesmanDropdown = (event) => {
+  if (isSalesmanDropdownOpen.value) {
+    isSalesmanDropdownOpen.value = false;
+    return;
+  }
+  isCounterDropdownOpen.value = false;
+  isPaymentDropdownOpen.value = false;
+  openWarehouseItemIndex.value = null;
+  isSalesmanDropdownOpen.value = true;
+
+  nextTick(() => {
+    const btn = event?.currentTarget;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const menuHeight = 220;
+    const leftVal = Math.max(10, Math.min(window.innerWidth - rect.width - 10, rect.left));
+
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+      const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
+      salesmanDropdownPos.value = {
+        top: 'auto',
+        bottom: `${bottomVal}px`,
+        left: `${leftVal}px`,
+        width: `${rect.width}px`
+      };
+    } else {
+      const topVal = rect.bottom + 2;
+      salesmanDropdownPos.value = {
+        top: `${topVal}px`,
+        bottom: 'auto',
+        left: `${leftVal}px`,
+        width: `${rect.width}px`
+      };
+    }
+  });
+};
+
+const selectCounter = (id) => {
+  invoiceForm.value.counter_id = id;
+  isCounterDropdownOpen.value = false;
+};
+
+const selectSalesman = (id) => {
+  invoiceForm.value.salesman_id = id;
+  isSalesmanDropdownOpen.value = false;
+};
+
+const getSelectedCounterLabel = () => {
+  if (!invoiceForm.value.counter_id) return 'Select Counter / Terminal';
+  const c = availableCounters.value.find(item => item.id == invoiceForm.value.counter_id);
+  return c ? `${c.name} ${c.counter_number ? `(#${c.counter_number})` : ''}` : 'Select Counter / Terminal';
+};
+
+const getSelectedSalesmanLabel = () => {
+  if (!invoiceForm.value.salesman_id) return 'Select Sales Representative';
+  const s = salesmen.value.find(item => item.id == invoiceForm.value.salesman_id);
+  if (!s) return 'Select Sales Representative';
+  const name = s.full_name || `${s.first_name || ''} ${s.last_name || ''}`.trim();
+  return s.employee_number ? `${name} (${s.employee_number})` : name;
+};
 
 const getSelectedWarehouseName = (product, id) => {
   if (!id) return 'Select Warehouse';
@@ -2169,6 +2511,9 @@ const invoiceForm = ref({
   customer_id: '',
   sale_number: '',
   category_id: null,
+  warehouse_id: '',
+  counter_id: '',
+  salesman_id: '',
   sale_date: new Date().toISOString().split('T')[0],
   due_date: getDefaultDueDate(new Date()),
   order_number: '',
@@ -2514,8 +2859,17 @@ const loadProducts = async () => {
       warehouses.value = response.data.warehouses || [];
       taxes.value = response.data.taxes || [];
       
-      // Select default warehouse
-      selectedWarehouseId.value = 'all';
+      // Auto-select default warehouse and its counter
+      if (warehouses.value.length > 0) {
+        const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0];
+        if (defaultWh) {
+          selectedWarehouseId.value = defaultWh.id;
+          invoiceForm.value.warehouse_id = defaultWh.id;
+          if (defaultWh.counters && defaultWh.counters.length > 0) {
+            invoiceForm.value.counter_id = defaultWh.counters[0].id;
+          }
+        }
+      }
     } else {
       products.value = response.data.data || response.data;
     }
@@ -2533,6 +2887,15 @@ const loadCategories = async () => {
     categories.value = response.data.data || response.data;
   } catch (error) {
     console.error('Error loading categories:', error);
+  }
+};
+
+const loadSalesmen = async () => {
+  try {
+    const response = await api.get('/employees/for-dropdown');
+    salesmen.value = response.data.data || response.data || [];
+  } catch (error) {
+    console.error('Error loading salesmen:', error);
   }
 };
 
@@ -2860,6 +3223,8 @@ const saveInvoice = async (shouldPrint = false) => {
       sale_number: invoiceForm.value.sale_number || null,
       category_id: invoiceForm.value.category_id || null,
       warehouse_id: selectedWarehouseId.value === 'all' ? null : selectedWarehouseId.value,
+      counter_id: invoiceForm.value.counter_id || null,
+      salesman_id: invoiceForm.value.salesman_id || null,
       sale_date: invoiceForm.value.sale_date,
       due_date: invoiceForm.value.due_date || null,
       order_number: invoiceForm.value.order_number || null,
@@ -3017,6 +3382,16 @@ const handleClickOutside = (event) => {
     isPaymentDropdownOpen.value = false;
   }
 
+  const counterContainer = document.getElementById('counter-dropdown-container');
+  if (counterContainer && !counterContainer.contains(event.target)) {
+    isCounterDropdownOpen.value = false;
+  }
+
+  const salesmanContainer = document.getElementById('salesman-dropdown-container');
+  if (salesmanContainer && !salesmanContainer.contains(event.target)) {
+    isSalesmanDropdownOpen.value = false;
+  }
+
   if (openWarehouseItemIndex.value !== null) {
     const itemWhContainer = document.getElementById(`item-wh-dropdown-${openWarehouseItemIndex.value}`);
     if (itemWhContainer && !itemWhContainer.contains(event.target)) {
@@ -3107,6 +3482,8 @@ const fetchNextInvoiceNumber = async () => {
 const handleWindowScrollOrResize = () => {
   openWarehouseItemIndex.value = null;
   isPaymentDropdownOpen.value = false;
+  isCounterDropdownOpen.value = false;
+  isSalesmanDropdownOpen.value = false;
 };
 
 // Lifecycle
@@ -3116,6 +3493,7 @@ onMounted(() => {
   loadProducts();
   loadCategories();
   loadTaxes();
+  loadSalesmen();
   fetchNextInvoiceNumber();
   fetchActiveCompany();
   document.addEventListener('click', handleClickOutside);

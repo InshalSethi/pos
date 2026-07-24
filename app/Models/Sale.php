@@ -23,6 +23,8 @@ class Sale extends Model
         'customer_id',
         'category_id',
         'warehouse_id',
+        'counter_id',
+        'salesman_id',
         'user_id',
         'sale_date',
         'due_date',
@@ -71,6 +73,16 @@ class Sale extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function counter(): BelongsTo
+    {
+        return $this->belongsTo(Counter::class);
+    }
+
+    public function salesman(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'salesman_id');
     }
 
     public function user(): BelongsTo

@@ -205,6 +205,8 @@ class SaleController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'sale_number' => 'nullable|string|max:100',
             'warehouse_id' => 'nullable|exists:warehouses,id',
+            'counter_id' => 'nullable|exists:counters,id',
+            'salesman_id' => 'nullable|exists:employees,id',
             'category_id' => 'nullable|exists:categories,id',
             'due_date' => 'nullable|date',
             'order_number' => 'nullable|string|max:100',
@@ -472,6 +474,8 @@ class SaleController extends Controller
                 'customer_id' => $customerId,
                 'category_id' => $request->category_id,
                 'warehouse_id' => $warehouseId,
+                'counter_id' => $request->counter_id,
+                'salesman_id' => $request->salesman_id,
                 'user_id' => auth()->id(),
                 'sale_date' => $request->sale_date ?? today()->toDateString(),
                 'due_date' => $request->due_date,
@@ -1585,8 +1589,17 @@ class SaleController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        // Fetch warehouses
-        $warehouses = Warehouse::where('company_id', $companyId)->where('is_active', true)->get();
+        // Fetch warehouses with counters and counters_count
+        $warehouses = Warehouse::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->with(['counters' => function ($q) {
+                $q->where('status', 'active');
+            }])
+            ->withCount(['counters' => function ($q) {
+                $q->where('status', 'active');
+            }])
+            ->orderBy('name')
+            ->get();
 
         // Fetch active taxes
         $taxes = \App\Models\Tax::where('company_id', $companyId)->where('is_active', true)->get();
