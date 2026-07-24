@@ -272,6 +272,62 @@
                   <td class="w-[40px]"></td>
                 </tr>
 
+                <!-- 3. Auto Applied Required Taxes (With Professional Override Toggle) -->
+                <template v-if="autoRequiredTaxesList.length > 0">
+                  <tr
+                    v-for="reqTax in autoRequiredTaxesList"
+                    :key="'req-tax-' + reqTax.id"
+                    :class="[
+                      'transition-colors duration-200',
+                      reqTax.enabled 
+                        ? 'bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 font-semibold' 
+                        : 'bg-slate-50/80 dark:bg-zinc-900/40 text-slate-400 dark:text-zinc-500 font-medium'
+                    ]"
+                  >
+                    <td colspan="3" class="py-2.5 px-3 text-right text-xs">
+                      <div class="inline-flex items-center gap-2.5 justify-end">
+                        <button
+                          type="button"
+                          @click="toggleRequiredTax(reqTax.id)"
+                          :class="[
+                            'relative inline-flex items-center h-4 w-7 shrink-0 cursor-pointer rounded-full p-0.5 transition-all duration-200 ease-in-out focus:outline-none border',
+                            reqTax.enabled 
+                              ? 'bg-emerald-500 border-emerald-600/30' 
+                              : 'bg-slate-300 dark:bg-zinc-700 border-slate-400/30 dark:border-zinc-600/30'
+                          ]"
+                          role="switch"
+                          :aria-checked="reqTax.enabled"
+                          :title="reqTax.enabled ? 'Click to exempt/disable this required tax' : 'Click to apply this required tax'"
+                        >
+                          <span
+                            :class="[
+                              'pointer-events-none inline-block h-3 w-3 rounded-full bg-white shadow-xs ring-0 transition-transform duration-200 ease-in-out transform',
+                              reqTax.enabled ? 'translate-x-3' : 'translate-x-0'
+                            ]"
+                          />
+                        </button>
+                        <span :class="{ 'line-through opacity-60': !reqTax.enabled }" class="font-bold text-xs">
+                          {{ reqTax.name }} <span class="text-[11px] font-extrabold opacity-80">({{ reqTax.rate }}{{ reqTax.type === 'percentage' ? '%' : '' }})</span>
+                        </span>
+                        <span
+                          :class="[
+                            'px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md border transition-all',
+                            reqTax.enabled 
+                              ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-800' 
+                              : 'bg-slate-200/80 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-300 dark:border-zinc-700'
+                          ]"
+                        >
+                          {{ reqTax.enabled ? 'Applied' : 'Exempted' }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-2.5 px-2 text-right text-xs" :class="reqTax.enabled ? 'font-black text-emerald-600 dark:text-emerald-400' : 'font-semibold text-slate-400 dark:text-zinc-500 line-through'">
+                      {{ reqTax.enabled ? '+' + currencySymbol + reqTax.amount.toFixed(2) : currencySymbol + '0.00' }}
+                    </td>
+                    <td class="w-[40px]"></td>
+                  </tr>
+                </template>
+
                 <!-- 3. Overall Order Tax -->
                 <tr>
                   <td colspan="3" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Order Tax</td>
@@ -534,6 +590,43 @@
                 <span>Total Amount:</span>
                 <span class="font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ orderSubtotal.toFixed(2) }}</span>
               </div>
+              <template v-if="autoRequiredTaxesList.length > 0">
+                <div
+                  v-for="reqTax in autoRequiredTaxesList"
+                  :key="'sidebar-req-tax-' + reqTax.id"
+                  class="flex justify-between items-center text-xs font-bold transition-all py-0.5"
+                  :class="reqTax.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'"
+                >
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      @click="toggleRequiredTax(reqTax.id)"
+                      :class="[
+                        'relative inline-flex items-center h-4 w-7 shrink-0 cursor-pointer rounded-full p-0.5 transition-all duration-200 ease-in-out focus:outline-none border',
+                        reqTax.enabled 
+                          ? 'bg-emerald-500 border-emerald-600/30' 
+                          : 'bg-slate-300 dark:bg-zinc-700 border-slate-400/30 dark:border-zinc-600/30'
+                      ]"
+                      role="switch"
+                      :aria-checked="reqTax.enabled"
+                      :title="reqTax.enabled ? 'Click to exempt tax' : 'Click to enable tax'"
+                    >
+                      <span
+                        :class="[
+                          'pointer-events-none inline-block h-3 w-3 rounded-full bg-white shadow-xs ring-0 transition-transform duration-200 ease-in-out transform',
+                          reqTax.enabled ? 'translate-x-3' : 'translate-x-0'
+                        ]"
+                      />
+                    </button>
+                    <span :class="{ 'line-through opacity-60': !reqTax.enabled }">
+                      {{ reqTax.name }} ({{ reqTax.rate }}{{ reqTax.type === 'percentage' ? '%' : '' }}):
+                    </span>
+                  </div>
+                  <span :class="reqTax.enabled ? 'font-extrabold' : 'font-semibold line-through opacity-60'">
+                    {{ reqTax.enabled ? '+' + currencySymbol + reqTax.amount.toFixed(2) : currencySymbol + '0.00' }}
+                  </span>
+                </div>
+              </template>
               <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Taxes (Manual):</span>
                 <span class="font-bold text-slate-800 dark:text-zinc-200">
@@ -1751,6 +1844,44 @@ const calculatedManualTax = computed(() => {
   return taxVal;
 });
 
+const disabledRequiredTaxIds = ref([]);
+
+const toggleRequiredTax = (taxId) => {
+  const idx = disabledRequiredTaxIds.value.indexOf(taxId);
+  if (idx > -1) {
+    disabledRequiredTaxIds.value.splice(idx, 1);
+  } else {
+    disabledRequiredTaxIds.value.push(taxId);
+  }
+};
+
+const requiredTaxes = computed(() => {
+  return taxes.value.filter(t => (t.is_active || t.is_active === 1) && (t.purchase_order_required || t.purchase_order_required === 1));
+});
+
+const autoRequiredTaxesList = computed(() => {
+  const sub = orderSubtotal.value || 0;
+  return requiredTaxes.value.map(t => {
+    const val = parseFloat(t.value) || 0;
+    const isEnabled = !disabledRequiredTaxIds.value.includes(t.id);
+    const amt = isEnabled ? (t.type === 'percentage' ? (sub * val) / 100 : val) : 0;
+    return {
+      id: t.id,
+      name: t.name,
+      rate: val,
+      type: t.type || 'percentage',
+      amount: amt,
+      enabled: isEnabled
+    };
+  });
+});
+
+const totalAutoRequiredTax = computed(() => {
+  return autoRequiredTaxesList.value
+    .filter(item => item.enabled)
+    .reduce((sum, item) => sum + item.amount, 0);
+});
+
 const calculatedManualDiscount = computed(() => {
   const disVal = parseFloat(orderForm.value.discount_amount) || 0;
   if (orderForm.value.discount_type === 'percentage') {
@@ -1762,7 +1893,7 @@ const calculatedManualDiscount = computed(() => {
 const grandTotal = computed(() => {
   const sub = orderSubtotal.value || 0;
   const shipping = parseFloat(orderForm.value.shipping_cost) || 0;
-  return Math.max(0, sub + calculatedManualTax.value + shipping - calculatedManualDiscount.value);
+  return Math.max(0, sub + totalAutoRequiredTax.value + calculatedManualTax.value + shipping - calculatedManualDiscount.value);
 });
 
 const orderTotal = computed(() => {
@@ -2305,6 +2436,15 @@ const fetchActiveCompany = async () => {
   }
 };
 
+const loadTaxes = async () => {
+  try {
+    const response = await api.get('/taxes');
+    taxes.value = response.data.data || response.data;
+  } catch (error) {
+    console.error('Error loading taxes:', error);
+  }
+};
+
 // Lifecycle
 onMounted(() => {
   updateDateTime();
@@ -2313,6 +2453,7 @@ onMounted(() => {
   loadProducts();
   loadCategories();
   loadSuppliers();
+  loadTaxes();
   fetchNextPONumber();
   document.addEventListener('click', handleClickOutside);
 });
