@@ -156,6 +156,12 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/sales/status-counts', [SaleController::class, 'getStatusCounts']);
     Route::get('/sales/next-number', [SaleController::class, 'getNextSaleNumber']);
     Route::get('/sales/products-with-stock', [SaleController::class, 'productsWithStock']);
+    Route::post('/sales/{sale}/refund', [SaleController::class , 'refund']);
+    Route::post('/sales/{sale}/void', [SaleController::class , 'void']);
+    Route::post('/invoices/{sale}/void', [SaleController::class , 'void']);
+    Route::get('/sales/returns/status-counts', [SaleController::class , 'getReturnStatusCounts']);
+    Route::post('/sales/returns', [SaleController::class , 'processReturn']);
+    Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);
     Route::apiResource('sales', SaleController::class);
 
     // Companies routes
@@ -164,10 +170,6 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::post('/companies/create-new', [\App\Http\Controllers\Api\CompanyController::class, 'createNewCompany']);
     Route::get('/companies/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'show']);
     Route::post('/companies/{id}', [\App\Http\Controllers\Api\CompanyController::class, 'update']);
-    Route::post('/sales/{sale}/refund', [SaleController::class , 'refund']);
-    Route::get('/sales/returns/status-counts', [SaleController::class , 'getReturnStatusCounts']);
-    Route::post('/sales/returns', [SaleController::class , 'processReturn']);
-    Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);
 
     // Inventory management routes
     Route::get('/suppliers/statistics', [SupplierController::class , 'getStatistics']);

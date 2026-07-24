@@ -253,19 +253,23 @@
                 <!-- Action Dropdown Overlay -->
                 <div
                   v-if="openActionDropdown === item.id"
-                  class="absolute right-4 mt-1 w-32 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in"
+                  class="absolute right-4 mt-1 w-36 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in"
                 >
                   <button @click="viewInvoice(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     <span>View</span>
                   </button>
-                  <button @click="editInvoice(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
+                  <button v-if="!isInvoiceVoided(item)" @click="editInvoice(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span>Edit</span>
                   </button>
                   <button @click="printInvoice(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     <span>Print</span>
+                  </button>
+                  <button v-if="!isInvoiceVoided(item)" @click="promptVoidInvoice(item)" class="w-full text-left px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center space-x-1.5 font-semibold">
+                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    <span>Void</span>
                   </button>
                   <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
                   <button @click="deleteInvoice(item.id)" class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center space-x-1.5">
@@ -337,8 +341,49 @@
           </nav>
         </div>
       </div>
-    </div>
+    <!-- Void Confirmation Modal -->
+    <teleport to="body">
+      <div v-if="voidModalState.isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-zinc-800 space-y-4 animate-scale-up">
+          <div class="flex items-center space-x-3 text-amber-600 dark:text-amber-400">
+            <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="text-left">
+              <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100">Void Invoice #{{ voidModalState.invoice?.sale_number }}</h3>
+              <p class="text-xs text-slate-500 dark:text-zinc-400">Inventory Restoration & Cancellation</p>
+            </div>
+          </div>
 
+          <p class="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed text-left">
+            Are you sure you want to void invoice <strong class="text-slate-900 dark:text-zinc-100 font-bold">#{{ voidModalState.invoice?.sale_number }}</strong>? This will cancel the sale and restore item stock back to the warehouse inventory.
+          </p>
+
+          <div class="flex items-center justify-end space-x-3 pt-2">
+            <button
+              type="button"
+              @click="closeVoidModal"
+              :disabled="voiding"
+              class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="confirmVoidInvoice"
+              :disabled="voiding"
+              class="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <span v-if="voiding" class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent mr-1"></span>
+              <span>{{ voiding ? 'Voiding...' : 'Confirm Void' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </teleport>
+    </div>
   </div>
 </template>
 
@@ -347,12 +392,14 @@ import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
+import { useToast } from '@/composables/useToast';
 import { debounce } from '@/utils/debounce';
 import axios from 'axios';
 
 const authStore = useAuthStore();
 const currencyStore = useCurrencyStore();
 const router = useRouter();
+const { showToast } = useToast();
 
 // Reactive data
 const invoices = ref([]);
@@ -585,11 +632,17 @@ const getBalanceState = (item) => {
   }
 };
 
+const isInvoiceVoided = (item) => {
+  if (!item || !item.status) return false;
+  return ['void', 'voided', 'cancelled'].includes(String(item.status).toLowerCase());
+};
+
 const getDueAmount = (item) => {
   return getBalanceState(item).type === 'due' ? getBalanceState(item).amount : 0;
 };
 
 const getStatusLabel = (item) => {
+  if (isInvoiceVoided(item)) return 'Void';
   const total = parseFloat(item.total_amount) || 0;
   const paid = parseFloat(item.paid_amount) || 0;
   if (item.status === 'completed' || paid >= total) return 'Paid';
@@ -607,11 +660,51 @@ const getStatusLabel = (item) => {
 
 const getStatusBadgeClass = (item) => {
   const label = getStatusLabel(item);
+  if (label === 'Void') return 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-semibold border border-slate-200 dark:border-zinc-700';
   if (label === 'Paid') return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400';
   if (label === 'Due') return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400';
   if (label === 'Overdue') return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
   if (label === 'Draft') return 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400';
   return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+};
+
+// Void Modal State
+const voiding = ref(false);
+const voidModalState = ref({
+  isOpen: false,
+  invoice: null
+});
+
+const promptVoidInvoice = (invoice) => {
+  openActionDropdown.value = null;
+  voidModalState.value = {
+    isOpen: true,
+    invoice
+  };
+};
+
+const closeVoidModal = () => {
+  voidModalState.value = {
+    isOpen: false,
+    invoice: null
+  };
+};
+
+const confirmVoidInvoice = async () => {
+  if (!voidModalState.value.invoice) return;
+  try {
+    voiding.value = true;
+    const invId = voidModalState.value.invoice.id;
+    const response = await axios.post(`/api/sales/${invId}/void`);
+    showToast(response.data.message || 'Invoice voided successfully', 'success');
+    closeVoidModal();
+    fetchInvoices(currentPage.value);
+  } catch (error) {
+    console.error('Error voiding invoice:', error);
+    showToast(error.response?.data?.message || 'Failed to void invoice', 'error');
+  } finally {
+    voiding.value = false;
+  }
 };
 
 // Actions

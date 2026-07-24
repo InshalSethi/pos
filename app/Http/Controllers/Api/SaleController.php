@@ -1162,6 +1162,110 @@ class SaleController extends Controller
     }
 
     /**
+     * Void an invoice with automatic inventory restoration
+     */
+    public function void(Request $request, Sale $sale): JsonResponse
+    {
+        // 1. Check if invoice is already voided
+        if (in_array(strtolower($sale->status), ['void', 'voided', 'cancelled'])) {
+            return response()->json([
+                'message' => "Invoice #{$sale->sale_number} is already voided."
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $companyId = auth()->user()->current_company_id;
+            $inventoryService = new WarehouseInventoryService();
+
+            // 2. Loop through all line items & restore stock to respective warehouse
+            foreach ($sale->saleItems as $item) {
+                $product = Product::find($item->product_id);
+                if ($product && $product->track_inventory) {
+                    $targetWarehouseId = $item->warehouse_id ?: $sale->warehouse_id;
+                    if ($targetWarehouseId) {
+                        $inventoryService->adjustStock(
+                            $targetWarehouseId,
+                            $item->product_id,
+                            $item->product_variation_id,
+                            $item->quantity, // positive restores quantity
+                            $companyId,
+                            'Void Invoice (Stock Restored)',
+                            'Void Invoice #' . $sale->sale_number
+                        );
+
+                        try {
+                            $this->verifyStockThresholds($item->product_id, $item->product_variation_id);
+                        } catch (\Throwable $th) {
+                            \Illuminate\Support\Facades\Log::warning('verifyStockThresholds failed in SaleController@void: ' . $th->getMessage());
+                        }
+                    }
+                }
+            }
+
+            // 3. Revert Customer Account Ledger / Balance if linked
+            if ($sale->customer_id) {
+                $customer = Customer::find($sale->customer_id);
+                if ($customer) {
+                    // Decrement total purchases
+                    $customer->decrement('total_purchases', $sale->total_amount);
+
+                    // Revert wallet credit if any was applied
+                    if ($sale->wallet_credit_applied > 0) {
+                        $customer->creditWallet($sale->wallet_credit_applied);
+                    }
+                }
+            }
+
+            // 4. Update status of invoice to 'void'
+            $sale->update([
+                'status' => 'void'
+            ]);
+
+            // 5. Reverse Double-Entry Accounting Journal Entries
+            try {
+                $existingEntries = JournalEntry::where('source_type', 'sale')->where('source_id', $sale->id)->get();
+                $affectedAccountIds = [];
+                foreach ($existingEntries as $entry) {
+                    $affectedAccountIds = array_merge($affectedAccountIds, $entry->journalEntryLines->pluck('account_id')->toArray());
+                    $entry->journalEntryLines()->delete();
+                    $entry->delete();
+                }
+                foreach (array_unique($affectedAccountIds) as $accountId) {
+                    $account = Account::find($accountId);
+                    if ($account) {
+                        $account->updateCurrentBalance();
+                    }
+                }
+            } catch (\Throwable $accountingError) {
+                \Illuminate\Support\Facades\Log::warning('Accounting entry reversal failed in void (non-blocking): ' . $accountingError->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => "Invoice #{$sale->sale_number} voided successfully. Stock restored to warehouse.",
+                'sale' => $sale->fresh(['customer', 'user', 'saleItems.product', 'saleItems.variation', 'saleItems.warehouse'])
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            \Illuminate\Support\Facades\Log::error('Failed to void invoice: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to void invoice: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Process a sales return
      */
     public function processReturn(Request $request): JsonResponse
