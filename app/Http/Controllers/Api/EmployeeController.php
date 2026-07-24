@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class EmployeeController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:employees.view')->only(['index', 'show', 'statistics', 'forDropdown']);
+        $this->middleware('permission:employees.view')->only(['index', 'show', 'statistics']);
         $this->middleware('permission:employees.create')->only(['store']);
         $this->middleware('permission:employees.edit')->only(['update']);
         $this->middleware('permission:employees.delete')->only(['destroy']);
@@ -445,14 +446,22 @@ class EmployeeController extends Controller
             }
             $employees = $query->with('user')->orderBy('first_name')->get();
 
-            // 2. Fetch users in current company (Owner, Cashiers, Admins, etc.)
-            if ($companyId) {
-                $companyUsers = User::where(function($q) use ($companyId) {
-                        $q->where('current_company_id', $companyId)
-                          ->orWhere('company_id', $companyId);
-                    })
-                    ->where('is_active', true)
-                    ->get();
+            // 2. Fetch main company owner explicitly + company users
+            $company = $companyId ? \App\Models\Company::find($companyId) : null;
+            $mainOwnerId = $company ? $company->user_id : null;
+
+            if ($companyId || $mainOwnerId) {
+                $userQuery = User::where('is_active', true);
+                $userQuery->where(function($q) use ($companyId, $mainOwnerId) {
+                    if ($companyId) {
+                        $q->where('current_company_id', $companyId);
+                    }
+                    if ($mainOwnerId) {
+                        $q->orWhere('id', $mainOwnerId);
+                    }
+                    $q->orWhere('id', 1);
+                });
+                $companyUsers = $userQuery->get();
 
                 foreach ($companyUsers as $cUser) {
                     $hasEmp = $employees->firstWhere('user_id', $cUser->id);
@@ -469,6 +478,7 @@ class EmployeeController extends Controller
                                 'email' => $cUser->email,
                                 'employee_number' => 'EMP-' . str_pad($cUser->id, 4, '0', STR_PAD_LEFT),
                                 'employment_status' => 'active',
+                                'hire_date' => now()->toDateString(),
                                 'is_active' => true,
                             ]
                         );
@@ -478,17 +488,25 @@ class EmployeeController extends Controller
                 }
             }
 
-            $dropdownData = $employees->unique('id')->map(function ($employee) {
+            $dropdownData = $employees->unique('id')->map(function ($employee) use ($mainOwnerId) {
                 $roleLabel = '';
+                $isOwner = false;
                 if ($employee->user) {
-                    $roleName = $employee->user->roles->first()?->name ?? $employee->user->role_name;
-                    if ($roleName) {
-                        $roleLabel = ' (' . ucfirst($roleName) . ')';
+                    $isOwner = ($mainOwnerId && (int)$employee->user->id === (int)$mainOwnerId) || (int)$employee->user->id === 1;
+                    $roles = $employee->user->roles->pluck('name')->map('ucfirst')->toArray();
+                    $primaryRole = $isOwner ? 'Owner' : (!empty($roles) ? implode('/', $roles) : ($employee->user->role_name ? ucfirst($employee->user->role_name) : ''));
+                    if ($primaryRole) {
+                        $roleLabel = ' (' . $primaryRole . ')';
                     }
+                } elseif ($employee->user_id && (($mainOwnerId && (int)$employee->user_id === (int)$mainOwnerId) || (int)$employee->user_id === 1)) {
+                    $roleLabel = ' (Owner)';
                 }
+
+                $displayName = trim(($employee->first_name . ' ' . $employee->last_name)) ?: ($employee->user->name ?? 'Employee #' . $employee->id);
+
                 return [
                     'id' => $employee->id,
-                    'full_name' => $employee->full_name . $roleLabel,
+                    'full_name' => $displayName . $roleLabel,
                     'employee_number' => $employee->employee_number,
                 ];
             })->values();
