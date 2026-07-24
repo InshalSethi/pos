@@ -943,10 +943,10 @@
       leave-to-class="opacity-0 scale-95"
     >
       <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-modal-backdrop backdrop-blur-sm overflow-y-auto" style="background-color: rgba(0, 0, 0, 0.75) !important;">
-        <div class="relative w-full max-w-5xl bg-[#1E1E1E] text-slate-100 border border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="relative w-full max-w-5xl bg-white dark:bg-[#1E1E1E] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
           
           <!-- Modal Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-[#2E2E2E] bg-[#252525]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2E2E2E] bg-slate-50 dark:bg-[#252525]">
             <h3 class="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
               <span>Advanced Item Search</span>
             </h3>
