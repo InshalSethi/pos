@@ -488,6 +488,7 @@
                       </svg>
                     </button>
                     <button
+                      v-if="!isMainOwner(item)"
                       @click="deleteUser(item.id)"
                       class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
                       title="Delete User"
@@ -566,6 +567,7 @@
                       Edit
                     </button>
                     <button
+                      v-if="!isMainOwner(item)"
                       @click="deleteUser(item.id)"
                       class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100"
                     >
@@ -1878,6 +1880,16 @@ const saveAccountingSettings = async () => {
 };
 
 // User management actions
+const isMainOwner = (user) => {
+  if (!user) return false;
+  if (user.is_main_owner) return true;
+  if (companyData.value && companyData.value.user_id && String(user.id) === String(companyData.value.user_id)) {
+    return true;
+  }
+  if (String(user.id) === '1') return true;
+  return false;
+};
+
 const editUser = (user) => {
   editingUser.value = { ...user };
   showUserEditModal.value = true;

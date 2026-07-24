@@ -94,6 +94,14 @@ class UserController extends Controller
         $perPage = $request->get('per_page', 15);
         $users = $query->paginate($perPage);
 
+        // Mark main owner
+        $company = \App\Models\Company::find($companyId);
+        $mainOwnerId = $company ? $company->user_id : null;
+        $users->getCollection()->transform(function ($u) use ($mainOwnerId) {
+            $u->is_main_owner = ($mainOwnerId && (int)$u->id === (int)$mainOwnerId) || (int)$u->id === 1;
+            return $u;
+        });
+
         return response()->json($users);
     }
 
@@ -220,14 +228,23 @@ class UserController extends Controller
      */
     public function destroy(User $user): JsonResponse
     {
+        $companyId = auth()->user()->current_company_id;
+        $company = \App\Models\Company::find($companyId);
+        $mainOwnerId = $company ? $company->user_id : null;
+
+        // Prevent deleting main company owner / account registrant
+        if (($mainOwnerId && (int)$user->id === (int)$mainOwnerId) || (int)$user->id === 1) {
+            return response()->json([
+                'message' => 'The main company owner account cannot be deleted.'
+            ], 422);
+        }
+
         // Prevent deleting the current user
         if ($user->id === auth()->id()) {
             return response()->json([
                 'message' => 'Cannot delete your own account'
             ], 422);
         }
-
-        $companyId = auth()->user()->current_company_id;
 
         if ($user->current_company_id !== $companyId && !$user->companies()->where('companies.id', $companyId)->exists()) {
             return response()->json(['message' => 'Unauthorized to delete this user.'], 403);

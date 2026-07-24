@@ -428,27 +428,74 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Get employees for dropdown/select options
+     * Get employees for dropdown/select options (includes employees & users with Cashier/Owner/Admin roles)
      */
     public function forDropdown(): JsonResponse
     {
         try {
-            $employees = Employee::active()
-                ->select('id', 'first_name', 'last_name', 'middle_name', 'employee_number')
-                ->orderBy('first_name')
-                ->orderBy('last_name')
-                ->get()
-                ->map(function ($employee) {
-                    return [
-                        'id' => $employee->id,
-                        'full_name' => $employee->full_name,
-                        'employee_number' => $employee->employee_number,
-                    ];
+            $user = auth()->user();
+            $companyId = $user ? ($user->current_company_id ?? $user->company_id) : null;
+
+            // 1. Fetch active employees (with user relation eager loaded)
+            $query = Employee::where('is_active', true);
+            if ($companyId) {
+                $query->where(function($q) use ($companyId) {
+                    $q->where('company_id', $companyId)->orWhereNull('company_id');
                 });
+            }
+            $employees = $query->with('user')->orderBy('first_name')->get();
 
-            Log::info('Employees for dropdown:', ['count' => $employees->count(), 'data' => $employees->toArray()]);
+            // 2. Fetch users in current company (Owner, Cashiers, Admins, etc.)
+            if ($companyId) {
+                $companyUsers = User::where(function($q) use ($companyId) {
+                        $q->where('current_company_id', $companyId)
+                          ->orWhere('company_id', $companyId);
+                    })
+                    ->where('is_active', true)
+                    ->get();
 
-            return response()->json($employees);
+                foreach ($companyUsers as $cUser) {
+                    $hasEmp = $employees->firstWhere('user_id', $cUser->id);
+                    if (!$hasEmp) {
+                        $nameParts = explode(' ', trim($cUser->name), 2);
+                        $firstName = $nameParts[0] ?? 'User';
+                        $lastName = $nameParts[1] ?? '';
+                        $emp = Employee::firstOrCreate(
+                            ['user_id' => $cUser->id],
+                            [
+                                'company_id' => $companyId,
+                                'first_name' => $firstName,
+                                'last_name' => $lastName,
+                                'email' => $cUser->email,
+                                'employee_number' => 'EMP-' . str_pad($cUser->id, 4, '0', STR_PAD_LEFT),
+                                'employment_status' => 'active',
+                                'is_active' => true,
+                            ]
+                        );
+                        $emp->setRelation('user', $cUser);
+                        $employees->push($emp);
+                    }
+                }
+            }
+
+            $dropdownData = $employees->unique('id')->map(function ($employee) {
+                $roleLabel = '';
+                if ($employee->user) {
+                    $roleName = $employee->user->roles->first()?->name ?? $employee->user->role_name;
+                    if ($roleName) {
+                        $roleLabel = ' (' . ucfirst($roleName) . ')';
+                    }
+                }
+                return [
+                    'id' => $employee->id,
+                    'full_name' => $employee->full_name . $roleLabel,
+                    'employee_number' => $employee->employee_number,
+                ];
+            })->values();
+
+            Log::info('Employees & Users for dropdown:', ['count' => $dropdownData->count()]);
+
+            return response()->json($dropdownData);
         } catch (\Exception $e) {
             Log::error('Error in forDropdown method:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['error' => $e->getMessage()], 500);
