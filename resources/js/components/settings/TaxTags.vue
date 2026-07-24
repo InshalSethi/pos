@@ -122,8 +122,10 @@
                   class="hover:bg-slate-50/60 dark:hover:bg-[#2D2D2D]/80 transition-colors"
                 >
                   <td class="px-6 py-4">
-                    <div class="font-bold text-slate-900 dark:text-slate-100 text-xs">
-                      {{ tax.name }}
+                    <div class="font-bold text-slate-900 dark:text-slate-100 text-xs flex items-center gap-1.5 flex-wrap">
+                      <span>{{ tax.name }}</span>
+                      <span v-if="tax.sale_invoice_required" class="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">Sale Required</span>
+                      <span v-if="tax.purchase_order_required" class="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">Purchase Required</span>
                     </div>
                   </td>
                   <td class="px-6 py-4">
@@ -351,6 +353,56 @@
                 />
               </div>
 
+              <!-- Toggle 1: Sale Invoice Required -->
+              <div class="flex items-center justify-between bg-slate-50 dark:bg-[#252525] p-3 rounded-2xl border border-slate-200/50 dark:border-[#2E2E2E]/80">
+                <div>
+                  <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200">Sale Invoice Required</span>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">Enable to automatically/mandatorily apply this tax on Sale Invoices</p>
+                </div>
+                <button 
+                  type="button" 
+                  @click="taxForm.sale_invoice_required = !taxForm.sale_invoice_required"
+                  :class="[
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    taxForm.sale_invoice_required ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                  ]"
+                  role="switch"
+                  :aria-checked="taxForm.sale_invoice_required"
+                >
+                  <span 
+                    :class="[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out',
+                      taxForm.sale_invoice_required ? 'translate-x-5' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
+              </div>
+
+              <!-- Toggle 2: Purchase Order Required -->
+              <div class="flex items-center justify-between bg-slate-50 dark:bg-[#252525] p-3 rounded-2xl border border-slate-200/50 dark:border-[#2E2E2E]/80">
+                <div>
+                  <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200">Purchase Order Required</span>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">Enable to automatically/mandatorily apply this tax on Purchase Orders</p>
+                </div>
+                <button 
+                  type="button" 
+                  @click="taxForm.purchase_order_required = !taxForm.purchase_order_required"
+                  :class="[
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    taxForm.purchase_order_required ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                  ]"
+                  role="switch"
+                  :aria-checked="taxForm.purchase_order_required"
+                >
+                  <span 
+                    :class="[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out',
+                      taxForm.purchase_order_required ? 'translate-x-5' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
+              </div>
+
               <div class="flex justify-end gap-2 pt-2">
                 <button 
                   type="button" 
@@ -459,7 +511,9 @@ const taxForm = ref({
   name: '',
   value: 0,
   type: 'percentage',
-  is_active: true
+  is_active: true,
+  sale_invoice_required: false,
+  purchase_order_required: false
 });
 
 const showTagModal = ref(false);
@@ -524,7 +578,9 @@ const openTaxModal = (tax = null) => {
       name: tax.name,
       value: parseFloat(tax.value),
       type: tax.type || 'percentage',
-      is_active: !!tax.is_active
+      is_active: tax.is_active !== undefined ? !!tax.is_active : true,
+      sale_invoice_required: !!tax.sale_invoice_required,
+      purchase_order_required: !!tax.purchase_order_required
     };
   } else {
     isEditingTax.value = false;
@@ -533,7 +589,9 @@ const openTaxModal = (tax = null) => {
       name: '',
       value: 0,
       type: 'percentage',
-      is_active: true
+      is_active: true,
+      sale_invoice_required: false,
+      purchase_order_required: false
     };
   }
   showTaxModal.value = true;

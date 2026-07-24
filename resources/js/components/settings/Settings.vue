@@ -1573,7 +1573,9 @@ const openTaxModal = (tax = null) => {
       name: tax.name,
       value: tax.value,
       type: tax.type,
-      is_active: !!tax.is_active
+      is_active: tax.is_active !== undefined ? !!tax.is_active : true,
+      sale_invoice_required: !!tax.sale_invoice_required,
+      purchase_order_required: !!tax.purchase_order_required
     };
   } else {
     editingTax.value = null;
@@ -1581,7 +1583,9 @@ const openTaxModal = (tax = null) => {
       name: '',
       value: '',
       type: 'percentage',
-      is_active: true
+      is_active: true,
+      sale_invoice_required: false,
+      purchase_order_required: false
     };
   }
   showTaxModal.value = true;

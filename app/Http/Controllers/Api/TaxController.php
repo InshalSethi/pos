@@ -36,6 +36,16 @@ class TaxController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
+        // Filter by sale_invoice_required
+        if ($request->has('sale_invoice_required')) {
+            $query->where('sale_invoice_required', $request->boolean('sale_invoice_required'));
+        }
+
+        // Filter by purchase_order_required
+        if ($request->has('purchase_order_required')) {
+            $query->where('purchase_order_required', $request->boolean('purchase_order_required'));
+        }
+
         $taxes = $query->orderBy('name')->get();
 
         return response()->json($taxes);
@@ -60,6 +70,8 @@ class TaxController extends Controller
             'value' => 'required|numeric|min:0',
             'type' => 'required|string|in:percentage,flat',
             'is_active' => 'boolean',
+            'sale_invoice_required' => 'boolean',
+            'purchase_order_required' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -107,6 +119,8 @@ class TaxController extends Controller
             'value' => 'required|numeric|min:0',
             'type' => 'required|string|in:percentage,flat',
             'is_active' => 'boolean',
+            'sale_invoice_required' => 'boolean',
+            'purchase_order_required' => 'boolean',
         ]);
 
         if ($validator->fails()) {
