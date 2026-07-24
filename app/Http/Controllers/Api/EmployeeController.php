@@ -488,6 +488,17 @@ class EmployeeController extends Controller
                 }
             }
 
+            $currentUser = auth()->user();
+            $isCurrentOwnerOrAdmin = false;
+            if ($currentUser) {
+                $userRoles = $currentUser->roles->pluck('name')->map('strtolower')->toArray();
+                $isCurrentOwnerOrAdmin = ($mainOwnerId && (int)$currentUser->id === (int)$mainOwnerId)
+                    || (int)$currentUser->id === 1
+                    || in_array('admin', $userRoles)
+                    || in_array('owner', $userRoles)
+                    || (isset($currentUser->role_name) && in_array(strtolower($currentUser->role_name), ['admin', 'owner']));
+            }
+
             $dropdownData = $employees->unique('id')->map(function ($employee) use ($mainOwnerId) {
                 $roleLabel = '';
                 $isOwner = false;
@@ -499,6 +510,7 @@ class EmployeeController extends Controller
                         $roleLabel = ' (' . $primaryRole . ')';
                     }
                 } elseif ($employee->user_id && (($mainOwnerId && (int)$employee->user_id === (int)$mainOwnerId) || (int)$employee->user_id === 1)) {
+                    $isOwner = true;
                     $roleLabel = ' (Owner)';
                 }
 
@@ -508,7 +520,13 @@ class EmployeeController extends Controller
                     'id' => $employee->id,
                     'full_name' => $displayName . $roleLabel,
                     'employee_number' => $employee->employee_number,
+                    'is_owner' => $isOwner,
                 ];
+            })->filter(function ($item) use ($isCurrentOwnerOrAdmin) {
+                if ($isCurrentOwnerOrAdmin) {
+                    return true;
+                }
+                return !$item['is_owner'];
             })->values();
 
             Log::info('Employees & Users for dropdown:', ['count' => $dropdownData->count()]);

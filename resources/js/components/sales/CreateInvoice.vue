@@ -1673,7 +1673,7 @@
             <span>Select Sales Representative</span>
           </div>
           <div
-            v-for="emp in salesmen"
+            v-for="emp in filteredSalesmen"
             :key="emp.id"
             @click.stop="selectSalesman(emp.id)"
             class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
@@ -1804,6 +1804,27 @@ const isCategoryDropdownOpen = ref(false);
 const barcodeInput = ref('');
 const warehouses = ref([]);
 const salesmen = ref([]);
+
+const isAdminOrOwner = computed(() => {
+  const user = authStore.user;
+  if (!user) return false;
+  const userRoles = (authStore.roles || []).map(r => String(r).toLowerCase());
+  if (userRoles.includes('admin') || userRoles.includes('owner') || (typeof authStore.hasRole === 'function' && (authStore.hasRole('admin') || authStore.hasRole('owner')))) {
+    return true;
+  }
+  if (user.id === 1 || (activeCompany.value?.user_id && Number(user.id) === Number(activeCompany.value.user_id))) {
+    return true;
+  }
+  return false;
+});
+
+const filteredSalesmen = computed(() => {
+  if (isAdminOrOwner.value) {
+    return salesmen.value;
+  }
+  return salesmen.value.filter(s => !s.is_owner && !String(s.full_name || '').toLowerCase().includes('(owner)'));
+});
+
 const showWarehouseSwitcherModal = ref(false);
 const selectedWarehouseId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
