@@ -41,6 +41,7 @@ class SaleController extends Controller
         $due = Sale::where('status', 'pending')->count();
         $recurring = Sale::where('status', 'recurring')->count();
         $overdue = Sale::where('status', 'pending')->where('due_date', '<', today())->count();
+        $void = Sale::whereIn('status', ['void', 'voided', 'cancelled'])->count();
 
         return response()->json([
             'all' => $all,
@@ -49,6 +50,7 @@ class SaleController extends Controller
             'due' => $due,
             'recurring' => $recurring,
             'overdue' => $overdue,
+            'void' => $void,
         ]);
     }
 
@@ -147,6 +149,8 @@ class SaleController extends Controller
                         $q->orWhere('status', 'completed');
                     } elseif ($st === 'due' || $st === 'pending') {
                         $q->orWhere('status', 'pending');
+                    } elseif ($st === 'void') {
+                        $q->orWhereIn('status', ['void', 'voided', 'cancelled']);
                     } else {
                         $q->orWhere('status', $st);
                     }

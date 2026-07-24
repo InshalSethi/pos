@@ -19,7 +19,7 @@
           :key="tab.id"
           v-show="tab.id === 'all' || selectedFilters.includes(tab.id)"
           @click="setActiveTab(tab.id)"
-          class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in"
+          class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
           :class="isTabActive(tab.id) ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
         >
           <span>{{ tab.label }}</span>
@@ -59,7 +59,7 @@
             class="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
           >
             <button
-              v-for="option in ['draft', 'paid', 'due', 'recurring', 'overdue']"
+              v-for="option in ['draft', 'paid', 'due', 'recurring', 'overdue', 'void']"
               :key="option"
               @click.stop="toggleFilterOption(option)"
               class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors"
@@ -71,15 +71,37 @@
           </div>
         </div>
 
-        <!-- Clear Button (shows when any filter applies) -->
+        <!-- Clear Button (shows when any search or filter applies) -->
         <button
-          v-if="selectedFilters.length > 0 || searchQuery !== ''"
+          v-if="searchQuery !== '' || dateFrom !== '' || dateTo !== '' || selectedFilters.length > 0"
           @click="clearAllFilters"
           class="inline-flex items-center px-3 py-1.5 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-xs font-semibold shadow-sm transition-all focus:outline-none cursor-pointer"
         >
           <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           Clear
         </button>
+      </div>
+    </div>
+
+    <!-- Date Filters Card -->
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 shadow-soft grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+      <div>
+        <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date From</label>
+        <input
+          v-model="dateFrom"
+          type="date"
+          @change="fetchInvoices(1)"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date To</label>
+        <input
+          v-model="dateTo"
+          type="date"
+          @change="fetchInvoices(1)"
+          class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
+        />
       </div>
     </div>
 
@@ -404,6 +426,8 @@ const { showToast } = useToast();
 // Reactive data
 const invoices = ref([]);
 const searchQuery = ref('');
+const dateFrom = ref('');
+const dateTo = ref('');
 const selectedFilters = ref([]);
 const currentTab = ref('all');
 const showEditModal = ref(false);
@@ -437,6 +461,8 @@ const clearAllFilters = () => {
   selectedFilters.value = [];
   currentTab.value = 'all';
   searchQuery.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
   fetchInvoices(1);
 };
 
@@ -465,7 +491,8 @@ const counts = ref({
   paid: 0,
   due: 0,
   recurring: 0,
-  overdue: 0
+  overdue: 0,
+  void: 0
 });
 
 const tabs = [
@@ -474,7 +501,8 @@ const tabs = [
   { id: 'paid', label: 'Paid' },
   { id: 'due', label: 'Due' },
   { id: 'recurring', label: 'Recurring' },
-  { id: 'overdue', label: 'Overdue' }
+  { id: 'overdue', label: 'Overdue' },
+  { id: 'void', label: 'Void' }
 ];
 
 // Computed
@@ -524,6 +552,13 @@ const fetchInvoices = async (page = 1) => {
       if (statusParam === 'paid') statusParam = 'completed';
       if (statusParam === 'due') statusParam = 'pending';
       params.status = statusParam;
+    }
+
+    if (dateFrom.value) {
+      params.date_from = dateFrom.value;
+    }
+    if (dateTo.value) {
+      params.date_to = dateTo.value;
     }
 
     const response = await axios.get('/api/sales', { params });
