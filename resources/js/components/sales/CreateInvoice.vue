@@ -244,15 +244,14 @@
                       <td class="pt-3 pb-1 px-2 text-center">
                         <select
                           v-model="item.tax_id"
-                          class="w-20 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
+                          class="w-22 px-1 py-1 border border-slate-300 dark:border-zinc-700 rounded text-[11px] font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 text-center"
                           @change="updateItemTax(item)"
                         >
-                          <option :value="null">No Tax</option>
+                          <option :value="null">No Tax (0%)</option>
                           <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
-                            {{ tax.name }} ({{ tax.value }}%)
+                            {{ tax.name ? `${tax.name} (${tax.value}%)` : `${tax.value}%` }}
                           </option>
                         </select>
-                        <div v-if="item.tax_rate" class="text-[9px] text-slate-500 dark:text-zinc-400 mt-1">Rate: {{ item.tax_rate }}%</div>
                       </td>
 
                       <!-- Line Discount -->
@@ -2995,9 +2994,24 @@ const addToInvoice = (product) => {
       return;
     }
     
-    // Set default tax ID and tax rate
-    const defaultTaxId = product.tax_ids && product.tax_ids.length > 0 ? product.tax_ids[0] : null;
-    let defaultTaxRate = parseFloat(product.tax_rate || 0);
+    // Set default tax ID and tax rate cleanly matching taxes array
+    let rawTaxId = product.tax_id || product.tax_rate_id || (product.tax_ids && product.tax_ids.length > 0 ? product.tax_ids[0] : null);
+    let defaultTaxRate = parseFloat(product.tax_rate || product.tax_value || 0);
+
+    let defaultTaxId = null;
+    let matchingTax = null;
+
+    if (rawTaxId !== null && rawTaxId !== undefined) {
+      matchingTax = taxes.value.find(t => String(t.id) === String(rawTaxId));
+    }
+    if (!matchingTax && defaultTaxRate > 0) {
+      matchingTax = taxes.value.find(t => Number(t.value) === Number(defaultTaxRate));
+    }
+
+    if (matchingTax) {
+      defaultTaxId = matchingTax.id;
+      defaultTaxRate = parseFloat(matchingTax.value || 0);
+    }
 
     const defaultIsWholesale = isAllWholesale.value;
     const basePrice = defaultIsWholesale ? (product.wholesale_price || 0) : parseFloat(product.price);
@@ -3071,11 +3085,17 @@ const updateItemTotal = (index) => {
 };
 
 const updateItemTax = (item) => {
-  if (item.tax_id === null) {
+  if (item.tax_id === null || item.tax_id === '' || item.tax_id === undefined) {
+    item.tax_id = null;
     item.tax_rate = 0;
   } else {
-    const selectedTax = taxes.value.find(t => t.id === item.tax_id);
-    item.tax_rate = selectedTax ? parseFloat(selectedTax.value) : 0;
+    const selectedTax = taxes.value.find(t => String(t.id) === String(item.tax_id));
+    if (selectedTax) {
+      item.tax_id = selectedTax.id;
+      item.tax_rate = parseFloat(selectedTax.value || 0);
+    } else {
+      item.tax_rate = 0;
+    }
   }
   updateItemTotal(invoiceItems.value.indexOf(item));
 };

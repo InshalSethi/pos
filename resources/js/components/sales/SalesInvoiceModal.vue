@@ -275,15 +275,14 @@
                     <td class="py-3 px-2 text-center">
                       <select
                         v-model="item.tax_id"
-                        class="w-18 px-1 py-1 border border-slate-350 rounded text-[10px] focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white"
+                        class="w-20 px-1 py-1 border border-slate-350 rounded text-[10px] font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer bg-white text-center"
                         @change="updateItemTax(item)"
                       >
-                        <option :value="null">No Tax</option>
+                        <option :value="null">No Tax (0%)</option>
                         <option v-for="tax in taxes" :key="tax.id" :value="tax.id">
-                          {{ tax.name }} ({{ tax.value }}%)
+                          {{ tax.name ? `${tax.name} (${tax.value}%)` : `${tax.value}%` }}
                         </option>
                       </select>
-                      <div v-if="item.tax_rate" class="text-[9px] text-slate-450 mt-1">{{ item.tax_rate }}%</div>
                     </td>
 
                     <!-- Discount -->
