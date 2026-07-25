@@ -673,8 +673,8 @@
               <!-- Salesman -->
               <div>
                 <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Salesman:</label>
-                <div class="relative flex items-center w-full" id="salesman-dropdown-container">
-                  <span class="absolute left-2.5 z-10 text-slate-400 dark:text-zinc-400 pointer-events-none">
+                <div class="relative w-full" id="salesman-dropdown-container">
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-slate-400 dark:text-zinc-400 pointer-events-none">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -689,6 +689,42 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+
+                  <!-- Absolute Positioned Floating Salesman Dropdown Menu -->
+                  <transition
+                    enter-active-class="transition duration-150 ease-out"
+                    enter-from-class="transform opacity-0 scale-95"
+                    enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition duration-100 ease-in"
+                    leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95"
+                  >
+                    <div
+                      v-if="isSalesmanDropdownOpen"
+                      class="absolute top-[calc(100%+4px)] left-0 right-0 w-full z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden p-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
+                    >
+                      <div
+                        v-for="emp in filteredSalesmen"
+                        :key="emp.id"
+                        @click.stop="selectSalesman(emp.id)"
+                        class="px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50/50 dark:border-zinc-800/20 last:border-0 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80"
+                        :class="invoiceForm.salesman_id == emp.id ? 'bg-indigo-50/90 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-700 dark:text-zinc-200 font-medium'"
+                      >
+                        <div class="flex items-center space-x-2.5 truncate">
+                          <div class="w-5.5 h-5.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 font-bold text-[10px] flex items-center justify-center shrink-0 border border-indigo-200 dark:border-indigo-800/50">
+                            {{ (emp.full_name || emp.first_name || 'S').charAt(0).toUpperCase() }}
+                          </div>
+                          <span class="truncate">{{ emp.full_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }} {{ emp.employee_number ? `(${emp.employee_number})` : '' }}</span>
+                        </div>
+                        <svg v-if="invoiceForm.salesman_id == emp.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div v-if="filteredSalesmen.length === 0" class="px-3 py-3 text-center text-xs text-slate-400 dark:text-zinc-500 italic">
+                        No sales representatives available
+                      </div>
+                    </div>
+                  </transition>
                 </div>
               </div>
 
@@ -1650,48 +1686,7 @@
       </transition>
     </teleport>
 
-    <!-- Teleported Floating Salesman Dropdown Menu -->
-    <teleport to="body">
-      <transition
-        enter-active-class="transition duration-150 ease-out"
-        enter-from-class="transform opacity-0 scale-95"
-        enter-to-class="transform opacity-100 scale-100"
-        leave-active-class="transition duration-100 ease-in"
-        leave-from-class="transform opacity-100 scale-100"
-        leave-to-class="transform opacity-0 scale-95"
-      >
-        <div
-          v-if="isSalesmanDropdownOpen"
-          :style="{ top: salesmanDropdownPos.top, bottom: salesmanDropdownPos.bottom, left: salesmanDropdownPos.left, width: salesmanDropdownPos.width }"
-          class="fixed z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
-        >
-          <div
-            @click.stop="selectSalesman('')"
-            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
-            :class="!invoiceForm.salesman_id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
-          >
-            <span>Select Sales Representative</span>
-          </div>
-          <div
-            v-for="emp in filteredSalesmen"
-            :key="emp.id"
-            @click.stop="selectSalesman(emp.id)"
-            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
-            :class="invoiceForm.salesman_id == emp.id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
-          >
-            <div class="flex items-center space-x-2 truncate">
-              <div class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold text-[9px] flex items-center justify-center shrink-0">
-                {{ (emp.full_name || emp.first_name || 'S').charAt(0).toUpperCase() }}
-              </div>
-              <span class="truncate">{{ emp.full_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }} {{ emp.employee_number ? `(${emp.employee_number})` : '' }}</span>
-            </div>
-            <svg v-if="invoiceForm.salesman_id == emp.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-      </transition>
-    </teleport>
+
 
     <!-- Quick Warehouse Switcher Modal -->
     <div v-if="showWarehouseSwitcherModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all duration-300">
@@ -1819,10 +1814,16 @@ const isAdminOrOwner = computed(() => {
 });
 
 const filteredSalesmen = computed(() => {
+  const list = (salesmen.value || []).filter(s => 
+    s && 
+    s.id && 
+    s.full_name !== 'Select Sales Representative' && 
+    !String(s.full_name || '').startsWith('Select Sales Representative')
+  );
   if (isAdminOrOwner.value) {
-    return salesmen.value;
+    return list;
   }
-  return salesmen.value.filter(s => !s.is_owner && !String(s.full_name || '').toLowerCase().includes('(owner)'));
+  return list.filter(s => !s.is_owner && !String(s.full_name || '').toLowerCase().includes('(owner)'));
 });
 
 const showWarehouseSwitcherModal = ref(false);
@@ -1915,42 +1916,10 @@ const toggleCounterDropdown = (event) => {
 };
 
 const toggleSalesmanDropdown = (event) => {
-  if (isSalesmanDropdownOpen.value) {
-    isSalesmanDropdownOpen.value = false;
-    return;
-  }
   isCounterDropdownOpen.value = false;
   isPaymentDropdownOpen.value = false;
   openWarehouseItemIndex.value = null;
-  isSalesmanDropdownOpen.value = true;
-
-  nextTick(() => {
-    const btn = event?.currentTarget;
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const menuHeight = 220;
-    const leftVal = Math.max(10, Math.min(window.innerWidth - rect.width - 10, rect.left));
-
-    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
-      const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
-      salesmanDropdownPos.value = {
-        top: 'auto',
-        bottom: `${bottomVal}px`,
-        left: `${leftVal}px`,
-        width: `${rect.width}px`
-      };
-    } else {
-      const topVal = rect.bottom + 2;
-      salesmanDropdownPos.value = {
-        top: `${topVal}px`,
-        bottom: 'auto',
-        left: `${leftVal}px`,
-        width: `${rect.width}px`
-      };
-    }
-  });
+  isSalesmanDropdownOpen.value = !isSalesmanDropdownOpen.value;
 };
 
 const selectCounter = (id) => {
@@ -2914,7 +2883,10 @@ const loadCategories = async () => {
 const loadSalesmen = async () => {
   try {
     const response = await api.get('/employees/for-dropdown');
-    salesmen.value = response.data.data || response.data || [];
+    const rawData = response.data.data || response.data || [];
+    salesmen.value = Array.isArray(rawData)
+      ? rawData.filter(s => s && s.id && s.full_name !== 'Select Sales Representative' && !String(s.full_name || '').startsWith('Select Sales Representative'))
+      : [];
   } catch (error) {
     console.error('Error loading salesmen:', error);
   }
