@@ -887,7 +887,7 @@
                     <div
                       @click="selectWarehouse('all')"
                       class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center"
-                      :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === 'all' }"
+                      :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': invoiceForm.warehouse_id === 'all' }"
                     >
                       <span>All Warehouses</span>
                     </div>
@@ -896,7 +896,7 @@
                       :key="wh.id"
                       @click="selectWarehouse(wh.id)"
                       class="cursor-pointer py-2 px-3 hover:bg-slate-100 dark:hover:bg-zinc-800 flex justify-between items-center border-t border-slate-50 dark:border-zinc-800"
-                      :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': selectedWarehouseId === wh.id }"
+                      :class="{ 'bg-slate-50 dark:bg-zinc-800 font-semibold text-indigo-600 dark:text-indigo-400': invoiceForm.warehouse_id === wh.id }"
                     >
                       <span>{{ wh.name }}</span>
                     </div>
@@ -1704,23 +1704,23 @@
             @click="selectActiveWarehouse(wh)"
             class="p-3 rounded-xl transition-all cursor-pointer flex items-center justify-between"
             :class="[
-              selectedWarehouseId === wh.id 
+              counterWarehouseFilterId === wh.id 
                 ? 'border-2 border-indigo-500 bg-indigo-50 dark:bg-zinc-800 shadow-md font-bold' 
                 : 'border border-slate-200 dark:border-zinc-800/80 hover:bg-slate-50 dark:hover:bg-zinc-800/60'
             ]"
           >
             <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors" :class="selectedWarehouseId === wh.id ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors" :class="counterWarehouseFilterId === wh.id ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
                 </svg>
               </div>
               <div class="min-w-0 text-left">
-                <span class="text-xs font-bold block truncate" :class="selectedWarehouseId === wh.id ? 'text-indigo-950 dark:text-zinc-100 font-extrabold' : 'text-slate-800 dark:text-zinc-300'">{{ wh.name }}</span>
-                <span class="text-[10px] block truncate font-medium" :class="selectedWarehouseId === wh.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-zinc-500'">{{ wh.counters_count ?? (wh.counters || []).length }} counter(s) available</span>
+                <span class="text-xs font-bold block truncate" :class="counterWarehouseFilterId === wh.id ? 'text-indigo-950 dark:text-zinc-100 font-extrabold' : 'text-slate-800 dark:text-zinc-300'">{{ wh.name }}</span>
+                <span class="text-[10px] block truncate font-medium" :class="counterWarehouseFilterId === wh.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-zinc-500'">{{ wh.counters_count ?? (wh.counters || []).length }} counter(s) available</span>
               </div>
             </div>
-            <span v-if="wh.is_default" class="px-2 py-0.5 text-[9px] font-extrabold uppercase rounded tracking-wider" :class="selectedWarehouseId === wh.id ? 'bg-indigo-600 text-white' : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'">
+            <span v-if="wh.is_default" class="px-2 py-0.5 text-[9px] font-extrabold uppercase rounded tracking-wider" :class="counterWarehouseFilterId === wh.id ? 'bg-indigo-600 text-white' : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'">
               Default
             </span>
           </div>
@@ -1809,29 +1809,28 @@ const filteredSalesmen = computed(() => {
 });
 
 const showWarehouseSwitcherModal = ref(false);
-const selectedWarehouseId = ref('all');
+const counterWarehouseFilterId = ref('all');
 const isWarehouseDropdownOpen = ref(false);
 
 const availableCounters = computed(() => {
-  if (!selectedWarehouseId.value || selectedWarehouseId.value === 'all') {
+  if (!counterWarehouseFilterId.value || counterWarehouseFilterId.value === 'all') {
     return warehouses.value.flatMap(w => w.counters || []);
   }
-  const wh = warehouses.value.find(w => String(w.id) === String(selectedWarehouseId.value));
+  const wh = warehouses.value.find(w => String(w.id) === String(counterWarehouseFilterId.value));
   return wh ? (wh.counters || []) : [];
 });
 
 const getSelectedWarehouseNameLabel = () => {
-  if (!selectedWarehouseId.value || selectedWarehouseId.value === 'all') return 'All Warehouses';
-  const wh = warehouses.value.find(w => String(w.id) === String(selectedWarehouseId.value));
+  if (!counterWarehouseFilterId.value || counterWarehouseFilterId.value === 'all') return 'All Warehouses';
+  const wh = warehouses.value.find(w => String(w.id) === String(counterWarehouseFilterId.value));
   return wh ? wh.name : 'Select Warehouse';
 };
 
 const selectActiveWarehouse = (wh) => {
-  selectedWarehouseId.value = wh.id;
-  invoiceForm.value.warehouse_id = wh.id;
+  counterWarehouseFilterId.value = wh ? wh.id : 'all';
   showWarehouseSwitcherModal.value = false;
   
-  const counters = wh.counters || [];
+  const counters = wh ? (wh.counters || []) : warehouses.value.flatMap(w => w.counters || []);
   if (counters.length > 0) {
     invoiceForm.value.counter_id = counters[0].id;
   } else {
@@ -2487,10 +2486,10 @@ const currentDateTime = ref('');
 
 // Computed properties
 const selectedWarehouseName = computed(() => {
-  if (selectedWarehouseId.value === 'all') {
+  if (!invoiceForm.value.warehouse_id || invoiceForm.value.warehouse_id === 'all') {
     return 'All Warehouses';
   }
-  const wh = warehouses.value.find(w => w.id === selectedWarehouseId.value);
+  const wh = warehouses.value.find(w => String(w.id) === String(invoiceForm.value.warehouse_id));
   return wh ? wh.name : 'All Warehouses';
 });
 const filteredProducts = computed(() => {
@@ -2682,8 +2681,8 @@ const updateDateTime = () => {
 
 const getProductStock = (product) => {
   if (!product || !product.track_inventory) return '∞';
-  if (!selectedWarehouseId.value || selectedWarehouseId.value === 'all') return product.total_stock;
-  return product.warehouse_stocks?.[selectedWarehouseId.value] ?? 0;
+  if (!invoiceForm.value.warehouse_id || invoiceForm.value.warehouse_id === 'all') return product.total_stock;
+  return product.warehouse_stocks?.[invoiceForm.value.warehouse_id] ?? 0;
 };
 
 const getProductWarehouseStock = (product, warehouseId) => {
@@ -2803,7 +2802,7 @@ const loadProducts = async () => {
       if (warehouses.value.length > 0) {
         const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0];
         if (defaultWh) {
-          selectedWarehouseId.value = defaultWh.id;
+          counterWarehouseFilterId.value = defaultWh.id;
           invoiceForm.value.warehouse_id = defaultWh.id;
           if (defaultWh.counters && defaultWh.counters.length > 0) {
             invoiceForm.value.counter_id = defaultWh.counters[0].id;
@@ -2953,7 +2952,7 @@ const addByBarcode = () => {
 };
 
 const addToInvoice = (product) => {
-  let targetWarehouseId = selectedWarehouseId.value;
+  let targetWarehouseId = invoiceForm.value.warehouse_id;
   if (!targetWarehouseId || targetWarehouseId === 'all') {
     // Try to find a warehouse with stock > 0
     const whWithStock = Object.keys(product.warehouse_stocks || {}).find(
@@ -3165,7 +3164,7 @@ const saveInvoice = async (shouldPrint = false) => {
       customer_name: customerSearch.value ? customerSearch.value.trim() : null,
       sale_number: invoiceForm.value.sale_number || null,
       category_id: invoiceForm.value.category_id || null,
-      warehouse_id: selectedWarehouseId.value === 'all' ? null : selectedWarehouseId.value,
+      warehouse_id: invoiceForm.value.warehouse_id === 'all' ? null : invoiceForm.value.warehouse_id,
       counter_id: invoiceForm.value.counter_id || null,
       salesman_id: invoiceForm.value.salesman_id || null,
       sale_date: invoiceForm.value.sale_date,
@@ -3344,7 +3343,7 @@ const handleClickOutside = (event) => {
 };
 
 const selectWarehouse = (id) => {
-  selectedWarehouseId.value = id;
+  invoiceForm.value.warehouse_id = id;
   isWarehouseDropdownOpen.value = false;
 };
 
