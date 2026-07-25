@@ -630,28 +630,15 @@
                 />
               </div>
 
-              <!-- Warehouse / Counter Number -->
+              <!-- Counter -->
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold">Warehouse / Counter Number:</label>
+                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Counter:</label>
+                <div class="relative w-full" id="counter-dropdown-container">
                   <button
                     type="button"
-                    @click="showWarehouseSwitcherModal = true"
-                    class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center space-x-1 cursor-pointer"
-                    title="Click to switch active warehouse"
-                  >
-                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
-                    </svg>
-                    <span>{{ getSelectedWarehouseNameLabel() }}</span>
-                  </button>
-                </div>
-                <div class="relative flex items-center w-full" id="counter-dropdown-container">
-                  <button
-                    type="button"
-                    @click="showWarehouseSwitcherModal = true"
-                    class="absolute left-2.5 z-10 text-slate-400 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                    title="Click to switch warehouse"
+                    @click.stop="showWarehouseSwitcherModal = true"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 text-slate-400 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+                    title="Filter counters by Warehouse"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
@@ -667,6 +654,42 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+
+                  <!-- Absolute Positioned Floating Counter Dropdown Menu -->
+                  <transition
+                    enter-active-class="transition duration-150 ease-out"
+                    enter-from-class="transform opacity-0 scale-95"
+                    enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition duration-100 ease-in"
+                    leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95"
+                  >
+                    <div
+                      v-if="isCounterDropdownOpen"
+                      class="absolute top-[calc(100%+4px)] left-0 right-0 w-full z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden p-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
+                    >
+                      <div
+                        v-for="counter in availableCounters"
+                        :key="counter.id"
+                        @click.stop="selectCounter(counter.id)"
+                        class="px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50/50 dark:border-zinc-800/20 last:border-0"
+                        :class="invoiceForm.counter_id == counter.id ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-100/80 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 font-medium'"
+                      >
+                        <div class="flex items-center space-x-2 truncate">
+                          <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <span class="truncate">{{ counter.name }} {{ counter.counter_number ? `(#${counter.counter_number})` : '' }}</span>
+                        </div>
+                        <svg v-if="invoiceForm.counter_id == counter.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div v-if="availableCounters.length === 0" class="px-3 py-3 text-center text-xs text-slate-400 dark:text-zinc-500 italic">
+                        No counters available for this warehouse
+                      </div>
+                    </div>
+                  </transition>
                 </div>
               </div>
 
@@ -1643,48 +1666,7 @@
       </transition>
     </teleport>
 
-    <!-- Teleported Floating Counter Dropdown Menu -->
-    <teleport to="body">
-      <transition
-        enter-active-class="transition duration-150 ease-out"
-        enter-from-class="transform opacity-0 scale-95"
-        enter-to-class="transform opacity-100 scale-100"
-        leave-active-class="transition duration-100 ease-in"
-        leave-from-class="transform opacity-100 scale-100"
-        leave-to-class="transform opacity-0 scale-95"
-      >
-        <div
-          v-if="isCounterDropdownOpen"
-          :style="{ top: counterDropdownPos.top, bottom: counterDropdownPos.bottom, left: counterDropdownPos.left, width: counterDropdownPos.width }"
-          class="fixed z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
-        >
-          <div
-            @click.stop="selectCounter('')"
-            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
-            :class="!invoiceForm.counter_id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
-          >
-            <span>Select Counter / Terminal</span>
-          </div>
-          <div
-            v-for="counter in availableCounters"
-            :key="counter.id"
-            @click.stop="selectCounter(counter.id)"
-            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
-            :class="invoiceForm.counter_id == counter.id ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
-          >
-            <div class="flex items-center space-x-2 truncate">
-              <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              <span class="truncate">{{ counter.name }} {{ counter.counter_number ? `(#${counter.counter_number})` : '' }}</span>
-            </div>
-            <svg v-if="invoiceForm.counter_id == counter.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-      </transition>
-    </teleport>
+
 
 
 
@@ -1877,42 +1859,10 @@ const salesmanDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px', widt
 const isSalesmanDropdownOpen = ref(false);
 
 const toggleCounterDropdown = (event) => {
-  if (isCounterDropdownOpen.value) {
-    isCounterDropdownOpen.value = false;
-    return;
-  }
   isSalesmanDropdownOpen.value = false;
   isPaymentDropdownOpen.value = false;
   openWarehouseItemIndex.value = null;
-  isCounterDropdownOpen.value = true;
-
-  nextTick(() => {
-    const btn = event?.currentTarget;
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const menuHeight = 220;
-    const leftVal = Math.max(10, Math.min(window.innerWidth - rect.width - 10, rect.left));
-
-    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
-      const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
-      counterDropdownPos.value = {
-        top: 'auto',
-        bottom: `${bottomVal}px`,
-        left: `${leftVal}px`,
-        width: `${rect.width}px`
-      };
-    } else {
-      const topVal = rect.bottom + 2;
-      counterDropdownPos.value = {
-        top: `${topVal}px`,
-        bottom: 'auto',
-        left: `${leftVal}px`,
-        width: `${rect.width}px`
-      };
-    }
-  });
+  isCounterDropdownOpen.value = !isCounterDropdownOpen.value;
 };
 
 const toggleSalesmanDropdown = (event) => {
