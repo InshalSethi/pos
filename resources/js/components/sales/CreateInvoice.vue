@@ -707,8 +707,8 @@
                         v-for="emp in filteredSalesmen"
                         :key="emp.id"
                         @click.stop="selectSalesman(emp.id)"
-                        class="px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50/50 dark:border-zinc-800/20 last:border-0 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80"
-                        :class="invoiceForm.salesman_id == emp.id ? 'bg-indigo-50/90 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-700 dark:text-zinc-200 font-medium'"
+                        class="px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50/50 dark:border-zinc-800/20 last:border-0"
+                        :class="invoiceForm.salesman_id == emp.id ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-100/80 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 font-medium'"
                       >
                         <div class="flex items-center space-x-2.5 truncate">
                           <div class="w-5.5 h-5.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 font-bold text-[10px] flex items-center justify-center shrink-0 border border-indigo-200 dark:border-indigo-800/50">
@@ -1632,7 +1632,7 @@
             :key="pm.value"
             @click.stop="selectPaymentMethod(pm.value)"
             class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
-            :class="invoiceForm.payment_method === pm.value ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
+            :class="invoiceForm.payment_method === pm.value ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
           >
             <span>{{ pm.label }}</span>
             <svg v-if="invoiceForm.payment_method === pm.value" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1669,8 +1669,8 @@
             v-for="counter in availableCounters"
             :key="counter.id"
             @click.stop="selectCounter(counter.id)"
-            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
-            :class="invoiceForm.counter_id == counter.id ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'text-slate-700 dark:text-zinc-300 font-medium'"
+            class="px-3.5 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
+            :class="invoiceForm.counter_id == counter.id ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
           >
             <div class="flex items-center space-x-2 truncate">
               <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1720,25 +1720,25 @@
             v-for="wh in warehouses"
             :key="wh.id"
             @click="selectActiveWarehouse(wh)"
-            class="p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between"
+            class="p-3 rounded-xl transition-all cursor-pointer flex items-center justify-between"
             :class="[
               selectedWarehouseId === wh.id 
-                ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 shadow-sm font-bold' 
-                : 'border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300'
+                ? 'border-2 border-indigo-500 bg-indigo-50 dark:bg-zinc-800 shadow-md font-bold' 
+                : 'border border-slate-200 dark:border-zinc-800/80 hover:bg-slate-50 dark:hover:bg-zinc-800/60'
             ]"
           >
             <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="selectedWarehouseId === wh.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors" :class="selectedWarehouseId === wh.id ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
                 </svg>
               </div>
               <div class="min-w-0 text-left">
-                <span class="text-xs font-bold block truncate">{{ wh.name }}</span>
-                <span class="text-[10px] text-slate-400 dark:text-zinc-500 block truncate">{{ wh.counters_count ?? (wh.counters || []).length }} counter(s) available</span>
+                <span class="text-xs font-bold block truncate" :class="selectedWarehouseId === wh.id ? 'text-indigo-950 dark:text-zinc-100 font-extrabold' : 'text-slate-800 dark:text-zinc-300'">{{ wh.name }}</span>
+                <span class="text-[10px] block truncate font-medium" :class="selectedWarehouseId === wh.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-zinc-500'">{{ wh.counters_count ?? (wh.counters || []).length }} counter(s) available</span>
               </div>
             </div>
-            <span v-if="wh.is_default" class="px-2 py-0.5 text-[9px] font-black uppercase rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+            <span v-if="wh.is_default" class="px-2 py-0.5 text-[9px] font-extrabold uppercase rounded tracking-wider" :class="selectedWarehouseId === wh.id ? 'bg-indigo-600 text-white' : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'">
               Default
             </span>
           </div>
