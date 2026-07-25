@@ -1882,7 +1882,8 @@ const selectSalesman = (id) => {
 
 const getSelectedCounterLabel = () => {
   if (!invoiceForm.value.counter_id) return 'Select Counter / Terminal';
-  const c = availableCounters.value.find(item => item.id == invoiceForm.value.counter_id);
+  const allCounters = warehouses.value.flatMap(w => w.counters || []);
+  const c = allCounters.find(item => String(item.id) === String(invoiceForm.value.counter_id));
   return c ? `${c.name} ${c.counter_number ? `(#${c.counter_number})` : ''}` : 'Select Counter / Terminal';
 };
 
@@ -2679,16 +2680,47 @@ const updateDateTime = () => {
 };
 
 const getProductStock = (product) => {
-  if (!product || !product.track_inventory) return '∞';
-  if (!invoiceForm.value.warehouse_id || invoiceForm.value.warehouse_id === 'all') return product.total_stock;
-  return product.warehouse_stocks?.[invoiceForm.value.warehouse_id] ?? 0;
+  if (!product) return '0';
+  if (!product.track_inventory) return '∞';
+  
+  const targetWhId = invoiceForm.value.warehouse_id || counterWarehouseFilterId.value;
+  
+  if (!targetWhId || targetWhId === 'all') {
+    return product.total_stock ?? 0;
+  }
+  
+  let whStock = 0;
+  if (product.warehouse_stocks) {
+    const stockVal = product.warehouse_stocks[targetWhId]
+      ?? product.warehouse_stocks[String(targetWhId)]
+      ?? product.warehouse_stocks[Number(targetWhId)];
+      
+    if (stockVal !== undefined && stockVal !== null) {
+      whStock = Number(stockVal);
+    }
+  }
+  
+  if (whStock === 0 && (product.total_stock ?? 0) > 0) {
+    return `0 (${product.total_stock} Total)`;
+  }
+  
+  return whStock;
 };
 
 const getProductWarehouseStock = (product, warehouseId) => {
   if (!product) return 0;
   if (!product.track_inventory) return '∞';
-  if (!warehouseId) return product.total_stock ?? 0;
-  return product.warehouse_stocks?.[warehouseId] ?? 0;
+  if (!warehouseId || warehouseId === 'all') return product.total_stock ?? 0;
+  
+  if (product.warehouse_stocks) {
+    const stockVal = product.warehouse_stocks[warehouseId]
+      ?? product.warehouse_stocks[String(warehouseId)]
+      ?? product.warehouse_stocks[Number(warehouseId)];
+    if (stockVal !== undefined && stockVal !== null) {
+      return stockVal;
+    }
+  }
+  return product.total_stock ?? 0;
 };
 
 const getItemAvailableStock = (item) => {
@@ -2698,8 +2730,22 @@ const getItemAvailableStock = (item) => {
     ? item.warehouse_ids
     : (item.warehouse_id ? [item.warehouse_id] : []);
 
-  if (whIds.length === 0) return item.product.total_stock ?? 0;
-  return whIds.reduce((sum, whId) => sum + (item.product.warehouse_stocks?.[whId] ?? 0), 0);
+  if (whIds.length === 0 || whIds.includes('all')) return item.product.total_stock ?? 0;
+
+  let total = 0;
+  let foundAny = false;
+  for (const whId of whIds) {
+    if (item.product.warehouse_stocks) {
+      const stockVal = item.product.warehouse_stocks[whId]
+        ?? item.product.warehouse_stocks[String(whId)]
+        ?? item.product.warehouse_stocks[Number(whId)];
+      if (stockVal !== undefined && stockVal !== null) {
+        total += Number(stockVal);
+        foundAny = true;
+      }
+    }
+  }
+  return foundAny ? total : (item.product.total_stock ?? 0);
 };
 
 const isItemStockExceeded = (item) => {
