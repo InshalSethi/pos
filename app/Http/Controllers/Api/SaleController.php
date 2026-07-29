@@ -702,7 +702,17 @@ class SaleController extends Controller
      */
     public function show(Sale $sale): JsonResponse
     {
-        $sale->load(['customer', 'user', 'saleItems.product']);
+        $sale->load([
+            'customer',
+            'category',
+            'warehouse',
+            'counter',
+            'salesman',
+            'user',
+            'saleItems.product',
+            'saleItems.tax',
+            'saleItems.warehouse'
+        ]);
 
         return response()->json($sale);
     }
