@@ -149,7 +149,7 @@
               <tr
                 v-for="acc in accounts"
                 :key="acc.id"
-                class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors"
+                class="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors"
               >
                 <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-zinc-100">{{ acc.account_code }}</td>
                 <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100">
@@ -172,20 +172,7 @@
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-right">
-                  <div class="inline-flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm divide-x divide-slate-200 dark:divide-zinc-800 overflow-hidden shrink-0">
-                    <!-- View Button -->
-                    <button
-                      @click="editAccount(acc)"
-                      type="button"
-                      title="View Details"
-                      class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-
+                  <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 inline-flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm divide-x divide-slate-200 dark:divide-zinc-800 overflow-hidden shrink-0">
                     <!-- Edit Button -->
                     <button
                       @click="editAccount(acc)"
@@ -198,18 +185,16 @@
                       </svg>
                     </button>
 
-                    <!-- Delete or Lock Button -->
-                    <button
+                    <!-- Conditional Delete OR Lock Icon -->
+                    <span
                       v-if="acc.is_system_account || acc.account_code === '1010' || acc.account_name === 'Cash'"
-                      type="button"
-                      disabled
-                      title="Default System Account (Locked)"
-                      class="p-1.5 px-2.5 text-slate-300 dark:text-zinc-600 cursor-not-allowed"
+                      title="System Account (Cannot be deleted)"
+                      class="p-1.5 px-2.5 text-slate-300 dark:text-zinc-600 bg-slate-50 dark:bg-zinc-950 cursor-not-allowed inline-flex items-center justify-center"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
-                    </button>
+                    </span>
                     <button
                       v-else
                       @click="deleteAccount(acc)"
