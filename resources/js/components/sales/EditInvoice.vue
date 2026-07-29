@@ -1995,13 +1995,10 @@ const setGlobalPricingMode = (mode) => {
 
 const getEffectiveUnitPrice = (item, isWholesaleGlobal = isGlobalWholesale.value) => {
   if (!item) return 0;
-  if (isWholesaleGlobal) {
-    return parseFloat(item.wholesale_price) || 0;
+  if (isWholesaleGlobal || item.is_wholesale) {
+    return parseFloat(item.wholesale_price ?? item.unit_price ?? item.price) || 0;
   }
-  if (item.is_wholesale) {
-    return parseFloat(item.wholesale_price) || 0;
-  }
-  return parseFloat(item.unit_price ?? item.price) || 0;
+  return parseFloat(item.unit_price ?? item.price ?? item.wholesale_price) || 0;
 };
 
 // Advance Search Modal State
@@ -3117,6 +3114,15 @@ const toggleManualDiscountType = () => {
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
+  if (isGlobalWholesale.value || item.is_wholesale) {
+    if (item.wholesale_price !== undefined && item.wholesale_price !== null) {
+      item.unit_price = item.wholesale_price;
+    }
+  } else {
+    if (item.unit_price !== undefined && item.unit_price !== null) {
+      item.wholesale_price = item.unit_price;
+    }
+  }
   const basePrice = getEffectiveUnitPrice(item);
   const itemSubtotal = item.quantity * basePrice;
   const rawDiscount = item.discount_amount || 0;
@@ -3628,8 +3634,21 @@ const loadInvoiceData = async () => {
           warehouse_stocks: {}
         };
 
-        const wholesaleVal = parseFloat(item.product?.wholesale_price || item.wholesale_price || (isWholesaleMode ? item.unit_price : 0));
-        const isWholesale = isWholesaleMode || item.is_wholesale === true || (wholesaleVal > 0 && Math.abs(parseFloat(item.unit_price) - wholesaleVal) < 0.01);
+        const savedUnitPrice = parseFloat(item.unit_price ?? item.price ?? 0);
+        const savedWholesale = (item.wholesale_price !== undefined && item.wholesale_price !== null && item.wholesale_price !== '')
+          ? parseFloat(item.wholesale_price)
+          : 0;
+        const catalogWholesale = parseFloat(item.product?.wholesale_price || 0);
+
+        const effectiveWholesalePrice = savedWholesale > 0
+          ? savedWholesale
+          : (savedUnitPrice > 0 ? savedUnitPrice : catalogWholesale);
+
+        const effectiveUnitPrice = savedUnitPrice > 0
+          ? savedUnitPrice
+          : (isWholesaleMode ? catalogWholesale : parseFloat(item.product?.price || 0));
+
+        const isWholesale = isWholesaleMode || item.is_wholesale === true || (catalogWholesale > 0 && Math.abs(effectiveUnitPrice - catalogWholesale) < 0.01);
 
         let itemTaxId = item.tax_id || null;
         let itemTaxRate = parseFloat(item.tax_rate) || 0;
@@ -3659,9 +3678,9 @@ const loadInvoiceData = async () => {
           warehouse_id: item.warehouse_id || sale.warehouse_id,
           name: item.product?.name || 'Product',
           sku: item.product?.sku || '',
-          price: parseFloat(item.unit_price) || 0,
-          unit_price: parseFloat(item.unit_price) || 0,
-          wholesale_price: wholesaleVal || parseFloat(item.unit_price) || 0,
+          price: effectiveUnitPrice,
+          unit_price: effectiveUnitPrice,
+          wholesale_price: effectiveWholesalePrice,
           is_wholesale: isWholesale,
           discount_type: lineDiscType,
           discount_amount: parseFloat(item.discount_amount) || 0,

@@ -1997,13 +1997,10 @@ const setGlobalPricingMode = (mode) => {
 
 const getEffectiveUnitPrice = (item, isWholesaleGlobal = isGlobalWholesale.value) => {
   if (!item) return 0;
-  if (isWholesaleGlobal) {
-    return parseFloat(item.wholesale_price) || 0;
+  if (isWholesaleGlobal || item.is_wholesale) {
+    return parseFloat(item.wholesale_price ?? item.unit_price ?? item.price) || 0;
   }
-  if (item.is_wholesale) {
-    return parseFloat(item.wholesale_price) || 0;
-  }
-  return parseFloat(item.unit_price ?? item.price) || 0;
+  return parseFloat(item.unit_price ?? item.price ?? item.wholesale_price) || 0;
 };
 
 // Advance Search Modal State
@@ -3117,6 +3114,15 @@ const toggleLineDiscountType = (item, index) => {
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
+  if (isGlobalWholesale.value || item.is_wholesale) {
+    if (item.wholesale_price !== undefined && item.wholesale_price !== null) {
+      item.unit_price = item.wholesale_price;
+    }
+  } else {
+    if (item.unit_price !== undefined && item.unit_price !== null) {
+      item.wholesale_price = item.unit_price;
+    }
+  }
   const basePrice = getEffectiveUnitPrice(item);
   const itemSubtotal = item.quantity * basePrice;
   const rawDiscount = item.discount_amount || 0;
