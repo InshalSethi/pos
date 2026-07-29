@@ -21,6 +21,8 @@ class Sale extends Model
         'company_id',
         'sale_number',
         'customer_id',
+        'customer_phone',
+        'customer_email',
         'category_id',
         'warehouse_id',
         'counter_id',

@@ -399,27 +399,55 @@ class SaleController extends Controller
 
             $changeAmount = max(0, $request->paid_amount - $totalAmount);
 
-            // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name) ---
+            // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name / Phone / Email) ---
             $customerId = $request->customer_id;
-            if (!$customerId && $request->filled('customer_name')) {
-                $typedName = trim($request->customer_name);
-                if ($typedName !== '') {
-                    $existingCustomer = Customer::where('company_id', $companyId)
-                        ->where(function($q) use ($typedName) {
-                            $q->where('name', $typedName)
-                              ->orWhere('phone', $typedName);
-                        })->first();
+            $customerPhone = $request->customer_phone;
+            $customerEmail = $request->customer_email;
+            $typedName = trim($request->customer_name ?? '');
 
-                    if ($existingCustomer) {
-                        $customerId = $existingCustomer->id;
-                    } else {
-                        $newCustomer = Customer::create([
-                            'company_id' => $companyId,
-                            'name' => $typedName,
-                            'is_active' => true,
-                        ]);
-                        $customerId = $newCustomer->id;
+            if ($customerId) {
+                $existingCustomer = Customer::find($customerId);
+                if ($existingCustomer) {
+                    $updateData = [];
+                    if ($customerPhone && $existingCustomer->phone !== $customerPhone) {
+                        $updateData['phone'] = $customerPhone;
                     }
+                    if ($customerEmail && $existingCustomer->email !== $customerEmail) {
+                        $updateData['email'] = $customerEmail;
+                    }
+                    if (!empty($updateData)) {
+                        $existingCustomer->update($updateData);
+                    }
+                }
+            } elseif ($typedName !== '' || $customerPhone || $customerEmail) {
+                $existingCustomer = Customer::where('company_id', $companyId)
+                    ->where(function($q) use ($typedName, $customerPhone, $customerEmail) {
+                        if ($typedName !== '') $q->where('name', $typedName);
+                        if ($customerPhone) $q->orWhere('phone', $customerPhone);
+                        if ($customerEmail) $q->orWhere('email', $customerEmail);
+                    })->first();
+
+                if ($existingCustomer) {
+                    $customerId = $existingCustomer->id;
+                    $updateData = [];
+                    if ($customerPhone && $existingCustomer->phone !== $customerPhone) {
+                        $updateData['phone'] = $customerPhone;
+                    }
+                    if ($customerEmail && $existingCustomer->email !== $customerEmail) {
+                        $updateData['email'] = $customerEmail;
+                    }
+                    if (!empty($updateData)) {
+                        $existingCustomer->update($updateData);
+                    }
+                } else {
+                    $newCustomer = Customer::create([
+                        'company_id' => $companyId,
+                        'name' => $typedName !== '' ? $typedName : 'Walk-in Customer',
+                        'phone' => $customerPhone,
+                        'email' => $customerEmail,
+                        'is_active' => true,
+                    ]);
+                    $customerId = $newCustomer->id;
                 }
             }
 
@@ -508,6 +536,8 @@ class SaleController extends Controller
                 'company_id' => $companyId,
                 'sale_number' => $saleNumber,
                 'customer_id' => $customerId,
+                'customer_phone' => $customerPhone,
+                'customer_email' => $customerEmail,
                 'category_id' => $request->category_id,
                 'warehouse_id' => $warehouseId,
                 'counter_id' => $request->counter_id,
@@ -1054,33 +1084,63 @@ class SaleController extends Controller
                 $primaryPaymentMethod = $payments[0]['method'];
             }
 
-            // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name) ---
+            // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name / Phone / Email) ---
             $customerId = $request->customer_id;
-            if (!$customerId && $request->filled('customer_name')) {
-                $typedName = trim($request->customer_name);
-                if ($typedName !== '') {
-                    $existingCustomer = Customer::where('company_id', $companyId)
-                        ->where(function($q) use ($typedName) {
-                            $q->where('name', $typedName)
-                              ->orWhere('phone', $typedName);
-                        })->first();
+            $customerPhone = $request->customer_phone;
+            $customerEmail = $request->customer_email;
+            $typedName = trim($request->customer_name ?? '');
 
-                    if ($existingCustomer) {
-                        $customerId = $existingCustomer->id;
-                    } else {
-                        $newCustomer = Customer::create([
-                            'company_id' => $companyId,
-                            'name' => $typedName,
-                            'is_active' => true,
-                        ]);
-                        $customerId = $newCustomer->id;
+            if ($customerId) {
+                $existingCustomer = Customer::find($customerId);
+                if ($existingCustomer) {
+                    $updateData = [];
+                    if ($customerPhone && $existingCustomer->phone !== $customerPhone) {
+                        $updateData['phone'] = $customerPhone;
                     }
+                    if ($customerEmail && $existingCustomer->email !== $customerEmail) {
+                        $updateData['email'] = $customerEmail;
+                    }
+                    if (!empty($updateData)) {
+                        $existingCustomer->update($updateData);
+                    }
+                }
+            } elseif ($typedName !== '' || $customerPhone || $customerEmail) {
+                $existingCustomer = Customer::where('company_id', $companyId)
+                    ->where(function($q) use ($typedName, $customerPhone, $customerEmail) {
+                        if ($typedName !== '') $q->where('name', $typedName);
+                        if ($customerPhone) $q->orWhere('phone', $customerPhone);
+                        if ($customerEmail) $q->orWhere('email', $customerEmail);
+                    })->first();
+
+                if ($existingCustomer) {
+                    $customerId = $existingCustomer->id;
+                    $updateData = [];
+                    if ($customerPhone && $existingCustomer->phone !== $customerPhone) {
+                        $updateData['phone'] = $customerPhone;
+                    }
+                    if ($customerEmail && $existingCustomer->email !== $customerEmail) {
+                        $updateData['email'] = $customerEmail;
+                    }
+                    if (!empty($updateData)) {
+                        $existingCustomer->update($updateData);
+                    }
+                } else {
+                    $newCustomer = Customer::create([
+                        'company_id' => $companyId,
+                        'name' => $typedName !== '' ? $typedName : 'Walk-in Customer',
+                        'phone' => $customerPhone,
+                        'email' => $customerEmail,
+                        'is_active' => true,
+                    ]);
+                    $customerId = $newCustomer->id;
                 }
             }
 
             $sale->update([
                 'sale_number' => $saleNumber,
                 'customer_id' => $customerId,
+                'customer_phone' => $customerPhone,
+                'customer_email' => $customerEmail,
                 'category_id' => $request->category_id,
                 'warehouse_id' => $warehouseId,
                 'sale_date' => $request->sale_date ?? $sale->sale_date,

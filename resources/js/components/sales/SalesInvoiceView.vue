@@ -161,20 +161,20 @@
                 </span>
               </div>
 
-              <div v-if="invoice.customer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div v-if="invoice.customer || invoice.customer_name || invoice.customer_phone || invoice.customer_email" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <p class="text-[11px] font-medium text-slate-400 dark:text-zinc-500">Customer Name</p>
-                  <p class="text-base font-extrabold text-slate-900 dark:text-zinc-100 mt-0.5">{{ invoice.customer.name }}</p>
+                  <p class="text-base font-extrabold text-slate-900 dark:text-zinc-100 mt-0.5">{{ invoice.customer?.name || invoice.customer_name || 'Walk-in Customer' }}</p>
                 </div>
                 <div>
                   <p class="text-[11px] font-medium text-slate-400 dark:text-zinc-500">Phone / Contact</p>
-                  <p class="text-xs font-bold text-slate-700 dark:text-zinc-200 mt-0.5">{{ invoice.customer.phone || 'N/A' }}</p>
+                  <p class="text-xs font-bold text-slate-700 dark:text-zinc-200 mt-0.5">{{ invoice.customer_phone || invoice.customer?.phone || 'N/A' }}</p>
                 </div>
                 <div>
                   <p class="text-[11px] font-medium text-slate-400 dark:text-zinc-500">Email Address</p>
-                  <p class="text-xs font-medium text-slate-700 dark:text-zinc-300 mt-0.5 truncate">{{ invoice.customer.email || 'N/A' }}</p>
+                  <p class="text-xs font-medium text-slate-700 dark:text-zinc-300 mt-0.5 truncate">{{ invoice.customer_email || invoice.customer?.email || 'N/A' }}</p>
                 </div>
-                <div v-if="invoice.customer.address" class="md:col-span-3 pt-2 border-t border-slate-50 dark:border-zinc-800/40">
+                <div v-if="invoice.customer?.address" class="md:col-span-3 pt-2 border-t border-slate-50 dark:border-zinc-800/40">
                   <p class="text-[11px] font-medium text-slate-400 dark:text-zinc-500">Billing Address</p>
                   <p class="text-xs font-medium text-slate-700 dark:text-zinc-300 mt-0.5">
                     {{ invoice.customer.address }}

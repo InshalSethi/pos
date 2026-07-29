@@ -861,6 +861,28 @@
                 <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
                   No customer selected. Type custom name or search above.
                 </div>
+
+                <!-- Customer Contact Fields (Phone & Email - Vertical Stack) -->
+                <div class="flex flex-col gap-2 pt-1 text-left w-full">
+                  <div class="w-full">
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Phone Number</label>
+                    <input
+                      v-model="customerPhone"
+                      type="tel"
+                      placeholder="Enter phone number"
+                      class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div class="w-full">
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Email Address</label>
+                    <input
+                      v-model="customerEmail"
+                      type="email"
+                      placeholder="Enter email address"
+                      class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               <!-- Invoice Date & Due Date -->
@@ -2466,6 +2488,8 @@ const handleProductSearchEnter = () => {
 const productSearch = ref('');
 const customerSearch = ref('');
 const customerSearchResults = ref([]);
+const customerPhone = ref('');
+const customerEmail = ref('');
 const loadingProducts = ref(false);
 const saving = ref(false);
 const printAfterSave = ref(false);
@@ -3282,12 +3306,17 @@ const selectCustomer = (customer) => {
   selectedCustomer.value = customer;
   invoiceForm.value.customer_id = customer.id;
   customerSearch.value = customer.name;
+  customerPhone.value = customer.phone || '';
+  customerEmail.value = customer.email || '';
   customerSearchResults.value = [];
   useWalletCredit.value = false;
-  // Fetch fresh wallet_balance from API
   api.get(`/customers/${customer.id}`).then(res => {
-    if (res.data && res.data.wallet_balance !== undefined) {
-      selectedCustomer.value = { ...selectedCustomer.value, wallet_balance: res.data.wallet_balance };
+    if (res.data) {
+      if (res.data.wallet_balance !== undefined) {
+        selectedCustomer.value = { ...selectedCustomer.value, wallet_balance: res.data.wallet_balance };
+      }
+      if (res.data.phone && !customerPhone.value) customerPhone.value = res.data.phone;
+      if (res.data.email && !customerEmail.value) customerEmail.value = res.data.email;
     }
   }).catch(() => {});
 };
@@ -3296,6 +3325,8 @@ const clearCustomer = () => {
   selectedCustomer.value = null;
   invoiceForm.value.customer_id = '';
   customerSearch.value = '';
+  customerPhone.value = '';
+  customerEmail.value = '';
   customerSearchResults.value = [];
   useWalletCredit.value = false;
 };
@@ -3362,6 +3393,8 @@ const saveInvoice = async (shouldPrint = false) => {
     const invoiceData = {
       customer_id: invoiceForm.value.customer_id || null,
       customer_name: customerSearch.value ? customerSearch.value.trim() : null,
+      customer_phone: customerPhone.value ? customerPhone.value.trim() : null,
+      customer_email: customerEmail.value ? customerEmail.value.trim() : null,
       sale_number: invoiceForm.value.sale_number || null,
       category_id: invoiceForm.value.category_id || null,
       warehouse_id: invoiceForm.value.warehouse_id === 'all' ? null : invoiceForm.value.warehouse_id,
