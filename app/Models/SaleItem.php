@@ -20,6 +20,8 @@ class SaleItem extends Model
         'warehouse_id',
         'quantity',
         'unit_price',
+        'is_wholesale',
+        'discount_type',
         'discount_amount',
         'tax_amount',
         'total_amount',

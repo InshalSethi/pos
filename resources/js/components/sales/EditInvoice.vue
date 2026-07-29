@@ -420,7 +420,7 @@
                     <div class="flex items-center justify-end space-x-1">
                       <button
                         type="button"
-                        @click="invoiceForm.tax_type = invoiceForm.tax_type === 'fixed' ? 'percentage' : 'fixed'"
+                        @click="toggleManualTaxType"
                         class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
                         :title="invoiceForm.tax_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
                       >
@@ -446,7 +446,7 @@
                     <div class="flex items-center justify-end space-x-1">
                       <button
                         type="button"
-                        @click="invoiceForm.discount_type = invoiceForm.discount_type === 'fixed' ? 'percentage' : 'fixed'"
+                        @click="toggleManualDiscountType"
                         class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
                         :title="invoiceForm.discount_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
                       >
@@ -869,124 +869,6 @@
                     type="date"
                     class="w-full px-2 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
                   />
-                </div>
-              </div>
-
-              <!-- Counter -->
-              <div>
-                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Counter:</label>
-                <div class="relative w-full" id="counter-dropdown-container">
-                  <button
-                    type="button"
-                    @click.stop="showWarehouseSwitcherModal = true"
-                    class="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 text-slate-400 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-                    title="Filter counters by Warehouse"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    @click.stop="toggleCounterDropdown($event)"
-                    class="w-full pl-9 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium cursor-pointer flex justify-between items-center h-[34px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
-                  >
-                    <span class="truncate">{{ getSelectedCounterLabel() }}</span>
-                    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isCounterDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  <!-- Absolute Positioned Floating Counter Dropdown Menu -->
-                  <transition
-                    enter-active-class="transition duration-150 ease-out"
-                    enter-from-class="transform opacity-0 scale-95"
-                    enter-to-class="transform opacity-100 scale-100"
-                    leave-active-class="transition duration-100 ease-in"
-                    leave-from-class="transform opacity-100 scale-100"
-                    leave-to-class="transform opacity-0 scale-95"
-                  >
-                    <div
-                      v-if="isCounterDropdownOpen"
-                      class="absolute top-[calc(100%+4px)] left-0 right-0 w-full z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden p-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
-                    >
-                      <div
-                        v-for="counter in availableCounters"
-                        :key="counter.id"
-                        @click.stop="selectCounter(counter.id)"
-                        class="px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50/50 dark:border-zinc-800/20 last:border-0"
-                        :class="invoiceForm.counter_id == counter.id ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-100/80 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 font-medium'"
-                      >
-                        <div class="flex items-center space-x-2 truncate">
-                          <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <span class="truncate">{{ counter.name }} {{ counter.counter_number ? `(#${counter.counter_number})` : '' }}</span>
-                        </div>
-                        <svg v-if="invoiceForm.counter_id == counter.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <div v-if="availableCounters.length === 0" class="px-3 py-3 text-center text-xs text-slate-400 dark:text-zinc-500 italic">
-                        No counters available for this warehouse
-                      </div>
-                    </div>
-                  </transition>
-                </div>
-              </div>
-
-              <!-- Salesman -->
-              <div>
-                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Salesman:</label>
-                <div class="relative w-full" id="salesman-dropdown-container">
-                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 text-slate-400 dark:text-zinc-400 pointer-events-none">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </span>
-                  <button
-                    type="button"
-                    @click.stop="toggleSalesmanDropdown($event)"
-                    class="w-full pl-9 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium cursor-pointer flex justify-between items-center h-[34px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
-                  >
-                    <span class="truncate">{{ getSelectedSalesmanLabel() }}</span>
-                    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isSalesmanDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  <!-- Absolute Positioned Floating Salesman Dropdown Menu -->
-                  <transition
-                    enter-active-class="transition duration-150 ease-out"
-                    enter-from-class="transform opacity-0 scale-95"
-                    enter-to-class="transform opacity-100 scale-100"
-                    leave-active-class="transition duration-100 ease-in"
-                    leave-from-class="transform opacity-100 scale-100"
-                    leave-to-class="transform opacity-0 scale-95"
-                  >
-                    <div
-                      v-if="isSalesmanDropdownOpen"
-                      class="absolute top-[calc(100%+4px)] left-0 right-0 w-full z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden p-1 max-h-56 overflow-y-auto custom-scrollbar backdrop-blur-md"
-                    >
-                      <div
-                        v-for="emp in filteredSalesmen"
-                        :key="emp.id"
-                        @click.stop="selectSalesman(emp.id)"
-                        class="px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50/50 dark:border-zinc-800/20 last:border-0"
-                        :class="invoiceForm.salesman_id == emp.id ? 'bg-indigo-50 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 font-bold border-l-2 border-indigo-500' : 'hover:bg-slate-100/80 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 font-medium'"
-                      >
-                        <div class="flex items-center space-x-2.5 truncate">
-                          <div class="w-5.5 h-5.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 font-bold text-[10px] flex items-center justify-center shrink-0 border border-indigo-200 dark:border-indigo-800/50">
-                            {{ (emp.full_name || emp.first_name || 'S').charAt(0).toUpperCase() }}
-                          </div>
-                          <span class="truncate font-semibold">{{ emp.full_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }}</span>
-                        </div>
-                        <svg v-if="invoiceForm.salesman_id == emp.id" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </transition>
                 </div>
               </div>
 
@@ -2669,24 +2551,40 @@ const calculatedManualTax = computed(() => {
 const disabledRequiredTaxIds = ref([]);
 
 const toggleRequiredTax = (taxId) => {
-  const idx = disabledRequiredTaxIds.value.indexOf(taxId);
+  const targetId = Number(taxId);
+  const idx = disabledRequiredTaxIds.value.findIndex(id => Number(id) === targetId);
   if (idx > -1) {
     disabledRequiredTaxIds.value.splice(idx, 1);
   } else {
-    disabledRequiredTaxIds.value.push(taxId);
+    disabledRequiredTaxIds.value.push(targetId);
   }
 };
 
 const requiredTaxes = computed(() => {
-  return taxes.value.filter(t => t.is_required);
+  return taxes.value.filter(t => (t.is_active || t.is_active === 1 || t.is_active === '1') && (t.sale_invoice_required || t.sale_invoice_required === 1 || t.sale_invoice_required === '1'));
+});
+
+const autoRequiredTaxesList = computed(() => {
+  const sub = invoiceSubtotal.value || 0;
+  return requiredTaxes.value.map(t => {
+    const val = parseFloat(t.value) || 0;
+    const isEnabled = !disabledRequiredTaxIds.value.some(id => Number(id) === Number(t.id));
+    const amt = isEnabled ? (t.type === 'percentage' ? (sub * val) / 100 : val) : 0;
+    return {
+      id: t.id,
+      name: t.name,
+      rate: val,
+      type: t.type || 'percentage',
+      amount: amt,
+      enabled: isEnabled
+    };
+  });
 });
 
 const totalAutoRequiredTax = computed(() => {
-  const activeReqTaxes = requiredTaxes.value.filter(t => !disabledRequiredTaxIds.value.includes(t.id));
-  return activeReqTaxes.reduce((sum, t) => {
-    const val = parseFloat(t.value) || 0;
-    return sum + (invoiceSubtotal.value * val) / 100;
-  }, 0);
+  return autoRequiredTaxesList.value
+    .filter(item => item.enabled)
+    .reduce((sum, item) => sum + item.amount, 0);
 });
 
 const calculatedManualDiscount = computed(() => {
@@ -3198,6 +3096,24 @@ const toggleLineDiscountType = (item, index) => {
   updateItemTotal(index);
 };
 
+const toggleManualTaxType = () => {
+  const newType = invoiceForm.value.tax_type === 'fixed' ? 'percentage' : 'fixed';
+  invoiceForm.value.tax_type = newType;
+  if (newType === 'percentage' && (parseFloat(invoiceForm.value.tax_amount) > 100)) {
+    invoiceForm.value.tax_amount = 0;
+  }
+  calculateTotal();
+};
+
+const toggleManualDiscountType = () => {
+  const newType = invoiceForm.value.discount_type === 'fixed' ? 'percentage' : 'fixed';
+  invoiceForm.value.discount_type = newType;
+  if (newType === 'percentage' && (parseFloat(invoiceForm.value.discount_amount) > 100)) {
+    invoiceForm.value.discount_amount = 0;
+  }
+  calculateTotal();
+};
+
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
@@ -3299,6 +3215,13 @@ const saveInvoice = async (shouldPrint = false) => {
     saving.value = true;
     printAfterSave.value = shouldPrint;
 
+    const calcSubtotal = invoiceSubtotal.value || 0;
+    const calcTax = totalTax.value || 0;
+    const calcDiscount = totalDiscount.value || 0;
+    const calcGrandTotal = invoiceTotal.value || 0;
+    const calcPaid = totalReceivedAmount.value || 0;
+    const calcDue = Math.max(0, calcGrandTotal - calcPaid);
+
     const invoiceData = {
       customer_id: invoiceForm.value.customer_id || null,
       customer_name: customerSearch.value ? customerSearch.value.trim() : null,
@@ -3308,15 +3231,29 @@ const saveInvoice = async (shouldPrint = false) => {
       sale_date: invoiceForm.value.sale_date,
       due_date: invoiceForm.value.due_date || null,
       order_number: invoiceForm.value.order_number || null,
-      status: invoiceForm.value.status,
+      sales_mode: isGlobalWholesale.value ? 'wholesale' : 'retail',
+      tax_type: invoiceForm.value.tax_type || 'percentage',
+      manual_tax_type: invoiceForm.value.tax_type || 'percentage',
+      manual_tax_value: parseFloat(invoiceForm.value.tax_amount) || 0,
+      manual_tax_amount: parseFloat(invoiceForm.value.tax_amount) || 0,
+      tax_amount: calcTax,
+      discount_type: invoiceForm.value.discount_type || 'percentage',
+      manual_discount_type: invoiceForm.value.discount_type || 'percentage',
+      manual_discount_value: parseFloat(invoiceForm.value.discount_amount) || 0,
+      manual_discount_amount: parseFloat(invoiceForm.value.discount_amount) || 0,
+      discount_amount: calcDiscount,
+      status: invoiceForm.value.status === 'draft' ? 'draft' : (calcPaid >= calcGrandTotal ? 'completed' : 'pending'),
       color: accentColor.value,
-      subtotal: invoiceSubtotal.value,
-      tax_amount: totalTax.value,
-      discount_amount: totalDiscount.value,
-      total_amount: invoiceTotal.value,
-      paid_amount: totalReceivedAmount.value,
-      use_wallet_credit: useWalletCredit.value,
-      wallet_credit_applied: walletCreditToApply.value,
+      subtotal: calcSubtotal,
+      total_amount: calcGrandTotal,
+      grand_total: calcGrandTotal,
+      paid_amount: calcPaid,
+      due_amount: calcDue,
+      disabled_tax_ids: disabledRequiredTaxIds.value.map(id => Number(id)),
+      excluded_tax_ids: disabledRequiredTaxIds.value.map(id => Number(id)),
+      applied_tax_ids: requiredTaxes.value
+        .filter(t => !disabledRequiredTaxIds.value.some(id => Number(id) === Number(t.id)))
+        .map(t => Number(t.id)),
       payment_method: selectedPaymentMethods.value.length === 1 ? selectedPaymentMethods.value[0] : 'mixed',
       payments: selectedPaymentMethods.value.map(methodId => ({
         method: methodId,
@@ -3331,6 +3268,8 @@ const saveInvoice = async (shouldPrint = false) => {
         warehouse_id: item.warehouse_id,
         quantity: item.quantity,
         unit_price: getEffectiveUnitPrice(item),
+        is_wholesale: item.is_wholesale || false,
+        discount_type: item.discount_type || 'percentage',
         discount_amount: item.discount_amount || 0,
         tax_id: item.tax_id || null,
         tax_rate: item.tax_rate || 0,
@@ -3591,6 +3530,87 @@ const loadInvoiceData = async () => {
       customerSearch.value = sale.customer.name;
     }
 
+    // 1. Sales Mode Hydration
+    const isWholesaleMode = sale.sales_mode === 'wholesale' ||
+                            sale.pricing_mode === 'wholesale' ||
+                            sale.is_wholesale === true ||
+                            (sale.sale_items && sale.sale_items.length > 0 && sale.sale_items.every(i => {
+                              const wsVal = parseFloat(i.product?.wholesale_price || i.wholesale_price || 0);
+                              return wsVal > 0 && Math.abs(parseFloat(i.unit_price) - wsVal) < 0.01;
+                            }));
+
+    isGlobalWholesale.value = !!isWholesaleMode;
+
+    // 2. Tax Type & Discount Type Hydration (Form Level)
+    const rawTaxType = sale.manual_tax_type || sale.tax_type;
+    const isTaxFixed = (rawTaxType === 'fixed' || rawTaxType === 'flat');
+    invoiceForm.value.tax_type = isTaxFixed ? 'fixed' : 'percentage';
+
+    if (sale.manual_tax_value !== undefined && sale.manual_tax_value !== null) {
+      invoiceForm.value.tax_amount = parseFloat(sale.manual_tax_value);
+    } else if (sale.manual_tax_amount !== undefined && sale.manual_tax_amount !== null && !isTaxFixed && parseFloat(sale.manual_tax_amount) <= 100) {
+      invoiceForm.value.tax_amount = parseFloat(sale.manual_tax_amount);
+    } else if (isTaxFixed) {
+      invoiceForm.value.tax_amount = parseFloat(sale.tax_amount) || 0;
+    } else {
+      const sub = sale.subtotal ? parseFloat(sale.subtotal) : 0;
+      const taxAmt = sale.tax_amount ? parseFloat(sale.tax_amount) : 0;
+      if (sub > 0 && taxAmt > 0 && taxAmt < sub) {
+        invoiceForm.value.tax_amount = parseFloat(((taxAmt / sub) * 100).toFixed(2));
+      } else {
+        invoiceForm.value.tax_amount = 0;
+      }
+    }
+
+    const rawDiscountType = sale.manual_discount_type || sale.discount_type;
+    const isDiscountFixed = (rawDiscountType === 'fixed' || rawDiscountType === 'flat');
+    invoiceForm.value.discount_type = isDiscountFixed ? 'fixed' : 'percentage';
+
+    if (sale.manual_discount_value !== undefined && sale.manual_discount_value !== null) {
+      invoiceForm.value.discount_amount = parseFloat(sale.manual_discount_value);
+    } else if (sale.manual_discount_amount !== undefined && sale.manual_discount_amount !== null && !isDiscountFixed && parseFloat(sale.manual_discount_amount) <= 100) {
+      invoiceForm.value.discount_amount = parseFloat(sale.manual_discount_amount);
+    } else if (isDiscountFixed) {
+      invoiceForm.value.discount_amount = parseFloat(sale.discount_amount) || 0;
+    } else {
+      const sub = sale.subtotal ? parseFloat(sale.subtotal) : 0;
+      const discAmt = sale.discount_amount ? parseFloat(sale.discount_amount) : 0;
+      if (sub > 0 && discAmt > 0 && discAmt < sub) {
+        invoiceForm.value.discount_amount = parseFloat(((discAmt / sub) * 100).toFixed(2));
+      } else {
+        invoiceForm.value.discount_amount = 0;
+      }
+    }
+
+    // 2b. Disabled / Applied Required Taxes Hydration
+    let disabledIds = [];
+    if (sale.disabled_tax_ids !== undefined && sale.disabled_tax_ids !== null) {
+      if (typeof sale.disabled_tax_ids === 'string') {
+        try { disabledIds = JSON.parse(sale.disabled_tax_ids); } catch(e){}
+      } else if (Array.isArray(sale.disabled_tax_ids)) {
+        disabledIds = sale.disabled_tax_ids;
+      }
+    } else if (sale.excluded_tax_ids !== undefined && sale.excluded_tax_ids !== null) {
+      if (typeof sale.excluded_tax_ids === 'string') {
+        try { disabledIds = JSON.parse(sale.excluded_tax_ids); } catch(e){}
+      } else if (Array.isArray(sale.excluded_tax_ids)) {
+        disabledIds = sale.excluded_tax_ids;
+      }
+    } else if (sale.applied_tax_ids !== undefined && sale.applied_tax_ids !== null) {
+      let appIds = [];
+      if (typeof sale.applied_tax_ids === 'string') {
+        try { appIds = JSON.parse(sale.applied_tax_ids); } catch(e){}
+      } else if (Array.isArray(sale.applied_tax_ids)) {
+        appIds = sale.applied_tax_ids;
+      }
+      disabledIds = requiredTaxes.value
+        .map(t => Number(t.id))
+        .filter(id => !appIds.some(aid => Number(aid) === id));
+    }
+
+    disabledRequiredTaxIds.value = (disabledIds || []).map(id => Number(id));
+
+    // 3. Line Items Hydration
     if (sale.sale_items && sale.sale_items.length > 0) {
       invoiceItems.value = sale.sale_items.map(item => {
         const productFlat = products.value.find(p => 
@@ -3608,8 +3628,8 @@ const loadInvoiceData = async () => {
           warehouse_stocks: {}
         };
 
-        const wholesaleVal = parseFloat(item.product?.wholesale_price || 0);
-        const isWholesale = Math.abs(parseFloat(item.unit_price) - wholesaleVal) < 0.01;
+        const wholesaleVal = parseFloat(item.product?.wholesale_price || item.wholesale_price || (isWholesaleMode ? item.unit_price : 0));
+        const isWholesale = isWholesaleMode || item.is_wholesale === true || (wholesaleVal > 0 && Math.abs(parseFloat(item.unit_price) - wholesaleVal) < 0.01);
 
         let itemTaxId = item.tax_id || null;
         let itemTaxRate = parseFloat(item.tax_rate) || 0;
@@ -3625,6 +3645,14 @@ const loadInvoiceData = async () => {
           itemTaxRate = parseFloat(matchingTax.value || 0);
         }
 
+        // Determine line discount_type with legacy fallback (if >100 and no discount_type specified)
+        let lineDiscType = item.discount_type;
+        if (!lineDiscType) {
+          lineDiscType = (parseFloat(item.discount_amount) > 100) ? 'fixed' : 'percentage';
+        } else {
+          lineDiscType = (lineDiscType === 'fixed' || lineDiscType === 'flat') ? 'fixed' : 'percentage';
+        }
+
         return {
           product_id: item.product_id,
           product_variation_id: item.product_variation_id,
@@ -3633,9 +3661,9 @@ const loadInvoiceData = async () => {
           sku: item.product?.sku || '',
           price: parseFloat(item.unit_price) || 0,
           unit_price: parseFloat(item.unit_price) || 0,
-          wholesale_price: wholesaleVal || 0,
+          wholesale_price: wholesaleVal || parseFloat(item.unit_price) || 0,
           is_wholesale: isWholesale,
-          discount_type: item.discount_type || 'percentage',
+          discount_type: lineDiscType,
           discount_amount: parseFloat(item.discount_amount) || 0,
           quantity: parseInt(item.quantity) || 1,
           tax_id: itemTaxId,
@@ -3646,7 +3674,11 @@ const loadInvoiceData = async () => {
         };
       });
 
-      isGlobalWholesale.value = invoiceItems.value.length > 0 && invoiceItems.value.every(i => i.is_wholesale);
+      // Recalculate totals immediately on mount / load for all items
+      invoiceItems.value.forEach((_, idx) => {
+        updateItemTotal(idx);
+      });
+      calculateTotal();
     }
   } catch (error) {
     showNotification('Error loading invoice data', 'error');

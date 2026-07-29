@@ -1232,6 +1232,13 @@ export default {
       errors.value = {};
 
       try {
+        const calcSubtotal = invoiceSubtotal.value || 0;
+        const calcTax = totalTax.value || 0;
+        const calcDiscount = totalDiscount.value || 0;
+        const calcGrandTotal = invoiceTotal.value || 0;
+        const calcPaid = parseFloat(invoiceForm.value.paid_amount) || calcGrandTotal;
+        const calcDue = Math.max(0, calcGrandTotal - calcPaid);
+
         const invoiceData = {
           customer_id: invoiceForm.value.customer_id || null,
           sale_number: invoiceForm.value.sale_number || null,
@@ -1240,13 +1247,18 @@ export default {
           sale_date: invoiceForm.value.sale_date,
           due_date: invoiceForm.value.due_date || null,
           order_number: invoiceForm.value.order_number || null,
-          status: invoiceForm.value.status,
+          sales_mode: isGlobalWholesale.value ? 'wholesale' : 'retail',
+          tax_type: 'percentage',
+          tax_amount: calcTax,
+          discount_type: 'percentage',
+          discount_amount: calcDiscount,
+          status: invoiceForm.value.status === 'draft' ? 'draft' : (calcPaid >= calcGrandTotal ? 'completed' : 'pending'),
           color: accentColor.value,
-          subtotal: invoiceSubtotal.value,
-          tax_amount: totalTax.value,
-          discount_amount: totalDiscount.value,
-          total_amount: invoiceTotal.value,
-          paid_amount: invoiceForm.value.paid_amount || invoiceTotal.value,
+          subtotal: calcSubtotal,
+          total_amount: calcGrandTotal,
+          grand_total: calcGrandTotal,
+          paid_amount: calcPaid,
+          due_amount: calcDue,
           payment_method: invoiceForm.value.payment_method,
           notes: invoiceForm.value.notes,
           footer: invoiceForm.value.footer,

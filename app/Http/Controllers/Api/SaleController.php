@@ -211,6 +211,9 @@ class SaleController extends Controller
             'due_date' => 'nullable|date',
             'order_number' => 'nullable|string|max:100',
             'footer' => 'nullable|string',
+            'sales_mode' => 'nullable|string|in:retail,wholesale',
+            'tax_type' => 'nullable|string|in:percentage,fixed,flat',
+            'discount_type' => 'nullable|string|in:percentage,fixed,flat',
             'color' => 'nullable|string|max:7',
             'attachments' => 'nullable|array',
             'items' => 'required|array|min:1',
@@ -221,18 +224,33 @@ class SaleController extends Controller
             'items.*.warehouse_ids.*' => 'exists:warehouses,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.is_wholesale' => 'nullable|boolean',
+            'items.*.discount_type' => 'nullable|string|in:percentage,fixed,flat',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0',
             'items.*.tax_id' => 'nullable|exists:taxes,id',
             'items.*.description' => 'nullable|string',
             'grand_discount_amount' => 'nullable|numeric|min:0',
             'grand_tax_rate' => 'nullable|numeric|min:0',
+            'subtotal' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
+            'manual_tax_type' => 'nullable|string|in:percentage,fixed,flat',
+            'manual_tax_value' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'manual_discount_type' => 'nullable|string|in:percentage,fixed,flat',
+            'manual_discount_value' => 'nullable|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0',
+            'grand_total' => 'nullable|numeric|min:0',
+            'due_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'nullable|numeric|min:0',
             'payments' => 'nullable|array',
             'payments.*.method' => 'required|string',
             'payments.*.amount' => 'required|numeric|min:0',
             'use_wallet_credit' => 'nullable|boolean',
+            'disabled_tax_ids' => 'nullable',
+            'excluded_tax_ids' => 'nullable',
+            'applied_tax_ids' => 'nullable',
             'wallet_credit_applied' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
@@ -362,7 +380,20 @@ class SaleController extends Controller
                 }
             }
 
-            $totalAmount = $subtotal - $totalDiscount + $totalTax;
+            if ($request->has('discount_amount') && $request->discount_amount !== null) {
+                $totalDiscount = (float) $request->discount_amount;
+            }
+
+            if ($request->has('subtotal') && $request->subtotal !== null) {
+                $subtotal = (float) $request->subtotal;
+            }
+
+            if ($request->has('total_amount') || $request->has('grand_total')) {
+                $totalAmount = (float) ($request->total_amount ?? $request->grand_total);
+            } else {
+                $totalAmount = $subtotal - $totalDiscount + $totalTax;
+            }
+
             $changeAmount = max(0, $request->paid_amount - $totalAmount);
 
             // --- CUSTOMER RESOLUTION (Selected ID or Custom Typed Name) ---
@@ -481,6 +512,13 @@ class SaleController extends Controller
                 'due_date' => $request->due_date,
                 'order_number' => $request->order_number,
                 'status' => $effectiveTotalPaid < $totalAmount ? 'pending' : 'completed',
+                'sales_mode' => $request->sales_mode ?? 'retail',
+                'tax_type' => $request->tax_type ?? 'percentage',
+                'manual_tax_type' => $request->manual_tax_type ?? $request->tax_type ?? 'percentage',
+                'manual_tax_value' => (float)($request->manual_tax_value ?? $request->manual_tax_amount ?? 0),
+                'discount_type' => $request->discount_type ?? 'percentage',
+                'manual_discount_type' => $request->manual_discount_type ?? $request->discount_type ?? 'percentage',
+                'manual_discount_value' => (float)($request->manual_discount_value ?? $request->manual_discount_amount ?? 0),
                 'color' => $request->color,
                 'subtotal' => $subtotal,
                 'tax_amount' => $totalTax,
@@ -490,6 +528,17 @@ class SaleController extends Controller
                 'change_amount' => $changeAmount,
                 'payment_method' => $primaryPaymentMethod,
                 'payment_details' => $payments,
+                'disabled_tax_ids' => (function() use ($request) {
+                    $disabled = $request->disabled_tax_ids ?? $request->excluded_tax_ids;
+                    if ($disabled === null && $request->has('applied_tax_ids')) {
+                        $applied = is_array($request->applied_tax_ids) ? $request->applied_tax_ids : json_decode($request->applied_tax_ids, true);
+                        if (is_array($applied)) {
+                            $allReqIds = \App\Models\Tax::where('is_active', true)->where('sale_invoice_required', true)->pluck('id')->toArray();
+                            $disabled = array_values(array_diff($allReqIds, array_map('intval', $applied)));
+                        }
+                    }
+                    return is_string($disabled) ? json_decode($disabled, true) : $disabled;
+                })(),
                 'notes' => $request->notes,
                 'footer' => $request->footer,
                 'attachments' => $request->attachments ? json_encode($request->attachments) : null,
@@ -550,6 +599,8 @@ class SaleController extends Controller
                     'warehouse_id' => $itemWarehouseId,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
+                    'is_wholesale' => $item['is_wholesale'] ?? false,
+                    'discount_type' => $item['discount_type'] ?? 'percentage',
                     'discount_amount' => $itemDiscount,
                     'tax_amount' => $itemTax,
                     'total_amount' => $itemTotal,
@@ -670,6 +721,9 @@ class SaleController extends Controller
             'due_date' => 'nullable|date',
             'order_number' => 'nullable|string|max:100',
             'footer' => 'nullable|string',
+            'sales_mode' => 'nullable|string|in:retail,wholesale',
+            'tax_type' => 'nullable|string|in:percentage,fixed,flat',
+            'discount_type' => 'nullable|string|in:percentage,fixed,flat',
             'color' => 'nullable|string|max:7',
             'attachments' => 'nullable|array',
             'status' => 'nullable|string|in:draft,completed,pending,cancelled',
@@ -679,17 +733,32 @@ class SaleController extends Controller
             'items.*.warehouse_id' => 'required|exists:warehouses,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.is_wholesale' => 'nullable|boolean',
+            'items.*.discount_type' => 'nullable|string|in:percentage,fixed,flat',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0',
             'items.*.tax_id' => 'nullable|exists:taxes,id',
             'items.*.description' => 'nullable|string',
             'grand_discount_amount' => 'nullable|numeric|min:0',
             'grand_tax_rate' => 'nullable|numeric|min:0',
+            'subtotal' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
+            'manual_tax_type' => 'nullable|string|in:percentage,fixed,flat',
+            'manual_tax_value' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'manual_discount_type' => 'nullable|string|in:percentage,fixed,flat',
+            'manual_discount_value' => 'nullable|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0',
+            'grand_total' => 'nullable|numeric|min:0',
+            'due_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'nullable|numeric|min:0',
             'payments' => 'nullable|array',
             'payments.*.method' => 'required|string',
             'payments.*.amount' => 'required|numeric|min:0',
+            'disabled_tax_ids' => 'nullable',
+            'excluded_tax_ids' => 'nullable',
+            'applied_tax_ids' => 'nullable',
             'notes' => 'nullable|string',
         ]);
 
@@ -881,6 +950,8 @@ class SaleController extends Controller
                     'warehouse_id' => $itemWarehouseId,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
+                    'is_wholesale' => $item['is_wholesale'] ?? false,
+                    'discount_type' => $item['discount_type'] ?? 'percentage',
                     'discount_amount' => $itemDiscount,
                     'tax_amount' => $itemTax,
                     'total_amount' => $itemTotal,
@@ -913,7 +984,20 @@ class SaleController extends Controller
                 }
             }
 
-            $totalAmount = $subtotal - $totalDiscount + $totalTax;
+            if ($request->has('discount_amount') && $request->discount_amount !== null) {
+                $totalDiscount = (float) $request->discount_amount;
+            }
+
+            if ($request->has('subtotal') && $request->subtotal !== null) {
+                $subtotal = (float) $request->subtotal;
+            }
+
+            if ($request->has('total_amount') || $request->has('grand_total')) {
+                $totalAmount = (float) ($request->total_amount ?? $request->grand_total);
+            } else {
+                $totalAmount = $subtotal - $totalDiscount + $totalTax;
+            }
+
             $changeAmount = max(0, $request->paid_amount - $totalAmount);
 
             // Sale number stays the same, or updates if a unique one is provided
@@ -988,6 +1072,13 @@ class SaleController extends Controller
                 'due_date' => $request->due_date,
                 'order_number' => $request->order_number,
                 'color' => $request->color,
+                'sales_mode' => $request->sales_mode ?? $sale->sales_mode ?? 'retail',
+                'tax_type' => $request->tax_type ?? $sale->tax_type ?? 'percentage',
+                'manual_tax_type' => $request->manual_tax_type ?? $request->tax_type ?? $sale->manual_tax_type ?? 'percentage',
+                'manual_tax_value' => (float)($request->manual_tax_value ?? $request->manual_tax_amount ?? $sale->manual_tax_value ?? 0),
+                'discount_type' => $request->discount_type ?? $sale->discount_type ?? 'percentage',
+                'manual_discount_type' => $request->manual_discount_type ?? $request->discount_type ?? $sale->manual_discount_type ?? 'percentage',
+                'manual_discount_value' => (float)($request->manual_discount_value ?? $request->manual_discount_amount ?? $sale->manual_discount_value ?? 0),
                 'status' => $effectiveDirectPaid < $totalAmount ? 'pending' : (($request->status ?? $sale->status) === 'pending' ? 'completed' : ($request->status ?? $sale->status)),
                 'subtotal' => $subtotal,
                 'tax_amount' => $totalTax,
@@ -997,6 +1088,19 @@ class SaleController extends Controller
                 'change_amount' => max(0, $effectiveDirectPaid - $totalAmount),
                 'payment_method' => $primaryPaymentMethod,
                 'payment_details' => $payments,
+                'disabled_tax_ids' => (function() use ($request, $sale) {
+                    if ($request->has('disabled_tax_ids') || $request->has('excluded_tax_ids')) {
+                        $disabled = $request->disabled_tax_ids ?? $request->excluded_tax_ids;
+                        return is_string($disabled) ? json_decode($disabled, true) : $disabled;
+                    } elseif ($request->has('applied_tax_ids')) {
+                        $applied = is_array($request->applied_tax_ids) ? $request->applied_tax_ids : json_decode($request->applied_tax_ids, true);
+                        if (is_array($applied)) {
+                            $allReqIds = \App\Models\Tax::where('is_active', true)->where('sale_invoice_required', true)->pluck('id')->toArray();
+                            return array_values(array_diff($allReqIds, array_map('intval', $applied)));
+                        }
+                    }
+                    return $sale->disabled_tax_ids;
+                })(),
                 'notes' => $request->notes,
                 'footer' => $request->footer,
                 'attachments' => $request->attachments ? json_encode($request->attachments) : null,

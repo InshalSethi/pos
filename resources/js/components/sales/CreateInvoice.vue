@@ -416,7 +416,7 @@
                     <div class="flex items-center justify-end space-x-1">
                       <button
                         type="button"
-                        @click="invoiceForm.tax_type = invoiceForm.tax_type === 'fixed' ? 'percentage' : 'fixed'"
+                        @click="toggleManualTaxType"
                         class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
                         :title="invoiceForm.tax_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
                       >
@@ -442,7 +442,7 @@
                     <div class="flex items-center justify-end space-x-1">
                       <button
                         type="button"
-                        @click="invoiceForm.discount_type = invoiceForm.discount_type === 'fixed' ? 'percentage' : 'fixed'"
+                        @click="toggleManualDiscountType"
                         class="h-7 px-2 text-[10px] font-black rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shrink-0 cursor-pointer"
                         :title="invoiceForm.discount_type === 'fixed' ? 'Click to switch to Percentage (%)' : 'Click to switch to Flat Amount'"
                       >
@@ -2582,23 +2582,24 @@ const calculatedManualTax = computed(() => {
 const disabledRequiredTaxIds = ref([]);
 
 const toggleRequiredTax = (taxId) => {
-  const idx = disabledRequiredTaxIds.value.indexOf(taxId);
+  const targetId = Number(taxId);
+  const idx = disabledRequiredTaxIds.value.findIndex(id => Number(id) === targetId);
   if (idx > -1) {
     disabledRequiredTaxIds.value.splice(idx, 1);
   } else {
-    disabledRequiredTaxIds.value.push(taxId);
+    disabledRequiredTaxIds.value.push(targetId);
   }
 };
 
 const requiredTaxes = computed(() => {
-  return taxes.value.filter(t => (t.is_active || t.is_active === 1) && (t.sale_invoice_required || t.sale_invoice_required === 1));
+  return taxes.value.filter(t => (t.is_active || t.is_active === 1 || t.is_active === '1') && (t.sale_invoice_required || t.sale_invoice_required === 1 || t.sale_invoice_required === '1'));
 });
 
 const autoRequiredTaxesList = computed(() => {
   const sub = invoiceSubtotal.value || 0;
   return requiredTaxes.value.map(t => {
     const val = parseFloat(t.value) || 0;
-    const isEnabled = !disabledRequiredTaxIds.value.includes(t.id);
+    const isEnabled = !disabledRequiredTaxIds.value.some(id => Number(id) === Number(t.id));
     const amt = isEnabled ? (t.type === 'percentage' ? (sub * val) / 100 : val) : 0;
     return {
       id: t.id,
@@ -3146,6 +3147,24 @@ const updateItemTax = (item) => {
   updateItemTotal(invoiceItems.value.indexOf(item));
 };
 
+const toggleManualTaxType = () => {
+  const newType = invoiceForm.value.tax_type === 'fixed' ? 'percentage' : 'fixed';
+  invoiceForm.value.tax_type = newType;
+  if (newType === 'percentage' && (parseFloat(invoiceForm.value.tax_amount) > 100)) {
+    invoiceForm.value.tax_amount = 0;
+  }
+  calculateTotal();
+};
+
+const toggleManualDiscountType = () => {
+  const newType = invoiceForm.value.discount_type === 'fixed' ? 'percentage' : 'fixed';
+  invoiceForm.value.discount_type = newType;
+  if (newType === 'percentage' && (parseFloat(invoiceForm.value.discount_amount) > 100)) {
+    invoiceForm.value.discount_amount = 0;
+  }
+  calculateTotal();
+};
+
 const calculateTotal = () => {
   // Reset paid amount to total if unchanged
   invoiceForm.value.paid_amount = parseFloat(invoiceTotal.value.toFixed(2));
@@ -3225,6 +3244,13 @@ const saveInvoice = async (shouldPrint = false) => {
     saving.value = true;
     printAfterSave.value = shouldPrint;
 
+    const calcSubtotal = invoiceSubtotal.value || 0;
+    const calcTax = totalTax.value || 0;
+    const calcDiscount = totalDiscount.value || 0;
+    const calcGrandTotal = invoiceTotal.value || 0;
+    const calcPaid = totalReceivedAmount.value || 0;
+    const calcDue = Math.max(0, calcGrandTotal - calcPaid);
+
     const invoiceData = {
       customer_id: invoiceForm.value.customer_id || null,
       customer_name: customerSearch.value ? customerSearch.value.trim() : null,
@@ -3236,13 +3262,29 @@ const saveInvoice = async (shouldPrint = false) => {
       sale_date: invoiceForm.value.sale_date,
       due_date: invoiceForm.value.due_date || null,
       order_number: invoiceForm.value.order_number || null,
-      status: invoiceForm.value.status,
+      sales_mode: isGlobalWholesale.value ? 'wholesale' : 'retail',
+      tax_type: invoiceForm.value.tax_type || 'percentage',
+      manual_tax_type: invoiceForm.value.tax_type || 'percentage',
+      manual_tax_value: parseFloat(invoiceForm.value.tax_amount) || 0,
+      manual_tax_amount: parseFloat(invoiceForm.value.tax_amount) || 0,
+      tax_amount: calcTax,
+      discount_type: invoiceForm.value.discount_type || 'percentage',
+      manual_discount_type: invoiceForm.value.discount_type || 'percentage',
+      manual_discount_value: parseFloat(invoiceForm.value.discount_amount) || 0,
+      manual_discount_amount: parseFloat(invoiceForm.value.discount_amount) || 0,
+      discount_amount: calcDiscount,
+      status: invoiceForm.value.status === 'draft' ? 'draft' : (calcPaid >= calcGrandTotal ? 'completed' : 'pending'),
       color: accentColor.value,
-      subtotal: invoiceSubtotal.value,
-      tax_amount: totalTax.value,
-      discount_amount: totalDiscount.value,
-      total_amount: invoiceTotal.value,
-      paid_amount: totalReceivedAmount.value,
+      subtotal: calcSubtotal,
+      total_amount: calcGrandTotal,
+      grand_total: calcGrandTotal,
+      paid_amount: calcPaid,
+      due_amount: calcDue,
+      disabled_tax_ids: disabledRequiredTaxIds.value.map(id => Number(id)),
+      excluded_tax_ids: disabledRequiredTaxIds.value.map(id => Number(id)),
+      applied_tax_ids: requiredTaxes.value
+        .filter(t => !disabledRequiredTaxIds.value.some(id => Number(id) === Number(t.id)))
+        .map(t => Number(t.id)),
       use_wallet_credit: useWalletCredit.value,
       wallet_credit_applied: walletCreditToApply.value,
       payment_method: selectedPaymentMethods.value.length === 1 ? selectedPaymentMethods.value[0] : 'mixed',
@@ -3259,6 +3301,8 @@ const saveInvoice = async (shouldPrint = false) => {
         warehouse_id: item.warehouse_id,
         quantity: item.quantity,
         unit_price: getEffectiveUnitPrice(item),
+        is_wholesale: item.is_wholesale || false,
+        discount_type: item.discount_type || 'percentage',
         discount_amount: item.discount_amount || 0,
         tax_id: item.tax_id || null,
         tax_rate: item.tax_rate || 0,
