@@ -158,9 +158,7 @@ const routes = [
       },
       {
         path: 'accounting',
-        name: 'Accounting',
-        component: Accounting,
-        meta: { permission: 'accounting.view' }
+        redirect: '/banking/accounts'
       },
       {
         path: 'banking/accounts',

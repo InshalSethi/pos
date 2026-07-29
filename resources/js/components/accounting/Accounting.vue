@@ -3,70 +3,7 @@
     <div class="px-4 py-6 sm:px-0">
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
-          <h1 class="text-3xl font-bold text-gray-900">Chart of Accounts</h1>
-          <div class="flex space-x-3">
-            <button
-              @click="activeView = 'tree'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
-                activeView === 'tree'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              ]"
-            >
-              Tree View
-            </button>
-            <button
-              @click="activeView = 'list'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
-                activeView === 'list'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              ]"
-            >
-              List View
-            </button>
-            <button
-              @click="activeView = 'balances'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
-                activeView === 'balances'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              ]"
-            >
-              Account Balances
-            </button>
-            <button
-              @click="activeView = 'journal-entries'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
-                activeView === 'journal-entries'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              ]"
-            >
-              Journal Entries
-            </button>
-            <button
-              @click="activeView = 'banking'"
-              :class="[
-                'px-4 py-2 rounded-md text-sm font-medium',
-                activeView === 'banking'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              ]"
-            >
-              Banking
-            </button>
-            <button
-              @click="showAccountModal = true"
-              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-            >
-              New Account
-            </button>
-          </div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-zinc-100">Chart of Accounts</h1>
         </div>
 
         <!-- Account Type Filter -->
