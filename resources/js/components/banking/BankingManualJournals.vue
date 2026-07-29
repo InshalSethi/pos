@@ -262,6 +262,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import api from '@/services/api';
 import { useToast } from '@/composables/useToast';
@@ -329,19 +330,10 @@ export default {
     const totalCredits = computed(() => form.value.lines.reduce((sum, l) => sum + (parseFloat(l.credit_amount) || 0), 0));
     const isBalanced = computed(() => Math.abs(totalDebits.value - totalCredits.value) < 0.01 && totalDebits.value > 0);
 
+    const router = useRouter();
+
     const openNewJournalModal = () => {
-      editingEntry.value = null;
-      form.value = {
-        entry_date: new Date().toISOString().split('T')[0],
-        reference: '',
-        description: '',
-        entry_type: 'manual',
-        lines: [
-          { account_id: null, description: '', debit_amount: 0, credit_amount: 0 },
-          { account_id: null, description: '', debit_amount: 0, credit_amount: 0 },
-        ]
-      };
-      showModal.value = true;
+      router.push('/banking/manual-journals/create');
     };
 
     const addLine = () => {
