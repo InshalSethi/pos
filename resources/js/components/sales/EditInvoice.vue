@@ -1127,7 +1127,7 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email</label>
+              <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address</label>
               <input
                 v-model="newCustomer.email"
                 type="email"
@@ -3027,7 +3027,7 @@ const loadSalesmen = async () => {
 const searchCustomers = async (query = '') => {
   try {
     const response = await api.get('/customers', {
-      params: { search: query, per_page: 10 }
+      params: { search: query, per_page: 10, type: 'registered' }
     });
     customerSearchResults.value = response.data.data || response.data;
   } catch (error) {
@@ -3383,7 +3383,11 @@ const clearCustomer = () => {
 const createCustomer = async () => {
   try {
     creatingCustomer.value = true;
-    const response = await api.post('/customers', newCustomer.value);
+    const payload = {
+      ...newCustomer.value,
+      type: 'registered'
+    };
+    const response = await api.post('/customers', payload);
 
     const customer = response.data.customer || response.data;
     selectCustomer(customer);

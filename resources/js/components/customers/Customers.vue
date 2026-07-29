@@ -72,28 +72,36 @@
               @input="debouncedSearch"
             />
           </div>
-          <!-- Status Switch/Toggle -->
+          <!-- Filter Tabs Bar (All | Walk-In | Active | Inactive) -->
           <div class="flex items-center bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg text-[11px] font-semibold">
             <button
               type="button"
-              @click="statusFilter = ''; loadCustomers(1);"
-              :class="statusFilter === '' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              @click="setTab('all')"
+              :class="activeTab === 'all' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
               class="px-3 py-1 rounded-md transition-all cursor-pointer"
             >
               All
             </button>
             <button
               type="button"
-              @click="statusFilter = '1'; loadCustomers(1);"
-              :class="statusFilter === '1' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              @click="setTab('walk_in')"
+              :class="activeTab === 'walk_in' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              class="px-3 py-1 rounded-md transition-all cursor-pointer"
+            >
+              Walk-In
+            </button>
+            <button
+              type="button"
+              @click="setTab('active')"
+              :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
               class="px-3 py-1 rounded-md transition-all cursor-pointer"
             >
               Active
             </button>
             <button
               type="button"
-              @click="statusFilter = '0'; loadCustomers(1);"
-              :class="statusFilter === '0' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
+              @click="setTab('inactive')"
+              :class="activeTab === 'inactive' ? 'bg-white dark:bg-zinc-700 text-slate-800 dark:text-zinc-100 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'"
               class="px-3 py-1 rounded-md transition-all cursor-pointer"
             >
               Inactive
@@ -154,7 +162,15 @@
                     <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400">{{ getInitials(item.name) }}</span>
                   </div>
                   <div>
-                    <button @click="viewLedger(item)" class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">{{ item.name }}</button>
+                    <div class="flex items-center space-x-1.5">
+                      <button @click="viewLedger(item)" class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">{{ item.name }}</button>
+                      <span
+                        v-if="item.type === 'walk_in'"
+                        class="px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 rounded-full shrink-0"
+                      >
+                        Walk-In
+                      </span>
+                    </div>
                     <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">ID: #{{ item.id }}</div>
                   </div>
                 </div>
@@ -328,8 +344,31 @@ export default {
     const statistics = ref({});
     const searchQuery = ref('');
     const perPage = ref(15);
+    const activeTab = ref('all');
+    const typeFilter = ref('');
     const statusFilter = ref('');
     const openActionDropdown = ref(null);
+
+    const setTab = (tab) => {
+      activeTab.value = tab;
+      if (tab === 'registered') {
+        typeFilter.value = 'registered';
+        statusFilter.value = '';
+      } else if (tab === 'walk_in') {
+        typeFilter.value = 'walk_in';
+        statusFilter.value = '';
+      } else if (tab === 'active') {
+        typeFilter.value = '';
+        statusFilter.value = '1';
+      } else if (tab === 'inactive') {
+        typeFilter.value = '';
+        statusFilter.value = '0';
+      } else {
+        typeFilter.value = '';
+        statusFilter.value = '';
+      }
+      loadCustomers(1);
+    };
 
     const selectedCustomer = ref(null);
     const showCreateModal = ref(false);
@@ -342,6 +381,7 @@ export default {
       try {
         const params = { page, per_page: perPage.value };
         if (searchQuery.value) params.search = searchQuery.value;
+        if (typeFilter.value !== '') params.type = typeFilter.value;
         if (statusFilter.value !== '') params.is_active = statusFilter.value;
 
         const response = await api.get('/customers', { params });
@@ -455,9 +495,9 @@ export default {
     });
 
     return {
-      loading, customers, statistics, searchQuery, perPage, statusFilter, openActionDropdown,
+      loading, customers, statistics, searchQuery, perPage, activeTab, typeFilter, statusFilter, openActionDropdown,
       selectedCustomer, showCreateModal, showEditModal, showViewModal, showLedgerModal,
-      visiblePages, loadCustomers, debouncedSearch, changePage, toggleActionDropdown,
+      visiblePages, loadCustomers, setTab, debouncedSearch, changePage, toggleActionDropdown,
       handleCreateCustomer, viewCustomer, editCustomer, viewLedger, deleteCustomer,
       closeModal, handleCustomerSaved, formatNumber, getInitials
     };

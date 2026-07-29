@@ -41,6 +41,11 @@ class CustomerController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
+        // Filter by customer type (registered vs walk_in)
+        if ($request->has('type') && $request->get('type') !== '' && $request->get('type') !== null) {
+            $query->where('type', $request->get('type'));
+        }
+
         $customers = $query->orderBy('name')->paginate($request->get('per_page', 15));
 
         return response()->json($customers);
@@ -71,6 +76,7 @@ class CustomerController extends Controller
             'tax_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
             'credit_limit' => 'nullable|numeric|min:0',
+            'type' => 'nullable|in:registered,walk_in',
         ]);
 
         if ($validator->fails()) {
@@ -80,7 +86,10 @@ class CustomerController extends Controller
             ], 422);
         }
 
-        $customer = Customer::create($request->all());
+        $data = $request->all();
+        $data['type'] = $request->input('type') ?? ($request->input('source') === 'modal' ? 'registered' : 'registered');
+
+        $customer = Customer::create($data);
 
         return response()->json([
             'message' => 'Customer created successfully',
@@ -167,14 +176,20 @@ class CustomerController extends Controller
     {
         $search = $request->get('search', '');
         $limit = $request->get('limit', 10);
+        $type = $request->get('type', 'registered');
 
-        $customers = Customer::active()
-            ->where(function ($query) use ($search) {
-            $query->where('name', 'like', "%{$search}%")
+        $query = Customer::active();
+
+        if ($type && $type !== 'all') {
+            $query->where('type', $type);
+        }
+
+        $customers = $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('phone', 'like', "%{$search}%");
         })
-            ->select('id', 'name', 'email', 'phone', 'total_purchases')
+            ->select('id', 'name', 'email', 'phone', 'total_purchases', 'type')
             ->limit($limit)
             ->get();
 

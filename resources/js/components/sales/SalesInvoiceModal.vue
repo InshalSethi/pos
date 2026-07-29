@@ -959,7 +959,7 @@ export default {
       }
       try {
         const response = await api.get('/customers', {
-          params: { search: query, per_page: 10 }
+          params: { search: query, per_page: 10, type: 'registered' }
         });
         customerSearchResults.value = response.data.data || response.data;
       } catch (error) {
@@ -988,8 +988,12 @@ export default {
     const createCustomer = async () => {
       try {
         creatingCustomer.value = true;
-        const response = await api.post('/customers', newCustomer.value);
-        selectCustomer(response.data);
+        const payload = {
+          ...newCustomer.value,
+          type: 'registered'
+        };
+        const response = await api.post('/customers', payload);
+        selectCustomer(response.data.customer || response.data);
         closeCustomerModal();
         showToast('Customer created successfully', 'success');
       } catch (error) {

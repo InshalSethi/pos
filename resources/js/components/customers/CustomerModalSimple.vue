@@ -37,7 +37,7 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address</label>
                 <input
                   v-model="form.email"
                   type="email"
@@ -516,14 +516,20 @@ export default {
         const url = props.isEdit ? `/customers/${props.customer.id}` : '/customers';
         const method = props.isEdit ? 'put' : 'post';
 
-        await api[method](url, form);
+        const payload = {
+          ...form,
+          type: form.type || 'registered'
+        };
+
+        const response = await api[method](url, payload);
 
         showToast(
           props.isEdit ? 'Customer updated successfully' : 'Customer created successfully',
           'success'
         );
 
-        emit('saved');
+        const savedCustomer = response.data.customer || response.data;
+        emit('saved', savedCustomer);
         emit('close');
       } catch (error) {
         if (error.response?.status === 422) {

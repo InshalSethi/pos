@@ -445,6 +445,7 @@ class SaleController extends Controller
                         'name' => $typedName !== '' ? $typedName : 'Walk-in Customer',
                         'phone' => $customerPhone,
                         'email' => $customerEmail,
+                        'type' => 'walk_in',
                         'is_active' => true,
                     ]);
                     $customerId = $newCustomer->id;
@@ -1130,6 +1131,7 @@ class SaleController extends Controller
                         'name' => $typedName !== '' ? $typedName : 'Walk-in Customer',
                         'phone' => $customerPhone,
                         'email' => $customerEmail,
+                        'type' => 'walk_in',
                         'is_active' => true,
                     ]);
                     $customerId = $newCustomer->id;

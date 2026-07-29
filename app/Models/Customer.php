@@ -31,6 +31,7 @@ class Customer extends Model
         'gender',
         'tax_number',
         'notes',
+        'type',
         'is_active',
         'credit_limit',
         'wallet_balance',
@@ -62,6 +63,16 @@ class Customer extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeRegistered($query)
+    {
+        return $query->where('type', 'registered');
+    }
+
+    public function scopeWalkIn($query)
+    {
+        return $query->where('type', 'walk_in');
     }
 
     public function scopeWithPurchases($query)
