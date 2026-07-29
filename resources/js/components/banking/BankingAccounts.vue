@@ -171,9 +171,57 @@
                     {{ acc.is_active ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
-                <td class="py-3.5 px-4 text-right space-x-2">
-                  <button @click="editAccount(acc)" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium">Edit</button>
-                  <button v-if="!acc.is_system_account" @click="deleteAccount(acc)" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 font-medium ml-2">Delete</button>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="inline-flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm divide-x divide-slate-200 dark:divide-zinc-800 overflow-hidden shrink-0">
+                    <!-- View Button -->
+                    <button
+                      @click="editAccount(acc)"
+                      type="button"
+                      title="View Details"
+                      class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+
+                    <!-- Edit Button -->
+                    <button
+                      @click="editAccount(acc)"
+                      type="button"
+                      title="Edit Account"
+                      class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+
+                    <!-- Delete or Lock Button -->
+                    <button
+                      v-if="acc.is_system_account || acc.account_code === '1010' || acc.account_name === 'Cash'"
+                      type="button"
+                      disabled
+                      title="Default System Account (Locked)"
+                      class="p-1.5 px-2.5 text-slate-300 dark:text-zinc-600 cursor-not-allowed"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </button>
+                    <button
+                      v-else
+                      @click="deleteAccount(acc)"
+                      type="button"
+                      title="Delete Account"
+                      class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -245,11 +293,11 @@
 
     <!-- Create / Edit Account Modal -->
     <Teleport to="body">
-      <div v-if="showAccountModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-        <div class="relative mx-auto border border-slate-800 w-full max-w-lg shadow-2xl rounded-2xl bg-[#12141a] text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
-          <div class="p-6 pb-4 border-b border-slate-800 flex justify-between items-center">
-            <h3 class="text-sm font-bold uppercase tracking-wider">{{ editingAccount ? 'Edit Account' : 'Create New Account' }}</h3>
-            <button @click="showAccountModal = false" class="text-slate-400 hover:text-slate-200 p-1 rounded-lg">
+      <div v-if="showAccountModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div class="relative mx-auto border border-slate-200 dark:border-slate-800 w-full max-w-lg shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-900 dark:text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
+          <div class="p-6 pb-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">{{ editingAccount ? 'Edit Account' : 'Create New Account' }}</h3>
+            <button @click="showAccountModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -258,36 +306,36 @@
             <div class="flex-1 overflow-y-auto p-6 space-y-4 pr-4">
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Account Code *</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Account Code *</label>
                   <input
                     v-model="accountForm.account_code"
                     type="text"
                     required
                     :disabled="!!editingAccount"
                     placeholder="e.g. 1010"
-                    class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Account Name *</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Account Name *</label>
                   <input
                     v-model="accountForm.account_name"
                     type="text"
                     required
                     placeholder="e.g. Meezan Bank Account"
-                    class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Account Type *</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Account Type *</label>
                   <select
                     v-model="accountForm.account_type"
                     required
                     @change="updateSubtypeOptions"
-                    class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="">Select Type</option>
                     <option value="asset">Asset</option>
@@ -298,11 +346,11 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Account Subtype *</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Account Subtype *</label>
                   <select
                     v-model="accountForm.account_subtype"
                     required
-                    class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="">Select Subtype</option>
                     <option v-for="st in availableSubtypes" :key="st.value" :value="st.value">
@@ -314,10 +362,10 @@
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Parent Account</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Parent Account</label>
                   <select
                     v-model="accountForm.parent_account_id"
-                    class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="">No Parent (Top Level)</option>
                     <option v-for="acc in parentAccountOptions" :key="acc.id" :value="acc.id">
@@ -326,42 +374,42 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Opening Balance ($)</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Opening Balance ($)</label>
                   <input
                     v-model.number="accountForm.opening_balance"
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
+                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
                 <textarea
                   v-model="accountForm.description"
                   rows="2"
                   placeholder="Optional account description..."
-                  class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 ></textarea>
               </div>
 
               <div class="flex items-center space-x-4">
-                <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input v-model="accountForm.is_active" type="checkbox" class="rounded bg-zinc-950 border-slate-800 text-indigo-600 focus:ring-indigo-500" />
+                <label class="flex items-center space-x-2 text-xs text-slate-700 dark:text-slate-300">
+                  <input v-model="accountForm.is_active" type="checkbox" class="rounded border-slate-300 dark:border-slate-800 text-indigo-600 focus:ring-indigo-500" />
                   <span>Active</span>
                 </label>
-                <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input v-model="accountForm.is_system_account" type="checkbox" :disabled="!!editingAccount" class="rounded bg-zinc-950 border-slate-800 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50" />
+                <label class="flex items-center space-x-2 text-xs text-slate-700 dark:text-slate-300">
+                  <input v-model="accountForm.is_system_account" type="checkbox" :disabled="!!editingAccount" class="rounded border-slate-300 dark:border-slate-800 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50" />
                   <span>System Account</span>
                 </label>
               </div>
             </div>
 
-            <div class="flex justify-end space-x-3 p-6 border-t border-slate-800 shrink-0">
-              <button type="button" @click="showAccountModal = false" class="px-4 h-9 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-semibold">Cancel</button>
-              <button type="submit" :disabled="savingAccount" class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">
+            <div class="flex justify-end space-x-3 p-6 border-t border-slate-200 dark:border-slate-800 shrink-0">
+              <button type="button" @click="showAccountModal = false" class="px-4 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 rounded-lg text-xs font-semibold">Cancel</button>
+              <button type="submit" :disabled="savingAccount" class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm">
                 {{ savingAccount ? 'Saving...' : (editingAccount ? 'Update Account' : 'Create Account') }}
               </button>
             </div>

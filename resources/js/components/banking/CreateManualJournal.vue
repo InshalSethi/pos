@@ -88,11 +88,11 @@
                   <select
                     v-model="line.account_id"
                     required
-                    class="w-full p-2 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-800 dark:text-zinc-200 focus:outline-none"
+                    class="w-full p-2.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
                   >
                     <option :value="null">- Select Account -</option>
                     <option v-for="acc in coaAccounts" :key="acc.id" :value="acc.id">
-                      {{ acc.account_code }} - {{ acc.account_name }} ({{ acc.account_type }})
+                      {{ acc.label }}
                     </option>
                   </select>
                 </td>
@@ -282,8 +282,24 @@ export default {
 
     const fetchCoaAccounts = async () => {
       try {
-        const res = await api.accounting.accounts();
-        coaAccounts.value = res.data || [];
+        const res = await axios.get('/api/accounts', { params: { flat: true, per_page: 200 } });
+        let rawList = res.data?.data || res.data || [];
+        if (!Array.isArray(rawList)) rawList = [];
+
+        coaAccounts.value = rawList
+          .map(acc => {
+            const code = String(acc.account_code || acc.code || acc.account_number || '').trim();
+            const name = String(acc.account_name || acc.name || acc.title || 'Unnamed Account').trim();
+            const type = String(acc.account_type || acc.type || 'Asset').trim();
+            return {
+              id: acc.id,
+              code,
+              name,
+              type,
+              label: code ? `${code} - ${name} (${type.toUpperCase()})` : `${name} (${type.toUpperCase()})`
+            };
+          })
+          .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
       } catch (e) {
         showToast('Failed to load Chart of Accounts', 'error');
       }

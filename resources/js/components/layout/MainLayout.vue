@@ -467,24 +467,6 @@
             </div>
           </transition>
         </div>
-        <router-link
-          to="/accounting"
-          :class="[
-            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
-            $route.path === '/accounting'
-              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
-              : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
-          ]"
-          :title="sidebarCollapsed ? 'Accounting' : ''"
-        >
-
-          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
-            Accounting
-          </span>
-        </router-link>
         <!-- Banking Accordion -->
         <div v-if="authStore.hasPermission('accounting.view')" class="space-y-1">
           <button

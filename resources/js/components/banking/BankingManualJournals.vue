@@ -168,7 +168,7 @@
                           <select v-model="line.account_id" required class="w-full px-2 py-1.5 border border-slate-800 rounded bg-zinc-950 text-xs text-zinc-200">
                             <option :value="null">-- Select Account --</option>
                             <option v-for="acc in coaAccounts" :key="acc.id" :value="acc.id">
-                              {{ acc.account_code }} - {{ acc.account_name }} ({{ acc.account_type }})
+                              {{ acc.label }}
                             </option>
                           </select>
                         </td>
@@ -213,46 +213,46 @@
 
     <!-- View Journal Entry Detail Modal -->
     <Teleport to="body">
-      <div v-if="showViewModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-        <div class="relative mx-auto border border-slate-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-[#12141a] text-slate-100 text-left transition-all duration-300 p-6 space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div v-if="showViewModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div class="relative mx-auto border border-slate-200 dark:border-slate-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-900 dark:text-slate-100 text-left transition-all duration-300 p-6 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
             <div>
-              <h3 class="text-base font-bold text-slate-100">Journal Entry #{{ selectedEntry?.entry_number }}</h3>
-              <p class="text-xs text-slate-400 mt-0.5">Date: {{ formatDate(selectedEntry?.entry_date) }}</p>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Journal Entry #{{ selectedEntry?.entry_number }}</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Date: {{ formatDate(selectedEntry?.entry_date) }}</p>
             </div>
-            <button @click="showViewModal = false" class="text-slate-400 hover:text-slate-200 p-1">
+            <button @click="showViewModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
 
           <div class="space-y-2 text-xs">
-            <p><span class="font-semibold text-slate-400">Description:</span> {{ selectedEntry?.description }}</p>
-            <p v-if="selectedEntry?.reference"><span class="font-semibold text-slate-400">Reference:</span> {{ selectedEntry?.reference }}</p>
+            <p><span class="font-semibold text-slate-500 dark:text-slate-400">Description:</span> <span class="text-slate-800 dark:text-slate-200">{{ selectedEntry?.description }}</span></p>
+            <p v-if="selectedEntry?.reference"><span class="font-semibold text-slate-500 dark:text-slate-400">Reference:</span> <span class="text-slate-800 dark:text-slate-200">{{ selectedEntry?.reference }}</span></p>
           </div>
 
-          <div class="border border-slate-800 rounded-xl overflow-hidden">
+          <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-zinc-950 text-slate-400 border-b border-slate-800 text-[10px] uppercase font-bold">
+              <thead class="bg-slate-50 dark:bg-zinc-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold">
                 <tr>
                   <th class="p-2.5">COA Account</th>
                   <th class="p-2.5 text-right">Debit ($)</th>
                   <th class="p-2.5 text-right">Credit ($)</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-800">
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr v-for="line in (selectedEntry?.journal_entry_lines || selectedEntry?.lines || [])" :key="line.id">
-                  <td class="p-2.5 font-medium text-slate-200">
+                  <td class="p-2.5 font-medium text-slate-800 dark:text-slate-200">
                     {{ line.account ? `${line.account.account_code} - ${line.account.account_name}` : `Account #${line.account_id}` }}
                   </td>
-                  <td class="p-2.5 text-right font-semibold text-emerald-400">${{ formatNumber(line.debit || line.debit_amount) }}</td>
-                  <td class="p-2.5 text-right font-semibold text-indigo-400">${{ formatNumber(line.credit || line.credit_amount) }}</td>
+                  <td class="p-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">${{ formatNumber(line.debit || line.debit_amount) }}</td>
+                  <td class="p-2.5 text-right font-semibold text-indigo-600 dark:text-indigo-400">${{ formatNumber(line.credit || line.credit_amount) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <div class="flex justify-end pt-2">
-            <button @click="showViewModal = false" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-semibold">Close</button>
+            <button @click="showViewModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 rounded-lg text-xs font-semibold">Close</button>
           </div>
         </div>
       </div>
@@ -319,8 +319,24 @@ export default {
 
     const fetchCoaAccounts = async () => {
       try {
-        const res = await api.accounting.accounts();
-        coaAccounts.value = res.data || [];
+        const res = await axios.get('/api/accounts', { params: { flat: true, per_page: 200 } });
+        let rawList = res.data?.data || res.data || [];
+        if (!Array.isArray(rawList)) rawList = [];
+
+        coaAccounts.value = rawList
+          .map(acc => {
+            const code = String(acc.account_code || acc.code || acc.account_number || '').trim();
+            const name = String(acc.account_name || acc.name || acc.title || 'Unnamed Account').trim();
+            const type = String(acc.account_type || acc.type || 'Asset').trim();
+            return {
+              id: acc.id,
+              code,
+              name,
+              type,
+              label: code ? `${code} - ${name} (${type.toUpperCase()})` : `${name} (${type.toUpperCase()})`
+            };
+          })
+          .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
       } catch (e) {
         // ignore
       }
