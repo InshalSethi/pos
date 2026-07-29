@@ -84,19 +84,31 @@
                     :ref="el => setProductItemRef(el, idx)"
                     @click="selectProductFromDropdown(product)"
                     @mouseenter="highlightedProductIndex = idx"
-                    class="px-4 py-2.5 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
-                    :class="{
-                      'bg-indigo-50/90 dark:bg-zinc-800/90 text-indigo-900 dark:text-indigo-200 border-l-4 border-l-indigo-600 dark:border-l-indigo-400 font-bold': highlightedProductIndex === idx,
-                      'hover:bg-slate-50 dark:hover:bg-zinc-800/80': highlightedProductIndex !== idx
-                    }"
+                    class="px-4 py-2.5 flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
+                    :class="[
+                      isProductOutOfStock(product)
+                        ? 'opacity-50 cursor-not-allowed bg-slate-100/50 dark:bg-zinc-800/40 select-none'
+                        : (highlightedProductIndex === idx
+                            ? 'bg-indigo-50/90 dark:bg-zinc-800/90 text-indigo-900 dark:text-indigo-200 border-l-4 border-l-indigo-600 dark:border-l-indigo-400 font-bold cursor-pointer'
+                            : 'hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer')
+                    ]"
                   >
                     <div class="min-w-0 pr-4">
                       <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
                       <div class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ product.sku }}</div>
                     </div>
-                    <div class="text-right flex-shrink-0">
+                    <div class="text-right flex-shrink-0 space-y-0.5">
                       <span class="font-black text-emerald-600 dark:text-emerald-400 text-sm block">{{ currencySymbol }}{{ product.price }}</span>
-                      <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
+                      
+                      <span
+                        v-if="isProductOutOfStock(product)"
+                        class="inline-block px-2 py-0.5 text-[9px] font-extrabold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 rounded-full border border-rose-200 dark:border-rose-800"
+                      >
+                        Out of Stock
+                      </span>
+                      <span v-else class="text-[10px] text-slate-500 dark:text-zinc-400">
+                        {{ getProductStock(product) }} in stock
+                      </span>
                     </div>
                   </div>
 
@@ -2702,6 +2714,25 @@ const updateDateTime = () => {
   currentDateTime.value = `${date}, ${time}`;
 };
 
+const isProductOutOfStock = (product) => {
+  if (!product) return false;
+  if (!product.track_inventory) return false;
+  const targetWhId = invoiceForm.value.warehouse_id || counterWarehouseFilterId.value;
+  if (!targetWhId || targetWhId === 'all') {
+    return (Number(product.total_stock) || 0) <= 0;
+  }
+  let whStock = 0;
+  if (product.warehouse_stocks) {
+    const stockVal = product.warehouse_stocks[targetWhId]
+      ?? product.warehouse_stocks[String(targetWhId)]
+      ?? product.warehouse_stocks[Number(targetWhId)];
+    if (stockVal !== undefined && stockVal !== null) {
+      whStock = Number(stockVal);
+    }
+  }
+  return whStock <= 0 && (Number(product.total_stock) || 0) <= 0;
+};
+
 const getProductStock = (product) => {
   if (!product) return '0';
   if (!product.track_inventory) return '∞';
@@ -2982,6 +3013,10 @@ const handleProductSearchKeydown = (event) => {
 };
 
 const selectProductFromDropdown = (product) => {
+  if (isProductOutOfStock(product)) {
+    showToast(`Product "${product.name}" is currently Out of Stock and cannot be added to the invoice.`, 'error');
+    return;
+  }
   addToInvoice(product);
   productSearch.value = '';
   isProductDropdownOpen.value = false;
@@ -3008,6 +3043,10 @@ const addByBarcode = () => {
 };
 
 const addToInvoice = (product) => {
+  if (isProductOutOfStock(product)) {
+    showToast(`Product "${product.name}" is currently Out of Stock and cannot be added to the invoice.`, 'error');
+    return;
+  }
   let targetWarehouseId = invoiceForm.value.warehouse_id || counterWarehouseFilterId.value;
   if (!targetWarehouseId || targetWarehouseId === 'all') {
     const whWithStock = Object.keys(product.warehouse_stocks || {}).find(
