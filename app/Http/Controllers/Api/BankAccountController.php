@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\Account;
+use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -15,8 +18,8 @@ class BankAccountController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:accounting.view')->only(['index', 'show', 'transactions']);
-        $this->middleware('permission:accounting.create')->only(['store']);
+        $this->middleware('permission:accounting.view')->only(['index', 'show', 'transactions', 'reconciliationSummary']);
+        $this->middleware('permission:accounting.create')->only(['store', 'transfer']);
         $this->middleware('permission:accounting.edit')->only(['update', 'reconcile']);
         $this->middleware('permission:accounting.delete')->only(['destroy']);
     }
@@ -69,7 +72,7 @@ class BankAccountController extends Controller
                 Rule::unique('bank_accounts', 'account_number')->where('company_id', $companyId),
             ],
             'account_type' => 'required|in:checking,savings,credit_card,line_of_credit,other',
-            'chart_account_id' => 'required|exists:chart_of_accounts,id',
+            'chart_account_id' => 'nullable|exists:chart_of_accounts,id',
             'routing_number' => 'nullable|string|max:20',
             'swift_code' => 'nullable|string|max:20',
             'iban' => 'nullable|string|max:50',
@@ -86,15 +89,35 @@ class BankAccountController extends Controller
             ], 422);
         }
 
-        // Validate that the chart account is an asset or liability account
-        $chartAccount = Account::find($request->chart_account_id);
-        if (!in_array($chartAccount->account_type, ['asset', 'liability'])) {
-            return response()->json([
-                'message' => 'Bank accounts must be linked to asset or liability accounts'
-            ], 422);
+        $data = $request->all();
+
+        // Auto-create Chart of Account if not selected
+        if (empty($data['chart_account_id'])) {
+            $maxCode = Account::where('account_type', 'asset')->max('account_code');
+            $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
+            $chartAccount = Account::create([
+                'account_code' => $newCode,
+                'account_name' => $request->account_name . ' (' . $request->bank_name . ')',
+                'account_type' => 'asset',
+                'account_subtype' => 'Cash and Bank',
+                'description' => 'Bank Account for ' . $request->account_name,
+                'opening_balance' => $request->opening_balance ?? 0,
+                'current_balance' => $request->opening_balance ?? 0,
+                'is_active' => true,
+                'is_system_account' => false,
+            ]);
+            $data['chart_account_id'] = $chartAccount->id;
+        } else {
+            // Validate that the chart account is an asset or liability account
+            $chartAccount = Account::find($request->chart_account_id);
+            if (!in_array($chartAccount->account_type, ['asset', 'liability'])) {
+                return response()->json([
+                    'message' => 'Bank accounts must be linked to asset or liability accounts'
+                ], 422);
+            }
         }
 
-        $bankAccount = BankAccount::create($request->all());
+        $bankAccount = BankAccount::create($data);
 
         return response()->json([
             'message' => 'Bank account created successfully',
@@ -287,5 +310,113 @@ class BankAccountController extends Controller
         $summary['difference'] = $summary['account_balance'] - $summary['reconciled_balance'];
 
         return response()->json($summary);
+    }
+
+    /**
+     * Transfer funds between bank accounts
+     */
+    public function transfer(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'from_bank_account_id' => 'required|exists:bank_accounts,id|different:to_bank_account_id',
+            'to_bank_account_id' => 'required|exists:bank_accounts,id',
+            'amount' => 'required|numeric|min:0.01',
+            'transfer_date' => 'required|date',
+            'reference_number' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:500',
+            'payment_method' => 'nullable|string|max:50',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            return DB::transaction(function () use ($request) {
+                $fromAccount = BankAccount::with('chartAccount')->findOrFail($request->from_bank_account_id);
+                $toAccount = BankAccount::with('chartAccount')->findOrFail($request->to_bank_account_id);
+                $amount = (float) $request->amount;
+                $date = $request->transfer_date;
+                $ref = $request->reference_number ?: ('TRF-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT));
+                $desc = $request->description ?: "Transfer from {$fromAccount->account_name} to {$toAccount->account_name}";
+
+                // 1. Create COA Journal Entry
+                $journalEntry = JournalEntry::create([
+                    'entry_number' => 'JE-TRF-' . date('Ymd') . '-' . mt_rand(100, 999),
+                    'entry_date' => $date,
+                    'reference' => $ref,
+                    'description' => $desc,
+                    'status' => 'posted',
+                    'created_by' => auth()->id(),
+                ]);
+
+                // Debit Destination Account (COA)
+                JournalEntryLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $toAccount->chart_account_id,
+                    'debit' => $amount,
+                    'credit' => 0,
+                    'description' => "Transfer in from {$fromAccount->account_name}",
+                ]);
+
+                // Credit Source Account (COA)
+                JournalEntryLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $fromAccount->chart_account_id,
+                    'debit' => 0,
+                    'credit' => $amount,
+                    'description' => "Transfer out to {$toAccount->account_name}",
+                ]);
+
+                // Update COA current balances
+                if ($toAccount->chartAccount) {
+                    $toAccount->chartAccount->increment('current_balance', $amount);
+                }
+                if ($fromAccount->chartAccount) {
+                    $fromAccount->chartAccount->decrement('current_balance', $amount);
+                }
+
+                // 2. Log Bank Transactions
+                $fromLastTx = BankTransaction::where('bank_account_id', $fromAccount->id)->latest('id')->first();
+                $fromPrevBal = $fromLastTx ? $fromLastTx->running_balance : $fromAccount->opening_balance;
+                BankTransaction::create([
+                    'bank_account_id' => $fromAccount->id,
+                    'transaction_date' => $date,
+                    'reference_number' => $ref,
+                    'description' => $desc,
+                    'transaction_type' => 'credit',
+                    'amount' => $amount,
+                    'running_balance' => $fromPrevBal - $amount,
+                    'status' => 'cleared',
+                    'journal_entry_id' => $journalEntry->id,
+                ]);
+
+                $toLastTx = BankTransaction::where('bank_account_id', $toAccount->id)->latest('id')->first();
+                $toPrevBal = $toLastTx ? $toLastTx->running_balance : $toAccount->opening_balance;
+                BankTransaction::create([
+                    'bank_account_id' => $toAccount->id,
+                    'transaction_date' => $date,
+                    'reference_number' => $ref,
+                    'description' => $desc,
+                    'transaction_type' => 'debit',
+                    'amount' => $amount,
+                    'running_balance' => $toPrevBal + $amount,
+                    'status' => 'cleared',
+                    'journal_entry_id' => $journalEntry->id,
+                ]);
+
+                return response()->json([
+                    'message' => 'Transfer completed successfully',
+                    'journal_entry' => $journalEntry
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Transfer failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

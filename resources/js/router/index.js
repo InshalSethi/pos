@@ -163,10 +163,38 @@ const routes = [
         meta: { permission: 'accounting.view' }
       },
       {
-        path: 'transactions',
-        name: 'Transactions',
-        component: Transactions,
+        path: 'banking/accounts',
+        name: 'BankingAccounts',
+        component: () => import('@/components/banking/BankingAccounts.vue'),
         meta: { permission: 'accounting.view' }
+      },
+      {
+        path: 'banking/manual-journals',
+        name: 'BankingManualJournals',
+        component: () => import('@/components/banking/BankingManualJournals.vue'),
+        meta: { permission: 'accounting.view' }
+      },
+      {
+        path: 'banking/transactions',
+        name: 'BankingTransactions',
+        component: () => import('@/components/banking/BankingTransactions.vue'),
+        meta: { permission: 'accounting.view' }
+      },
+      {
+        path: 'banking/transfers',
+        name: 'BankingTransfers',
+        component: () => import('@/components/banking/BankingTransfers.vue'),
+        meta: { permission: 'accounting.view' }
+      },
+      {
+        path: 'banking/reconciliations',
+        name: 'BankingReconciliations',
+        component: () => import('@/components/banking/BankingReconciliations.vue'),
+        meta: { permission: 'accounting.view' }
+      },
+      {
+        path: 'transactions',
+        redirect: '/banking/transactions'
       },
       {
         path: 'reports',

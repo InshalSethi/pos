@@ -197,6 +197,19 @@ const apiMethods = {
     cashFlow: (params = {}) => api.get('/accounting/cash-flow', { params }),
   },
 
+  // Banking methods
+  banking: {
+    accounts: (params = {}) => api.get('/bank-accounts', { params }),
+    createAccount: (data) => api.post('/bank-accounts', data),
+    updateAccount: (id, data) => api.put(`/bank-accounts/${id}`, data),
+    deleteAccount: (id) => api.delete(`/bank-accounts/${id}`),
+    accountTransactions: (id, params = {}) => api.get(`/bank-accounts/${id}/transactions`, { params }),
+    reconciliationSummary: (id) => api.get(`/bank-accounts/${id}/reconciliation-summary`),
+    reconcile: (id, data) => api.post(`/bank-accounts/${id}/reconcile`, data),
+    transfer: (data) => api.post('/bank-accounts/transfer', data),
+    transactions: (params = {}) => api.get('/bank-transactions', { params }),
+  },
+
   // Reports methods
   reports: {
     sales: (params = {}) => api.get('/reports/sales', { params }),
