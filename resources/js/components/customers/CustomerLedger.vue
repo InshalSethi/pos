@@ -1,6 +1,6 @@
 <template>
-  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" v-if="show">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
+  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+    <div class="relative top-20 mx-auto p-5 border border-slate-800 w-11/12 max-w-6xl shadow-lg rounded-md bg-[#12141a] text-slate-100">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <div>

@@ -1,6 +1,6 @@
 <template>
-  <div v-if="show" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="handleBackdropClick">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white" @click.stop>
+  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);" @click="handleBackdropClick">
+    <div class="relative mx-auto p-5 border border-slate-800 w-96 shadow-lg rounded-md bg-[#12141a] text-slate-100" @click.stop>
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center">

@@ -635,8 +635,8 @@
     </div>
 
     <!-- Quick Customer Creation Modal -->
-    <div v-if="showCustomerModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <div class="relative mx-auto p-6 border w-full max-w-md shadow-2xl rounded-2xl bg-white text-left">
+    <div v-if="showCustomerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+      <div class="relative mx-auto p-6 border border-slate-800 w-full max-w-md shadow-2xl rounded-2xl bg-[#12141a] text-slate-100 text-left">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
           <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Add New Customer</h3>
           <button @click="closeCustomerModal" class="text-slate-400 hover:text-slate-600 text-xs font-bold">Close</button>

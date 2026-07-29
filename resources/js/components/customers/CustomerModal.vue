@@ -1,10 +1,10 @@
 <template>
   <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto" @click="closeModal">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+      <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"></div>
       
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" @click.stop>
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+      <div class="inline-block align-bottom bg-[#12141a] text-slate-100 border border-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" @click.stop>
+        <div class="bg-[#12141a] px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center space-x-3">
