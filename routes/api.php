@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\AccountingSettingsController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
+use App\Http\Controllers\Api\InvoicePurchaseSettingsController;
 use App\Http\Controllers\Api\PurchaseReturnController;
 use App\Http\Controllers\Api\FinancialReportController;
 use App\Http\Controllers\Api\ReportController;
@@ -295,6 +296,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::get('/payment-settings', [PaymentSettingsController::class , 'index']);
         Route::put('/payment-settings', [PaymentSettingsController::class , 'update']);
         Route::post('/payment-settings/test-connection', [PaymentSettingsController::class , 'testConnection']);
+
+        // Invoice & Purchase Settings routes
+        Route::get('/invoice-purchase-settings', [InvoicePurchaseSettingsController::class, 'index']);
+        Route::put('/invoice-purchase-settings', [InvoicePurchaseSettingsController::class, 'update']);
 
         // Currency management routes
         Route::get('/currencies', [CurrencyController::class, 'index']);

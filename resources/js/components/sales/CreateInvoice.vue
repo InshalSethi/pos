@@ -187,7 +187,7 @@
                           </div>
                           
                           <!-- W.S Toggle Switch (Visible in Retail Mode only) -->
-                          <label v-if="!isGlobalWholesale" class="inline-flex items-center cursor-pointer select-none shrink-0" title="Toggle Wholesale Price for this item">
+                          <label v-if="!isGlobalWholesale && companyInvoiceSettings.show_item_wholesale_toggle !== false" class="inline-flex items-center cursor-pointer select-none shrink-0" title="Toggle Wholesale Price for this item">
                             <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
                             <div class="relative">
                               <input
@@ -410,7 +410,7 @@
                 </template>
 
                 <!-- 4. Taxes (manual field) -->
-                <tr>
+                <tr v-if="companyInvoiceSettings.allow_manual_taxes_discounts !== false">
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Taxes (Manual)</td>
                   <td colspan="2" class="py-1.5 px-2 text-right">
                     <div class="flex items-center justify-end space-x-1">
@@ -436,7 +436,7 @@
                 </tr>
 
                 <!-- 4. Discount (manual field) -->
-                <tr>
+                <tr v-if="companyInvoiceSettings.allow_manual_taxes_discounts !== false">
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Discount (Manual)</td>
                   <td colspan="2" class="py-1.5 px-2 text-right">
                     <div class="flex items-center justify-end space-x-1">
@@ -1986,6 +1986,52 @@ const selectPaymentMethod = (val) => {
 };
 const isBarcodeActive = ref(true);
 const isGlobalWholesale = ref(false);
+
+const companyInvoiceSettings = ref({
+  show_item_wholesale_toggle: true,
+  allow_manual_taxes_discounts: true
+});
+
+const loadCompanyInvoiceSettings = async () => {
+  try {
+    const res = await api.get('/invoice-purchase-settings');
+    if (res.data) {
+      companyInvoiceSettings.value = {
+        ...companyInvoiceSettings.value,
+        ...res.data
+      };
+
+      if (res.data.default_pricing_mode === 'wholesale') {
+        isGlobalWholesale.value = true;
+      } else if (res.data.default_pricing_mode === 'retail') {
+        isGlobalWholesale.value = false;
+      }
+
+      if (res.data.default_due_period_days !== undefined && res.data.default_due_period_days !== null) {
+        const days = parseInt(res.data.default_due_period_days) || 0;
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        invoiceForm.value.due_date = d.toISOString().split('T')[0];
+      }
+
+      if (res.data.default_terms_conditions && !invoiceForm.value.footer) {
+        invoiceForm.value.footer = res.data.default_terms_conditions;
+      }
+
+      if (Array.isArray(res.data.default_system_tax_ids)) {
+        const defaultTaxIds = res.data.default_system_tax_ids.map(id => Number(id));
+        const disabledIds = requiredTaxes.value
+          .map(t => Number(t.id))
+          .filter(id => !defaultTaxIds.includes(id));
+        if (disabledIds.length > 0) {
+          disabledRequiredTaxIds.value = disabledIds;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error loading company invoice settings:', e);
+  }
+};
 
 const setGlobalPricingMode = (mode) => {
   isGlobalWholesale.value = (mode === 'wholesale');
@@ -3545,15 +3591,16 @@ const handleWindowScrollOrResize = () => {
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   updateDateTime();
   setInterval(updateDateTime, 1000);
-  loadProducts();
-  loadCategories();
-  loadTaxes();
-  loadSalesmen();
-  fetchNextInvoiceNumber();
-  fetchActiveCompany();
+  await loadProducts();
+  await loadCategories();
+  await loadTaxes();
+  await loadSalesmen();
+  await fetchNextInvoiceNumber();
+  await fetchActiveCompany();
+  await loadCompanyInvoiceSettings();
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('scroll', handleWindowScrollOrResize, true);
   window.addEventListener('resize', handleWindowScrollOrResize);

@@ -79,16 +79,19 @@ class SaleController extends Controller
      */
     public function getNextSaleNumber(): JsonResponse
     {
+        $settings = \App\Models\InvoicePurchaseSetting::getSettings();
+        $prefix = $settings->invoice_prefix ?: 'INV-';
+
         $lastSale = Sale::orderBy('id', 'desc')->first();
         $nextNumber = 1;
         if ($lastSale) {
-            if (preg_match('/INV-(\d+)/i', $lastSale->sale_number, $matches)) {
+            if (preg_match('/(\d+)/i', $lastSale->sale_number, $matches)) {
                 $nextNumber = (int)$matches[1] + 1;
             } else {
                 $nextNumber = Sale::count() + 1;
             }
         }
-        $saleNumber = 'INV-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        $saleNumber = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         return response()->json([
             'success' => true,
             'sale_number' => $saleNumber
@@ -458,9 +461,11 @@ class SaleController extends Controller
             }
             
             if (!$saleNumber) {
-                $counter = Sale::whereDate('created_at', today())->count() + 1;
+                $settings = \App\Models\InvoicePurchaseSetting::getSettings();
+                $prefix = $settings->invoice_prefix ?: 'INV-';
+                $counter = Sale::count() + 1;
                 do {
-                    $saleNumber = 'SALE-' . date('Ymd') . '-' . str_pad($counter, 4, '0', STR_PAD_LEFT);
+                    $saleNumber = $prefix . str_pad($counter, 4, '0', STR_PAD_LEFT);
                     $counter++;
                 } while (Sale::where('sale_number', $saleNumber)->exists());
             }

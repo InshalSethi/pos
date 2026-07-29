@@ -189,7 +189,7 @@
                           </div>
                           
                           <!-- W.S Toggle Switch (Visible in Retail Mode only) -->
-                          <label v-if="!isGlobalWholesale" class="inline-flex items-center cursor-pointer select-none shrink-0" title="Toggle Wholesale Price for this item">
+                          <label v-if="!isGlobalWholesale && companyInvoiceSettings.show_item_wholesale_toggle !== false" class="inline-flex items-center cursor-pointer select-none shrink-0" title="Toggle Wholesale Price for this item">
                             <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
                             <div class="relative">
                               <input
@@ -414,7 +414,7 @@
                 </template>
 
                 <!-- 4. Taxes (manual field) -->
-                <tr>
+                <tr v-if="companyInvoiceSettings.allow_manual_taxes_discounts !== false">
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Taxes (Manual)</td>
                   <td colspan="2" class="py-1.5 px-2 text-right">
                     <div class="flex items-center justify-end space-x-1">
@@ -440,7 +440,7 @@
                 </tr>
 
                 <!-- 4. Discount (manual field) -->
-                <tr>
+                <tr v-if="companyInvoiceSettings.allow_manual_taxes_discounts !== false">
                   <td colspan="5" class="py-2 px-3 text-right font-semibold text-slate-500 dark:text-zinc-400">Discount (Manual)</td>
                   <td colspan="2" class="py-1.5 px-2 text-right">
                     <div class="flex items-center justify-end space-x-1">
@@ -1984,6 +1984,25 @@ const selectPaymentMethod = (val) => {
 };
 const isBarcodeActive = ref(true);
 const isGlobalWholesale = ref(false);
+
+const companyInvoiceSettings = ref({
+  show_item_wholesale_toggle: true,
+  allow_manual_taxes_discounts: true
+});
+
+const loadCompanyInvoiceSettings = async () => {
+  try {
+    const res = await api.get('/invoice-purchase-settings');
+    if (res.data) {
+      companyInvoiceSettings.value = {
+        ...companyInvoiceSettings.value,
+        ...res.data
+      };
+    }
+  } catch (e) {
+    console.error('Error loading company invoice settings:', e);
+  }
+};
 
 const setGlobalPricingMode = (mode) => {
   isGlobalWholesale.value = (mode === 'wholesale');
@@ -3729,6 +3748,7 @@ onMounted(async () => {
   await loadSalesmen();
   await loadInvoiceData();
   await fetchActiveCompany();
+  await loadCompanyInvoiceSettings();
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('scroll', handleWindowScrollOrResize, true);
   window.addEventListener('resize', handleWindowScrollOrResize);

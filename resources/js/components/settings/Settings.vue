@@ -77,6 +77,17 @@
           >
             Taxes
           </button>
+          <button
+            @click="activeTab = 'invoice-purchase'"
+            :class="[
+              'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+              activeTab === 'invoice-purchase'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Invoice & Purchase Settings
+          </button>
         </nav>
       </div>
 
@@ -1186,6 +1197,286 @@
             </table>
           </div>
         </div>
+
+        <!-- Invoice & Purchase Settings Tab -->
+        <div v-else-if="activeTab === 'invoice-purchase'" class="p-6 bg-slate-50 dark:bg-zinc-950/50 min-h-screen space-y-8">
+          
+          <!-- Loading state -->
+          <div v-if="loadingInvoicePurchaseSettings" class="flex flex-col justify-center items-center h-64 space-y-3">
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent"></div>
+            <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Loading Invoice & Purchase Settings...</p>
+          </div>
+
+          <template v-else>
+            <!-- Header -->
+            <div class="border-b border-slate-200 dark:border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 class="text-xl font-extrabold text-slate-900 dark:text-zinc-100">Invoice & Purchase Settings</h3>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">Configure default preferences, prefix rules, tax behaviors, and default terms for Sales Invoices and Purchase Orders.</p>
+              </div>
+
+              <!-- Top Save Action Button -->
+              <button
+                @click="saveInvoicePurchaseSettings"
+                :disabled="savingInvoicePurchaseSettings"
+                class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer self-start sm:self-auto"
+              >
+                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ savingInvoicePurchaseSettings ? 'Saving...' : 'Save All Settings' }}</span>
+              </button>
+            </div>
+
+            <!-- SECTION A: Invoice Settings (Sales) -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
+              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
+                <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-black text-xs">A</span>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Section A: Invoice Settings (Sales)</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-zinc-400">Default numbering, pricing mode, due periods, and terms for Sales Invoices.</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- 1. Invoice Numbering Prefix -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                    Invoice Numbering Prefix
+                  </label>
+                  <input
+                    v-model="invoicePurchaseSettings.invoice_prefix"
+                    type="text"
+                    placeholder="e.g. INV- or SLS-"
+                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                  />
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Applied to automatically generated sales invoice numbers.</p>
+                </div>
+
+                <!-- 2. Default Pricing Mode -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                    Default Pricing Mode
+                  </label>
+                  <div class="flex items-center space-x-4 pt-1">
+                    <label class="inline-flex items-center cursor-pointer space-x-2">
+                      <input
+                        type="radio"
+                        value="retail"
+                        v-model="invoicePurchaseSettings.default_pricing_mode"
+                        class="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                      />
+                      <span class="text-xs font-extrabold text-slate-800 dark:text-zinc-200">Retail Mode</span>
+                    </label>
+
+                    <label class="inline-flex items-center cursor-pointer space-x-2">
+                      <input
+                        type="radio"
+                        value="wholesale"
+                        v-model="invoicePurchaseSettings.default_pricing_mode"
+                        class="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                      />
+                      <span class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">Wholesale Mode</span>
+                    </label>
+                  </div>
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Default active mode when initializing Create Invoice screen.</p>
+                </div>
+
+                <!-- 3. Default Due Period (Days) -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                    Default Due Period (Days)
+                  </label>
+                  <input
+                    v-model.number="invoicePurchaseSettings.default_due_period_days"
+                    type="number"
+                    min="0"
+                    max="365"
+                    placeholder="e.g. 30"
+                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                  />
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Number of days added to creation date to calculate default due date.</p>
+                </div>
+
+                <!-- 5. Show/Hide Item Wholesale Toggle -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
+                  <div>
+                    <label class="text-xs font-bold text-slate-800 dark:text-zinc-200 block">Show Row-Level W.S Toggle</label>
+                    <p class="text-[10px] text-slate-400 dark:text-zinc-400">Enable/disable row-level Wholesale toggle switch on invoice items.</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      v-model="invoicePurchaseSettings.show_item_wholesale_toggle"
+                      class="sr-only peer"
+                    />
+                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+
+                <!-- 4. Default Invoice Terms & Conditions -->
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                    Default Invoice Terms & Conditions
+                  </label>
+                  <textarea
+                    v-model="invoicePurchaseSettings.default_terms_conditions"
+                    rows="3"
+                    placeholder="Enter default terms and conditions text for sales invoices..."
+                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                  ></textarea>
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Appears in footer notes section on printed and digital invoices.</p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- SECTION B: Purchase Order Settings -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
+              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
+                <span class="p-2 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 font-black text-xs">B</span>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Section B: Purchase Order Settings</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-zinc-400">Prefix rules, default receiving warehouses, and cost update behavior for Purchases.</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- 1. PO Numbering Prefix -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                    PO Numbering Prefix
+                  </label>
+                  <input
+                    v-model="invoicePurchaseSettings.po_prefix"
+                    type="text"
+                    placeholder="e.g. PO- or PUR-"
+                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                  />
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Applied to automatically generated Purchase Order numbers.</p>
+                </div>
+
+                <!-- 2. Default Purchase Warehouse -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                    Default Purchase Receiving Warehouse
+                  </label>
+                  <select
+                    v-model="invoicePurchaseSettings.default_purchase_warehouse_id"
+                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                  >
+                    <option :value="null">-- Select Default Warehouse --</option>
+                    <option v-for="wh in warehousesList" :key="wh.id" :value="wh.id">
+                      {{ wh.name }} {{ wh.code ? `(${wh.code})` : '' }}
+                    </option>
+                  </select>
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Pre-selected receiving location on new Purchase Order screen.</p>
+                </div>
+
+                <!-- 3. Auto-Update Product Cost Price -->
+                <div class="md:col-span-2 flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
+                  <div>
+                    <label class="text-xs font-bold text-slate-800 dark:text-zinc-200 block">Auto-Update Product Master Cost Price</label>
+                    <p class="text-[10px] text-slate-400 dark:text-zinc-400">Automatically update product master cost price when stock is received via Purchase Order.</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      v-model="invoicePurchaseSettings.auto_update_product_cost"
+                      class="sr-only peer"
+                    />
+                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- SECTION C: Taxes & Discount Defaults -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
+              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
+                <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-black text-xs">C</span>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Section C: Taxes & Discount Defaults</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-zinc-400">Default included system taxes and manual tax/discount overrides control.</p>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                
+                <!-- 1. Default Included System Taxes -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-2">
+                    Default Included System Taxes
+                  </label>
+                  <div v-if="taxes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <div
+                      v-for="tax in taxes"
+                      :key="tax.id"
+                      @click="toggleDefaultSystemTax(tax.id)"
+                      :class="[
+                        'p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all',
+                        (invoicePurchaseSettings.default_system_tax_ids || []).includes(Number(tax.id))
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+                          : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800'
+                      ]"
+                    >
+                      <div class="flex items-center space-x-2.5">
+                        <input
+                          type="checkbox"
+                          :checked="(invoicePurchaseSettings.default_system_tax_ids || []).includes(Number(tax.id))"
+                          class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 pointer-events-none"
+                        />
+                        <span class="text-xs font-bold">{{ tax.name }} ({{ tax.value }}{{ tax.type === 'percentage' ? '%' : '' }})</span>
+                      </div>
+                      <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-500">
+                        {{ tax.sale_invoice_required ? 'Required' : 'Optional' }}
+                      </span>
+                    </div>
+                  </div>
+                  <p v-else class="text-xs text-slate-400 dark:text-zinc-500 italic">No system taxes configured in Tax Module.</p>
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5">Select which system taxes are enabled by default on new invoice creation.</p>
+                </div>
+
+                <!-- 2. Allow Manual Taxes & Discounts -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
+                  <div>
+                    <label class="text-xs font-bold text-slate-800 dark:text-zinc-200 block">Allow Manual Taxes & Discounts</label>
+                    <p class="text-[10px] text-slate-400 dark:text-zinc-400">Allow cashiers and sales representatives to enter manual tax and discount amounts during POS/Invoice creation.</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      v-model="invoicePurchaseSettings.allow_manual_taxes_discounts"
+                      class="sr-only peer"
+                    />
+                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Bottom Save Action Bar -->
+            <div class="flex justify-end pt-4">
+              <button
+                @click="saveInvoicePurchaseSettings"
+                :disabled="savingInvoicePurchaseSettings"
+                class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
+              >
+                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ savingInvoicePurchaseSettings ? 'Saving Settings...' : 'Save All Settings' }}</span>
+              </button>
+            </div>
+
+          </template>
+        </div>
       </div>
     </div>
   </div>
@@ -1327,6 +1618,23 @@ const settings = ref({
   sound_effects: true,
   session_timeout: '60',
   two_factor_auth: false
+});
+
+// Invoice & Purchase Settings state
+const loadingInvoicePurchaseSettings = ref(false);
+const savingInvoicePurchaseSettings = ref(false);
+const warehousesList = ref([]);
+const invoicePurchaseSettings = ref({
+  invoice_prefix: 'INV-',
+  default_pricing_mode: 'retail',
+  default_due_period_days: 30,
+  default_terms_conditions: 'Thank you for your business!',
+  show_item_wholesale_toggle: true,
+  po_prefix: 'PO-',
+  default_purchase_warehouse_id: null,
+  auto_update_product_cost: true,
+  default_system_tax_ids: [],
+  allow_manual_taxes_discounts: true
 });
 
 // Users tab data and states
@@ -1520,12 +1828,14 @@ const saveAllSettings = async () => {
 // Watch for theme changes
 watch(() => settings.value.theme, (newTheme) => {
   applyTheme(newTheme);
-});// Watch for accounting or taxes tab activation
+});// Watch for accounting, taxes, or invoice-purchase tab activation
 watch(() => activeTab.value, (newTab) => {
   if (newTab === 'accounting') {
     loadAccountingSettings();
   } else if (newTab === 'taxes') {
     loadTaxes();
+  } else if (newTab === 'invoice-purchase') {
+    fetchInvoicePurchaseSettings();
   }
 });
 
@@ -1939,5 +2249,58 @@ const closeRoleModal = () => {
 const handleRoleSaved = async () => {
   await loadRoles();
   closeRoleModal();
+};
+
+// Invoice & Purchase Settings management methods
+const fetchInvoicePurchaseSettings = async () => {
+  try {
+    loadingInvoicePurchaseSettings.value = true;
+    const [settingsRes, whRes, taxRes] = await Promise.all([
+      axios.get('/api/invoice-purchase-settings'),
+      axios.get('/api/warehouses'),
+      axios.get('/api/taxes')
+    ]);
+    if (settingsRes.data) {
+      invoicePurchaseSettings.value = {
+        ...invoicePurchaseSettings.value,
+        ...settingsRes.data,
+        default_system_tax_ids: Array.isArray(settingsRes.data.default_system_tax_ids)
+          ? settingsRes.data.default_system_tax_ids.map(id => Number(id))
+          : []
+      };
+    }
+    warehousesList.value = Array.isArray(whRes.data) ? whRes.data : (whRes.data?.data || []);
+    if (!taxes.value || taxes.value.length === 0) {
+      taxes.value = Array.isArray(taxRes.data) ? taxRes.data : (taxRes.data?.data || []);
+    }
+  } catch (e) {
+    console.error('Error fetching invoice purchase settings:', e);
+    showToast('Failed to load Invoice & Purchase settings', 'error');
+  } finally {
+    loadingInvoicePurchaseSettings.value = false;
+  }
+};
+
+const saveInvoicePurchaseSettings = async () => {
+  try {
+    savingInvoicePurchaseSettings.value = true;
+    const res = await axios.put('/api/invoice-purchase-settings', invoicePurchaseSettings.value);
+    showToast(res.data.message || 'Invoice & Purchase settings updated successfully', 'success');
+  } catch (e) {
+    console.error('Error saving invoice purchase settings:', e);
+    showToast('Failed to save settings: ' + (e.response?.data?.message || e.message), 'error');
+  } finally {
+    savingInvoicePurchaseSettings.value = false;
+  }
+};
+
+const toggleDefaultSystemTax = (taxId) => {
+  const numId = Number(taxId);
+  const current = invoicePurchaseSettings.value.default_system_tax_ids || [];
+  if (current.includes(numId)) {
+    invoicePurchaseSettings.value.default_system_tax_ids = current.filter(id => id !== numId);
+  } else {
+    invoicePurchaseSettings.value.default_system_tax_ids = [...current, numId];
+  }
 };
 </script>
