@@ -6,17 +6,39 @@
 
       <!-- Enhanced Modal Header -->
       <div class="bg-white border-b border-slate-200 px-6 py-4 shadow-sm flex justify-between items-center relative">
-        <div class="flex items-center space-x-3">
-          <div class="p-2.5 rounded-xl text-white transition-all duration-300" :style="{ backgroundColor: accentColor }">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
+          <div class="flex items-center space-x-3">
+            <div class="p-2.5 rounded-xl text-white transition-all duration-300" :style="{ backgroundColor: accentColor }">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">{{ isEdit ? 'Edit Sales Invoice' : 'Create Sales Invoice' }}</h2>
+              <p class="text-xs text-slate-450">{{ isEdit ? `Modify details for Invoice #${invoiceForm.sale_number || ''}` : 'Generate a new invoice entry' }}</p>
+            </div>
+
+            <!-- Global Pricing Mode Toggle (Retail vs Wholesale) -->
+            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 ml-4 shadow-inner select-none">
+              <button
+                type="button"
+                @click="setGlobalPricingMode('retail')"
+                class="px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                :class="!isGlobalWholesale ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60' : 'text-slate-500 hover:text-slate-800'"
+              >
+                <span class="w-2 h-2 rounded-full" :class="!isGlobalWholesale ? 'bg-indigo-600' : 'bg-slate-300'"></span>
+                Retail Mode
+              </button>
+              <button
+                type="button"
+                @click="setGlobalPricingMode('wholesale')"
+                class="px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                :class="isGlobalWholesale ? 'bg-indigo-600 text-white shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-800'"
+              >
+                <span class="w-2 h-2 rounded-full" :class="isGlobalWholesale ? 'bg-white animate-pulse' : 'bg-slate-300'"></span>
+                Wholesale Mode
+              </button>
+            </div>
           </div>
-          <div>
-            <h2 class="text-lg font-bold text-slate-800">{{ isEdit ? 'Edit Sales Invoice' : 'Create Sales Invoice' }}</h2>
-            <p class="text-xs text-slate-450">{{ isEdit ? `Modify details for Invoice #${invoiceForm.sale_number || ''}` : 'Generate a new invoice entry' }}</p>
-          </div>
-        </div>
 
         <button @click="closeModal" class="bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 p-2 rounded-xl border border-slate-200 transition-all cursor-pointer" type="button">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,17 +205,21 @@
                   <tr class="text-slate-450 uppercase font-extrabold tracking-wider">
                     <th class="py-3 px-3 w-4/12 bg-slate-50">Item Details / Description</th>
                     <th class="py-3 px-2 w-1/12 text-center bg-slate-50">Qty</th>
-                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50">Price</th>
-                    <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50">W.S Price</th>
+                    <th class="py-3 px-2 w-2/12 text-right bg-slate-50">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <span>Price</span>
+                        <span v-if="isGlobalWholesale" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-extrabold normal-case tracking-normal">W.S</span>
+                      </div>
+                    </th>
                     <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50">Tax</th>
                     <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50">Discount</th>
-                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50">Amount</th>
+                    <th class="py-3 px-2 w-2/12 text-right bg-slate-50">Amount</th>
                     <th class="py-3 px-1 w-[40px] text-center bg-slate-50"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   <tr v-if="invoiceItems.length === 0">
-                    <td colspan="8" class="py-12 text-center text-slate-400 italic">
+                    <td colspan="7" class="py-12 text-center text-slate-400 italic">
                       <svg class="mx-auto h-8 w-8 text-slate-350 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
@@ -204,11 +230,18 @@
                   <tr v-for="(item, index) in invoiceItems" :key="index" class="hover:bg-slate-50/40 group align-top">
                     <!-- Name & Description -->
                     <td class="py-3 px-2 text-left">
-                      <div class="flex items-center justify-between mb-1.5">
-                        <div class="font-bold text-slate-800 text-xs">{{ item.name }}</div>
+                      <div class="flex items-center justify-between mb-1.5 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span class="font-bold text-slate-800 text-xs truncate">{{ item.name }}</span>
+                          <!-- W.S Applied Badge for individual row override in Retail Mode -->
+                          <span v-if="!isGlobalWholesale && item.is_wholesale" class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300 flex items-center gap-1 shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            W.S Applied
+                          </span>
+                        </div>
                         
-                        <!-- Wholesale toggle switch -->
-                        <label class="inline-flex items-center cursor-pointer select-none">
+                        <!-- Wholesale toggle switch (Visible in Retail Mode only) -->
+                        <label v-if="!isGlobalWholesale" class="inline-flex items-center cursor-pointer select-none shrink-0" title="Toggle Wholesale Price for this item">
                           <span class="text-[9px] font-extrabold uppercase text-slate-500 mr-1.5 tracking-wider">W.S</span>
                           <div class="relative">
                             <input
@@ -246,27 +279,22 @@
                     <!-- Price -->
                     <td class="py-3 px-2 text-right">
                       <input
-                        v-model.number="item.unit_price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        class="w-20 px-1.5 py-1 text-right border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all"
-                        :class="item.is_wholesale ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'"
-                        :readonly="item.is_wholesale"
-                        @input="updateItemTotal(index)"
-                      />
-                    </td>
-
-                    <!-- Wholesale Price -->
-                    <td class="py-3 px-2 text-right">
-                      <input
+                        v-if="isGlobalWholesale || item.is_wholesale"
                         v-model.number="item.wholesale_price"
                         type="number"
                         step="0.01"
                         min="0"
-                        class="w-20 px-1.5 py-1 text-right border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all"
-                        :class="!item.is_wholesale ? 'bg-slate-100 text-slate-400 opacity-60' : 'bg-white text-slate-800'"
-                        :readonly="!item.is_wholesale"
+                        class="w-20 px-1.5 py-1 text-right border rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all"
+                        :class="item.is_wholesale && !isGlobalWholesale ? 'border-amber-400 bg-amber-50 text-amber-900' : 'border-slate-350 bg-white text-slate-800'"
+                        @input="updateItemTotal(index)"
+                      />
+                      <input
+                        v-else
+                        v-model.number="item.unit_price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="w-20 px-1.5 py-1 text-right border border-slate-350 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all bg-white text-slate-800"
                         @input="updateItemTotal(index)"
                       />
                     </td>
@@ -1078,9 +1106,30 @@ export default {
       calculateTotal();
     };
 
+    const isGlobalWholesale = ref(false);
+
+    const setGlobalPricingMode = (mode) => {
+      isGlobalWholesale.value = (mode === 'wholesale');
+      invoiceItems.value.forEach((_, index) => {
+        updateItemTotal(index);
+      });
+      calculateTotal();
+    };
+
+    const getEffectiveUnitPrice = (item, isWholesaleGlobal = isGlobalWholesale.value) => {
+      if (!item) return 0;
+      if (isWholesaleGlobal) {
+        return parseFloat(item.wholesale_price) || 0;
+      }
+      if (item.is_wholesale) {
+        return parseFloat(item.wholesale_price) || 0;
+      }
+      return parseFloat(item.unit_price ?? item.price) || 0;
+    };
+
     const updateItemTotal = (index) => {
       const item = invoiceItems.value[index];
-      const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+      const basePrice = getEffectiveUnitPrice(item);
       const itemSubtotal = item.quantity * basePrice;
       const itemDiscount = item.discount_amount || 0;
       const taxRate = item.tax_rate || 0;
@@ -1114,7 +1163,7 @@ export default {
     // Computed total prices
     const invoiceSubtotal = computed(() => {
       return invoiceItems.value.reduce((sum, item) => {
-        const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+        const basePrice = getEffectiveUnitPrice(item);
         return sum + (item.quantity * basePrice);
       }, 0);
     });
@@ -1125,7 +1174,7 @@ export default {
 
     const totalTax = computed(() => {
       return invoiceItems.value.reduce((sum, item) => {
-        const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+        const basePrice = getEffectiveUnitPrice(item);
         const itemSubtotal = item.quantity * basePrice;
         const itemDiscount = item.discount_amount || 0;
         const taxRate = item.tax_rate || 0;
@@ -1206,7 +1255,7 @@ export default {
             product_variation_id: item.product_variation_id,
             warehouse_id: item.warehouse_id,
             quantity: item.quantity,
-            unit_price: item.is_wholesale ? item.wholesale_price : item.unit_price,
+            unit_price: getEffectiveUnitPrice(item),
             discount_amount: item.discount_amount || 0,
             tax_id: item.tax_id || null,
             tax_rate: item.tax_rate || 0,
@@ -1354,7 +1403,10 @@ export default {
       clearSelectedCategories,
       saveSalesInvoice,
       saveAsDraft,
-      closeModal
+      closeModal,
+      isGlobalWholesale,
+      setGlobalPricingMode,
+      getEffectiveUnitPrice
     };
   }
 };

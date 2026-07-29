@@ -3,7 +3,7 @@
 
     <!-- Header bar -->
     <div class="bg-white dark:bg-[#1E1E1E] border-b border-slate-200 dark:border-[#2E2E2E] px-6 py-4 shadow-sm">
-      <div class="flex justify-between items-center">
+      <div class="flex justify-between items-center flex-wrap gap-3">
         <div class="flex items-center space-x-4">
           <button
             @click="goBack"
@@ -16,6 +16,28 @@
           </button>
           <span class="text-slate-300 dark:text-slate-600 select-none">|</span>
           <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">Edit Sales Invoice</h1>
+
+          <!-- Global Pricing Mode Toggle (Retail vs Wholesale) -->
+          <div class="flex items-center bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-slate-200 dark:border-zinc-700/80 ml-2 shadow-inner select-none">
+            <button
+              type="button"
+              @click="setGlobalPricingMode('retail')"
+              class="px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+              :class="!isGlobalWholesale ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-zinc-700' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'"
+            >
+              <span class="w-2 h-2 rounded-full" :class="!isGlobalWholesale ? 'bg-indigo-600 dark:bg-indigo-400' : 'bg-slate-300 dark:bg-zinc-600'"></span>
+              Retail Mode
+            </button>
+            <button
+              type="button"
+              @click="setGlobalPricingMode('wholesale')"
+              class="px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+              :class="isGlobalWholesale ? 'bg-indigo-600 text-white shadow-sm font-extrabold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'"
+            >
+              <span class="w-2 h-2 rounded-full" :class="isGlobalWholesale ? 'bg-white animate-pulse' : 'bg-slate-300 dark:bg-zinc-600'"></span>
+              Wholesale Mode
+            </button>
+          </div>
         </div>
         <div class="text-right text-xs">
           <div class="text-slate-700 dark:text-slate-300 font-bold">{{ authStore.user?.name }}</div>
@@ -129,30 +151,21 @@
                   <tr class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 uppercase font-extrabold tracking-wider">
                     <th class="py-3 px-3 w-4/12 bg-slate-50 dark:bg-zinc-900">Item Details / Description</th>
                     <th class="py-3 px-2 w-1/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
-                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Price</th>
-                    <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">
-                      <div class="flex items-center justify-center gap-1.5">
-                        <span>W.S Price</span>
-                        <label class="inline-flex items-center cursor-pointer select-none" title="Apply Wholesale Price to All Items">
-                          <input
-                            type="checkbox"
-                            v-model="isAllWholesale"
-                            @change="toggleAllWholesale"
-                            class="sr-only peer"
-                          />
-                          <div class="w-6 h-3.5 bg-slate-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-zinc-650 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
-                        </label>
+                    <th class="py-3 px-2 w-2/12 text-right bg-slate-50 dark:bg-zinc-900">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <span>Price</span>
+                        <span v-if="isGlobalWholesale" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-extrabold normal-case tracking-normal">W.S</span>
                       </div>
                     </th>
                     <th class="py-3 px-2 w-1.5/12 text-center bg-slate-50 dark:bg-zinc-900">Tax</th>
                     <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Discount</th>
-                    <th class="py-3 px-2 w-1.5/12 text-right bg-slate-50 dark:bg-zinc-900">Amount</th>
+                    <th class="py-3 px-2 w-2/12 text-right bg-slate-50 dark:bg-zinc-900">Amount</th>
                     <th class="py-3 px-1 w-[40px] text-center bg-slate-50 dark:bg-zinc-900"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-zinc-800">
                   <tr v-if="invoiceItems.length === 0">
-                    <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+                    <td colspan="7" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
                       <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
@@ -165,11 +178,18 @@
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top border-t border-slate-100 dark:border-zinc-800/60 first:border-0">
                       <!-- Name and SKU -->
                       <td class="pt-3 pb-1 px-3">
-                        <div class="flex items-center justify-between mb-0.5">
-                          <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm">{{ item.name }}</div>
+                        <div class="flex items-center justify-between mb-0.5 gap-2">
+                          <div class="flex items-center gap-2 min-w-0">
+                            <span class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ item.name }}</span>
+                            <!-- W.S Applied Badge for individual row override in Retail Mode -->
+                            <span v-if="!isGlobalWholesale && item.is_wholesale" class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 flex items-center gap-1 shrink-0">
+                              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                              W.S Applied
+                            </span>
+                          </div>
                           
-                          <!-- W.S Toggle Switch -->
-                          <label class="inline-flex items-center cursor-pointer select-none">
+                          <!-- W.S Toggle Switch (Visible in Retail Mode only) -->
+                          <label v-if="!isGlobalWholesale" class="inline-flex items-center cursor-pointer select-none shrink-0" title="Toggle Wholesale Price for this item">
                             <span class="text-[9px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 mr-1.5 tracking-wider">W.S</span>
                             <div class="relative">
                               <input
@@ -206,7 +226,7 @@
                           :class="[
                             isItemStockExceeded(item)
                               ? 'text-rose-600 dark:text-rose-400 font-extrabold flex items-center justify-center gap-0.5'
-                              : 'text-slate-400 dark:text-zinc-500'
+                              : 'text-[#94a3b8] dark:text-zinc-500'
                           ]"
                         >
                           <span v-if="isItemStockExceeded(item)" class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
@@ -214,30 +234,25 @@
                         </div>
                       </td>
 
-                      <!-- Unit Price -->
+                      <!-- Price Field -->
                       <td class="pt-3 pb-1 px-2 text-right">
                         <input
-                          v-model.number="item.unit_price"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                          :class="item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
-                          :readonly="item.is_wholesale"
-                          @input="updateItemTotal(index)"
-                        />
-                      </td>
-
-                      <!-- W.S Price -->
-                      <td class="pt-3 pb-1 px-2 text-right">
-                        <input
+                          v-if="isGlobalWholesale || item.is_wholesale"
                           v-model.number="item.wholesale_price"
                           type="number"
                           step="0.01"
                           min="0"
-                          class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
-                          :class="!item.is_wholesale ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 opacity-60' : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
-                          :readonly="!item.is_wholesale"
+                          class="w-20 px-1.5 py-1 text-right border rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200"
+                          :class="item.is_wholesale && !isGlobalWholesale ? 'border-amber-400 dark:border-amber-600 bg-amber-50/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200' : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200'"
+                          @input="updateItemTotal(index)"
+                        />
+                        <input
+                          v-else
+                          v-model.number="item.unit_price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="w-20 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                           @input="updateItemTotal(index)"
                         />
                       </td>
@@ -2097,7 +2112,26 @@ const selectPaymentMethod = (val) => {
   isPaymentDropdownOpen.value = false;
 };
 const isBarcodeActive = ref(true);
-const isAllWholesale = ref(false);
+const isGlobalWholesale = ref(false);
+
+const setGlobalPricingMode = (mode) => {
+  isGlobalWholesale.value = (mode === 'wholesale');
+  invoiceItems.value.forEach((_, index) => {
+    updateItemTotal(index);
+  });
+  calculateTotal();
+};
+
+const getEffectiveUnitPrice = (item, isWholesaleGlobal = isGlobalWholesale.value) => {
+  if (!item) return 0;
+  if (isWholesaleGlobal) {
+    return parseFloat(item.wholesale_price) || 0;
+  }
+  if (item.is_wholesale) {
+    return parseFloat(item.wholesale_price) || 0;
+  }
+  return parseFloat(item.unit_price ?? item.price) || 0;
+};
 
 // Advance Search Modal State
 const isAdvanceSearchModalOpen = ref(false);
@@ -2430,19 +2464,6 @@ const addAdvanceProductToInvoice = (product) => {
   showNotification(`Added "${product.name}" to invoice`, 'success');
 };
 
-const toggleAllWholesale = () => {
-  const targetState = isAllWholesale.value;
-  invoiceItems.value.forEach((item) => {
-    item.is_wholesale = targetState;
-    const basePrice = targetState ? (item.wholesale_price || 0) : (item.unit_price || 0);
-    const itemSubtotal = item.quantity * basePrice;
-    const itemDiscount = item.discount_amount || 0;
-    const taxRate = item.tax_rate || 0;
-    item.total = itemSubtotal - itemDiscount + ((itemSubtotal - itemDiscount) * (taxRate / 100));
-  });
-  calculateTotal();
-};
-
 let barcodeBuffer = '';
 let lastKeyTime = 0;
 
@@ -2643,7 +2664,7 @@ const categoryDropdownLabel = computed(() => {
 
 const invoiceSubtotal = computed(() => {
   return invoiceItems.value.reduce((sum, item) => {
-    const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+    const basePrice = getEffectiveUnitPrice(item);
     return sum + (item.quantity * basePrice);
   }, 0);
 });
@@ -2668,30 +2689,15 @@ const toggleRequiredTax = (taxId) => {
 };
 
 const requiredTaxes = computed(() => {
-  return taxes.value.filter(t => (t.is_active || t.is_active === 1) && (t.sale_invoice_required || t.sale_invoice_required === 1));
-});
-
-const autoRequiredTaxesList = computed(() => {
-  const sub = invoiceSubtotal.value || 0;
-  return requiredTaxes.value.map(t => {
-    const val = parseFloat(t.value) || 0;
-    const isEnabled = !disabledRequiredTaxIds.value.includes(t.id);
-    const amt = isEnabled ? (t.type === 'percentage' ? (sub * val) / 100 : val) : 0;
-    return {
-      id: t.id,
-      name: t.name,
-      rate: val,
-      type: t.type || 'percentage',
-      amount: amt,
-      enabled: isEnabled
-    };
-  });
+  return taxes.value.filter(t => t.is_required);
 });
 
 const totalAutoRequiredTax = computed(() => {
-  return autoRequiredTaxesList.value
-    .filter(item => item.enabled)
-    .reduce((sum, item) => sum + item.amount, 0);
+  const activeReqTaxes = requiredTaxes.value.filter(t => !disabledRequiredTaxIds.value.includes(t.id));
+  return activeReqTaxes.reduce((sum, t) => {
+    const val = parseFloat(t.value) || 0;
+    return sum + (invoiceSubtotal.value * val) / 100;
+  }, 0);
 });
 
 const calculatedManualDiscount = computed(() => {
@@ -2704,7 +2710,7 @@ const calculatedManualDiscount = computed(() => {
 
 const totalDiscount = computed(() => {
   const itemDiscountSum = invoiceItems.value.reduce((sum, item) => {
-    const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+    const basePrice = getEffectiveUnitPrice(item);
     const itemSubtotal = item.quantity * basePrice;
     const rawDiscount = item.discount_amount || 0;
     const effDiscount = (item.discount_type === 'percentage')
@@ -2717,7 +2723,7 @@ const totalDiscount = computed(() => {
 
 const totalTax = computed(() => {
   const itemTaxSum = invoiceItems.value.reduce((sum, item) => {
-    const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+    const basePrice = getEffectiveUnitPrice(item);
     const itemSubtotal = item.quantity * basePrice;
     const rawDiscount = item.discount_amount || 0;
     const effDiscount = (item.discount_type === 'percentage')
@@ -3159,8 +3165,7 @@ const addToInvoice = (product) => {
       defaultTaxRate = parseFloat(matchingTax.value || 0);
     }
 
-    const defaultIsWholesale = isAllWholesale.value;
-    const basePrice = defaultIsWholesale ? (product.wholesale_price || 0) : parseFloat(product.price);
+    const basePrice = getEffectiveUnitPrice(product);
     const itemSubtotal = basePrice * 1;
     const itemTax = (itemSubtotal * (defaultTaxRate / 100));
 
@@ -3175,9 +3180,9 @@ const addToInvoice = (product) => {
       name: product.name,
       sku: product.sku,
       price: product.price,
-      unit_price: parseFloat(product.price),
-      wholesale_price: product.wholesale_price || 0,
-      is_wholesale: defaultIsWholesale,
+      unit_price: parseFloat(product.price || 0),
+      wholesale_price: parseFloat(product.wholesale_price || 0),
+      is_wholesale: false,
       discount_type: 'percentage',
       discount_amount: 0,
       quantity: 1,
@@ -3196,11 +3201,6 @@ const addToInvoice = (product) => {
 
 const removeFromInvoice = (index) => {
   invoiceItems.value.splice(index, 1);
-  if (invoiceItems.value.length === 0) {
-    isAllWholesale.value = false;
-  } else {
-    isAllWholesale.value = invoiceItems.value.every(i => i.is_wholesale);
-  }
   calculateTotal();
 };
 
@@ -3212,7 +3212,7 @@ const toggleLineDiscountType = (item, index) => {
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
-  const basePrice = item.is_wholesale ? (item.wholesale_price || 0) : (item.unit_price || 0);
+  const basePrice = getEffectiveUnitPrice(item);
   const itemSubtotal = item.quantity * basePrice;
   const rawDiscount = item.discount_amount || 0;
   const effectiveDiscount = (item.discount_type === 'percentage')
@@ -3222,10 +3222,6 @@ const updateItemTotal = (index) => {
   
   const taxableAmount = Math.max(0, itemSubtotal - effectiveDiscount);
   item.total = Math.max(0, taxableAmount + (taxableAmount * (taxRate / 100)));
-  
-  if (invoiceItems.value.length > 0) {
-    isAllWholesale.value = invoiceItems.value.every(i => i.is_wholesale);
-  }
 
   calculateTotal();
 };
@@ -3345,7 +3341,7 @@ const saveInvoice = async (shouldPrint = false) => {
         product_variation_id: item.product_variation_id,
         warehouse_id: item.warehouse_id,
         quantity: item.quantity,
-        unit_price: item.is_wholesale ? item.wholesale_price : item.unit_price,
+        unit_price: getEffectiveUnitPrice(item),
         discount_amount: item.discount_amount || 0,
         tax_id: item.tax_id || null,
         tax_rate: item.tax_rate || 0,
@@ -3660,6 +3656,8 @@ const loadInvoiceData = async () => {
           product: productFlat
         };
       });
+
+      isGlobalWholesale.value = invoiceItems.value.length > 0 && invoiceItems.value.every(i => i.is_wholesale);
     }
   } catch (error) {
     showNotification('Error loading invoice data', 'error');
