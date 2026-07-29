@@ -238,11 +238,13 @@
                           :class="[
                             isItemStockExceeded(item)
                               ? 'text-rose-600 dark:text-rose-400 font-extrabold flex items-center justify-center gap-0.5'
-                              : 'text-[#94a3b8] dark:text-zinc-500'
+                              : (item.original_quantity > 0 && typeof getItemAvailableStock(item) === 'number' && getItemAvailableStock(item) <= item.original_quantity
+                                  ? 'text-amber-600 dark:text-amber-400 font-extrabold'
+                                  : 'text-[#94a3b8] dark:text-zinc-500')
                           ]"
                         >
                           <span v-if="isItemStockExceeded(item)" class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                          Stock: {{ getItemAvailableStock(item) }}
+                          Stock: {{ getItemStockLabel(item) }}
                         </div>
                       </td>
 
@@ -2588,11 +2590,14 @@ const categoryDropdownLabel = computed(() => {
 const invoiceSubtotal = computed(() => {
   return invoiceItems.value.reduce((sum, item) => {
     const basePrice = getEffectiveUnitPrice(item);
-    return sum + (item.quantity * basePrice);
+    const qty = Number(item.quantity) || 0;
+    const lineVal = qty * basePrice;
+    return sum + (isNaN(lineVal) ? 0 : lineVal);
   }, 0);
 });
 
 const calculatedManualTax = computed(() => {
+  if (companyInvoiceSettings.value?.allow_manual_taxes_discounts === false) return 0;
   const taxVal = parseFloat(invoiceForm.value.tax_amount) || 0;
   if (invoiceForm.value.tax_type === 'percentage') {
     return (invoiceSubtotal.value * taxVal) / 100;
@@ -2636,10 +2641,11 @@ const autoRequiredTaxesList = computed(() => {
 const totalAutoRequiredTax = computed(() => {
   return autoRequiredTaxesList.value
     .filter(item => item.enabled)
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 });
 
 const calculatedManualDiscount = computed(() => {
+  if (companyInvoiceSettings.value?.allow_manual_taxes_discounts === false) return 0;
   const disVal = parseFloat(invoiceForm.value.discount_amount) || 0;
   if (invoiceForm.value.discount_type === 'percentage') {
     return (invoiceSubtotal.value * disVal) / 100;
@@ -2650,12 +2656,16 @@ const calculatedManualDiscount = computed(() => {
 const totalDiscount = computed(() => {
   const itemDiscountSum = invoiceItems.value.reduce((sum, item) => {
     const basePrice = getEffectiveUnitPrice(item);
-    const itemSubtotal = item.quantity * basePrice;
-    const rawDiscount = item.discount_amount || 0;
+    const qty = Number(item.quantity) || 0;
+    const itemSubtotal = qty * basePrice;
+    let rawDiscount = Number(item.discount_amount) || 0;
+    if (item.discount_type === 'percentage' && rawDiscount > 100) {
+      rawDiscount = 100;
+    }
     const effDiscount = (item.discount_type === 'percentage')
       ? (itemSubtotal * rawDiscount) / 100
-      : rawDiscount;
-    return sum + effDiscount;
+      : Math.min(itemSubtotal, rawDiscount);
+    return sum + (isNaN(effDiscount) ? 0 : effDiscount);
   }, 0);
   return itemDiscountSum + calculatedManualDiscount.value;
 });
@@ -2663,20 +2673,40 @@ const totalDiscount = computed(() => {
 const totalTax = computed(() => {
   const itemTaxSum = invoiceItems.value.reduce((sum, item) => {
     const basePrice = getEffectiveUnitPrice(item);
-    const itemSubtotal = item.quantity * basePrice;
-    const rawDiscount = item.discount_amount || 0;
+    const qty = Number(item.quantity) || 0;
+    const itemSubtotal = qty * basePrice;
+    let rawDiscount = Number(item.discount_amount) || 0;
+    if (item.discount_type === 'percentage' && rawDiscount > 100) {
+      rawDiscount = 100;
+    }
     const effDiscount = (item.discount_type === 'percentage')
       ? (itemSubtotal * rawDiscount) / 100
-      : rawDiscount;
-    const taxRate = item.tax_rate || 0;
-    return sum + (Math.max(0, itemSubtotal - effDiscount) * (taxRate / 100));
+      : Math.min(itemSubtotal, rawDiscount);
+    const taxRate = Number(item.tax_rate) || 0;
+    const taxable = Math.max(0, itemSubtotal - effDiscount);
+    const taxAmt = (taxable * taxRate) / 100;
+    return sum + (isNaN(taxAmt) ? 0 : taxAmt);
   }, 0);
   return itemTaxSum + totalAutoRequiredTax.value + calculatedManualTax.value;
 });
 
 const grandTotal = computed(() => {
-  const sub = invoiceSubtotal.value || 0;
-  return Math.max(0, sub + totalTax.value - totalDiscount.value);
+  const netLineSubtotal = invoiceItems.value.reduce((sum, item) => {
+    const basePrice = getEffectiveUnitPrice(item);
+    const qty = Number(item.quantity) || 0;
+    const itemSub = qty * basePrice;
+    let rawDiscount = Number(item.discount_amount) || 0;
+    if (item.discount_type === 'percentage' && rawDiscount > 100) {
+      rawDiscount = 100;
+    }
+    const effDiscount = (item.discount_type === 'percentage')
+      ? (itemSub * rawDiscount) / 100
+      : Math.min(itemSub, rawDiscount);
+    return sum + Math.max(0, itemSub - effDiscount);
+  }, 0);
+
+  const finalVal = netLineSubtotal + totalTax.value - calculatedManualDiscount.value;
+  return Math.max(0, isNaN(finalVal) ? 0 : finalVal);
 });
 
 const invoiceTotal = computed(() => {
@@ -2801,6 +2831,39 @@ const getProductWarehouseStock = (product, warehouseId) => {
   return product.total_stock ?? 0;
 };
 
+const getItemStockLabel = (item) => {
+  if (!item || !item.product || !item.product.track_inventory) return '∞';
+  const whIds = (Array.isArray(item.warehouse_ids) && item.warehouse_ids.length > 0)
+    ? item.warehouse_ids
+    : (item.warehouse_id ? [item.warehouse_id] : []);
+
+  let storeStock = 0;
+  if (whIds.length === 0 || whIds.includes('all')) {
+    storeStock = Number(item.product.total_stock ?? 0);
+  } else {
+    let total = 0;
+    let foundAny = false;
+    for (const whId of whIds) {
+      if (item.product.warehouse_stocks) {
+        const stockVal = item.product.warehouse_stocks[whId]
+          ?? item.product.warehouse_stocks[String(whId)]
+          ?? item.product.warehouse_stocks[Number(whId)];
+        if (stockVal !== undefined && stockVal !== null) {
+          total += Number(stockVal);
+          foundAny = true;
+        }
+      }
+    }
+    storeStock = foundAny ? total : Number(item.product.total_stock ?? 0);
+  }
+
+  const origAlloc = Number(item.original_quantity || 0);
+  if (storeStock <= 0 && origAlloc > 0) {
+    return `0 (${origAlloc} allocated in invoice)`;
+  }
+  return storeStock + origAlloc;
+};
+
 const getItemAvailableStock = (item) => {
   if (!item || !item.product) return '∞';
   if (!item.product.track_inventory) return '∞';
@@ -2808,22 +2871,28 @@ const getItemAvailableStock = (item) => {
     ? item.warehouse_ids
     : (item.warehouse_id ? [item.warehouse_id] : []);
 
-  if (whIds.length === 0 || whIds.includes('all')) return item.product.total_stock ?? 0;
-
-  let total = 0;
-  let foundAny = false;
-  for (const whId of whIds) {
-    if (item.product.warehouse_stocks) {
-      const stockVal = item.product.warehouse_stocks[whId]
-        ?? item.product.warehouse_stocks[String(whId)]
-        ?? item.product.warehouse_stocks[Number(whId)];
-      if (stockVal !== undefined && stockVal !== null) {
-        total += Number(stockVal);
-        foundAny = true;
+  let storeStock = 0;
+  if (whIds.length === 0 || whIds.includes('all')) {
+    storeStock = Number(item.product.total_stock ?? 0);
+  } else {
+    let total = 0;
+    let foundAny = false;
+    for (const whId of whIds) {
+      if (item.product.warehouse_stocks) {
+        const stockVal = item.product.warehouse_stocks[whId]
+          ?? item.product.warehouse_stocks[String(whId)]
+          ?? item.product.warehouse_stocks[Number(whId)];
+        if (stockVal !== undefined && stockVal !== null) {
+          total += Number(stockVal);
+          foundAny = true;
+        }
       }
     }
+    storeStock = foundAny ? total : Number(item.product.total_stock ?? 0);
   }
-  return foundAny ? total : (item.product.total_stock ?? 0);
+
+  const origAlloc = Number(item.original_quantity || 0);
+  return storeStock + origAlloc;
 };
 
 const isItemStockExceeded = (item) => {
@@ -2838,8 +2907,11 @@ const validateItemStock = (item, notify = false) => {
   const stock = getItemAvailableStock(item);
   if (typeof stock !== 'number') return;
 
-  if (item.quantity > stock && notify) {
-    showNotification(`Requested quantity ${item.quantity} exceeds combined available stock ${stock} across selected warehouses`, 'error');
+  if (item.quantity > stock) {
+    item.quantity = stock;
+    if (notify) {
+      showNotification(`Cannot increase quantity. Additional warehouse stock is 0. (Max allowed: ${stock})`, 'error');
+    }
   }
 };
 
@@ -3171,7 +3243,28 @@ const removeFromInvoice = (index) => {
 };
 
 const toggleLineDiscountType = (item, index) => {
-  item.discount_type = (item.discount_type || 'percentage') === 'fixed' ? 'percentage' : 'fixed';
+  const currentType = item.discount_type || 'percentage';
+  const newType = currentType === 'fixed' ? 'percentage' : 'fixed';
+  item.discount_type = newType;
+
+  const basePrice = getEffectiveUnitPrice(item);
+  const itemSubtotal = (Number(item.quantity) || 1) * basePrice;
+  const currentVal = parseFloat(item.discount_amount) || 0;
+
+  if (newType === 'percentage') {
+    if (currentVal > 100) {
+      if (itemSubtotal > 0) {
+        item.discount_amount = parseFloat(((currentVal / itemSubtotal) * 100).toFixed(2));
+      } else {
+        item.discount_amount = 0;
+      }
+    }
+  } else if (newType === 'fixed') {
+    if (currentVal <= 100 && itemSubtotal > 0) {
+      item.discount_amount = parseFloat(((itemSubtotal * currentVal) / 100).toFixed(2));
+    }
+  }
+
   updateItemTotal(index);
 };
 
@@ -3196,6 +3289,13 @@ const toggleManualDiscountType = () => {
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
+
+  // CRITICAL: Row amount calculation is ALWAYS based on qty * price - discount + tax.
+  // Live warehouse stock status must NEVER affect this calculation.
+  // Stock validation only prevents adding NEW products or increasing qty beyond allocation.
+  const basePrice = getEffectiveUnitPrice(item);
+  const qty = Math.max(0, Number(item.quantity) || 0);
+
   if (isGlobalWholesale.value || item.is_wholesale) {
     if (item.wholesale_price !== undefined && item.wholesale_price !== null) {
       item.unit_price = item.wholesale_price;
@@ -3205,16 +3305,28 @@ const updateItemTotal = (index) => {
       item.wholesale_price = item.unit_price;
     }
   }
-  const basePrice = getEffectiveUnitPrice(item);
-  const itemSubtotal = item.quantity * basePrice;
-  const rawDiscount = item.discount_amount || 0;
+
+  // Guarantee: if qty > 0 and price > 0, always compute a real financial value
+  const itemSubtotal = qty * basePrice;
+  let rawDiscount = Number(item.discount_amount) || 0;
+
+  if (item.discount_type === 'percentage') {
+    if (rawDiscount > 100) {
+      rawDiscount = 100;
+      item.discount_amount = 100;
+    }
+  }
+
   const effectiveDiscount = (item.discount_type === 'percentage')
     ? (itemSubtotal * rawDiscount) / 100
-    : rawDiscount;
-  const taxRate = item.tax_rate || 0;
-  
+    : Math.min(itemSubtotal, rawDiscount);
+
   const taxableAmount = Math.max(0, itemSubtotal - effectiveDiscount);
-  item.total = Math.max(0, taxableAmount + (taxableAmount * (taxRate / 100)));
+  const taxRate = Number(item.tax_rate) || 0;
+  const itemTax = (taxableAmount * taxRate) / 100;
+
+  const finalRowTotal = taxableAmount + itemTax;
+  item.total = isNaN(finalRowTotal) ? 0 : Math.max(0, finalRowTotal);
 
   calculateTotal();
 };
@@ -3769,18 +3881,24 @@ const loadInvoiceData = async () => {
           itemTaxRate = parseFloat(matchingTax.value || 0);
         }
 
-        // Determine line discount_type with legacy fallback (if >100 and no discount_type specified)
+        // Determine line discount_type with legacy fallback
+        // CRITICAL FIX: Previously used `> 100` which treated a discount of exactly 100
+        // as 100% percentage — zeroing out the entire row amount. Changed to `>= 100`
+        // so values like Rs100, Rs200 etc. are correctly treated as fixed currency amounts.
         let lineDiscType = item.discount_type;
         if (!lineDiscType) {
-          lineDiscType = (parseFloat(item.discount_amount) > 100) ? 'fixed' : 'percentage';
+          lineDiscType = (parseFloat(item.discount_amount) >= 100) ? 'fixed' : 'percentage';
         } else {
           lineDiscType = (lineDiscType === 'fixed' || lineDiscType === 'flat') ? 'fixed' : 'percentage';
         }
 
+        const savedQty = parseInt(item.quantity) || 1;
+        const itemWarehouseId = item.warehouse_id || sale.warehouse_id;
         return {
           product_id: item.product_id,
           product_variation_id: item.product_variation_id,
-          warehouse_id: item.warehouse_id || sale.warehouse_id,
+          warehouse_id: itemWarehouseId,
+          warehouse_ids: [itemWarehouseId].filter(Boolean),
           name: item.product?.name || 'Product',
           sku: item.product?.sku || '',
           price: effectiveUnitPrice,
@@ -3789,7 +3907,8 @@ const loadInvoiceData = async () => {
           is_wholesale: isWholesale,
           discount_type: lineDiscType,
           discount_amount: parseFloat(item.discount_amount) || 0,
-          quantity: parseInt(item.quantity) || 1,
+          quantity: savedQty,
+          original_quantity: savedQty,
           tax_id: itemTaxId,
           tax_rate: itemTaxRate,
           description: item.description || '',

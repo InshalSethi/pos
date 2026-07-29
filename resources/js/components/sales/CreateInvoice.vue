@@ -2636,38 +2636,14 @@ const categoryDropdownLabel = computed(() => {
 const invoiceSubtotal = computed(() => {
   return invoiceItems.value.reduce((sum, item) => {
     const basePrice = getEffectiveUnitPrice(item);
-    return sum + (item.quantity * basePrice);
+    const qty = Number(item.quantity) || 0;
+    const lineVal = qty * basePrice;
+    return sum + (isNaN(lineVal) ? 0 : lineVal);
   }, 0);
-});
-
-const totalDiscount = computed(() => {
-  const itemDiscountSum = invoiceItems.value.reduce((sum, item) => {
-    const basePrice = getEffectiveUnitPrice(item);
-    const itemSubtotal = item.quantity * basePrice;
-    const rawDiscount = item.discount_amount || 0;
-    const effDiscount = (item.discount_type === 'percentage')
-      ? (itemSubtotal * rawDiscount) / 100
-      : rawDiscount;
-    return sum + effDiscount;
-  }, 0);
-  return itemDiscountSum + calculatedManualDiscount.value;
-});
-
-const totalTax = computed(() => {
-  const itemTaxSum = invoiceItems.value.reduce((sum, item) => {
-    const basePrice = getEffectiveUnitPrice(item);
-    const itemSubtotal = item.quantity * basePrice;
-    const rawDiscount = item.discount_amount || 0;
-    const effDiscount = (item.discount_type === 'percentage')
-      ? (itemSubtotal * rawDiscount) / 100
-      : rawDiscount;
-    const taxRate = item.tax_rate || 0;
-    return sum + (Math.max(0, itemSubtotal - effDiscount) * (taxRate / 100));
-  }, 0);
-  return itemTaxSum + totalAutoRequiredTax.value + calculatedManualTax.value;
 });
 
 const calculatedManualTax = computed(() => {
+  if (companyInvoiceSettings.value?.allow_manual_taxes_discounts === false) return 0;
   const taxVal = parseFloat(invoiceForm.value.tax_amount) || 0;
   if (invoiceForm.value.tax_type === 'percentage') {
     return (invoiceSubtotal.value * taxVal) / 100;
@@ -2711,10 +2687,11 @@ const autoRequiredTaxesList = computed(() => {
 const totalAutoRequiredTax = computed(() => {
   return autoRequiredTaxesList.value
     .filter(item => item.enabled)
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 });
 
 const calculatedManualDiscount = computed(() => {
+  if (companyInvoiceSettings.value?.allow_manual_taxes_discounts === false) return 0;
   const disVal = parseFloat(invoiceForm.value.discount_amount) || 0;
   if (invoiceForm.value.discount_type === 'percentage') {
     return (invoiceSubtotal.value * disVal) / 100;
@@ -2722,9 +2699,60 @@ const calculatedManualDiscount = computed(() => {
   return disVal;
 });
 
+const totalDiscount = computed(() => {
+  const itemDiscountSum = invoiceItems.value.reduce((sum, item) => {
+    const basePrice = getEffectiveUnitPrice(item);
+    const qty = Number(item.quantity) || 0;
+    const itemSubtotal = qty * basePrice;
+    let rawDiscount = Number(item.discount_amount) || 0;
+    if (item.discount_type === 'percentage' && rawDiscount > 100) {
+      rawDiscount = 100;
+    }
+    const effDiscount = (item.discount_type === 'percentage')
+      ? (itemSubtotal * rawDiscount) / 100
+      : Math.min(itemSubtotal, rawDiscount);
+    return sum + (isNaN(effDiscount) ? 0 : effDiscount);
+  }, 0);
+  return itemDiscountSum + calculatedManualDiscount.value;
+});
+
+const totalTax = computed(() => {
+  const itemTaxSum = invoiceItems.value.reduce((sum, item) => {
+    const basePrice = getEffectiveUnitPrice(item);
+    const qty = Number(item.quantity) || 0;
+    const itemSubtotal = qty * basePrice;
+    let rawDiscount = Number(item.discount_amount) || 0;
+    if (item.discount_type === 'percentage' && rawDiscount > 100) {
+      rawDiscount = 100;
+    }
+    const effDiscount = (item.discount_type === 'percentage')
+      ? (itemSubtotal * rawDiscount) / 100
+      : Math.min(itemSubtotal, rawDiscount);
+    const taxRate = Number(item.tax_rate) || 0;
+    const taxable = Math.max(0, itemSubtotal - effDiscount);
+    const taxAmt = (taxable * taxRate) / 100;
+    return sum + (isNaN(taxAmt) ? 0 : taxAmt);
+  }, 0);
+  return itemTaxSum + totalAutoRequiredTax.value + calculatedManualTax.value;
+});
+
 const grandTotal = computed(() => {
-  const sub = invoiceSubtotal.value || 0;
-  return Math.max(0, sub + totalTax.value - totalDiscount.value);
+  const netLineSubtotal = invoiceItems.value.reduce((sum, item) => {
+    const basePrice = getEffectiveUnitPrice(item);
+    const qty = Number(item.quantity) || 0;
+    const itemSub = qty * basePrice;
+    let rawDiscount = Number(item.discount_amount) || 0;
+    if (item.discount_type === 'percentage' && rawDiscount > 100) {
+      rawDiscount = 100;
+    }
+    const effDiscount = (item.discount_type === 'percentage')
+      ? (itemSub * rawDiscount) / 100
+      : Math.min(itemSub, rawDiscount);
+    return sum + Math.max(0, itemSub - effDiscount);
+  }, 0);
+
+  const finalVal = netLineSubtotal + totalTax.value - calculatedManualDiscount.value;
+  return Math.max(0, isNaN(finalVal) ? 0 : finalVal);
 });
 
 const invoiceTotal = computed(() => {
@@ -3233,13 +3261,38 @@ const removeFromInvoice = (index) => {
 };
 
 const toggleLineDiscountType = (item, index) => {
-  item.discount_type = (item.discount_type || 'percentage') === 'fixed' ? 'percentage' : 'fixed';
+  const currentType = item.discount_type || 'percentage';
+  const newType = currentType === 'fixed' ? 'percentage' : 'fixed';
+  item.discount_type = newType;
+
+  const basePrice = getEffectiveUnitPrice(item);
+  const itemSubtotal = (Number(item.quantity) || 1) * basePrice;
+  const currentVal = parseFloat(item.discount_amount) || 0;
+
+  if (newType === 'percentage') {
+    if (currentVal > 100) {
+      if (itemSubtotal > 0) {
+        item.discount_amount = parseFloat(((currentVal / itemSubtotal) * 100).toFixed(2));
+      } else {
+        item.discount_amount = 0;
+      }
+    }
+  } else if (newType === 'fixed') {
+    if (currentVal <= 100 && itemSubtotal > 0) {
+      item.discount_amount = parseFloat(((itemSubtotal * currentVal) / 100).toFixed(2));
+    }
+  }
+
   updateItemTotal(index);
 };
 
 const updateItemTotal = (index) => {
   const item = invoiceItems.value[index];
   if (!item) return;
+
+  const basePrice = getEffectiveUnitPrice(item);
+  const qty = Math.max(0, Number(item.quantity) || 0);
+
   if (isGlobalWholesale.value || item.is_wholesale) {
     if (item.wholesale_price !== undefined && item.wholesale_price !== null) {
       item.unit_price = item.wholesale_price;
@@ -3249,16 +3302,27 @@ const updateItemTotal = (index) => {
       item.wholesale_price = item.unit_price;
     }
   }
-  const basePrice = getEffectiveUnitPrice(item);
-  const itemSubtotal = item.quantity * basePrice;
-  const rawDiscount = item.discount_amount || 0;
+
+  const itemSubtotal = qty * basePrice;
+  let rawDiscount = Number(item.discount_amount) || 0;
+
+  if (item.discount_type === 'percentage') {
+    if (rawDiscount > 100) {
+      rawDiscount = 100;
+      item.discount_amount = 100;
+    }
+  }
+
   const effectiveDiscount = (item.discount_type === 'percentage')
     ? (itemSubtotal * rawDiscount) / 100
-    : rawDiscount;
-  const taxRate = item.tax_rate || 0;
-  
+    : Math.min(itemSubtotal, rawDiscount);
+
   const taxableAmount = Math.max(0, itemSubtotal - effectiveDiscount);
-  item.total = Math.max(0, taxableAmount + (taxableAmount * (taxRate / 100)));
+  const taxRate = Number(item.tax_rate) || 0;
+  const itemTax = (taxableAmount * taxRate) / 100;
+
+  const finalRowTotal = taxableAmount + itemTax;
+  item.total = isNaN(finalRowTotal) ? 0 : Math.max(0, finalRowTotal);
 
   calculateTotal();
 };
