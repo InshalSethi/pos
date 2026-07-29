@@ -1984,18 +1984,35 @@ const selectPaymentMethod = (val) => {
   invoiceForm.value.payment_method = val;
   isPaymentDropdownOpen.value = false;
 };
+const getInitialInvoiceSettings = () => {
+  try {
+    const cached = localStorage.getItem('company_invoice_settings');
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {}
+  return null;
+};
+
+const cachedInvoiceSettings = getInitialInvoiceSettings();
+
 const isBarcodeActive = ref(true);
-const isGlobalWholesale = ref(false);
+const isGlobalWholesale = ref(cachedInvoiceSettings?.default_pricing_mode === 'wholesale');
 
 const companyInvoiceSettings = ref({
-  show_item_wholesale_toggle: true,
-  allow_manual_taxes_discounts: true
+  show_item_wholesale_toggle: cachedInvoiceSettings?.show_item_wholesale_toggle ?? true,
+  allow_manual_taxes_discounts: cachedInvoiceSettings?.allow_manual_taxes_discounts ?? true,
+  ...(cachedInvoiceSettings || {})
 });
 
 const loadCompanyInvoiceSettings = async () => {
   try {
     const res = await api.get('/invoice-purchase-settings');
     if (res.data) {
+      try {
+        localStorage.setItem('company_invoice_settings', JSON.stringify(res.data));
+      } catch (e) {}
+
       companyInvoiceSettings.value = {
         ...companyInvoiceSettings.value,
         ...res.data

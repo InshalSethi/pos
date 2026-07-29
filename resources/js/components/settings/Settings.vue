@@ -2261,6 +2261,9 @@ const fetchInvoicePurchaseSettings = async () => {
       axios.get('/api/taxes')
     ]);
     if (settingsRes.data) {
+      try {
+        localStorage.setItem('company_invoice_settings', JSON.stringify(settingsRes.data));
+      } catch(e){}
       invoicePurchaseSettings.value = {
         ...invoicePurchaseSettings.value,
         ...settingsRes.data,
@@ -2285,6 +2288,11 @@ const saveInvoicePurchaseSettings = async () => {
   try {
     savingInvoicePurchaseSettings.value = true;
     const res = await axios.put('/api/invoice-purchase-settings', invoicePurchaseSettings.value);
+    if (res.data?.settings) {
+      try {
+        localStorage.setItem('company_invoice_settings', JSON.stringify(res.data.settings));
+      } catch(e){}
+    }
     showToast(res.data.message || 'Invoice & Purchase settings updated successfully', 'success');
   } catch (e) {
     console.error('Error saving invoice purchase settings:', e);
