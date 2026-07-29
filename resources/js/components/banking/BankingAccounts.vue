@@ -172,40 +172,45 @@
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-right">
-                  <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 inline-flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm divide-x divide-slate-200 dark:divide-zinc-800 overflow-hidden shrink-0">
-                    <!-- Edit Button -->
-                    <button
-                      @click="editAccount(acc)"
-                      type="button"
-                      title="Edit Account"
-                      class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
+                  <div class="flex items-center justify-end gap-1.5 shrink-0">
+                    <!-- HOVER-ONLY EDIT / DELETE BUTTONS -->
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 inline-flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden shrink-0">
+                      <!-- Edit Button -->
+                      <button
+                        @click="editAccount(acc)"
+                        type="button"
+                        title="Edit Account"
+                        class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
 
-                    <!-- Conditional Delete OR Lock Icon -->
+                      <!-- Delete Button (ONLY for NON-SYSTEM accounts on hover) -->
+                      <button
+                        v-if="!(acc.is_system_account || acc.account_code === '1010' || acc.account_name === 'Cash')"
+                        @click="deleteAccount(acc)"
+                        type="button"
+                        title="Delete Account"
+                        class="p-1.5 px-2.5 border-l border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- ALWAYS VISIBLE LOCK ICON FOR SYSTEM ACCOUNTS -->
                     <span
                       v-if="acc.is_system_account || acc.account_code === '1010' || acc.account_name === 'Cash'"
-                      title="System Account (Cannot be deleted)"
-                      class="p-1.5 px-2.5 text-slate-300 dark:text-zinc-600 bg-slate-50 dark:bg-zinc-950 cursor-not-allowed inline-flex items-center justify-center"
+                      title="System Account Locked"
+                      class="p-1.5 px-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 border border-slate-200/80 dark:border-zinc-700/80 shrink-0 inline-flex items-center justify-center"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </span>
-                    <button
-                      v-else
-                      @click="deleteAccount(acc)"
-                      type="button"
-                      title="Delete Account"
-                      class="p-1.5 px-2.5 text-slate-500 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
                   </div>
                 </td>
               </tr>
