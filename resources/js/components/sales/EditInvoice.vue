@@ -357,13 +357,6 @@
                   <td class="w-[40px]"></td>
                 </tr>
 
-                <!-- 2. Total Amount -->
-                <tr class="bg-slate-100/50 dark:bg-zinc-800/30 font-bold border-t border-slate-200 dark:border-zinc-800">
-                  <td colspan="5" class="py-2 px-3 text-right text-slate-800 dark:text-zinc-200 text-xs">Total Amount</td>
-                  <td colspan="2" class="py-2 px-2 text-right text-slate-900 dark:text-zinc-100 text-sm font-black">{{ currencySymbol }}{{ invoiceSubtotal.toFixed(2) }}</td>
-                  <td class="w-[40px]"></td>
-                </tr>
-
                 <!-- 3. Auto Applied Required Taxes (With Professional Override Toggle) -->
                 <template v-if="autoRequiredTaxesList.length > 0">
                   <tr
@@ -1046,10 +1039,6 @@
             <div class="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-zinc-800/80 text-xs space-y-2.5">
               <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
                 <span>Subtotal:</span>
-                <span class="font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ invoiceSubtotal.toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between font-medium text-slate-600 dark:text-zinc-400">
-                <span>Total Amount:</span>
                 <span class="font-bold text-slate-800 dark:text-zinc-200">{{ currencySymbol }}{{ invoiceSubtotal.toFixed(2) }}</span>
               </div>
               <template v-if="autoRequiredTaxesList.length > 0">
