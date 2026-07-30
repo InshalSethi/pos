@@ -320,48 +320,32 @@
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Account Type *</label>
-                  <select
+                  <CustomFloatingSelect
+                    label="Account Type *"
+                    :options="accountTypeSelectOptions"
                     v-model="accountForm.account_type"
-                    required
                     @change="updateSubtypeOptions"
-                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="asset">Asset</option>
-                    <option value="liability">Liability</option>
-                    <option value="equity">Equity</option>
-                    <option value="revenue">Revenue</option>
-                    <option value="expense">Expense</option>
-                  </select>
+                    placeholder="Select Type"
+                  />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Account Subtype *</label>
-                  <select
+                  <CustomFloatingSelect
+                    label="Account Subtype *"
+                    :options="availableSubtypes"
                     v-model="accountForm.account_subtype"
-                    required
-                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    <option value="">Select Subtype</option>
-                    <option v-for="st in availableSubtypes" :key="st.value" :value="st.value">
-                      {{ st.label }}
-                    </option>
-                  </select>
+                    placeholder="Select Subtype"
+                  />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Parent Account</label>
-                  <select
+                  <CustomFloatingSelect
+                    label="Parent Account"
+                    :options="parentAccountSelectOptions"
                     v-model="accountForm.parent_account_id"
-                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    <option value="">No Parent (Top Level)</option>
-                    <option v-for="acc in parentAccountOptions" :key="acc.id" :value="acc.id">
-                      {{ acc.account_code }} - {{ acc.account_name }}
-                    </option>
-                  </select>
+                    placeholder="No Parent (Top Level)"
+                  />
                 </div>
                 <div>
                   <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Opening Balance ($)</label>
@@ -370,7 +354,7 @@
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    class="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -414,11 +398,12 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import AccountTreeNode from '../accounting/AccountTreeNode.vue';
+import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 import { useToast } from '@/composables/useToast';
 
 export default {
   name: 'BankingAccounts',
-  components: { AccountTreeNode },
+  components: { AccountTreeNode, CustomFloatingSelect },
   setup() {
     const { showToast } = useToast();
     const activeView = ref('tree');
@@ -440,6 +425,14 @@ export default {
       { value: 'equity', label: 'Equity' },
       { value: 'revenue', label: 'Revenue' },
       { value: 'expense', label: 'Expenses' }
+    ];
+
+    const accountTypeSelectOptions = [
+      { value: 'asset', label: 'Asset' },
+      { value: 'liability', label: 'Liability' },
+      { value: 'equity', label: 'Equity' },
+      { value: 'revenue', label: 'Revenue' },
+      { value: 'expense', label: 'Expense' }
     ];
 
     const accountSubtypes = {
@@ -483,6 +476,20 @@ export default {
         account.account_type === accountForm.value.account_type &&
         account.id !== editingAccount.value?.id
       );
+    });
+
+    const parentAccountSelectOptions = computed(() => {
+      const filtered = accounts.value.filter(account =>
+        account.account_type === accountForm.value.account_type &&
+        account.id !== editingAccount.value?.id
+      );
+      return [
+        { value: '', label: 'No Parent (Top Level)' },
+        ...filtered.map(acc => ({
+          value: acc.id,
+          label: `${acc.account_code || acc.code || ''} - ${acc.account_name || acc.name}`
+        }))
+      ];
     });
 
     let searchTimeout;
@@ -661,9 +668,11 @@ export default {
       editingAccount,
       savingAccount,
       accountTypes,
+      accountTypeSelectOptions,
       availableSubtypes,
       accountForm,
       parentAccountOptions,
+      parentAccountSelectOptions,
       debouncedSearch,
       selectTypeFilter,
       fetchAccountTree,
