@@ -540,6 +540,19 @@
               <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
 
               <router-link
+                to="/banking/accounts"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/banking/accounts'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/banking/accounts'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Accounts
+              </router-link>
+
+              <router-link
                 to="/banking/manual-journals"
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
@@ -1843,6 +1856,7 @@ const menuItems = [
   { path: '/inventory/histories', name: 'Histories', category: 'Inventory', icon: 'histories' },
   { path: '/inventory/transfer-orders', name: 'Stock Transfers', category: 'Inventory', icon: 'transfers' },
   { path: '/accounting/chart-of-accounts', name: 'Chart of Accounts', category: 'Accounting', icon: 'accounting' },
+  { path: '/banking/accounts', name: 'Bank Accounts', category: 'Banking', icon: 'banking' },
   { path: '/transactions', name: 'Transactions', category: 'Accounting', icon: 'transactions' },
   { path: '/expenses', name: 'Expenses', category: 'Accounting', icon: 'expenses' },
   { path: '/payments', name: 'Payments Out', category: 'Payments', icon: 'payments' },

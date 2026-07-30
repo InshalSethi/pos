@@ -62,24 +62,34 @@ class BankAccountController extends Controller
     public function store(Request $request): JsonResponse
     {
         $companyId = auth()->user()->current_company_id;
+
+        $rawType = $request->input('account_type', 'checking');
+        if ($rawType === 'bank') {
+            $rawType = 'checking';
+        }
+
         $validator = Validator::make($request->all(), [
             'account_name' => 'required|string|max:255',
-            'bank_name' => 'required|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
             'account_number' => [
                 'required',
                 'string',
                 'max:50',
                 Rule::unique('bank_accounts', 'account_number')->where('company_id', $companyId),
             ],
-            'account_type' => 'required|in:checking,savings,credit_card,line_of_credit,other',
+            'account_type' => 'required|string',
             'chart_account_id' => 'nullable|exists:chart_of_accounts,id',
             'routing_number' => 'nullable|string|max:20',
             'swift_code' => 'nullable|string|max:20',
             'iban' => 'nullable|string|max:50',
+            'currency' => 'nullable|string|max:10',
             'opening_balance' => 'nullable|numeric',
             'opening_date' => 'nullable|date',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'is_default' => 'boolean',
+            'bank_phone' => 'nullable|string|max:50',
+            'bank_address' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -90,6 +100,14 @@ class BankAccountController extends Controller
         }
 
         $data = $request->all();
+        $data['account_type'] = $rawType;
+        if (empty($data['bank_name'])) {
+            $data['bank_name'] = $data['account_name'];
+        }
+
+        if (!empty($data['is_default'])) {
+            BankAccount::where('company_id', $companyId)->update(['is_default' => false]);
+        }
 
         // Auto-create Chart of Account if not selected
         if (empty($data['chart_account_id'])) {
@@ -97,20 +115,19 @@ class BankAccountController extends Controller
             $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
             $chartAccount = Account::create([
                 'account_code' => $newCode,
-                'account_name' => $request->account_name . ' (' . $request->bank_name . ')',
-                'account_type' => 'asset',
-                'account_subtype' => 'Cash and Bank',
-                'description' => 'Bank Account for ' . $request->account_name,
-                'opening_balance' => $request->opening_balance ?? 0,
-                'current_balance' => $request->opening_balance ?? 0,
+                'account_name' => $data['account_name'] . ' (' . $data['bank_name'] . ')',
+                'account_type' => $data['account_type'] === 'credit_card' ? 'liability' : 'asset',
+                'account_subtype' => $data['account_type'] === 'credit_card' ? 'Credit Card' : 'Cash and Bank',
+                'description' => 'Bank Account for ' . $data['account_name'],
+                'opening_balance' => $data['opening_balance'] ?? 0,
+                'current_balance' => $data['opening_balance'] ?? 0,
                 'is_active' => true,
                 'is_system_account' => false,
             ]);
             $data['chart_account_id'] = $chartAccount->id;
         } else {
-            // Validate that the chart account is an asset or liability account
             $chartAccount = Account::find($request->chart_account_id);
-            if (!in_array($chartAccount->account_type, ['asset', 'liability'])) {
+            if ($chartAccount && !in_array($chartAccount->account_type, ['asset', 'liability'])) {
                 return response()->json([
                     'message' => 'Bank accounts must be linked to asset or liability accounts'
                 ], 422);
@@ -146,24 +163,34 @@ class BankAccountController extends Controller
     public function update(Request $request, BankAccount $bankAccount): JsonResponse
     {
         $companyId = auth()->user()->current_company_id;
+
+        $rawType = $request->input('account_type', $bankAccount->account_type);
+        if ($rawType === 'bank') {
+            $rawType = 'checking';
+        }
+
         $validator = Validator::make($request->all(), [
             'account_name' => 'required|string|max:255',
-            'bank_name' => 'required|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
             'account_number' => [
                 'required',
                 'string',
                 'max:50',
                 Rule::unique('bank_accounts', 'account_number')->ignore($bankAccount->id)->where('company_id', $companyId),
             ],
-            'account_type' => 'required|in:checking,savings,credit_card,line_of_credit,other',
-            'chart_account_id' => 'required|exists:chart_of_accounts,id',
+            'account_type' => 'required|string',
+            'chart_account_id' => 'nullable|exists:chart_of_accounts,id',
             'routing_number' => 'nullable|string|max:20',
             'swift_code' => 'nullable|string|max:20',
             'iban' => 'nullable|string|max:50',
+            'currency' => 'nullable|string|max:10',
             'opening_balance' => 'nullable|numeric',
             'opening_date' => 'nullable|date',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'is_default' => 'boolean',
+            'bank_phone' => 'nullable|string|max:50',
+            'bank_address' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -173,15 +200,26 @@ class BankAccountController extends Controller
             ], 422);
         }
 
-        // Validate chart account type
-        $chartAccount = Account::find($request->chart_account_id);
-        if (!in_array($chartAccount->account_type, ['asset', 'liability'])) {
-            return response()->json([
-                'message' => 'Bank accounts must be linked to asset or liability accounts'
-            ], 422);
+        $data = $request->all();
+        $data['account_type'] = $rawType;
+        if (empty($data['bank_name'])) {
+            $data['bank_name'] = $data['account_name'];
         }
 
-        $bankAccount->update($request->all());
+        if (!empty($data['is_default'])) {
+            BankAccount::where('company_id', $companyId)->where('id', '!=', $bankAccount->id)->update(['is_default' => false]);
+        }
+
+        if (!empty($data['chart_account_id'])) {
+            $chartAccount = Account::find($data['chart_account_id']);
+            if ($chartAccount && !in_array($chartAccount->account_type, ['asset', 'liability'])) {
+                return response()->json([
+                    'message' => 'Bank accounts must be linked to asset or liability accounts'
+                ], 422);
+            }
+        }
+
+        $bankAccount->update($data);
 
         return response()->json([
             'message' => 'Bank account updated successfully',
