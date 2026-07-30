@@ -118,6 +118,67 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination & Per-Page Footer -->
+      <div v-if="!loading && pagination.total > 0" class="px-6 py-3.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+        <div class="flex flex-wrap items-center gap-4 text-slate-500 dark:text-zinc-400">
+          <span>
+            Showing <span class="font-bold text-slate-800 dark:text-zinc-200">{{ pagination.from || 0 }}</span> to
+            <span class="font-bold text-slate-800 dark:text-zinc-200">{{ pagination.to || 0 }}</span> of
+            <span class="font-bold text-slate-800 dark:text-zinc-200">{{ pagination.total || 0 }}</span> entries
+          </span>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-slate-500 dark:text-zinc-400 font-medium">Rows:</span>
+            <div class="w-24">
+              <CustomFloatingSelect
+                v-model="perPage"
+                :options="perPageOptions"
+                placement="top"
+                @change="handlePerPageChange"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5" v-if="pagination.last_page > 1">
+          <button
+            @click="changePage(pagination.current_page - 1)"
+            :disabled="pagination.current_page === 1"
+            class="px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            title="Previous Page"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <button
+            v-for="page in visiblePages"
+            :key="page"
+            @click="changePage(page)"
+            :class="[
+              'px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer',
+              page === pagination.current_page
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800'
+            ]"
+          >
+            {{ page }}
+          </button>
+
+          <button
+            @click="changePage(pagination.current_page + 1)"
+            :disabled="pagination.current_page === pagination.last_page"
+            class="px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            title="Next Page"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- New / Edit Journal Entry Modal -->
@@ -278,9 +339,13 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import api from '@/services/api';
 import { useToast } from '@/composables/useToast';
+import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 
 export default {
   name: 'BankingManualJournals',
+  components: {
+    CustomFloatingSelect,
+  },
   setup() {
     const { showToast } = useToast();
     const journalEntries = ref([]);
@@ -293,6 +358,22 @@ export default {
     const showViewModal = ref(false);
     const editingEntry = ref(null);
     const selectedEntry = ref(null);
+
+    const perPage = ref(10);
+    const perPageOptions = [
+      { label: '10', value: 10 },
+      { label: '50', value: 50 },
+      { label: '100', value: 100 },
+    ];
+
+    const pagination = ref({
+      current_page: 1,
+      last_page: 1,
+      per_page: 10,
+      total: 0,
+      from: 0,
+      to: 0,
+    });
 
     const form = ref({
       entry_date: new Date().toISOString().split('T')[0],
@@ -309,25 +390,72 @@ export default {
     const debouncedJournalSearch = () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
-        fetchJournalEntries();
+        fetchJournalEntries(1);
       }, 300);
     };
 
-    const fetchJournalEntries = async () => {
+    const fetchJournalEntries = async (page = 1) => {
       loading.value = true;
       try {
-        const params = { per_page: 50 };
+        const params = {
+          page: page,
+          per_page: perPage.value,
+        };
         if (selectedStatus.value) params.status = selectedStatus.value;
         if (searchQuery.value) params.search = searchQuery.value;
 
         const response = await axios.get('/api/journal-entries', { params });
-        journalEntries.value = response.data?.data || response.data || [];
+        const resData = response.data;
+
+        if (resData && Array.isArray(resData.data)) {
+          journalEntries.value = resData.data;
+          pagination.value = {
+            current_page: resData.current_page || page,
+            last_page: resData.last_page || 1,
+            per_page: resData.per_page || perPage.value,
+            total: resData.total || resData.data.length,
+            from: resData.from || ((page - 1) * perPage.value + 1),
+            to: resData.to || Math.min(page * perPage.value, resData.total || resData.data.length)
+          };
+        } else {
+          journalEntries.value = Array.isArray(resData) ? resData : [];
+          pagination.value = {
+            current_page: 1,
+            last_page: 1,
+            per_page: perPage.value,
+            total: journalEntries.value.length,
+            from: journalEntries.value.length ? 1 : 0,
+            to: journalEntries.value.length
+          };
+        }
       } catch (error) {
         showToast('Failed to load journal entries', 'error');
       } finally {
         loading.value = false;
       }
     };
+
+    const changePage = (page) => {
+      if (page < 1 || page > pagination.value.last_page || page === pagination.value.current_page) return;
+      fetchJournalEntries(page);
+    };
+
+    const handlePerPageChange = (val) => {
+      perPage.value = Number(val);
+      fetchJournalEntries(1);
+    };
+
+    const visiblePages = computed(() => {
+      const current = pagination.value.current_page || 1;
+      const last = pagination.value.last_page || 1;
+      const pages = [];
+      const start = Math.max(1, current - 2);
+      const end = Math.min(last, current + 2);
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      return pages;
+    });
 
     const fetchCoaAccounts = async () => {
       try {
@@ -468,6 +596,12 @@ export default {
       reverseJournalEntry,
       formatDate,
       formatNumber,
+      perPage,
+      perPageOptions,
+      pagination,
+      changePage,
+      handlePerPageChange,
+      visiblePages,
     };
   },
 };

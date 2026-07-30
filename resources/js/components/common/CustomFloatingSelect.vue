@@ -30,10 +30,10 @@
         v-if="isOpen"
         ref="dropdownMenuRef"
         :style="floatingStyle"
-        class="bg-white dark:bg-[#12141a] border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/60 transition-all animate-in fade-in zoom-in-95"
+        class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/60 transition-all animate-in fade-in zoom-in-95"
       >
         <!-- Optional Search Input -->
-        <div v-if="searchable" class="p-2 border-b border-slate-100 dark:border-zinc-800 sticky top-0 bg-white dark:bg-[#12141a] z-10">
+        <div v-if="searchable" class="p-2 border-b border-slate-100 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
           <input
             ref="searchInputRef"
             v-model="searchQuery"
@@ -57,7 +57,7 @@
             'p-2.5 px-3.5 text-xs font-normal cursor-pointer transition-colors flex items-center justify-between',
             String(modelValue) === String(option.value)
               ? 'bg-indigo-600 text-white font-normal'
-              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-normal'
+              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white font-normal'
           ]"
         >
           <span>{{ option.label }}</span>
@@ -83,7 +83,8 @@ const props = defineProps({
   options: { type: Array, default: () => [] },
   modelValue: { type: [String, Number, Boolean, Object], default: '' },
   placeholder: { type: String, default: 'Select...' },
-  searchable: { type: Boolean, default: false }
+  searchable: { type: Boolean, default: false },
+  placement: { type: String, default: 'auto' } // 'auto', 'top', 'bottom'
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
@@ -119,17 +120,21 @@ const updatePosition = () => {
   if (!containerRef.value) return;
   const rect = containerRef.value.getBoundingClientRect();
   
+  const menuEl = dropdownMenuRef.value;
+  const actualHeight = (menuEl && menuEl.offsetHeight)
+    ? menuEl.offsetHeight
+    : (props.options.length * 38 + (props.searchable ? 45 : 0));
+  
   const spaceBelow = window.innerHeight - rect.bottom;
-  const dropdownHeight = 240; // max-h-60 approx
   
   let top = rect.bottom + 4;
-  if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
-    top = rect.top - dropdownHeight - 4;
+  if (props.placement === 'top' || (props.placement === 'auto' && spaceBelow < (actualHeight + 10) && rect.top > actualHeight)) {
+    top = rect.top - actualHeight - 4;
   }
 
   floatingStyle.value = {
     position: 'fixed',
-    top: `${top}px`,
+    top: `${Math.max(4, top)}px`,
     left: `${rect.left}px`,
     width: `${rect.width}px`,
     zIndex: '99999'
@@ -140,12 +145,12 @@ const toggleOpen = () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     searchQuery.value = '';
-    updatePosition();
-    if (props.searchable) {
-      nextTick(() => {
+    nextTick(() => {
+      updatePosition();
+      if (props.searchable) {
         searchInputRef.value?.focus();
-      });
-    }
+      }
+    });
   }
 };
 
