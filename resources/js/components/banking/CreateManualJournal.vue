@@ -71,8 +71,8 @@
               <tr>
                 <th class="p-3 w-2/5">ACCOUNT *</th>
                 <th class="p-3">NOTE</th>
-                <th class="p-3 w-32 text-right">DEBIT</th>
-                <th class="p-3 w-32 text-right">CREDIT</th>
+                <th class="p-3 w-32 text-right">DEBIT ({{ companyCurrencySymbol }})</th>
+                <th class="p-3 w-32 text-right">CREDIT ({{ companyCurrencySymbol }})</th>
                 <th class="p-3 w-12 text-center"></th>
               </tr>
             </thead>
@@ -245,6 +245,7 @@ import axios from 'axios';
 import api from '@/services/api';
 import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 
 export default {
   name: 'CreateManualJournal',
@@ -252,15 +253,24 @@ export default {
   setup() {
     const router = useRouter();
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
     const coaAccounts = ref([]);
     const submitting = ref(false);
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
 
     const currencyOptions = [
       { value: 'PKR', label: 'Pakistan Rupee (PKR)' },
       { value: 'USD', label: 'US Dollar (USD)' },
       { value: 'EUR', label: 'Euro (EUR)' },
       { value: 'GBP', label: 'British Pound (GBP)' },
-      { value: 'AED', label: 'UAE Dirham (AED)' }
+      { value: 'AED', label: 'UAE Dirham (AED)' },
+      { value: 'SAR', label: 'Saudi Riyal (SAR)' },
+      { value: 'CAD', label: 'Canadian Dollar (CAD)' },
+      { value: 'AUD', label: 'Australian Dollar (AUD)' },
+      { value: 'INR', label: 'Indian Rupee (INR)' }
     ];
 
     const coaAccountOptions = computed(() => {
@@ -276,7 +286,7 @@ export default {
 
     const form = ref({
       entry_date: new Date().toISOString().split('T')[0],
-      currency: 'PKR',
+      currency: currencyStore.currencyCode || 'PKR',
       description: '',
       entry_number: generateNumber(),
       basis: 'accrual',
@@ -386,11 +396,16 @@ export default {
       return Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    onMounted(() => {
+    onMounted(async () => {
+      await currencyStore.fetchCurrencies();
+      if (currencyStore.currencyCode) {
+        form.value.currency = currencyStore.currencyCode;
+      }
       fetchCoaAccounts();
     });
 
     return {
+      companyCurrencySymbol,
       coaAccounts,
       currencyOptions,
       coaAccountOptions,
