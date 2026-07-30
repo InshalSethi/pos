@@ -49,7 +49,7 @@
         </div>
 
         <button
-          @click="openAddModal"
+          @click="openAddPage"
           class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           + Add Account
@@ -126,7 +126,7 @@
 
           <div class="flex items-center space-x-1">
             <button
-              @click="openEditModal(acc)"
+              @click="openEditPage(acc)"
               title="Edit Account"
               class="p-2 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-colors cursor-pointer"
             >
@@ -218,7 +218,7 @@
               <!-- Actions -->
               <td class="py-4 px-5 text-right space-x-1">
                 <button
-                  @click="openEditModal(acc)"
+                  @click="openEditPage(acc)"
                   title="Edit Account"
                   class="p-1.5 inline-flex items-center justify-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors cursor-pointer"
                 >
@@ -252,7 +252,7 @@
       <h3 class="text-base font-bold text-slate-800 dark:text-zinc-200 mb-1">No Bank Accounts Found</h3>
       <p class="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mb-6">Get started by creating your first bank or credit card account to track financial transactions and balances.</p>
       <button
-        @click="openAddModal"
+        @click="openAddPage"
         class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
       >
         + Add Bank Account
@@ -263,245 +263,24 @@
     <div v-if="loading" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-12 text-center shadow-sm">
       <p class="text-xs text-slate-400 dark:text-zinc-500">Loading bank accounts...</p>
     </div>
-
-    <!-- Add / Edit Bank Account Modal (Akaunting Style Layout) -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-        <div class="relative mx-auto border border-slate-200 dark:border-slate-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-900 dark:text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
-          
-          <!-- Modal Header -->
-          <div class="p-6 pb-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
-            <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                {{ editingAccount ? 'Edit Bank Account' : 'Add Bank Account' }}
-              </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure bank or credit card details and opening balance.</p>
-            </div>
-            <button @click="showModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg transition-colors cursor-pointer">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-
-          <!-- Form Body -->
-          <form @submit.prevent="saveBankAccount" class="flex flex-col flex-1 min-h-0">
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
-
-              <!-- SECTION 1: General Information -->
-              <div class="space-y-4">
-                <!-- Account Type Selector (Segmented Toggle / Tabs) -->
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">Type *</label>
-                  <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl">
-                    <button
-                      type="button"
-                      @click="form.account_type = 'bank'"
-                      :class="form.account_type === 'bank' || form.account_type === 'checking' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
-                      class="px-6 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer"
-                    >
-                      Bank
-                    </button>
-                    <button
-                      type="button"
-                      @click="form.account_type = 'credit_card'"
-                      :class="form.account_type === 'credit_card' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
-                      class="px-6 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer"
-                    >
-                      Credit Card
-                    </button>
-                  </div>
-                  <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 font-normal italic">
-                    Use credit card type for negative opening balance. The number is essential to reconcile accounts correctly.
-                  </p>
-                </div>
-
-                <!-- Account Name & Account Number -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Name *</label>
-                    <input
-                      v-model="form.account_name"
-                      type="text"
-                      required
-                      placeholder="e.g. Meezan Bank / Corporate Card"
-                      class="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Number *</label>
-                    <input
-                      v-model="form.account_number"
-                      type="text"
-                      required
-                      placeholder="Enter Account Number"
-                      class="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
-                    />
-                  </div>
-                </div>
-
-                <!-- Currency & Opening Balance -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Currency *</label>
-                    <CustomFloatingSelect
-                      v-model="form.currency"
-                      :options="currencyOptions"
-                      placeholder="Select Currency"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Opening Balance *</label>
-                    <div class="relative">
-                      <span class="absolute left-3 top-2.5 text-xs text-slate-400 font-semibold">
-                        {{ getCurrencySymbol(form.currency) }}
-                      </span>
-                      <input
-                        v-model.number="form.opening_balance"
-                        type="number"
-                        step="0.01"
-                        required
-                        placeholder="0.00"
-                        class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Default Account Toggle (Yes / No) -->
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">Default Account</label>
-                  <div class="inline-flex rounded-xl p-1 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
-                    <button
-                      type="button"
-                      @click="form.is_default = true"
-                      :class="form.is_default ? 'bg-emerald-600 text-white font-semibold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium'"
-                      class="px-5 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
-                    >
-                      Yes
-                    </button>
-                    <button
-                      type="button"
-                      @click="form.is_default = false"
-                      :class="!form.is_default ? 'bg-rose-600 text-white font-semibold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium'"
-                      class="px-5 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
-                    >
-                      No
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- SECTION 2: Bank Details (Optional Metadata) -->
-              <div class="pt-4 border-t border-slate-200 dark:border-zinc-800 space-y-4">
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Bank</h3>
-                  <p class="text-[11px] text-slate-400 dark:text-zinc-500 italic mt-0.5">
-                    You may have multiple bank accounts in more than one bank. Recording information about your bank will make it easier to match transactions.
-                  </p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Bank Name</label>
-                    <input
-                      v-model="form.bank_name"
-                      type="text"
-                      placeholder="Enter Bank Name (e.g. Meezan Bank)"
-                      class="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Bank Phone</label>
-                    <input
-                      v-model="form.bank_phone"
-                      type="text"
-                      placeholder="Enter Bank Phone"
-                      class="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Bank Address</label>
-                  <textarea
-                    v-model="form.bank_address"
-                    rows="3"
-                    placeholder="Enter Bank Address"
-                    class="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal resize-none"
-                  ></textarea>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Modal Footer Buttons -->
-            <div class="flex justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-800 shrink-0">
-              <button
-                type="button"
-                @click="showModal = false"
-                class="px-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="submitting"
-                class="px-6 py-2 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold shadow-sm transition-all cursor-pointer"
-              >
-                {{ submitting ? 'Saving...' : 'Save' }}
-              </button>
-            </div>
-          </form>
-
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
-import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 
 export default {
   name: 'BankAccounts',
-  components: {
-    CustomFloatingSelect
-  },
   setup() {
+    const router = useRouter();
     const { showToast } = useToast();
     const accounts = ref([]);
     const loading = ref(true);
-    const submitting = ref(false);
     const searchQuery = ref('');
-    const showModal = ref(false);
-    const editingAccount = ref(null);
     const viewMode = ref('list'); // 'list' | 'grid'
-
-    const currencyOptions = [
-      { label: 'Pakistan Rupee (PKR)', value: 'PKR' },
-      { label: 'US Dollar (USD)', value: 'USD' },
-      { label: 'Euro (EUR)', value: 'EUR' },
-      { label: 'British Pound (GBP)', value: 'GBP' },
-      { label: 'UAE Dirham (AED)', value: 'AED' },
-      { label: 'Saudi Riyal (SAR)', value: 'SAR' },
-    ];
-
-    const form = ref({
-      account_name: '',
-      account_number: '',
-      account_type: 'bank', // 'bank' or 'credit_card'
-      currency: 'PKR',
-      opening_balance: 0.00,
-      is_default: false,
-      bank_name: '',
-      bank_phone: '',
-      bank_address: ''
-    });
 
     let searchTimeout;
     const debouncedSearch = () => {
@@ -525,62 +304,12 @@ export default {
       }
     };
 
-    const openAddModal = () => {
-      editingAccount.value = null;
-      form.value = {
-        account_name: '',
-        account_number: '',
-        account_type: 'bank',
-        currency: 'PKR',
-        opening_balance: 0.00,
-        is_default: false,
-        bank_name: '',
-        bank_phone: '',
-        bank_address: ''
-      };
-      showModal.value = true;
+    const openAddPage = () => {
+      router.push('/banking/accounts/create');
     };
 
-    const openEditModal = (acc) => {
-      editingAccount.value = acc;
-      form.value = {
-        account_name: acc.account_name || '',
-        account_number: acc.account_number || '',
-        account_type: acc.account_type === 'credit_card' ? 'credit_card' : 'bank',
-        currency: acc.currency || 'PKR',
-        opening_balance: acc.opening_balance || 0.00,
-        is_default: Boolean(acc.is_default),
-        bank_name: acc.bank_name || '',
-        bank_phone: acc.bank_phone || '',
-        bank_address: acc.bank_address || ''
-      };
-      showModal.value = true;
-    };
-
-    const saveBankAccount = async () => {
-      submitting.value = true;
-      try {
-        const payload = {
-          ...form.value,
-          account_type: form.value.account_type === 'credit_card' ? 'credit_card' : 'checking',
-          bank_name: form.value.bank_name || form.value.account_name
-        };
-
-        if (editingAccount.value) {
-          await axios.put(`/api/bank-accounts/${editingAccount.value.id}`, payload);
-          showToast('Bank account updated successfully');
-        } else {
-          await axios.post('/api/bank-accounts', payload);
-          showToast('Bank account created successfully');
-        }
-        showModal.value = false;
-        fetchAccounts();
-      } catch (err) {
-        const msg = err.response?.data?.message || 'Failed to save bank account';
-        showToast(msg, 'error');
-      } finally {
-        submitting.value = false;
-      }
+    const openEditPage = (acc) => {
+      router.push(`/banking/accounts/${acc.id}/edit`);
     };
 
     const deleteAccount = async (acc) => {
@@ -626,18 +355,12 @@ export default {
     return {
       accounts,
       loading,
-      submitting,
       searchQuery,
-      showModal,
-      editingAccount,
-      currencyOptions,
-      form,
       viewMode,
       debouncedSearch,
       fetchAccounts,
-      openAddModal,
-      openEditModal,
-      saveBankAccount,
+      openAddPage,
+      openEditPage,
       deleteAccount,
       formatCurrency,
       getCurrencySymbol,

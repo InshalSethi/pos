@@ -173,6 +173,18 @@ const routes = [
         meta: { permission: 'accounting.view' }
       },
       {
+        path: 'banking/accounts/create',
+        name: 'CreateBankAccount',
+        component: () => import('@/components/banking/CreateBankAccount.vue'),
+        meta: { permission: 'accounting.create' }
+      },
+      {
+        path: 'banking/accounts/:id/edit',
+        name: 'EditBankAccount',
+        component: () => import('@/components/banking/CreateBankAccount.vue'),
+        meta: { permission: 'accounting.edit' }
+      },
+      {
         path: 'banking/manual-journals',
         name: 'BankingManualJournals',
         component: () => import('@/components/banking/BankingManualJournals.vue'),
