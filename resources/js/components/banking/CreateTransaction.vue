@@ -245,8 +245,7 @@
         <button
           type="submit"
           :disabled="submitting"
-          :class="isIncome ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900 dark:bg-indigo-600 dark:hover:bg-indigo-700'"
-          class="px-8 py-2.5 text-xs font-semibold text-white rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+          class="px-8 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
         >
           {{ submitting ? 'Saving...' : 'Save' }}
         </button>
