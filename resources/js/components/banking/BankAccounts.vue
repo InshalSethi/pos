@@ -331,14 +331,13 @@ export default {
     };
 
     const getCurrencySymbol = (code) => {
+      if (!code || code === 'PKR' || code === 'USD') return 'Rs';
       switch (code) {
-        case 'USD': return '$';
         case 'EUR': return '€';
         case 'GBP': return '£';
         case 'AED': return 'AED';
         case 'SAR': return 'SAR';
-        case 'PKR': return 'Rs';
-        default: return code || 'Rs';
+        default: return 'Rs';
       }
     };
 
