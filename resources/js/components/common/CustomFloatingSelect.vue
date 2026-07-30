@@ -10,7 +10,7 @@
       @click="toggleOpen"
       class="w-full text-left text-xs p-2.5 px-3 border rounded-xl bg-slate-50 dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-zinc-200 flex justify-between items-center shadow-sm hover:border-indigo-400 dark:hover:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
     >
-      <span :class="selectedOption ? 'font-semibold text-slate-900 dark:text-zinc-100' : 'text-slate-400'">
+      <span :class="selectedOption ? 'font-normal text-slate-800 dark:text-zinc-100' : 'font-normal text-slate-400'">
         {{ selectedOption ? selectedOption.label : placeholder }}
       </span>
       <svg
@@ -34,9 +34,9 @@
         :key="option.value"
         @click="selectOption(option.value)"
         :class="[
-          'p-2.5 px-3.5 text-xs cursor-pointer transition-all flex items-center justify-between',
+          'p-2.5 px-3.5 text-xs font-normal cursor-pointer transition-all flex items-center justify-between',
           String(modelValue) === String(option.value)
-            ? 'border-l-4 border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold'
+            ? 'border-l-4 border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-normal'
             : 'text-slate-700 dark:text-zinc-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 hover:text-indigo-600 dark:hover:text-indigo-400'
         ]"
       >
