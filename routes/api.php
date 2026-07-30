@@ -260,6 +260,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
 
         // Transaction routes
         Route::get('/transactions', [TransactionController::class , 'index']);
+        Route::post('/transactions', [TransactionController::class , 'store']);
         Route::get('/transactions/export-pdf', [TransactionController::class , 'exportPDF']);
         Route::get('/transactions/summary', [TransactionController::class , 'summary']);
 

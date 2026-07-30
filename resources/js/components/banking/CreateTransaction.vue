@@ -123,10 +123,9 @@
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Category *</label>
             <select
               v-model="form.category_id"
-              required
               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
             >
-              <option value="" disabled>- Select Category -</option>
+              <option value="">- Select Category -</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                 {{ cat.account_code ? cat.account_code + ' - ' : '' }}{{ cat.account_name }}
               </option>
@@ -337,7 +336,6 @@ export default {
               a.account_type === 'expense' || a.category === 'expense'
             );
           }
-          // Fallback if empty filter
           if (categories.value.length === 0) categories.value = allAccounts;
         } catch (e) {
           categories.value = [];
@@ -394,19 +392,25 @@ export default {
 
       submitting.value = true;
       try {
-        const payload = {
-          bank_account_id: form.value.bank_account_id,
-          transaction_date: form.value.transaction_date,
-          transaction_type: isIncome.value ? 'credit' : 'debit',
-          amount: parseFloat(form.value.amount || 0),
-          description: form.value.description || (isIncome.value ? 'Income entry' : 'Expense entry'),
-          reference_number: form.value.reference || form.value.number,
-          notes: `Payment Method: ${form.value.payment_method}. Ref: ${form.value.reference || form.value.number}`,
-          create_journal_entry: Boolean(form.value.category_id),
-          contra_account_id: form.value.category_id || null
-        };
+        const formData = new FormData();
+        formData.append('type', isIncome.value ? 'income' : 'expense');
+        formData.append('paid_at', form.value.transaction_date);
+        formData.append('payment_method', form.value.payment_method || 'Cash');
+        formData.append('account_id', form.value.bank_account_id);
+        formData.append('amount', form.value.amount || 0);
+        formData.append('number', form.value.number);
+        if (form.value.description) formData.append('description', form.value.description);
+        if (form.value.category_id) formData.append('category_id', form.value.category_id);
+        if (isIncome.value && form.value.contact_id) formData.append('customer_id', form.value.contact_id);
+        if (!isIncome.value && form.value.contact_id) formData.append('vendor_id', form.value.contact_id);
+        if (form.value.tax_id) formData.append('tax_id', form.value.tax_id);
+        if (form.value.reference) formData.append('reference', form.value.reference);
+        if (form.value.file) formData.append('attachment', form.value.file);
 
-        await axios.post('/api/bank-transactions', payload);
+        await axios.post('/api/transactions', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
         showToast(`${isIncome.value ? 'Income' : 'Expense'} transaction recorded successfully`);
         router.push('/banking/transactions');
       } catch (err) {

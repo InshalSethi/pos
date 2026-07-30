@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transaction;
+use App\Models\BankAccount;
+use App\Models\BankTransaction;
 use App\Models\JournalEntryLine;
 use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransactionController extends Controller
@@ -15,205 +19,191 @@ class TransactionController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:accounting.view')->only(['index']);
+        $this->middleware('permission:accounting.view')->only(['index', 'summary', 'exportPDF']);
+        $this->middleware('permission:accounting.create')->only(['store']);
     }
 
     /**
-     * Display a listing of bank account transactions
+     * Display a listing of transactions
      */
     public function index(Request $request): JsonResponse
     {
-        $query = JournalEntryLine::with(['journalEntry', 'account'])
-            ->whereHas('journalEntry', function ($q) {
-                $q->where('status', 'posted');
-            })
-            ->whereHas('account', function ($q) {
-                $q->where('account_type', 'asset')
-                  ->whereIn('account_name', ['Cash', 'Bank Account', 'Petty Cash']);
-            });
+        $query = Transaction::with(['bankAccount', 'category', 'customer', 'vendor', 'tax']);
 
-        // Filter by account
         if ($request->has('account_id') && $request->account_id) {
             $query->where('account_id', $request->account_id);
         }
 
-        // Filter by date range
+        if ($request->has('type') && $request->type) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->has('transaction_type') && $request->transaction_type) {
+            $typeMap = [
+                'debit' => 'expense',
+                'credit' => 'income',
+                'income' => 'income',
+                'expense' => 'expense',
+            ];
+            if (isset($typeMap[$request->transaction_type])) {
+                $query->where('type', $typeMap[$request->transaction_type]);
+            }
+        }
+
         if ($request->has('date_from') && $request->date_from) {
-            $query->whereHas('journalEntry', function ($q) use ($request) {
-                $q->whereDate('entry_date', '>=', $request->date_from);
-            });
+            $query->whereDate('paid_at', '>=', $request->date_from);
         }
 
         if ($request->has('date_to') && $request->date_to) {
-            $query->whereHas('journalEntry', function ($q) use ($request) {
-                $q->whereDate('entry_date', '<=', $request->date_to);
-            });
+            $query->whereDate('paid_at', '<=', $request->date_to);
         }
 
-        // Filter by transaction type
-        if ($request->has('transaction_type') && $request->transaction_type) {
-            if ($request->transaction_type === 'debit') {
-                $query->where('debit_amount', '>', 0);
-            } elseif ($request->transaction_type === 'credit') {
-                $query->where('credit_amount', '>', 0);
-            }
-        }
-
-        // Search functionality
         if ($request->has('search') && $request->search) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereHas('journalEntry', function ($subQ) use ($searchTerm) {
-                    $subQ->where('reference', 'like', "%{$searchTerm}%")
-                         ->orWhere('description', 'like', "%{$searchTerm}%");
-                })
-                ->orWhere('description', 'like', "%{$searchTerm}%")
-                ->orWhereHas('account', function ($subQ) use ($searchTerm) {
-                    $subQ->where('account_name', 'like', "%{$searchTerm}%")
-                         ->orWhere('account_code', 'like', "%{$searchTerm}%");
-                });
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                  ->orWhere('reference', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             });
-        }
-
-        // Sorting
-        $sortField = $request->get('sort_field', 'entry_date');
-        $sortOrder = $request->get('sort_order', 'desc');
-
-        // Join with journal_entries for sorting and selection
-        $query->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
-              ->select('journal_entry_lines.*');
-
-        // Apply sorting based on the field
-        switch ($sortField) {
-            case 'id':
-                $query->orderBy('journal_entry_lines.id', $sortOrder);
-                break;
-            case 'entry_date':
-                $query->orderBy('journal_entries.entry_date', $sortOrder)
-                      ->orderBy('journal_entries.id', $sortOrder);
-                break;
-            case 'reference':
-                $query->orderBy('journal_entries.reference', $sortOrder);
-                break;
-            case 'account_name':
-                $query->join('chart_of_accounts as accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
-                      ->orderBy('accounts.account_name', $sortOrder);
-                break;
-            case 'debit_amount':
-                $query->orderBy('journal_entry_lines.debit_amount', $sortOrder);
-                break;
-            case 'credit_amount':
-                $query->orderBy('journal_entry_lines.credit_amount', $sortOrder);
-                break;
-            default:
-                $query->orderBy('journal_entries.entry_date', 'desc')
-                      ->orderBy('journal_entries.id', 'desc');
-        }
-
-        // Handle export request (get all records) or paginate
-        if ($request->get('export') === 'true' || $request->get('per_page') === 'all') {
-            $transactions = $query->get();
-
-            // For export, return simplified structure with running balance
-            $runningBalance = 0;
-            $processedTransactions = [];
-
-            foreach ($transactions as $transaction) {
-                if ($transaction->debit_amount > 0) {
-                    $runningBalance -= $transaction->debit_amount;
-                } else {
-                    $runningBalance += $transaction->credit_amount;
-                }
-
-                $processedTransactions[] = [
-                    'id' => $transaction->id,
-                    'entry_date' => $transaction->journalEntry->entry_date,
-                    'reference' => $transaction->journalEntry->reference,
-                    'description' => $transaction->description ?: $transaction->journalEntry->description,
-                    'account_name' => $transaction->account->account_name,
-                    'debit_amount' => $transaction->debit_amount,
-                    'credit_amount' => $transaction->credit_amount,
-                    'running_balance' => $runningBalance
-                ];
-            }
-
-            return response()->json([
-                'data' => $processedTransactions
-            ]);
         }
 
         $perPage = $request->get('per_page', 50);
-        $transactions = $query->paginate($perPage);
+        $paginated = $query->orderBy('paid_at', 'desc')->orderBy('id', 'desc')->paginate($perPage);
 
-        // Calculate running balance for each transaction
-        $runningBalance = 0;
-        $accountId = $request->account_id;
-        
-        if ($accountId) {
-            // Get the account to determine balance calculation method
-            $account = Account::find($accountId);
-            
-            // Get all transactions up to the first transaction in current page
-            $firstTransaction = $transactions->items()[0] ?? null;
-            if ($firstTransaction) {
-                $previousTransactions = JournalEntryLine::where('account_id', $accountId)
-                    ->whereHas('journalEntry', function ($q) use ($firstTransaction) {
-                        $q->where('status', 'posted')
-                          ->where(function ($subQ) use ($firstTransaction) {
-                              $subQ->where('entry_date', '<', $firstTransaction->journalEntry->entry_date)
-                                   ->orWhere(function ($dateQ) use ($firstTransaction) {
-                                       $dateQ->where('entry_date', '=', $firstTransaction->journalEntry->entry_date)
-                                            ->where('id', '<', $firstTransaction->journal_entry_id);
-                                   });
-                          });
-                    })
-                    ->get();
-
-                // Calculate starting balance
-                $runningBalance = $account->opening_balance ?? 0;
-                foreach ($previousTransactions as $prevTrans) {
-                    if (in_array($account->account_type, ['asset', 'expense'])) {
-                        $runningBalance += $prevTrans->debit_amount - $prevTrans->credit_amount;
-                    } else {
-                        $runningBalance += $prevTrans->credit_amount - $prevTrans->debit_amount;
-                    }
-                }
-            }
-        }
-
-        // Add running balance to each transaction
-        $transactionsWithBalance = $transactions->getCollection()->map(function ($transaction) use (&$runningBalance, $accountId) {
-            if ($accountId) {
-                $account = $transaction->account;
-                if (in_array($account->account_type, ['asset', 'expense'])) {
-                    $runningBalance += $transaction->debit_amount - $transaction->credit_amount;
-                } else {
-                    $runningBalance += $transaction->credit_amount - $transaction->debit_amount;
-                }
-            }
-
+        // Map transactions to consistent structure expected by frontend
+        $mappedItems = $paginated->getCollection()->map(function ($tx) {
             return [
-                'id' => $transaction->id,
-                'entry_date' => $transaction->journalEntry->entry_date,
-                'reference' => $transaction->journalEntry->reference,
-                'description' => $transaction->description,
-                'account_name' => $transaction->account->account_name,
-                'account_code' => $transaction->account->account_code,
-                'debit_amount' => (float) $transaction->debit_amount,
-                'credit_amount' => (float) $transaction->credit_amount,
-                'running_balance' => $accountId ? (float) $runningBalance : null,
-                'entry_type' => $transaction->journalEntry->entry_type,
-                'entry_number' => $transaction->journalEntry->entry_number,
+                'id' => $tx->id,
+                'transaction_date' => $tx->paid_at ? $tx->paid_at->format('Y-m-d') : date('Y-m-d'),
+                'paid_at' => $tx->paid_at ? $tx->paid_at->format('Y-m-d') : date('Y-m-d'),
+                'bank_account_id' => $tx->account_id,
+                'bank_account' => $tx->bankAccount ? [
+                    'id' => $tx->bankAccount->id,
+                    'account_name' => $tx->bankAccount->account_name,
+                    'bank_name' => $tx->bankAccount->bank_name,
+                    'currency' => $tx->bankAccount->currency,
+                ] : null,
+                'reference_number' => $tx->reference || $tx->number,
+                'number' => $tx->number,
+                'description' => $tx->description,
+                'transaction_type' => $tx->type === 'income' ? 'credit' : 'debit',
+                'type' => $tx->type,
+                'amount' => (float) $tx->amount,
+                'payment_method' => $tx->payment_method,
+                'category' => $tx->category,
+                'customer' => $tx->customer,
+                'vendor' => $tx->vendor,
+                'tax' => $tx->tax,
+                'running_balance' => (float) ($tx->bankAccount->opening_balance ?? 0),
             ];
         });
 
-        $transactions->setCollection($transactionsWithBalance);
+        $paginated->setCollection($mappedItems);
 
-        return response()->json($transactions);
+        return response()->json($paginated);
     }
 
     /**
-     * Get transaction summary for a specific account
+     * Store a newly created transaction (Income or Expense)
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|in:income,expense',
+            'paid_at' => 'required|date',
+            'payment_method' => 'nullable|string',
+            'account_id' => 'required|exists:bank_accounts,id',
+            'amount' => 'required|numeric|min:0.01',
+            'number' => 'required|string|unique:transactions,number',
+            'description' => 'nullable|string',
+            'category_id' => 'nullable|exists:chart_of_accounts,id',
+            'customer_id' => 'nullable|exists:customers,id',
+            'vendor_id' => 'nullable|exists:suppliers,id',
+            'tax_id' => 'nullable|exists:taxes,id',
+            'reference' => 'nullable|string',
+            'attachment' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentPath = $request->file('attachment')->store('transaction_attachments', 'public');
+            }
+
+            $companyId = session('active_company_id') ?? auth()->user()->company_id ?? 1;
+
+            $transaction = Transaction::create([
+                'company_id' => $companyId,
+                'type' => $request->type,
+                'paid_at' => $request->paid_at,
+                'payment_method' => $request->payment_method ?? 'Cash',
+                'account_id' => $request->account_id,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'category_id' => $request->category_id,
+                'customer_id' => $request->customer_id,
+                'vendor_id' => $request->vendor_id,
+                'tax_id' => $request->tax_id,
+                'number' => $request->number,
+                'reference' => $request->reference,
+                'attachment_path' => $attachmentPath,
+            ]);
+
+            // Update linked Bank Account balance and record in BankTransaction
+            $bankAccount = BankAccount::findOrFail($request->account_id);
+            $lastBankTx = BankTransaction::where('bank_account_id', $request->account_id)
+                ->orderBy('transaction_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $currentBal = $lastBankTx ? (float)$lastBankTx->running_balance : (float)$bankAccount->opening_balance;
+            $isIncome = $request->type === 'income';
+            $txType = $isIncome ? 'credit' : 'debit';
+            $newBal = $isIncome ? ($currentBal + (float)$request->amount) : ($currentBal - (float)$request->amount);
+
+            $bankTx = BankTransaction::create([
+                'bank_account_id' => $request->account_id,
+                'transaction_date' => $request->paid_at,
+                'transaction_type' => $txType,
+                'amount' => $request->amount,
+                'description' => ($isIncome ? 'Income: ' : 'Expense: ') . ($request->description ?? $request->number),
+                'reference_number' => $request->reference ?? $request->number,
+                'running_balance' => $newBal,
+                'status' => 'posted',
+                'notes' => "Payment Method: " . ($request->payment_method ?? 'Cash'),
+            ]);
+
+            // Update opening_balance or current balance on BankAccount if applicable
+            $bankAccount->opening_balance = $newBal;
+            $bankAccount->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Transaction created successfully',
+                'transaction' => $transaction->load(['bankAccount', 'category', 'customer', 'vendor', 'tax'])
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to create transaction',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get transaction summary
      */
     public function summary(Request $request): JsonResponse
     {
@@ -221,180 +211,70 @@ class TransactionController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
 
-        if (!$accountId) {
-            return response()->json([
-                'message' => 'Account ID is required'
-            ], 422);
+        $query = Transaction::query();
+
+        if ($accountId) {
+            $query->where('account_id', $accountId);
+        }
+        if ($dateFrom) {
+            $query->whereDate('paid_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('paid_at', '<=', $dateTo);
         }
 
-        $account = Account::find($accountId);
-        if (!$account) {
-            return response()->json([
-                'message' => 'Account not found'
-            ], 404);
-        }
-
-        $query = JournalEntryLine::where('account_id', $accountId)
-            ->whereHas('journalEntry', function ($q) use ($dateFrom, $dateTo) {
-                $q->where('status', 'posted');
-                if ($dateFrom) {
-                    $q->whereDate('entry_date', '>=', $dateFrom);
-                }
-                if ($dateTo) {
-                    $q->whereDate('entry_date', '<=', $dateTo);
-                }
-            });
-
-        $totalDebits = $query->sum('debit_amount');
-        $totalCredits = $query->sum('credit_amount');
-        $transactionCount = $query->count();
-
-        // Calculate net change
-        $netChange = 0;
-        if (in_array($account->account_type, ['asset', 'expense'])) {
-            $netChange = $totalDebits - $totalCredits;
-        } else {
-            $netChange = $totalCredits - $totalDebits;
-        }
+        $totalIncome = (clone $query)->where('type', 'income')->sum('amount');
+        $totalExpense = (clone $query)->where('type', 'expense')->sum('amount');
 
         return response()->json([
-            'account' => [
-                'id' => $account->id,
-                'name' => $account->account_name,
-                'code' => $account->account_code,
-                'type' => $account->account_type,
-                'current_balance' => (float) $account->current_balance,
-            ],
             'summary' => [
-                'total_debits' => (float) $totalDebits,
-                'total_credits' => (float) $totalCredits,
-                'net_change' => (float) $netChange,
-                'transaction_count' => $transactionCount,
-            ],
-            'period' => [
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
+                'total_income' => (float) $totalIncome,
+                'total_expense' => (float) $totalExpense,
+                'net_balance' => (float) ($totalIncome - $totalExpense),
+                'transaction_count' => $query->count(),
             ]
         ]);
     }
 
+    /**
+     * Export PDF of transactions
+     */
     public function exportPDF(Request $request)
     {
-        // Build the same query as index method
-        $query = JournalEntryLine::with(['journalEntry', 'account'])
-            ->whereHas('journalEntry', function ($q) {
-                $q->where('status', 'posted');
-            })
-            ->whereHas('account', function ($q) {
-                $q->where('account_type', 'asset')
-                  ->whereIn('account_name', ['Cash', 'Bank Account', 'Petty Cash']);
-            });
+        $query = Transaction::with(['bankAccount', 'category', 'customer', 'vendor', 'tax']);
 
-        // Apply filters
         if ($request->has('account_id') && $request->account_id) {
             $query->where('account_id', $request->account_id);
         }
 
         if ($request->has('date_from') && $request->date_from) {
-            $query->whereHas('journalEntry', function ($q) use ($request) {
-                $q->whereDate('entry_date', '>=', $request->date_from);
-            });
+            $query->whereDate('paid_at', '>=', $request->date_from);
         }
 
         if ($request->has('date_to') && $request->date_to) {
-            $query->whereHas('journalEntry', function ($q) use ($request) {
-                $q->whereDate('entry_date', '<=', $request->date_to);
-            });
+            $query->whereDate('paid_at', '<=', $request->date_to);
         }
 
-        if ($request->has('transaction_type') && $request->transaction_type) {
-            if ($request->transaction_type === 'debit') {
-                $query->where('debit_amount', '>', 0);
-            } elseif ($request->transaction_type === 'credit') {
-                $query->where('credit_amount', '>', 0);
-            }
-        }
+        $transactions = $query->orderBy('paid_at', 'desc')->get();
 
-        if ($request->has('search') && $request->search) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereHas('journalEntry', function ($subQ) use ($searchTerm) {
-                    $subQ->where('reference', 'like', "%{$searchTerm}%")
-                         ->orWhere('description', 'like', "%{$searchTerm}%");
-                })
-                ->orWhere('description', 'like', "%{$searchTerm}%")
-                ->orWhereHas('account', function ($subQ) use ($searchTerm) {
-                    $subQ->where('account_name', 'like', "%{$searchTerm}%")
-                         ->orWhere('account_code', 'like', "%{$searchTerm}%");
-                });
-            });
-        }
-
-        // Order by date
-        $query->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
-              ->orderBy('journal_entries.entry_date', 'desc')
-              ->orderBy('journal_entries.id', 'desc')
-              ->select('journal_entry_lines.*');
-
-        // Get all transactions
-        $transactions = $query->get();
-
-        // Calculate running balance and format data
-        $runningBalance = 0;
-        $processedTransactions = [];
-        $totalDebits = 0;
-        $totalCredits = 0;
-
-        foreach ($transactions as $transaction) {
-            if ($transaction->debit_amount > 0) {
-                $runningBalance -= $transaction->debit_amount;
-                $totalDebits += $transaction->debit_amount;
-            } else {
-                $runningBalance += $transaction->credit_amount;
-                $totalCredits += $transaction->credit_amount;
-            }
-
-            $processedTransactions[] = [
-                'id' => $transaction->id,
-                'entry_date' => $transaction->journalEntry->entry_date,
-                'reference' => $transaction->journalEntry->reference,
-                'description' => $transaction->description ?: $transaction->journalEntry->description,
-                'account_name' => $transaction->account->account_name,
-                'debit_amount' => $transaction->debit_amount,
-                'credit_amount' => $transaction->credit_amount,
-                'running_balance' => $runningBalance
-            ];
-        }
-
-        // Prepare filter information for display
-        $filters = [];
-        if ($request->account_id) {
-            $account = Account::find($request->account_id);
-            $filters['account_name'] = $account ? $account->account_name : '';
-        }
-        $filters['date_from'] = $request->date_from;
-        $filters['date_to'] = $request->date_to;
-        $filters['transaction_type'] = $request->transaction_type;
-        $filters['search'] = $request->search;
-
-        // Summary data
-        $summary = [
-            'total_count' => count($processedTransactions),
-            'total_debits' => $totalDebits,
-            'total_credits' => $totalCredits,
+        $filters = [
+            'date_from' => $request->date_from,
+            'date_to' => $request->date_to,
         ];
 
-        // Generate PDF
+        $summary = [
+            'total_count' => count($transactions),
+            'total_income' => $transactions->where('type', 'income')->sum('amount'),
+            'total_expense' => $transactions->where('type', 'expense')->sum('amount'),
+        ];
+
         $pdf = Pdf::loadView('pdf.transactions', [
-            'transactions' => $processedTransactions,
+            'transactions' => $transactions,
             'filters' => $filters,
             'summary' => $summary
         ]);
 
         $pdf->setPaper('a4', 'landscape');
-
-        $filename = 'transactions_' . now()->format('Y-m-d') . '.pdf';
-
-        return $pdf->download($filename);
+        return $pdf->download('transactions_' . now()->format('Y-m-d') . '.pdf');
     }
 }
