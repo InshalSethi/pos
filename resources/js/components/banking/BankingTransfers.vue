@@ -63,7 +63,7 @@
               <td class="py-3.5 px-4 font-semibold text-emerald-600 dark:text-emerald-400">{{ trf.to_account_name }}</td>
               <td class="py-3.5 px-4 text-slate-500 dark:text-zinc-400 font-mono text-[11px]">{{ trf.reference_number || '-' }}</td>
               <td class="py-3.5 px-4 text-slate-700 dark:text-zinc-300 max-w-xs truncate">{{ trf.description || '-' }}</td>
-              <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-zinc-100">${{ formatNumber(trf.amount) }}</td>
+              <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-zinc-100">{{ companyCurrencySymbol }} {{ formatNumber(trf.amount) }}</td>
             </tr>
           </tbody>
         </table>
@@ -71,12 +71,12 @@
     </div>
 
     <!-- New Transfer Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-        <div class="relative mx-auto border border-slate-800 w-full max-w-md shadow-2xl rounded-2xl bg-[#12141a] text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
-          <div class="p-6 pb-4 border-b border-slate-800 flex justify-between items-center">
-            <h3 class="text-sm font-bold uppercase tracking-wider">New Inter-Account Transfer</h3>
-            <button @click="showModal = false" class="text-slate-400 hover:text-slate-200 p-1 rounded-lg">
+    <Teleport to="body" v-if="showModal">
+      <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
+          <div class="p-6 pb-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-zinc-100">New Inter-Account Transfer</h3>
+            <button @click="showModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -84,50 +84,50 @@
           <form @submit.prevent="executeTransfer" class="flex flex-col flex-1 min-h-0">
             <div class="flex-1 overflow-y-auto p-6 space-y-4 pr-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">From Account (Credit) *</label>
-                <select v-model="form.from_bank_account_id" required class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">From Account (Credit) *</label>
+                <select v-model="form.from_bank_account_id" required class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option :value="null">-- Select Source Bank Account --</option>
                   <option v-for="acc in bankAccounts" :key="acc.id" :value="acc.id">
-                    {{ acc.account_name }} (Balance: ${{ formatNumber(acc.current_balance) }})
+                    {{ acc.account_name }} (Balance: {{ companyCurrencySymbol }} {{ formatNumber(acc.current_balance) }})
                   </option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">To Account (Debit) *</label>
-                <select v-model="form.to_bank_account_id" required class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">To Account (Debit) *</label>
+                <select v-model="form.to_bank_account_id" required class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option :value="null">-- Select Destination Bank Account --</option>
                   <option v-for="acc in bankAccounts" :key="acc.id" :value="acc.id">
-                    {{ acc.account_name }} (Balance: ${{ formatNumber(acc.current_balance) }})
+                    {{ acc.account_name }} (Balance: {{ companyCurrencySymbol }} {{ formatNumber(acc.current_balance) }})
                   </option>
                 </select>
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Amount ($) *</label>
-                  <input v-model.number="form.amount" type="number" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Amount ({{ companyCurrencySymbol }}) *</label>
+                  <input v-model.number="form.amount" type="number" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transfer Date *</label>
-                  <input v-model="form.transfer_date" type="date" required class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Transfer Date *</label>
+                  <input v-model="form.transfer_date" type="date" required class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Reference Number</label>
-                <input v-model="form.reference_number" type="text" placeholder="e.g. TRF-1002" class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Reference Number</label>
+                <input v-model="form.reference_number" type="text" placeholder="e.g. TRF-1002" class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Description / Reason</label>
-                <textarea v-model="form.description" rows="2" placeholder="Fund transfer description..." class="w-full px-3 py-2 border border-slate-800 rounded-lg bg-zinc-950 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Description / Reason</label>
+                <textarea v-model="form.description" rows="2" placeholder="Fund transfer description..." class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
               </div>
             </div>
 
-            <div class="flex justify-end space-x-3 p-6 border-t border-slate-800 shrink-0">
-              <button type="button" @click="showModal = false" class="px-4 h-9 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-semibold">Cancel</button>
-              <button type="submit" :disabled="submitting" class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold">
+            <div class="flex justify-end space-x-3 p-6 border-t border-slate-200 dark:border-zinc-800 shrink-0">
+              <button type="button" @click="showModal = false" class="px-4 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 rounded-lg text-xs font-semibold">Cancel</button>
+              <button type="submit" :disabled="submitting" class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm">
                 {{ submitting ? 'Transferring...' : 'Execute Transfer' }}
               </button>
             </div>
@@ -142,11 +142,18 @@
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 
 export default {
   name: 'BankingTransfers',
   setup() {
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
+
     const bankAccounts = ref([]);
     const transfers = ref([]);
     const loading = ref(true);
@@ -246,11 +253,13 @@ export default {
     };
 
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       fetchAccounts();
       fetchTransfers();
     });
 
     return {
+      companyCurrencySymbol,
       bankAccounts,
       transfers,
       loading,
