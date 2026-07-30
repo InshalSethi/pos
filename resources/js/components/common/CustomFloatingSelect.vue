@@ -8,7 +8,10 @@
     <button
       type="button"
       @click="toggleOpen"
-      class="w-full text-left text-xs p-2.5 px-3 border rounded-xl bg-slate-50 dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-zinc-200 flex justify-between items-center shadow-sm hover:border-indigo-400 dark:hover:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+      :class="[
+        'w-full text-left text-xs py-2 px-3 border rounded-xl bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 flex justify-between items-center shadow-sm hover:border-indigo-400 dark:hover:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer font-normal',
+        buttonClass
+      ]"
     >
       <span :class="selectedOption ? 'font-normal text-slate-800 dark:text-slate-100' : 'font-normal text-slate-400 dark:text-slate-500'">
         {{ selectedOption ? selectedOption.label : placeholder }}
@@ -30,7 +33,7 @@
         v-if="isOpen"
         ref="dropdownMenuRef"
         :style="floatingStyle"
-        class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/60 transition-all animate-in fade-in zoom-in-95"
+        class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/60 transition-all animate-in fade-in zoom-in-95 z-[99999]"
       >
         <!-- Optional Search Input -->
         <div v-if="searchable" class="p-2 border-b border-slate-100 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
@@ -57,7 +60,7 @@
             'p-2.5 px-3.5 text-xs font-normal cursor-pointer transition-colors flex items-center justify-between',
             String(modelValue) === String(option.value)
               ? 'bg-indigo-600 text-white font-normal'
-              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white font-normal'
+              : 'text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-normal'
           ]"
         >
           <span>{{ option.label }}</span>
@@ -84,7 +87,8 @@ const props = defineProps({
   modelValue: { type: [String, Number, Boolean, Object], default: '' },
   placeholder: { type: String, default: 'Select...' },
   searchable: { type: Boolean, default: false },
-  placement: { type: String, default: 'auto' } // 'auto', 'top', 'bottom'
+  placement: { type: String, default: 'auto' }, // 'auto', 'top', 'bottom'
+  buttonClass: { type: String, default: '' }
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);

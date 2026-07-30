@@ -5,33 +5,43 @@
       <h1 class="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Journal Entries</h1>
       
       <div class="flex items-center space-x-3">
-        <select
-          v-model="selectedStatus"
-          @change="fetchJournalEntries"
-          class="px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-        >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="posted">Posted</option>
-          <option value="reversed">Reversed</option>
-        </select>
-
         <div class="relative w-64">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search entries..."
             @input="debouncedJournalSearch"
-            class="w-full pl-9 pr-4 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            class="w-full pl-9 pr-4 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-normal text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           />
           <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
 
+        <div class="w-40">
+          <CustomFloatingSelect
+            v-model="selectedStatus"
+            :options="statusOptions"
+            placeholder="All Status"
+            @change="handleStatusChange"
+          />
+        </div>
+
+        <button
+          v-if="isFilterActive"
+          type="button"
+          @click="handleClearFilters"
+          class="px-3 py-2 text-xs font-normal text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 rounded-xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:hover:bg-rose-950/40 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer shrink-0"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Clear</span>
+        </button>
+
         <button
           @click="openNewJournalModal"
-          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           + New Entry
         </button>
@@ -352,12 +362,35 @@ export default {
     const coaAccounts = ref([]);
     const loading = ref(true);
     const submitting = ref(false);
-    const selectedStatus = ref('');
+    const selectedStatus = ref('ALL');
     const searchQuery = ref('');
     const showModal = ref(false);
     const showViewModal = ref(false);
     const editingEntry = ref(null);
     const selectedEntry = ref(null);
+
+    const statusOptions = [
+      { label: 'All Status', value: 'ALL' },
+      { label: 'Draft', value: 'draft' },
+      { label: 'Posted', value: 'posted' },
+      { label: 'Reversed', value: 'reversed' },
+    ];
+
+    const isFilterActive = computed(() => {
+      const hasSearch = searchQuery.value && searchQuery.value.trim() !== '';
+      const hasStatus = selectedStatus.value && selectedStatus.value !== 'ALL' && selectedStatus.value !== '';
+      return hasSearch || hasStatus;
+    });
+
+    const handleClearFilters = () => {
+      searchQuery.value = '';
+      selectedStatus.value = 'ALL';
+      fetchJournalEntries(1);
+    };
+
+    const handleStatusChange = () => {
+      fetchJournalEntries(1);
+    };
 
     const perPage = ref(10);
     const perPageOptions = [
@@ -401,8 +434,12 @@ export default {
           page: page,
           per_page: perPage.value,
         };
-        if (selectedStatus.value) params.status = selectedStatus.value;
-        if (searchQuery.value) params.search = searchQuery.value;
+        if (selectedStatus.value && selectedStatus.value !== 'ALL') {
+          params.status = selectedStatus.value.toLowerCase();
+        }
+        if (searchQuery.value && searchQuery.value.trim() !== '') {
+          params.search = searchQuery.value.trim();
+        }
 
         const response = await axios.get('/api/journal-entries', { params });
         const resData = response.data;
@@ -577,7 +614,11 @@ export default {
       loading,
       submitting,
       selectedStatus,
+      statusOptions,
       searchQuery,
+      isFilterActive,
+      handleClearFilters,
+      handleStatusChange,
       showModal,
       showViewModal,
       editingEntry,
