@@ -203,6 +203,18 @@ const routes = [
         meta: { permission: 'accounting.view' }
       },
       {
+        path: 'banking/transactions/create-income',
+        name: 'CreateIncomeTransaction',
+        component: () => import('@/components/banking/CreateTransaction.vue'),
+        meta: { permission: 'accounting.create' }
+      },
+      {
+        path: 'banking/transactions/create-expense',
+        name: 'CreateExpenseTransaction',
+        component: () => import('@/components/banking/CreateTransaction.vue'),
+        meta: { permission: 'accounting.create' }
+      },
+      {
         path: 'banking/transfers',
         name: 'BankingTransfers',
         component: () => import('@/components/banking/BankingTransfers.vue'),
