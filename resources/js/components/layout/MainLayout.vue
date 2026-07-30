@@ -467,6 +467,32 @@
             </div>
           </transition>
         </div>
+        <!-- Accounting Section -->
+        <div v-if="authStore.hasPermission('accounting.view')" class="space-y-1">
+          <div v-if="!sidebarCollapsed" class="px-3 pt-3 pb-1">
+            <h3 class="text-[10px] tracking-widest text-gray-400 dark:text-slate-550 font-bold uppercase">
+              Accounting
+            </h3>
+          </div>
+          <router-link
+            to="/accounting/chart-of-accounts"
+            :class="[
+              'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
+              $route.path === '/accounting/chart-of-accounts'
+                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
+            ]"
+            :title="sidebarCollapsed ? 'Chart of Accounts' : ''"
+          >
+            <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+              Chart of Accounts
+            </span>
+          </router-link>
+        </div>
+
         <!-- Banking Accordion -->
         <div v-if="authStore.hasPermission('accounting.view')" class="space-y-1">
           <button
@@ -512,19 +538,6 @@
               class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
             >
               <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
-
-              <router-link
-                to="/banking/accounts"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/banking/accounts'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
-              >
-                <div v-if="$route.path === '/banking/accounts'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Accounts
-              </router-link>
 
               <router-link
                 to="/banking/manual-journals"
@@ -1829,7 +1842,7 @@ const menuItems = [
   { path: '/inventory/warehouses', name: 'Warehouses', category: 'Inventory', icon: 'warehouses' },
   { path: '/inventory/histories', name: 'Histories', category: 'Inventory', icon: 'histories' },
   { path: '/inventory/transfer-orders', name: 'Stock Transfers', category: 'Inventory', icon: 'transfers' },
-  { path: '/accounting', name: 'Accounting', category: 'Accounting', icon: 'accounting' },
+  { path: '/accounting/chart-of-accounts', name: 'Chart of Accounts', category: 'Accounting', icon: 'accounting' },
   { path: '/transactions', name: 'Transactions', category: 'Accounting', icon: 'transactions' },
   { path: '/expenses', name: 'Expenses', category: 'Accounting', icon: 'expenses' },
   { path: '/payments', name: 'Payments Out', category: 'Payments', icon: 'payments' },

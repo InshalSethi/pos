@@ -158,13 +158,17 @@ const routes = [
       },
       {
         path: 'accounting',
-        redirect: '/banking/accounts'
+        redirect: '/accounting/chart-of-accounts'
+      },
+      {
+        path: 'accounting/chart-of-accounts',
+        name: 'ChartOfAccounts',
+        component: () => import('@/components/banking/BankingAccounts.vue'),
+        meta: { permission: 'accounting.view' }
       },
       {
         path: 'banking/accounts',
-        name: 'BankingAccounts',
-        component: () => import('@/components/banking/BankingAccounts.vue'),
-        meta: { permission: 'accounting.view' }
+        redirect: '/accounting/chart-of-accounts'
       },
       {
         path: 'banking/manual-journals',
