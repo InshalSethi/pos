@@ -27,10 +27,27 @@
     <!-- Floating Options Menu -->
     <div
       v-if="isOpen"
-      class="absolute left-0 top-full mt-1.5 w-full bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-56 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/60 transition-all animate-in fade-in zoom-in-95"
+      class="absolute left-0 top-full mt-1.5 w-full bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800/60 transition-all animate-in fade-in zoom-in-95"
     >
+      <!-- Optional Search Input -->
+      <div v-if="searchable" class="p-2 border-b border-slate-100 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
+        <input
+          ref="searchInputRef"
+          v-model="searchQuery"
+          type="text"
+          placeholder="Type to search..."
+          class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-normal"
+          @click.stop
+        />
+      </div>
+
+      <!-- Options List -->
+      <div v-if="filteredOptions.length === 0" class="p-3 text-xs text-slate-400 text-center font-normal">
+        No matching options found
+      </div>
+
       <div
-        v-for="option in options"
+        v-for="option in filteredOptions"
         :key="option.value"
         @click="selectOption(option.value)"
         :class="[
@@ -55,26 +72,46 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
   label: { type: String, default: '' },
   options: { type: Array, default: () => [] },
   modelValue: { type: [String, Number, Boolean, Object], default: '' },
-  placeholder: { type: String, default: 'Select...' }
+  placeholder: { type: String, default: 'Select...' },
+  searchable: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
 
 const isOpen = ref(false);
 const containerRef = ref(null);
+const searchInputRef = ref(null);
+const searchQuery = ref('');
 
 const selectedOption = computed(() => {
   return props.options.find(opt => String(opt.value) === String(props.modelValue));
 });
 
+const filteredOptions = computed(() => {
+  if (!props.searchable || !searchQuery.value) return props.options;
+  const q = searchQuery.value.toLowerCase().trim();
+  return props.options.filter(opt =>
+    (opt.label || '').toLowerCase().includes(q) ||
+    String(opt.value || '').toLowerCase().includes(q)
+  );
+});
+
 const toggleOpen = () => {
   isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    searchQuery.value = '';
+    if (props.searchable) {
+      nextTick(() => {
+        searchInputRef.value?.focus();
+      });
+    }
+  }
 };
 
 const selectOption = (val) => {

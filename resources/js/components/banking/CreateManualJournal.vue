@@ -37,18 +37,12 @@
             />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">Currency *</label>
-            <select
+            <CustomFloatingSelect
+              label="Currency *"
+              :options="currencyOptions"
               v-model="form.currency"
-              required
-              class="w-full text-sm p-2.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="PKR">Pakistan Rupee (PKR)</option>
-              <option value="USD">US Dollar (USD)</option>
-              <option value="EUR">Euro (EUR)</option>
-              <option value="GBP">British Pound (GBP)</option>
-              <option value="AED">UAE Dirham (AED)</option>
-            </select>
+              placeholder="Select Currency"
+            />
           </div>
         </div>
 
@@ -85,16 +79,12 @@
             <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
               <tr v-for="(line, idx) in form.lines" :key="idx" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
                 <td class="p-2.5">
-                  <select
+                  <CustomFloatingSelect
+                    :options="coaAccountOptions"
                     v-model="line.account_id"
-                    required
-                    class="w-full p-2.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
-                  >
-                    <option :value="null">- Select Account -</option>
-                    <option v-for="acc in coaAccounts" :key="acc.id" :value="acc.id">
-                      {{ acc.label }}
-                    </option>
-                  </select>
+                    placeholder="- Select Account -"
+                    :searchable="true"
+                  />
                 </td>
                 <td class="p-2.5">
                   <input
@@ -253,15 +243,32 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import api from '@/services/api';
+import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 import { useToast } from '@/composables/useToast';
 
 export default {
   name: 'CreateManualJournal',
+  components: { CustomFloatingSelect },
   setup() {
     const router = useRouter();
     const { showToast } = useToast();
     const coaAccounts = ref([]);
     const submitting = ref(false);
+
+    const currencyOptions = [
+      { value: 'PKR', label: 'Pakistan Rupee (PKR)' },
+      { value: 'USD', label: 'US Dollar (USD)' },
+      { value: 'EUR', label: 'Euro (EUR)' },
+      { value: 'GBP', label: 'British Pound (GBP)' },
+      { value: 'AED', label: 'UAE Dirham (AED)' }
+    ];
+
+    const coaAccountOptions = computed(() => {
+      return coaAccounts.value.map(acc => ({
+        value: acc.id,
+        label: acc.label
+      }));
+    });
 
     const generateNumber = () => {
       return 'MJE-' + String(Math.floor(10000 + Math.random() * 90000));
@@ -385,6 +392,8 @@ export default {
 
     return {
       coaAccounts,
+      currencyOptions,
+      coaAccountOptions,
       submitting,
       form,
       addLine,
