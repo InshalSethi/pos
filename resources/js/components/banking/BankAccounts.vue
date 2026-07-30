@@ -267,20 +267,44 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 
 export default {
   name: 'BankAccounts',
   setup() {
     const router = useRouter();
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
+
     const accounts = ref([]);
     const loading = ref(true);
     const searchQuery = ref('');
     const viewMode = ref('list'); // 'list' | 'grid'
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
+
+    const getCurrencySymbol = (code) => {
+      if (!code) return companyCurrencySymbol.value;
+      const upper = String(code).trim().toUpperCase();
+      const map = {
+        PKR: companyCurrencySymbol.value,
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        AED: 'AED',
+        SAR: 'SAR',
+        CAD: 'CA$',
+        AUD: 'A$',
+        INR: '₹',
+      };
+      return map[upper] || upper || companyCurrencySymbol.value;
+    };
 
     let searchTimeout;
     const debouncedSearch = () => {
@@ -328,17 +352,6 @@ export default {
       const val = Number(amount || 0);
       const symbol = getCurrencySymbol(currencySymbol);
       return `${symbol} ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
-
-    const getCurrencySymbol = (code) => {
-      if (!code || code === 'PKR' || code === 'USD') return 'Rs';
-      switch (code) {
-        case 'EUR': return '€';
-        case 'GBP': return '£';
-        case 'AED': return 'AED';
-        case 'SAR': return 'SAR';
-        default: return 'Rs';
-      }
     };
 
     const formatMaskedNumber = (num) => {

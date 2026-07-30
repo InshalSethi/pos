@@ -72,9 +72,20 @@ export const useCurrencyStore = defineStore('currency', () => {
     async function fetchCurrencies() {
         loading.value = true;
         try {
+            // First fetch active company base_currency setting
+            try {
+                const compRes = await api.get('/companies/active');
+                const compCurr = compRes.data?.company?.base_currency;
+                if (compCurr) {
+                    seedFromCompany(compCurr);
+                }
+            } catch (compErr) {
+                // Ignore if unauthenticated or endpoint silent
+            }
+
             const response = await api.get('/currencies');
-            currencies.value = response.data.currencies;
-            activeCurrencyId.value = response.data.active_currency_id;
+            currencies.value = response.data?.currencies || [];
+            activeCurrencyId.value = response.data?.active_currency_id || null;
 
             // Persist the selection locally so it survives page refreshes
             if (activeCurrencyId.value) {

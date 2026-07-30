@@ -196,6 +196,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 
 export default {
@@ -282,18 +283,31 @@ export default {
       }
     };
 
+    const currencyStore = useCurrencyStore();
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
+
     const getCurrencySymbol = (code) => {
-      switch (code) {
-        case 'USD': return '$';
-        case 'EUR': return '€';
-        case 'GBP': return '£';
-        case 'AED': return 'AED';
-        case 'SAR': return 'SAR';
-        default: return 'Rs';
-      }
+      if (!code) return companyCurrencySymbol.value;
+      const upper = String(code).trim().toUpperCase();
+      const map = {
+        PKR: companyCurrencySymbol.value,
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        AED: 'AED',
+        SAR: 'SAR',
+        CAD: 'CA$',
+        AUD: 'A$',
+        INR: '₹',
+      };
+      return map[upper] || upper || companyCurrencySymbol.value;
     };
 
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       if (route.params.id) {
         fetchAccountDetail(route.params.id);
       }

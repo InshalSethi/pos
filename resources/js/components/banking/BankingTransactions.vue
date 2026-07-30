@@ -128,9 +128,11 @@
                 </span>
               </td>
               <td class="py-3.5 px-4 text-right font-bold" :class="isIncomeType(tx.transaction_type) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                {{ isIncomeType(tx.transaction_type) ? '+' : '-' }}Rs {{ formatNumber(tx.amount) }}
+                {{ isIncomeType(tx.transaction_type) ? '+' : '-' }}{{ getCurrencySymbol(tx.bank_account?.currency) }} {{ formatNumber(tx.amount) }}
               </td>
-              <td class="py-3.5 px-4 text-right font-semibold text-slate-900 dark:text-zinc-100">Rs {{ formatNumber(tx.running_balance) }}</td>
+              <td class="py-3.5 px-4 text-right font-semibold text-slate-900 dark:text-zinc-100">
+                {{ getCurrencySymbol(tx.bank_account?.currency) }} {{ formatNumber(tx.running_balance) }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -144,18 +146,42 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 
 export default {
   name: 'BankingTransactions',
   setup() {
     const router = useRouter();
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
+
     const transactions = ref([]);
     const bankAccounts = ref([]);
     const loading = ref(true);
     const activeTab = ref('all');
     const selectedAccount = ref('');
     const search = ref('');
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
+
+    const getCurrencySymbol = (code) => {
+      if (!code) return companyCurrencySymbol.value;
+      const upper = String(code).trim().toUpperCase();
+      const map = {
+        PKR: companyCurrencySymbol.value,
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        AED: 'AED',
+        SAR: 'SAR',
+        CAD: 'CA$',
+        AUD: 'A$',
+        INR: '₹',
+      };
+      return map[upper] || upper || companyCurrencySymbol.value;
+    };
 
     const isIncomeType = (type) => {
       return type === 'credit' || type === 'income';
@@ -217,6 +243,7 @@ export default {
     };
 
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       fetchTransactions();
       fetchBankAccounts();
     });
@@ -233,6 +260,8 @@ export default {
       navigateToCreateIncome,
       navigateToCreateExpense,
       formatNumber,
+      getCurrencySymbol,
+      companyCurrencySymbol,
     };
   },
 };

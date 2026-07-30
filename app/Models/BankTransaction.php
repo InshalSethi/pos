@@ -48,6 +48,11 @@ class BankTransaction extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 
+    public function journalEntryLine(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
+    }
+
     public function partner()
     {
         return $this->morphTo();

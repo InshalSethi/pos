@@ -178,7 +178,7 @@ class TransactionController extends Controller
                 'description' => ($isIncome ? 'Income: ' : 'Expense: ') . ($request->description ?? $request->number),
                 'reference_number' => $request->reference ?? $request->number,
                 'running_balance' => $newBal,
-                'status' => 'posted',
+                'status' => 'cleared',
                 'notes' => "Payment Method: " . ($request->payment_method ?? 'Cash'),
             ]);
 

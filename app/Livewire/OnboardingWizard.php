@@ -355,6 +355,7 @@ class OnboardingWizard extends Component
                 'account_number' => 'CASH-001',
                 'account_type' => 'checking',
                 'chart_account_id' => $cashAccount->id,
+                'currency' => $company->base_currency ?? 'PKR',
                 'is_active' => true,
                 'is_default' => true,
                 'opening_balance' => 0.00,

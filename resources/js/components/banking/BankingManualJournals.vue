@@ -89,7 +89,7 @@
                   {{ entry.entry_type === 'automatic' ? 'Automatic' : 'Manual' }}
                 </span>
               </td>
-              <td class="py-4 px-5 text-right font-extrabold text-slate-900 dark:text-zinc-100">${{ formatNumber(entry.total_debit) }}</td>
+              <td class="py-4 px-5 text-right font-extrabold text-slate-900 dark:text-zinc-100">{{ companyCurrencySymbol }} {{ formatNumber(entry.total_debit) }}</td>
               <td class="py-4 px-5 text-center">
                 <span
                   :class="{
@@ -240,8 +240,8 @@
                       <tr>
                         <th class="p-2.5">COA Account *</th>
                         <th class="p-2.5">Line Description</th>
-                        <th class="p-2.5 w-28 text-right">Debit ($)</th>
-                        <th class="p-2.5 w-28 text-right">Credit ($)</th>
+                        <th class="p-2.5 w-28 text-right">Debit ({{ companyCurrencySymbol }})</th>
+                        <th class="p-2.5 w-28 text-right">Credit ({{ companyCurrencySymbol }})</th>
                         <th class="p-2.5 w-8"></th>
                       </tr>
                     </thead>
@@ -272,8 +272,8 @@
                     <tfoot class="bg-zinc-950 border-t border-slate-800 font-bold text-xs">
                       <tr>
                         <td colspan="2" class="p-2.5 text-slate-400">Total</td>
-                        <td class="p-2.5 text-right" :class="isBalanced ? 'text-emerald-400' : 'text-rose-400'">${{ formatNumber(totalDebits) }}</td>
-                        <td class="p-2.5 text-right" :class="isBalanced ? 'text-emerald-400' : 'text-rose-400'">${{ formatNumber(totalCredits) }}</td>
+                        <td class="p-2.5 text-right" :class="isBalanced ? 'text-emerald-400' : 'text-rose-400'">{{ companyCurrencySymbol }} {{ formatNumber(totalDebits) }}</td>
+                        <td class="p-2.5 text-right" :class="isBalanced ? 'text-emerald-400' : 'text-rose-400'">{{ companyCurrencySymbol }} {{ formatNumber(totalCredits) }}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -318,8 +318,8 @@
               <thead class="bg-slate-50 dark:bg-zinc-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold">
                 <tr>
                   <th class="p-2.5">COA Account</th>
-                  <th class="p-2.5 text-right">Debit ($)</th>
-                  <th class="p-2.5 text-right">Credit ($)</th>
+                  <th class="p-2.5 text-right">Debit ({{ companyCurrencySymbol }})</th>
+                  <th class="p-2.5 text-right">Credit ({{ companyCurrencySymbol }})</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -327,8 +327,8 @@
                   <td class="p-2.5 font-medium text-slate-800 dark:text-slate-200">
                     {{ line.account ? `${line.account.account_code} - ${line.account.account_name}` : `Account #${line.account_id}` }}
                   </td>
-                  <td class="p-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">${{ formatNumber(line.debit || line.debit_amount) }}</td>
-                  <td class="p-2.5 text-right font-semibold text-indigo-600 dark:text-indigo-400">${{ formatNumber(line.credit || line.credit_amount) }}</td>
+                  <td class="p-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">{{ companyCurrencySymbol }} {{ formatNumber(line.debit || line.debit_amount) }}</td>
+                  <td class="p-2.5 text-right font-semibold text-indigo-600 dark:text-indigo-400">{{ companyCurrencySymbol }} {{ formatNumber(line.credit || line.credit_amount) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -349,6 +349,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import api from '@/services/api';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 
 export default {
@@ -358,6 +359,12 @@ export default {
   },
   setup() {
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
+
     const journalEntries = ref([]);
     const coaAccounts = ref([]);
     const loading = ref(true);
@@ -604,11 +611,13 @@ export default {
     };
 
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       fetchJournalEntries();
       fetchCoaAccounts();
     });
 
     return {
+      companyCurrencySymbol,
       journalEntries,
       coaAccounts,
       loading,

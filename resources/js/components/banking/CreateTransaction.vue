@@ -260,6 +260,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 
 export default {
@@ -271,6 +272,7 @@ export default {
     const route = useRoute();
     const router = useRouter();
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
 
     const submitting = ref(false);
     const isDragging = ref(false);
@@ -307,11 +309,33 @@ export default {
       file: null
     });
 
-    const selectedAccountCurrencySymbol = computed(() => {
-      if (!form.value.bank_account_id) return 'Rs';
-      const acc = bankAccounts.value.find(a => a.id === form.value.bank_account_id);
-      return getCurrencySymbol(acc?.currency);
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
     });
+
+    const selectedAccountCurrencySymbol = computed(() => {
+      if (!form.value.bank_account_id) return companyCurrencySymbol.value;
+      const acc = bankAccounts.value.find(a => a.id === form.value.bank_account_id);
+      if (!acc || !acc.currency) return companyCurrencySymbol.value;
+      return getCurrencySymbol(acc.currency);
+    });
+
+    const getCurrencySymbol = (code) => {
+      if (!code) return companyCurrencySymbol.value;
+      const upper = String(code).trim().toUpperCase();
+      const map = {
+        PKR: companyCurrencySymbol.value,
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        AED: 'AED',
+        SAR: 'SAR',
+        CAD: 'CA$',
+        AUD: 'A$',
+        INR: '₹',
+      };
+      return map[upper] || upper || companyCurrencySymbol.value;
+    };
 
     const fetchDropdownData = async () => {
       try {
@@ -420,18 +444,8 @@ export default {
       }
     };
 
-    const getCurrencySymbol = (code) => {
-      if (!code || code === 'PKR' || code === 'USD') return 'Rs';
-      switch (code) {
-        case 'EUR': return '€';
-        case 'GBP': return '£';
-        case 'AED': return 'AED';
-        case 'SAR': return 'SAR';
-        default: return 'Rs';
-      }
-    };
-
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       fetchDropdownData();
     });
 
@@ -446,6 +460,7 @@ export default {
       contacts,
       taxes,
       paymentMethodOptions,
+      companyCurrencySymbol,
       selectedAccountCurrencySymbol,
       handleFileSelect,
       handleFileDrop,

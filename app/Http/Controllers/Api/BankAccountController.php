@@ -134,6 +134,11 @@ class BankAccountController extends Controller
             }
         }
 
+        if (empty($data['currency'])) {
+            $company = auth()->user()->currentCompany ?? \App\Models\Company::find($companyId);
+            $data['currency'] = $company?->base_currency ?? $company?->currency_code ?? 'PKR';
+        }
+
         $bankAccount = BankAccount::create($data);
 
         return response()->json([
@@ -251,7 +256,7 @@ class BankAccountController extends Controller
      */
     public function transactions(Request $request, BankAccount $bankAccount): JsonResponse
     {
-        $query = $bankAccount->bankTransactions()->with(['journalEntryLine.journalEntry']);
+        $query = $bankAccount->bankTransactions()->with(['journalEntry']);
 
         // Filter by date range
         if ($request->has('start_date')) {

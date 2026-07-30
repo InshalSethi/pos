@@ -27,7 +27,7 @@ class BankTransactionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = BankTransaction::with(['bankAccount', 'journalEntryLine.journalEntry']);
+        $query = BankTransaction::with(['bankAccount', 'journalEntry']);
 
         // Filter by bank account
         if ($request->has('bank_account_id')) {
@@ -190,7 +190,7 @@ class BankTransactionController extends Controller
 
             DB::commit();
 
-            $bankTransaction->load(['bankAccount', 'journalEntryLine.journalEntry']);
+            $bankTransaction->load(['bankAccount', 'journalEntry']);
 
             return response()->json([
                 'message' => 'Bank transaction created successfully',
@@ -212,7 +212,7 @@ class BankTransactionController extends Controller
      */
     public function show(BankTransaction $bankTransaction): JsonResponse
     {
-        $bankTransaction->load(['bankAccount', 'journalEntryLine.journalEntry']);
+        $bankTransaction->load(['bankAccount', 'journalEntry']);
 
         return response()->json($bankTransaction);
     }
@@ -249,7 +249,7 @@ class BankTransactionController extends Controller
 
         return response()->json([
             'message' => 'Bank transaction updated successfully',
-            'bank_transaction' => $bankTransaction->load(['bankAccount', 'journalEntryLine.journalEntry'])
+            'bank_transaction' => $bankTransaction->load(['bankAccount', 'journalEntry'])
         ]);
     }
 
@@ -294,7 +294,7 @@ class BankTransactionController extends Controller
 
         return response()->json([
             'message' => 'Bank transaction matched successfully',
-            'bank_transaction' => $bankTransaction->load(['bankAccount', 'journalEntryLine.journalEntry'])
+            'bank_transaction' => $bankTransaction->load(['bankAccount', 'journalEntry'])
         ]);
     }
 

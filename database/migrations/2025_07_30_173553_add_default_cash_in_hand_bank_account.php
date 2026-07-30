@@ -26,6 +26,9 @@ return new class extends Migration
             ]
         );
 
+        $company = \App\Models\Company::first();
+        $companyCurrency = $company?->base_currency ?? $company?->currency_code ?? 'PKR';
+
         // Create the default "Cash in Hand" bank account
         $cashInHandAccount = BankAccount::firstOrCreate(
             ['account_name' => 'Cash in Hand'],
@@ -37,7 +40,7 @@ return new class extends Migration
                 'routing_number' => null,
                 'swift_code' => null,
                 'iban' => null,
-                'currency' => 'USD',
+                'currency' => $companyCurrency,
                 'opening_balance' => 0,
                 'current_balance' => 0,
                 'opening_date' => now()->toDateString(),
