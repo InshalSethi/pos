@@ -176,7 +176,6 @@ const formatCurrency = (amount, symbol = 'Rs') => {
 };
 
 const formatBalance = (acc) => {
-  if (acc.formatted_balance) return acc.formatted_balance;
   const num = Number(acc.current_balance ?? acc.balance ?? acc.opening_balance ?? 0);
   const symbol = acc.currency_symbol || acc.currency || 'Rs';
   return formatCurrency(num, symbol);

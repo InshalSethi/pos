@@ -348,7 +348,7 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Opening Balance ($)</label>
+                  <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Opening Balance ({{ companyCurrencySymbol }})</label>
                   <input
                     v-model.number="accountForm.opening_balance"
                     type="number"
@@ -664,6 +664,8 @@ export default {
       fetchBalances();
     });
 
+    const companyCurrencySymbol = ref('Rs');
+
     return {
       activeView,
       selectedAccountType,
@@ -697,6 +699,7 @@ export default {
       formatAccountSubtype,
       formatNumber,
       formatCurrency,
+      companyCurrencySymbol,
     };
   },
 };

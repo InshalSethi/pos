@@ -119,6 +119,7 @@ class Account extends Model
 
     public function getFormattedBalanceAttribute(): string
     {
-        return '$' . number_format($this->current_balance, 2);
+        $val = (float) ($this->current_balance ?? 0);
+        return $val < 0 ? '- Rs ' . number_format(abs($val), 2) : 'Rs ' . number_format($val, 2);
     }
 }
