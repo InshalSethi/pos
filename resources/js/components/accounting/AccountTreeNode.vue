@@ -134,6 +134,9 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useCurrencyStore } from '@/stores/currency';
+
+const currencyStore = useCurrencyStore();
 
 const props = defineProps({
   account: {
@@ -166,9 +169,10 @@ const isLocked = (acc) => {
   return name === 'cash' || name === 'cash on hand' || name === 'bank account' || code === '1010' || code === '1020';
 };
 
-const formatCurrency = (amount, symbol = 'Rs') => {
+const formatCurrency = (amount, customSymbol) => {
+  const symbol = customSymbol || currencyStore.symbol || 'PKR';
   const num = Number(amount || 0);
-  const formatted = Math.abs(num).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatted = Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (num < 0) {
     return `- ${symbol} ${formatted}`;
   }
@@ -177,7 +181,7 @@ const formatCurrency = (amount, symbol = 'Rs') => {
 
 const formatBalance = (acc) => {
   const num = Number(acc.current_balance ?? acc.balance ?? acc.opening_balance ?? 0);
-  const symbol = acc.currency_symbol || acc.currency || 'Rs';
+  const symbol = acc.currency_symbol || (acc.currency && acc.currency !== 'PKR' && acc.currency !== 'USD' ? acc.currency : currencyStore.symbol);
   return formatCurrency(num, symbol);
 };
 

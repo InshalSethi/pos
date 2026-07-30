@@ -265,8 +265,8 @@
           <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">Accounting Equation Verification</h3>
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
             <div>
-              <p class="text-slate-500">Assets: <strong class="text-slate-800 dark:text-zinc-200">${{ formatNumber(balances.equation_check.assets) }}</strong></p>
-              <p class="text-slate-500">Liabilities + Equity + Net Income: <strong class="text-slate-800 dark:text-zinc-200">${{ formatNumber(balances.equation_check.liabilities_equity_income) }}</strong></p>
+              <p class="text-slate-500">Assets: <strong class="text-slate-800 dark:text-zinc-200">{{ companyCurrencySymbol }} {{ formatNumber(balances.equation_check.assets) }}</strong></p>
+              <p class="text-slate-500">Liabilities + Equity + Net Income: <strong class="text-slate-800 dark:text-zinc-200">{{ companyCurrencySymbol }} {{ formatNumber(balances.equation_check.liabilities_equity_income) }}</strong></p>
             </div>
             <div>
               <span
@@ -400,12 +400,19 @@ import axios from 'axios';
 import AccountTreeNode from '../accounting/AccountTreeNode.vue';
 import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 
 export default {
   name: 'BankingAccounts',
   components: { AccountTreeNode, CustomFloatingSelect },
   setup() {
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
+
+    const companyCurrencySymbol = computed(() => {
+      return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
+    });
+
     const activeView = ref('tree');
     const selectedAccountType = ref('');
     const searchQuery = ref('');
@@ -628,13 +635,14 @@ export default {
       }
     };
 
-    const formatCurrency = (amount, symbol = 'Rs') => {
+    const formatCurrency = (amount, customSymbol) => {
+      const activeSymbol = (customSymbol && customSymbol !== 'PKR' && customSymbol !== 'USD' && customSymbol !== 'Rs') ? customSymbol : companyCurrencySymbol.value;
       const num = Number(amount || 0);
-      const formatted = Math.abs(num).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formatted = Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (num < 0) {
-        return `- ${symbol} ${formatted}`;
+        return `- ${activeSymbol} ${formatted}`;
       }
-      return `${symbol} ${formatted}`;
+      return `${activeSymbol} ${formatted}`;
     };
 
     const getAccountTypeBadgeClass = (type) => {
@@ -659,12 +667,11 @@ export default {
     };
 
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       fetchAccountTree();
       fetchAccounts();
       fetchBalances();
     });
-
-    const companyCurrencySymbol = ref('Rs');
 
     return {
       activeView,
