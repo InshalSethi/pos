@@ -78,7 +78,7 @@
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
               <tr v-for="(line, idx) in form.lines" :key="idx" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
-                <td class="p-2.5">
+                <td class="p-2.5 relative z-10 focus-within:z-50">
                   <CustomFloatingSelect
                     :options="coaAccountOptions"
                     v-model="line.account_id"
