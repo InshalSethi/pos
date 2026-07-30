@@ -43,7 +43,7 @@
         <!-- Badges -->
         <span
           :class="getAccountTypeBadgeClass(account.account_type || account.type)"
-          class="px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider shrink-0"
+          class="px-2.5 py-0.5 text-[11px] font-semibold tracking-wider uppercase rounded-full border shrink-0"
         >
           {{ formatAccountType(account.account_type || account.type) }}
         </span>
@@ -51,7 +51,7 @@
         <!-- Plain Text-Only System Badge -->
         <span
           v-if="isLocked(account)"
-          class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50 shrink-0"
+          class="px-2.5 py-0.5 text-[11px] font-semibold tracking-wider uppercase rounded-full border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50 shrink-0"
         >
           System
         </span>
@@ -166,22 +166,32 @@ const isLocked = (acc) => {
   return name === 'cash' || name === 'cash on hand' || name === 'bank account' || code === '1010' || code === '1020';
 };
 
+const formatCurrency = (amount, symbol = 'Rs') => {
+  const num = Number(amount || 0);
+  const formatted = Math.abs(num).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (num < 0) {
+    return `- ${symbol} ${formatted}`;
+  }
+  return `${symbol} ${formatted}`;
+};
+
 const formatBalance = (acc) => {
   if (acc.formatted_balance) return acc.formatted_balance;
   const num = Number(acc.current_balance ?? acc.balance ?? acc.opening_balance ?? 0);
-  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const symbol = acc.currency_symbol || acc.currency || 'Rs';
+  return formatCurrency(num, symbol);
 };
 
 const getAccountTypeBadgeClass = (type) => {
-  const t = (type || '').toLowerCase();
+  const t = (type || '').toUpperCase();
   const classes = {
-    asset: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40',
-    liability: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40',
-    equity: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40',
-    revenue: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 border border-purple-200 dark:border-purple-800/40',
-    expense: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40'
+    ASSET: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800/60',
+    LIABILITY: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800/60',
+    EQUITY: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800/60',
+    REVENUE: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800/60',
+    EXPENSE: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800/60'
   };
-  return classes[t] || 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
+  return classes[t] || 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
 };
 
 const formatAccountType = (type) => {

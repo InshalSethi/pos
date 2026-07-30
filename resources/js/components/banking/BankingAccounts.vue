@@ -154,15 +154,15 @@
                 <td class="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-zinc-100">{{ acc.account_code }}</td>
                 <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-zinc-100">
                   {{ acc.account_name }}
-                  <span v-if="acc.is_system_account" class="ml-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-500 font-normal">System</span>
+                  <span v-if="acc.is_system_account" class="ml-2 px-2.5 py-0.5 text-[11px] font-semibold tracking-wider uppercase rounded-full border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50 inline-block">System</span>
                 </td>
                 <td class="py-3.5 px-4">
-                  <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" :class="getAccountTypeBadgeClass(acc.account_type)">
+                  <span class="inline-flex px-2.5 py-0.5 text-[11px] font-semibold tracking-wider uppercase rounded-full border" :class="getAccountTypeBadgeClass(acc.account_type)">
                     {{ acc.account_type }}
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-slate-600 dark:text-zinc-400 capitalize">{{ formatAccountSubtype(acc.account_subtype) }}</td>
-                <td class="py-3.5 px-4 text-right font-extrabold text-slate-900 dark:text-zinc-100">${{ formatNumber(acc.current_balance ?? acc.opening_balance) }}</td>
+                <td class="py-3.5 px-4 text-right font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatCurrency(acc.current_balance ?? acc.opening_balance, acc.currency_symbol || acc.currency || 'Rs') }}</td>
                 <td class="py-3.5 px-4 text-center">
                   <span
                     :class="acc.is_active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'"
@@ -231,32 +231,32 @@
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div class="p-5 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40">
             <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Assets</p>
-            <p class="text-2xl font-extrabold text-blue-950 dark:text-blue-100 mt-1">${{ formatNumber(balances.assets) }}</p>
+            <p class="text-2xl font-extrabold text-blue-950 dark:text-blue-100 mt-1 font-mono">{{ formatCurrency(balances.assets) }}</p>
           </div>
 
           <div class="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40">
             <p class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Total Liabilities</p>
-            <p class="text-2xl font-extrabold text-rose-950 dark:text-rose-100 mt-1">${{ formatNumber(balances.liabilities) }}</p>
+            <p class="text-2xl font-extrabold text-rose-950 dark:text-rose-100 mt-1 font-mono">{{ formatCurrency(balances.liabilities) }}</p>
           </div>
 
           <div class="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40">
             <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Equity</p>
-            <p class="text-2xl font-extrabold text-emerald-950 dark:text-emerald-100 mt-1">${{ formatNumber(balances.equity) }}</p>
+            <p class="text-2xl font-extrabold text-emerald-950 dark:text-emerald-100 mt-1 font-mono">{{ formatCurrency(balances.equity) }}</p>
           </div>
 
           <div class="p-5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/40">
             <p class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Total Revenue</p>
-            <p class="text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-1">${{ formatNumber(balances.revenue) }}</p>
+            <p class="text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-1 font-mono">{{ formatCurrency(balances.revenue) }}</p>
           </div>
 
           <div class="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
             <p class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Total Expenses</p>
-            <p class="text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-1">${{ formatNumber(balances.expenses) }}</p>
+            <p class="text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-1 font-mono">{{ formatCurrency(balances.expenses) }}</p>
           </div>
 
           <div class="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/40">
             <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Net Income</p>
-            <p class="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-1">${{ formatNumber(balances.net_income) }}</p>
+            <p class="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-1 font-mono">{{ formatCurrency(balances.net_income) }}</p>
           </div>
         </div>
 
@@ -628,15 +628,25 @@ export default {
       }
     };
 
+    const formatCurrency = (amount, symbol = 'Rs') => {
+      const num = Number(amount || 0);
+      const formatted = Math.abs(num).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (num < 0) {
+        return `- ${symbol} ${formatted}`;
+      }
+      return `${symbol} ${formatted}`;
+    };
+
     const getAccountTypeBadgeClass = (type) => {
+      const t = (type || '').toUpperCase();
       const classes = {
-        asset: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40',
-        liability: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40',
-        equity: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40',
-        revenue: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 border border-purple-200 dark:border-purple-800/40',
-        expense: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40'
+        ASSET: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800/60',
+        LIABILITY: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800/60',
+        EQUITY: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800/60',
+        REVENUE: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800/60',
+        EXPENSE: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800/60'
       };
-      return classes[type] || 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
+      return classes[t] || 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
     };
 
     const formatAccountSubtype = (st) => {
@@ -686,6 +696,7 @@ export default {
       getAccountTypeBadgeClass,
       formatAccountSubtype,
       formatNumber,
+      formatCurrency,
     };
   },
 };
