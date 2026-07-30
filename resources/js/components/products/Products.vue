@@ -366,11 +366,13 @@
                   <!-- Price Matrix (Center Aligned) -->
                   <td class="px-6 py-4.5 sm:py-5 text-center align-middle">
                     <div class="flex flex-col items-center justify-center text-center">
+                      <!-- Main Sale Price -->
                       <span class="text-sm font-extrabold text-gray-950 dark:text-slate-200">
-                        {{ currencyStore.formatPrice((item.variations && item.variations.length > 0) ? (item.variations[0].retail_price || item.variations[0].selling_price || 0) : (item.selling_price || item.retail_price || 0)) }}
+                        {{ currencyStore.formatPrice(getItemSellingPrice(item)) }}
                       </span>
-                      <span class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-semibold">
-                        {{ currencyStore.formatPrice((item.variations && item.variations.length > 0) ? (item.variations[0].cost_price || 0) : (item.cost_price || 0)) }}
+                      <!-- Conditional Wholesale Price Display -->
+                      <span v-if="getItemWholesalePrice(item) !== null" class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-semibold">
+                        {{ currencyStore.formatPrice(getItemWholesalePrice(item)) }}
                       </span>
                     </div>
 
@@ -2141,7 +2143,27 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+const getItemSellingPrice = (item) => {
+  if (item.variations && item.variations.length > 0) {
+    const v = item.variations[0];
+    return v.selling_price || v.retail_price || v.price || item.selling_price || item.retail_price || item.price || 0;
+  }
+  return item.selling_price || item.retail_price || item.price || 0;
+};
 
+const getItemWholesalePrice = (item) => {
+  let val = null;
+  if (item.variations && item.variations.length > 0) {
+    val = item.variations[0].wholesale_price;
+  }
+  if (val === null || val === undefined || Number(val) <= 0) {
+    val = item.wholesale_price;
+  }
+  if (val !== null && val !== undefined && Number(val) > 0) {
+    return Number(val);
+  }
+  return null;
+};
 
 // Lifecycle
 watch(
