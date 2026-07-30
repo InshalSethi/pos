@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="">
+<html lang="en" class="notranslate" translate="no">
 <head>
     <script>
         (function() {
@@ -15,6 +15,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate" />
     <title>Admin Panel</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

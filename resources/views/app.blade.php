@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ request()->cookie('theme') === 'dark' ? 'dark' : '' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="notranslate {{ request()->cookie('theme') === 'dark' ? 'dark' : '' }}" translate="no">
 <head>
     <script>
         (function() {
@@ -24,6 +24,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="google" content="notranslate" />
 
     <title>{{ config('app.name', 'POS System') }}</title>
 
@@ -41,7 +42,7 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="font-sans antialiased text-[13px] font-medium text-gray-600 tracking-wide">
+<body class="notranslate font-sans antialiased text-[13px] font-medium text-gray-600 tracking-wide">
     <div id="app"></div>
 
     <!-- THE VARIANT PRICING LAYOUT MODAL -->
