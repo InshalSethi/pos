@@ -100,36 +100,71 @@
                     </label>
                     <div class="relative" id="category-multiselect-container">
                       <div 
-                        @click="showCategoryDropdown = !showCategoryDropdown"
-                        class="w-full min-h-[34px] px-3 py-1 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
+                        @click="focusCategoryInput"
+                        class="w-full min-h-[38px] p-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-xl text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-text flex flex-wrap items-center gap-1.5 pr-8"
                       >
                         <div 
                           v-for="catId in form.category_ids" 
                           :key="catId" 
-                          class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold shadow-xs"
+                          class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold shadow-xs"
                         >
                           <span>{{ getCategoryLabel(catId) }}</span>
                           <button type="button" @click.stop="removeCategory(catId)" class="hover:text-red-350 font-bold focus:outline-none">&times;</button>
                         </div>
-                        <span v-if="form.category_ids.length === 0" class="text-gray-400 dark:text-slate-550 text-sm">Add category</span>
-                        
+
+                        <!-- Real-Time Search Input -->
+                        <input
+                          ref="categoryInputRef"
+                          type="text"
+                          v-model="categorySearchQuery"
+                          @focus="showCategoryDropdown = true"
+                          @click.stop="showCategoryDropdown = true"
+                          :placeholder="form.category_ids.length === 0 ? 'Add category' : ''"
+                          class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
+                        />
+
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
                         </span>
                       </div>
- 
+
                       <!-- Dropdown Menu -->
-                      <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
-                        <div 
-                          v-for="opt in categoryOptions" 
-                          :key="opt.value"
-                          @click="toggleCategorySelection(opt.value)"
-                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
-                        >
-                          <span :class="form.category_ids.includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ opt.label }}</span>
-                          <span v-if="form.category_ids.includes(opt.value)" class="text-indigo-600 dark:text-indigo-450">
-                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                          </span>
+                      <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                        <!-- Scrollable List of Filtered Options -->
+                        <div class="overflow-y-auto max-h-44 custom-scrollbar">
+                          <template v-if="filteredCategoryOptions.length > 0">
+                            <div 
+                              v-for="opt in filteredCategoryOptions" 
+                              :key="opt.value"
+                              @click="toggleCategorySelection(opt.value)"
+                              class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
+                            >
+                              <span :class="form.category_ids.includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ opt.label }}</span>
+                              <span v-if="form.category_ids.includes(opt.value)" class="text-indigo-600 dark:text-indigo-400">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                              </span>
+                            </div>
+                          </template>
+
+                          <!-- Empty State ("No Categories Found") -->
+                          <div v-else class="px-3 py-3 text-center">
+                            <p class="text-slate-400 dark:text-slate-500 text-xs font-semibold italic">No categories found</p>
+                          </div>
+                        </div>
+
+                        <!-- Add Category Footer -->
+                        <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1 p-1 bg-white dark:bg-[#1E1E1E]">
+                          <button 
+                            type="button"
+                            @click.stop="toggleCategorySelection('add_new_category')" 
+                            class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-[#2D2D2D]/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>+ Add Category</span>
+                            <span v-if="categorySearchQuery" class="text-xs text-slate-400">"{{ categorySearchQuery }}"</span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -2340,6 +2375,15 @@ const setStatus = (val) => {
 
 // Multi-select Category Badge & Tag logic
 const showCategoryDropdown = ref(false);
+const categorySearchQuery = ref('');
+const categoryInputRef = ref(null);
+
+const focusCategoryInput = () => {
+  showCategoryDropdown.value = true;
+  if (categoryInputRef.value) {
+    categoryInputRef.value.focus();
+  }
+};
 
 const getCategoryLabel = (id) => {
   const list = Array.isArray(categories.value)
@@ -2353,6 +2397,7 @@ const toggleCategorySelection = (val) => {
   if (val === 'add_new_category') {
     openCategoryModal();
     showCategoryDropdown.value = false;
+    categorySearchQuery.value = '';
     return;
   }
   const idx = form.value.category_ids.indexOf(val);
@@ -2377,6 +2422,7 @@ const closeCategoryDropdownOnOutsideClick = (e) => {
   const el = document.getElementById('category-multiselect-container');
   if (el && !el.contains(e.target)) {
     showCategoryDropdown.value = false;
+    categorySearchQuery.value = '';
   }
 };
 
@@ -2541,9 +2587,14 @@ const categoryOptions = computed(() => {
   const list = Array.isArray(categories.value)
     ? categories.value
     : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
-  const options = list.map(c => ({ label: c?.name || '', value: c?.id || '' }));
-  options.push({ label: '+ ADD New Category', value: 'add_new_category' });
-  return options;
+  return list.map(c => ({ label: c?.name || '', value: c?.id || '' }));
+});
+
+const filteredCategoryOptions = computed(() => {
+  const options = categoryOptions.value;
+  if (!categorySearchQuery.value.trim()) return options;
+  const q = categorySearchQuery.value.toLowerCase().trim();
+  return options.filter(opt => opt.label.toLowerCase().includes(q));
 });
 
 const parentCategoryOptions = computed(() => {
