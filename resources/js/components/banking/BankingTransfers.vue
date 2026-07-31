@@ -43,7 +43,7 @@
               <th class="py-3 px-4">To Account</th>
               <th class="py-3 px-4">Reference</th>
               <th class="py-3 px-4">Description</th>
-              <th class="py-3 px-4 text-right">Amount ($)</th>
+              <th class="py-3 px-4 text-right">Amount ({{ companyCurrencySymbol }})</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
@@ -58,7 +58,7 @@
               :key="trf.id"
               class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors"
             >
-              <td class="py-3.5 px-4 font-medium text-slate-600 dark:text-zinc-300">{{ trf.transaction_date }}</td>
+              <td class="py-3.5 px-4 font-medium text-slate-600 dark:text-zinc-300">{{ formatDate(trf.transaction_date) }}</td>
               <td class="py-3.5 px-4 font-semibold text-rose-600 dark:text-rose-400">{{ trf.from_account_name }}</td>
               <td class="py-3.5 px-4 font-semibold text-emerald-600 dark:text-emerald-400">{{ trf.to_account_name }}</td>
               <td class="py-3.5 px-4 text-slate-500 dark:text-zinc-400 font-mono text-[11px]">{{ trf.reference_number || '-' }}</td>
@@ -183,20 +183,8 @@ export default {
     const fetchTransfers = async () => {
       loading.value = true;
       try {
-        const response = await api.banking.transactions({ search: 'Transfer' });
-        const raw = response.data?.data || response.data || [];
-        // Map raw transactions into grouped transfer pairs if possible
-        transfers.value = raw.map(tx => {
-          return {
-            id: tx.id,
-            transaction_date: tx.transaction_date,
-            from_account_name: tx.transaction_type === 'credit' ? (tx.bank_account?.account_name || 'Bank') : 'Inter-Account',
-            to_account_name: tx.transaction_type === 'debit' ? (tx.bank_account?.account_name || 'Bank') : 'Inter-Account',
-            reference_number: tx.reference_number,
-            description: tx.description,
-            amount: tx.amount,
-          };
-        });
+        const response = await api.banking.transfersList();
+        transfers.value = response.data || [];
       } catch (error) {
         showToast('Failed to load transfers', 'error');
       } finally {
@@ -252,6 +240,13 @@ export default {
       return Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
     onMounted(() => {
       currencyStore.fetchCurrencies();
       fetchAccounts();
@@ -271,6 +266,7 @@ export default {
       openTransferModal,
       executeTransfer,
       formatNumber,
+      formatDate,
     };
   },
 };

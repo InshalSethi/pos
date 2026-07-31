@@ -265,11 +265,13 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::get('/transactions/summary', [TransactionController::class , 'summary']);
 
         // Banking routes
+        Route::get('/bank-accounts/transfers-list', [BankAccountController::class , 'transfersList']);
         Route::post('/bank-accounts/transfer', [BankAccountController::class , 'transfer']);
         Route::apiResource('bank-accounts', BankAccountController::class);
         Route::get('/bank-accounts/{bankAccount}/transactions', [BankAccountController::class , 'transactions']);
         Route::post('/bank-accounts/{bankAccount}/reconcile', [BankAccountController::class , 'reconcile']);
         Route::get('/bank-accounts/{bankAccount}/reconciliation-summary', [BankAccountController::class , 'reconciliationSummary']);
+
 
         Route::apiResource('bank-transactions', BankTransactionController::class);
         Route::post('/bank-transactions/{bankTransaction}/match', [BankTransactionController::class , 'match']);

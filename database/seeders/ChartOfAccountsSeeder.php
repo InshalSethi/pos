@@ -21,8 +21,8 @@ class ChartOfAccountsSeeder extends Seeder
         $accounts = [
             // ASSETS
             ['account_code' => '1000', 'account_name' => 'Current Assets', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => true],
-            ['account_code' => '1010', 'account_name' => 'Cash', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => true],
-            ['account_code' => '1020', 'account_name' => 'Bank Account', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => true],
+            ['account_code' => '1010', 'account_name' => 'Cash', 'account_type' => 'asset', 'account_subtype' => 'cash_and_bank', 'is_system_account' => true],
+            ['account_code' => '1020', 'account_name' => 'Bank Account', 'account_type' => 'asset', 'account_subtype' => 'cash_and_bank', 'is_system_account' => true],
             ['account_code' => '1030', 'account_name' => 'Accounts Receivable', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => true],
             ['account_code' => '1040', 'account_name' => 'Inventory', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => true],
             ['account_code' => '1050', 'account_name' => 'Prepaid Expenses', 'account_type' => 'asset', 'account_subtype' => 'current_asset', 'is_system_account' => false],

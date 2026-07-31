@@ -18,7 +18,7 @@ class BankAccountController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:accounting.view')->only(['index', 'show', 'transactions', 'reconciliationSummary']);
+        $this->middleware('permission:accounting.view')->only(['index', 'show', 'transactions', 'reconciliationSummary', 'transfersList']);
         $this->middleware('permission:accounting.create')->only(['store', 'transfer']);
         $this->middleware('permission:accounting.edit')->only(['update', 'reconcile']);
         $this->middleware('permission:accounting.delete')->only(['destroy']);
@@ -135,7 +135,7 @@ class BankAccountController extends Controller
                         'account_code' => $newCode,
                         'account_name' => $data['account_name'] . ' (' . $data['bank_name'] . ')',
                         'account_type' => $isCreditCard ? 'liability' : 'asset',
-                        'account_subtype' => $isCreditCard ? 'current_liability' : 'current_asset',
+                        'account_subtype' => $isCreditCard ? 'current_liability' : 'cash_and_bank',
                         'description' => 'Bank Account for ' . $data['account_name'],
                         'opening_balance' => $data['opening_balance'] ?? 0,
                         'current_balance' => $data['opening_balance'] ?? 0,
@@ -376,6 +376,44 @@ class BankAccountController extends Controller
     }
 
     /**
+     * List all inter-account transfers with proper from/to bank names
+     */
+    public function transfersList(Request $request): JsonResponse
+    {
+        // Get all transfer bank transactions (those with a journal_entry_id and description containing "Transfer")
+        $transactions = BankTransaction::with('bankAccount')
+            ->whereNotNull('journal_entry_id')
+            ->where('description', 'like', '%Transfer%')
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        // Group by journal_entry_id to pair credit/debit sides
+        $grouped = $transactions->groupBy('journal_entry_id');
+
+        $transfers = [];
+        foreach ($grouped as $journalEntryId => $pair) {
+            $creditTx = $pair->firstWhere('transaction_type', 'credit'); // from (money out)
+            $debitTx = $pair->firstWhere('transaction_type', 'debit');   // to (money in)
+
+            if (!$creditTx || !$debitTx) continue;
+
+            $transfers[] = [
+                'id' => $creditTx->id,
+                'journal_entry_id' => $journalEntryId,
+                'transaction_date' => $creditTx->transaction_date?->format('Y-m-d'),
+                'from_account_name' => $creditTx->bankAccount->account_name ?? 'Unknown',
+                'to_account_name' => $debitTx->bankAccount->account_name ?? 'Unknown',
+                'reference_number' => $creditTx->reference_number,
+                'description' => $creditTx->description,
+                'amount' => $creditTx->amount,
+            ];
+        }
+
+        return response()->json($transfers);
+    }
+
+    /**
      * Transfer funds between bank accounts
      */
     public function transfer(Request $request): JsonResponse
@@ -412,8 +450,13 @@ class BankAccountController extends Controller
                     'entry_date' => $date,
                     'reference' => $ref,
                     'description' => $desc,
+                    'entry_type' => 'automatic',
                     'status' => 'posted',
+                    'total_debit' => $amount,
+                    'total_credit' => $amount,
                     'created_by' => auth()->id(),
+                    'posted_by' => auth()->id(),
+                    'posted_at' => now(),
                 ]);
 
                 // Debit Destination Account (COA)

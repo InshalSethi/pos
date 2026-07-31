@@ -207,6 +207,7 @@ const apiMethods = {
     reconciliationSummary: (id) => api.get(`/bank-accounts/${id}/reconciliation-summary`),
     reconcile: (id, data) => api.post(`/bank-accounts/${id}/reconcile`, data),
     transfer: (data) => api.post('/bank-accounts/transfer', data),
+    transfersList: () => api.get('/bank-accounts/transfers-list'),
     transactions: (params = {}) => api.get('/bank-transactions', { params }),
   },
 

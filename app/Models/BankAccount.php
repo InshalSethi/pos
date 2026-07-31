@@ -113,12 +113,12 @@ class BankAccount extends Model
                             ->where('transaction_type', 'credit')
                             ->sum('amount');
 
-        // For asset accounts (checking, savings): Credits increase, Debits decrease
-        // For liability accounts (credit cards): Debits increase, Credits decrease
+        // For asset accounts (checking, savings): Debits increase (money in), Credits decrease (money out)
+        // For liability accounts (credit cards): Credits increase, Debits decrease
         if (in_array($this->account_type, ['checking', 'savings'])) {
-            return $this->opening_balance + $totalCredits - $totalDebits;
-        } else {
             return $this->opening_balance + $totalDebits - $totalCredits;
+        } else {
+            return $this->opening_balance + $totalCredits - $totalDebits;
         }
     }
 
@@ -135,9 +135,9 @@ class BankAccount extends Model
                             ->sum('amount');
 
         if (in_array($this->account_type, ['checking', 'savings'])) {
-            return $this->opening_balance + $totalCredits - $totalDebits;
-        } else {
             return $this->opening_balance + $totalDebits - $totalCredits;
+        } else {
+            return $this->opening_balance + $totalCredits - $totalDebits;
         }
     }
 

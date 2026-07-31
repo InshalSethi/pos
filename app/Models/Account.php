@@ -19,6 +19,7 @@ class Account extends Model
     protected $table = 'chart_of_accounts';
 
     protected $fillable = [
+        'company_id',
         'account_code',
         'account_name',
         'account_type',

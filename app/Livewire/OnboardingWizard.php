@@ -339,7 +339,7 @@ class OnboardingWizard extends Component
                     'account_code' => '1010',
                     'account_name' => 'Cash on Hand',
                     'account_type' => 'asset',
-                    'account_subtype' => 'current_asset',
+                    'account_subtype' => 'cash_and_bank',
                     'is_active' => true,
                     'is_system_account' => true,
                     'opening_balance' => 0.00,

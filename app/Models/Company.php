@@ -14,6 +14,7 @@ class Company extends Model
     protected static function booted()
     {
         static::created(function ($company) {
+            // Seed default measurement units
             $defaultUnits = [
                 ['name' => 'Pieces', 'short_name' => 'PCS'],
                 ['name' => 'Kilograms', 'short_name' => 'KG'],
@@ -28,6 +29,26 @@ class Company extends Model
                     'short_name' => $unit['short_name'],
                     'is_active' => true,
                 ]);
+            }
+
+            // Seed default Chart of Accounts for the new company
+            $defaultAccounts = [
+                ['account_code' => '1010', 'account_name' => 'Cash',                'account_type' => 'asset',     'account_subtype' => 'cash_and_bank',      'is_system_account' => true],
+                ['account_code' => '1020', 'account_name' => 'Bank Account',         'account_type' => 'asset',     'account_subtype' => 'cash_and_bank',      'is_system_account' => true],
+                ['account_code' => '1030', 'account_name' => 'Accounts Receivable',  'account_type' => 'asset',     'account_subtype' => 'current_asset',      'is_system_account' => true],
+                ['account_code' => '1040', 'account_name' => 'Inventory',            'account_type' => 'asset',     'account_subtype' => 'current_asset',      'is_system_account' => true],
+                ['account_code' => '2010', 'account_name' => 'Accounts Payable',     'account_type' => 'liability', 'account_subtype' => 'current_liability',  'is_system_account' => true],
+                ['account_code' => '3010', 'account_name' => "Owner's Equity",       'account_type' => 'equity',    'account_subtype' => 'equity',             'is_system_account' => true],
+                ['account_code' => '4010', 'account_name' => 'Sales Revenue',        'account_type' => 'revenue',   'account_subtype' => 'operating_income',   'is_system_account' => true],
+            ];
+
+            foreach ($defaultAccounts as $account) {
+                \App\Models\Account::create(array_merge($account, [
+                    'company_id' => $company->id,
+                    'is_active' => true,
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                ]));
             }
         });
     }
