@@ -7,6 +7,7 @@ use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
@@ -174,7 +175,60 @@ class AccountController extends Controller
             ], 422);
         }
 
-        $account->update($request->all());
+        $data = $request->all();
+
+        // Preserve existing parent_account_id if not sent in form or empty
+        if (empty($data['parent_account_id']) && $account->parent_account_id) {
+            $data['parent_account_id'] = $account->parent_account_id;
+        }
+
+        // For bank-linked accounts, ensure parent_account_id defaults to 1020 Bank Account
+        if (empty($data['parent_account_id']) && $account->bankAccounts()->exists()) {
+            $parent = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '1020')
+                      ->orWhere('account_name', 'like', '%Bank Account%');
+                })
+                ->where('account_type', 'asset')
+                ->first();
+            if ($parent) {
+                $data['parent_account_id'] = $parent->id;
+            }
+        }
+
+        DB::transaction(function () use ($request, $account, $companyId, &$data) {
+            $oldOpeningBalance = (float) ($account->opening_balance ?? 0);
+            $newOpeningBalance = $request->has('opening_balance') ? (float) $request->input('opening_balance') : $oldOpeningBalance;
+
+            // Calculate delta difference
+            $delta = $newOpeningBalance - $oldOpeningBalance;
+            $newCurrentBalance = (float) ($account->current_balance ?? 0) + $delta;
+
+            $data['opening_balance'] = $newOpeningBalance;
+            $data['current_balance'] = $newCurrentBalance;
+
+            $account->update($data);
+
+            // HARD SYNC to linked Bank Account record
+            $linkedBank = DB::table('bank_accounts')
+                ->where('company_id', $account->company_id)
+                ->where(function ($query) use ($account) {
+                    $query->where('chart_account_id', $account->id)
+                          ->orWhere('account_number', $account->account_code)
+                          ->orWhere('bank_name', 'LIKE', "%{$account->account_name}%");
+                })
+                ->first();
+
+            if ($linkedBank) {
+                DB::table('bank_accounts')
+                    ->where('id', $linkedBank->id)
+                    ->update([
+                        'opening_balance' => $newOpeningBalance,
+                        'current_balance' => $newCurrentBalance,
+                        'updated_at'      => now(),
+                    ]);
+            }
+        });
 
         return response()->json([
             'message' => 'Account updated successfully',

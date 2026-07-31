@@ -29,6 +29,7 @@ class JournalEntry extends Model
         'created_by',
         'posted_by',
         'posted_at',
+        'is_reversal',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class JournalEntry extends Model
         'posted_at' => 'datetime',
         'total_debit' => 'decimal:2',
         'total_credit' => 'decimal:2',
+        'is_reversal' => 'boolean',
     ];
 
     // Relationships

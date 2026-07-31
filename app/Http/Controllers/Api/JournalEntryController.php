@@ -357,9 +357,22 @@ class JournalEntryController extends Controller
      */
     public function reverse(Request $request, JournalEntry $journalEntry): JsonResponse
     {
+        if ($journalEntry->status === 'reversed') {
+            return response()->json([
+                'message' => 'This journal entry has already been reversed.'
+            ], 422);
+        }
+
         if ($journalEntry->status !== 'posted') {
             return response()->json([
                 'message' => 'Can only reverse posted journal entries'
+            ], 422);
+        }
+
+        // Block if this entry is ITSELF a reversal entry
+        if ($journalEntry->is_reversal || str_starts_with($journalEntry->entry_number, 'REV-') || str_starts_with($journalEntry->description, 'REVERSAL:')) {
+            return response()->json([
+                'message' => 'Cannot reverse a reversal entry.'
             ], 422);
         }
 
@@ -378,16 +391,22 @@ class JournalEntryController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create reversal entry
-            $reversalNumber = 'REV-' . $journalEntry->entry_number;
+            // Clean single prefix formatting (strip repeated REV- and REVERSAL: prefixes)
+            $cleanNumber = preg_replace('/^(REV-)+/i', '', $journalEntry->entry_number);
+            $reversalNumber = 'REV-' . $cleanNumber;
+
+            $cleanDesc = preg_replace('/^(REVERSAL:\s*)+/i', '', $journalEntry->description);
+            $reversalDescription = 'REVERSAL: ' . $cleanDesc . ($request->reason ? ' - ' . $request->reason : '');
 
             $reversalEntry = JournalEntry::create([
+                'company_id' => $journalEntry->company_id,
                 'entry_number' => $reversalNumber,
                 'entry_date' => $request->reversal_date,
                 'reference' => $journalEntry->reference,
-                'description' => 'REVERSAL: ' . $journalEntry->description . ' - ' . $request->reason,
+                'description' => $reversalDescription,
                 'entry_type' => 'adjustment',
                 'status' => 'posted',
+                'is_reversal' => true,
                 'total_debit' => $journalEntry->total_credit,
                 'total_credit' => $journalEntry->total_debit,
                 'created_by' => auth()->id() ?? 1,
@@ -411,10 +430,46 @@ class JournalEntryController extends Controller
             // Update original entry status
             $journalEntry->update(['status' => 'reversed']);
 
-            // Update account balances
+            // Update account balances & sync to linked bank_accounts
             foreach ($reversalEntry->journalEntryLines as $line) {
                 $account = Account::find($line->account_id);
-                $account->updateCurrentBalance();
+                if ($account) {
+                    $reversedDebit = (float) $line->debit_amount;
+                    $reversedCredit = (float) $line->credit_amount;
+
+                    $isNormalDebit = in_array(strtolower($account->account_type), ['asset', 'expense']);
+                    $netChange = $isNormalDebit 
+                        ? ($reversedDebit - $reversedCredit)
+                        : ($reversedCredit - $reversedDebit);
+
+                    if ($netChange >= 0) {
+                        $account->increment('current_balance', $netChange);
+                    } else {
+                        $account->decrement('current_balance', abs($netChange));
+                    }
+
+                    // Sync with linked Bank Account (if applicable)
+                    $bankAccount = DB::table('bank_accounts')
+                        ->where('company_id', $journalEntry->company_id)
+                        ->where(function ($q) use ($account) {
+                            $q->where('chart_account_id', $account->id)
+                              ->orWhere('account_number', $account->account_code)
+                              ->orWhere('bank_name', 'LIKE', "%{$account->account_name}%");
+                        })
+                        ->first();
+
+                    if ($bankAccount) {
+                        if ($netChange >= 0) {
+                            DB::table('bank_accounts')
+                                ->where('id', $bankAccount->id)
+                                ->increment('current_balance', $netChange);
+                        } else {
+                            DB::table('bank_accounts')
+                                ->where('id', $bankAccount->id)
+                                ->decrement('current_balance', abs($netChange));
+                        }
+                    }
+                }
             }
 
             DB::commit();

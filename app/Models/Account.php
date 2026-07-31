@@ -18,6 +18,25 @@ class Account extends Model
 
     protected $table = 'chart_of_accounts';
 
+    protected static function booted()
+    {
+        static::saved(function ($account) {
+            if ($account->wasChanged(['opening_balance', 'current_balance'])) {
+                \Illuminate\Support\Facades\DB::table('bank_accounts')
+                    ->where('company_id', $account->company_id)
+                    ->where(function ($query) use ($account) {
+                        $query->where('chart_account_id', $account->id)
+                              ->orWhere('account_number', $account->account_code)
+                              ->orWhere('bank_name', 'LIKE', "%{$account->account_name}%");
+                    })
+                    ->update([
+                        'opening_balance' => $account->opening_balance,
+                        'current_balance' => $account->current_balance,
+                    ]);
+            }
+        });
+    }
+
     protected $fillable = [
         'company_id',
         'account_code',
@@ -38,6 +57,19 @@ class Account extends Model
         'opening_balance' => 'decimal:2',
         'current_balance' => 'decimal:2',
     ];
+
+    protected $appends = ['calculated_balance'];
+
+    public function getCalculatedBalanceAttribute()
+    {
+        if ($this->relationLoaded('children') && $this->children && $this->children->count() > 0) {
+            return (float) $this->children->sum(function ($child) {
+                return $child->calculated_balance;
+            });
+        }
+
+        return (float) ($this->current_balance ?? $this->opening_balance ?? 0);
+    }
 
     // Alias attributes for consistency with controller
     public function getCodeAttribute()

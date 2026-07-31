@@ -116,18 +116,20 @@ class BankAccountController extends Controller
                     BankAccount::where('company_id', $companyId)->update(['is_default' => false]);
                 }
 
-                // Auto-create Chart of Account if not selected
+                // Auto-create or update Chart of Account to link to 1020 Bank Account
+                $parentAccount = Account::where('company_id', $companyId)
+                    ->where(function ($q) {
+                        $q->where('account_code', '1020')
+                          ->orWhere('account_name', 'like', '%Bank Account%');
+                    })
+                    ->where('account_type', 'asset')
+                    ->first();
+
                 if (empty($data['chart_account_id'])) {
                     $maxCode = Account::where('account_type', 'asset')
                         ->where('company_id', $companyId)
                         ->max('account_code');
                     $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
-
-                    // Find parent "Bank Account" node (code 1020) for proper hierarchy placement
-                    $parentAccount = Account::where('company_id', $companyId)
-                        ->where('account_code', '1020')
-                        ->where('account_type', 'asset')
-                        ->first();
 
                     $isCreditCard = ($data['account_type'] === 'credit_card');
 
@@ -135,7 +137,7 @@ class BankAccountController extends Controller
                         'account_code' => $newCode,
                         'account_name' => $data['account_name'] . ' (' . $data['bank_name'] . ')',
                         'account_type' => $isCreditCard ? 'liability' : 'asset',
-                        'account_subtype' => $isCreditCard ? 'current_liability' : 'cash_and_bank',
+                        'account_subtype' => $isCreditCard ? 'current_liability' : 'current_asset',
                         'description' => 'Bank Account for ' . $data['account_name'],
                         'opening_balance' => $data['opening_balance'] ?? 0,
                         'current_balance' => $data['opening_balance'] ?? 0,
@@ -151,9 +153,19 @@ class BankAccountController extends Controller
                             'message' => 'Bank accounts must be linked to asset or liability accounts'
                         ], 422);
                     }
+
+                    $isCreditCard = ($data['account_type'] === 'credit_card');
+                    if ($chartAccount && !$isCreditCard && $parentAccount && $chartAccount->id !== $parentAccount->id) {
+                        $chartAccount->update([
+                            'parent_account_id' => $parentAccount->id,
+                            'account_type' => 'asset',
+                            'account_subtype' => $chartAccount->account_subtype ?: 'current_asset',
+                        ]);
+                    }
                 }
 
                 $bankAccount = BankAccount::create($data);
+                $this->updateAccountBalance($bankAccount->id);
 
                 return response()->json([
                     'message' => 'Bank account created successfully',
@@ -245,6 +257,7 @@ class BankAccountController extends Controller
         }
 
         $bankAccount->update($data);
+        $this->updateAccountBalance($bankAccount->id);
 
         return response()->json([
             'message' => 'Bank account updated successfully',
@@ -463,8 +476,8 @@ class BankAccountController extends Controller
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $toAccount->chart_account_id,
-                    'debit' => $amount,
-                    'credit' => 0,
+                    'debit_amount' => $amount,
+                    'credit_amount' => 0,
                     'description' => "Transfer in from {$fromAccount->account_name}",
                 ]);
 
@@ -472,22 +485,15 @@ class BankAccountController extends Controller
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
                     'account_id' => $fromAccount->chart_account_id,
-                    'debit' => 0,
-                    'credit' => $amount,
+                    'debit_amount' => 0,
+                    'credit_amount' => $amount,
                     'description' => "Transfer out to {$toAccount->account_name}",
                 ]);
-
-                // Update COA current balances
-                if ($toAccount->chartAccount) {
-                    $toAccount->chartAccount->increment('current_balance', $amount);
-                }
-                if ($fromAccount->chartAccount) {
-                    $fromAccount->chartAccount->decrement('current_balance', $amount);
-                }
 
                 // 2. Log Bank Transactions
                 $fromLastTx = BankTransaction::where('bank_account_id', $fromAccount->id)->latest('id')->first();
                 $fromPrevBal = $fromLastTx ? $fromLastTx->running_balance : $fromAccount->opening_balance;
+                $fromNewBal = $fromPrevBal - $amount;
                 BankTransaction::create([
                     'bank_account_id' => $fromAccount->id,
                     'transaction_date' => $date,
@@ -495,13 +501,14 @@ class BankAccountController extends Controller
                     'description' => $desc,
                     'transaction_type' => 'credit',
                     'amount' => $amount,
-                    'running_balance' => $fromPrevBal - $amount,
+                    'running_balance' => $fromNewBal,
                     'status' => 'cleared',
                     'journal_entry_id' => $journalEntry->id,
                 ]);
 
                 $toLastTx = BankTransaction::where('bank_account_id', $toAccount->id)->latest('id')->first();
                 $toPrevBal = $toLastTx ? $toLastTx->running_balance : $toAccount->opening_balance;
+                $toNewBal = $toPrevBal + $amount;
                 BankTransaction::create([
                     'bank_account_id' => $toAccount->id,
                     'transaction_date' => $date,
@@ -509,10 +516,27 @@ class BankAccountController extends Controller
                     'description' => $desc,
                     'transaction_type' => 'debit',
                     'amount' => $amount,
-                    'running_balance' => $toPrevBal + $amount,
+                    'running_balance' => $toNewBal,
                     'status' => 'cleared',
                     'journal_entry_id' => $journalEntry->id,
                 ]);
+
+                // 3. Update Bank Accounts Table
+                $fromAccount->decrement('current_balance', $amount);
+                $toAccount->increment('current_balance', $amount);
+
+                // 4. Update Linked Chart of Accounts Records
+                if ($fromAccount->chart_account_id) {
+                    DB::table('chart_of_accounts')
+                        ->where('id', $fromAccount->chart_account_id)
+                        ->decrement('current_balance', $amount);
+                }
+
+                if ($toAccount->chart_account_id) {
+                    DB::table('chart_of_accounts')
+                        ->where('id', $toAccount->chart_account_id)
+                        ->increment('current_balance', $amount);
+                }
 
                 return response()->json([
                     'message' => 'Transfer completed successfully',
@@ -524,5 +548,39 @@ class BankAccountController extends Controller
                 'message' => 'Transfer failed: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Standard Balance Sync Helper Function:
+     * Syncs current_balance on both bank_accounts and chart_of_accounts
+     */
+    public function updateAccountBalance($bankAccountId, $newBalance = null): void
+    {
+        DB::transaction(function () use ($bankAccountId, $newBalance) {
+            $bankAccount = BankAccount::find($bankAccountId);
+            if (!$bankAccount) return;
+
+            if ($newBalance === null) {
+                $newBalance = $bankAccount->calculateBalance();
+            }
+
+            // 1. Update Bank Account table
+            $bankAccount->update(['current_balance' => $newBalance]);
+
+            // 2. Sync linked Chart of Account record
+            Account::where('company_id', $bankAccount->company_id)
+                ->where(function ($query) use ($bankAccount) {
+                    if ($bankAccount->chart_account_id) {
+                        $query->where('id', $bankAccount->chart_account_id);
+                    }
+                    if ($bankAccount->bank_name) {
+                        $query->orWhere('account_name', 'LIKE', "%{$bankAccount->bank_name}%");
+                    }
+                    if ($bankAccount->account_name) {
+                        $query->orWhere('account_name', 'LIKE', "%{$bankAccount->account_name}%");
+                    }
+                })
+                ->update(['current_balance' => $newBalance]);
+        });
     }
 }

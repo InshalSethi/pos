@@ -161,7 +161,11 @@
                     {{ acc.account_type }}
                   </span>
                 </td>
-                <td class="py-3.5 px-4 text-slate-600 dark:text-zinc-400 capitalize">{{ formatAccountSubtype(acc.account_subtype) }}</td>
+                <td class="py-3.5 px-4">
+                  <span v-if="acc.account_subtype" class="inline-flex px-2.5 py-0.5 text-[11px] font-medium tracking-wider capitalize rounded-full border bg-slate-100 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
+                    {{ formatAccountSubtype(acc.account_subtype) }}
+                  </span>
+                </td>
                 <td class="py-3.5 px-4 text-right font-extrabold text-slate-900 dark:text-zinc-100 font-mono">{{ formatCurrency(acc.current_balance ?? acc.opening_balance, acc.currency_symbol || acc.currency || 'Rs') }}</td>
                 <td class="py-3.5 px-4 text-center">
                   <span
@@ -478,16 +482,35 @@ export default {
       is_system_account: false
     });
 
+    const flattenAccounts = (nodes) => {
+      let list = [];
+      if (!nodes || !Array.isArray(nodes)) return list;
+      for (const node of nodes) {
+        list.push(node);
+        if (node.children && node.children.length > 0) {
+          list = list.concat(flattenAccounts(node.children));
+        }
+      }
+      return list;
+    };
+
+    const allAccountsList = computed(() => {
+      if (accounts.value && accounts.value.length > 0) {
+        return accounts.value;
+      }
+      return flattenAccounts(accountTree.value);
+    });
+
     const parentAccountOptions = computed(() => {
-      return accounts.value.filter(account =>
-        account.account_type === accountForm.value.account_type &&
+      return allAccountsList.value.filter(account =>
+        (account.account_type || account.type) === accountForm.value.account_type &&
         account.id !== editingAccount.value?.id
       );
     });
 
     const parentAccountSelectOptions = computed(() => {
-      const filtered = accounts.value.filter(account =>
-        account.account_type === accountForm.value.account_type &&
+      const filtered = allAccountsList.value.filter(account =>
+        (account.account_type || account.type) === accountForm.value.account_type &&
         account.id !== editingAccount.value?.id
       );
       return [
@@ -574,15 +597,18 @@ export default {
 
     const editAccount = (account) => {
       editingAccount.value = account;
+      if (!accounts.value || accounts.value.length === 0) {
+        fetchAccounts();
+      }
       accountForm.value = {
-        account_code: account.account_code || account.code,
-        account_name: account.account_name || account.name,
-        account_type: account.account_type,
-        account_subtype: account.account_subtype || '',
-        parent_account_id: account.parent_account_id || '',
-        opening_balance: account.opening_balance || 0,
+        account_code: account.account_code || account.code || '',
+        account_name: account.account_name || account.name || '',
+        account_type: account.account_type || account.type || '',
+        account_subtype: account.account_subtype || account.subtype || '',
+        parent_account_id: account.parent_account_id ?? account.parent_id ?? '',
+        opening_balance: account.opening_balance ?? account.current_balance ?? account.balance ?? 0,
         description: account.description || '',
-        is_active: account.is_active,
+        is_active: account.is_active !== false,
         is_system_account: account.is_system_account || account.is_system || false
       };
       updateSubtypeOptions();

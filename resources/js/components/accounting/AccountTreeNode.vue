@@ -48,6 +48,14 @@
           {{ formatAccountType(account.account_type || account.type) }}
         </span>
 
+        <!-- Subtype Badge -->
+        <span
+          v-if="account.account_subtype || account.subtype"
+          class="px-2.5 py-0.5 text-[11px] font-medium tracking-wider capitalize rounded-full border bg-slate-100 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 shrink-0"
+        >
+          {{ formatAccountSubtype(account.account_subtype || account.subtype) }}
+        </span>
+
         <!-- Plain Text-Only System Badge -->
         <span
           v-if="isLocked(account)"
@@ -179,8 +187,15 @@ const formatCurrency = (amount, customSymbol) => {
   return `${symbol} ${formatted}`;
 };
 
+const calculateNodeBalance = (acc) => {
+  if (acc.children && Array.isArray(acc.children) && acc.children.length > 0) {
+    return acc.children.reduce((total, child) => total + calculateNodeBalance(child), 0);
+  }
+  return Number(acc.calculated_balance ?? acc.current_balance ?? acc.balance ?? acc.opening_balance ?? 0);
+};
+
 const formatBalance = (acc) => {
-  const num = Number(acc.current_balance ?? acc.balance ?? acc.opening_balance ?? 0);
+  const num = calculateNodeBalance(acc);
   const symbol = acc.currency_symbol || (acc.currency && acc.currency !== 'PKR' && acc.currency !== 'USD' ? acc.currency : currencyStore.symbol);
   return formatCurrency(num, symbol);
 };
@@ -200,5 +215,10 @@ const getAccountTypeBadgeClass = (type) => {
 const formatAccountType = (type) => {
   if (!type) return 'Account';
   return type.charAt(0).toUpperCase() + type.slice(1);
+};
+
+const formatAccountSubtype = (subtype) => {
+  if (!subtype) return '';
+  return String(subtype).replace(/_/g, ' ');
 };
 </script>

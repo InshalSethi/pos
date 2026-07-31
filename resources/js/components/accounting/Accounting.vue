@@ -129,7 +129,12 @@
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatAccountSubtype(account.account_subtype) }}
+                      <span
+                        v-if="account.account_subtype"
+                        class="inline-flex px-2.5 py-0.5 text-[11px] font-medium tracking-wider capitalize rounded-full border bg-slate-100 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700"
+                      >
+                        {{ formatAccountSubtype(account.account_subtype) }}
+                      </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       ${{ formatNumber(account.current_balance) }}
@@ -1325,10 +1330,29 @@ const accountSubtypes = {
   ]
 };
 
+const flattenAccounts = (nodes) => {
+  let list = [];
+  if (!nodes || !Array.isArray(nodes)) return list;
+  for (const node of nodes) {
+    list.push(node);
+    if (node.children && node.children.length > 0) {
+      list = list.concat(flattenAccounts(node.children));
+    }
+  }
+  return list;
+};
+
+const allAccountsList = computed(() => {
+  if (accounts.value && accounts.value.length > 0) {
+    return accounts.value;
+  }
+  return flattenAccounts(accountTree.value);
+});
+
 const availableSubtypes = ref([]);
 const parentAccountOptions = computed(() => {
-  return accounts.value.filter(account =>
-    account.account_type === accountForm.value.account_type &&
+  return allAccountsList.value.filter(account =>
+    (account.account_type || account.type) === accountForm.value.account_type &&
     account.id !== editingAccount.value?.id
   );
 });
@@ -1483,16 +1507,19 @@ const fetchAssetAccounts = async () => {
 
 const editAccount = (account) => {
   editingAccount.value = account;
+  if (!accounts.value || accounts.value.length === 0) {
+    fetchAccounts();
+  }
   accountForm.value = {
-    account_code: account.account_code,
-    account_name: account.account_name,
-    account_type: account.account_type,
-    account_subtype: account.account_subtype,
-    parent_account_id: account.parent_account_id || '',
-    opening_balance: account.opening_balance || 0,
+    account_code: account.account_code || account.code || '',
+    account_name: account.account_name || account.name || '',
+    account_type: account.account_type || account.type || '',
+    account_subtype: account.account_subtype || account.subtype || '',
+    parent_account_id: account.parent_account_id ?? account.parent_id ?? '',
+    opening_balance: account.opening_balance ?? account.current_balance ?? account.balance ?? 0,
     description: account.description || '',
-    is_active: account.is_active,
-    is_system_account: account.is_system_account || false
+    is_active: account.is_active !== false,
+    is_system_account: account.is_system_account || account.is_system || false
   };
 
   // Update available subtypes
