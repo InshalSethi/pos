@@ -105,46 +105,66 @@ class BankAccountController extends Controller
             $data['bank_name'] = $data['account_name'];
         }
 
-        if (!empty($data['is_default'])) {
-            BankAccount::where('company_id', $companyId)->update(['is_default' => false]);
-        }
-
-        // Auto-create Chart of Account if not selected
-        if (empty($data['chart_account_id'])) {
-            $maxCode = Account::where('account_type', 'asset')->max('account_code');
-            $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
-            $chartAccount = Account::create([
-                'account_code' => $newCode,
-                'account_name' => $data['account_name'] . ' (' . $data['bank_name'] . ')',
-                'account_type' => $data['account_type'] === 'credit_card' ? 'liability' : 'asset',
-                'account_subtype' => $data['account_type'] === 'credit_card' ? 'Credit Card' : 'Cash and Bank',
-                'description' => 'Bank Account for ' . $data['account_name'],
-                'opening_balance' => $data['opening_balance'] ?? 0,
-                'current_balance' => $data['opening_balance'] ?? 0,
-                'is_active' => true,
-                'is_system_account' => false,
-            ]);
-            $data['chart_account_id'] = $chartAccount->id;
-        } else {
-            $chartAccount = Account::find($request->chart_account_id);
-            if ($chartAccount && !in_array($chartAccount->account_type, ['asset', 'liability'])) {
-                return response()->json([
-                    'message' => 'Bank accounts must be linked to asset or liability accounts'
-                ], 422);
-            }
-        }
-
         if (empty($data['currency'])) {
             $company = auth()->user()->currentCompany ?? \App\Models\Company::find($companyId);
             $data['currency'] = $company?->base_currency ?? $company?->currency_code ?? 'PKR';
         }
 
-        $bankAccount = BankAccount::create($data);
+        try {
+            return DB::transaction(function () use ($data, $request, $companyId) {
+                if (!empty($data['is_default'])) {
+                    BankAccount::where('company_id', $companyId)->update(['is_default' => false]);
+                }
 
-        return response()->json([
-            'message' => 'Bank account created successfully',
-            'bank_account' => $bankAccount->load('chartAccount')
-        ], 201);
+                // Auto-create Chart of Account if not selected
+                if (empty($data['chart_account_id'])) {
+                    $maxCode = Account::where('account_type', 'asset')
+                        ->where('company_id', $companyId)
+                        ->max('account_code');
+                    $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
+
+                    // Find parent "Bank Account" node (code 1020) for proper hierarchy placement
+                    $parentAccount = Account::where('company_id', $companyId)
+                        ->where('account_code', '1020')
+                        ->where('account_type', 'asset')
+                        ->first();
+
+                    $isCreditCard = ($data['account_type'] === 'credit_card');
+
+                    $chartAccount = Account::create([
+                        'account_code' => $newCode,
+                        'account_name' => $data['account_name'] . ' (' . $data['bank_name'] . ')',
+                        'account_type' => $isCreditCard ? 'liability' : 'asset',
+                        'account_subtype' => $isCreditCard ? 'current_liability' : 'current_asset',
+                        'description' => 'Bank Account for ' . $data['account_name'],
+                        'opening_balance' => $data['opening_balance'] ?? 0,
+                        'current_balance' => $data['opening_balance'] ?? 0,
+                        'is_active' => true,
+                        'is_system_account' => false,
+                        'parent_account_id' => $isCreditCard ? null : $parentAccount?->id,
+                    ]);
+                    $data['chart_account_id'] = $chartAccount->id;
+                } else {
+                    $chartAccount = Account::find($request->chart_account_id);
+                    if ($chartAccount && !in_array($chartAccount->account_type, ['asset', 'liability'])) {
+                        return response()->json([
+                            'message' => 'Bank accounts must be linked to asset or liability accounts'
+                        ], 422);
+                    }
+                }
+
+                $bankAccount = BankAccount::create($data);
+
+                return response()->json([
+                    'message' => 'Bank account created successfully',
+                    'bank_account' => $bankAccount->load('chartAccount')
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create bank account: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
