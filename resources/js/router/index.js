@@ -167,6 +167,12 @@ const routes = [
         meta: { permission: 'accounting.view' }
       },
       {
+        path: 'accounting/journal-entries',
+        name: 'AccountingJournalEntries',
+        component: () => import('@/components/banking/BankingManualJournals.vue'),
+        meta: { permission: 'accounting.view' }
+      },
+      {
         path: 'banking/accounts',
         name: 'BankAccounts',
         component: () => import('@/components/banking/BankAccounts.vue'),

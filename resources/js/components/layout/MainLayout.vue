@@ -474,137 +474,182 @@
               Accounting
             </h3>
           </div>
-          <router-link
-            to="/accounting/chart-of-accounts"
-            :class="[
-              'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
-              $route.path === '/accounting/chart-of-accounts'
-                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
-                : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
-            ]"
-            :title="sidebarCollapsed ? 'Chart of Accounts' : ''"
-          >
-            <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
-              Chart of Accounts
-            </span>
-          </router-link>
-        </div>
 
-        <!-- Banking Accordion -->
-        <div v-if="authStore.hasPermission('accounting.view')" class="space-y-1">
-          <button
-            @click="showSidebarBankingMenu = !showSidebarBankingMenu"
-            :class="[
-              'w-full group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative cursor-pointer',
-              $route.path.startsWith('/banking')
-                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
-                : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
-            ]"
-            :title="sidebarCollapsed ? 'Banking' : ''"
-          >
-            <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-            <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
-              Banking
-            </span>
-            <div class="relative group ml-auto">
-              <svg
-                v-if="!sidebarCollapsed"
-                :class="[
-                  'h-4 w-4 transition-transform duration-300 transform',
-                  showSidebarBankingMenu ? 'rotate-180 text-gray-900' : 'text-slate-400 group-hover:text-slate-600'
-                ]"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
-              </svg>
-            </div>
-          </button>
-
-          <transition
-            enter-active-class="transition-all duration-300 ease-out"
-            enter-from-class="opacity-0 -translate-y-2 max-h-0"
-            enter-to-class="opacity-100 translate-y-0 max-h-60"
-            leave-active-class="transition-all duration-200 ease-in"
-            leave-from-class="opacity-100 translate-y-0 max-h-60"
-            leave-to-class="opacity-0 -translate-y-2 max-h-0"
-          >
-            <div
-              v-show="showSidebarBankingMenu && !sidebarCollapsed"
-              class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
+          <!-- Double Entry Accordion -->
+          <div class="space-y-1">
+            <button
+              @click="showSidebarDoubleEntryMenu = !showSidebarDoubleEntryMenu"
+              :class="[
+                'w-full group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative cursor-pointer',
+                ($route.path.startsWith('/accounting') || $route.path === '/banking/manual-journals')
+                  ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                  : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
+              ]"
+              :title="sidebarCollapsed ? 'Double Entry' : ''"
             >
-              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
+              <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+                Double Entry
+              </span>
+              <div class="relative group ml-auto">
+                <svg
+                  v-if="!sidebarCollapsed"
+                  :class="[
+                    'h-4 w-4 transition-transform duration-300 transform',
+                    showSidebarDoubleEntryMenu ? 'rotate-180 text-gray-900' : 'text-slate-400 group-hover:text-slate-600'
+                  ]"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                </svg>
+              </div>
+            </button>
 
-              <router-link
-                to="/banking/accounts"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/banking/accounts'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
+            <transition
+              enter-active-class="transition-all duration-300 ease-out"
+              enter-from-class="opacity-0 -translate-y-2 max-h-0"
+              enter-to-class="opacity-100 translate-y-0 max-h-60"
+              leave-active-class="transition-all duration-200 ease-in"
+              leave-from-class="opacity-100 translate-y-0 max-h-60"
+              leave-to-class="opacity-0 -translate-y-2 max-h-0"
+            >
+              <div
+                v-show="showSidebarDoubleEntryMenu && !sidebarCollapsed"
+                class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
               >
-                <div v-if="$route.path === '/banking/accounts'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Accounts
-              </router-link>
+                <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
 
-              <router-link
-                to="/banking/manual-journals"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/banking/manual-journals'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
-              >
-                <div v-if="$route.path === '/banking/manual-journals'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Journal Entries
-              </router-link>
+                <router-link
+                  to="/accounting/chart-of-accounts"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/accounting/chart-of-accounts' || $route.path === '/accounting'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/accounting/chart-of-accounts' || $route.path === '/accounting'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Chart of Accounts
+                </router-link>
 
-              <router-link
-                to="/banking/transactions"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/banking/transactions'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
-              >
-                <div v-if="$route.path === '/banking/transactions'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Transactions
-              </router-link>
+                <router-link
+                  to="/banking/manual-journals"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/banking/manual-journals' || $route.path === '/accounting/journal-entries'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/banking/manual-journals' || $route.path === '/accounting/journal-entries'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Journal Entries
+                </router-link>
+              </div>
+            </transition>
+          </div>
 
-              <router-link
-                to="/banking/transfers"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/banking/transfers'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
-              >
-                <div v-if="$route.path === '/banking/transfers'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Transfers
-              </router-link>
+          <!-- Banking Accordion -->
+          <div class="space-y-1">
+            <button
+              @click="showSidebarBankingMenu = !showSidebarBankingMenu"
+              :class="[
+                'w-full group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative cursor-pointer',
+                ($route.path.startsWith('/banking') && $route.path !== '/banking/manual-journals')
+                  ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                  : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
+              ]"
+              :title="sidebarCollapsed ? 'Banking' : ''"
+            >
+              <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+                Banking
+              </span>
+              <div class="relative group ml-auto">
+                <svg
+                  v-if="!sidebarCollapsed"
+                  :class="[
+                    'h-4 w-4 transition-transform duration-300 transform',
+                    showSidebarBankingMenu ? 'rotate-180 text-gray-900' : 'text-slate-400 group-hover:text-slate-600'
+                  ]"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                </svg>
+              </div>
+            </button>
 
-              <router-link
-                to="/banking/reconciliations"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/banking/reconciliations'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
+            <transition
+              enter-active-class="transition-all duration-300 ease-out"
+              enter-from-class="opacity-0 -translate-y-2 max-h-0"
+              enter-to-class="opacity-100 translate-y-0 max-h-60"
+              leave-active-class="transition-all duration-200 ease-in"
+              leave-from-class="opacity-100 translate-y-0 max-h-60"
+              leave-to-class="opacity-0 -translate-y-2 max-h-0"
+            >
+              <div
+                v-show="showSidebarBankingMenu && !sidebarCollapsed"
+                class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
               >
-                <div v-if="$route.path === '/banking/reconciliations'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Reconciliations
-              </router-link>
-            </div>
-          </transition>
+                <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
+
+                <router-link
+                  to="/banking/accounts"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/banking/accounts'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/banking/accounts'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Accounts
+                </router-link>
+
+                <router-link
+                  to="/banking/transactions"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/banking/transactions'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/banking/transactions'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Transactions
+                </router-link>
+
+                <router-link
+                  to="/banking/transfers"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/banking/transfers'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/banking/transfers'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Transfers
+                </router-link>
+
+                <router-link
+                  to="/banking/reconciliations"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/banking/reconciliations'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/banking/reconciliations'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Reconciliations
+                </router-link>
+              </div>
+            </transition>
+          </div>
         </div>
         <router-link v-if="authStore.hasPermission('expenses.view')"
           to="/expenses"
@@ -1819,13 +1864,21 @@ const isSidebarCollapsedEffective = computed(() => sidebarCollapsed.value && !is
 const showMobileSidebar = ref(false);
 const showSidebarSalesMenu = ref(router.currentRoute.value.path.startsWith('/sales'));
 const showSidebarPurchaseMenu = ref(router.currentRoute.value.path.startsWith('/purchase'));
-const showSidebarBankingMenu = ref(router.currentRoute.value.path.startsWith('/banking'));
+const showSidebarDoubleEntryMenu = ref(
+  router.currentRoute.value.path.startsWith('/accounting') || router.currentRoute.value.path.startsWith('/banking/manual-journals')
+);
+const showSidebarBankingMenu = ref(
+  router.currentRoute.value.path.startsWith('/banking') && !router.currentRoute.value.path.startsWith('/banking/manual-journals')
+);
 const showSidebarInventoryMenu = ref(
   router.currentRoute.value.path.startsWith('/inventory') || router.currentRoute.value.path.startsWith('/products') || router.currentRoute.value.path === '/settings/tax-tags'
 );
 
 watch(() => router.currentRoute.value.path, (newPath) => {
-  if (newPath.startsWith('/banking')) {
+  if (newPath.startsWith('/accounting') || newPath.startsWith('/banking/manual-journals')) {
+    showSidebarDoubleEntryMenu.value = true;
+  }
+  if (newPath.startsWith('/banking') && !newPath.startsWith('/banking/manual-journals')) {
     showSidebarBankingMenu.value = true;
   }
   if (newPath.startsWith('/inventory') || newPath.startsWith('/products') || newPath === '/settings/tax-tags') {
