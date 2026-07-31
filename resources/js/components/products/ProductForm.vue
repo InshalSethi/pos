@@ -153,58 +153,71 @@
                   </label>
                   <div class="relative" id="tag-multiselect-container">
                     <div 
-                      @click="showTagDropdown = !showTagDropdown"
-                      class="w-full min-h-[34px] px-3 py-1 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-slate-300 dark:focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-pointer flex flex-wrap items-center gap-1 pr-8"
+                      @click="focusTagInput"
+                      class="w-full min-h-[38px] p-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-xl text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-text flex flex-wrap items-center gap-1.5 pr-8"
                     >
                       <div 
                         v-for="tagName in (form.tags || [])" 
                         :key="tagName" 
-                        class="bg-indigo-100 dark:bg-indigo-950/40 text-indigo-850 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/30 rounded px-2 py-0.5 text-xs flex items-center gap-1 font-semibold"
+                        class="bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/40 rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold"
                       >
                         <span>{{ tagName }}</span>
-                        <button type="button" @click.stop="removeTag(tagName)" class="hover:text-red-650 font-bold focus:outline-none">&times;</button>
+                        <button type="button" @click.stop="removeTag(tagName)" class="hover:text-indigo-800 dark:hover:text-indigo-100 font-bold focus:outline-none">&times;</button>
                       </div>
-                      <span v-if="(!form.tags || form.tags.length === 0)" class="text-gray-400 dark:text-slate-550 text-sm">Select Tag(s)</span>
                       
+                      <!-- Real-Time Search Input -->
+                      <input
+                        ref="tagInputRef"
+                        type="text"
+                        v-model="tagSearchQuery"
+                        @focus="showTagDropdown = true"
+                        @click.stop="showTagDropdown = true"
+                        :placeholder="(!form.tags || form.tags.length === 0) ? 'Select or search tags...' : ''"
+                        class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
+                      />
+
                       <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
                       </span>
                     </div>
- 
+
                     <!-- Dropdown Menu -->
-                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
-                      <!-- Scrollable List of Options -->
+                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                      <!-- Scrollable List of Filtered Options -->
                       <div class="overflow-y-auto max-h-44 custom-scrollbar">
-                        <div 
-                          v-for="opt in tagOptions" 
-                          :key="opt.value"
-                          @click="toggleTagSelection(opt.value)"
-                          class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
-                        >
-                          <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-350'">{{ opt.label }}</span>
-                          <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-455">
-                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                          </span>
-                        </div>
- 
-                        <!-- Empty State -->
-                        <div v-if="tagOptions.length === 0" class="p-3 text-center">
-                          <p class="text-slate-400 dark:text-slate-500 text-xs font-semibold">No tags found</p>
+                        <template v-if="filteredTagOptions.length > 0">
+                          <div 
+                            v-for="opt in filteredTagOptions" 
+                            :key="opt.value"
+                            @click="toggleTagSelection(opt.value)"
+                            class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
+                          >
+                            <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-350'">{{ opt.label }}</span>
+                            <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-400">
+                              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            </span>
+                          </div>
+                        </template>
+
+                        <!-- Empty State ("No Tags Found") -->
+                        <div v-else class="px-3 py-3 text-center">
+                          <p class="text-slate-400 dark:text-slate-500 text-xs font-semibold italic">No tags found</p>
                         </div>
                       </div>
- 
+
                       <!-- Inline Creation Footer -->
                       <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1 p-1 bg-white dark:bg-[#1E1E1E]">
                         <button 
                           v-if="!showInlineCreateTag" 
                           type="button"
                           @click.stop="startInlineTagCreate" 
-                          class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-650 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-[#2D2D2D]/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
+                          class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-[#2D2D2D]/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                           </svg>
-                          Add Tag
+                          <span>+ Add Tag</span>
+                          <span v-if="tagSearchQuery" class="text-xs text-slate-400">"{{ tagSearchQuery }}"</span>
                         </button>
                         <div v-else class="flex items-center gap-1.5" @click.stop>
                           <input 
@@ -3434,15 +3447,31 @@ const submit = () => {
 const allTags = ref([]);
 const showTagDropdown = ref(false);
 const creatingTag = ref(false);
+const tagSearchQuery = ref('');
+const tagInputRef = ref(null);
 
 const showInlineCreateTag = ref(false);
 const newInlineTagName = ref('');
 const inlineTagInputRef = ref(null);
 
+const focusTagInput = () => {
+  showTagDropdown.value = true;
+  if (tagInputRef.value) {
+    tagInputRef.value.focus();
+  }
+};
+
 const tagOptions = computed(() => {
   const list = Array.isArray(allTags.value) ? allTags.value : [];
   const options = list.map(t => ({ label: t.name, value: t.name }));
   return options;
+});
+
+const filteredTagOptions = computed(() => {
+  const options = tagOptions.value;
+  if (!tagSearchQuery.value.trim()) return options;
+  const q = tagSearchQuery.value.toLowerCase().trim();
+  return options.filter(opt => opt.label.toLowerCase().includes(q));
 });
 
 const toggleTagSelection = (val) => {
@@ -3467,6 +3496,9 @@ const removeTag = (val) => {
 
 const startInlineTagCreate = () => {
   showInlineCreateTag.value = true;
+  if (tagSearchQuery.value.trim()) {
+    newInlineTagName.value = tagSearchQuery.value.trim();
+  }
   nextTick(() => {
     if (inlineTagInputRef.value) {
       inlineTagInputRef.value.focus();
@@ -3492,6 +3524,7 @@ const submitInlineTag = async () => {
         form.value.tags.push(found.name);
       }
     }
+    tagSearchQuery.value = '';
     cancelInlineTagCreate();
     return;
   }
@@ -3523,6 +3556,7 @@ const submitInlineTag = async () => {
     }
   } finally {
     creatingTag.value = false;
+    tagSearchQuery.value = '';
     cancelInlineTagCreate();
   }
 };
@@ -3531,6 +3565,7 @@ const closeTagDropdownOnOutsideClick = (e) => {
   const el = document.getElementById('tag-multiselect-container');
   if (el && !el.contains(e.target)) {
     showTagDropdown.value = false;
+    tagSearchQuery.value = '';
     cancelInlineTagCreate();
   }
 };
