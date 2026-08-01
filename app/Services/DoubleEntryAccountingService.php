@@ -100,6 +100,213 @@ class DoubleEntryAccountingService
     }
 
     /**
+     * Process multi-payment entries for sales invoice (Cash and Bank ledgers)
+     */
+    public function processInvoicePayments(Sale $sale, array $payments): void
+    {
+        if (empty($payments)) {
+            return;
+        }
+
+        $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
+
+        // Resolve Sales Revenue Account
+        $revenueAccountId = $this->accountingSettings->sales_invoice_revenue_account_id;
+        if (!$revenueAccountId) {
+            $revenueAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'revenue')
+                ->first();
+            $revenueAccountId = $revenueAccount?->id;
+        }
+
+        foreach ($payments as $payment) {
+            $type = strtolower($payment['type'] ?? $payment['method'] ?? 'cash');
+            $amount = (float) ($payment['amount'] ?? 0);
+            if ($amount <= 0) {
+                continue;
+            }
+
+            if ($type === 'cash') {
+                // Find or resolve Default Cash account
+                $cashAccountId = $this->accountingSettings->cash_account_id;
+                $cashAccount = null;
+                if ($cashAccountId) {
+                    $cashAccount = Account::where('company_id', $companyId)->find($cashAccountId);
+                }
+                if (!$cashAccount) {
+                    $cashAccount = Account::where('company_id', $companyId)
+                        ->where('account_type', 'asset')
+                        ->where(function ($q) {
+                            $q->where('account_name', 'LIKE', '%Cash%')
+                              ->orWhere('account_code', '1010');
+                        })->first();
+                }
+                if (!$cashAccount) {
+                    $cashAccount = Account::create([
+                        'company_id' => $companyId,
+                        'account_code' => '1010',
+                        'account_name' => 'Default Cash',
+                        'account_type' => 'asset',
+                        'opening_balance' => 0,
+                        'current_balance' => 0,
+                        'is_active' => true,
+                        'is_system_account' => true,
+                    ]);
+                }
+
+                // Add amount to Default Cash account balance
+                $cashAccount->current_balance = (float)$cashAccount->current_balance + $amount;
+                $cashAccount->save();
+
+                // Record double-entry in Chart of Accounts for Cash ledger
+                if ($revenueAccountId) {
+                    $journalEntry = JournalEntry::create([
+                        'entry_number' => $this->generateEntryNumber('SI-CASH'),
+                        'entry_date' => $sale->sale_date,
+                        'reference' => "Sales Invoice #{$sale->sale_number}",
+                        'description' => "Cash Payment for Invoice #{$sale->sale_number}",
+                        'entry_type' => 'automatic',
+                        'status' => 'posted',
+                        'total_debit' => $amount,
+                        'total_credit' => $amount,
+                        'created_by' => $sale->user_id ?? auth()->id(),
+                        'posted_by' => $sale->user_id ?? auth()->id(),
+                        'posted_at' => now(),
+                        'source_type' => 'sale',
+                        'source_id' => $sale->id,
+                    ]);
+
+                    // Debit Cash Account
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $cashAccount->id,
+                        'description' => "Cash Received - Invoice #{$sale->sale_number}",
+                        'debit_amount' => $amount,
+                        'credit_amount' => 0,
+                        'partner_type' => Customer::class,
+                        'partner_id' => $sale->customer_id,
+                    ]);
+
+                    // Credit Sales Revenue
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $revenueAccountId,
+                        'description' => "Sales Revenue - Invoice #{$sale->sale_number} (Cash)",
+                        'debit_amount' => 0,
+                        'credit_amount' => $amount,
+                        'partner_type' => Customer::class,
+                        'partner_id' => $sale->customer_id,
+                    ]);
+                }
+
+            } elseif ($type === 'bank' || $type === 'card' || $type === 'bank_transfer') {
+                $bankAccountId = $payment['bank_id'] ?? null;
+                $bankAccount = null;
+                if ($bankAccountId) {
+                    $bankAccount = \App\Models\BankAccount::where('company_id', $companyId)->find($bankAccountId);
+                }
+                
+                // Fallback to first bank account of company if bank_id not specified
+                if (!$bankAccount) {
+                    $bankAccount = \App\Models\BankAccount::where('company_id', $companyId)->first();
+                }
+
+                if ($bankAccount) {
+                    // Update bank account balance
+                    $currentBankBal = (float) ($bankAccount->current_balance ?? 0);
+                    $newBalance = $currentBankBal + $amount;
+
+                    // Record Bank Transaction
+                    \App\Models\BankTransaction::create([
+                        'company_id' => $companyId,
+                        'bank_account_id' => $bankAccount->id,
+                        'transaction_date' => $sale->sale_date,
+                        'reference_number' => $sale->sale_number,
+                        'description' => "Payment for Sales Invoice #{$sale->sale_number}",
+                        'transaction_type' => 'debit',
+                        'amount' => $amount,
+                        'running_balance' => $newBalance,
+                        'status' => 'cleared',
+                    ]);
+
+                    // Update current_balance field on BankAccount
+                    $bankAccount->current_balance = $newBalance;
+                    $bankAccount->save();
+
+                    // Find or resolve corresponding Chart of Accounts record for this bank
+                    $bankChartAccount = null;
+                    if ($bankAccount->chart_account_id) {
+                        $bankChartAccount = Account::where('company_id', $companyId)->find($bankAccount->chart_account_id);
+                    }
+                    if (!$bankChartAccount) {
+                        $bankChartAccount = Account::where('company_id', $companyId)
+                            ->where('account_type', 'asset')
+                            ->where('account_name', 'LIKE', "%{$bankAccount->bank_name}%")
+                            ->first();
+                    }
+                    if (!$bankChartAccount) {
+                        $bankChartAccount = Account::create([
+                            'company_id' => $companyId,
+                            'account_code' => '1020-' . $bankAccount->id,
+                            'account_name' => $bankAccount->account_name . ' (' . ($bankAccount->bank_name ?: 'Bank') . ')',
+                            'account_type' => 'asset',
+                            'opening_balance' => $bankAccount->opening_balance ?? 0,
+                            'current_balance' => 0,
+                            'is_active' => true,
+                        ]);
+                        $bankAccount->update(['chart_account_id' => $bankChartAccount->id]);
+                    }
+
+                    // Add amount to bank chart account balance
+                    $bankChartAccount->current_balance = (float)$bankChartAccount->current_balance + $amount;
+                    $bankChartAccount->save();
+
+                    // Record double-entry in Chart of Accounts for specific Bank ledger
+                    if ($revenueAccountId) {
+                        $journalEntry = JournalEntry::create([
+                            'entry_number' => $this->generateEntryNumber('SI-BANK'),
+                            'entry_date' => $sale->sale_date,
+                            'reference' => "Sales Invoice #{$sale->sale_number}",
+                            'description' => "Bank Payment via {$bankAccount->account_name} for Invoice #{$sale->sale_number}",
+                            'entry_type' => 'automatic',
+                            'status' => 'posted',
+                            'total_debit' => $amount,
+                            'total_credit' => $amount,
+                            'created_by' => $sale->user_id ?? auth()->id(),
+                            'posted_by' => $sale->user_id ?? auth()->id(),
+                            'posted_at' => now(),
+                            'source_type' => 'sale',
+                            'source_id' => $sale->id,
+                        ]);
+
+                        // Debit Bank Chart Account
+                        JournalEntryLine::create([
+                            'journal_entry_id' => $journalEntry->id,
+                            'account_id' => $bankChartAccount->id,
+                            'description' => "Bank Payment - Invoice #{$sale->sale_number} ({$bankAccount->account_name})",
+                            'debit_amount' => $amount,
+                            'credit_amount' => 0,
+                            'partner_type' => Customer::class,
+                            'partner_id' => $sale->customer_id,
+                        ]);
+
+                        // Credit Sales Revenue
+                        JournalEntryLine::create([
+                            'journal_entry_id' => $journalEntry->id,
+                            'account_id' => $revenueAccountId,
+                            'description' => "Sales Revenue - Invoice #{$sale->sale_number} (Bank)",
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'partner_type' => Customer::class,
+                            'partner_id' => $sale->customer_id,
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Create journal entry for sales return
      */
     public function createSalesReturnEntry(Sale $saleReturn): ?JournalEntry

@@ -35,7 +35,7 @@
         </div>
 
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Statement Ending Balance ($)</label>
+          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Statement Ending Balance ({{ currencySymbol }})</label>
           <input
             v-model.number="statementBalance"
             type="number"
@@ -61,23 +61,23 @@
     <div v-if="selectedAccountId && summary" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
       <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
         <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">System Balance</p>
-        <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 mt-1">${{ formatNumber(summary.account_balance) }}</p>
+        <p class="text-xl font-extrabold text-slate-900 dark:text-zinc-100 mt-1">{{ currencySymbol }}{{ formatNumber(summary.account_balance) }}</p>
       </div>
 
       <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
         <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Statement Balance</p>
-        <p class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">${{ formatNumber(statementBalance) }}</p>
+        <p class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">{{ currencySymbol }}{{ formatNumber(statementBalance) }}</p>
       </div>
 
       <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
         <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Selected Cleared</p>
-        <p class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">${{ formatNumber(selectedClearedTotal) }}</p>
+        <p class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{{ currencySymbol }}{{ formatNumber(selectedClearedTotal) }}</p>
       </div>
 
       <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
         <p class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Difference</p>
         <p class="text-xl font-extrabold mt-1" :class="difference === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'">
-          ${{ formatNumber(difference) }}
+          {{ currencySymbol }}{{ formatNumber(difference) }}
         </p>
       </div>
     </div>
@@ -113,7 +113,7 @@
               <th class="py-3 px-4">Reference</th>
               <th class="py-3 px-4">Description</th>
               <th class="py-3 px-4 text-center">Type</th>
-              <th class="py-3 px-4 text-right">Amount ($)</th>
+              <th class="py-3 px-4 text-right">Amount ({{ currencySymbol }})</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
@@ -148,7 +148,7 @@
                 </span>
               </td>
               <td class="py-3.5 px-4 text-right font-bold" :class="tx.transaction_type === 'debit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                {{ tx.transaction_type === 'debit' ? '+' : '-' }}${{ formatNumber(tx.amount) }}
+                {{ tx.transaction_type === 'debit' ? '+' : '-' }}{{ currencySymbol }}{{ formatNumber(tx.amount) }}
               </td>
             </tr>
           </tbody>
@@ -163,12 +163,16 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/services/api';
 import { useToast } from '@/composables/useToast';
+import { useCurrencyStore } from '@/stores/currency';
 
 export default {
   name: 'BankingReconciliations',
   setup() {
     const route = useRoute();
     const { showToast } = useToast();
+    const currencyStore = useCurrencyStore();
+    const currencySymbol = computed(() => currencyStore.symbol);
+
     const bankAccounts = ref([]);
     const selectedAccountId = ref(null);
     const statementDate = ref(new Date().toISOString().split('T')[0]);
@@ -279,10 +283,12 @@ export default {
     };
 
     onMounted(() => {
+      currencyStore.fetchCurrencies();
       fetchAccounts();
     });
 
     return {
+      currencySymbol,
       bankAccounts,
       selectedAccountId,
       statementDate,

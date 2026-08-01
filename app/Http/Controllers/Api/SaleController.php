@@ -248,7 +248,9 @@ class SaleController extends Controller
             'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'nullable|numeric|min:0',
             'payments' => 'nullable|array',
-            'payments.*.method' => 'required|string',
+            'payments.*.method' => 'nullable|string',
+            'payments.*.type' => 'nullable|string',
+            'payments.*.bank_id' => 'nullable',
             'payments.*.amount' => 'required|numeric|min:0',
             'use_wallet_credit' => 'nullable|boolean',
             'disabled_tax_ids' => 'nullable',
@@ -503,10 +505,15 @@ class SaleController extends Controller
             $payments = [];
             if (is_array($rawPayments) && count($rawPayments) > 0) {
                 foreach ($rawPayments as $p) {
-                    if (isset($p['method']) && isset($p['amount'])) {
+                    $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
+                    $amount = (float)($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) ? (int)$p['bank_id'] : null;
+                    if ($amount > 0) {
                         $payments[] = [
-                            'method' => (string)$p['method'],
-                            'amount' => (float)$p['amount'],
+                            'type' => $type,
+                            'method' => $type === 'bank' ? 'bank_transfer' : $type,
+                            'bank_id' => $bankId,
+                            'amount' => $amount,
                         ];
                     }
                 }
@@ -514,7 +521,9 @@ class SaleController extends Controller
 
             if (empty($payments) && $request->payment_method) {
                 $payments[] = [
+                    'type' => ($request->payment_method === 'bank_transfer' || $request->payment_method === 'card') ? 'bank' : 'cash',
                     'method' => $request->payment_method,
+                    'bank_id' => $request->bank_id ?? null,
                     'amount' => (float)($request->paid_amount ?? 0)
                 ];
             }
@@ -700,10 +709,10 @@ class SaleController extends Controller
                 }
             }
 
-            // Create accounting entries (non-blocking)
+            // Create accounting entries and process ledgers (non-blocking)
             try {
                 $accountingService = new DoubleEntryAccountingService();
-                $accountingService->createSalesInvoiceEntry($sale);
+                $accountingService->processInvoicePayments($sale, $payments);
             } catch (\Throwable $accountingError) {
                 \Illuminate\Support\Facades\Log::warning('Accounting entry creation failed (non-blocking): ' . $accountingError->getMessage());
             }
@@ -800,7 +809,9 @@ class SaleController extends Controller
             'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'nullable|numeric|min:0',
             'payments' => 'nullable|array',
-            'payments.*.method' => 'required|string',
+            'payments.*.method' => 'nullable|string',
+            'payments.*.type' => 'nullable|string',
+            'payments.*.bank_id' => 'nullable',
             'payments.*.amount' => 'required|numeric|min:0',
             'disabled_tax_ids' => 'nullable',
             'excluded_tax_ids' => 'nullable',

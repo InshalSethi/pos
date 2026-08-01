@@ -302,7 +302,11 @@ class BankAccountController extends Controller
 
         // Filter by reconciliation status
         if ($request->has('reconciled')) {
-            $query->where('is_reconciled', $request->boolean('reconciled'));
+            if ($request->boolean('reconciled')) {
+                $query->where('status', 'reconciled');
+            } else {
+                $query->whereIn('status', ['pending', 'cleared']);
+            }
         }
 
         // Search by description or reference
@@ -310,8 +314,7 @@ class BankAccountController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('reference', 'like', "%{$search}%")
-                  ->orWhere('check_number', 'like', "%{$search}%");
+                  ->orWhere('reference_number', 'like', "%{$search}%");
             });
         }
 
@@ -345,8 +348,7 @@ class BankAccountController extends Controller
             BankTransaction::whereIn('id', $request->transaction_ids)
                           ->where('bank_account_id', $bankAccount->id)
                           ->update([
-                              'is_reconciled' => true,
-                              'reconciled_date' => $request->statement_date
+                              'status' => 'reconciled',
                           ]);
 
             // Update bank account last reconciliation info
@@ -377,7 +379,7 @@ class BankAccountController extends Controller
             'account_balance' => $bankAccount->calculateBalance(),
             'reconciled_balance' => $bankAccount->calculateReconciledBalance(),
             'unreconciled_transactions' => $bankAccount->bankTransactions()
-                                                      ->where('is_reconciled', false)
+                                                      ->whereIn('status', ['pending', 'cleared'])
                                                       ->count(),
             'last_reconciled_date' => $bankAccount->last_reconciled_date,
             'last_statement_balance' => $bankAccount->last_statement_balance,
