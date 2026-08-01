@@ -158,6 +158,37 @@ class DoubleEntryAccountingService
                 $cashAccount->current_balance = (float)$cashAccount->current_balance + $amount;
                 $cashAccount->save();
 
+                // Find and update Default Cash Vault bank account in bank_accounts table
+                $cashBankAccount = \App\Models\BankAccount::where('company_id', $companyId)
+                    ->where(function ($q) use ($cashAccount) {
+                        if ($cashAccount) {
+                            $q->where('chart_account_id', $cashAccount->id);
+                        }
+                        $q->orWhere('account_name', 'LIKE', '%Cash%')
+                          ->orWhere('bank_name', 'LIKE', '%Cash%')
+                          ->orWhere('is_default', true);
+                    })->first();
+
+                if ($cashBankAccount) {
+                    // Always sync 1:1 with Chart of Accounts Cash balance
+                    $newCashBalance = (float) $cashAccount->current_balance;
+
+                    \App\Models\BankTransaction::create([
+                        'company_id' => $companyId,
+                        'bank_account_id' => $cashBankAccount->id,
+                        'transaction_date' => $sale->sale_date,
+                        'reference_number' => $sale->sale_number,
+                        'description' => "Cash Payment for Sales Invoice #{$sale->sale_number}",
+                        'transaction_type' => 'debit',
+                        'amount' => $amount,
+                        'running_balance' => $newCashBalance,
+                        'status' => 'cleared',
+                    ]);
+
+                    $cashBankAccount->current_balance = $newCashBalance;
+                    $cashBankAccount->save();
+                }
+
                 // Record double-entry in Chart of Accounts for Cash ledger
                 if ($revenueAccountId) {
                     $journalEntry = JournalEntry::create([

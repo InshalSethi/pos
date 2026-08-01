@@ -105,6 +105,11 @@ class BankAccount extends Model
     // Methods
     public function calculateBalance(): float
     {
+        $hasTransactions = $this->bankTransactions()->exists();
+        if (!$hasTransactions) {
+            return (float) ($this->attributes['current_balance'] ?? $this->opening_balance ?? 0);
+        }
+
         $totalDebits = $this->bankTransactions()
                            ->where('transaction_type', 'debit')
                            ->sum('amount');
