@@ -338,6 +338,73 @@ class DoubleEntryAccountingService
                     }
                 }
             }
+        // Process Accounts Receivable for any remaining due balance (Unpaid amount)
+        $dueAmount = (float) $sale->total_amount - (float) $sale->paid_amount;
+        if ($dueAmount > 0) {
+            $arAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'asset')
+                ->where(function ($q) {
+                    $q->where('account_code', '1030')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Receivable%');
+                })->first();
+
+            if (!$arAccount) {
+                $arAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1030',
+                    'account_name' => 'Accounts Receivable',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            if ($revenueAccountId) {
+                $jeAr = JournalEntry::create([
+                    'company_id' => $companyId,
+                    'entry_number' => $this->generateEntryNumber('SI-AR'),
+                    'entry_date' => $sale->sale_date,
+                    'reference' => "Accounts Receivable - Invoice #{$sale->sale_number}",
+                    'description' => "Unpaid balance receivable for Invoice #{$sale->sale_number}",
+                    'entry_type' => 'automatic',
+                    'status' => 'posted',
+                    'total_debit' => $dueAmount,
+                    'total_credit' => $dueAmount,
+                    'created_by' => $sale->user_id ?? auth()->id(),
+                    'posted_by' => $sale->user_id ?? auth()->id(),
+                    'posted_at' => now(),
+                    'source_type' => 'sale',
+                    'source_id' => $sale->id,
+                ]);
+
+                // Debit Accounts Receivable
+                JournalEntryLine::create([
+                    'journal_entry_id' => $jeAr->id,
+                    'account_id' => $arAccount->id,
+                    'description' => "Accounts Receivable - Invoice #{$sale->sale_number}",
+                    'debit_amount' => $dueAmount,
+                    'credit_amount' => 0,
+                    'partner_type' => Customer::class,
+                    'partner_id' => $sale->customer_id,
+                ]);
+
+                // Credit Sales Revenue
+                JournalEntryLine::create([
+                    'journal_entry_id' => $jeAr->id,
+                    'account_id' => $revenueAccountId,
+                    'description' => "Sales Revenue (Due Balance) - Invoice #{$sale->sale_number}",
+                    'debit_amount' => 0,
+                    'credit_amount' => $dueAmount,
+                    'partner_type' => Customer::class,
+                    'partner_id' => $sale->customer_id,
+                ]);
+
+                $arAccount->current_balance = (float) $arAccount->current_balance + $dueAmount;
+                $arAccount->save();
+            }
         }
 
         // Process Perpetual Inventory System COGS & 1040 Inventory deduction
@@ -773,6 +840,305 @@ class DoubleEntryAccountingService
             ]);
 
             $this->updateAccountBalances($journalEntry);
+            return $journalEntry;
+        });
+    }
+
+    /**
+     * Scenario 1: Process Credit Sale Invoice (0 Upfront Payment)
+     * 
+     * Double Entries Created:
+     *  1. Revenue Entry:
+     *     - Debit:  1030 Accounts Receivable (Selling Price, e.g. 60,000)
+     *     - Credit: 4010 Sales Revenue       (Selling Price, e.g. 60,000)
+     * 
+     *  2. Perpetual Inventory COGS Entry:
+     *     - Debit:  5010 Cost of Goods Sold  (Purchase Cost, e.g. 50,000)
+     *     - Credit: 1040 Inventory           (Purchase Cost, e.g. 50,000)
+     */
+    public function processCreditSaleInvoice(Sale $sale): JournalEntry
+    {
+        return DB::transaction(function () use ($sale) {
+            $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
+
+            // 1. Resolve Accounts Receivable (1030) Account
+            $arAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'asset')
+                ->where(function ($q) {
+                    $q->where('account_code', '1030')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Receivable%');
+                })->first();
+
+            if (!$arAccount) {
+                $arAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1030',
+                    'account_name' => 'Accounts Receivable',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            // 2. Resolve Sales Revenue (4010) Account
+            $revenueAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'revenue')
+                ->where(function ($q) {
+                    $q->where('account_code', '4010')
+                      ->orWhere('account_name', 'LIKE', '%Sales Revenue%');
+                })->first();
+
+            if (!$revenueAccount) {
+                $revenueAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '4010',
+                    'account_name' => 'Sales Revenue',
+                    'account_type' => 'revenue',
+                    'account_subtype' => 'operating_revenue',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            $saleAmount = (float) $sale->total_amount;
+
+            // 3. Create Double-Entry Journal Entry for Revenue
+            $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('SI-CR'),
+                'entry_date' => $sale->sale_date ?? now()->toDateString(),
+                'reference' => "Credit Sales Invoice #{$sale->sale_number}",
+                'description' => "Credit sale to customer",
+                'entry_type' => 'automatic',
+                'status' => 'posted',
+                'total_debit' => $saleAmount,
+                'total_credit' => $saleAmount,
+                'created_by' => $sale->user_id ?? auth()->id(),
+                'posted_by' => $sale->user_id ?? auth()->id(),
+                'posted_at' => now(),
+                'source_type' => 'sale',
+                'source_id' => $sale->id,
+            ]);
+
+            // Debit: 1030 Accounts Receivable (Asset increases)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $arAccount->id,
+                'description' => "Accounts Receivable for Invoice #{$sale->sale_number}",
+                'debit_amount' => $saleAmount,
+                'credit_amount' => 0,
+                'partner_type' => Customer::class,
+                'partner_id' => $sale->customer_id,
+            ]);
+
+            // Credit: 4010 Sales Revenue (Revenue increases)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $revenueAccount->id,
+                'description' => "Sales Revenue for Invoice #{$sale->sale_number}",
+                'debit_amount' => 0,
+                'credit_amount' => $saleAmount,
+                'partner_type' => Customer::class,
+                'partner_id' => $sale->customer_id,
+            ]);
+
+            // Update balances in chart_of_accounts
+            $arAccount->current_balance = (float) $arAccount->current_balance + $saleAmount;
+            $arAccount->save();
+
+            $revenueAccount->current_balance = (float) $revenueAccount->current_balance + $saleAmount;
+            $revenueAccount->save();
+
+            // Update Sale status & due amount
+            $sale->update([
+                'paid_amount' => 0,
+                'due_amount' => $saleAmount,
+                'payment_status' => 'unpaid',
+            ]);
+
+            // Process COGS Perpetual Inventory Deduction (5010 COGS / 1040 Inventory)
+            $this->processPerpetualInventoryCOGS($sale);
+
+            return $journalEntry;
+        });
+    }
+
+    /**
+     * Scenario 2: Process Partial or Full Payment Receipt for Credit Invoice
+     * 
+     * Double Entries Created:
+     *  - Debit:  Selected Cash/Bank Account (Asset increases, e.g. +20,000)
+     *  - Credit: 1030 Accounts Receivable  (Asset decreases, e.g. -20,000)
+     */
+    public function processPartialPaymentReceipt(
+        Sale $sale, 
+        float $paymentAmount, 
+        string $paymentMethod = 'cash', 
+        ?int $bankAccountId = null
+    ): JournalEntry {
+        return DB::transaction(function () use ($sale, $paymentAmount, $paymentMethod, $bankAccountId) {
+            $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
+
+            // 1. Resolve Accounts Receivable Account (1030)
+            $arAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'asset')
+                ->where(function ($q) {
+                    $q->where('account_code', '1030')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Receivable%');
+                })->first();
+
+            if (!$arAccount) {
+                $arAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1030',
+                    'account_name' => 'Accounts Receivable',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            // 2. Resolve Receiving Liquid Account (Cash vs Bank)
+            $receivingAccount = null;
+            if (strtolower($paymentMethod) === 'cash') {
+                $receivingAccount = Account::where('company_id', $companyId)
+                    ->where('account_type', 'asset')
+                    ->where(function ($q) {
+                        $q->where('account_code', '1010')
+                          ->orWhere('account_name', 'LIKE', '%Cash%');
+                    })->first();
+
+                if (!$receivingAccount) {
+                    $receivingAccount = Account::create([
+                        'company_id' => $companyId,
+                        'account_code' => '1010',
+                        'account_name' => 'Default Cash',
+                        'account_type' => 'asset',
+                        'opening_balance' => 0,
+                        'current_balance' => 0,
+                        'is_active' => true,
+                        'is_system_account' => true,
+                    ]);
+                }
+
+                // Sync Default Cash Vault in bank_accounts table
+                $cashVault = \App\Models\BankAccount::where('company_id', $companyId)
+                    ->where(function ($q) {
+                        $q->where('account_name', 'LIKE', '%Cash%')
+                          ->orWhere('bank_name', 'LIKE', '%Cash%');
+                    })->first();
+
+                if ($cashVault) {
+                    $newCashBalance = (float) $cashVault->current_balance + $paymentAmount;
+
+                    \App\Models\BankTransaction::create([
+                        'company_id' => $companyId,
+                        'bank_account_id' => $cashVault->id,
+                        'transaction_date' => now()->toDateString(),
+                        'reference_number' => $sale->sale_number,
+                        'description' => "Partial Cash Receipt for Invoice #{$sale->sale_number}",
+                        'transaction_type' => 'debit',
+                        'amount' => $paymentAmount,
+                        'running_balance' => $newCashBalance,
+                        'status' => 'cleared',
+                    ]);
+
+                    $cashVault->update(['current_balance' => $newCashBalance]);
+                }
+            } else {
+                // Bank Account Payment
+                $bankAccount = \App\Models\BankAccount::where('company_id', $companyId)->findOrFail($bankAccountId);
+                $newBankBalance = (float) $bankAccount->current_balance + $paymentAmount;
+
+                \App\Models\BankTransaction::create([
+                    'company_id' => $companyId,
+                    'bank_account_id' => $bankAccount->id,
+                    'transaction_date' => now()->toDateString(),
+                    'reference_number' => $sale->sale_number,
+                    'description' => "Partial Bank Payment for Invoice #{$sale->sale_number}",
+                    'transaction_type' => 'debit',
+                    'amount' => $paymentAmount,
+                    'running_balance' => $newBankBalance,
+                    'status' => 'cleared',
+                ]);
+
+                $bankAccount->update(['current_balance' => $newBankBalance]);
+
+                $receivingAccount = Account::find($bankAccount->chart_account_id);
+                if (!$receivingAccount) {
+                    $receivingAccount = Account::where('company_id', $companyId)
+                        ->where('account_type', 'asset')
+                        ->where('account_name', 'LIKE', "%{$bankAccount->bank_name}%")
+                        ->first();
+                }
+            }
+
+            // 3. Create Journal Entry
+            $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('PAY'),
+                'entry_date' => now()->toDateString(),
+                'reference' => "Payment Receipt - Invoice #{$sale->sale_number}",
+                'description' => "Partial payment receipt of {$paymentAmount} for Invoice #{$sale->sale_number}",
+                'entry_type' => 'automatic',
+                'status' => 'posted',
+                'total_debit' => $paymentAmount,
+                'total_credit' => $paymentAmount,
+                'created_by' => auth()->id(),
+                'posted_by' => auth()->id(),
+                'posted_at' => now(),
+                'source_type' => 'sale_payment',
+                'source_id' => $sale->id,
+            ]);
+
+            // Debit: Cash/Bank Asset Account (+20,000)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $receivingAccount->id,
+                'description' => "Payment Receipt - Invoice #{$sale->sale_number}",
+                'debit_amount' => $paymentAmount,
+                'credit_amount' => 0,
+                'partner_type' => Customer::class,
+                'partner_id' => $sale->customer_id,
+            ]);
+
+            // Credit: Accounts Receivable (-20,000)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $arAccount->id,
+                'description' => "Receivable Reduction - Invoice #{$sale->sale_number}",
+                'debit_amount' => 0,
+                'credit_amount' => $paymentAmount,
+                'partner_type' => Customer::class,
+                'partner_id' => $sale->customer_id,
+            ]);
+
+            // 4. Update balances in chart_of_accounts
+            $receivingAccount->current_balance = (float) $receivingAccount->current_balance + $paymentAmount;
+            $receivingAccount->save();
+
+            $arAccount->current_balance = (float) $arAccount->current_balance - $paymentAmount;
+            $arAccount->save();
+
+            // 5. Update Sale Invoice balances
+            $newPaidAmount = (float) $sale->paid_amount + $paymentAmount;
+            $newDueAmount = max(0, (float) $sale->total_amount - $newPaidAmount);
+            $paymentStatus = $newDueAmount == 0 ? 'paid' : 'partially_paid';
+
+            $sale->update([
+                'paid_amount' => $newPaidAmount,
+                'due_amount' => $newDueAmount,
+                'payment_status' => $paymentStatus,
+            ]);
+
             return $journalEntry;
         });
     }
