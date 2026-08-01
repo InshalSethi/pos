@@ -35,7 +35,9 @@ class DoubleEntryAccountingService
         }
 
         return DB::transaction(function () use ($sale) {
+            $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
             $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
                 'entry_number' => $this->generateEntryNumber('SI'),
                 'entry_date' => $sale->sale_date,
                 'reference' => "Sales Invoice #{$sale->sale_number}",
@@ -192,6 +194,7 @@ class DoubleEntryAccountingService
                 // Record double-entry in Chart of Accounts for Cash ledger
                 if ($revenueAccountId) {
                     $journalEntry = JournalEntry::create([
+                        'company_id' => $companyId,
                         'entry_number' => $this->generateEntryNumber('SI-CASH'),
                         'entry_date' => $sale->sale_date,
                         'reference' => "Sales Invoice #{$sale->sale_number}",
@@ -295,6 +298,7 @@ class DoubleEntryAccountingService
                     // Record double-entry in Chart of Accounts for specific Bank ledger
                     if ($revenueAccountId) {
                         $journalEntry = JournalEntry::create([
+                            'company_id' => $companyId,
                             'entry_number' => $this->generateEntryNumber('SI-BANK'),
                             'entry_date' => $sale->sale_date,
                             'reference' => "Sales Invoice #{$sale->sale_number}",
@@ -335,6 +339,193 @@ class DoubleEntryAccountingService
                 }
             }
         }
+
+        // Process Perpetual Inventory System COGS & 1040 Inventory deduction
+        $this->processPerpetualInventoryCOGS($sale);
+    }
+
+    /**
+     * Process Perpetual Inventory System COGS & 1040 Inventory deduction for sales invoice
+     * 
+     * Double-Entry Journal Entry:
+     *  Debit:  'Cost of Goods Sold' (Expense Account 5010) (Purchase Price * Quantity)
+     *  Credit: '1040 Inventory' (Asset Account 1040)       (Purchase Price * Quantity)
+     */
+    public function processPerpetualInventoryCOGS(Sale $sale): ?JournalEntry
+    {
+        $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
+
+        // Load sale items with product and variation relationships
+        $sale->loadMissing(['saleItems.product', 'saleItems.variation']);
+
+        $totalCogs = 0;
+        foreach ($sale->saleItems as $item) {
+            // Determine purchase price (cost price) of item from variation or product
+            $costPrice = (float) (
+                $item->variation?->cost_price 
+                ?? $item->product?->cost_price 
+                ?? $item->product?->purchase_price 
+                ?? 0
+            );
+            $totalCogs += $costPrice * (float) $item->quantity;
+        }
+
+        if ($totalCogs <= 0) {
+            return null;
+        }
+
+        // Check if COGS entry already posted for this sale to avoid duplicates
+        $existingEntry = JournalEntry::where('source_type', 'sale')
+            ->where('source_id', $sale->id)
+            ->where('reference', "COGS - Invoice #{$sale->sale_number}")
+            ->first();
+
+        if ($existingEntry) {
+            return $existingEntry;
+        }
+
+        return DB::transaction(function () use ($sale, $companyId, $totalCogs) {
+            // 1. Resolve '1040 Inventory' Asset Account
+            $inventoryAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'asset')
+                ->where(function ($q) {
+                    $q->where('account_code', '1040')
+                      ->orWhere('account_name', 'LIKE', '%Inventory%');
+                })->first();
+
+            if (!$inventoryAccount) {
+                $inventoryAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1040',
+                    'account_name' => 'Inventory',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            // 2. Resolve 'Cost of Goods Sold' Expense Account
+            $cogsAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'expense')
+                ->where(function ($q) {
+                    $q->where('account_code', '5010')
+                      ->orWhere('account_name', 'LIKE', '%Cost of Goods Sold%')
+                      ->orWhere('account_name', 'LIKE', '%COGS%');
+                })->first();
+
+            if (!$cogsAccount) {
+                $cogsAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '5010',
+                    'account_name' => 'Cost of Goods Sold',
+                    'account_type' => 'expense',
+                    'account_subtype' => 'cost_of_goods_sold',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            // 3. Create Double-Entry Journal Entry
+            $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('COGS'),
+                'entry_date' => $sale->sale_date ?? now()->toDateString(),
+                'reference' => "COGS - Invoice #{$sale->sale_number}",
+                'description' => "Cost of Goods Sold deduction for Invoice #{$sale->sale_number}",
+                'entry_type' => 'automatic',
+                'status' => 'posted',
+                'total_debit' => $totalCogs,
+                'total_credit' => $totalCogs,
+                'created_by' => $sale->user_id ?? auth()->id(),
+                'posted_by' => $sale->user_id ?? auth()->id(),
+                'posted_at' => now(),
+                'source_type' => 'sale',
+                'source_id' => $sale->id,
+            ]);
+
+            // Debit: Cost of Goods Sold (Expense increases)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $cogsAccount->id,
+                'description' => "COGS Expense - Invoice #{$sale->sale_number}",
+                'debit_amount' => $totalCogs,
+                'credit_amount' => 0,
+                'partner_type' => Customer::class,
+                'partner_id' => $sale->customer_id,
+            ]);
+
+            // Credit: 1040 Inventory Asset (Asset decreases)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $inventoryAccount->id,
+                'description' => "Inventory Asset Deduction - Invoice #{$sale->sale_number}",
+                'debit_amount' => 0,
+                'credit_amount' => $totalCogs,
+                'partner_type' => Customer::class,
+                'partner_id' => $sale->customer_id,
+            ]);
+
+            // 4. Update current balances in chart_of_accounts
+            $cogsAccount->current_balance = (float) $cogsAccount->current_balance + $totalCogs;
+            $cogsAccount->save();
+
+            $inventoryAccount->current_balance = (float) $inventoryAccount->current_balance - $totalCogs;
+            $inventoryAccount->save();
+
+            return $journalEntry;
+        });
+    }
+
+    /**
+     * Sync 1040 Inventory Chart of Account balance with current stock-on-hand valuation.
+     */
+    public function syncInventoryValuation(?int $companyId = null): void
+    {
+        $companyId = $companyId ?: auth()->user()?->current_company_id;
+        if (!$companyId) {
+            return;
+        }
+
+        $products = \App\Models\Product::where('company_id', $companyId)->get();
+        $currentValuation = 0;
+        foreach ($products as $p) {
+            $cost = (float) $p->cost_price;
+            $qty = (float) $p->stock_quantity;
+            $currentValuation += ($cost * $qty);
+        }
+
+        $invAcc = Account::where('company_id', $companyId)->where(function ($q) {
+            $q->where('account_code', '1040')->orWhere('account_name', 'LIKE', '%Inventory%');
+        })->first();
+
+        if (!$invAcc) {
+            $invAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '1040',
+                'account_name' => 'Inventory',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'opening_balance' => $currentValuation,
+                'current_balance' => $currentValuation,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+            return;
+        }
+
+        $totalCredits = (float) $invAcc->journalEntries()->sum('credit_amount');
+        $totalDebits = (float) $invAcc->journalEntries()->sum('debit_amount');
+
+        // Calculate opening_balance so that calculateBalance() matches actual stock valuation on hand
+        $openingBalanceNeeded = $currentValuation - $totalDebits + $totalCredits;
+        $invAcc->opening_balance = max(0, $openingBalanceNeeded);
+        $invAcc->current_balance = $invAcc->calculateBalance();
+        $invAcc->save();
     }
 
     /**
