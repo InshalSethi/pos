@@ -396,7 +396,9 @@ class JournalEntryController extends Controller
             $reversalNumber = 'REV-' . $cleanNumber;
 
             $cleanDesc = preg_replace('/^(REVERSAL:\s*)+/i', '', $journalEntry->description);
-            $reversalDescription = 'REVERSAL: ' . $cleanDesc . ($request->reason ? ' - ' . $request->reason : '');
+            $cleanDesc = rtrim(trim($cleanDesc), '-/ .');
+            $reason = $request->reason ? rtrim(trim($request->reason), '-/ .') : '';
+            $reversalDescription = 'REVERSAL: ' . $cleanDesc . ($reason ? ' - ' . $reason : '');
 
             $reversalEntry = JournalEntry::create([
                 'company_id' => $journalEntry->company_id,
