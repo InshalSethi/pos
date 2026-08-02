@@ -12,6 +12,7 @@ use App\Models\Inventory;
 use App\Services\WarehouseInventoryService;
 use App\Services\DoubleEntryAccountingService;
 use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -248,7 +249,9 @@ class SaleController extends Controller
             'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'nullable|numeric|min:0',
             'payments' => 'nullable|array',
-            'payments.*.method' => 'required|string',
+            'payments.*.method' => 'nullable|string',
+            'payments.*.type' => 'nullable|string',
+            'payments.*.bank_id' => 'nullable',
             'payments.*.amount' => 'required|numeric|min:0',
             'use_wallet_credit' => 'nullable|boolean',
             'disabled_tax_ids' => 'nullable',
@@ -503,10 +506,15 @@ class SaleController extends Controller
             $payments = [];
             if (is_array($rawPayments) && count($rawPayments) > 0) {
                 foreach ($rawPayments as $p) {
-                    if (isset($p['method']) && isset($p['amount'])) {
+                    $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
+                    $amount = (float)($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) ? (int)$p['bank_id'] : null;
+                    if ($amount > 0) {
                         $payments[] = [
-                            'method' => (string)$p['method'],
-                            'amount' => (float)$p['amount'],
+                            'type' => $type,
+                            'method' => $type === 'bank' ? 'bank_transfer' : $type,
+                            'bank_id' => $bankId,
+                            'amount' => $amount,
                         ];
                     }
                 }
@@ -514,7 +522,9 @@ class SaleController extends Controller
 
             if (empty($payments) && $request->payment_method) {
                 $payments[] = [
+                    'type' => ($request->payment_method === 'bank_transfer' || $request->payment_method === 'card') ? 'bank' : 'cash',
                     'method' => $request->payment_method,
+                    'bank_id' => $request->bank_id ?? null,
                     'amount' => (float)($request->paid_amount ?? 0)
                 ];
             }
@@ -700,10 +710,10 @@ class SaleController extends Controller
                 }
             }
 
-            // Create accounting entries (non-blocking)
+            // Create accounting entries and process ledgers (non-blocking)
             try {
                 $accountingService = new DoubleEntryAccountingService();
-                $accountingService->createSalesInvoiceEntry($sale);
+                $accountingService->processInvoicePayments($sale, $payments);
             } catch (\Throwable $accountingError) {
                 \Illuminate\Support\Facades\Log::warning('Accounting entry creation failed (non-blocking): ' . $accountingError->getMessage());
             }
@@ -800,7 +810,9 @@ class SaleController extends Controller
             'payment_method' => 'nullable|in:cash,card,bank_transfer,mobile_payment,mixed',
             'paid_amount' => 'nullable|numeric|min:0',
             'payments' => 'nullable|array',
-            'payments.*.method' => 'required|string',
+            'payments.*.method' => 'nullable|string',
+            'payments.*.type' => 'nullable|string',
+            'payments.*.bank_id' => 'nullable',
             'payments.*.amount' => 'required|numeric|min:0',
             'disabled_tax_ids' => 'nullable',
             'excluded_tax_ids' => 'nullable',
@@ -1183,6 +1195,15 @@ class SaleController extends Controller
                 'attachments' => $request->attachments ? json_encode($request->attachments) : null,
             ]);
 
+            // Handle overpayments: route excess payment difference into Customer Wallet / Store Credit
+            if ($effectiveDirectPaid > $totalAmount && $customerId) {
+                $overpaymentAmount = $effectiveDirectPaid - $totalAmount;
+                $customerForCredit = Customer::find($customerId);
+                if ($customerForCredit) {
+                    $customerForCredit->creditWallet($overpaymentAmount);
+                }
+            }
+
             // Increment customer total purchases with the new updated total (financial reporting ledger update)
             if ($customerId) {
                 $customer = Customer::find($customerId);
@@ -1191,26 +1212,62 @@ class SaleController extends Controller
                 }
             }
 
-            // Re-generate double-entry accounting entries (update the journal ledger)
+            // Re-generate double-entry accounting entries cleanly without deleting historical records
             try {
-                // Delete old journal entries
-                $existingEntries = JournalEntry::where('source_type', 'sale')->where('source_id', $sale->id)->get();
-                $affectedAccountIds = [];
+                // Post reversal entry for old posted entries to preserve complete audit trail
+                $existingEntries = JournalEntry::where('source_type', 'sale')
+                    ->where('source_id', $sale->id)
+                    ->where('status', 'posted')
+                    ->get();
+
                 foreach ($existingEntries as $entry) {
-                    $affectedAccountIds = array_merge($affectedAccountIds, $entry->journalEntryLines->pluck('account_id')->toArray());
-                    $entry->journalEntryLines()->delete();
-                    $entry->delete();
-                }
-                foreach (array_unique($affectedAccountIds) as $accountId) {
-                    $account = Account::find($accountId);
-                    if ($account) {
-                        $account->updateCurrentBalance();
+                    $cleanNumber = preg_replace('/^(REV-)+/i', '', $entry->entry_number);
+                    $reversalNumber = 'REV-' . $cleanNumber;
+                    $reversalDesc = 'REVERSAL: ' . preg_replace('/^(REVERSAL:\s*)+/i', '', $entry->description) . ' (Invoice Updated)';
+
+                    $reversalEntry = JournalEntry::create([
+                        'company_id' => $entry->company_id,
+                        'entry_number' => $reversalNumber,
+                        'entry_date' => now()->toDateString(),
+                        'reference' => $entry->reference,
+                        'description' => $reversalDesc,
+                        'entry_type' => 'adjustment',
+                        'status' => 'posted',
+                        'is_reversal' => true,
+                        'total_debit' => $entry->total_credit,
+                        'total_credit' => $entry->total_debit,
+                        'created_by' => auth()->id() ?? 1,
+                        'posted_by' => auth()->id() ?? 1,
+                        'posted_at' => now(),
+                        'source_type' => $entry->source_type,
+                        'source_id' => $entry->source_id,
+                    ]);
+
+                    foreach ($entry->journalEntryLines as $line) {
+                        JournalEntryLine::create([
+                            'journal_entry_id' => $reversalEntry->id,
+                            'account_id' => $line->account_id,
+                            'description' => 'REVERSAL: ' . $line->description,
+                            'debit_amount' => $line->credit_amount,
+                            'credit_amount' => $line->debit_amount,
+                            'partner_type' => $line->partner_type,
+                            'partner_id' => $line->partner_id,
+                        ]);
+
+                        if ($line->account) {
+                            $line->account->updateCurrentBalance();
+                        }
                     }
+
+                    $entry->update(['status' => 'reversed']);
                 }
 
-                // Create new journal entry
+                // Create new fresh double-entry journal entry for the updated invoice values
                 $accountingService = new DoubleEntryAccountingService();
                 $accountingService->createSalesInvoiceEntry($sale);
+                if (!empty($payments)) {
+                    $accountingService->processInvoicePayments($sale, $payments);
+                }
             } catch (\Throwable $accountingError) {
                 \Illuminate\Support\Facades\Log::warning('Accounting entry update failed (non-blocking): ' . $accountingError->getMessage());
             }
@@ -1412,19 +1469,76 @@ class SaleController extends Controller
                 'status' => 'void'
             ]);
 
-            // 5. Reverse Double-Entry Accounting Journal Entries
+            // 5. Reverse Double-Entry Accounting Journal Entries (AUDIT COMPLIANT - NO HARD DELETION)
             try {
-                $existingEntries = JournalEntry::where('source_type', 'sale')->where('source_id', $sale->id)->get();
-                $affectedAccountIds = [];
+                $existingEntries = JournalEntry::where('source_type', 'sale')
+                    ->where('source_id', $sale->id)
+                    ->where('status', 'posted')
+                    ->get();
+
                 foreach ($existingEntries as $entry) {
-                    $affectedAccountIds = array_merge($affectedAccountIds, $entry->journalEntryLines->pluck('account_id')->toArray());
-                    $entry->journalEntryLines()->delete();
-                    $entry->delete();
+                    $cleanNumber = preg_replace('/^(REV-)+/i', '', $entry->entry_number);
+                    $reversalNumber = 'REV-' . $cleanNumber;
+                    $reversalDesc = 'REVERSAL: ' . preg_replace('/^(REVERSAL:\s*)+/i', '', $entry->description) . ' (Invoice Voided)';
+
+                    $reversalEntry = JournalEntry::create([
+                        'company_id' => $entry->company_id,
+                        'entry_number' => $reversalNumber,
+                        'entry_date' => now()->toDateString(),
+                        'reference' => $entry->reference,
+                        'description' => $reversalDesc,
+                        'entry_type' => 'adjustment',
+                        'status' => 'posted',
+                        'is_reversal' => true,
+                        'total_debit' => $entry->total_credit,
+                        'total_credit' => $entry->total_debit,
+                        'created_by' => auth()->id() ?? 1,
+                        'posted_by' => auth()->id() ?? 1,
+                        'posted_at' => now(),
+                        'source_type' => $entry->source_type,
+                        'source_id' => $entry->source_id,
+                    ]);
+
+                    foreach ($entry->journalEntryLines as $line) {
+                        JournalEntryLine::create([
+                            'journal_entry_id' => $reversalEntry->id,
+                            'account_id' => $line->account_id,
+                            'description' => 'REVERSAL: ' . $line->description,
+                            'debit_amount' => $line->credit_amount,
+                            'credit_amount' => $line->debit_amount,
+                            'partner_type' => $line->partner_type,
+                            'partner_id' => $line->partner_id,
+                        ]);
+
+                        if ($line->account) {
+                            $line->account->updateCurrentBalance();
+                        }
+                    }
+
+                    $entry->update(['status' => 'reversed']);
                 }
-                foreach (array_unique($affectedAccountIds) as $accountId) {
-                    $account = Account::find($accountId);
-                    if ($account) {
-                        $account->updateCurrentBalance();
+
+                // 6. Reverse Linked Bank/Cash Transactions
+                $bankTransactions = \App\Models\BankTransaction::where('company_id', $companyId)
+                    ->where('reference_number', $sale->sale_number)
+                    ->get();
+
+                foreach ($bankTransactions as $bankTx) {
+                    $bankAccount = \App\Models\BankAccount::find($bankTx->bank_account_id);
+                    if ($bankAccount && $bankTx->transaction_type === 'debit') {
+                        $bankAccount->decrement('current_balance', $bankTx->amount);
+
+                        \App\Models\BankTransaction::create([
+                            'company_id' => $companyId,
+                            'bank_account_id' => $bankAccount->id,
+                            'transaction_date' => now()->toDateString(),
+                            'reference_number' => 'REV-' . $sale->sale_number,
+                            'description' => "Reversal of payment for Voided Invoice #{$sale->sale_number}",
+                            'transaction_type' => 'credit',
+                            'amount' => $bankTx->amount,
+                            'running_balance' => (float) $bankAccount->current_balance,
+                            'status' => 'cleared',
+                        ]);
                     }
                 }
             } catch (\Throwable $accountingError) {
@@ -1655,6 +1769,102 @@ class SaleController extends Controller
             return response()->json([
                 'message' => 'Failed to process return',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage (Handles both Invoices and Sales Returns).
+     */
+    public function destroy(Sale $sale): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $inventoryService = new WarehouseInventoryService();
+            $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
+
+            // Revert stock adjustments
+            foreach ($sale->saleItems as $item) {
+                $product = Product::find($item->product_id);
+                if ($product && $product->track_inventory) {
+                    if ($sale->is_refund) {
+                        // Return is being deleted => deduct the stock that was restored
+                        $inventoryService->adjustStock(
+                            $item->warehouse_id,
+                            $item->product_id,
+                            $item->product_variation_id,
+                            -abs($item->quantity),
+                            $companyId,
+                            'Return Delete (Deduction)',
+                            $sale->sale_number
+                        );
+                    } else {
+                        // Invoice is being deleted => add back the stock that was deducted
+                        $inventoryService->adjustStock(
+                            $item->warehouse_id,
+                            $item->product_id,
+                            $item->product_variation_id,
+                            abs($item->quantity),
+                            $companyId,
+                            'Invoice Delete (Restock)',
+                            $sale->sale_number
+                        );
+                    }
+                }
+            }
+
+            // Revert customer purchase balance
+            if ($sale->customer_id) {
+                $customer = Customer::find($sale->customer_id);
+                if ($customer) {
+                    if ($sale->is_refund) {
+                        $customer->increment('total_purchases', abs($sale->total_amount));
+                        if ($sale->payment_method === 'store_credit') {
+                            $customer->debitWallet(abs($sale->total_amount));
+                        }
+                    } else {
+                        $customer->decrement('total_purchases', abs($sale->total_amount));
+                        if ($sale->wallet_credit_applied > 0) {
+                            $customer->creditWallet($sale->wallet_credit_applied);
+                        }
+                    }
+                }
+            }
+
+            // Reverse Double-Entry Accounting Journal Entries
+            try {
+                $sourceType = $sale->is_refund ? 'sale_return' : 'sale';
+                $existingEntries = JournalEntry::where('source_type', $sourceType)->where('source_id', $sale->id)->get();
+                $affectedAccountIds = [];
+                foreach ($existingEntries as $entry) {
+                    $affectedAccountIds = array_merge($affectedAccountIds, $entry->journalEntryLines->pluck('account_id')->toArray());
+                    $entry->journalEntryLines()->delete();
+                    $entry->delete();
+                }
+                foreach (array_unique($affectedAccountIds) as $accountId) {
+                    $account = Account::find($accountId);
+                    if ($account) {
+                        $account->updateCurrentBalance();
+                    }
+                }
+            } catch (\Throwable $accountingError) {
+                \Illuminate\Support\Facades\Log::warning('Accounting entry reversal failed in destroy: ' . $accountingError->getMessage());
+            }
+
+            $sale->saleItems()->delete();
+            $sale->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => $sale->is_refund ? 'Sales return deleted successfully' : 'Sales invoice deleted successfully'
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to delete record: ' . $e->getMessage()
             ], 500);
         }
     }

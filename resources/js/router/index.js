@@ -29,6 +29,10 @@ import SalesInvoiceView from '@/components/sales/SalesInvoiceView.vue';
 import SalesInvoicePrint from '@/components/sales/SalesInvoicePrint.vue';
 import EditInvoice from '@/components/sales/EditInvoice.vue';
 import SalesReturns from '@/components/sales/SalesReturns.vue';
+import CreateReturn from '@/components/sales/CreateReturn.vue';
+import SalesReturnView from '@/components/sales/SalesReturnView.vue';
+import EditReturn from '@/components/sales/EditReturn.vue';
+import SalesReturnPrint from '@/components/sales/SalesReturnPrint.vue';
 import PurchaseOrders from '@/components/purchase/PurchaseOrders.vue';
 import CreatePurchaseOrder from '@/components/purchase/CreatePurchaseOrder.vue';
 import EditPurchaseOrder from '@/components/purchase/EditPurchaseOrder.vue';
@@ -291,6 +295,30 @@ const routes = [
         path: 'sales/returns',
         name: 'SalesReturns',
         component: SalesReturns,
+        meta: { permission: 'sales.view' }
+      },
+      {
+        path: 'sales/returns/create',
+        name: 'CreateReturn',
+        component: CreateReturn,
+        meta: { permission: 'sales.create' }
+      },
+      {
+        path: 'sales/returns/:id',
+        name: 'SalesReturnView',
+        component: SalesReturnView,
+        meta: { permission: 'sales.view' }
+      },
+      {
+        path: 'sales/returns/:id/edit',
+        name: 'EditReturn',
+        component: EditReturn,
+        meta: { permission: 'sales.edit' }
+      },
+      {
+        path: 'sales/returns/:id/print',
+        name: 'SalesReturnPrint',
+        component: SalesReturnPrint,
         meta: { permission: 'sales.view' }
       },
       {

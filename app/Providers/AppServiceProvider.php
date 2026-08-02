@@ -36,5 +36,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(ExpenseApproved::class, CreateExpenseJournalEntry::class);
         Event::listen(ExpensePaid::class, CreateExpensePaymentJournalEntry::class);
         Event::listen(ExpenseRejected::class, ReverseExpenseJournalEntry::class);
+
+        // Register ProductObserver and ProductVariationObserver for automatic Opening Stock journal entries
+        \App\Models\Product::observe(\App\Observers\ProductObserver::class);
+        \App\Models\ProductVariation::observe(\App\Observers\ProductVariationObserver::class);
     }
 }

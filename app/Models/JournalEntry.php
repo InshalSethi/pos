@@ -18,6 +18,7 @@ class JournalEntry extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'entry_number',
         'entry_date',
         'reference',
@@ -30,6 +31,8 @@ class JournalEntry extends Model
         'posted_by',
         'posted_at',
         'is_reversal',
+        'source_type',
+        'source_id',
     ];
 
     protected $casts = [

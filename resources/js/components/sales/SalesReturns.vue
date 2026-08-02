@@ -20,7 +20,6 @@
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          v-show="tab.id === 'all' || selectedFilters.includes(tab.id)"
           @click="setActiveTab(tab.id)"
           class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
           :class="isTabActive(tab.id) ? 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
@@ -313,6 +312,12 @@
                     </svg>
                     <span>View</span>
                   </button>
+                  <button @click="editReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span>Edit</span>
+                  </button>
                   <button @click="printReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
@@ -405,14 +410,16 @@
 
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import { debounce } from '@/utils/debounce';
 import SalesReturnModal from './SalesReturnModal.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
 const route = useRoute();
+const router = useRouter();
 
 // Reactive data
 const returns = ref([]);
@@ -605,6 +612,12 @@ const closeAllDropdowns = () => {
   showFilterDropdown.value = false;
 };
 
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
+
 const formatDate = (dateString) => {
   if (!dateString) return '-';
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -613,8 +626,8 @@ const formatDate = (dateString) => {
 
 const formatCurrency = (val) => {
   const num = parseFloat(val);
-  if (isNaN(num)) return '$0.00';
-  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  if (isNaN(num)) return currencySymbol.value + '0.00';
+  return currencySymbol.value + ' ' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 };
 
 const formatRefundLabel = (method) => {
@@ -625,17 +638,21 @@ const formatRefundLabel = (method) => {
 
 // Actions
 const viewReturn = (returnItem) => {
-  window.open(`/sales/returns/${returnItem.id}`, '_blank');
+  router.push(`/sales/returns/${returnItem.id}`);
+};
+
+const editReturn = (returnItem) => {
+  router.push(`/sales/returns/${returnItem.id}/edit`);
 };
 
 const printReturn = (returnItem) => {
-  window.open(`/sales/returns/${returnItem.id}/print`, '_blank');
+  router.push(`/sales/returns/${returnItem.id}/print`);
 };
 
 const deleteReturn = async (returnId) => {
-  if (confirm('Are you sure you want to delete this return?')) {
+  if (confirm('Are you sure you want to delete this sales return? Stock reversal and journal entry removal will take effect.')) {
     try {
-      await axios.delete(`/api/sales/${returnId}`);
+      await axios.delete(`/api/sales/returns/${returnId}`);
       fetchReturns(currentPage.value);
     } catch (error) {
       console.error('Error deleting return:', error);
@@ -661,7 +678,7 @@ const goToPage = (page) => {
 
 // Create return methods
 const createReturn = () => {
-  showCreateModal.value = true;
+  router.push('/sales/returns/create');
 };
 
 const closeModal = () => {

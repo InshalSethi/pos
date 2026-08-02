@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Services\ChartOfAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -26,6 +27,11 @@ class AccountController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $companyId = auth()->user()?->current_company_id;
+        if ($companyId) {
+            ChartOfAccountService::ensureDefaultAccountsForCompany($companyId);
+        }
+
         $query = Account::query()->with(['parent', 'children']);
 
         // Filter by account type
@@ -274,6 +280,11 @@ class AccountController extends Controller
      */
     public function tree(Request $request): JsonResponse
     {
+        $companyId = auth()->user()?->current_company_id;
+        if ($companyId) {
+            ChartOfAccountService::ensureDefaultAccountsForCompany($companyId);
+        }
+
         $accountType = $request->get('account_type');
 
         $query = Account::query()->with(['children' => function ($query) {
@@ -299,6 +310,11 @@ class AccountController extends Controller
      */
     public function balances(Request $request): JsonResponse
     {
+        $companyId = auth()->user()?->current_company_id;
+        if ($companyId) {
+            ChartOfAccountService::ensureDefaultAccountsForCompany($companyId);
+        }
+
         $asOfDate = $request->get('as_of_date', now()->toDateString());
 
         $balances = [

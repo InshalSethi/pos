@@ -85,7 +85,15 @@
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6">
       <!-- TREE VIEW -->
       <div v-if="activeView === 'tree'" class="space-y-4">
-        <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100">Account Hierarchy</h2>
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100">Account Hierarchy</h2>
+          <div v-if="financialCycleBadge" class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60 shadow-sm">
+            <svg class="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>FY: {{ financialCycleBadge }}</span>
+          </div>
+        </div>
 
         <div v-if="loadingTree" class="text-center py-10">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -417,6 +425,34 @@ export default {
       return currencyStore.symbol || currencyStore.tenantCurrencyCode || 'PKR';
     });
 
+    const companyData = ref(null);
+
+    const fetchCompanyDetails = async () => {
+      try {
+        const res = await axios.get('/api/companies/active');
+        companyData.value = res.data.company;
+      } catch (e) {
+        console.error('Error fetching active company details:', e);
+      }
+    };
+
+    const financialCycleBadge = computed(() => {
+      if (companyData.value?.formatted_fiscal_year_cycle) {
+        return companyData.value.formatted_fiscal_year_cycle;
+      }
+      if (!companyData.value?.fiscal_year_start) return '';
+      const parts = String(companyData.value.fiscal_year_start).split('-');
+      if (parts.length !== 3) return '';
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const start = new Date(year, month, day);
+      if (isNaN(start.getTime())) return '';
+      const end = new Date(year + 1, month, day - 1);
+      const options = { month: 'short', day: 'numeric', year: 'numeric' };
+      return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+    });
+
     const activeView = ref('tree');
     const selectedAccountType = ref('');
     const searchQuery = ref('');
@@ -449,22 +485,27 @@ export default {
     const accountSubtypes = {
       asset: [
         { value: 'current_asset', label: 'Current Asset' },
+        { value: 'cash_and_bank', label: 'Cash & Bank' },
         { value: 'fixed_asset', label: 'Fixed Asset' },
         { value: 'other_asset', label: 'Other Asset' }
       ],
       liability: [
         { value: 'current_liability', label: 'Current Liability' },
-        { value: 'long_term_liability', label: 'Long-term Liability' }
+        { value: 'long_term_liability', label: 'Long-term Liability' },
+        { value: 'other_liability', label: 'Other Liability' }
       ],
       equity: [
-        { value: 'equity', label: 'Equity' }
+        { value: 'equity', label: 'Equity' },
+        { value: 'owner_equity', label: 'Owner Equity' }
       ],
       revenue: [
-        { value: 'revenue', label: 'Revenue' }
+        { value: 'operating_revenue', label: 'Operating Revenue' },
+        { value: 'other_revenue', label: 'Other Revenue' }
       ],
       expense: [
-        { value: 'expense', label: 'Expense' },
-        { value: 'cost_of_goods_sold', label: 'Cost of Goods Sold' }
+        { value: 'operating_expense', label: 'Operating Expense' },
+        { value: 'cost_of_goods_sold', label: 'Cost of Goods Sold' },
+        { value: 'other_expense', label: 'Other Expense' }
       ]
     };
 
@@ -693,6 +734,7 @@ export default {
     };
 
     onMounted(() => {
+      fetchCompanyDetails();
       currencyStore.fetchCurrencies();
       fetchAccountTree();
       fetchAccounts();
@@ -700,6 +742,7 @@ export default {
     });
 
     return {
+      financialCycleBadge,
       activeView,
       selectedAccountType,
       searchQuery,

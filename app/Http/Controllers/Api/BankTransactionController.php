@@ -36,7 +36,11 @@ class BankTransactionController extends Controller
 
         // Filter by reconciliation status
         if ($request->has('reconciled')) {
-            $query->where('is_reconciled', $request->boolean('reconciled'));
+            if ($request->boolean('reconciled')) {
+                $query->where('status', 'reconciled');
+            } else {
+                $query->whereIn('status', ['pending', 'cleared']);
+            }
         }
 
         // Filter by transaction type

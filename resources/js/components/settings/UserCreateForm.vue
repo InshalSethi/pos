@@ -2,28 +2,28 @@
   <Teleport to="body">
     <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto">
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-50" @click="$emit('close')"></div>
+      <div class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs transition-opacity" @click="$emit('close')"></div>
       
       <!-- Modal -->
       <div class="flex min-h-full items-center justify-center p-4">
-        <div class="relative w-full max-w-4xl bg-white rounded-lg shadow-xl">
+        <div class="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden transition-all">
           <!-- Header -->
-          <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 rounded-t-lg">
+          <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 dark:from-indigo-700 dark:to-indigo-900 px-6 py-4">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                  <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                 </div>
                 <div>
-                  <h3 class="text-xl font-semibold text-white">{{ isEdit ? 'Edit User' : 'Add New User' }}</h3>
-                  <p class="text-indigo-100">{{ isEdit ? 'Update user information' : 'Create a new user profile' }}</p>
+                  <h3 class="text-xl font-bold text-white">{{ isEdit ? 'Edit User' : 'Add New User' }}</h3>
+                  <p class="text-indigo-100 text-xs">{{ isEdit ? 'Update user information' : 'Create a new user profile' }}</p>
                 </div>
               </div>
-              <button @click="$emit('close')" class="text-white hover:text-gray-200 transition-colors">
+              <button @click="$emit('close')" class="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -32,68 +32,68 @@
           </div>
 
           <!-- Content -->
-          <div class="max-h-[70vh] overflow-y-auto">
+          <div class="max-h-[75vh] overflow-y-auto">
             <form @submit.prevent="saveUser" class="p-6">
               <div class="space-y-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <!-- Basic Information -->
                   <div class="space-y-4">
-                    <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Basic Information</h4>
+                    <h4 class="text-base font-bold text-slate-900 dark:text-zinc-100 border-b border-slate-200 dark:border-zinc-800 pb-2">Basic Information</h4>
                     
                     <div>
-                      <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                      <label for="name" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Name *</label>
                       <input
                         id="name"
                         v-model="form.name"
                         type="text"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.name }"
+                        class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        :class="{ 'border-red-400 focus:ring-red-500 focus:border-red-500': errors.name }"
                         required
                       />
-                      <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name[0] }}</p>
+                      <p v-if="errors.name" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.name[0] }}</p>
                     </div>
 
                     <div>
-                      <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <label for="email" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Email *</label>
                       <input
                         id="email"
                         v-model="form.email"
                         type="email"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.email }"
+                        class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        :class="{ 'border-red-400 focus:ring-red-500 focus:border-red-500': errors.email }"
                         required
                       />
-                      <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email[0] }}</p>
+                      <p v-if="errors.email" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.email[0] }}</p>
                     </div>
 
                     <div>
-                      <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <label for="phone" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Phone</label>
                       <input
                         id="phone"
                         v-model="form.phone"
                         type="text"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.phone }"
+                        class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        :class="{ 'border-red-400 focus:ring-red-500 focus:border-red-500': errors.phone }"
                       />
-                      <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone[0] }}</p>
+                      <p v-if="errors.phone" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.phone[0] }}</p>
                     </div>
 
                     <div v-if="!isEdit" class="space-y-4">
                       <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                        <label for="password" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Password *</label>
                         <div class="relative">
                           <input
                             id="password"
                             v-model="form.password"
                             :type="showPassword ? 'text' : 'password'"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 pr-10"
-                            :class="{ 'border-red-300': errors.password }"
+                            class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 pr-10"
+                            :class="{ 'border-red-400': errors.password }"
                             required
                           />
                           <button 
                             type="button" 
                             @click="showPassword = !showPassword"
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
                           >
                             <svg v-if="!showPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -104,24 +104,24 @@
                             </svg>
                           </button>
                         </div>
-                        <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password[0] }}</p>
+                        <p v-if="errors.password" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.password[0] }}</p>
                       </div>
 
                       <div>
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+                        <label for="password_confirmation" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Confirm Password *</label>
                         <div class="relative">
                           <input
                             id="password_confirmation"
                             v-model="form.password_confirmation"
                             :type="showConfirmPassword ? 'text' : 'password'"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 pr-10"
-                            :class="{ 'border-red-300': errors.password }"
+                            class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 pr-10"
+                            :class="{ 'border-red-400': errors.password }"
                             required
                           />
                           <button 
                             type="button" 
                             @click="showConfirmPassword = !showConfirmPassword"
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
                           >
                             <svg v-if="!showConfirmPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -138,14 +138,14 @@
 
                   <!-- Account Settings -->
                   <div class="space-y-4">
-                    <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Account Settings</h4>
+                    <h4 class="text-base font-bold text-slate-900 dark:text-zinc-100 border-b border-slate-200 dark:border-zinc-800 pb-2">Account Settings</h4>
                     
                     <div>
-                      <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                      <label for="role" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Role *</label>
                       <select
                         id="role"
                         v-model="form.role"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-zinc-100 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         required
                       >
                         <option v-for="role in rolesList" :key="role.id" :value="role.name">
@@ -155,58 +155,58 @@
                     </div>
 
                     <div>
-                      <label for="is_active" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <label for="is_active" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Status</label>
                       <select
                         id="is_active"
                         v-model="form.is_active"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-zinc-100 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       >
                         <option :value="true">Active</option>
                         <option :value="false">Inactive</option>
                       </select>
-                      <p v-if="errors.is_active" class="mt-1 text-sm text-red-600">{{ errors.is_active[0] }}</p>
+                      <p v-if="errors.is_active" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.is_active[0] }}</p>
                     </div>
 
                     <div>
-                      <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                      <label for="address" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Address</label>
                       <textarea
                         id="address"
                         v-model="form.address"
                         rows="3"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       ></textarea>
-                      <p v-if="errors.address" class="mt-1 text-sm text-red-600">{{ errors.address[0] }}</p>
+                      <p v-if="errors.address" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.address[0] }}</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Notes -->
                 <div>
-                  <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label for="notes" class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Notes</label>
                   <textarea
                     id="notes"
                     v-model="form.notes"
                     rows="3"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Internal notes about this user..."
                   ></textarea>
-                  <p v-if="errors.notes" class="mt-1 text-sm text-red-600">{{ errors.notes[0] }}</p>
+                  <p v-if="errors.notes" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.notes[0] }}</p>
                 </div>
               </div>
               
               <!-- Footer -->
-              <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+              <div class="flex justify-end space-x-3 pt-6 border-t border-slate-200 dark:border-zinc-800 mt-6">
                 <button 
                   type="button" 
                   @click="$emit('close')" 
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  class="px-4 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   :disabled="saving" 
-                  class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex items-center px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent rounded-xl shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

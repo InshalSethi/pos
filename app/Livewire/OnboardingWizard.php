@@ -329,23 +329,13 @@ class OnboardingWizard extends Component
                 'is_saleable' => true,
             ]);
 
-            // Seed Default Cash Vault Bank Account
-            $cashAccount = \App\Models\Account::where('account_code', '1010')
-                ->orWhere('account_name', 'like', '%Cash%')
-                ->first();
+            // Seed Enterprise Chart of Accounts for new company
+            \App\Services\ChartOfAccountService::ensureDefaultAccountsForCompany($company->id);
 
-            if (!$cashAccount) {
-                $cashAccount = \App\Models\Account::create([
-                    'account_code' => '1010',
-                    'account_name' => 'Cash on Hand',
-                    'account_type' => 'asset',
-                    'account_subtype' => 'cash_and_bank',
-                    'is_active' => true,
-                    'is_system_account' => true,
-                    'opening_balance' => 0.00,
-                    'current_balance' => 0.00,
-                ]);
-            }
+            // Seed Default Cash Vault Bank Account
+            $cashAccount = \App\Models\Account::where('company_id', $company->id)
+                ->where('account_code', '1010')
+                ->first();
 
             \App\Models\BankAccount::firstOrCreate([
                 'company_id' => $company->id,

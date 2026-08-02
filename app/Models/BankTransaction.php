@@ -37,6 +37,10 @@ class BankTransaction extends Model
         'running_balance' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'is_reconciled',
+    ];
+
     // Relationships
     public function bankAccount(): BelongsTo
     {
@@ -108,6 +112,11 @@ class BankTransaction extends Model
             'credit' => 'Credit',
             default => ucfirst($this->transaction_type)
         };
+    }
+
+    public function getIsReconciledAttribute(): bool
+    {
+        return $this->status === 'reconciled';
     }
 
     public function getIsDebitAttribute(): bool
