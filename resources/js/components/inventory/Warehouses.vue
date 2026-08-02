@@ -77,7 +77,19 @@
                     </p>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span v-if="warehouse.is_default" class="px-2 py-0.5 text-[8px] font-black rounded-lg uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Default
+                  </span>
+                  <button
+                    v-else
+                    @click.stop="makeDefault(warehouse)"
+                    title="Set as Default Warehouse"
+                    class="px-2 py-0.5 text-[8px] font-bold rounded-lg uppercase tracking-wider bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 dark:bg-[#252525] dark:hover:bg-emerald-950/30 dark:text-slate-400 dark:hover:text-emerald-400 border border-slate-200/60 dark:border-[#2E2E2E] transition-all cursor-pointer"
+                  >
+                    Set Default
+                  </button>
                   <span v-if="warehouse.is_primary" class="px-1.5 py-0.5 text-[8px] font-black rounded uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
                     Primary
                   </span>
@@ -126,6 +138,10 @@
               <div>
                 <div class="flex items-center gap-2">
                   <h2 class="text-base font-extrabold text-slate-800 dark:text-slate-100">{{ selectedWarehouse.name }}</h2>
+                  <span v-if="selectedWarehouse.is_default" class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 text-[9px] font-black rounded-full flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    DEFAULT WAREHOUSE
+                  </span>
                   <span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-full">
                     {{ inventoryTotal }} Active Stock Lines
                   </span>
@@ -137,7 +153,15 @@
               </div>
 
               <!-- Action buttons -->
-              <div class="flex gap-2">
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="!selectedWarehouse.is_default"
+                  @click="makeDefault(selectedWarehouse)"
+                  class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                >
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  Set as Default
+                </button>
                 <button
                   @click="openEditModal(selectedWarehouse)"
                   class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 rounded-xl transition-all cursor-pointer dark:text-slate-400"
@@ -147,9 +171,9 @@
                 </button>
                 <button
                   @click="deleteWarehouse(selectedWarehouse)"
-                  :disabled="selectedWarehouse.is_primary"
+                  :disabled="selectedWarehouse.is_primary || selectedWarehouse.is_default"
                   class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all disabled:opacity-30 cursor-pointer"
-                  title="Remove Location"
+                  :title="selectedWarehouse.is_default ? 'Cannot delete default warehouse' : 'Remove Location'"
                 >
                   <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
@@ -557,8 +581,30 @@
               </div>
             </div>
 
-            <!-- Toggles primary & active -->
-            <div class="space-y-2.5 pt-2 border-t border-slate-100 dark:border-[#2E2E2E]">
+            <!-- Toggles default, primary & active -->
+            <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-[#2E2E2E]">
+              <!-- Default Warehouse toggle -->
+              <div class="flex items-center justify-between p-3 bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl">
+                <div>
+                  <span class="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Set as Default Warehouse
+                  </span>
+                  <p class="text-[9px] text-gray-500 dark:text-slate-400 mt-0.5">
+                    Automatically designated for sales, purchase orders, and stock allocations.
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    v-model="warehouseForm.is_default"
+                    class="sr-only peer"
+                    :disabled="editingWarehouse && editingWarehouse.is_default"
+                  >
+                  <div class="w-11 h-6 bg-slate-200 dark:bg-[#252525] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 peer-disabled:opacity-50"></div>
+                </label>
+              </div>
+
               <!-- Primary toggle -->
               <div class="flex items-center justify-between">
                 <div>
@@ -818,6 +864,7 @@ const openCreateModal = () => {
     country: '',
     phone: '',
     email: '',
+    is_default: warehouses.value.length === 0,
     is_primary: false,
     is_active: true,
     counters: [
@@ -839,6 +886,7 @@ const openEditModal = (warehouse) => {
     country: warehouse.country || '',
     phone: warehouse.phone || '',
     email: warehouse.email || '',
+    is_default: !!warehouse.is_default,
     is_primary: !!warehouse.is_primary,
     is_active: !!warehouse.is_active,
     counters: (warehouse.counters || []).map(c => ({
@@ -872,9 +920,29 @@ const saveWarehouse = async () => {
   }
 };
 
+const makeDefault = async (warehouse) => {
+  if (warehouse.is_default) return;
+  try {
+    const res = await axios.post(`/api/warehouses/${warehouse.id}/set-default`);
+    showToast('success', `"${warehouse.name}" is now set as the Default Warehouse.`);
+    await fetchWarehouses();
+    if (selectedWarehouse.value && selectedWarehouse.value.id === warehouse.id) {
+      await selectWarehouse(res.data.warehouse);
+    }
+  } catch (error) {
+    const msg = error.response?.data?.message || 'Failed to set default warehouse.';
+    showToast('error', msg);
+  }
+};
+
 const { confirm } = useConfirm();
 
 const deleteWarehouse = async (warehouse) => {
+  if (warehouse.is_default) {
+    showToast('error', 'Cannot delete the default warehouse. Set another warehouse as default first.');
+    return;
+  }
+
   if (warehouse.is_primary) {
     showToast('error', 'Cannot delete primary operational facility.');
     return;

@@ -40,9 +40,7 @@ class WarehouseController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $warehouses = $query->with(['counters' => function ($q) {
-            $q->where('status', 'active');
-        }])->withCount(['counters' => function ($q) {
+        $warehouses = $query->with('counters')->withCount(['counters' => function ($q) {
             $q->where('status', 'active');
         }])->orderBy('name')->get();
 
@@ -278,6 +276,35 @@ class WarehouseController extends Controller
         return response()->json([
             'message' => 'Warehouse deleted successfully'
         ]);
+    }
+
+    /**
+     * Set the specified warehouse as default.
+     */
+    public function setDefault(Warehouse $warehouse): JsonResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Remove default flag from all other warehouses in the company
+            Warehouse::where('company_id', $companyId)->where('id', '!=', $warehouse->id)->update(['is_default' => false]);
+
+            $warehouse->is_default = true;
+            $warehouse->save();
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            $warehouse->load('counters');
+
+            return response()->json([
+                'message' => 'Warehouse set as default successfully',
+                'warehouse' => $warehouse
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Failed to set default warehouse: ' . $e->getMessage()], 500);
+        }
     }
 
     /**

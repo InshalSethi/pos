@@ -2220,7 +2220,8 @@ const addToOrder = (product) => {
     existingItem.quantity_ordered += 1;
     updateItemTotal(orderItems.value.indexOf(existingItem));
   } else {
-    const defaultWarehouseIds = warehouses.value.length > 0 ? [warehouses.value[0].id] : [];
+    const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0];
+    const defaultWarehouseIds = defaultWh ? [defaultWh.id] : [];
     const newItem = {
       product: product,
       product_id: product.id,

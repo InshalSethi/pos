@@ -203,6 +203,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
 
     // Warehouse and stock transfer routes
     Route::get('/warehouses/{warehouse}/inventory', [WarehouseController::class, 'inventory']);
+    Route::post('/warehouses/{warehouse}/set-default', [WarehouseController::class, 'setDefault']);
     Route::apiResource('warehouses', WarehouseController::class);
     Route::apiResource('transfer-orders', TransferOrderController::class);
     Route::post('/transfer-orders/{transferOrder}/send', [TransferOrderController::class , 'send']);
