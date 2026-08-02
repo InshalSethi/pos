@@ -83,6 +83,7 @@ class CompanySwitcherController extends Controller
             'system_language' => 'nullable|string|max:10',
             'base_currency' => 'nullable|string|max:10',
             'timezone_offset' => 'nullable|string|max:50',
+            'fiscal_year_start' => 'nullable|date',
         ]);
 
         if (!$user->current_company_id) {
@@ -108,6 +109,18 @@ class CompanySwitcherController extends Controller
             }
         } else {
             $company = $user->currentCompany;
+
+            if ($request->has('fiscal_year_start') && $request->fiscal_year_start && $request->fiscal_year_start !== $company->fiscal_year_start) {
+                if (!$company->can_edit_fiscal_year) {
+                    return response()->json([
+                        'message' => 'Fiscal year cannot be modified once financial transactions exist.',
+                        'errors' => [
+                            'fiscal_year_start' => ['Fiscal year cannot be modified once financial transactions exist.']
+                        ]
+                    ], 422);
+                }
+            }
+
             $company->update($validatedData);
         }
 

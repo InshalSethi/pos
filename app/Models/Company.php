@@ -81,6 +81,47 @@ class Company extends Model
         'deleted_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'fiscal_year_end',
+        'can_edit_fiscal_year',
+        'formatted_fiscal_year_cycle',
+    ];
+
+    /**
+     * Get calculated fiscal year end date (12 months minus 1 day from fiscal_year_start).
+     */
+    public function getFiscalYearEndAttribute(): ?string
+    {
+        if (!$this->fiscal_year_start) {
+            return null;
+        }
+        return \Carbon\Carbon::parse($this->fiscal_year_start)
+            ->addMonths(12)
+            ->subDay()
+            ->format('Y-m-d');
+    }
+
+    /**
+     * Check if fiscal year start can be edited (true ONLY if journal_entries table is empty for company).
+     */
+    public function getCanEditFiscalYearAttribute(): bool
+    {
+        return !\App\Models\JournalEntry::where('company_id', $this->id)->exists();
+    }
+
+    /**
+     * Get formatted fiscal year cycle string (e.g., 'Jan 1, 2026 - Dec 31, 2026').
+     */
+    public function getFormattedFiscalYearCycleAttribute(): ?string
+    {
+        if (!$this->fiscal_year_start) {
+            return null;
+        }
+        $start = \Carbon\Carbon::parse($this->fiscal_year_start);
+        $end = $start->copy()->addMonths(12)->subDay();
+        return $start->format('M j, Y') . ' - ' . $end->format('M j, Y');
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
