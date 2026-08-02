@@ -852,49 +852,34 @@
                 <h4 class="text-lg font-medium text-green-900 mb-4">Sales Invoice Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Revenue Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Revenue Account"
                       v-model="accountingSettings.sales_invoice_revenue_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Receivable</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Accounts Receivable"
                       v-model="accountingSettings.sales_invoice_receivable_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Tax Account"
                       v-model="accountingSettings.sales_invoice_tax_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -904,49 +889,34 @@
                 <h4 class="text-lg font-medium text-red-900 mb-4">Sales Return Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Revenue Return Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Revenue Return Account"
                       v-model="accountingSettings.sales_return_revenue_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Receivable</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Accounts Receivable"
                       v-model="accountingSettings.sales_return_receivable_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Tax Account"
                       v-model="accountingSettings.sales_return_tax_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -956,49 +926,34 @@
                 <h4 class="text-lg font-medium text-orange-900 mb-4">Purchase Invoice Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Expense Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Expense Account"
                       v-model="accountingSettings.purchase_invoice_expense_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Payable</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Accounts Payable"
                       v-model="accountingSettings.purchase_invoice_payable_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Tax Account"
                       v-model="accountingSettings.purchase_invoice_tax_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -1008,49 +963,34 @@
                 <h4 class="text-lg font-medium text-purple-900 mb-4">Purchase Return Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Expense Return Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Expense Return Account"
                       v-model="accountingSettings.purchase_return_expense_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Accounts Payable</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Accounts Payable"
                       v-model="accountingSettings.purchase_return_payable_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Tax Account"
                       v-model="accountingSettings.purchase_return_tax_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -1060,34 +1000,24 @@
                 <h4 class="text-lg font-medium text-yellow-900 mb-4">Expense Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Expense Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Default Expense Account"
                       v-model="accountingSettings.expense_default_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Expense Payable Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Expense Payable Account"
                       v-model="accountingSettings.expense_payable_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -1097,34 +1027,24 @@
                 <h4 class="text-lg font-medium text-blue-900 mb-4">Liquid Assets & Banking Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Cash Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Default Cash Account"
                       v-model="accountingSettings.cash_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Bank Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Default Bank Account"
                       v-model="accountingSettings.bank_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -1134,34 +1054,24 @@
                 <h4 class="text-lg font-medium text-teal-900 mb-4">Inventory & Cost of Goods Sold Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Inventory Asset Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Inventory Asset Account"
                       v-model="accountingSettings.inventory_asset_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Cost of Goods Sold (COGS) Account</label>
-                    <select
+                    <CustomFloatingSelect
+                      label="Cost of Goods Sold (COGS) Account"
                       v-model="accountingSettings.cost_of_goods_sold_account_id"
+                      :options="accountOptions"
+                      :searchable="true"
+                      placeholder="Select Account"
                       @change="updateAccountingSetting"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option :value="null">Select Account</option>
-                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
-                          {{ account.display_name }}
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -1504,6 +1414,7 @@ import { useToast } from '@/composables/useToast';
 import { debounce } from '@/utils/debounce';
 import DataTable from '@/components/common/DataTable.vue';
 import SystemSelect from '@/components/common/SystemSelect.vue';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 import UserCreateForm from './UserCreateForm.vue';
 import UserViewModal from './UserViewModal.vue';
 import RoleCreateForm from './RoleCreateForm.vue';
@@ -1691,6 +1602,24 @@ const loadingAccounting = ref(false);
 const savingAccounting = ref(false);
 const accountingSettings = ref({});
 const accountsForDropdown = ref({});
+
+const accountOptions = computed(() => {
+  const list = [{ value: null, label: 'Select Account' }];
+  if (!accountsForDropdown.value || typeof accountsForDropdown.value !== 'object') return list;
+
+  Object.keys(accountsForDropdown.value).forEach(type => {
+    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+    const accounts = accountsForDropdown.value[type] || [];
+    accounts.forEach(account => {
+      list.push({
+        value: Number(account.id),
+        label: `${account.display_name || account.name} (${typeLabel})`
+      });
+    });
+  });
+
+  return list;
+});
 
 // Methods
 const loadSettings = async () => {

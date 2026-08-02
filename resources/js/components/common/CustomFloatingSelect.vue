@@ -1,6 +1,6 @@
 <template>
   <div class="relative w-full" ref="containerRef">
-    <label v-if="label" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+    <label v-if="label" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
       {{ label }}
     </label>
 
