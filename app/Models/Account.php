@@ -129,20 +129,33 @@ class Account extends Model
     {
         $query = $this->journalEntries()
                      ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                         $q->where('status', 'posted');
+                         $q->where(function ($sub) {
+                             $sub->where('status', 'posted')
+                                 ->orWhere(function ($r) {
+                                     $r->where('status', 'reversed')
+                                       ->whereExists(function ($ex) {
+                                           $ex->select(\Illuminate\Support\Facades\DB::raw(1))
+                                              ->from('journal_entries as rev')
+                                              ->whereColumn('rev.source_type', 'journal_entries.source_type')
+                                              ->whereColumn('rev.source_id', 'journal_entries.source_id')
+                                              ->where('rev.is_reversal', true)
+                                              ->where('rev.status', 'posted');
+                                       });
+                                 });
+                         });
                          if ($asOfDate) {
                              $q->where('entry_date', '<=', $asOfDate);
                          }
                      });
 
-        $totalDebits = $query->sum('debit_amount');
-        $totalCredits = $query->sum('credit_amount');
+        $totalDebits = (float) $query->sum('debit_amount');
+        $totalCredits = (float) $query->sum('credit_amount');
 
         // Calculate balance based on account type
         if (in_array($this->account_type, ['asset', 'expense'])) {
-            return $this->opening_balance + $totalDebits - $totalCredits;
+            return (float) $this->opening_balance + $totalDebits - $totalCredits;
         } else {
-            return $this->opening_balance + $totalCredits - $totalDebits;
+            return (float) $this->opening_balance + $totalCredits - $totalDebits;
         }
     }
 

@@ -731,72 +731,267 @@ class DoubleEntryAccountingService
     /**
      * Create journal entry for sales return
      */
+    /**
+     * Create journal entry for sales return
+     */
     public function createSalesReturnEntry(Sale $saleReturn): ?JournalEntry
     {
-        if (!$this->accountingSettings->sales_return_revenue_account_id || 
-            !$this->accountingSettings->sales_return_receivable_account_id) {
-            return null;
-        }
-
         return DB::transaction(function () use ($saleReturn) {
+            $companyId = $saleReturn->company_id ?: auth()->user()?->current_company_id;
+
+            // Resolve Sales Return (Contra-Revenue) Account
+            $salesReturnAccount = $this->accountingSettings->sales_return_revenue_account_id
+                ?: Account::where('company_id', $companyId)->where(function($q) { 
+                    $q->where('account_code', '4060')
+                      ->orWhere('account_code', '4020')
+                      ->orWhere('account_type', 'sales_return')
+                      ->orWhere('account_name', 'like', '%Sales Return%'); 
+                })->value('id');
+
+            // Resolve Tax Account
+            $taxAccount = $this->accountingSettings->sales_return_tax_account_id
+                ?: Account::where('company_id', $companyId)->where(function($q) { 
+                    $q->where('account_code', '2020')
+                      ->orWhere('account_type', 'tax_payable')
+                      ->orWhere('account_name', 'like', '%Tax%'); 
+                })->value('id');
+
+            // Inventory & COGS Accounts for stock reversal (matching Sales Invoice priority)
+            $inventoryAccount = $this->accountingSettings->inventory_asset_account_id
+                ?: Account::where('company_id', $companyId)->where(function($q) { 
+                    $q->where('account_code', '1040')
+                      ->orWhere('account_type', 'inventory')
+                      ->orWhere('account_name', 'like', '%Inventory%'); 
+                })->value('id');
+
+            $cogsAccount = $this->accountingSettings->cost_of_goods_sold_account_id
+                ?: Account::where('company_id', $companyId)->where(function($q) { 
+                    $q->where('account_code', '5000')
+                      ->orWhere('account_code', '5010')
+                      ->orWhere('account_type', 'cost_of_goods_sold')
+                      ->orWhere('account_type', 'cogs')
+                      ->orWhere('account_name', 'like', '%Cost of Goods Sold%')
+                      ->orWhere('account_name', 'like', '%COGS%'); 
+                })->value('id');
+
+            if (!$salesReturnAccount) {
+                \Illuminate\Support\Facades\Log::warning("Sales return journal entry skipped: Revenue return account could not be resolved for company ID {$companyId}");
+                return null;
+            }
+
+            $totalAmount = abs($saleReturn->total_amount);
+            $subtotalAmount = abs($saleReturn->subtotal);
+            $taxAmount = abs($saleReturn->tax_amount);
+
             $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
                 'entry_number' => $this->generateEntryNumber('SR'),
-                'entry_date' => $saleReturn->sale_date,
+                'entry_date' => $saleReturn->sale_date ?? today()->toDateString(),
                 'reference' => "Sales Return #{$saleReturn->sale_number}",
                 'description' => "Return from " . ($saleReturn->customer->name ?? 'Walk-in Customer'),
                 'entry_type' => 'automatic',
                 'status' => 'posted',
-                'total_debit' => $saleReturn->total_amount,
-                'total_credit' => $saleReturn->total_amount,
-                'created_by' => $saleReturn->user_id,
-                'posted_by' => $saleReturn->user_id,
+                'total_debit' => $totalAmount,
+                'total_credit' => $totalAmount,
+                'created_by' => $saleReturn->user_id ?? auth()->id(),
+                'posted_by' => $saleReturn->user_id ?? auth()->id(),
                 'posted_at' => now(),
                 'source_type' => 'sale_return',
                 'source_id' => $saleReturn->id,
             ]);
 
-            // Debit: Sales Returns (contra-revenue account)
+            // 1. Debit: Sales Returns & Allowances (Contra-Revenue)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
-                'account_id' => $this->accountingSettings->sales_return_revenue_account_id,
+                'account_id' => $salesReturnAccount,
                 'description' => "Sales Return #{$saleReturn->sale_number}",
-                'debit_amount' => $saleReturn->subtotal,
+                'debit_amount' => $subtotalAmount,
                 'credit_amount' => 0,
                 'partner_type' => Customer::class,
                 'partner_id' => $saleReturn->customer_id,
             ]);
 
-            // Debit: Tax Account (if tax exists)
-            if ($saleReturn->tax_amount > 0 && $this->accountingSettings->sales_return_tax_account_id) {
+            // 2. Debit: Tax Account (if tax exists)
+            if ($taxAmount > 0 && $taxAccount) {
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
-                    'account_id' => $this->accountingSettings->sales_return_tax_account_id,
+                    'account_id' => $taxAccount,
                     'description' => "Sales Tax Return #{$saleReturn->sale_number}",
-                    'debit_amount' => $saleReturn->tax_amount,
+                    'debit_amount' => $taxAmount,
                     'credit_amount' => 0,
                     'partner_type' => Customer::class,
                     'partner_id' => $saleReturn->customer_id,
                 ]);
             }
 
-            // Credit: Accounts Receivable (or Cash if refunded)
-            $receivableAccount = $saleReturn->payment_method === 'cash' 
-                ? ($this->accountingSettings->cash_account_id ?: $this->accountingSettings->sales_return_receivable_account_id) 
-                : $this->accountingSettings->sales_return_receivable_account_id;
+            // 3. Credit: Liquid Assets or Accounts Receivable
+            // Resolve refund payments breakdown
+            $refundPayments = [];
+            $originalSale = $saleReturn->originalSale;
 
-            if (!$receivableAccount) {
-                throw new \Exception("No cash or receivable account configured for sales returns.");
+            if ($saleReturn->payment_method === 'store_credit') {
+                // Store credit was credited to wallet - no cash/bank ledger movement
+                $arAccount = $this->accountingSettings->sales_return_receivable_account_id
+                    ?: Account::where('company_id', $companyId)->where(function($q) { 
+                        $q->where('account_code', '1030')->orWhere('account_type', 'accounts_receivable'); 
+                    })->value('id');
+                if ($arAccount) {
+                    $refundPayments[] = ['account_id' => $arAccount, 'amount' => $totalAmount, 'bank_account_id' => null];
+                }
+            } else if ($originalSale && is_array($originalSale->payment_details) && count($originalSale->payment_details) > 0) {
+                // Original sale had structured payments (e.g. mixed payment)
+                $origTotalPaid = (float) $originalSale->paid_amount ?: (float) $originalSale->total_amount;
+                $ratio = $origTotalPaid > 0 ? ($totalAmount / $origTotalPaid) : 1.0;
+
+                foreach ($originalSale->payment_details as $p) {
+                    $pAmount = (float) ($p['amount'] ?? 0) * $ratio;
+                    if ($pAmount <= 0) continue;
+
+                    $pType = $p['type'] ?? $p['method'] ?? 'cash';
+                    $pBankId = $p['bank_id'] ?? null;
+
+                    if ($pType === 'cash') {
+                        $cashAccount = Account::where('company_id', $companyId)
+                            ->where('account_type', 'asset')
+                            ->where(function ($q) { $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%'); })
+                            ->first();
+
+                        $cashBank = \App\Models\BankAccount::where('company_id', $companyId)
+                            ->where(function ($q) use ($cashAccount) {
+                                if ($cashAccount) $q->where('chart_account_id', $cashAccount->id);
+                                $q->orWhere('account_name', 'LIKE', '%Cash%')->orWhere('is_default', true);
+                            })->first();
+
+                        if ($cashAccount) {
+                            $refundPayments[] = [
+                                'account_id' => $cashAccount->id,
+                                'amount' => $pAmount,
+                                'bank_account_id' => $cashBank?->id,
+                                'desc' => 'Cash Vault Refund'
+                            ];
+                        }
+                    } else {
+                        // Bank / Card / Transfer
+                        $bankAccount = $pBankId ? \App\Models\BankAccount::where('company_id', $companyId)->find($pBankId) : null;
+                        if (!$bankAccount) {
+                            $bankAccount = \App\Models\BankAccount::where('company_id', $companyId)->first();
+                        }
+
+                        $bankChartAccount = null;
+                        if ($bankAccount?->chart_account_id) {
+                            $bankChartAccount = Account::where('company_id', $companyId)->find($bankAccount->chart_account_id);
+                        }
+                        if (!$bankChartAccount && $bankAccount) {
+                            $bankChartAccount = Account::where('company_id', $companyId)
+                                ->where('account_type', 'asset')
+                                ->where('account_name', 'LIKE', "%{$bankAccount->bank_name}%")
+                                ->first();
+                        }
+                        if (!$bankChartAccount) {
+                            $bankChartAccount = Account::where('company_id', $companyId)
+                                ->where('account_type', 'asset')
+                                ->where(function($q) { $q->where('account_code', '1020')->orWhere('account_name', 'LIKE', '%Bank%'); })
+                                ->first();
+                        }
+
+                        if ($bankChartAccount) {
+                            $refundPayments[] = [
+                                'account_id' => $bankChartAccount->id,
+                                'amount' => $pAmount,
+                                'bank_account_id' => $bankAccount?->id,
+                                'desc' => 'Bank Refund via ' . ($bankAccount?->account_name ?? 'Bank')
+                            ];
+                        }
+                    }
+                }
             }
 
-            JournalEntryLine::create([
-                'journal_entry_id' => $journalEntry->id,
-                'account_id' => $receivableAccount,
-                'description' => "Sales Return Refund #{$saleReturn->sale_number}",
-                'debit_amount' => 0,
-                'credit_amount' => $saleReturn->total_amount,
-                'partner_type' => Customer::class,
-                'partner_id' => $saleReturn->customer_id,
-            ]);
+            // Fallback if no payment details resolved
+            if (empty($refundPayments)) {
+                $cashAccount = Account::where('company_id', $companyId)
+                    ->where('account_type', 'asset')
+                    ->where(function ($q) { $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%'); })
+                    ->first();
+
+                $cashBank = \App\Models\BankAccount::where('company_id', $companyId)
+                    ->where(function ($q) use ($cashAccount) {
+                        if ($cashAccount) $q->where('chart_account_id', $cashAccount->id);
+                        $q->orWhere('account_name', 'LIKE', '%Cash%')->orWhere('is_default', true);
+                    })->first();
+
+                if ($cashAccount) {
+                    $refundPayments[] = [
+                        'account_id' => $cashAccount->id,
+                        'amount' => $totalAmount,
+                        'bank_account_id' => $cashBank?->id,
+                        'desc' => 'Refund for Sales Return'
+                    ];
+                }
+            }
+
+            // Create Credit Journal Entry Lines and Bank Transactions for refund payments
+            foreach ($refundPayments as $rp) {
+                JournalEntryLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $rp['account_id'],
+                    'description' => "Sales Return Refund #{$saleReturn->sale_number}" . (isset($rp['desc']) ? " ({$rp['desc']})" : ""),
+                    'debit_amount' => 0,
+                    'credit_amount' => $rp['amount'],
+                    'partner_type' => Customer::class,
+                    'partner_id' => $saleReturn->customer_id,
+                ]);
+
+                if (!empty($rp['bank_account_id'])) {
+                    $bAcc = \App\Models\BankAccount::find($rp['bank_account_id']);
+                    if ($bAcc) {
+                        $newBal = (float)$bAcc->current_balance - (float)$rp['amount'];
+                        \App\Models\BankTransaction::create([
+                            'company_id' => $companyId,
+                            'bank_account_id' => $bAcc->id,
+                            'transaction_date' => $saleReturn->sale_date ?? today()->toDateString(),
+                            'reference_number' => $saleReturn->sale_number,
+                            'description' => "Refund for Sales Return #{$saleReturn->sale_number}",
+                            'transaction_type' => 'credit',
+                            'amount' => $rp['amount'],
+                            'running_balance' => $newBal,
+                            'status' => 'cleared',
+                        ]);
+                        $bAcc->current_balance = $newBal;
+                        $bAcc->save();
+                    }
+                }
+            }
+
+            // 4. Inventory Reversal (Debit: Inventory Asset, Credit: COGS)
+            if ($inventoryAccount && $cogsAccount) {
+                $totalReturnCost = 0;
+                $saleReturn->loadMissing('saleItems.product');
+                foreach ($saleReturn->saleItems as $item) {
+                    $qty = abs($item->quantity);
+                    $unitCost = $item->product?->purchase_price ?? $item->product?->cost_price ?? 0;
+                    $totalReturnCost += ($qty * $unitCost);
+                }
+
+                if ($totalReturnCost > 0) {
+                    // Debit: Inventory Asset (Restoring inventory valuation)
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $inventoryAccount,
+                        'description' => "Stock Reversal - Sales Return #{$saleReturn->sale_number}",
+                        'debit_amount' => $totalReturnCost,
+                        'credit_amount' => 0,
+                    ]);
+
+                    // Credit: COGS (Reducing COGS expense)
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $cogsAccount,
+                        'description' => "COGS Reversal - Sales Return #{$saleReturn->sale_number}",
+                        'debit_amount' => 0,
+                        'credit_amount' => $totalReturnCost,
+                    ]);
+                }
+            }
 
             $this->updateAccountBalances($journalEntry);
             return $journalEntry;

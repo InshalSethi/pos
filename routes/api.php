@@ -162,6 +162,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::post('/invoices/{sale}/void', [SaleController::class , 'void']);
     Route::get('/sales/returns/status-counts', [SaleController::class , 'getReturnStatusCounts']);
     Route::post('/sales/returns', [SaleController::class , 'processReturn']);
+    Route::get('/sales/returns/{sale}', [SaleController::class , 'show']);
+    Route::put('/sales/returns/{sale}', [SaleController::class , 'update']);
+    Route::delete('/sales/returns/{sale}', [SaleController::class , 'destroy']);
     Route::get('/sales/statistics/summary', [SaleController::class , 'statistics']);
     Route::apiResource('sales', SaleController::class);
 
