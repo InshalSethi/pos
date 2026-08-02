@@ -338,6 +338,8 @@ class DoubleEntryAccountingService
                     }
                 }
             }
+        }
+
         // Process Accounts Receivable for any remaining due balance (Unpaid amount)
         $dueAmount = (float) $sale->total_amount - (float) $sale->paid_amount;
         if ($dueAmount > 0) {
@@ -543,6 +545,137 @@ class DoubleEntryAccountingService
 
             $inventoryAccount->current_balance = (float) $inventoryAccount->current_balance - $totalCogs;
             $inventoryAccount->save();
+
+            return $journalEntry;
+        });
+    }
+
+    /**
+     * Create double-entry journal entry for initial Item/Product Opening Stock.
+     * 
+     * Double-Entry Rule:
+     *  Debit:  '1040 Inventory' Account (Total Opening Value)
+     *  Credit: '3010 Owner's Equity' OR 'Opening Balance Equity' Account (Total Opening Value)
+     * 
+     * Updates current_balance for both ledgers in chart_of_accounts table within DB Transaction.
+     */
+    public function createOpeningStockEntry($item): ?JournalEntry
+    {
+        $quantity = (float) ($item->stock_quantity ?? $item->quantity ?? $item->stock_qty ?? 0);
+        $purchasePrice = (float) ($item->cost_price ?? $item->purchase_price ?? 0);
+
+        if ($quantity <= 0 || $purchasePrice <= 0) {
+            return null;
+        }
+
+        $totalOpeningValue = $quantity * $purchasePrice;
+
+        if ($totalOpeningValue <= 0) {
+            return null;
+        }
+
+        $companyId = $item->company_id ?: (auth()->user()?->current_company_id ?? 1);
+
+        // Prevent duplicate opening stock entry for the same item/product
+        $existingEntry = JournalEntry::where('company_id', $companyId)
+            ->where('source_type', 'product_opening_stock')
+            ->where('source_id', $item->id)
+            ->first();
+
+        if ($existingEntry) {
+            return $existingEntry;
+        }
+
+        return DB::transaction(function () use ($item, $companyId, $quantity, $purchasePrice, $totalOpeningValue) {
+            // 1. Resolve '1040 Inventory' Asset Account
+            $inventoryAccount = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '1040')
+                      ->orWhere('account_name', 'LIKE', '%Inventory%');
+                })->first();
+
+            if (!$inventoryAccount) {
+                $inventoryAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1040',
+                    'account_name' => 'Inventory on Hand',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            // 2. Resolve '3010 Owner's Equity' Account
+            $equityAccount = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '3010')
+                      ->orWhere('account_name', 'LIKE', '%Owner%Equity%')
+                      ->orWhere('account_name', 'LIKE', '%Owner%Capital%')
+                      ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%');
+                })->first();
+
+            if (!$equityAccount) {
+                $equityAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '3010',
+                    'account_name' => "Owner's Equity",
+                    'account_type' => 'equity',
+                    'account_subtype' => 'owner_equity',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+
+            // 3. Create Double-Entry Journal Entry
+            $itemName = $item->name ?? $item->variation_name_string ?? ('Item #' . $item->id);
+            $skuStr = !empty($item->sku) ? " (SKU: {$item->sku})" : '';
+
+            $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('OS'),
+                'entry_date' => now()->toDateString(),
+                'reference' => "Opening Stock - {$itemName}{$skuStr}",
+                'description' => "Opening Stock valuation for {$itemName} ({$quantity} units @ {$purchasePrice})",
+                'entry_type' => 'automatic',
+                'status' => 'posted',
+                'total_debit' => $totalOpeningValue,
+                'total_credit' => $totalOpeningValue,
+                'created_by' => auth()->id() ?: 1,
+                'posted_by' => auth()->id() ?: 1,
+                'posted_at' => now(),
+                'source_type' => 'product_opening_stock',
+                'source_id' => $item->id,
+            ]);
+
+            // Debit: '1040 Inventory' Account
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $inventoryAccount->id,
+                'description' => "Opening Stock Asset - {$itemName}",
+                'debit_amount' => $totalOpeningValue,
+                'credit_amount' => 0,
+            ]);
+
+            // Credit: '3010 Owner's Equity' Account
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $equityAccount->id,
+                'description' => "Opening Stock Equity - {$itemName}",
+                'debit_amount' => 0,
+                'credit_amount' => $totalOpeningValue,
+            ]);
+
+            // 4. Update current_balance of both ledgers in chart_of_accounts
+            $inventoryAccount->current_balance = (float) $inventoryAccount->current_balance + $totalOpeningValue;
+            $inventoryAccount->save();
+
+            $equityAccount->current_balance = (float) $equityAccount->current_balance + $totalOpeningValue;
+            $equityAccount->save();
 
             return $journalEntry;
         });
