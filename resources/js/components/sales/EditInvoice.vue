@@ -3377,6 +3377,8 @@ const addToInvoice = (product) => {
       price: product.price,
       unit_price: parseFloat(product.price || 0),
       wholesale_price: parseFloat(product.wholesale_price || 0),
+      original_sale_price: parseFloat(product.price || 0),
+      original_wholesale_price: parseFloat(product.wholesale_price || 0),
       is_wholesale: false,
       discount_type: 'percentage',
       discount_amount: 0,
@@ -3452,16 +3454,6 @@ const updateItemTotal = (index) => {
   // Stock validation only prevents adding NEW products or increasing qty beyond allocation.
   const basePrice = getEffectiveUnitPrice(item);
   const qty = Math.max(0, Number(item.quantity) || 0);
-
-  if (isGlobalWholesale.value || item.is_wholesale) {
-    if (item.wholesale_price !== undefined && item.wholesale_price !== null) {
-      item.unit_price = item.wholesale_price;
-    }
-  } else {
-    if (item.unit_price !== undefined && item.unit_price !== null) {
-      item.wholesale_price = item.unit_price;
-    }
-  }
 
   // Guarantee: if qty > 0 and price > 0, always compute a real financial value
   const itemSubtotal = qty * basePrice;
