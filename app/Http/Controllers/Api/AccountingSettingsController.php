@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AccountingSetting;
 use App\Models\Account;
+use App\Services\ChartOfAccountsSetupService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
@@ -12,13 +13,23 @@ use Illuminate\Validation\Rule;
 class AccountingSettingsController extends Controller
 {
     /**
-     * Get accounting settings
+     * Get accounting settings (ensures auto-provisioning first).
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function getAccountingSettings(Request $request): JsonResponse
     {
+        $companyId = auth()->user()?->current_company_id 
+            ?? $request->header('X-Company-ID') 
+            ?? $request->header('X-Workspace-ID');
+
+        if ($companyId) {
+            ChartOfAccountsSetupService::setupForCompany((int) $companyId);
+        }
+
         $settings = AccountingSetting::getSettings();
         
-        // Load all related accounts
         $settings->load([
             'salesInvoiceRevenueAccount',
             'salesInvoiceReceivableAccount',
@@ -39,8 +50,33 @@ class AccountingSettingsController extends Controller
             'inventoryAssetAccount',
             'costOfGoodsSoldAccount'
         ]);
-        
-        return response()->json($settings);
+
+        $accounts = Account::where('is_active', true)
+            ->orderBy('account_code')
+            ->get()
+            ->map(function ($account) {
+                return [
+                    'id' => $account->id,
+                    'account_code' => $account->account_code,
+                    'account_name' => $account->account_name,
+                    'account_type' => $account->account_type,
+                    'account_subtype' => $account->account_subtype,
+                    'display_name' => $account->account_code . ' - ' . $account->account_name
+                ];
+            });
+
+        return response()->json([
+            'settings' => $settings,
+            'accounts' => $accounts,
+        ]);
+    }
+
+    /**
+     * Get accounting settings
+     */
+    public function index(Request $request): JsonResponse
+    {
+        return $this->getAccountingSettings($request);
     }
 
     /**

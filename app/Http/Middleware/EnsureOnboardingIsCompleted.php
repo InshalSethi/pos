@@ -53,14 +53,9 @@ class EnsureOnboardingIsCompleted
             return $next($request);
         }
 
-        // ── CASE 4: Fully onboarded user hitting /company-setup without flag ──
-        // Guard against accidental visits — send them back to the dashboard,
-        // EXCEPT if they are explicitly passing a parameter to start/resume.
+        // ── CASE 4: Allow access to company-setup for adding new company ──
         if ($request->is('company-setup*')) {
-            if ($request->filled('continue_draft_id') || $request->filled('start_fresh_flow')) {
-                return $next($request);
-            }
-            return redirect('/');
+            return $next($request);
         }
 
         return $next($request);

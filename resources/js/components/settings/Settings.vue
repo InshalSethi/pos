@@ -858,9 +858,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -873,9 +873,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -888,9 +888,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -910,9 +910,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -925,9 +925,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -940,9 +940,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -962,9 +962,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -977,9 +977,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -992,9 +992,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -1014,9 +1014,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -1029,9 +1029,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -1044,9 +1044,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -1066,9 +1066,9 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -1081,9 +1081,83 @@
                       @change="updateAccountingSetting"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Select Account</option>
+                      <option :value="null">Select Account</option>
                       <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
-                        <option v-for="account in accounts" :key="account.id" :value="account.id">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Liquid Asset & Banking Accounts -->
+              <div class="bg-blue-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-blue-900 mb-4">Liquid Assets & Banking Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Cash Account</label>
+                    <select
+                      v-model="accountingSettings.cash_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option :value="null">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Bank Account</label>
+                    <select
+                      v-model="accountingSettings.bank_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option :value="null">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Inventory & Cost of Goods Sold Accounts -->
+              <div class="bg-teal-50 p-6 rounded-lg">
+                <h4 class="text-lg font-medium text-teal-900 mb-4">Inventory & Cost of Goods Sold Accounts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Inventory Asset Account</label>
+                    <select
+                      v-model="accountingSettings.inventory_asset_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option :value="null">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
+                          {{ account.display_name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Cost of Goods Sold (COGS) Account</label>
+                    <select
+                      v-model="accountingSettings.cost_of_goods_sold_account_id"
+                      @change="updateAccountingSetting"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option :value="null">Select Account</option>
+                      <optgroup v-for="(accounts, type) in accountsForDropdown" :key="type" :label="type.charAt(0).toUpperCase() + type.slice(1)">
+                        <option v-for="account in accounts" :key="account.id" :value="Number(account.id)">
                           {{ account.display_name }}
                         </option>
                       </optgroup>
@@ -1970,23 +2044,24 @@ const updatePaymentSetting = async (key, value) => {
 const loadAccountingSettings = async () => {
   loadingAccounting.value = true;
   try {
-    console.log('Loading accounting settings...');
-
-    // Load settings first
     const settingsResponse = await axios.get('/api/accounting-settings');
-    console.log('Settings response:', settingsResponse.data);
-    accountingSettings.value = settingsResponse.data || {};
+    const rawData = settingsResponse.data?.settings || settingsResponse.data || {};
 
-    // Then load accounts
+    const parsedSettings = {};
+    Object.keys(rawData).forEach(key => {
+      const val = rawData[key];
+      parsedSettings[key] = (val !== null && val !== undefined && key.endsWith('_id'))
+        ? Number(val)
+        : val;
+    });
+
+    accountingSettings.value = parsedSettings;
+
     const accountsResponse = await axios.get('/api/accounting-settings/accounts-for-dropdowns');
-    console.log('Accounts response:', accountsResponse.data);
     accountsForDropdown.value = accountsResponse.data || {};
 
   } catch (error) {
     console.error('Error loading accounting settings:', error);
-    console.error('Error details:', error.response?.data);
-
-    // Initialize with empty objects if there's an error
     accountingSettings.value = {};
     accountsForDropdown.value = {};
   } finally {

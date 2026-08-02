@@ -212,7 +212,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/accounts/balances/summary', [AccountController::class , 'balances']);
 
     // Accounting Settings routes
-    Route::get('/accounting-settings', [AccountingSettingsController::class , 'index']);
+    Route::get('/accounting-settings', [AccountingSettingsController::class , 'getAccountingSettings']);
     Route::put('/accounting-settings', [AccountingSettingsController::class , 'update']);
     Route::get('/accounting-settings/accounts-for-dropdowns', [AccountingSettingsController::class , 'getAccountsForDropdowns']);
     Route::get('/accounting-settings/default-mappings', [AccountingSettingsController::class , 'getDefaultMappings']);

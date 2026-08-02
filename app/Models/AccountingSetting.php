@@ -17,6 +17,7 @@ class AccountingSetting extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'sales_invoice_revenue_account_id',
         'sales_invoice_receivable_account_id',
         'sales_invoice_tax_account_id',

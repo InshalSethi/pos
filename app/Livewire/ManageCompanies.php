@@ -23,13 +23,7 @@ class ManageCompanies extends Component
 
     public function createNewCompany()
     {
-        $user = Auth::user();
-        $user->onboarding_completed = 0;
-        $user->save();
-
-        session()->forget('onboarding_step');
-
-        return redirect()->route('company.setup');
+        return redirect()->route('company.initiate-new');
     }
 
     public function switchCompany($companyId)

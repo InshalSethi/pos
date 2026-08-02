@@ -449,22 +449,27 @@ export default {
     const accountSubtypes = {
       asset: [
         { value: 'current_asset', label: 'Current Asset' },
+        { value: 'cash_and_bank', label: 'Cash & Bank' },
         { value: 'fixed_asset', label: 'Fixed Asset' },
         { value: 'other_asset', label: 'Other Asset' }
       ],
       liability: [
         { value: 'current_liability', label: 'Current Liability' },
-        { value: 'long_term_liability', label: 'Long-term Liability' }
+        { value: 'long_term_liability', label: 'Long-term Liability' },
+        { value: 'other_liability', label: 'Other Liability' }
       ],
       equity: [
-        { value: 'equity', label: 'Equity' }
+        { value: 'equity', label: 'Equity' },
+        { value: 'owner_equity', label: 'Owner Equity' }
       ],
       revenue: [
-        { value: 'revenue', label: 'Revenue' }
+        { value: 'operating_revenue', label: 'Operating Revenue' },
+        { value: 'other_revenue', label: 'Other Revenue' }
       ],
       expense: [
-        { value: 'expense', label: 'Expense' },
-        { value: 'cost_of_goods_sold', label: 'Cost of Goods Sold' }
+        { value: 'operating_expense', label: 'Operating Expense' },
+        { value: 'cost_of_goods_sold', label: 'Cost of Goods Sold' },
+        { value: 'other_expense', label: 'Other Expense' }
       ]
     };
 
