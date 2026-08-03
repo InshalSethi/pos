@@ -21,6 +21,11 @@ class EnsureCompanySetup
         if (Auth::check()) {
             $user = Auth::user();
 
+            // Allow passage if user is explicitly in multi-company creation mode
+            if ($request->query('mode') === 'create_new' || session('creating_new_company') || session('creating_subsequent_company')) {
+                return $next($request);
+            }
+
             // Check if company_id is null or is_setup_completed is false
             if (is_null($user->company_id) || !$user->is_setup_completed) {
                 

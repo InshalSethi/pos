@@ -107,10 +107,11 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureCompanySetup::class])->gro
         [\App\Http\Controllers\CompanySetupController::class, 'abortRegistration'])
         ->name('onboarding.abort-registration');
 
-    // New Company Initiation — stamps a session flag then sends the user into the wizard.
+    // New Company Initiation — stamps session flags then sends the user into the wizard.
     Route::get('/initiate-new-company', function () {
+        Session::put('creating_new_company', true);
         Session::put('creating_subsequent_company', true);
-        return redirect()->to('/company-setup?start_fresh_flow=true');
+        return redirect()->to('/company-setup?mode=create_new&start_fresh_flow=true');
     })->name('company.initiate-new');
 
     Route::get('/sales-invoices/{id}/edit', [\App\Http\Controllers\SalesInvoiceController::class, 'edit'])

@@ -31,6 +31,23 @@ class CompanySetupController extends Controller
             ->where('status', 'active')
             ->exists();
 
+        $isCreateMode = $request->query('mode') === 'create_new'
+            || $request->boolean('start_fresh_flow')
+            || session('creating_new_company')
+            || session('creating_subsequent_company');
+
+        // Prevent already-onboarded users from accessing /company-setup directly unless explicitly adding a new company or resuming a draft
+        if ($hasExistingActiveCompany && !$isCreateMode && !$request->filled('continue_draft_id')) {
+            return redirect()->to('/');
+        }
+
+        if ($isCreateMode) {
+            session([
+                'creating_new_company' => true,
+                'creating_subsequent_company' => true
+            ]);
+        }
+
         // ── Context A: Resume a specific saved draft ──────────────────
         if ($request->filled('continue_draft_id')) {
             $company = Company::where('id', $request->query('continue_draft_id'))
@@ -38,7 +55,10 @@ class CompanySetupController extends Controller
                 ->where('status', 'draft')
                 ->firstOrFail();
 
-            session(['creating_subsequent_company' => true]);
+            session([
+                'creating_new_company' => true,
+                'creating_subsequent_company' => true
+            ]);
 
             return view('company-setup', [
                 'company'                  => $company,
@@ -67,7 +87,10 @@ class CompanySetupController extends Controller
             'draft_step'        => 1,
         ]);
 
-        session(['creating_subsequent_company' => true]);
+        session([
+            'creating_new_company' => true,
+            'creating_subsequent_company' => true
+        ]);
 
         return view('company-setup', [
             'company'                  => $company,
@@ -109,7 +132,7 @@ class CompanySetupController extends Controller
                 ->delete();
         }
 
-        session()->forget('creating_subsequent_company');
+        session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
         return redirect('/')->with('info', 'Sub-company setup discarded safely.');
     }
@@ -134,7 +157,7 @@ class CompanySetupController extends Controller
                 'draft_step' => $validated['current_step'],
             ]);
 
-        session()->forget('creating_subsequent_company');
+        session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
         return redirect('/')->with('status', 'Progress saved as draft.');
     }
@@ -194,7 +217,7 @@ class CompanySetupController extends Controller
 
         $company->delete();
 
-        session()->forget('creating_subsequent_company');
+        session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
         return redirect('/')->with('status', 'Company setup discarded.');
     }

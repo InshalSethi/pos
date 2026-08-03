@@ -21,7 +21,7 @@
         </button>
 
         <a 
-          href="/initiate-new-company"
+          href="/company-setup?mode=create_new&start_fresh_flow=true"
           class="inline-flex items-center px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <svg class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

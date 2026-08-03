@@ -373,8 +373,8 @@ class OnboardingWizard extends Component
             ]);
         });
 
-        // Clear the bypass session token now that setup is complete.
-        session()->forget('creating_subsequent_company');
+        // Clear the bypass session tokens now that setup is complete.
+        session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
         // ── Apply system-wide settings from Step 4 ──────────────────────────────
 

@@ -29,9 +29,9 @@ class EnsureOnboardingIsCompleted
         }
 
         // ── CASE 2: Explicit subsequent-company creation bypass ───────────────
-        // The /initiate-new-company route stamps this flag before redirecting
+        // The /initiate-new-company route or ?mode=create_new stamps this flag before redirecting
         // to /company-setup, so it is always present during wizard navigation.
-        if (session()->has('creating_subsequent_company')) {
+        if (session()->has('creating_subsequent_company') || session()->has('creating_new_company') || $request->query('mode') === 'create_new') {
             return $next($request);
         }
 
