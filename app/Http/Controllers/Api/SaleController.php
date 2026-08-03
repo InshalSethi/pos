@@ -1577,7 +1577,12 @@ class SaleController extends Controller
             'original_sale_id' => 'required|exists:sales,id',
             'return_date' => 'required|date',
             'return_reason' => 'required|string',
-            'refund_method' => 'required|in:cash,card,store_credit,exchange',
+            'refund_method' => 'nullable|string',
+            'payments' => 'nullable|array',
+            'payments.*.type' => 'nullable|string',
+            'payments.*.method' => 'nullable|string',
+            'payments.*.bank_id' => 'nullable',
+            'payments.*.amount' => 'required|numeric|min:0',
             'return_items' => 'required|array|min:1',
             'return_items.*.original_item_id' => 'required|exists:sale_items,id',
             'return_items.*.quantity' => 'required|integer|min:1',
@@ -1657,7 +1662,6 @@ class SaleController extends Controller
                     }
                 } else {
                     // Damaged & Opened Buffer -> Virtual Warehouse Container where is_saleable = false
-                    // Unrecognized, empty or null reasons default to this buffer as a safety guardrail
                     $virtualWarehouse = Warehouse::where('company_id', $companyId)
                         ->where('is_saleable', false)
                         ->first();
@@ -1672,14 +1676,6 @@ class SaleController extends Controller
                         ]);
                     }
                     $targetWarehouseId = $virtualWarehouse->id;
-
-                    // Log the routing event
-                    \Illuminate\Support\Facades\Log::info("Sales return item routed to virtual warehouse buffer.", [
-                        'product_id' => $originalItem->product_id,
-                        'quantity' => $returnItem['quantity'],
-                        'reason' => $reason,
-                        'virtual_warehouse_id' => $targetWarehouseId
-                    ]);
                 }
 
                 if (!$firstTargetWarehouseId) {
@@ -1712,6 +1708,63 @@ class SaleController extends Controller
                 }
             }
 
+            // Parse payments array
+            $rawPayments = $request->input('payments', []);
+            $payments = [];
+            $totalPaidRefund = 0;
+
+            if (is_array($rawPayments) && count($rawPayments) > 0) {
+                foreach ($rawPayments as $p) {
+                    $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
+                    $amount = (float)($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) ? (int)$p['bank_id'] : null;
+                    if ($amount > 0) {
+                        $payments[] = [
+                            'type' => $type,
+                            'method' => in_array($type, ['bank', 'card', 'bank_transfer']) ? 'bank_transfer' : $type,
+                            'bank_id' => $bankId,
+                            'amount' => $amount,
+                        ];
+                        if ($type !== 'store_credit') {
+                            $totalPaidRefund += $amount;
+                        }
+                    }
+                }
+            } else {
+                $refMethod = $request->input('refund_method', 'cash');
+                if ($refMethod !== 'store_credit') {
+                    $payments[] = [
+                        'type' => in_array($refMethod, ['card', 'bank_transfer']) ? 'bank' : $refMethod,
+                        'method' => $refMethod,
+                        'bank_id' => null,
+                        'amount' => $totalReturnAmount,
+                    ];
+                    $totalPaidRefund = $totalReturnAmount;
+                }
+            }
+
+            // Balance Check Safeguard for Cash and Bank Accounts
+            foreach ($payments as $p) {
+                if ($p['type'] === 'cash') {
+                    $cashAccount = Account::where('company_id', $companyId)
+                        ->where('account_type', 'asset')
+                        ->where(function ($q) { $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%'); })
+                        ->first();
+                    $cashBalance = $cashAccount ? (float)$cashAccount->current_balance : 0;
+                    if ($p['amount'] > $cashBalance) {
+                        throw new \Exception("Insufficient cash funds! Maximum available cash is Rs " . number_format($cashBalance, 2));
+                    }
+                } elseif (in_array($p['type'], ['bank', 'card', 'bank_transfer']) && !empty($p['bank_id'])) {
+                    $bankAcc = \App\Models\BankAccount::where('company_id', $companyId)->find($p['bank_id']);
+                    if ($bankAcc) {
+                        $bankBalance = (float)$bankAcc->current_balance > 0 ? (float)$bankAcc->current_balance : $bankAcc->calculateBalance();
+                        if ($p['amount'] > $bankBalance) {
+                            throw new \Exception("Insufficient funds! Maximum available in {$bankAcc->bank_name} ({$bankAcc->account_name}) is Rs " . number_format($bankBalance, 2));
+                        }
+                    }
+                }
+            }
+
             // Create return sale record
             $returnSale = Sale::create([
                 'sale_number' => $returnSaleNumber,
@@ -1724,9 +1777,10 @@ class SaleController extends Controller
                 'tax_amount' => 0,
                 'discount_amount' => 0,
                 'total_amount' => -$totalReturnAmount,
-                'paid_amount' => -$totalReturnAmount,
+                'paid_amount' => -$totalPaidRefund,
                 'change_amount' => 0,
-                'payment_method' => $request->refund_method,
+                'payment_method' => count($payments) > 1 ? 'mixed' : ($payments[0]['method'] ?? $request->refund_method ?? 'cash'),
+                'payment_details' => $payments,
                 'notes' => $request->return_notes,
                 'is_refund' => true,
                 'original_sale_id' => $originalSale->id,

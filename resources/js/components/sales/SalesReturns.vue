@@ -106,7 +106,7 @@
       leave-from-class="transform translate-y-0 opacity-100"
       leave-to-class="transform -translate-y-2 opacity-0"
     >
-      <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || originalInvoice !== ''" class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between shadow-sm">
+      <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || originalInvoice !== '' || selectedFilters.length > 0" class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between shadow-sm">
         <div class="flex flex-wrap gap-4 items-center">
           <div class="flex items-center space-x-2">
             <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Original Invoice:</label>
@@ -499,6 +499,7 @@ const clearAllFilters = () => {
   originalInvoice.value = '';
   dateFrom.value = '';
   dateTo.value = '';
+  showFilterDropdown.value = false;
   fetchReturns(1);
 };
 

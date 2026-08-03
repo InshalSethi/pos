@@ -1,7 +1,7 @@
 <template>
   <VueFinalModal
     class="flex justify-center items-center"
-    content-class="relative flex flex-col w-full max-w-6xl max-h-[90vh] mx-4 bg-[#12141a] text-slate-100 border border-slate-800 rounded-lg shadow-xl overflow-hidden"
+    content-class="relative flex flex-col w-full max-w-4xl max-h-[90vh] mx-4 bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
     overlay-style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
     :click-to-close="true"
     :esc-to-close="true"

@@ -84,7 +84,7 @@
     </div>
 
     <!-- Date Filters Card -->
-    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 shadow-soft grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+    <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || selectedFilters.length > 0" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 shadow-soft grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
       <div>
         <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date From</label>
         <input
@@ -463,6 +463,7 @@ const clearAllFilters = () => {
   searchQuery.value = '';
   dateFrom.value = '';
   dateTo.value = '';
+  showFilterDropdown.value = false;
   fetchInvoices(1);
 };
 

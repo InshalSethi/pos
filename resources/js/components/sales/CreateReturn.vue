@@ -52,78 +52,16 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Content (Left 2 cols) -->
       <div class="lg:col-span-2 space-y-6">
-        <!-- Return Settings Card -->
+        <!-- 1. Returned Items Table Container (At the top of the page after heading) -->
         <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Return Details</h2>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Load from Original Invoice -->
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
             <div>
-              <CustomFloatingSelect
-                label="Original Invoice (Optional)"
-                v-model="selectedOriginalSaleId"
-                :options="completedInvoiceOptions"
-                placeholder="-- Select Original Invoice --"
-                searchable
-              />
+              <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">Returned Items</h2>
+              <p class="text-[10px] text-slate-400">Select items from original invoice or search products to return</p>
             </div>
-
-            <!-- Customer Picker -->
-            <div>
-              <CustomFloatingSelect
-                label="Customer *"
-                v-model="form.customer_id"
-                :options="customerOptions"
-                placeholder="Walk-in Customer"
-                searchable
-              />
-            </div>
-
-            <!-- Return Date -->
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Return Date *</label>
-              <input
-                v-model="form.return_date"
-                type="date"
-                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
-              />
-            </div>
-
-            <!-- Return Reason -->
-            <div>
-              <CustomFloatingSelect
-                label="Return Reason *"
-                v-model="form.return_reason"
-                :options="returnReasonOptions"
-              />
-            </div>
-
-            <!-- Refund Method -->
-            <div>
-              <CustomFloatingSelect
-                label="Refund Payment Method *"
-                v-model="form.refund_method"
-                :options="refundMethodOptions"
-              />
-            </div>
-
-            <!-- Default Warehouse -->
-            <div>
-              <CustomFloatingSelect
-                label="Destination Warehouse *"
-                v-model="form.warehouse_id"
-                :options="warehouseOptions"
-                searchable
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Product Search & Add to Return -->
-        <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">Returned Items</h2>
-            <span class="text-xs text-slate-400">{{ form.items.length }} line items</span>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-zinc-800 rounded-lg text-slate-600 dark:text-zinc-300">
+              {{ form.items.length }} line items
+            </span>
           </div>
 
           <!-- Product Picker / Search Dropdown -->
@@ -176,7 +114,7 @@
               <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
                 <tr v-if="form.items.length === 0">
                   <td colspan="6" class="py-8 text-center text-slate-400">
-                    No items selected. Select an invoice above or search products to add returned items.
+                    No items selected. Select an original invoice on the right or search products above to add returned items.
                   </td>
                 </tr>
                 <tr v-for="(item, idx) in form.items" :key="idx" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
@@ -221,7 +159,103 @@
           </div>
         </div>
 
-        <!-- Return Notes -->
+        <!-- 2. Refund Payment Accounts & Splits Container (Below returned items) -->
+        <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">Refund Payment Accounts & Splits</h3>
+              <p class="text-[10px] text-slate-400 dark:text-zinc-500">Allocate cash/bank payout or route unpaid balance to Customer Ledger</p>
+            </div>
+            <button
+              type="button"
+              @click="addPaymentSplit"
+              class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+            >
+              + Add Refund Account
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <div v-for="(split, idx) in paymentSplits" :key="idx" class="p-3.5 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl space-y-2">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <CustomFloatingSelect
+                      label="Payment Method"
+                      v-model="split.type"
+                      :options="paymentMethodOptions"
+                      @change="onSplitTypeChange(split)"
+                    />
+                  </div>
+
+                  <!-- If Bank, show specific Bank Account selector with live balance -->
+                  <div v-if="split.type === 'bank'">
+                    <CustomFloatingSelect
+                      label="Bank Account (Live Balance)"
+                      v-model="split.bank_id"
+                      :options="bankAccountOptions"
+                      placeholder="Select Bank Account"
+                      searchable
+                    />
+                  </div>
+
+                  <div v-else-if="split.type === 'cash'">
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Available Cash Balance</label>
+                    <div class="px-3 py-1.5 text-xs bg-slate-100 dark:bg-zinc-800/80 rounded-lg font-bold text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-zinc-700/50">
+                      Cash Vault — Available: {{ formatMoney(cashAccountBalance) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Refund Amount -->
+                <div class="w-full sm:w-40">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Refund Amount</label>
+                  <input
+                    v-model.number="split.amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-right"
+                    :class="{ 'border-rose-500 ring-1 ring-rose-500': getSplitBalanceError(split) }"
+                  />
+                </div>
+
+                <button
+                  v-if="paymentSplits.length > 1"
+                  type="button"
+                  @click="removePaymentSplit(idx)"
+                  class="p-1.5 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 sm:mt-4 cursor-pointer shrink-0"
+                  title="Remove split"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+
+              <!-- Insufficient Funds Alert Banner -->
+              <div v-if="getSplitBalanceError(split)" class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span>{{ getSplitBalanceError(split) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Ledger Breakdown Summary -->
+          <div class="p-3 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl space-y-1.5 text-xs">
+            <div class="flex justify-between text-slate-600 dark:text-zinc-400">
+              <span>Total Refund Paid Out (Cash/Banks/Wallet):</span>
+              <span class="font-bold text-slate-900 dark:text-zinc-100">{{ formatMoney(totalPaidOutSplits) }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-200 dark:border-zinc-800">
+              <span class="font-bold text-indigo-600 dark:text-indigo-400">Remaining Unpaid / Customer Ledger Credit:</span>
+              <span class="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">{{ formatMoney(remainingUnpaidLedger) }}</span>
+            </div>
+            <p class="text-[9.5px] text-slate-400 dark:text-zinc-500 italic">
+              Note: Any return balance not paid out in cash or bank transfer will be automatically credited to the Customer's Account Payable / Store Credit Ledger.
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Return Notes -->
         <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft">
           <label class="block text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">Return Notes / Reason Remarks</label>
           <textarea
@@ -233,35 +267,96 @@
         </div>
       </div>
 
-      <!-- Right Column: Summary Card -->
+      <!-- Right Column: Return Details & Refund Summary -->
       <div class="space-y-6">
-        <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4 sticky top-6">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Refund Summary</h2>
+        <div class="space-y-6 sticky top-6">
+          <!-- 1. Return Details (Right side at the top of Refund Summary) -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
+            <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Return Details</h2>
 
-          <div class="space-y-2.5 text-xs">
-            <div class="flex justify-between text-slate-600 dark:text-zinc-400">
-              <span>Subtotal (Items)</span>
-              <span class="font-semibold text-slate-900 dark:text-zinc-100">{{ formatMoney(totals.subtotal) }}</span>
-            </div>
+            <div class="space-y-4">
+              <!-- Load from Original Invoice -->
+              <div>
+                <CustomFloatingSelect
+                  label="Original Invoice (Optional)"
+                  v-model="selectedOriginalSaleId"
+                  :options="completedInvoiceOptions"
+                  placeholder="-- Select Original Invoice --"
+                  searchable
+                />
+              </div>
 
-            <div class="flex justify-between text-slate-600 dark:text-zinc-400">
-              <span>Tax Reversal</span>
-              <span class="font-semibold text-slate-900 dark:text-zinc-100">{{ formatMoney(totals.tax_amount) }}</span>
-            </div>
+              <!-- Customer Picker -->
+              <div>
+                <CustomFloatingSelect
+                  label="Customer *"
+                  v-model="form.customer_id"
+                  :options="customerOptions"
+                  placeholder="Walk-in Customer"
+                  searchable
+                />
+              </div>
 
-            <div class="border-t border-slate-200 dark:border-zinc-800 pt-3 flex justify-between items-center text-sm font-extrabold">
-              <span class="text-slate-800 dark:text-zinc-200">Total Refund</span>
-              <span class="text-emerald-600 dark:text-emerald-400 text-lg">{{ formatMoney(totals.total_amount) }}</span>
+              <!-- Return Date -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Return Date *</label>
+                <input
+                  v-model="form.return_date"
+                  type="date"
+                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                />
+              </div>
+
+              <!-- Return Reason -->
+              <div>
+                <CustomFloatingSelect
+                  label="Return Reason *"
+                  v-model="form.return_reason"
+                  :options="returnReasonOptions"
+                />
+              </div>
+
+              <!-- Destination Warehouse -->
+              <div>
+                <CustomFloatingSelect
+                  label="Destination Warehouse *"
+                  v-model="form.warehouse_id"
+                  :options="warehouseOptions"
+                  searchable
+                />
+              </div>
             </div>
           </div>
 
-          <div class="bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-lg p-3 text-[11px] text-blue-700 dark:text-blue-300 space-y-1">
-            <div class="font-bold flex items-center space-x-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span>Automated Postings</span>
+          <!-- 2. Refund Summary Card (Below Return Details on the right side) -->
+          <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
+            <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Refund Summary</h2>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="flex justify-between text-slate-600 dark:text-zinc-400">
+                <span>Subtotal (Items)</span>
+                <span class="font-semibold text-slate-900 dark:text-zinc-100">{{ formatMoney(totals.subtotal) }}</span>
+              </div>
+
+              <div class="flex justify-between text-slate-600 dark:text-zinc-400">
+                <span>Tax Reversal</span>
+                <span class="font-semibold text-slate-900 dark:text-zinc-100">{{ formatMoney(totals.tax_amount) }}</span>
+              </div>
+
+              <div class="border-t border-slate-200 dark:border-zinc-800 pt-3 flex justify-between items-center text-sm font-extrabold">
+                <span class="text-slate-800 dark:text-zinc-200">Total Refund</span>
+                <span class="text-emerald-600 dark:text-emerald-400 text-lg">{{ formatMoney(totals.total_amount) }}</span>
+              </div>
             </div>
-            <p>• Restores stock quantity into selected warehouse.</p>
-            <p>• Debits Sales Returns (Contra Revenue) & Credits Liquid Asset / Accounts Receivable.</p>
+
+            <div class="bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-lg p-3 text-[11px] text-blue-700 dark:text-blue-300 space-y-1">
+              <div class="font-bold flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Automated Postings</span>
+              </div>
+              <p>• Restores stock quantity into selected warehouse.</p>
+              <p>• Debits Sales Returns (Contra Revenue) & Credits Liquid Asset / Accounts Receivable.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -293,6 +388,67 @@ const completedInvoices = ref([])
 const customers = ref([])
 const warehouses = ref([])
 const availableProducts = ref([])
+const bankAccounts = ref([])
+const cashAccountBalance = ref(0)
+const paymentMethodOptions = [
+  { value: 'cash', label: 'Cash Vault' },
+  { value: 'bank', label: 'Bank Account / Transfer' },
+  { value: 'store_credit', label: 'Store Credit (Customer Wallet)' }
+]
+
+const bankAccountOptions = computed(() => {
+  return bankAccounts.value.map(bAcc => ({
+    value: bAcc.id,
+    label: `${bAcc.bank_name} (${bAcc.account_name}) — Available: ${currencySymbol.value}${Number(bAcc.current_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }))
+})
+
+const paymentSplits = ref([
+  { type: 'cash', bank_id: null, amount: 0 }
+])
+
+const addPaymentSplit = () => {
+  const defaultBank = bankAccounts.value[0]?.id || null
+  paymentSplits.value.push({ type: 'cash', bank_id: defaultBank, amount: 0 })
+}
+
+const removePaymentSplit = (idx) => {
+  paymentSplits.value.splice(idx, 1)
+}
+
+const onSplitTypeChange = (split) => {
+  if (split.type === 'bank' && !split.bank_id && bankAccounts.value.length > 0) {
+    split.bank_id = bankAccounts.value[0].id
+  }
+}
+
+const getSplitBalanceError = (split) => {
+  if (!split.amount || split.amount <= 0) return null
+  if (split.type === 'cash') {
+    if (split.amount > cashAccountBalance.value) {
+      return `Insufficient funds! Maximum available in Cash Vault is ${formatMoney(cashAccountBalance.value)}`
+    }
+  } else if (split.type === 'bank' && split.bank_id) {
+    const bAcc = bankAccounts.value.find(b => b.id === split.bank_id)
+    const avail = bAcc ? (bAcc.current_balance || 0) : 0
+    if (split.amount > avail) {
+      return `Insufficient funds! Maximum available in ${bAcc?.bank_name || 'Bank'} (${bAcc?.account_name || ''}) is ${formatMoney(avail)}`
+    }
+  }
+  return null
+}
+
+const hasBalanceErrors = computed(() => {
+  return paymentSplits.value.some(s => getSplitBalanceError(s) !== null)
+})
+
+const totalPaidOutSplits = computed(() => {
+  return paymentSplits.value.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0)
+})
+
+const remainingUnpaidLedger = computed(() => {
+  return Math.max(0, totals.value.total_amount - totalPaidOutSplits.value)
+})
 
 const productSearch = ref('')
 const showProductDropdown = ref(false)
@@ -397,17 +553,23 @@ const fetchInitialData = async () => {
     if (!currencyStore.currencies.length) {
       currencyStore.fetchCurrencies()
     }
-    const [invRes, custRes, whRes, prodRes] = await Promise.all([
+    const [invRes, custRes, whRes, prodRes, bankRes, accRes] = await Promise.all([
       axios.get('/api/sales', { params: { is_refund: false, per_page: 50 } }),
       axios.get('/api/customers'),
       axios.get('/api/warehouses'),
-      axios.get('/api/sales/products-with-stock')
+      axios.get('/api/sales/products-with-stock'),
+      axios.get('/api/bank-accounts'),
+      axios.get('/api/accounts/balances/summary').catch(() => ({ data: {} }))
     ])
 
     completedInvoices.value = invRes.data.data || invRes.data || []
     customers.value = custRes.data.data || custRes.data || []
     warehouses.value = whRes.data.data || whRes.data || []
     availableProducts.value = prodRes.data.items || []
+    bankAccounts.value = bankRes.data.data || bankRes.data || []
+
+    const cashBank = bankAccounts.value.find(b => (b.bank_name && b.bank_name.toLowerCase().includes('cash')) || (b.account_name && b.account_name.toLowerCase().includes('cash')) || b.is_default)
+    cashAccountBalance.value = cashBank ? (cashBank.current_balance || 0) : (accRes.data?.cash_balance || 500000)
 
     const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0]
     if (defaultWh) {
@@ -452,6 +614,10 @@ const onOriginalSaleSelect = async () => {
         total_amount: (qty * unitPrice) + tax
       }
     })
+
+    // Pre-populate refund splits with return total
+    const returnTotal = form.items.reduce((s, i) => s + i.total_amount, 0)
+    paymentSplits.value = [{ type: 'cash', bank_id: null, amount: returnTotal }]
   } catch (err) {
     errorMessage.value = 'Failed to load details for selected invoice.'
   }
@@ -496,6 +662,11 @@ const submitReturn = async (andPrint = false) => {
     return
   }
 
+  if (hasBalanceErrors.value) {
+    errorMessage.value = 'Please resolve insufficient balance errors before proceeding.'
+    return
+  }
+
   isSubmitting.value = true
   errorMessage.value = ''
 
@@ -505,7 +676,8 @@ const submitReturn = async (andPrint = false) => {
       customer_id: form.customer_id,
       return_date: form.return_date,
       return_reason: form.return_reason,
-      refund_method: form.refund_method,
+      refund_method: paymentSplits.value.length > 1 ? 'mixed' : (paymentSplits.value[0]?.type || 'cash'),
+      payments: paymentSplits.value,
       warehouse_id: form.warehouse_id,
       return_notes: form.return_notes,
       return_items: form.items.map(item => ({

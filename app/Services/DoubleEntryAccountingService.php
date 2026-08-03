@@ -827,27 +827,18 @@ class DoubleEntryAccountingService
             // 3. Credit: Liquid Assets or Accounts Receivable
             // Resolve refund payments breakdown
             $refundPayments = [];
+            $totalRefundedAmount = 0;
             $originalSale = $saleReturn->originalSale;
+            $returnPaymentDetails = is_array($saleReturn->payment_details) && count($saleReturn->payment_details) > 0
+                ? $saleReturn->payment_details
+                : ($originalSale && is_array($originalSale->payment_details) && count($originalSale->payment_details) > 0 ? $originalSale->payment_details : []);
 
-            if ($saleReturn->payment_method === 'store_credit') {
-                // Store credit was credited to wallet - no cash/bank ledger movement
-                $arAccount = $this->accountingSettings->sales_return_receivable_account_id
-                    ?: Account::where('company_id', $companyId)->where(function($q) { 
-                        $q->where('account_code', '1030')->orWhere('account_type', 'accounts_receivable'); 
-                    })->value('id');
-                if ($arAccount) {
-                    $refundPayments[] = ['account_id' => $arAccount, 'amount' => $totalAmount, 'bank_account_id' => null];
-                }
-            } else if ($originalSale && is_array($originalSale->payment_details) && count($originalSale->payment_details) > 0) {
-                // Original sale had structured payments (e.g. mixed payment)
-                $origTotalPaid = (float) $originalSale->paid_amount ?: (float) $originalSale->total_amount;
-                $ratio = $origTotalPaid > 0 ? ($totalAmount / $origTotalPaid) : 1.0;
-
-                foreach ($originalSale->payment_details as $p) {
-                    $pAmount = (float) ($p['amount'] ?? 0) * $ratio;
+            if (count($returnPaymentDetails) > 0) {
+                foreach ($returnPaymentDetails as $p) {
+                    $pAmount = (float) ($p['amount'] ?? 0);
                     if ($pAmount <= 0) continue;
 
-                    $pType = $p['type'] ?? $p['method'] ?? 'cash';
+                    $pType = strtolower($p['type'] ?? $p['method'] ?? 'cash');
                     $pBankId = $p['bank_id'] ?? null;
 
                     if ($pType === 'cash') {
@@ -867,8 +858,23 @@ class DoubleEntryAccountingService
                                 'account_id' => $cashAccount->id,
                                 'amount' => $pAmount,
                                 'bank_account_id' => $cashBank?->id,
-                                'desc' => 'Cash Vault Refund'
+                                'desc' => 'Cash Refund'
                             ];
+                            $totalRefundedAmount += $pAmount;
+                        }
+                    } elseif ($pType === 'store_credit') {
+                        $arAccount = $this->accountingSettings->sales_return_receivable_account_id
+                            ?: Account::where('company_id', $companyId)->where(function($q) { 
+                                $q->where('account_code', '1030')->orWhere('account_type', 'accounts_receivable'); 
+                            })->value('id');
+                        if ($arAccount) {
+                            $refundPayments[] = [
+                                'account_id' => $arAccount,
+                                'amount' => $pAmount,
+                                'bank_account_id' => null,
+                                'desc' => 'Store Credit (Customer Wallet)'
+                            ];
+                            $totalRefundedAmount += $pAmount;
                         }
                     } else {
                         // Bank / Card / Transfer
@@ -899,32 +905,29 @@ class DoubleEntryAccountingService
                                 'account_id' => $bankChartAccount->id,
                                 'amount' => $pAmount,
                                 'bank_account_id' => $bankAccount?->id,
-                                'desc' => 'Bank Refund via ' . ($bankAccount?->account_name ?? 'Bank')
+                                'desc' => 'Bank Refund via ' . ($bankAccount?->bank_name ?? $bankAccount?->account_name ?? 'Bank')
                             ];
+                            $totalRefundedAmount += $pAmount;
                         }
                     }
                 }
             }
 
-            // Fallback if no payment details resolved
-            if (empty($refundPayments)) {
-                $cashAccount = Account::where('company_id', $companyId)
-                    ->where('account_type', 'asset')
-                    ->where(function ($q) { $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%'); })
-                    ->first();
+            // Fallback: If no payment details or if there is remaining unpaid return amount -> Route to Accounts Receivable / Customer Credit Ledger
+            $remainingUnpaid = round($totalAmount - $totalRefundedAmount, 2);
+            if ($remainingUnpaid > 0 || empty($refundPayments)) {
+                $unpaidAmount = empty($refundPayments) ? $totalAmount : $remainingUnpaid;
+                $arAccount = $this->accountingSettings->sales_return_receivable_account_id
+                    ?: Account::where('company_id', $companyId)->where(function($q) { 
+                        $q->where('account_code', '1030')->orWhere('account_type', 'accounts_receivable'); 
+                    })->value('id');
 
-                $cashBank = \App\Models\BankAccount::where('company_id', $companyId)
-                    ->where(function ($q) use ($cashAccount) {
-                        if ($cashAccount) $q->where('chart_account_id', $cashAccount->id);
-                        $q->orWhere('account_name', 'LIKE', '%Cash%')->orWhere('is_default', true);
-                    })->first();
-
-                if ($cashAccount) {
+                if ($arAccount) {
                     $refundPayments[] = [
-                        'account_id' => $cashAccount->id,
-                        'amount' => $totalAmount,
-                        'bank_account_id' => $cashBank?->id,
-                        'desc' => 'Refund for Sales Return'
+                        'account_id' => $arAccount,
+                        'amount' => $unpaidAmount,
+                        'bank_account_id' => null,
+                        'desc' => 'Customer Credit Ledger / Accounts Receivable'
                     ];
                 }
             }

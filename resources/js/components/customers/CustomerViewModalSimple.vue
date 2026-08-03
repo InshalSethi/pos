@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-      <div class="relative mx-auto border border-slate-800 w-full max-w-lg shadow-2xl rounded-2xl bg-[#12141a] text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
+    <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
         
         <!-- Sleek Close Icon Button -->
         <button
@@ -101,11 +101,11 @@
                 </div>
                 <div>
                   <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Credit Limit</span>
-                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">${{ formatNumber(customer.credit_limit) }}</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ currencySymbol }}{{ formatNumber(customer.credit_limit) }}</span>
                 </div>
                 <div>
                   <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Total Purchases</span>
-                  <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">${{ formatNumber(customer.total_purchases) }}</span>
+                  <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">{{ currencySymbol }}{{ formatNumber(customer.total_purchases) }}</span>
                 </div>
                 <div>
                   <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Loyalty Points</span>
@@ -137,6 +137,10 @@
 </template>
 
 <script>
+import { computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
+
 export default {
   name: 'CustomerViewModalSimple',
   props: {
@@ -151,6 +155,13 @@ export default {
   },
   emits: ['close'],
   setup() {
+    const authStore = useAuthStore();
+    const currencyStore = useCurrencyStore();
+
+    const currencySymbol = computed(() => {
+      return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+    });
+
     const formatNumber = (value) => {
       return new Intl.NumberFormat().format(value || 0);
     };
@@ -166,6 +177,7 @@ export default {
     };
 
     return {
+      currencySymbol,
       formatNumber,
       formatDate
     };

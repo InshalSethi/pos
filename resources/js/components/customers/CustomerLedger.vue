@@ -47,19 +47,19 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" v-if="ledgerData">
         <div class="bg-blue-50 p-4 rounded-lg">
           <h4 class="text-sm font-medium text-blue-800">Opening Balance</h4>
-          <p class="text-2xl font-bold text-blue-900">${{ formatAmount(ledgerData.opening_balance) }}</p>
+          <p class="text-2xl font-bold text-blue-900">{{ currencySymbol }}{{ formatAmount(ledgerData.opening_balance) }}</p>
         </div>
         <div class="bg-green-50 p-4 rounded-lg">
           <h4 class="text-sm font-medium text-green-800">Total Sales</h4>
-          <p class="text-2xl font-bold text-green-900">${{ formatAmount(ledgerData.summary?.total_sales || 0) }}</p>
+          <p class="text-2xl font-bold text-green-900">{{ currencySymbol }}{{ formatAmount(ledgerData.summary?.total_sales || 0) }}</p>
         </div>
         <div class="bg-purple-50 p-4 rounded-lg">
           <h4 class="text-sm font-medium text-purple-800">Total Payments</h4>
-          <p class="text-2xl font-bold text-purple-900">${{ formatAmount(ledgerData.summary?.total_payments || 0) }}</p>
+          <p class="text-2xl font-bold text-purple-900">{{ currencySymbol }}{{ formatAmount(ledgerData.summary?.total_payments || 0) }}</p>
         </div>
         <div class="bg-gray-50 p-4 rounded-lg">
           <h4 class="text-sm font-medium text-gray-800">Closing Balance</h4>
-          <p class="text-2xl font-bold text-gray-900">${{ formatAmount(ledgerData.closing_balance) }}</p>
+          <p class="text-2xl font-bold text-gray-900">{{ currencySymbol }}{{ formatAmount(ledgerData.closing_balance) }}</p>
         </div>
       </div>
 
@@ -108,13 +108,13 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                  {{ transaction.debit ? '$' + formatAmount(transaction.debit) : '-' }}
+                  {{ transaction.debit ? currencySymbol + formatAmount(transaction.debit) : '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                  {{ transaction.credit ? '$' + formatAmount(transaction.credit) : '-' }}
+                  {{ transaction.credit ? currencySymbol + formatAmount(transaction.credit) : '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                  ${{ formatAmount(transaction.running_balance) }}
+                  {{ currencySymbol }}{{ formatAmount(transaction.running_balance) }}
                 </td>
               </tr>
             </tbody>
@@ -142,8 +142,17 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
+
+const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
 
 const props = defineProps({
   show: Boolean,

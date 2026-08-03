@@ -187,7 +187,7 @@
               </td>
               <!-- Credit Limit -->
               <td class="py-3.5 px-4 text-right font-semibold text-slate-700 dark:text-zinc-200 text-sm align-middle bg-white dark:bg-zinc-900">
-                ${{ formatNumber(item.credit_limit || 0) }}
+                {{ currencySymbol }}{{ formatNumber(item.credit_limit || 0) }}
               </td>
               <!-- Wallet -->
               <td class="py-3.5 px-4 text-right font-bold text-sm align-middle bg-white dark:bg-zinc-900">
@@ -195,7 +195,7 @@
                   v-if="parseFloat(item.wallet_balance || 0) > 0"
                   class="text-amber-600 dark:text-amber-400"
                 >
-                  ${{ formatNumber(item.wallet_balance) }}
+                  {{ currencySymbol }}{{ formatNumber(item.wallet_balance) }}
                 </span>
                 <span
                   v-else
@@ -210,7 +210,7 @@
                   v-if="parseFloat(item.due_amount || 0) > 0"
                   class="text-rose-600 dark:text-rose-450"
                 >
-                  ${{ formatNumber(item.due_amount) }}
+                  {{ currencySymbol }}{{ formatNumber(item.due_amount) }}
                 </span>
                 <span
                   v-else
@@ -322,6 +322,8 @@
 
 <script>
 import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import { debounce } from '@/utils/debounce';
 import CustomerModalSimple from './CustomerModalSimple.vue';
 import CustomerViewModalSimple from './CustomerViewModalSimple.vue';
@@ -338,6 +340,12 @@ export default {
   },
   setup() {
     const { showToast } = useToast();
+    const authStore = useAuthStore();
+    const currencyStore = useCurrencyStore();
+
+    const currencySymbol = computed(() => {
+      return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+    });
 
     const loading = ref(false);
     const customers = ref({ data: [], current_page: 1, last_page: 1, total: 0 });
@@ -495,6 +503,7 @@ export default {
     });
 
     return {
+      currencySymbol,
       loading, customers, statistics, searchQuery, perPage, activeTab, typeFilter, statusFilter, openActionDropdown,
       selectedCustomer, showCreateModal, showEditModal, showViewModal, showLedgerModal,
       visiblePages, loadCustomers, setTab, debouncedSearch, changePage, toggleActionDropdown,

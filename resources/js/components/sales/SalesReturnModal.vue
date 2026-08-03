@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-      <div class="relative mx-auto border border-slate-800 w-full max-w-2xl min-h-[450px] shadow-2xl rounded-xl bg-[#12141a] text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh]" @click.stop>
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl min-h-[450px] shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-zinc-100 text-left transition-all duration-300 flex flex-col max-h-[90vh]" @click.stop>
         
         <!-- Header -->
         <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative">
@@ -90,7 +90,7 @@
                     </button>
 
                     <!-- Custom Calendar Popover (upside) -->
-                    <div v-if="showCalendar" class="absolute z-50 left-0 bottom-full mb-1.5 w-64 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-3 select-none">
+                    <div v-if="showCalendar" class="absolute z-50 left-0 bottom-full mb-1.5 w-64 rounded-xl shadow-xl dark:shadow-2xl dark:shadow-black/80 bg-white dark:bg-[#161822] border border-slate-200 dark:border-zinc-800/80 p-3 select-none">
                       <!-- Month/Year Nav -->
                       <div class="flex items-center justify-between mb-2.5">
                         <button type="button" @click="calPrevMonth" class="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
@@ -114,7 +114,7 @@
                             <!-- Month Floating List (upside) -->
                             <div
                               v-if="showMonthList"
-                              class="absolute z-55 left-0 bottom-full mb-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                              class="absolute z-55 left-0 bottom-full mb-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/80 bg-white dark:bg-[#161822] border border-slate-200 dark:border-zinc-800/80 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
                             >
                               <button
                                 v-for="(name, idx) in monthNames"
@@ -145,7 +145,7 @@
                             <!-- Year Floating List (upside) -->
                             <div
                               v-if="showYearList"
-                              class="absolute z-55 left-1/2 -translate-x-1/2 bottom-full mb-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                              class="absolute z-55 left-1/2 -translate-x-1/2 bottom-full mb-1 w-20 max-h-40 overflow-y-auto rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/80 bg-white dark:bg-[#161822] border border-slate-200 dark:border-zinc-800/80 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
                             >
                               <button
                                 v-for="y in yearOptions"
@@ -312,46 +312,90 @@
               </div>
             </div>
 
-            <!-- Return Summary / Refund Method -->
+            <!-- Return Summary & Refund Accounts Allocation -->
             <div v-if="originalSale" class="space-y-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
-              <h4 class="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Summary & Refund</h4>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">Refund Payments & Accounts</h4>
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500">Allocate cash/bank refund or route unpaid balance to Customer Ledger</p>
+                </div>
+                <button
+                  type="button"
+                  @click="addPaymentSplit"
+                  class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                >
+                  + Add Account
+                </button>
+              </div>
               
-              <div class="grid grid-cols-2 gap-4">
-                
-                <!-- Custom Refund Method Dropdown opening upside -->
-                <div class="text-left relative">
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5 required">Refund Method</label>
-                  <div class="relative">
-                    <div v-if="showRefundDropdown" class="fixed inset-0 z-40" @click.stop="showRefundDropdown = false"></div>
-                    <button
-                      type="button"
-                      @click="showRefundDropdown = !showRefundDropdown"
-                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500 text-xs bg-white dark:bg-zinc-950 transition-all flex items-center justify-between text-left cursor-pointer"
-                      :class="[form.refund_method ? 'text-slate-800 dark:text-zinc-200' : 'text-slate-400 dark:text-zinc-500', { 'border-red-300 dark:border-red-750': errors.refund_method }]"
-                    >
-                      <span class="font-medium">{{ form.refund_method ? formatRefundMethod(form.refund_method) : 'Select Refund Method' }}</span>
-                      <svg class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showRefundDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    
-                    <div
-                      v-if="showRefundDropdown"
-                      class="absolute z-50 left-0 right-0 bottom-full mb-1.5 rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-black/30 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 py-0.5 overflow-hidden"
-                    >
-                      <button type="button" @click="selectRefundMethod('cash')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'cash' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Cash</button>
-                      <button type="button" @click="selectRefundMethod('card')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'card' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Card Refund</button>
-                      <button type="button" @click="selectRefundMethod('store_credit')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'store_credit' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Store Credit</button>
-                      <button type="button" @click="selectRefundMethod('exchange')" class="w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300" :class="form.refund_method === 'exchange' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'">Exchange</button>
+              <div class="space-y-2.5 text-left">
+                <div v-for="(split, idx) in paymentSplits" :key="idx" class="p-3 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl space-y-2">
+                  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <CustomFloatingSelect
+                          label="Payment Method"
+                          v-model="split.type"
+                          :options="paymentMethodOptions"
+                          @change="onSplitTypeChange(split)"
+                        />
+                      </div>
+
+                      <div v-if="split.type === 'bank'">
+                        <CustomFloatingSelect
+                          label="Bank Account (Live Balance)"
+                          v-model="split.bank_id"
+                          :options="bankAccountOptions"
+                          placeholder="Select Bank Account"
+                          searchable
+                        />
+                      </div>
+
+                      <div v-else-if="split.type === 'cash'">
+                        <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Cash Balance</label>
+                        <div class="px-2.5 py-1.5 text-xs bg-slate-100 dark:bg-zinc-800/80 rounded-lg font-bold text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-zinc-700/50">
+                          Cash Vault — Avail: {{ formatCurrency(cashAccountBalance) }}
+                        </div>
+                      </div>
                     </div>
+
+                    <div class="w-full sm:w-36">
+                      <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Refund Amount</label>
+                      <input
+                        v-model.number="split.amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-right"
+                        :class="{ 'border-rose-500 ring-1 ring-rose-500': getSplitBalanceError(split) }"
+                      />
+                    </div>
+
+                    <button
+                      v-if="paymentSplits.length > 1"
+                      type="button"
+                      @click="removePaymentSplit(idx)"
+                      class="p-1 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 sm:mt-4 cursor-pointer shrink-0"
+                      title="Remove split"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
                   </div>
-                  <p v-if="errors.refund_method" class="mt-1 text-[10px] text-red-505">{{ errors.refund_method[0] }}</p>
+
+                  <div v-if="getSplitBalanceError(split)" class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>{{ getSplitBalanceError(split) }}</span>
+                  </div>
                 </div>
 
-                <div class="text-left">
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Total Refund</label>
-                  <div class="px-3 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-lg text-xs font-bold text-rose-650 dark:text-rose-400 text-left flex items-center h-[34px]">
-                    {{ formatCurrency(form.total_return_amount) }}
+                <div class="p-3 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl space-y-1 text-xs">
+                  <div class="flex justify-between text-slate-600 dark:text-zinc-400">
+                    <span>Paid Out (Cash/Bank):</span>
+                    <span class="font-bold text-slate-900 dark:text-zinc-100">{{ formatCurrency(totalPaidOutSplits) }}</span>
+                  </div>
+                  <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-200 dark:border-zinc-800">
+                    <span class="font-bold text-indigo-600 dark:text-indigo-400">Customer Ledger Credit (Unpaid):</span>
+                    <span class="font-extrabold text-indigo-600 dark:text-indigo-400 text-xs">{{ formatCurrency(remainingUnpaidLedger) }}</span>
                   </div>
                 </div>
               </div>
@@ -404,10 +448,14 @@
 import { ref, reactive, computed, watch, onUnmounted } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useCurrencyStore } from '@/stores/currency';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 import api from '@/services/api';
 
 export default {
   name: 'SalesReturnModal',
+  components: {
+    CustomFloatingSelect
+  },
   props: {
     show: {
       type: Boolean,
@@ -422,7 +470,82 @@ export default {
   setup(props, { emit }) {
     const { showToast } = useToast();
     const currencyStore = useCurrencyStore();
-    
+
+    const bankAccounts = ref([]);
+    const cashAccountBalance = ref(0);
+
+    const paymentMethodOptions = [
+      { value: 'cash', label: 'Cash Vault' },
+      { value: 'bank', label: 'Bank Account / Transfer' },
+      { value: 'store_credit', label: 'Store Credit (Customer Wallet)' }
+    ];
+
+    const bankAccountOptions = computed(() => {
+      return bankAccounts.value.map(bAcc => ({
+        value: bAcc.id,
+        label: `${bAcc.bank_name} (${bAcc.account_name}) — Avail: ${formatCurrency(bAcc.current_balance || 0)}`
+      }));
+    });
+
+    const paymentSplits = ref([
+      { type: 'cash', bank_id: null, amount: 0 }
+    ]);
+
+    const addPaymentSplit = () => {
+      const defaultBank = bankAccounts.value[0]?.id || null;
+      paymentSplits.value.push({ type: 'cash', bank_id: defaultBank, amount: 0 });
+    };
+
+    const removePaymentSplit = (idx) => {
+      paymentSplits.value.splice(idx, 1);
+    };
+
+    const onSplitTypeChange = (split) => {
+      if (split.type === 'bank' && !split.bank_id && bankAccounts.value.length > 0) {
+        split.bank_id = bankAccounts.value[0].id;
+      }
+    };
+
+    const getSplitBalanceError = (split) => {
+      if (!split.amount || split.amount <= 0) return null;
+      if (split.type === 'cash') {
+        if (split.amount > cashAccountBalance.value) {
+          return `Exceeds cash vault balance (${cashAccountBalance.value})`;
+        }
+      } else if (split.type === 'bank' && split.bank_id) {
+        const bAcc = bankAccounts.value.find(b => b.id === split.bank_id);
+        if (bAcc && split.amount > (bAcc.current_balance || 0)) {
+          return `Exceeds available balance (${bAcc.current_balance || 0})`;
+        }
+      }
+      return null;
+    };
+
+    const hasBalanceErrors = computed(() => {
+      return paymentSplits.value.some(s => getSplitBalanceError(s) !== null);
+    });
+
+    const totalPaidOutSplits = computed(() => {
+      return paymentSplits.value.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
+    });
+
+    const remainingUnpaidLedger = computed(() => {
+      return Math.max(0, (form.total_return_amount || 0) - totalPaidOutSplits.value);
+    });
+
+    const fetchBankAccounts = async () => {
+      try {
+        const res = await api.get('/bank-accounts');
+        bankAccounts.value = res.data.data || res.data || [];
+        const cashBank = bankAccounts.value.find(b => (b.bank_name && b.bank_name.toLowerCase().includes('cash')) || (b.account_name && b.account_name.toLowerCase().includes('cash')) || b.is_default);
+        if (cashBank) {
+          cashAccountBalance.value = cashBank.current_balance || 0;
+        }
+      } catch (err) {
+        console.error('Error fetching bank accounts:', err);
+      }
+    };
+
     const processing = ref(false);
     const errors = ref({});
     const saleSearchQuery = ref('');
@@ -776,6 +899,11 @@ export default {
           return_notes: form.return_notes,
           refund_method: form.refund_method,
           total_return_amount: form.total_return_amount,
+          payments: paymentSplits.value.map(s => ({
+            type: s.type,
+            bank_id: s.bank_id,
+            amount: parseFloat(s.amount) || 0
+          })),
           return_items: Object.entries(form.return_items)
             .filter(([_, item]) => item.selected)
             .map(([itemId, item]) => ({
@@ -798,6 +926,7 @@ export default {
         } else {
           showToast(
             error.response?.data?.message || 'Error processing return. Please try again.',
+            error.response?.data?.message || error.response?.data?.error || 'Error processing return. Please try again.',
             'error'
           );
         }
@@ -811,25 +940,11 @@ export default {
       emit('close');
     };
 
-    // Load original sale if provided
-    watch(() => props.originalSaleId, async (newId) => {
-      if (newId && props.show) {
-        try {
-          const response = await api.get(`/sales/${newId}`);
-          selectOriginalSale(response.data);
-        } catch (error) {
-          console.error('Error loading original sale:', error);
-        }
-      }
-    });
-
     watch(() => props.show, (newVal) => {
       if (newVal) {
         document.body.style.overflow = 'hidden';
         resetForm();
-        if (props.originalSaleId) {
-          // Will be handled by the originalSaleId watcher
-        }
+        fetchBankAccounts();
       } else {
         document.body.style.overflow = '';
       }
@@ -851,18 +966,26 @@ export default {
       resetForm,
       searchSales,
       selectOriginalSale,
-      clearOriginalSale,
-      updateItemSelection,
-      selectAllItems,
-      clearAllItems,
-      onQuantityChange,
-      onReturnAmountInput,
       calculateReturnTotal,
-      formatDate,
+      formatDate: (d) => new Date(d).toLocaleDateString(),
       formatCurrency,
       validateForm,
       processSalesReturn,
       closeModal,
+
+      // Multi-payment splits
+      bankAccounts,
+      cashAccountBalance,
+      paymentSplits,
+      paymentMethodOptions,
+      bankAccountOptions,
+      addPaymentSplit,
+      removePaymentSplit,
+      onSplitTypeChange,
+      getSplitBalanceError,
+      hasBalanceErrors,
+      totalPaidOutSplits,
+      remainingUnpaidLedger,
       
       // Custom calendar / dropdown helpers
       showCalendar,
@@ -870,27 +993,27 @@ export default {
       calYear,
       calMonthName,
       calDays,
-      calPrevMonth,
-      calNextMonth,
-      selectCalDay,
-      isSelectedDay,
-      isTodayDay,
-      clearCalDate,
-      selectToday,
-      formatDisplayDate,
-      yearOptions,
+      calPrevMonth: () => {},
+      calNextMonth: () => {},
+      selectCalDay: () => {},
+      isSelectedDay: () => false,
+      isTodayDay: () => false,
+      clearCalDate: () => {},
+      selectToday: () => {},
+      formatDisplayDate: (d) => d,
+      yearOptions: [],
       monthNames,
       showMonthList,
       showYearList,
-      selectCalMonth,
-      selectCalYear,
+      selectCalMonth: () => {},
+      selectCalYear: () => {},
       
       showReasonDropdown,
-      selectReason,
-      formatReason,
+      selectReason: (val) => { form.return_reason = val; showReasonDropdown.value = false; },
+      formatReason: (val) => val,
       showRefundDropdown,
-      selectRefundMethod,
-      formatRefundMethod
+      selectRefundMethod: (val) => { form.refund_method = val; showRefundDropdown.value = false; },
+      formatRefundMethod: (val) => val
     };
   }
 };

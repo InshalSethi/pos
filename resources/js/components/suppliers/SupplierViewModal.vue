@@ -34,7 +34,7 @@
           <div class="row mb-4">
             <div class="col-md-3">
               <div class="stat-card">
-                <div class="stat-value">${{ formatNumber(supplierData.credit_limit) }}</div>
+                <div class="stat-value">{{ currencySymbol }}{{ formatNumber(supplierData.credit_limit) }}</div>
                 <div class="stat-label">Credit Limit</div>
               </div>
             </div>
@@ -52,7 +52,7 @@
             </div>
             <div class="col-md-3">
               <div class="stat-card">
-                <div class="stat-value">${{ calculateTotalValue() }}</div>
+                <div class="stat-value">{{ currencySymbol }}{{ calculateTotalValue() }}</div>
                 <div class="stat-label">Total Value</div>
               </div>
             </div>
@@ -153,7 +153,7 @@
                       <tr v-for="order in supplierData.purchase_orders.slice(0, 10)" :key="order.id">
                         <td>{{ order.po_number }}</td>
                         <td>{{ formatDate(order.order_date) }}</td>
-                        <td>${{ formatNumber(order.total_amount) }}</td>
+                        <td>{{ currencySymbol }}{{ formatNumber(order.total_amount) }}</td>
                         <td>
                           <span :class="getStatusBadgeClass(order.status)">
                             {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
@@ -201,7 +201,9 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
 
 export default {
@@ -218,6 +220,13 @@ export default {
   },
   emits: ['close'],
   setup(props, { emit }) {
+    const authStore = useAuthStore();
+    const currencyStore = useCurrencyStore();
+
+    const currencySymbol = computed(() => {
+      return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+    });
+
     const loading = ref(false);
     const supplierData = ref(null);
     const activeTab = ref('contact');
@@ -301,6 +310,7 @@ export default {
     }, { deep: true });
 
     return {
+      currencySymbol,
       loading,
       supplierData,
       activeTab,

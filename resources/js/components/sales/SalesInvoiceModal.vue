@@ -635,90 +635,12 @@
     </div>
 
     <!-- Quick Customer Creation Modal -->
-    <div v-if="showCustomerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-      <div class="relative mx-auto p-6 border border-slate-800 w-full max-w-md shadow-2xl rounded-2xl bg-[#12141a] text-slate-100 text-left">
-        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-          <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Add New Customer</h3>
-          <button @click="closeCustomerModal" class="text-slate-400 hover:text-slate-600 text-xs font-bold">Close</button>
-        </div>
-
-        <form @submit.prevent="createCustomer" class="space-y-4">
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Full Name *</label>
-            <input
-              v-model="newCustomer.name"
-              type="text"
-              required
-              class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Phone</label>
-              <input
-                v-model="newCustomer.phone"
-                type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-              />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email</label>
-              <input
-                v-model="newCustomer.email"
-                type="email"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Address</label>
-            <textarea
-              v-model="newCustomer.address"
-              rows="2"
-              class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-            ></textarea>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">City</label>
-              <input
-                v-model="newCustomer.city"
-                type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-              />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tax Number / ID</label>
-              <input
-                v-model="newCustomer.tax_number"
-                type="text"
-                class="w-full px-3 py-2 border border-slate-350 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              @click="closeCustomerModal"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="!newCustomer.name || creatingCustomer"
-              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer"
-            >
-              {{ creatingCustomer ? 'Creating...' : 'Create Customer' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <CustomerModalSimple
+      v-if="showCustomerModal"
+      :show="showCustomerModal"
+      @close="showCustomerModal = false"
+      @saved="handleCustomerSaved"
+    />
 
   </div>
 </template>
@@ -727,10 +649,14 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useCurrencyStore } from '@/stores/currency';
+import CustomerModalSimple from '@/components/customers/CustomerModalSimple.vue';
 import api from '@/services/api';
 
 export default {
   name: 'SalesInvoiceModal',
+  components: {
+    CustomerModalSimple
+  },
   props: {
     show: {
       type: Boolean,
@@ -1001,6 +927,13 @@ export default {
       } finally {
         creatingCustomer.value = false;
       }
+    };
+
+    const handleCustomerSaved = (savedCustomer) => {
+      if (savedCustomer && savedCustomer.id) {
+        selectCustomer(savedCustomer);
+      }
+      showCustomerModal.value = false;
     };
 
     const closeCustomerModal = () => {
@@ -1399,6 +1332,7 @@ export default {
       selectCustomer,
       clearCustomer,
       createCustomer,
+      handleCustomerSaved,
       closeCustomerModal,
       getProductStock,
       addByBarcode,

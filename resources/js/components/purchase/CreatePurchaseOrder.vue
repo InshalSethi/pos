@@ -724,7 +724,7 @@
 
     <!-- Quick Supplier Creation Modal -->
     <div v-if="showSupplierModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-      <div class="relative mx-auto p-6 border border-slate-800 w-full max-w-2xl shadow-2xl rounded-xl bg-[#12141a] text-slate-100 text-left transition-all duration-300">
+      <div class="relative mx-auto p-6 border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-zinc-100 text-left transition-all duration-300">
         
         <!-- Sleek Close Icon Button -->
         <button

@@ -1,10 +1,10 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto" @click="closeModal">
+  <div v-if="show" class="fixed inset-0 z-[9999] overflow-hidden">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
       <div class="fixed inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"></div>
       
-      <div class="inline-block align-bottom bg-[#12141a] text-slate-100 border border-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" @click.stop>
-        <div class="bg-[#12141a] px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+      <div class="inline-block align-bottom bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" @click.stop>
+        <div class="bg-white dark:bg-[#12141a] px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center space-x-3">
@@ -271,7 +271,7 @@
 </template>
 
 <script>
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onUnmounted } from 'vue';
 import { useToast } from '@/composables/useToast';
 import api from '@/services/api';
 
@@ -371,11 +371,27 @@ export default {
       emit('close');
     };
 
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && props.show) {
+        closeModal();
+      }
+    };
+
     watch(() => props.show, (newVal) => {
       if (newVal) {
         resetForm();
         loadCustomerData();
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', handleKeyDown);
+      } else {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
       }
+    }, { immediate: true });
+
+    onUnmounted(() => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     });
 
     return {
