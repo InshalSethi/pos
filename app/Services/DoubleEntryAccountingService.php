@@ -216,8 +216,7 @@ class DoubleEntryAccountingService
                                     $q->where('chart_account_id', $cashAccount->id);
                                 }
                                 $q->orWhere('account_name', 'LIKE', '%Cash%')
-                                  ->orWhere('bank_name', 'LIKE', '%Cash%')
-                                  ->orWhere('is_default', true);
+                                  ->orWhere('bank_name', 'LIKE', '%Cash%');
                             })->first();
 
                         if ($cashBankAccount) {

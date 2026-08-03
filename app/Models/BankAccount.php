@@ -121,7 +121,8 @@ class BankAccount extends Model
     {
         $hasTransactions = $this->bankTransactions()->exists();
         if (!$hasTransactions) {
-            return (float) ($this->attributes['current_balance'] ?? $this->opening_balance ?? 0);
+            $curr = (float) ($this->attributes['current_balance'] ?? 0);
+            return $curr != 0 ? $curr : (float) ($this->opening_balance ?? 0);
         }
 
         $totalDebits = $this->bankTransactions()

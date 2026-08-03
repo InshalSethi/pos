@@ -775,7 +775,7 @@ class SaleController extends Controller
             // Create accounting entries and process ledgers (non-blocking)
             try {
                 $accountingService = new DoubleEntryAccountingService();
-                $accountingService->processInvoicePayments($sale, $payments);
+                $accountingService->processSalesInvoiceAccounting($sale, $payments);
             } catch (\Throwable $accountingError) {
                 \Illuminate\Support\Facades\Log::warning('Accounting entry creation failed (non-blocking): ' . $accountingError->getMessage());
             }
