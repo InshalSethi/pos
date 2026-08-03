@@ -1219,59 +1219,15 @@ class SaleController extends Controller
                 }
             }
 
-            // Re-generate double-entry accounting entries cleanly without deleting historical records
+            // Re-generate double-entry accounting entries cleanly (Reverse & Re-post)
             try {
-                // Post reversal entry for old posted entries to preserve complete audit trail
-                $existingEntries = JournalEntry::where('source_type', 'sale')
-                    ->where('source_id', $sale->id)
-                    ->where('status', 'posted')
-                    ->get();
-
-                foreach ($existingEntries as $entry) {
-                    $cleanNumber = preg_replace('/^(REV-)+/i', '', $entry->entry_number);
-                    $reversalNumber = 'REV-' . $cleanNumber;
-                    $reversalDesc = 'REVERSAL: ' . preg_replace('/^(REVERSAL:\s*)+/i', '', $entry->description) . ' (Invoice Updated)';
-
-                    $reversalEntry = JournalEntry::create([
-                        'company_id' => $entry->company_id,
-                        'entry_number' => $reversalNumber,
-                        'entry_date' => now()->toDateString(),
-                        'reference' => $entry->reference,
-                        'description' => $reversalDesc,
-                        'entry_type' => 'adjustment',
-                        'status' => 'posted',
-                        'is_reversal' => true,
-                        'total_debit' => $entry->total_credit,
-                        'total_credit' => $entry->total_debit,
-                        'created_by' => auth()->id() ?? 1,
-                        'posted_by' => auth()->id() ?? 1,
-                        'posted_at' => now(),
-                        'source_type' => $entry->source_type,
-                        'source_id' => $entry->source_id,
-                    ]);
-
-                    foreach ($entry->journalEntryLines as $line) {
-                        JournalEntryLine::create([
-                            'journal_entry_id' => $reversalEntry->id,
-                            'account_id' => $line->account_id,
-                            'description' => 'REVERSAL: ' . $line->description,
-                            'debit_amount' => $line->credit_amount,
-                            'credit_amount' => $line->debit_amount,
-                            'partner_type' => $line->partner_type,
-                            'partner_id' => $line->partner_id,
-                        ]);
-
-                        if ($line->account) {
-                            $line->account->updateCurrentBalance();
-                        }
-                    }
-
-                    $entry->update(['status' => 'reversed']);
-                }
-
-                // Create new fresh atomic double-entry journal entry for the updated invoice values
                 $accountingService = new DoubleEntryAccountingService();
-                $accountingService->processSalesInvoiceAccounting($sale, $payments);
+                $accountingService->reverseSalesInvoiceAccounting($sale);
+                if ($sale->type === 'return') {
+                    $accountingService->createSalesReturnEntry($sale);
+                } else {
+                    $accountingService->processSalesInvoiceAccounting($sale, $payments);
+                }
             } catch (\Throwable $accountingError) {
                 \Illuminate\Support\Facades\Log::warning('Accounting entry update failed (non-blocking): ' . $accountingError->getMessage());
             }
