@@ -591,8 +591,8 @@
                                       class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
                                     />
                                     <div class="truncate">
-                                      <span class="truncate font-semibold block">{{ bank.account_name || bank.bank_name }}</span>
-                                      <span class="text-[10px] text-slate-400 block font-normal">{{ bank.bank_name }} - {{ bank.account_number }}</span>
+                                      <span class="truncate font-semibold block">{{ formatBankAccountLabel(bank) }}</span>
+                                      <span class="text-[10px] text-slate-400 block font-normal">{{ bank.bank_name || bank.account_name }} - {{ bank.account_number }}</span>
                                     </div>
                                   </div>
                                   <span v-if="selectedBankIds.includes(bank.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
@@ -636,7 +636,7 @@
                                 class="flex items-center justify-between gap-2 h-10 bg-white dark:bg-zinc-900/90 px-3 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
                               >
                                 <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate">
-                                  {{ bankAccounts.find(b => b.id === bankId)?.account_name || bankAccounts.find(b => b.id === bankId)?.bank_name || 'Bank' }}
+                                  {{ formatBankAccountLabel(activeBankAccounts.find(b => b.id === bankId) || bankAccounts.find(b => b.id === bankId)) }}
                                 </label>
                                 <div class="relative w-36 shrink-0">
                                   <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
@@ -2497,11 +2497,22 @@ const toggleBankSelection = (bankId) => {
   }
 };
 
+const formatBankAccountLabel = (bank) => {
+  if (!bank) return 'Bank';
+  const bankName = (bank.bank_name || '').trim();
+  const accountName = (bank.account_name || '').trim();
+
+  if (bankName && accountName && bankName.toLowerCase() !== accountName.toLowerCase()) {
+    return `${bankName} (${accountName})`;
+  }
+  return accountName || bankName || 'Bank';
+};
+
 const getSelectedBanksLabel = () => {
   if (selectedBankIds.value.length === 0) return 'Select Bank Account(s)';
   const names = activeBankAccounts.value
     .filter(b => selectedBankIds.value.includes(b.id))
-    .map(b => b.account_name || b.bank_name);
+    .map(b => formatBankAccountLabel(b));
   return names.join(', ') || 'Select Bank Account(s)';
 };
 
