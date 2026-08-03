@@ -52,7 +52,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Content (Left 2 cols) -->
       <div class="lg:col-span-2 space-y-6">
-        <!-- 1. Returned Items Table Container (At the top of the page after heading) -->
+        <!-- 1. Returned Items Table Container -->
         <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
             <div>
@@ -120,7 +120,12 @@
                 <tr v-for="(item, idx) in form.items" :key="idx" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
                   <td class="py-3 px-3">
                     <div class="font-semibold text-slate-800 dark:text-zinc-200">{{ item.name }}</div>
-                    <div class="text-[10px] text-slate-400" v-if="item.original_qty">Original Sold Qty: {{ item.original_qty }}</div>
+                    <div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                      <span v-if="item.original_qty">Original Sold Qty: {{ item.original_qty }}</span>
+                      <span v-if="item.source_warehouse_name" class="inline-flex items-center gap-1 text-slate-500 dark:text-zinc-400 font-medium bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                        Dispatched from: <span class="text-blue-600 dark:text-blue-400 font-semibold">{{ item.source_warehouse_name }}</span>
+                      </span>
+                    </div>
                   </td>
                   <td class="py-3 px-3 text-center">
                     <input
@@ -159,7 +164,7 @@
           </div>
         </div>
 
-        <!-- 2. Refund Payment Accounts & Splits Container (Below returned items) -->
+        <!-- 2. Refund Payment Accounts & Splits Container (Unified Selector) -->
         <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
             <div>
@@ -176,55 +181,49 @@
           </div>
 
           <div class="space-y-3">
-            <div v-for="(split, idx) in paymentSplits" :key="idx" class="p-3.5 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl space-y-2">
+            <div
+              v-for="(split, idx) in paymentSplits"
+              :key="idx"
+              class="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl space-y-3"
+            >
               <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <CustomFloatingSelect
-                      label="Payment Method"
-                      v-model="split.type"
-                      :options="paymentMethodOptions"
-                      @change="onSplitTypeChange(split)"
-                    />
-                  </div>
-
-                  <!-- If Bank, show specific Bank Account selector with live balance -->
-                  <div v-if="split.type === 'bank'">
-                    <CustomFloatingSelect
-                      label="Bank Account (Live Balance)"
-                      v-model="split.bank_id"
-                      :options="bankAccountOptions"
-                      placeholder="Select Bank Account"
-                      searchable
-                    />
-                  </div>
-
-                  <div v-else-if="split.type === 'cash'">
-                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Available Cash Balance</label>
-                    <div class="px-3 py-1.5 text-xs bg-slate-100 dark:bg-zinc-800/80 rounded-lg font-bold text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-zinc-700/50">
-                      Cash Vault — Available: {{ formatMoney(cashAccountBalance) }}
-                    </div>
+                <!-- Dynamic Unified Account Selector -->
+                <div class="flex-1 w-full space-y-1">
+                  <CustomFloatingSelect
+                    label="Refund Account / Payment Source *"
+                    v-model="split.selected_account_key"
+                    :options="refundAccountOptions"
+                    @change="onAccountKeyChange(split)"
+                    searchable
+                  />
+                  <!-- Live Available Balance Pill -->
+                  <div v-if="getSplitAccountInfo(split).availableBalance !== null" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-zinc-400 pl-1">
+                    <span>Live Account Balance:</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getSplitAccountInfo(split).badgeClass">
+                      {{ formatMoney(getSplitAccountInfo(split).availableBalance) }}
+                    </span>
                   </div>
                 </div>
 
                 <!-- Refund Amount -->
-                <div class="w-full sm:w-40">
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Refund Amount</label>
+                <div class="w-full sm:w-44 space-y-1">
+                  <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Refund Amount *</label>
                   <input
                     v-model.number="split.amount"
                     type="number"
                     step="0.01"
                     min="0"
-                    class="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-right"
+                    class="w-full px-3 py-2 text-xs bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-right"
                     :class="{ 'border-rose-500 ring-1 ring-rose-500': getSplitBalanceError(split) }"
                   />
                 </div>
 
+                <!-- Remove Split Button -->
                 <button
                   v-if="paymentSplits.length > 1"
                   type="button"
                   @click="removePaymentSplit(idx)"
-                  class="p-1.5 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 sm:mt-4 cursor-pointer shrink-0"
+                  class="p-2 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 sm:mt-4 cursor-pointer shrink-0"
                   title="Remove split"
                 >
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -232,8 +231,8 @@
               </div>
 
               <!-- Insufficient Funds Alert Banner -->
-              <div v-if="getSplitBalanceError(split)" class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <div v-if="getSplitBalanceError(split)" class="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 <span>{{ getSplitBalanceError(split) }}</span>
               </div>
             </div>
@@ -270,7 +269,7 @@
       <!-- Right Column: Return Details & Refund Summary -->
       <div class="space-y-6">
         <div class="space-y-6 sticky top-6">
-          <!-- 1. Return Details (Right side at the top of Refund Summary) -->
+          <!-- 1. Return Details (Right Sidebar) -->
           <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
             <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Return Details</h2>
 
@@ -297,6 +296,28 @@
                 />
               </div>
 
+              <!-- Sales Representative / Salesman -->
+              <div>
+                <CustomFloatingSelect
+                  label="Sales Representative / Salesman"
+                  v-model="form.salesman_id"
+                  :options="salesmanOptions"
+                  placeholder="-- Select Sales Representative --"
+                  searchable
+                />
+              </div>
+
+              <!-- POS Counter -->
+              <div>
+                <CustomFloatingSelect
+                  label="POS Counter"
+                  v-model="form.counter_id"
+                  :options="counterOptions"
+                  placeholder="-- Select POS Counter --"
+                  searchable
+                />
+              </div>
+
               <!-- Return Date -->
               <div>
                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Return Date *</label>
@@ -316,19 +337,20 @@
                 />
               </div>
 
-              <!-- Destination Warehouse -->
+              <!-- Destination Return Warehouse -->
               <div>
                 <CustomFloatingSelect
-                  label="Destination Warehouse *"
+                  label="Destination Return Warehouse *"
                   v-model="form.warehouse_id"
                   :options="warehouseOptions"
                   searchable
                 />
+                <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Warehouse where returned stock will be restored.</p>
               </div>
             </div>
           </div>
 
-          <!-- 2. Refund Summary Card (Below Return Details on the right side) -->
+          <!-- 2. Refund Summary Card -->
           <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-soft space-y-4">
             <h2 class="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Refund Summary</h2>
 
@@ -354,7 +376,7 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Automated Postings</span>
               </div>
-              <p>• Restores stock quantity into selected warehouse.</p>
+              <p>• Restores stock quantity into designated return warehouse.</p>
               <p>• Debits Sales Returns (Contra Revenue) & Credits Liquid Asset / Accounts Receivable.</p>
             </div>
           </div>
@@ -389,50 +411,102 @@ const customers = ref([])
 const warehouses = ref([])
 const availableProducts = ref([])
 const bankAccounts = ref([])
+const salesmen = ref([])
+const counters = ref([])
 const cashAccountBalance = ref(0)
-const paymentMethodOptions = [
-  { value: 'cash', label: 'Cash Vault' },
-  { value: 'bank', label: 'Bank Account / Transfer' },
-  { value: 'store_credit', label: 'Store Credit (Customer Wallet)' }
-]
 
-const bankAccountOptions = computed(() => {
-  return bankAccounts.value.map(bAcc => ({
-    value: bAcc.id,
-    label: `${bAcc.bank_name} (${bAcc.account_name}) — Available: ${currencySymbol.value}${Number(bAcc.current_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }))
+const form = reactive({
+  original_sale_id: null,
+  customer_id: null,
+  salesman_id: null,
+  counter_id: null,
+  return_date: new Date().toISOString().substring(0, 10),
+  return_reason: 'customer_change_mind',
+  refund_method: 'cash',
+  warehouse_id: null,
+  return_notes: '',
+  items: []
+})
+
+// Unified / Consolidated Refund Account Selector Options
+const refundAccountOptions = computed(() => {
+  const options = []
+  
+  // 1. Cash Vault Option (Default Cash Vault)
+  options.push({
+    value: 'cash',
+    label: `Cash Vault (Default Cash Vault) — Avail: ${formatMoney(cashAccountBalance.value)}`,
+    type: 'cash',
+    bank_id: null,
+    availableBalance: cashAccountBalance.value,
+    badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+  })
+
+  // 2. Active Bank Accounts
+  bankAccounts.value.forEach(bAcc => {
+    const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
+      ? parseFloat(bAcc.current_balance)
+      : 0
+    options.push({
+      value: `bank_${bAcc.id}`,
+      label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name}) — Avail: ${formatMoney(bal)}`,
+      type: 'bank',
+      bank_id: bAcc.id,
+      availableBalance: bal,
+      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+    })
+  })
+
+  // 3. Store Credit / Customer Wallet
+  options.push({
+    value: 'store_credit',
+    label: 'Store Credit (Customer Wallet / Store Ledger)',
+    type: 'store_credit',
+    bank_id: null,
+    availableBalance: null,
+    badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+  })
+
+  return options
 })
 
 const paymentSplits = ref([
-  { type: 'cash', bank_id: null, amount: 0 }
+  { selected_account_key: 'cash', type: 'cash', bank_id: null, amount: 0 }
 ])
 
+const onAccountKeyChange = (split) => {
+  const option = refundAccountOptions.value.find(opt => opt.value === split.selected_account_key)
+  if (option) {
+    split.type = option.type
+    split.bank_id = option.bank_id
+  } else {
+    split.type = 'cash'
+    split.bank_id = null
+  }
+}
+
+const getSplitAccountInfo = (split) => {
+  return refundAccountOptions.value.find(opt => opt.value === split.selected_account_key) || {
+    label: 'Cash Vault',
+    availableBalance: cashAccountBalance.value,
+    badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+  }
+}
+
 const addPaymentSplit = () => {
-  const defaultBank = bankAccounts.value[0]?.id || null
-  paymentSplits.value.push({ type: 'cash', bank_id: defaultBank, amount: 0 })
+  paymentSplits.value.push({ selected_account_key: 'cash', type: 'cash', bank_id: null, amount: 0 })
 }
 
 const removePaymentSplit = (idx) => {
   paymentSplits.value.splice(idx, 1)
 }
 
-const onSplitTypeChange = (split) => {
-  if (split.type === 'bank' && !split.bank_id && bankAccounts.value.length > 0) {
-    split.bank_id = bankAccounts.value[0].id
-  }
-}
-
 const getSplitBalanceError = (split) => {
   if (!split.amount || split.amount <= 0) return null
-  if (split.type === 'cash') {
-    if (split.amount > cashAccountBalance.value) {
-      return `Insufficient funds! Maximum available in Cash Vault is ${formatMoney(cashAccountBalance.value)}`
-    }
-  } else if (split.type === 'bank' && split.bank_id) {
-    const bAcc = bankAccounts.value.find(b => b.id === split.bank_id)
-    const avail = bAcc ? (bAcc.current_balance || 0) : 0
-    if (split.amount > avail) {
-      return `Insufficient funds! Maximum available in ${bAcc?.bank_name || 'Bank'} (${bAcc?.account_name || ''}) is ${formatMoney(avail)}`
+  const info = getSplitAccountInfo(split)
+  if (info && info.availableBalance !== null && info.availableBalance !== undefined) {
+    if (split.amount > info.availableBalance) {
+      return `Insufficient funds! Maximum available in ${info.label.split('—')[0].trim()} is ${formatMoney(info.availableBalance)}`
     }
   }
   return null
@@ -453,17 +527,6 @@ const remainingUnpaidLedger = computed(() => {
 const productSearch = ref('')
 const showProductDropdown = ref(false)
 
-const form = reactive({
-  original_sale_id: null,
-  customer_id: null,
-  return_date: new Date().toISOString().substring(0, 10),
-  return_reason: 'customer_change_mind',
-  refund_method: 'cash',
-  warehouse_id: null,
-  return_notes: '',
-  items: []
-})
-
 const completedInvoiceOptions = computed(() => [
   { value: '', label: '-- Select Original Invoice --' },
   ...completedInvoices.value.map(inv => ({
@@ -480,19 +543,35 @@ const customerOptions = computed(() => [
   }))
 ])
 
+const salesmanOptions = computed(() => [
+  { value: '', label: '-- Select Sales Representative --' },
+  ...salesmen.value.map(emp => ({
+    value: emp.id,
+    label: `${emp.full_name || (emp.first_name + ' ' + (emp.last_name || ''))} ${emp.employee_number ? '(' + emp.employee_number + ')' : ''}`
+  }))
+])
+
+const counterOptions = computed(() => {
+  let list = counters.value
+  if (form.warehouse_id) {
+    const whIdStr = String(form.warehouse_id)
+    list = list.filter(c => !c.warehouse_id || String(c.warehouse_id) === whIdStr)
+  }
+  return [
+    { value: '', label: '-- Select POS Counter --' },
+    ...list.map(cnt => ({
+      value: cnt.id,
+      label: cnt.name
+    }))
+  ]
+})
+
 const returnReasonOptions = [
   { value: 'customer_change_mind', label: 'Customer Changed Mind (Clean Inventory)' },
   { value: 'wrong_item', label: 'Wrong Item Issued (Clean Inventory)' },
   { value: 'not_as_described', label: 'Not As Described (Clean Inventory)' },
   { value: 'damaged', label: 'Damaged / Opened (Quarantine Buffer Warehouse)' },
   { value: 'defective', label: 'Defective / Faulty (Quarantine Buffer Warehouse)' }
-]
-
-const refundMethodOptions = [
-  { value: 'cash', label: 'Cash Refund' },
-  { value: 'card', label: 'Card / Bank Refund' },
-  { value: 'store_credit', label: 'Store Credit (Customer Wallet)' },
-  { value: 'exchange', label: 'Exchange Item' }
 ]
 
 const warehouseOptions = computed(() => 
@@ -534,6 +613,13 @@ const totals = computed(() => {
   return { subtotal, tax_amount, total_amount }
 })
 
+// Auto-sync refund amount if single split
+watch(() => totals.value.total_amount, (newTotal) => {
+  if (paymentSplits.value.length === 1) {
+    paymentSplits.value[0].amount = newTotal
+  }
+}, { immediate: true })
+
 const formatMoney = (val) => {
   const num = Number(val || 0)
   return `${currencySymbol.value} ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -553,13 +639,15 @@ const fetchInitialData = async () => {
     if (!currencyStore.currencies.length) {
       currencyStore.fetchCurrencies()
     }
-    const [invRes, custRes, whRes, prodRes, bankRes, accRes] = await Promise.all([
+    const [invRes, custRes, whRes, prodRes, bankRes, accRes, empRes, cntRes] = await Promise.all([
       axios.get('/api/sales', { params: { is_refund: false, per_page: 50 } }),
       axios.get('/api/customers'),
       axios.get('/api/warehouses'),
       axios.get('/api/sales/products-with-stock'),
       axios.get('/api/bank-accounts'),
-      axios.get('/api/accounts/balances/summary').catch(() => ({ data: {} }))
+      axios.get('/api/accounts').catch(() => ({ data: [] })),
+      axios.get('/api/employees/for-dropdown').catch(() => ({ data: [] })),
+      axios.get('/api/counters').catch(() => ({ data: [] }))
     ])
 
     completedInvoices.value = invRes.data.data || invRes.data || []
@@ -567,12 +655,20 @@ const fetchInitialData = async () => {
     warehouses.value = whRes.data.data || whRes.data || []
     availableProducts.value = prodRes.data.items || []
     bankAccounts.value = bankRes.data.data || bankRes.data || []
+    salesmen.value = empRes.data.data || empRes.data || []
+    counters.value = cntRes.data.data || cntRes.data || []
 
-    const cashBank = bankAccounts.value.find(b => (b.bank_name && b.bank_name.toLowerCase().includes('cash')) || (b.account_name && b.account_name.toLowerCase().includes('cash')) || b.is_default)
-    cashAccountBalance.value = cashBank ? (cashBank.current_balance || 0) : (accRes.data?.cash_balance || 500000)
+    const accountsList = accRes.data.data || accRes.data || []
+    const cashAcc = accountsList.find(a => a.account_code === '1010' || (a.account_name && a.account_name.toLowerCase().includes('cash')))
+    if (cashAcc) {
+      cashAccountBalance.value = parseFloat(cashAcc.current_balance || cashAcc.calculated_balance || 0)
+    } else {
+      const defaultBank = bankAccounts.value.find(b => (b.bank_name && b.bank_name.toLowerCase().includes('cash')) || b.is_default)
+      cashAccountBalance.value = defaultBank ? parseFloat(defaultBank.current_balance || 0) : 50000
+    }
 
     const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0]
-    if (defaultWh) {
+    if (defaultWh && !form.warehouse_id) {
       form.warehouse_id = defaultWh.id
     }
   } catch (err) {
@@ -591,12 +687,14 @@ const onOriginalSaleSelect = async () => {
     const sale = res.data
     form.original_sale_id = sale.id
     form.customer_id = sale.customer_id
+    if (sale.salesman_id) form.salesman_id = sale.salesman_id
+    if (sale.counter_id) form.counter_id = sale.counter_id
 
     if (sale.warehouse_id) {
       form.warehouse_id = sale.warehouse_id
     }
 
-    // Populate returned items from original sale
+    // Populate returned items from original sale with original dispatch warehouse info
     form.items = (sale.sale_items || sale.saleItems || []).map(item => {
       const unitPrice = parseFloat(item.unit_price || 0)
       const qty = parseInt(item.quantity || 1)
@@ -611,13 +709,15 @@ const onOriginalSaleSelect = async () => {
         original_qty: qty,
         unit_price: unitPrice,
         tax_amount: tax,
-        total_amount: (qty * unitPrice) + tax
+        total_amount: (qty * unitPrice) + tax,
+        source_warehouse_id: item.warehouse_id || sale.warehouse_id,
+        source_warehouse_name: item.warehouse?.name || sale.warehouse?.name || 'Original Dispatch Warehouse'
       }
     })
 
     // Pre-populate refund splits with return total
     const returnTotal = form.items.reduce((s, i) => s + i.total_amount, 0)
-    paymentSplits.value = [{ type: 'cash', bank_id: null, amount: returnTotal }]
+    paymentSplits.value = [{ selected_account_key: 'cash', type: 'cash', bank_id: null, amount: returnTotal }]
   } catch (err) {
     errorMessage.value = 'Failed to load details for selected invoice.'
   }
@@ -637,7 +737,8 @@ const addProductToReturn = (prod) => {
     original_qty: null,
     unit_price: prod.price || 0,
     tax_amount: 0,
-    total_amount: prod.price || 0
+    total_amount: prod.price || 0,
+    source_warehouse_name: null
   })
 
   productSearch.value = ''
@@ -674,11 +775,18 @@ const submitReturn = async (andPrint = false) => {
     const payload = {
       original_sale_id: form.original_sale_id,
       customer_id: form.customer_id,
+      salesman_id: form.salesman_id,
+      counter_id: form.counter_id,
+      warehouse_id: form.warehouse_id,
       return_date: form.return_date,
       return_reason: form.return_reason,
       refund_method: paymentSplits.value.length > 1 ? 'mixed' : (paymentSplits.value[0]?.type || 'cash'),
-      payments: paymentSplits.value,
-      warehouse_id: form.warehouse_id,
+      payments: paymentSplits.value.map(s => ({
+        type: s.type,
+        method: s.type === 'bank' ? 'bank_transfer' : s.type,
+        bank_id: s.bank_id,
+        amount: parseFloat(s.amount) || 0
+      })),
       return_notes: form.return_notes,
       return_items: form.items.map(item => ({
         original_item_id: item.original_item_id,
