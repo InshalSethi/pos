@@ -508,11 +508,11 @@ class SaleController extends Controller
                 foreach ($rawPayments as $p) {
                     $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
                     $amount = (float)($p['amount'] ?? 0);
-                    $bankId = isset($p['bank_id']) ? (int)$p['bank_id'] : null;
+                    $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int)$p['bank_id'] : null;
                     if ($amount > 0) {
                         $payments[] = [
                             'type' => $type,
-                            'method' => $type === 'bank' ? 'bank_transfer' : $type,
+                            'method' => ($type === 'bank' || $type === 'card' || $type === 'bank_transfer') ? 'bank_transfer' : 'cash',
                             'bank_id' => $bankId,
                             'amount' => $amount,
                         ];
@@ -524,7 +524,7 @@ class SaleController extends Controller
                 $payments[] = [
                     'type' => ($request->payment_method === 'bank_transfer' || $request->payment_method === 'card') ? 'bank' : 'cash',
                     'method' => $request->payment_method,
-                    'bank_id' => $request->bank_id ?? null,
+                    'bank_id' => $request->bank_id ? (int)$request->bank_id : null,
                     'amount' => (float)($request->paid_amount ?? 0)
                 ];
             }
@@ -1071,10 +1071,15 @@ class SaleController extends Controller
             $payments = [];
             if (is_array($rawPayments) && count($rawPayments) > 0) {
                 foreach ($rawPayments as $p) {
-                    if (isset($p['method']) && isset($p['amount'])) {
+                    $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
+                    $amount = (float)($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int)$p['bank_id'] : null;
+                    if ($amount > 0) {
                         $payments[] = [
-                            'method' => (string)$p['method'],
-                            'amount' => (float)$p['amount'],
+                            'type' => $type,
+                            'method' => ($type === 'bank' || $type === 'card' || $type === 'bank_transfer') ? 'bank_transfer' : 'cash',
+                            'bank_id' => $bankId,
+                            'amount' => $amount,
                         ];
                     }
                 }
@@ -1082,8 +1087,10 @@ class SaleController extends Controller
 
             if (empty($payments) && $request->payment_method) {
                 $payments[] = [
+                    'type' => ($request->payment_method === 'bank_transfer' || $request->payment_method === 'card') ? 'bank' : 'cash',
                     'method' => $request->payment_method,
-                    'amount' => (float)($request->paid_amount ?? 0)
+                    'bank_id' => $request->bank_id ? (int)$request->bank_id : null,
+                    'amount' => (float)($request->paid_amount ?? $sale->paid_amount ?? 0)
                 ];
             }
 
@@ -1262,12 +1269,9 @@ class SaleController extends Controller
                     $entry->update(['status' => 'reversed']);
                 }
 
-                // Create new fresh double-entry journal entry for the updated invoice values
+                // Create new fresh atomic double-entry journal entry for the updated invoice values
                 $accountingService = new DoubleEntryAccountingService();
-                $accountingService->createSalesInvoiceEntry($sale);
-                if (!empty($payments)) {
-                    $accountingService->processInvoicePayments($sale, $payments);
-                }
+                $accountingService->processSalesInvoiceAccounting($sale, $payments);
             } catch (\Throwable $accountingError) {
                 \Illuminate\Support\Facades\Log::warning('Accounting entry update failed (non-blocking): ' . $accountingError->getMessage());
             }

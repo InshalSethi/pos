@@ -2420,9 +2420,11 @@ const loadBankAccounts = async () => {
     const response = await api.get('/bank-accounts');
     const rawData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
     allAccounts.value = rawData;
-    if (activeBankAccounts.value.length > 0 && selectedBankIds.value.length === 0) {
+    if (activeBankAccounts.value.length > 0 && selectedBankIds.value.length === 0 && Object.keys(bankPaymentAmounts.value).length === 0) {
       selectedBankIds.value = [activeBankAccounts.value[0].id];
-      bankPaymentAmounts.value[activeBankAccounts.value[0].id] = 0;
+      if (bankPaymentAmounts.value[activeBankAccounts.value[0].id] === undefined) {
+        bankPaymentAmounts.value[activeBankAccounts.value[0].id] = 0;
+      }
     }
   } catch (error) {
     console.error('Error loading bank accounts:', error);
@@ -3738,17 +3740,26 @@ const loadInvoiceData = async () => {
     if (Array.isArray(sale.payment_details) && sale.payment_details.length > 0) {
       const methods = [];
       const bankIds = [];
+      bankPaymentAmounts.value = {};
+
       sale.payment_details.forEach(p => {
-        const type = p.type || p.method;
+        const type = (p.type || p.method || 'cash').toLowerCase();
+        const amt = parseFloat(p.amount) || 0;
         if (type === 'cash') {
           if (!methods.includes('cash')) methods.push('cash');
-          paymentAmounts.value.cash = parseFloat(p.amount) || 0;
+          paymentAmounts.value.cash = amt;
         } else if (type === 'bank' || type === 'card' || type === 'bank_transfer') {
           const methodType = type === 'card' ? 'card' : 'bank_transfer';
           if (!methods.includes(methodType)) methods.push(methodType);
-          if (p.bank_id) {
-            bankIds.push(p.bank_id);
-            bankPaymentAmounts.value[p.bank_id] = parseFloat(p.amount) || 0;
+
+          let targetBankId = p.bank_id ? Number(p.bank_id) : (sale.bank_id ? Number(sale.bank_id) : null);
+          if (!targetBankId && activeBankAccounts.value.length > 0) {
+            targetBankId = Number(activeBankAccounts.value[0].id);
+          }
+
+          if (targetBankId) {
+            if (!bankIds.includes(targetBankId)) bankIds.push(targetBankId);
+            bankPaymentAmounts.value[targetBankId] = (bankPaymentAmounts.value[targetBankId] || 0) + amt;
           }
         }
       });
@@ -3756,9 +3767,19 @@ const loadInvoiceData = async () => {
       if (bankIds.length > 0) selectedBankIds.value = bankIds;
     } else {
       const pm = sale.payment_method || 'cash';
-      selectedPaymentMethods.value = [pm === 'mixed' ? 'cash' : pm];
-      if (pm === 'cash' || pm === 'mixed') {
-        paymentAmounts.value.cash = parseFloat(sale.paid_amount) || 0;
+      if (pm === 'bank_transfer' || pm === 'card' || pm === 'bank') {
+        const methodType = pm === 'card' ? 'card' : 'bank_transfer';
+        selectedPaymentMethods.value = [methodType];
+        let targetBankId = sale.bank_id ? Number(sale.bank_id) : (activeBankAccounts.value[0]?.id ? Number(activeBankAccounts.value[0].id) : null);
+        if (targetBankId) {
+          selectedBankIds.value = [targetBankId];
+          bankPaymentAmounts.value = { [targetBankId]: parseFloat(sale.paid_amount) || 0 };
+        }
+      } else {
+        selectedPaymentMethods.value = [pm === 'mixed' ? 'cash' : pm];
+        if (pm === 'cash' || pm === 'mixed') {
+          paymentAmounts.value.cash = parseFloat(sale.paid_amount) || 0;
+        }
       }
     }
     

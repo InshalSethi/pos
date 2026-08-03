@@ -17,6 +17,20 @@ class BankAccount extends Model
     use HasUtcDatabaseTimezones;
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::saved(function ($bankAccount) {
+            if ($bankAccount->chart_account_id) {
+                $balanceToSync = $bankAccount->current_balance ?? $bankAccount->opening_balance ?? 0;
+                \Illuminate\Support\Facades\DB::table('chart_of_accounts')
+                    ->where('id', $bankAccount->chart_account_id)
+                    ->update([
+                        'current_balance' => (float)$balanceToSync,
+                    ]);
+            }
+        });
+    }
+
     protected $fillable = [
         'account_name',
         'bank_name',

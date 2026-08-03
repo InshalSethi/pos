@@ -3508,20 +3508,26 @@ const saveInvoice = async (shouldPrint = false) => {
       payments: (() => {
         const list = [];
         if (selectedPaymentMethods.value.includes('cash')) {
-          list.push({
-            type: 'cash',
-            method: 'cash',
-            amount: parseFloat(paymentAmounts.value.cash) || 0
-          });
+          const cashAmt = parseFloat(paymentAmounts.value.cash) || 0;
+          if (cashAmt > 0) {
+            list.push({
+              type: 'cash',
+              method: 'cash',
+              amount: cashAmt
+            });
+          }
         }
         if (selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer')) {
           selectedBankIds.value.forEach(bankId => {
-            list.push({
-              type: 'bank',
-              method: 'bank_transfer',
-              bank_id: Number(bankId),
-              amount: parseFloat(bankPaymentAmounts.value[bankId]) || 0
-            });
+            const bankAmt = parseFloat(bankPaymentAmounts.value[bankId]) || 0;
+            if (bankAmt > 0) {
+              list.push({
+                type: 'bank',
+                method: selectedPaymentMethods.value.includes('card') ? 'card' : 'bank_transfer',
+                bank_id: Number(bankId),
+                amount: bankAmt
+              });
+            }
           });
         }
         return list;
