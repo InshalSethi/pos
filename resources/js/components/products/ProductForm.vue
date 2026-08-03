@@ -464,12 +464,12 @@
             <!-- Inline Activation Block Checkboxes -->
             <div class="flex items-center gap-5 mb-3">
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
-                <input type="checkbox" v-model="form.enabled_for_sale" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
-                Sale Information
-              </label>
-              <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
                 <input type="checkbox" v-model="form.enabled_for_purchase" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
                 Purchase Information
+              </label>
+              <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
+                <input type="checkbox" v-model="form.enabled_for_sale" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+                Sale Information
               </label>
               <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none">
                 <input type="checkbox" v-model="form.enabled_for_wholesale" class="rounded border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
@@ -483,31 +483,6 @@
 
             <!-- Billing Sub-grid -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div v-show="form.enabled_for_sale">
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  Sale Price <span v-if="form.enabled_for_sale && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
-                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
-                      The standard retail selling price offered to consumers.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
-                    </span>
-                  </span>
-                </label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  v-model="form.selling_price" 
-                  :disabled="!form.enabled_for_sale || form.has_variations"
-                  :class="(!form.enabled_for_sale || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
-                  class="w-full px-3 py-1.5 rounded-md text-sm font-medium transition-all outline-none border" 
-                  :required="form.enabled_for_sale && !form.has_variations"
-                />
-              </div>
               <div v-show="form.enabled_for_purchase">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Purchase Price <span v-if="form.enabled_for_purchase && !form.has_variations" class="text-rose-500">*</span>
@@ -531,6 +506,31 @@
                   :class="(!form.enabled_for_purchase || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
                   class="w-full px-3 py-1.5 rounded-md text-sm font-medium transition-all outline-none border"
                   :required="form.enabled_for_purchase && !form.has_variations"
+                />
+              </div>
+              <div v-show="form.enabled_for_sale">
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Sale Price <span v-if="form.enabled_for_sale && !form.has_variations" class="text-rose-500">*</span>
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      The standard retail selling price offered to consumers.
+                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                    </span>
+                  </span>
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  v-model="form.selling_price" 
+                  :disabled="!form.enabled_for_sale || form.has_variations"
+                  :class="(!form.enabled_for_sale || form.has_variations) ? 'bg-gray-50 dark:bg-[#1E1E1E]/50 border-gray-200 dark:border-[#2E2E2E] text-gray-450 dark:text-slate-650 cursor-not-allowed' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-300 focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25'"
+                  class="w-full px-3 py-1.5 rounded-md text-sm font-medium transition-all outline-none border" 
+                  :required="form.enabled_for_sale && !form.has_variations"
                 />
               </div>
               <div v-show="form.enabled_for_wholesale">
