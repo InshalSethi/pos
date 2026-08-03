@@ -92,7 +92,7 @@
                     </button>
 
                     <!-- Custom Calendar Popover -->
-                    <div v-if="showCalendar" class="absolute z-50 left-0 top-full mt-1.5 w-[225px] rounded-xl shadow-xl dark:shadow-2xl dark:shadow-black/80 bg-white text-slate-900 border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 p-2 select-none">
+                    <div v-if="showCalendar" class="absolute z-50 left-0 top-full mt-1.5 w-[225px] rounded-xl shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 p-2 select-none">
                       <!-- Month/Year Nav -->
                       <div class="flex items-center justify-between mb-1">
                         <button type="button" @click="calPrevMonth" class="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
@@ -116,7 +116,7 @@
                             <!-- Month Floating List -->
                             <div
                               v-if="showMonthList"
-                              class="absolute z-[60] left-0 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/80 bg-white text-slate-900 border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                              class="absolute z-[60] left-0 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
                             >
                               <button
                                 v-for="(name, idx) in monthNames"
@@ -147,7 +147,7 @@
                             <!-- Year Floating List -->
                             <div
                               v-if="showYearList"
-                              class="absolute z-[60] left-1/2 -translate-x-1/2 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-xl dark:shadow-2xl dark:shadow-black/80 bg-white text-slate-900 border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                              class="absolute z-[60] left-1/2 -translate-x-1/2 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
                             >
                               <button
                                 v-for="y in yearOptions"
