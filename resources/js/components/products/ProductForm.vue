@@ -1279,6 +1279,63 @@
       </div>
     </div>
 
+    <!-- 0-Quantity Confirmation Modal -->
+    <Teleport to="body">
+      <div v-if="showZeroQtyModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-all">
+        <div class="absolute inset-0" @click="showZeroQtyModal = false"></div>
+        <div class="relative w-full max-w-md p-6 bg-white dark:bg-[#1E1E1E] rounded-2xl border border-slate-200 dark:border-[#2E2E2E] shadow-2xl dark:shadow-slate-950/90 space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+          
+          <!-- Icon & Header -->
+          <div class="flex items-start gap-3.5">
+            <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl text-amber-500 shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Save with 0 Quantity?</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed font-medium">
+                Do You Want to Save with 0 quantity? You can update inventory stock at any time.
+              </p>
+            </div>
+          </div>
+
+          <!-- Checkbox Option: Do not show again -->
+          <div class="pt-2 border-t border-slate-100 dark:border-[#2E2E2E]">
+            <label class="flex items-center gap-2 cursor-pointer select-none group">
+              <input 
+                type="checkbox" 
+                v-model="doNotShowZeroQtyAgain" 
+                class="w-4 h-4 rounded border-gray-300 dark:border-[#2E2E2E] text-emerald-600 focus:ring-emerald-500 dark:bg-[#1E1E1E] cursor-pointer"
+              />
+              <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
+                Do not show again?
+              </span>
+            </label>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-2.5 pt-2">
+            <button 
+              type="button" 
+              @click="showZeroQtyModal = false" 
+              class="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-[#252525] hover:bg-slate-200 dark:hover:bg-[#303030] rounded-xl transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              @click="confirmZeroQtySave" 
+              class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer"
+            >
+              Yes, Save
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Manage Media Modal -->
     <Teleport to="body">
       <div v-if="showMediaManagerModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
@@ -1711,6 +1768,10 @@ const emit = defineEmits(['submit']);
 
 // Hollow favorite star state
 const isStarred = ref(false);
+
+// 0-Quantity Confirmation Modal state
+const showZeroQtyModal = ref(false);
+const doNotShowZeroQtyAgain = ref(false);
 
 // Local errors for toast notifications with auto-hide timer
 const localErrors = ref([]);
@@ -3490,13 +3551,25 @@ const submit = () => {
     if (isNaN(totalStockQty)) totalStockQty = 0;
   }
 
-  if (totalStockQty === 0) {
-    const confirmSave = confirm("Do You Want to Save with 0 quantity?");
-    if (!confirmSave) {
-      return;
-    }
+  const isPreferenceSet = localStorage.getItem('pos_hide_zero_qty_alert') === 'true';
+
+  if (totalStockQty === 0 && !isPreferenceSet) {
+    showZeroQtyModal.value = true;
+    return;
   }
 
+  executeSubmit();
+};
+
+const confirmZeroQtySave = () => {
+  if (doNotShowZeroQtyAgain.value) {
+    localStorage.setItem('pos_hide_zero_qty_alert', 'true');
+  }
+  showZeroQtyModal.value = false;
+  executeSubmit();
+};
+
+const executeSubmit = () => {
   // Clear localStorage status on successful form submission intent
   localStorage.removeItem('pos_item_form_status');
 
