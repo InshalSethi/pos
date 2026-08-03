@@ -1317,70 +1317,7 @@
               </div>
             </div>
 
-            <!-- SECTION C: Taxes & Discount Defaults -->
-            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
-              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
-                <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-black text-xs">C</span>
-                <div>
-                  <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Section C: Taxes & Discount Defaults</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-zinc-400">Default included system taxes and manual tax/discount overrides control.</p>
-                </div>
-              </div>
 
-              <div class="space-y-6">
-                
-                <!-- 1. Default Included System Taxes -->
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-2">
-                    Default Included System Taxes
-                  </label>
-                  <div v-if="taxes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    <div
-                      v-for="tax in taxes"
-                      :key="tax.id"
-                      @click="toggleDefaultSystemTax(tax.id)"
-                      :class="[
-                        'p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all',
-                        (invoicePurchaseSettings.default_system_tax_ids || []).includes(Number(tax.id))
-                          ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
-                          : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800'
-                      ]"
-                    >
-                      <div class="flex items-center space-x-2.5">
-                        <input
-                          type="checkbox"
-                          :checked="(invoicePurchaseSettings.default_system_tax_ids || []).includes(Number(tax.id))"
-                          class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4 pointer-events-none"
-                        />
-                        <span class="text-xs font-bold">{{ tax.name }} ({{ tax.value }}{{ tax.type === 'percentage' ? '%' : '' }})</span>
-                      </div>
-                      <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-500">
-                        {{ tax.sale_invoice_required ? 'Required' : 'Optional' }}
-                      </span>
-                    </div>
-                  </div>
-                  <p v-else class="text-xs text-slate-400 dark:text-zinc-500 italic">No system taxes configured in Tax Module.</p>
-                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5">Select which system taxes are enabled by default on new invoice creation.</p>
-                </div>
-
-                <!-- 2. Allow Manual Taxes & Discounts -->
-                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
-                  <div>
-                    <label class="text-xs font-bold text-slate-800 dark:text-zinc-200 block">Allow Manual Taxes & Discounts</label>
-                    <p class="text-[10px] text-slate-400 dark:text-zinc-400">Allow cashiers and sales representatives to enter manual tax and discount amounts during POS/Invoice creation.</p>
-                  </div>
-                  <label class="relative inline-flex items-center cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      v-model="invoicePurchaseSettings.allow_manual_taxes_discounts"
-                      class="sr-only peer"
-                    />
-                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
-                  </label>
-                </div>
-
-              </div>
-            </div>
 
             <!-- Bottom Save Action Bar -->
             <div class="flex justify-end pt-4">
@@ -2209,16 +2146,6 @@ const saveInvoicePurchaseSettings = async () => {
     showToast('Failed to save settings: ' + (e.response?.data?.message || e.message), 'error');
   } finally {
     savingInvoicePurchaseSettings.value = false;
-  }
-};
-
-const toggleDefaultSystemTax = (taxId) => {
-  const numId = Number(taxId);
-  const current = invoicePurchaseSettings.value.default_system_tax_ids || [];
-  if (current.includes(numId)) {
-    invoicePurchaseSettings.value.default_system_tax_ids = current.filter(id => id !== numId);
-  } else {
-    invoicePurchaseSettings.value.default_system_tax_ids = [...current, numId];
   }
 };
 

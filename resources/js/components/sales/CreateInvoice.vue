@@ -2000,16 +2000,6 @@ const loadCompanyInvoiceSettings = async () => {
       if (res.data.default_terms_conditions && !invoiceForm.value.footer) {
         invoiceForm.value.footer = res.data.default_terms_conditions;
       }
-
-      if (Array.isArray(res.data.default_system_tax_ids)) {
-        const defaultTaxIds = res.data.default_system_tax_ids.map(id => Number(id));
-        const disabledIds = requiredTaxes.value
-          .map(t => Number(t.id))
-          .filter(id => !defaultTaxIds.includes(id));
-        if (disabledIds.length > 0) {
-          disabledRequiredTaxIds.value = disabledIds;
-        }
-      }
     }
   } catch (e) {
     console.error('Error loading company invoice settings:', e);
