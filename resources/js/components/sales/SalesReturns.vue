@@ -18,7 +18,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 dark:border-zinc-800 mb-6 pb-0.5 space-y-4 sm:space-y-0">
       <div class="flex flex-wrap gap-x-6 gap-y-2">
         <button
-          v-for="tab in tabs"
+          v-for="tab in visibleTabs"
           :key="tab.id"
           @click="setActiveTab(tab.id)"
           class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
@@ -30,6 +30,16 @@
             :class="isTabActive(tab.id) ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'"
           >
             {{ counts[tab.id] || 0 }}
+          </span>
+          <span
+            v-if="tab.id !== 'all'"
+            @click.stop="removeFilterOption(tab.id)"
+            class="ml-0.5 text-slate-400 hover:text-rose-500 rounded-full p-0.5 transition-colors"
+            title="Remove filter"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
           </span>
         </button>
       </div>
@@ -66,7 +76,7 @@
           <!-- Filter Dropdown List -->
           <div
             v-if="showFilterDropdown"
-            class="absolute right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
+            class="absolute right-0 mt-1 w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
           >
             <button
               v-for="option in ['cash', 'card', 'store_credit', 'exchange']"
@@ -78,6 +88,17 @@
               <span>{{ formatRefundLabel(option) }}</span>
               <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+            </button>
+            <div v-if="selectedFilters.length > 0" class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
+            <button
+              v-if="selectedFilters.length > 0"
+              @click.stop="clearFilterSelection"
+              class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 font-semibold flex items-center justify-between transition-colors cursor-pointer"
+            >
+              <span>Clear Filter</span>
+              <svg class="w-3 h-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
@@ -471,8 +492,28 @@ const tabs = [
 
 const selectedFilters = ref([]);
 
+const visibleTabs = computed(() => {
+  if (selectedFilters.value.length === 0) {
+    return tabs.filter(tab => tab.id === 'all');
+  }
+  return tabs.filter(tab => tab.id === 'all' || selectedFilters.value.includes(tab.id));
+});
+
 const isTabActive = (tabId) => {
   return currentTab.value === tabId;
+};
+
+const setActiveTab = (tabId) => {
+  if (tabId === 'all') {
+    selectedFilters.value = [];
+    currentTab.value = 'all';
+  } else {
+    currentTab.value = tabId;
+    if (!selectedFilters.value.includes(tabId)) {
+      selectedFilters.value.push(tabId);
+    }
+  }
+  fetchReturns(1);
 };
 
 const toggleFilterDropdown = () => {
@@ -484,12 +525,28 @@ const toggleFilterOption = (option) => {
   if (index > -1) {
     selectedFilters.value.splice(index, 1);
     if (currentTab.value === option) {
-      currentTab.value = 'all';
-      fetchReturns(1);
+      if (selectedFilters.value.length > 0) {
+        currentTab.value = selectedFilters.value[selectedFilters.value.length - 1];
+      } else {
+        currentTab.value = 'all';
+      }
     }
   } else {
     selectedFilters.value.push(option);
+    currentTab.value = option;
   }
+  fetchReturns(1);
+};
+
+const removeFilterOption = (option) => {
+  toggleFilterOption(option);
+};
+
+const clearFilterSelection = () => {
+  selectedFilters.value = [];
+  currentTab.value = 'all';
+  showFilterDropdown.value = false;
+  fetchReturns(1);
 };
 
 const clearAllFilters = () => {
@@ -596,11 +653,6 @@ const handleSort = (field) => {
 };
 
 const handlePerPageChange = () => {
-  fetchReturns(1);
-};
-
-const setActiveTab = (tabId) => {
-  currentTab.value = tabId;
   fetchReturns(1);
 };
 
