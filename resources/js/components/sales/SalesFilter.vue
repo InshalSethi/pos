@@ -31,24 +31,15 @@
       >
         <!-- Header -->
         <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/50">
-          <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z" />
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Advanced Filter</h2>
-              <p class="text-xs text-slate-500 dark:text-zinc-400">Refine invoices by product, warehouse, sales rep, counter & status</p>
-            </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Advanced Filter</h2>
+            <p class="text-xs text-slate-500 dark:text-zinc-400">Refine invoices by product, warehouse, sales rep, counter & status</p>
           </div>
           <button
             @click="close"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer font-bold text-base leading-none"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            ✕
           </button>
         </div>
 
@@ -78,26 +69,18 @@
                 @click="togglePopover('product')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
               >
-                <div class="flex items-center space-x-2 truncate pr-2">
-                  <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                  </svg>
-                  <span class="truncate" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedProductLabel }">
-                    {{ selectedProductLabel || 'Select a Top Selling Product' }}
-                  </span>
-                </div>
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedProductLabel }">
+                  {{ selectedProductLabel || 'Select a Top Selling Product' }}
+                </span>
                 <div class="flex items-center space-x-1">
                   <button
                     v-if="localFilters.product_id || localFilters.product_search"
                     @click.stop="clearProduct"
-                    class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-0.5"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 px-1 font-bold text-xs"
                     title="Clear selected product"
                   >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    ✕
                   </button>
-                  <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': activePopover === 'product' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
                 </div>
               </button>
 
@@ -126,7 +109,6 @@
                     :class="{ 'bg-blue-50/50 dark:bg-blue-900/30 text-blue-600': !localFilters.product_id && !localFilters.product_search }"
                   >
                     <span>All Products / No Filter</span>
-                    <svg v-if="!localFilters.product_id && !localFilters.product_search" class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                   </button>
                   <button
                     v-for="p in topProducts"
@@ -136,15 +118,9 @@
                     class="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between space-x-2 border-t border-slate-50 dark:border-zinc-800/60 cursor-pointer"
                     :class="{ 'bg-blue-50/80 dark:bg-blue-900/40 font-semibold text-blue-700 dark:text-blue-300': String(localFilters.product_id) === String(p.id) }"
                   >
-                    <div class="flex items-center space-x-2.5 truncate">
-                      <div class="w-6 h-6 rounded bg-slate-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-slate-400 font-bold text-[10px]">
-                        <img v-if="p.image" :src="p.image" class="w-6 h-6 rounded object-cover" />
-                        <span v-else>{{ p.name ? p.name.charAt(0).toUpperCase() : 'P' }}</span>
-                      </div>
-                      <div class="truncate">
-                        <div class="font-medium text-slate-800 dark:text-zinc-100 truncate">{{ p.name }}</div>
-                        <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ p.sku || 'N/A' }}</div>
-                      </div>
+                    <div class="truncate">
+                      <div class="font-medium text-slate-800 dark:text-zinc-100 truncate">{{ p.name }}</div>
+                      <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ p.sku || 'N/A' }}</div>
                     </div>
                     <span v-if="p.selling_price" class="text-[11px] font-bold text-slate-600 dark:text-zinc-300 shrink-0">
                       ${{ parseFloat(p.selling_price).toFixed(2) }}
@@ -167,20 +143,12 @@
                 @click="togglePopover('warehouse')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
               >
-                <div class="flex items-center space-x-2 truncate pr-2">
-                  <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"/></svg>
-                  <span class="truncate" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.warehouse_ids.length === 0 }">
-                    {{ warehouseSummaryLabel }}
-                  </span>
-                </div>
-                <div class="flex items-center space-x-1">
-                  <span v-if="localFilters.warehouse_ids.length > 0" class="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-full">
-                    {{ localFilters.warehouse_ids.length }}
-                  </span>
-                  <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': activePopover === 'warehouse' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.warehouse_ids.length === 0 }">
+                  {{ warehouseSummaryLabel }}
+                </span>
+                <span v-if="localFilters.warehouse_ids.length > 0" class="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.warehouse_ids.length }}
+                </span>
               </button>
 
               <!-- Floating Multi-Select Popover (No Search Field) -->
@@ -226,20 +194,12 @@
                 @click="togglePopover('counter')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
               >
-                <div class="flex items-center space-x-2 truncate pr-2">
-                  <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                  <span class="truncate" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.counter_ids.length === 0 }">
-                    {{ counterSummaryLabel }}
-                  </span>
-                </div>
-                <div class="flex items-center space-x-1">
-                  <span v-if="localFilters.counter_ids.length > 0" class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded-full">
-                    {{ localFilters.counter_ids.length }}
-                  </span>
-                  <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': activePopover === 'counter' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.counter_ids.length === 0 }">
+                  {{ counterSummaryLabel }}
+                </span>
+                <span v-if="localFilters.counter_ids.length > 0" class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.counter_ids.length }}
+                </span>
               </button>
 
               <!-- Floating Multi-Select Popover (No Search Field, Cascaded) -->
@@ -288,20 +248,12 @@
                 @click="togglePopover('salesman')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
               >
-                <div class="flex items-center space-x-2 truncate pr-2">
-                  <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                  <span class="truncate" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.salesman_ids.length === 0 }">
-                    {{ salesmanSummaryLabel }}
-                  </span>
-                </div>
-                <div class="flex items-center space-x-1">
-                  <span v-if="localFilters.salesman_ids.length > 0" class="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 px-1.5 py-0.2 rounded-full">
-                    {{ localFilters.salesman_ids.length }}
-                  </span>
-                  <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': activePopover === 'salesman' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.salesman_ids.length === 0 }">
+                  {{ salesmanSummaryLabel }}
+                </span>
+                <span v-if="localFilters.salesman_ids.length > 0" class="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.salesman_ids.length }}
+                </span>
               </button>
 
               <!-- Floating Multi-Select Popover (No Search Field) -->
@@ -346,20 +298,12 @@
                 @click="togglePopover('status')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
               >
-                <div class="flex items-center space-x-2 truncate pr-2">
-                  <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <span class="truncate" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.statuses.length === 0 }">
-                    {{ statusSummaryLabel }}
-                  </span>
-                </div>
-                <div class="flex items-center space-x-1">
-                  <span v-if="localFilters.statuses.length > 0" class="text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 px-1.5 py-0.2 rounded-full">
-                    {{ localFilters.statuses.length }}
-                  </span>
-                  <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': activePopover === 'status' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.statuses.length === 0 }">
+                  {{ statusSummaryLabel }}
+                </span>
+                <span v-if="localFilters.statuses.length > 0" class="text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.statuses.length }}
+                </span>
               </button>
 
               <!-- Floating Multi-Select Popover (No Search Field) -->
@@ -390,8 +334,8 @@
             </div>
           </div>
 
-          <!-- Date Range Section -->
-          <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+          <!-- Date Range Section: Single Unified Date Range Picker Popover -->
+          <div class="space-y-1.5 relative pt-2 border-t border-slate-100 dark:border-zinc-800" @click.stop>
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
                 Date Range
@@ -400,36 +344,181 @@
                 <button
                   type="button"
                   @click="setQuickDate('today')"
-                  class="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded transition-colors"
+                  class="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded transition-colors cursor-pointer"
                 >
                   Today
                 </button>
                 <button
                   type="button"
                   @click="setQuickDate('this_month')"
-                  class="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded transition-colors"
+                  class="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded transition-colors cursor-pointer"
                 >
                   This Month
                 </button>
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <span class="block text-[10px] text-slate-400 dark:text-zinc-500 font-semibold mb-1">From Date</span>
-                <input
-                  v-model="localFilters.date_from"
-                  type="date"
-                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                />
-              </div>
-              <div>
-                <span class="block text-[10px] text-slate-400 dark:text-zinc-500 font-semibold mb-1">To Date</span>
-                <input
-                  v-model="localFilters.date_to"
-                  type="date"
-                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                />
+            <div class="relative">
+              <button
+                type="button"
+                @click="togglePopover('date_range')"
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              >
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': !dateRangeSummaryLabel }">
+                  {{ dateRangeSummaryLabel || 'Select Date Range (Start Date - End Date)' }}
+                </span>
+                <div class="flex items-center space-x-1">
+                  <button
+                    v-if="localFilters.date_from || localFilters.date_to"
+                    @click.stop="clearDateRange"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 px-1 font-bold text-xs cursor-pointer"
+                    title="Clear date range"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </button>
+
+              <!-- Floating Single Calendar Date Range Popover -->
+              <div
+                v-if="activePopover === 'date_range'"
+                class="absolute left-0 right-0 bottom-full mb-1 sm:top-full sm:bottom-auto sm:mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-3 animate-fade-in text-xs w-full select-none"
+              >
+                <!-- Quick Preset Pills inside Calendar -->
+                <div class="flex flex-wrap gap-1 pb-2.5 mb-2 border-b border-slate-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    @click="setQuickDate('today')"
+                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    @click="setQuickDate('yesterday')"
+                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                  >
+                    Yesterday
+                  </button>
+                  <button
+                    type="button"
+                    @click="setQuickDate('this_week')"
+                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                  >
+                    This Week
+                  </button>
+                  <button
+                    type="button"
+                    @click="setQuickDate('this_month')"
+                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                  >
+                    This Month
+                  </button>
+                  <button
+                    type="button"
+                    @click="setQuickDate('last_month')"
+                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                  >
+                    Last Month
+                  </button>
+                  <button
+                    type="button"
+                    @click="clearDateRange"
+                    class="px-2 py-1 text-[10px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors ml-auto cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <!-- Calendar Header: Prev / Month Year Title / Next -->
+                <div class="flex items-center justify-between pb-2 mb-1 px-1">
+                  <button
+                    type="button"
+                    @click="prevMonth"
+                    class="p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded font-bold cursor-pointer"
+                  >
+                    &lt;
+                  </button>
+                  <div class="font-bold text-slate-800 dark:text-zinc-100 text-xs">
+                    {{ calendarMonthTitle }}
+                  </div>
+                  <button
+                    type="button"
+                    @click="nextMonth"
+                    class="p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded font-bold cursor-pointer"
+                  >
+                    &gt;
+                  </button>
+                </div>
+
+                <!-- Day Headers (Sun - Sat) -->
+                <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1">
+                  <span>Su</span>
+                  <span>Mo</span>
+                  <span>Tu</span>
+                  <span>We</span>
+                  <span>Th</span>
+                  <span>Fr</span>
+                  <span>Sa</span>
+                </div>
+
+                <!-- Calendar Days Grid -->
+                <div class="grid grid-cols-7 gap-y-1 text-center" @mouseleave="hoverDate = null">
+                  <div
+                    v-for="(day, idx) in calendarDays"
+                    :key="idx"
+                    class="relative py-0.5 flex items-center justify-center cursor-pointer"
+                    @click="handleDateClick(day.dateStr)"
+                    @mouseenter="hoverDate = day.dateStr"
+                  >
+                    <!-- Highlight range background overlay -->
+                    <div
+                      v-if="isDateInRange(day.dateStr)"
+                      class="absolute inset-y-0.5 inset-x-0 bg-blue-50 dark:bg-blue-900/40"
+                      :class="{
+                        'rounded-l-md': isDateStart(day.dateStr),
+                        'rounded-r-md': isDateEnd(day.dateStr) || isDateHoverEnd(day.dateStr)
+                      }"
+                    ></div>
+
+                    <!-- Day Button Number -->
+                    <button
+                      type="button"
+                      class="relative z-10 w-7 h-7 text-xs flex items-center justify-center rounded-md font-medium transition-all cursor-pointer"
+                      :class="{
+                        'opacity-30': !day.isCurrentMonth,
+                        'bg-blue-600 text-white font-bold shadow-xs': isDateStart(day.dateStr) || isDateEnd(day.dateStr),
+                        'text-blue-700 dark:text-blue-300 font-bold': isDateInRange(day.dateStr) && !isDateStart(day.dateStr) && !isDateEnd(day.dateStr),
+                        'hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200': !isDateStart(day.dateStr) && !isDateEnd(day.dateStr) && !isDateInRange(day.dateStr),
+                        'ring-1 ring-blue-500': isToday(day.dateStr) && !isDateStart(day.dateStr) && !isDateEnd(day.dateStr)
+                      }"
+                    >
+                      {{ day.dayNum }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Selected Range Footer Info -->
+                <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400">
+                  <div>
+                    <span v-if="localFilters.date_from && !localFilters.date_to" class="text-blue-600 dark:text-blue-400 font-medium">
+                      Select end date...
+                    </span>
+                    <span v-else-if="localFilters.date_from && localFilters.date_to" class="font-medium text-slate-700 dark:text-zinc-200">
+                      Range selected
+                    </span>
+                    <span v-else class="italic text-slate-400">
+                      Click start date
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="togglePopover('date_range')"
+                    class="px-2.5 py-1 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors text-[10px] cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -455,9 +544,8 @@
             <button
               type="button"
               @click="applyFilters"
-              class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer"
+              class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-lg shadow-sm transition-all flex items-center cursor-pointer"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <span>Apply Filters</span>
             </button>
           </div>
@@ -732,17 +820,191 @@ const clearProduct = () => {
   localFilters.value.product_search = '';
 };
 
+// Date Range Picker State & Helpers
+const calendarYear = ref(new Date().getFullYear());
+const calendarMonth = ref(new Date().getMonth());
+const hoverDate = ref(null);
+
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const calendarMonthTitle = computed(() => {
+  return `${monthNames[calendarMonth.value]} ${calendarYear.value}`;
+});
+
+const prevMonth = () => {
+  if (calendarMonth.value === 0) {
+    calendarMonth.value = 11;
+    calendarYear.value--;
+  } else {
+    calendarMonth.value--;
+  }
+};
+
+const nextMonth = () => {
+  if (calendarMonth.value === 11) {
+    calendarMonth.value = 0;
+    calendarYear.value++;
+  } else {
+    calendarMonth.value++;
+  }
+};
+
+const calendarDays = computed(() => {
+  const year = calendarYear.value;
+  const month = calendarMonth.value;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  const days = [];
+
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrevMonth - i;
+    const prevM = month === 0 ? 11 : month - 1;
+    const prevY = month === 0 ? year - 1 : year;
+    const dateStr = `${prevY}-${String(prevM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ dayNum: d, dateStr, isCurrentMonth: false });
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ dayNum: d, dateStr, isCurrentMonth: true });
+  }
+
+  const totalSlots = days.length > 35 ? 42 : 35;
+  const remaining = totalSlots - days.length;
+  for (let d = 1; d <= remaining; d++) {
+    const nextM = month === 11 ? 0 : month + 1;
+    const nextY = month === 11 ? year + 1 : year;
+    const dateStr = `${nextY}-${String(nextM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ dayNum: d, dateStr, isCurrentMonth: false });
+  }
+
+  return days;
+});
+
+const todayDateStr = computed(() => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+});
+
+const isToday = (dateStr) => dateStr === todayDateStr.value;
+const isDateStart = (dateStr) => localFilters.value.date_from === dateStr;
+const isDateEnd = (dateStr) => localFilters.value.date_to === dateStr;
+
+const isDateHoverEnd = (dateStr) => {
+  return !!(localFilters.value.date_from && !localFilters.value.date_to && hoverDate.value === dateStr);
+};
+
+const isDateInRange = (dateStr) => {
+  const from = localFilters.value.date_from;
+  const to = localFilters.value.date_to || (from && hoverDate.value && hoverDate.value >= from ? hoverDate.value : null);
+  if (!from || !to) return false;
+  return dateStr >= from && dateStr <= to;
+};
+
+const handleDateClick = (dateStr) => {
+  const from = localFilters.value.date_from;
+  const to = localFilters.value.date_to;
+
+  if (!from || (from && to)) {
+    localFilters.value.date_from = dateStr;
+    localFilters.value.date_to = '';
+  } else if (from && !to) {
+    if (dateStr < from) {
+      localFilters.value.date_from = dateStr;
+      localFilters.value.date_to = '';
+    } else {
+      localFilters.value.date_to = dateStr;
+    }
+  }
+};
+
+const formatDateLabel = (dateStr) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1;
+  const day = parseInt(parts[2]);
+  const d = new Date(year, month, day);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const dateRangeSummaryLabel = computed(() => {
+  const from = localFilters.value.date_from;
+  const to = localFilters.value.date_to;
+  if (from && to) {
+    if (from === to) return formatDateLabel(from);
+    return `${formatDateLabel(from)} - ${formatDateLabel(to)}`;
+  }
+  if (from) return `From ${formatDateLabel(from)}`;
+  if (to) return `Until ${formatDateLabel(to)}`;
+  return '';
+});
+
+const clearDateRange = () => {
+  localFilters.value.date_from = '';
+  localFilters.value.date_to = '';
+};
+
 const setQuickDate = (preset) => {
   const now = new Date();
+  let from = '';
+  let to = '';
+
+  const format = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   if (preset === 'today') {
-    const todayStr = now.toISOString().split('T')[0];
-    localFilters.value.date_from = todayStr;
-    localFilters.value.date_to = todayStr;
+    from = format(now);
+    to = format(now);
+  } else if (preset === 'yesterday') {
+    const y = new Date(now);
+    y.setDate(now.getDate() - 1);
+    from = format(y);
+    to = format(y);
+  } else if (preset === 'this_week') {
+    const dayOfWeek = now.getDay();
+    const distanceToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() - distanceToMon);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    from = format(mon);
+    to = format(sun);
   } else if (preset === 'this_month') {
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const todayStr = now.toISOString().split('T')[0];
-    localFilters.value.date_from = firstDay;
-    localFilters.value.date_to = todayStr;
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    from = format(firstDay);
+    to = format(lastDay);
+  } else if (preset === 'last_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+    from = format(firstDay);
+    to = format(lastDay);
+  }
+
+  localFilters.value.date_from = from;
+  localFilters.value.date_to = to;
+
+  if (from) {
+    const parts = from.split('-');
+    if (parts.length === 3) {
+      calendarYear.value = parseInt(parts[0]);
+      calendarMonth.value = parseInt(parts[1]) - 1;
+    }
   }
 };
 
