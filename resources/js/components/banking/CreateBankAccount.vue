@@ -52,12 +52,12 @@
           <!-- GENERAL FIELDS GRID -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">NAME *</label>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">ACCOUNT NAME *</label>
               <input
                 v-model="form.account_name"
                 type="text"
                 required
-                placeholder="e.g. Meezan Bank / Corporate Card"
+                placeholder="Enter Account Name"
                 class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
             </div>
@@ -137,10 +137,11 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">BANK NAME</label>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">BANK NAME *</label>
               <input
                 v-model="form.bank_name"
                 type="text"
+                required
                 placeholder="Enter Bank Name (e.g. Meezan Bank)"
                 class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
@@ -259,12 +260,17 @@ export default {
     };
 
     const saveBankAccount = async () => {
+      if (!form.value.bank_name || !form.value.bank_name.trim()) {
+        showToast('Bank Name is required', 'error');
+        return;
+      }
+
       submitting.value = true;
       try {
         const payload = {
           ...form.value,
           account_type: form.value.account_type === 'credit_card' ? 'credit_card' : 'checking',
-          bank_name: form.value.bank_name || form.value.account_name
+          bank_name: form.value.bank_name.trim()
         };
 
         if (isEditMode.value) {

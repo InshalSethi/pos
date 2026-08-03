@@ -70,7 +70,7 @@ class BankAccountController extends Controller
 
         $validator = Validator::make($request->all(), [
             'account_name' => 'required|string|max:255',
-            'bank_name' => 'nullable|string|max:255',
+            'bank_name' => 'required|string|max:255',
             'account_number' => [
                 'required',
                 'string',
@@ -208,7 +208,7 @@ class BankAccountController extends Controller
 
         $validator = Validator::make($request->all(), [
             'account_name' => 'required|string|max:255',
-            'bank_name' => 'nullable|string|max:255',
+            'bank_name' => 'required|string|max:255',
             'account_number' => [
                 'required',
                 'string',
