@@ -449,9 +449,6 @@ const refundAccountOptions = computed(() => {
       (bAcc.account_name && bAcc.account_name.toLowerCase().includes('cash'))
 
     if (isCashAccount) {
-      if (bAcc.current_balance !== undefined && bAcc.current_balance !== null && parseFloat(bAcc.current_balance) > 0) {
-        cashAccountBalance.value = parseFloat(bAcc.current_balance)
-      }
       return // Deduplicate: Skip adding cash bank account entries
     }
 

@@ -330,58 +330,51 @@
               
               <div class="space-y-2.5 text-left">
                 <div v-for="(split, idx) in paymentSplits" :key="idx" class="p-3 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl space-y-2">
-                  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                    <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div>
-                        <CustomFloatingSelect
-                          label="Payment Method"
-                          v-model="split.type"
-                          :options="paymentMethodOptions"
-                          @change="onSplitTypeChange(split)"
-                        />
-                      </div>
-
-                      <div v-if="split.type === 'bank'">
-                        <CustomFloatingSelect
-                          label="Bank Account (Live Balance)"
-                          v-model="split.bank_id"
-                          :options="bankAccountOptions"
-                          placeholder="Select Bank Account"
-                          searchable
-                        />
-                      </div>
-
-                      <div v-else-if="split.type === 'cash'">
-                        <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Cash Balance</label>
-                        <div class="px-2.5 py-1.5 text-xs bg-slate-100 dark:bg-zinc-800/80 rounded-lg font-bold text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-zinc-700/50">
-                          Cash Vault — Avail: {{ formatCurrency(cashAccountBalance) }}
-                        </div>
+                  <div class="flex flex-col sm:flex-row items-start sm:items-start justify-start gap-3">
+                    <!-- Dynamic Unified Account Selector -->
+                    <div class="w-full sm:w-80 shrink-0 space-y-1">
+                      <CustomFloatingSelect
+                        label="Refund Account / Payment Source *"
+                        v-model="split.selected_account_key"
+                        :options="refundAccountOptions"
+                        @change="onAccountKeyChange(split)"
+                        searchable
+                      />
+                      <!-- Live Available Balance Pill -->
+                      <div v-if="getSplitAccountInfo(split).availableBalance !== null" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-zinc-400 pl-1">
+                        <span>Live Balance:</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getSplitAccountInfo(split).badgeClass">
+                          {{ formatCurrency(getSplitAccountInfo(split).availableBalance) }}
+                        </span>
                       </div>
                     </div>
 
-                    <div class="w-full sm:w-36">
-                      <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Refund Amount</label>
+                    <!-- Refund Amount -->
+                    <div class="w-full sm:w-36 space-y-1">
+                      <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Refund Amount *</label>
                       <input
                         v-model.number="split.amount"
                         type="number"
                         step="0.01"
                         min="0"
-                        class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-right"
+                        class="w-full px-2.5 py-2 text-xs bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-right"
                         :class="{ 'border-rose-500 ring-1 ring-rose-500': getSplitBalanceError(split) }"
                       />
                     </div>
 
+                    <!-- Remove Split Button -->
                     <button
                       v-if="paymentSplits.length > 1"
                       type="button"
                       @click="removePaymentSplit(idx)"
-                      class="p-1 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 sm:mt-4 cursor-pointer shrink-0"
+                      class="p-2 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 cursor-pointer shrink-0 mt-1 sm:mt-6"
                       title="Remove split"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
 
+                  <!-- Insufficient Funds Alert Banner -->
                   <div v-if="getSplitBalanceError(split)" class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <span>{{ getSplitBalanceError(split) }}</span>
@@ -474,48 +467,97 @@ export default {
     const bankAccounts = ref([]);
     const cashAccountBalance = ref(0);
 
-    const paymentMethodOptions = [
-      { value: 'cash', label: 'Cash Vault' },
-      { value: 'bank', label: 'Bank Account / Transfer' },
-      { value: 'store_credit', label: 'Store Credit (Customer Wallet)' }
-    ];
+    const refundAccountOptions = computed(() => {
+      const options = [];
+      options.push({
+        value: 'cash',
+        label: `Default Cash Vault — Avail: ${formatCurrency(cashAccountBalance.value)}`,
+        type: 'cash',
+        bank_id: null,
+        availableBalance: cashAccountBalance.value,
+        badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+      });
 
-    const bankAccountOptions = computed(() => {
-      return bankAccounts.value.map(bAcc => ({
-        value: bAcc.id,
-        label: `${bAcc.bank_name} (${bAcc.account_name}) — Avail: ${formatCurrency(bAcc.current_balance || 0)}`
-      }));
+      bankAccounts.value.forEach(bAcc => {
+        const isCashAccount = (bAcc.account_type && bAcc.account_type.toLowerCase().includes('cash')) ||
+          (bAcc.bank_name && bAcc.bank_name.toLowerCase().includes('cash')) ||
+          (bAcc.account_name && bAcc.account_name.toLowerCase().includes('cash'));
+
+        if (isCashAccount) return;
+
+        const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
+          ? parseFloat(bAcc.current_balance)
+          : 0;
+        options.push({
+          value: `bank_${bAcc.id}`,
+          label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name}) — Avail: ${formatCurrency(bal)}`,
+          type: 'bank',
+          bank_id: bAcc.id,
+          availableBalance: bal,
+          badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+        });
+      });
+
+      options.push({
+        value: 'store_credit',
+        label: 'Store Credit (Customer Wallet / Store Ledger)',
+        type: 'store_credit',
+        bank_id: null,
+        availableBalance: null,
+        badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+      });
+
+      return options;
     });
 
     const paymentSplits = ref([
-      { type: 'cash', bank_id: null, amount: 0 }
+      { selected_account_key: 'cash', type: 'cash', bank_id: null, amount: 0 }
     ]);
 
+    const onAccountKeyChange = (split) => {
+      const option = refundAccountOptions.value.find(opt => String(opt.value) === String(split.selected_account_key));
+      if (option) {
+        split.type = option.type;
+        split.bank_id = option.bank_id;
+      } else {
+        split.type = 'cash';
+        split.bank_id = null;
+      }
+    };
+
+    const getSplitAccountInfo = (split) => {
+      return refundAccountOptions.value.find(opt => String(opt.value) === String(split.selected_account_key)) || {
+        label: 'Default Cash Vault',
+        availableBalance: cashAccountBalance.value,
+        badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+      };
+    };
+
     const addPaymentSplit = () => {
-      const defaultBank = bankAccounts.value[0]?.id || null;
-      paymentSplits.value.push({ type: 'cash', bank_id: defaultBank, amount: 0 });
+      const usedKeys = paymentSplits.value.map(s => s.selected_account_key);
+      const unusedOpt = refundAccountOptions.value.find(opt => !usedKeys.includes(opt.value)) || refundAccountOptions.value[0];
+      const defaultKey = unusedOpt ? unusedOpt.value : 'cash';
+      const optInfo = refundAccountOptions.value.find(o => String(o.value) === String(defaultKey)) || {};
+
+      const remaining = Math.max(0, remainingUnpaidLedger.value);
+      paymentSplits.value.push({
+        selected_account_key: defaultKey,
+        type: optInfo.type || 'cash',
+        bank_id: optInfo.bank_id || null,
+        amount: remaining
+      });
     };
 
     const removePaymentSplit = (idx) => {
       paymentSplits.value.splice(idx, 1);
     };
 
-    const onSplitTypeChange = (split) => {
-      if (split.type === 'bank' && !split.bank_id && bankAccounts.value.length > 0) {
-        split.bank_id = bankAccounts.value[0].id;
-      }
-    };
-
     const getSplitBalanceError = (split) => {
       if (!split.amount || split.amount <= 0) return null;
-      if (split.type === 'cash') {
-        if (split.amount > cashAccountBalance.value) {
-          return `Exceeds cash vault balance (${cashAccountBalance.value})`;
-        }
-      } else if (split.type === 'bank' && split.bank_id) {
-        const bAcc = bankAccounts.value.find(b => b.id === split.bank_id);
-        if (bAcc && split.amount > (bAcc.current_balance || 0)) {
-          return `Exceeds available balance (${bAcc.current_balance || 0})`;
+      const info = getSplitAccountInfo(split);
+      if (info && info.availableBalance !== null && info.availableBalance !== undefined) {
+        if (split.amount > info.availableBalance) {
+          return `Insufficient funds! Maximum available in ${info.label.split('—')[0].trim()} is ${formatCurrency(info.availableBalance)}`;
         }
       }
       return null;
@@ -976,12 +1018,12 @@ export default {
       // Multi-payment splits
       bankAccounts,
       cashAccountBalance,
+      refundAccountOptions,
       paymentSplits,
-      paymentMethodOptions,
-      bankAccountOptions,
+      onAccountKeyChange,
+      getSplitAccountInfo,
       addPaymentSplit,
       removePaymentSplit,
-      onSplitTypeChange,
       getSplitBalanceError,
       hasBalanceErrors,
       totalPaidOutSplits,
