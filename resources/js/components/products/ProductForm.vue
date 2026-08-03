@@ -662,7 +662,7 @@
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  Unit
+                  Unit <span v-if="form.track_inventory" class="text-rose-500">*</span>
                   <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
@@ -3441,6 +3441,11 @@ watch(() => form.value.category_ids, (newCategoryIds) => {
 }, { deep: true });
 
 const submit = () => {
+  if (form.value.track_inventory && !form.value.unit_id) {
+    showLocalError('Please select a Unit.');
+    return;
+  }
+
   if (isVariantMode.value) {
     const names = attributes.value.map(a => (a.name || '').trim().toLowerCase()).filter(n => n !== '');
     const uniqueNames = new Set(names);

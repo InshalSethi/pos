@@ -247,6 +247,10 @@ class ProductController extends Controller
             return ($input->status ?? 'active') !== 'draft' && filter_var($input->enabled_for_tax ?? false, FILTER_VALIDATE_BOOLEAN);
         });
 
+        $validator->sometimes('unit_id', 'required', function ($input) {
+            return ($input->status ?? 'active') !== 'draft' && filter_var($input->track_inventory ?? true, FILTER_VALIDATE_BOOLEAN);
+        });
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
