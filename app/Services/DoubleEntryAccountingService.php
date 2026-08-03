@@ -46,19 +46,24 @@ class DoubleEntryAccountingService
                 ->where('source_id', $sale->id)
                 ->get();
 
+            $affectedAccountIds = [];
+
             foreach ($oldEntries as $entry) {
                 foreach ($entry->journalEntryLines as $line) {
-                    if ($line->account) {
-                        if ($line->debit_amount > 0) {
-                            Account::where('id', $line->account_id)->decrement('current_balance', $line->debit_amount);
-                        }
-                        if ($line->credit_amount > 0) {
-                            Account::where('id', $line->account_id)->decrement('current_balance', $line->credit_amount);
-                        }
+                    if ($line->account_id) {
+                        $affectedAccountIds[] = $line->account_id;
                     }
                 }
                 JournalEntryLine::where('journal_entry_id', $entry->id)->delete();
                 $entry->delete();
+            }
+
+            // Recalculate ground-truth balances for affected Chart of Accounts ledgers
+            foreach (array_unique($affectedAccountIds) as $accId) {
+                $acc = Account::find($accId);
+                if ($acc) {
+                    $acc->updateCurrentBalance();
+                }
             }
 
             // 2. Revert Old Bank Transactions & Bank Account Balances
@@ -73,6 +78,9 @@ class DoubleEntryAccountingService
                         $bAccount->decrement('current_balance', $tx->amount);
                     } elseif ($tx->transaction_type === 'credit') {
                         $bAccount->increment('current_balance', $tx->amount);
+                    }
+                    if ($bAccount->chartAccount) {
+                        $bAccount->chartAccount->updateCurrentBalance();
                     }
                 }
                 $tx->delete();
@@ -90,13 +98,18 @@ class DoubleEntryAccountingService
             $grandTotal = (float) $sale->total_amount;
             $subtotal = (float) ($sale->subtotal > 0 ? $sale->subtotal : $sale->total_amount);
             $taxAmount = (float) ($sale->tax_amount > 0 ? $sale->tax_amount : 0);
+            $discountAmount = (float) ($sale->discount_amount > 0 ? $sale->discount_amount : 0);
 
-            // 1. Resolve Revenue Account
+            // 1. Resolve Revenue Account (4010 - Sales Revenue)
             $revenueAccountId = $this->accountingSettings->sales_invoice_revenue_account_id;
             if (!$revenueAccountId) {
                 $revenueAccount = Account::where('company_id', $companyId)
                     ->where('account_type', 'revenue')
-                    ->first();
+                    ->where(function($q) {
+                        $q->where('account_code', '4010')
+                          ->orWhere('account_name', 'LIKE', '%Sales Revenue%')
+                          ->orWhere('account_name', 'LIKE', '%Revenue%');
+                    })->first();
                 $revenueAccountId = $revenueAccount?->id;
             }
 
@@ -114,23 +127,29 @@ class DoubleEntryAccountingService
                 $revenueAccountId = $revenueAccount->id;
             }
 
+            // Total journal entry amount = Gross Subtotal + Tax
+            $entryTotal = $subtotal + $taxAmount;
+
             // Create Single Journal Entry for the Sales Invoice
             $journalEntry = JournalEntry::create([
                 'company_id' => $companyId,
                 'entry_number' => $this->generateEntryNumber('SI'),
-                'entry_date' => $sale->sale_date,
+                'entry_date' => $sale->sale_date ?? now()->toDateString(),
                 'reference' => "Sales Invoice #{$sale->sale_number}",
                 'description' => "Sales Invoice #{$sale->sale_number} - " . ($sale->customer->name ?? 'Walk-in Customer'),
                 'entry_type' => 'automatic',
                 'status' => 'posted',
-                'total_debit' => $grandTotal,
-                'total_credit' => $grandTotal,
+                'total_debit' => $entryTotal,
+                'total_credit' => $entryTotal,
                 'created_by' => $sale->user_id ?? auth()->id(),
                 'posted_by' => $sale->user_id ?? auth()->id(),
                 'posted_at' => now(),
                 'source_type' => 'sale',
                 'source_id' => $sale->id,
             ]);
+
+            // Track affected COA IDs to update current_balance at the end
+            $affectedAccountIds = [];
 
             // Format Payments Array if empty
             if (empty($payments) && $sale->payment_details && is_array($sale->payment_details)) {
@@ -178,7 +197,6 @@ class DoubleEntryAccountingService
                             ]);
                         }
 
-                        // DEBIT Cash COA Line (ONLY $amount)
                         JournalEntryLine::create([
                             'journal_entry_id' => $journalEntry->id,
                             'account_id' => $cashAccount->id,
@@ -189,7 +207,7 @@ class DoubleEntryAccountingService
                             'partner_id' => $sale->customer_id,
                         ]);
 
-                        $cashAccount->increment('current_balance', $amount);
+                        $affectedAccountIds[] = $cashAccount->id;
 
                         // Sync Banking Module Default Cash Vault
                         $cashBankAccount = \App\Models\BankAccount::where('company_id', $companyId)
@@ -208,7 +226,7 @@ class DoubleEntryAccountingService
                             \App\Models\BankTransaction::create([
                                 'company_id' => $companyId,
                                 'bank_account_id' => $cashBankAccount->id,
-                                'transaction_date' => $sale->sale_date,
+                                'transaction_date' => $sale->sale_date ?? now()->toDateString(),
                                 'reference_number' => $sale->sale_number,
                                 'description' => "Cash Payment for Sales Invoice #{$sale->sale_number}",
                                 'transaction_type' => 'debit',
@@ -235,13 +253,12 @@ class DoubleEntryAccountingService
                         if ($bankAccount) {
                             $totalPaid += $amount;
 
-                            // Increment Banking Module Balance
                             $bankAccount->increment('current_balance', $amount);
 
                             \App\Models\BankTransaction::create([
                                 'company_id' => $companyId,
                                 'bank_account_id' => $bankAccount->id,
-                                'transaction_date' => $sale->sale_date,
+                                'transaction_date' => $sale->sale_date ?? now()->toDateString(),
                                 'reference_number' => $sale->sale_number,
                                 'description' => "Bank Payment ({$bankAccount->account_name}) - Invoice #{$sale->sale_number}",
                                 'transaction_type' => 'debit',
@@ -250,7 +267,6 @@ class DoubleEntryAccountingService
                                 'status' => 'cleared',
                             ]);
 
-                            // HARD SYNC: Find or Link Chart of Account record for this Bank
                             $bankChartAccount = null;
                             if ($bankAccount->chart_account_id) {
                                 $bankChartAccount = Account::where('company_id', $companyId)->find($bankAccount->chart_account_id);
@@ -283,7 +299,6 @@ class DoubleEntryAccountingService
                                 $bankAccount->update(['chart_account_id' => $bankChartAccount->id]);
                             }
 
-                            // DEBIT Linked Bank COA
                             JournalEntryLine::create([
                                 'journal_entry_id' => $journalEntry->id,
                                 'account_id' => $bankChartAccount->id,
@@ -294,7 +309,7 @@ class DoubleEntryAccountingService
                                 'partner_id' => $sale->customer_id,
                             ]);
 
-                            $bankChartAccount->increment('current_balance', $amount);
+                            $affectedAccountIds[] = $bankChartAccount->id;
                         }
                     }
                 }
@@ -333,39 +348,108 @@ class DoubleEntryAccountingService
                     'partner_id' => $sale->customer_id,
                 ]);
 
-                $arAccount->increment('current_balance', $remainingDue);
+                $affectedAccountIds[] = $arAccount->id;
             }
 
-            // STEP D: CREDIT Sales Revenue (and Sales Tax)
-            $hasTaxSeparate = ($taxAmount > 0 && $this->accountingSettings->sales_invoice_tax_account_id);
-            $revenueAmount = $hasTaxSeparate ? $subtotal : $grandTotal;
+            // STEP D: DEBIT Sales Discounts (4030) if discount > 0
+            if ($discountAmount > 0) {
+                $discountAccount = Account::where('company_id', $companyId)
+                    ->where(function ($q) {
+                        $q->where('account_code', '4030')
+                          ->orWhere('account_name', 'LIKE', '%Sales Discount%')
+                          ->orWhere('account_name', 'LIKE', '%Discount Allowed%')
+                          ->orWhere('account_name', 'LIKE', '%Discount%');
+                    })->first();
 
+                if (!$discountAccount) {
+                    $discountAccount = Account::create([
+                        'company_id' => $companyId,
+                        'account_code' => '4030',
+                        'account_name' => 'Sales Discounts',
+                        'account_type' => 'revenue',
+                        'account_subtype' => 'sales_discount',
+                        'opening_balance' => 0,
+                        'current_balance' => 0,
+                        'is_active' => true,
+                        'is_system_account' => true,
+                    ]);
+                }
+
+                JournalEntryLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $discountAccount->id,
+                    'description' => "Sales Discount - Invoice #{$sale->sale_number}",
+                    'debit_amount' => $discountAmount,
+                    'credit_amount' => 0,
+                    'partner_type' => Customer::class,
+                    'partner_id' => $sale->customer_id,
+                ]);
+
+                $affectedAccountIds[] = $discountAccount->id;
+            }
+
+            // STEP E: CREDIT Sales Revenue (4010) (Gross Subtotal)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $revenueAccountId,
                 'description' => "Sales Revenue - Invoice #{$sale->sale_number}",
                 'debit_amount' => 0,
-                'credit_amount' => $revenueAmount,
+                'credit_amount' => $subtotal,
                 'partner_type' => Customer::class,
                 'partner_id' => $sale->customer_id,
             ]);
 
-            Account::where('id', $revenueAccountId)->increment('current_balance', $revenueAmount);
+            $affectedAccountIds[] = $revenueAccountId;
 
-            if ($hasTaxSeparate) {
-                $taxAccount = Account::find($this->accountingSettings->sales_invoice_tax_account_id);
-                if ($taxAccount) {
-                    JournalEntryLine::create([
-                        'journal_entry_id' => $journalEntry->id,
-                        'account_id' => $taxAccount->id,
-                        'description' => "Sales Tax - Invoice #{$sale->sale_number}",
-                        'debit_amount' => 0,
-                        'credit_amount' => $taxAmount,
-                        'partner_type' => Customer::class,
-                        'partner_id' => $sale->customer_id,
+            // STEP F: CREDIT Sales Tax Payable (2020) if tax > 0
+            if ($taxAmount > 0) {
+                $taxAccountId = $this->accountingSettings->sales_invoice_tax_account_id;
+                $taxAccount = null;
+                if ($taxAccountId) {
+                    $taxAccount = Account::find($taxAccountId);
+                }
+                if (!$taxAccount) {
+                    $taxAccount = Account::where('company_id', $companyId)
+                        ->where(function ($q) {
+                            $q->where('account_code', '2020')
+                              ->orWhere('account_type', 'tax_payable')
+                              ->orWhere('account_name', 'LIKE', '%Sales Tax%')
+                              ->orWhere('account_name', 'LIKE', '%Tax Payable%');
+                        })->first();
+                }
+
+                if (!$taxAccount) {
+                    $taxAccount = Account::create([
+                        'company_id' => $companyId,
+                        'account_code' => '2020',
+                        'account_name' => 'Sales Tax Payable',
+                        'account_type' => 'liability',
+                        'account_subtype' => 'current_liability',
+                        'opening_balance' => 0,
+                        'current_balance' => 0,
+                        'is_active' => true,
+                        'is_system_account' => true,
                     ]);
+                }
 
-                    $taxAccount->increment('current_balance', $taxAmount);
+                JournalEntryLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $taxAccount->id,
+                    'description' => "Sales Tax Payable - Invoice #{$sale->sale_number}",
+                    'debit_amount' => 0,
+                    'credit_amount' => $taxAmount,
+                    'partner_type' => Customer::class,
+                    'partner_id' => $sale->customer_id,
+                ]);
+
+                $affectedAccountIds[] = $taxAccount->id;
+            }
+
+            // Recalculate exact balances for all affected accounts
+            foreach (array_unique($affectedAccountIds) as $accId) {
+                $acc = Account::find($accId);
+                if ($acc) {
+                    $acc->updateCurrentBalance();
                 }
             }
 
