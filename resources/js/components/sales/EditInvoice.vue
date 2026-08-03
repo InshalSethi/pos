@@ -614,7 +614,7 @@
                               class="flex items-center justify-between gap-2 h-10 bg-white dark:bg-zinc-900/90 px-3 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
                             >
                               <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate">
-                                Receiving Amount (Cash):
+                                Cash
                               </label>
                               <div class="relative w-36 shrink-0">
                                 <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
@@ -636,7 +636,7 @@
                                 class="flex items-center justify-between gap-2 h-10 bg-white dark:bg-zinc-900/90 px-3 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
                               >
                                 <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate">
-                                  Receiving Amount ({{ bankAccounts.find(b => b.id === bankId)?.account_name || 'Bank' }}):
+                                  {{ bankAccounts.find(b => b.id === bankId)?.account_name || bankAccounts.find(b => b.id === bankId)?.bank_name || 'Bank' }}
                                 </label>
                                 <div class="relative w-36 shrink-0">
                                   <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
