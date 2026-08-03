@@ -842,9 +842,6 @@ class DoubleEntryAccountingService
                             'partner_id' => $saleReturn->customer_id,
                         ]);
 
-                        $cashAccount->decrement('current_balance', $amount);
-
-                        // Sync Default Cash Vault in Banking Module
                         $cashBankAccount = \App\Models\BankAccount::where('company_id', $companyId)
                             ->where(function ($q) use ($cashAccount) {
                                 if ($cashAccount) $q->where('chart_account_id', $cashAccount->id);
@@ -854,8 +851,6 @@ class DoubleEntryAccountingService
                             })->first();
 
                         if ($cashBankAccount) {
-                            $cashBankAccount->decrement('current_balance', $amount);
-
                             \App\Models\BankTransaction::create([
                                 'company_id' => $companyId,
                                 'bank_account_id' => $cashBankAccount->id,
@@ -886,9 +881,6 @@ class DoubleEntryAccountingService
 
                     if ($bankAccount) {
                         $totalRefunded += $amount;
-
-                        // Decrement Banking Module Balance
-                        $bankAccount->decrement('current_balance', $amount);
 
                         \App\Models\BankTransaction::create([
                             'company_id' => $companyId,
@@ -945,8 +937,6 @@ class DoubleEntryAccountingService
                             'partner_type' => Customer::class,
                             'partner_id' => $saleReturn->customer_id,
                         ]);
-
-                        $bankChartAccount->decrement('current_balance', $amount);
                     }
                 } elseif ($type === 'store_credit') {
                     $totalRefunded += $amount;
@@ -968,19 +958,19 @@ class DoubleEntryAccountingService
                             'partner_type' => Customer::class,
                             'partner_id' => $saleReturn->customer_id,
                         ]);
-
-                        $arAccount->decrement('current_balance', $amount);
                     }
                 }
             }
 
-            // 4. Handle remaining unrefunded return balance -> CREDIT Customer Accounts Receivable
+            // 4. Handle remaining unrefunded return balance -> CREDIT Customer Accounts Receivable / Customer Payable
             $remainingUnrefunded = max(0, $totalAmount - $totalRefunded);
             if ($remainingUnrefunded > 0) {
                 $arAccount = Account::where('company_id', $companyId)
-                    ->where('account_type', 'asset')
                     ->where(function ($q) {
-                        $q->where('account_code', '1030')
+                        $q->where('account_code', '2010')
+                          ->orWhere('account_code', '1030')
+                          ->orWhere('account_type', 'customer_payable')
+                          ->orWhere('account_name', 'LIKE', '%Customer Payable%')
                           ->orWhere('account_name', 'LIKE', '%Accounts Receivable%');
                     })->first();
 
@@ -994,8 +984,6 @@ class DoubleEntryAccountingService
                         'partner_type' => Customer::class,
                         'partner_id' => $saleReturn->customer_id,
                     ]);
-
-                    $arAccount->decrement('current_balance', $remainingUnrefunded);
                 }
             }
 
@@ -1018,7 +1006,6 @@ class DoubleEntryAccountingService
                         'debit_amount' => $totalReturnCost,
                         'credit_amount' => 0,
                     ]);
-                    Account::where('id', $inventoryAccount)->increment('current_balance', $totalReturnCost);
 
                     // CREDIT: COGS (Reducing COGS expense)
                     JournalEntryLine::create([
@@ -1028,10 +1015,10 @@ class DoubleEntryAccountingService
                         'debit_amount' => 0,
                         'credit_amount' => $totalReturnCost,
                     ]);
-                    Account::where('id', $cogsAccount)->decrement('current_balance', $totalReturnCost);
                 }
             }
 
+            $this->updateAccountBalances($journalEntry);
             return $journalEntry;
         });
     }

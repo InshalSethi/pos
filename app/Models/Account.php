@@ -163,6 +163,11 @@ class Account extends Model
     {
         $this->current_balance = $this->calculateBalance();
         $this->save();
+
+        // Direct COA Hard-Sync with Banking Module (Single Source of Truth)
+        \Illuminate\Support\Facades\DB::table('bank_accounts')
+            ->where('chart_account_id', $this->id)
+            ->update(['current_balance' => $this->current_balance]);
     }
 
     public function getFormattedBalanceAttribute(): string
