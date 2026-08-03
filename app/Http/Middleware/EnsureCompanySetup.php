@@ -36,7 +36,9 @@ class EnsureCompanySetup
                     || $request->is('admin*')
                     || $request->routeIs('onboarding.*')
                     || $request->routeIs('abort-onboarding')
-                    || $request->routeIs('company.setup.cancel');
+                    || $request->routeIs('company.setup.cancel')
+                    || $request->routeIs('company.initiate-new')
+                    || $request->is('initiate-new-company');
 
                 if (!$exempt) {
                     if ($request->expectsJson()) {

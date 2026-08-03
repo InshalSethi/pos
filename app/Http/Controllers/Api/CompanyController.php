@@ -59,11 +59,12 @@ class CompanyController extends Controller
 
     public function createNewCompany()
     {
-        $user = Auth::user();
-        $user->onboarding_completed = 0;
-        $user->save();
+        session(['creating_subsequent_company' => true]);
 
-        return response()->json(['message' => 'Redirecting to onboarding...']);
+        return response()->json([
+            'message' => 'Initiating new company setup...',
+            'redirect_url' => '/initiate-new-company'
+        ]);
     }
 
     public function show($id)

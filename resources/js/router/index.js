@@ -401,6 +401,27 @@ const routes = [
     name: 'SupplierDebug',
     component: () => import('@/components/debug/SupplierDebug.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/company-setup',
+    name: 'CompanySetup',
+    beforeEnter: (to, from, next) => {
+      // If we are already on the server-rendered company-setup page, do not trigger a reload
+      if (window.location.pathname === '/company-setup' || window.location.pathname.startsWith('/company-setup')) {
+        return next();
+      }
+      window.location.href = to.fullPath;
+    }
+  },
+  {
+    path: '/initiate-new-company',
+    name: 'InitiateNewCompany',
+    beforeEnter: (to, from, next) => {
+      if (window.location.pathname === '/initiate-new-company') {
+        return next();
+      }
+      window.location.href = '/initiate-new-company';
+    }
   }
 ];
 
@@ -416,6 +437,11 @@ router.beforeEach(async (to, from, next) => {
   // Initialize auth if not already done
   if (!authStore.user && localStorage.getItem('auth_token')) {
     await authStore.initializeAuth();
+  }
+
+  // Allow company setup and initiation routes to pass through cleanly
+  if (to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company') {
+    return next();
   }
 
   // Redirect to company setup if setup is not complete
