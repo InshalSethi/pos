@@ -570,19 +570,31 @@ class BankAccountController extends Controller
             $bankAccount->update(['current_balance' => $newBalance]);
 
             // 2. Sync linked Chart of Account record
+            $bankName = trim($bankAccount->bank_name ?? '');
+            $accountName = trim($bankAccount->account_name ?? '');
+            if ($bankName !== '' && $accountName !== '' && strcasecmp($bankName, $accountName) !== 0) {
+                $formattedName = "{$accountName} ({$bankName})";
+            } else {
+                $formattedName = $accountName ?: $bankName;
+            }
+
             Account::where('company_id', $bankAccount->company_id)
                 ->where(function ($query) use ($bankAccount) {
                     if ($bankAccount->chart_account_id) {
                         $query->where('id', $bankAccount->chart_account_id);
-                    }
-                    if ($bankAccount->bank_name) {
-                        $query->orWhere('account_name', 'LIKE', "%{$bankAccount->bank_name}%");
-                    }
-                    if ($bankAccount->account_name) {
-                        $query->orWhere('account_name', 'LIKE', "%{$bankAccount->account_name}%");
+                    } else {
+                        if ($bankAccount->bank_name) {
+                            $query->orWhere('account_name', 'LIKE', "%{$bankAccount->bank_name}%");
+                        }
+                        if ($bankAccount->account_name) {
+                            $query->orWhere('account_name', 'LIKE', "%{$bankAccount->account_name}%");
+                        }
                     }
                 })
-                ->update(['current_balance' => $newBalance]);
+                ->update([
+                    'account_name' => $formattedName,
+                    'current_balance' => $newBalance
+                ]);
         });
     }
 }

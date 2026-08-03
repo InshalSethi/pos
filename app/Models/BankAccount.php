@@ -22,9 +22,20 @@ class BankAccount extends Model
         static::saved(function ($bankAccount) {
             if ($bankAccount->chart_account_id) {
                 $balanceToSync = $bankAccount->current_balance ?? $bankAccount->opening_balance ?? 0;
+                
+                $bankName = trim($bankAccount->bank_name ?? '');
+                $accountName = trim($bankAccount->account_name ?? '');
+
+                if ($bankName !== '' && $accountName !== '' && strcasecmp($bankName, $accountName) !== 0) {
+                    $formattedName = "{$accountName} ({$bankName})";
+                } else {
+                    $formattedName = $accountName ?: $bankName;
+                }
+
                 \Illuminate\Support\Facades\DB::table('chart_of_accounts')
                     ->where('id', $bankAccount->chart_account_id)
                     ->update([
+                        'account_name' => $formattedName,
                         'current_balance' => (float)$balanceToSync,
                     ]);
             }
