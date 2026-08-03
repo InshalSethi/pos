@@ -33,7 +33,6 @@
         <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/50">
           <div>
             <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Advanced Filter</h2>
-            <p class="text-xs text-slate-500 dark:text-zinc-400">Refine invoices by product, warehouse, sales rep, counter & status</p>
           </div>
           <button
             @click="close"
@@ -58,7 +57,7 @@
             </button>
           </div>
 
-          <!-- 1. Top 20 Interactive Product / Item Dropdown -->
+          <!-- 1. Product / Line Item (Top 20) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
               Product / Line Item (Top 20)
@@ -84,7 +83,7 @@
                 </div>
               </button>
 
-              <!-- Floating Product Popover Dropdown (No Search Field, Top 20) -->
+              <!-- Floating Product Popover Dropdown -->
               <div
                 v-if="activePopover === 'product'"
                 class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-64 overflow-y-auto custom-scrollbar animate-fade-in"
@@ -132,210 +131,8 @@
             <p class="text-[11px] text-slate-400 dark:text-zinc-500">Select from the top 20 items to isolate invoices containing that product.</p>
           </div>
 
-          <!-- 2. Multi-Select Floating Dropdown: Warehouse / Shop Location -->
+          <!-- 2. Date Range Section: Single Unified Date Range Picker Popover -->
           <div class="space-y-1.5 relative" @click.stop>
-            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Warehouse / Shop Location (Multi-Select)
-            </label>
-            <div class="relative">
-              <button
-                type="button"
-                @click="togglePopover('warehouse')"
-                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-              >
-                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.warehouse_ids.length === 0 }">
-                  {{ warehouseSummaryLabel }}
-                </span>
-                <span v-if="localFilters.warehouse_ids.length > 0" class="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-full shrink-0">
-                  {{ localFilters.warehouse_ids.length }}
-                </span>
-              </button>
-
-              <!-- Floating Multi-Select Popover (No Search Field) -->
-              <div
-                v-if="activePopover === 'warehouse'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
-              >
-                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>Select Warehouses</span>
-                  <button @click="localFilters.warehouse_ids = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
-                </div>
-                <div v-if="warehouses.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
-                  No warehouses found.
-                </div>
-                <label
-                  v-for="wh in warehouses"
-                  :key="wh.id"
-                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
-                >
-                  <input
-                    type="checkbox"
-                    :value="wh.id"
-                    v-model="localFilters.warehouse_ids"
-                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
-                  />
-                  <span class="font-medium text-slate-800 dark:text-zinc-200">
-                    {{ wh.name }} {{ wh.code ? `(${wh.code})` : '' }} {{ wh.is_default ? '★' : '' }}
-                  </span>
-                </label>
-              </div>
-            </div>
-            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Multi-warehouse isolation; filters line items and counter options below.</p>
-          </div>
-
-          <!-- 3. Multi-Select Floating Dropdown: POS Counter (Cascading) -->
-          <div class="space-y-1.5 relative" @click.stop>
-            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              POS Counter (Multi-Select)
-            </label>
-            <div class="relative">
-              <button
-                type="button"
-                @click="togglePopover('counter')"
-                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-              >
-                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.counter_ids.length === 0 }">
-                  {{ counterSummaryLabel }}
-                </span>
-                <span v-if="localFilters.counter_ids.length > 0" class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded-full shrink-0">
-                  {{ localFilters.counter_ids.length }}
-                </span>
-              </button>
-
-              <!-- Floating Multi-Select Popover (No Search Field, Cascaded) -->
-              <div
-                v-if="activePopover === 'counter'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
-              >
-                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>
-                    {{ localFilters.warehouse_ids.length > 0 ? 'Filtered Counters' : 'All Counters' }}
-                  </span>
-                  <button @click="localFilters.counter_ids = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
-                </div>
-                <div v-if="filteredCounters.length === 0" class="py-4 text-center text-slate-400 text-xs italic px-3">
-                  No counters available for the selected warehouse(s).
-                </div>
-                <label
-                  v-for="c in filteredCounters"
-                  :key="c.id"
-                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
-                >
-                  <input
-                    type="checkbox"
-                    :value="c.id"
-                    v-model="localFilters.counter_ids"
-                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
-                  />
-                  <span class="font-medium text-slate-800 dark:text-zinc-200">
-                    {{ c.name }} {{ c.counter_number ? `(#${c.counter_number})` : '' }}
-                    <span v-if="c.warehouse?.name" class="text-slate-400 text-[10px]">({{ c.warehouse.name }})</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Cascades based on selected warehouse location above.</p>
-          </div>
-
-          <!-- 4. Multi-Select Floating Dropdown: Sales Representative -->
-          <div class="space-y-1.5 relative" @click.stop>
-            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Sales Representative / Salesman (Multi-Select)
-            </label>
-            <div class="relative">
-              <button
-                type="button"
-                @click="togglePopover('salesman')"
-                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-              >
-                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.salesman_ids.length === 0 }">
-                  {{ salesmanSummaryLabel }}
-                </span>
-                <span v-if="localFilters.salesman_ids.length > 0" class="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 px-1.5 py-0.2 rounded-full shrink-0">
-                  {{ localFilters.salesman_ids.length }}
-                </span>
-              </button>
-
-              <!-- Floating Multi-Select Popover (No Search Field) -->
-              <div
-                v-if="activePopover === 'salesman'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
-              >
-                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>Select Sales Representatives</span>
-                  <button @click="localFilters.salesman_ids = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
-                </div>
-                <div v-if="salesmen.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
-                  No sales reps found.
-                </div>
-                <label
-                  v-for="emp in salesmen"
-                  :key="emp.id"
-                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
-                >
-                  <input
-                    type="checkbox"
-                    :value="emp.id"
-                    v-model="localFilters.salesman_ids"
-                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
-                  />
-                  <span class="font-medium text-slate-800 dark:text-zinc-200">
-                    {{ emp.full_name }}
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. Multi-Select Floating Dropdown: Status Filter Addition -->
-          <div class="space-y-1.5 relative" @click.stop>
-            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Invoice Status (Multi-Select)
-            </label>
-            <div class="relative">
-              <button
-                type="button"
-                @click="togglePopover('status')"
-                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-              >
-                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.statuses.length === 0 }">
-                  {{ statusSummaryLabel }}
-                </span>
-                <span v-if="localFilters.statuses.length > 0" class="text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 px-1.5 py-0.2 rounded-full shrink-0">
-                  {{ localFilters.statuses.length }}
-                </span>
-              </button>
-
-              <!-- Floating Multi-Select Popover (No Search Field) -->
-              <div
-                v-if="activePopover === 'status'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
-              >
-                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>Select Invoice Statuses</span>
-                  <button @click="localFilters.statuses = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
-                </div>
-                <label
-                  v-for="st in availableStatuses"
-                  :key="st.id"
-                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
-                >
-                  <input
-                    type="checkbox"
-                    :value="st.id"
-                    v-model="localFilters.statuses"
-                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
-                  />
-                  <span class="font-semibold" :class="st.colorClass">
-                    {{ st.label }}
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Date Range Section: Single Unified Date Range Picker Popover -->
-          <div class="space-y-1.5 relative pt-2 border-t border-slate-100 dark:border-zinc-800" @click.stop>
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
                 Date Range
@@ -382,77 +179,149 @@
               <!-- Floating Single Calendar Date Range Popover -->
               <div
                 v-if="activePopover === 'date_range'"
-                class="absolute left-0 right-0 bottom-full mb-1 sm:top-full sm:bottom-auto sm:mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-3 animate-fade-in text-xs w-full select-none"
+                class="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-2.5 animate-fade-in text-xs w-full select-none"
               >
                 <!-- Quick Preset Pills inside Calendar -->
-                <div class="flex flex-wrap gap-1 pb-2.5 mb-2 border-b border-slate-100 dark:border-zinc-800">
+                <div class="flex flex-wrap gap-1 pb-1.5 mb-1.5 border-b border-slate-100 dark:border-zinc-800">
                   <button
                     type="button"
                     @click="setQuickDate('today')"
-                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
                   >
                     Today
                   </button>
                   <button
                     type="button"
                     @click="setQuickDate('yesterday')"
-                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
                   >
                     Yesterday
                   </button>
                   <button
                     type="button"
                     @click="setQuickDate('this_week')"
-                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
                   >
                     This Week
                   </button>
                   <button
                     type="button"
                     @click="setQuickDate('this_month')"
-                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
                   >
                     This Month
                   </button>
                   <button
                     type="button"
                     @click="setQuickDate('last_month')"
-                    class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 rounded transition-colors cursor-pointer"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
                   >
                     Last Month
                   </button>
                   <button
                     type="button"
+                    @click="setQuickDate('this_year')"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
+                  >
+                    This Year
+                  </button>
+                  <button
+                    type="button"
+                    @click="setQuickDate('last_year')"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded transition-colors cursor-pointer"
+                  >
+                    Last Year
+                  </button>
+                  <button
+                    type="button"
                     @click="clearDateRange"
-                    class="px-2 py-1 text-[10px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors ml-auto cursor-pointer"
+                    class="px-1.5 py-0.5 text-[10px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors ml-auto cursor-pointer"
                   >
                     Clear
                   </button>
                 </div>
 
-                <!-- Calendar Header: Prev / Month Year Title / Next -->
-                <div class="flex items-center justify-between pb-2 mb-1 px-1">
+                <!-- Calendar Header: Prev / Interactive Month & Year Buttons / Next -->
+                <div class="flex items-center justify-between pb-1 mb-0.5 px-0.5 relative">
                   <button
                     type="button"
                     @click="prevMonth"
-                    class="p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded font-bold cursor-pointer"
+                    class="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded font-bold cursor-pointer transition-colors"
+                    title="Previous Month"
                   >
                     &lt;
                   </button>
-                  <div class="font-bold text-slate-800 dark:text-zinc-100 text-xs">
-                    {{ calendarMonthTitle }}
+
+                  <div class="flex items-center space-x-1 relative">
+                    <!-- Month Sub-Picker Toggle Button -->
+                    <button
+                      type="button"
+                      @click.stop="toggleSubPicker('month')"
+                      class="px-2 py-0.5 font-bold text-slate-800 dark:text-zinc-100 text-xs hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors flex items-center gap-1 cursor-pointer"
+                      :class="{ 'bg-slate-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400': subPickerOpen === 'month' }"
+                    >
+                      <span>{{ monthNames[calendarMonth] }}</span>
+                      <span class="text-[8px] text-slate-400">▲</span>
+                    </button>
+
+                    <!-- Year Sub-Picker Toggle Button -->
+                    <button
+                      type="button"
+                      @click.stop="toggleSubPicker('year')"
+                      class="px-2 py-0.5 font-bold text-slate-800 dark:text-zinc-100 text-xs hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors flex items-center gap-1 cursor-pointer"
+                      :class="{ 'bg-slate-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400': subPickerOpen === 'year' }"
+                    >
+                      <span>{{ calendarYear }}</span>
+                      <span class="text-[8px] text-slate-400">▲</span>
+                    </button>
                   </div>
+
                   <button
                     type="button"
                     @click="nextMonth"
-                    class="p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded font-bold cursor-pointer"
+                    class="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded font-bold cursor-pointer transition-colors"
+                    title="Next Month"
                   >
                     &gt;
                   </button>
+
+                  <!-- Upward Floating Month Grid Menu Popup -->
+                  <div
+                    v-if="subPickerOpen === 'month'"
+                    class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-60 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-2 w-56 grid grid-cols-3 gap-1 animate-fade-in"
+                  >
+                    <button
+                      v-for="(mName, mIdx) in shortMonthNames"
+                      :key="mIdx"
+                      type="button"
+                      @click.stop="selectMonth(mIdx)"
+                      class="py-1 text-xs font-semibold rounded text-center transition-colors cursor-pointer"
+                      :class="calendarMonth === mIdx ? 'bg-blue-600 text-white font-bold shadow-xs' : 'hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200'"
+                    >
+                      {{ mName }}
+                    </button>
+                  </div>
+
+                  <!-- Upward Floating Year Grid Menu Popup -->
+                  <div
+                    v-if="subPickerOpen === 'year'"
+                    class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-60 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-2 w-52 max-h-44 overflow-y-auto custom-scrollbar grid grid-cols-3 gap-1 animate-fade-in"
+                  >
+                    <button
+                      v-for="y in availableYears"
+                      :key="y"
+                      type="button"
+                      @click.stop="selectYear(y)"
+                      class="py-1 text-xs font-semibold rounded text-center transition-colors cursor-pointer"
+                      :class="calendarYear === y ? 'bg-blue-600 text-white font-bold shadow-xs' : 'hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200'"
+                    >
+                      {{ y }}
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Day Headers (Sun - Sat) -->
-                <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1">
+                <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-0.5">
                   <span>Su</span>
                   <span>Mo</span>
                   <span>Tu</span>
@@ -463,7 +332,7 @@
                 </div>
 
                 <!-- Calendar Days Grid -->
-                <div class="grid grid-cols-7 gap-y-1 text-center" @mouseleave="hoverDate = null">
+                <div class="grid grid-cols-7 gap-y-0.5 text-center" @mouseleave="hoverDate = null">
                   <div
                     v-for="(day, idx) in calendarDays"
                     :key="idx"
@@ -484,7 +353,7 @@
                     <!-- Day Button Number -->
                     <button
                       type="button"
-                      class="relative z-10 w-7 h-7 text-xs flex items-center justify-center rounded-md font-medium transition-all cursor-pointer"
+                      class="relative z-10 w-6 h-6 text-xs flex items-center justify-center rounded-md font-medium transition-all cursor-pointer"
                       :class="{
                         'opacity-30': !day.isCurrentMonth,
                         'bg-blue-600 text-white font-bold shadow-xs': isDateStart(day.dateStr) || isDateEnd(day.dateStr),
@@ -499,7 +368,7 @@
                 </div>
 
                 <!-- Selected Range Footer Info -->
-                <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400">
+                <div class="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-400">
                   <div>
                     <span v-if="localFilters.date_from && !localFilters.date_to" class="text-blue-600 dark:text-blue-400 font-medium">
                       Select end date...
@@ -514,11 +383,213 @@
                   <button
                     type="button"
                     @click="togglePopover('date_range')"
-                    class="px-2.5 py-1 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors text-[10px] cursor-pointer"
+                    class="px-2 py-0.5 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors text-[10px] cursor-pointer"
                   >
                     Done
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Multi-Select Floating Dropdown: Invoice Status -->
+          <div class="space-y-1.5 relative" @click.stop>
+            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+              Invoice Status (Multi-Select)
+            </label>
+            <div class="relative">
+              <button
+                type="button"
+                @click="togglePopover('status')"
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              >
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.statuses.length === 0 }">
+                  {{ statusSummaryLabel }}
+                </span>
+                <span v-if="localFilters.statuses.length > 0" class="text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.statuses.length }}
+                </span>
+              </button>
+
+              <!-- Floating Multi-Select Popover -->
+              <div
+                v-if="activePopover === 'status'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
+              >
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
+                  <span>Select Invoice Statuses</span>
+                  <button @click="localFilters.statuses = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
+                </div>
+                <label
+                  v-for="st in availableStatuses"
+                  :key="st.id"
+                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
+                >
+                  <input
+                    type="checkbox"
+                    :value="st.id"
+                    v-model="localFilters.statuses"
+                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                  />
+                  <span class="font-semibold" :class="st.colorClass">
+                    {{ st.label }}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Multi-Select Floating Dropdown: Warehouse / Shop Location -->
+          <div class="space-y-1.5 relative" @click.stop>
+            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+              Warehouse / Shop Location (Multi-Select)
+            </label>
+            <div class="relative">
+              <button
+                type="button"
+                @click="togglePopover('warehouse')"
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              >
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.warehouse_ids.length === 0 }">
+                  {{ warehouseSummaryLabel }}
+                </span>
+                <span v-if="localFilters.warehouse_ids.length > 0" class="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.warehouse_ids.length }}
+                </span>
+              </button>
+
+              <!-- Floating Multi-Select Popover -->
+              <div
+                v-if="activePopover === 'warehouse'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
+              >
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
+                  <span>Select Warehouses</span>
+                  <button @click="localFilters.warehouse_ids = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
+                </div>
+                <div v-if="warehouses.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                  No warehouses found.
+                </div>
+                <label
+                  v-for="wh in warehouses"
+                  :key="wh.id"
+                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
+                >
+                  <input
+                    type="checkbox"
+                    :value="wh.id"
+                    v-model="localFilters.warehouse_ids"
+                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                  />
+                  <span class="font-medium text-slate-800 dark:text-zinc-200">
+                    {{ wh.name }} {{ wh.code ? `(${wh.code})` : '' }} {{ wh.is_default ? '★' : '' }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Multi-warehouse isolation; filters line items and counter options below.</p>
+          </div>
+
+          <!-- 5. Multi-Select Floating Dropdown: POS Counter (Cascading) -->
+          <div class="space-y-1.5 relative" @click.stop>
+            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+              POS Counter (Multi-Select)
+            </label>
+            <div class="relative">
+              <button
+                type="button"
+                @click="togglePopover('counter')"
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              >
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.counter_ids.length === 0 }">
+                  {{ counterSummaryLabel }}
+                </span>
+                <span v-if="localFilters.counter_ids.length > 0" class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.counter_ids.length }}
+                </span>
+              </button>
+
+              <!-- Floating Multi-Select Popover -->
+              <div
+                v-if="activePopover === 'counter'"
+                class="absolute left-0 right-0 bottom-full mb-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
+              >
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
+                  <span>
+                    {{ localFilters.warehouse_ids.length > 0 ? 'Filtered Counters' : 'All Counters' }}
+                  </span>
+                  <button @click="localFilters.counter_ids = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
+                </div>
+                <div v-if="filteredCounters.length === 0" class="py-4 text-center text-slate-400 text-xs italic px-3">
+                  No counters available for the selected warehouse(s).
+                </div>
+                <label
+                  v-for="c in filteredCounters"
+                  :key="c.id"
+                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
+                >
+                  <input
+                    type="checkbox"
+                    :value="c.id"
+                    v-model="localFilters.counter_ids"
+                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                  />
+                  <span class="font-medium text-slate-800 dark:text-zinc-200">
+                    {{ c.name }} {{ c.counter_number ? `(#${c.counter_number})` : '' }}
+                    <span v-if="c.warehouse?.name" class="text-slate-400 text-[10px]">({{ c.warehouse.name }})</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Cascades based on selected warehouse location above.</p>
+          </div>
+
+          <!-- 6. Multi-Select Floating Dropdown: Sales Representative / Salesman -->
+          <div class="space-y-1.5 relative" @click.stop>
+            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+              Sales Representative / Salesman (Multi-Select)
+            </label>
+            <div class="relative">
+              <button
+                type="button"
+                @click="togglePopover('salesman')"
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              >
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.salesman_ids.length === 0 }">
+                  {{ salesmanSummaryLabel }}
+                </span>
+                <span v-if="localFilters.salesman_ids.length > 0" class="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.salesman_ids.length }}
+                </span>
+              </button>
+
+              <!-- Floating Multi-Select Popover -->
+              <div
+                v-if="activePopover === 'salesman'"
+                class="absolute left-0 right-0 bottom-full mb-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
+              >
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
+                  <span>Select Sales Representatives</span>
+                  <button @click="localFilters.salesman_ids = []" class="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Clear</button>
+                </div>
+                <div v-if="salesmen.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                  No sales reps found.
+                </div>
+                <label
+                  v-for="emp in salesmen"
+                  :key="emp.id"
+                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
+                >
+                  <input
+                    type="checkbox"
+                    :value="emp.id"
+                    v-model="localFilters.salesman_ids"
+                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                  />
+                  <span class="font-medium text-slate-800 dark:text-zinc-200">
+                    {{ emp.full_name }}
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -572,8 +643,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:isOpen', 'apply', 'reset']);
 
-// Active Popover Name: 'product' | 'warehouse' | 'counter' | 'salesman' | 'status' | null
+// Active Popover Name: 'product' | 'warehouse' | 'counter' | 'salesman' | 'status' | 'date_range' | null
 const activePopover = ref(null);
+const subPickerOpen = ref(null);
 
 const togglePopover = (name) => {
   if (activePopover.value === name) {
@@ -581,10 +653,12 @@ const togglePopover = (name) => {
   } else {
     activePopover.value = name;
   }
+  subPickerOpen.value = null;
 };
 
 const closeAllPopovers = () => {
   activePopover.value = null;
+  subPickerOpen.value = null;
 };
 
 // Local state for multi-select & popover filters
@@ -750,11 +824,24 @@ const syncPropsToLocal = () => {
   };
 };
 
+const toggleBodyScroll = (disable) => {
+  if (disable) {
+    document.body.classList.add('overflow-hidden');
+    document.documentElement.classList.add('overflow-hidden');
+  } else {
+    document.body.classList.remove('overflow-hidden');
+    document.documentElement.classList.remove('overflow-hidden');
+  }
+};
+
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
+    toggleBodyScroll(true);
     syncPropsToLocal();
     fetchDropdownData();
     fetchTopProducts();
+  } else {
+    toggleBodyScroll(false);
   }
 }, { immediate: true });
 
@@ -829,6 +916,36 @@ const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
+
+const shortMonthNames = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const availableYears = computed(() => {
+  const currentY = new Date().getFullYear();
+  const startY = Math.min(currentY - 15, 2015);
+  const endY = Math.max(currentY + 15, 2040);
+  const years = [];
+  for (let y = startY; y <= endY; y++) {
+    years.push(y);
+  }
+  return years;
+});
+
+const toggleSubPicker = (type) => {
+  subPickerOpen.value = subPickerOpen.value === type ? null : type;
+};
+
+const selectMonth = (idx) => {
+  calendarMonth.value = idx;
+  subPickerOpen.value = null;
+};
+
+const selectYear = (y) => {
+  calendarYear.value = y;
+  subPickerOpen.value = null;
+};
 
 const calendarMonthTitle = computed(() => {
   return `${monthNames[calendarMonth.value]} ${calendarYear.value}`;
@@ -994,6 +1111,16 @@ const setQuickDate = (preset) => {
     const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
     from = format(firstDay);
     to = format(lastDay);
+  } else if (preset === 'this_year') {
+    const firstDay = new Date(now.getFullYear(), 0, 1);
+    const lastDay = new Date(now.getFullYear(), 11, 31);
+    from = format(firstDay);
+    to = format(lastDay);
+  } else if (preset === 'last_year') {
+    const firstDay = new Date(now.getFullYear() - 1, 0, 1);
+    const lastDay = new Date(now.getFullYear() - 1, 11, 31);
+    from = format(firstDay);
+    to = format(lastDay);
   }
 
   localFilters.value.date_from = from;
@@ -1048,6 +1175,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  toggleBodyScroll(false);
   document.removeEventListener('click', handleDocumentClick);
 });
 </script>
