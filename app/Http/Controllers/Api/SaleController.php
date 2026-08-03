@@ -104,36 +104,98 @@ class SaleController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Sale::with(['customer', 'user', 'saleItems.product']);
+        $query = Sale::with([
+            'customer',
+            'user',
+            'salesman',
+            'counter',
+            'warehouse',
+            'saleItems.product',
+            'saleItems.variation',
+            'saleItems.warehouse'
+        ]);
 
-        // Search functionality
-        if ($request->has('search') && $request->search) {
+        // General Search functionality (invoice number, customer, product name/sku)
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('sale_number', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($cq) use ($search) {
                         $cq->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('saleItems.product', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%")
+                            ->orWhere('barcode', 'like', "%{$search}%");
                     });
             });
         }
 
-        // Filter by date range
-        if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('sale_date', '>=', $request->date_from);
+        // Product search filter (explicit via product name / SKU / barcode or product_id)
+        if ($request->filled('product_id')) {
+            $query->whereHas('saleItems', function ($sq) use ($request) {
+                $sq->where('product_id', $request->product_id);
+            });
         }
 
-        if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('sale_date', '<=', $request->date_to);
+        if ($request->filled('product_search') || $request->filled('product')) {
+            $productSearch = $request->input('product_search') ?? $request->input('product');
+            $query->whereHas('saleItems.product', function ($sq) use ($productSearch) {
+                $sq->where('name', 'like', "%{$productSearch}%")
+                    ->orWhere('sku', 'like', "%{$productSearch}%")
+                    ->orWhere('barcode', 'like', "%{$productSearch}%");
+            });
         }
 
-        // Legacy support for start_date and end_date
-        if ($request->has('start_date')) {
-            $query->whereDate('sale_date', '>=', $request->start_date);
+        // Line-item level Multi-Warehouse Filter (supports array, comma-separated, or scalar)
+        if ($request->filled('warehouse_id') || $request->filled('warehouse_ids')) {
+            $rawWh = $request->input('warehouse_ids') ?? $request->input('warehouse_id');
+            $warehouseIds = is_array($rawWh) ? $rawWh : explode(',', $rawWh);
+            $warehouseIds = array_values(array_filter(array_map('trim', $warehouseIds)));
+
+            if (!empty($warehouseIds)) {
+                $query->where(function ($q) use ($warehouseIds) {
+                    $q->whereHas('saleItems', function ($sq) use ($warehouseIds) {
+                        $sq->whereIn('warehouse_id', $warehouseIds);
+                    })->orWhereIn('warehouse_id', $warehouseIds);
+                });
+            }
         }
 
-        if ($request->has('end_date')) {
-            $query->whereDate('sale_date', '<=', $request->end_date);
+        // Salesman tracking filter (supports array, comma-separated, or scalar)
+        if ($request->filled('salesman_id') || $request->filled('salesman_ids')) {
+            $rawSales = $request->input('salesman_ids') ?? $request->input('salesman_id');
+            $salesmanIds = is_array($rawSales) ? $rawSales : explode(',', $rawSales);
+            $salesmanIds = array_values(array_filter(array_map('trim', $salesmanIds)));
+
+            if (!empty($salesmanIds)) {
+                $query->whereIn('salesman_id', $salesmanIds);
+            }
+        }
+
+        // Counter tracking filter (supports array, comma-separated, or scalar)
+        if ($request->filled('counter_id') || $request->filled('counter_ids')) {
+            $rawCnt = $request->input('counter_ids') ?? $request->input('counter_id');
+            $counterIds = is_array($rawCnt) ? $rawCnt : explode(',', $rawCnt);
+            $counterIds = array_values(array_filter(array_map('trim', $counterIds)));
+
+            if (!empty($counterIds)) {
+                $query->whereIn('counter_id', $counterIds);
+            }
+        }
+
+        // Filter by date range (supports date_from / date_to and start_date / end_date)
+        $dateFrom = $request->input('date_from') ?? $request->input('start_date');
+        $dateTo = $request->input('date_to') ?? $request->input('end_date');
+
+        if ($dateFrom) {
+            $query->whereDate('sale_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('sale_date', '<=', $dateTo);
         }
 
         // Filter by status (supports array, comma-separated string, and multi-select with overdue)

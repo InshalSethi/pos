@@ -15,8 +15,46 @@ class WarehouseController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:inventory.view')->only(['index', 'show', 'inventory']);
+        $this->middleware('permission:inventory.view')->only(['index', 'show', 'inventory', 'counters']);
         $this->middleware('permission:inventory.edit')->only(['store', 'update', 'destroy']);
+    }
+
+    /**
+     * Get counters list for dropdowns.
+     */
+    public function counters(Request $request): JsonResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+        $query = Counter::where('company_id', $companyId);
+
+        if ($request->has('warehouse_id') || $request->has('warehouse_ids')) {
+            $rawWh = $request->input('warehouse_ids') ?? $request->input('warehouse_id');
+            if (is_array($rawWh)) {
+                $warehouseIds = $rawWh;
+            } elseif (is_string($rawWh)) {
+                $warehouseIds = explode(',', $rawWh);
+            } else {
+                $warehouseIds = [$rawWh];
+            }
+            $warehouseIds = array_values(array_filter(array_map(function ($val) {
+                return is_string($val) ? trim($val) : $val;
+            }, $warehouseIds), function ($val) {
+                return $val !== null && $val !== '';
+            }));
+
+            if (!empty($warehouseIds)) {
+                $query->whereIn('warehouse_id', $warehouseIds);
+            }
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'active');
+        }
+
+        $counters = $query->with('warehouse:id,name')->orderBy('name')->get();
+        return response()->json($counters);
     }
 
     /**

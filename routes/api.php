@@ -202,6 +202,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/inventory/low-stock', [InventoryAdjustmentController::class , 'lowStock']);
 
     // Warehouse and stock transfer routes
+    Route::get('/counters', [WarehouseController::class, 'counters']);
     Route::get('/warehouses/{warehouse}/inventory', [WarehouseController::class, 'inventory']);
     Route::post('/warehouses/{warehouse}/set-default', [WarehouseController::class, 'setDefault']);
     Route::apiResource('warehouses', WarehouseController::class);
