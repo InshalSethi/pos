@@ -26,6 +26,18 @@ class CategoryController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $companyId = auth()->user()?->current_company_id;
+        if ($companyId) {
+            Category::firstOrCreate([
+                'company_id' => $companyId,
+                'name' => 'General',
+            ], [
+                'slug' => 'general',
+                'description' => 'Default Category',
+                'is_active' => true,
+            ]);
+        }
+
         $query = Category::with('parent', 'children', 'tax')->withCount('products');
 
         // Search functionality

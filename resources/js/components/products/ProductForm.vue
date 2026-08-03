@@ -560,7 +560,7 @@
               </div>
               <div v-show="form.enabled_for_tax">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  Tax
+                  Tax <span v-if="form.enabled_for_tax && !form.has_variations" class="text-rose-500">*</span>
                   <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
@@ -640,7 +640,7 @@
             <div v-show="form.track_inventory" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  SKU
+                  SKU <span class="text-rose-500">*</span>
                   <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
@@ -707,7 +707,7 @@
               <div class="space-y-3 bg-slate-50 dark:bg-[#1E1E1E]/20 p-3 rounded-lg border border-slate-200/50 dark:border-[#2E2E2E]/80">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
-                    Assign Warehouse(s)
+                    Assign Warehouse(s) <span v-if="form.track_inventory && !form.has_variations" class="text-rose-500">*</span>
                     <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
@@ -827,7 +827,7 @@
               <!-- Multi-select searchable dropdown container -->
               <div class="relative md:w-1/2 w-full" id="master-attr-multiselect-container">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  Search or Enter Variation Name
+                  Search or Enter Variation Name <span v-if="isVariantMode" class="text-rose-500">*</span>
                   <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
@@ -1006,7 +1006,7 @@
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Purchase Cost ($)</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Retail Price ($) *</th>
                         <th v-if="form.show_wholesale_price" class="px-2.5 py-2 text-left min-w-[100px]">Wholesale ($) *</th>
-                        <th v-if="form.show_tax_rate" class="px-2.5 py-2 text-left min-w-[120px]">Tax Rate(s)</th>
+                        <th v-if="form.show_tax_rate" class="px-2.5 py-2 text-left min-w-[120px]">Tax Rate(s) *</th>
                         <th class="px-2.5 py-2 text-left min-w-[180px]">Stock Qty *</th>
                         <th class="px-2.5 py-2 text-left min-w-[120px]">Expiry Date</th>
                         <th class="px-2.5 py-2 text-center bg-slate-50 dark:bg-[#1E1E1E]/60 z-10 shadow-[-1px_0_0_0_#cbd5e1] dark:shadow-[-1px_0_0_0_#334155]">Action</th>
@@ -2635,6 +2635,21 @@ onMounted(async () => {
       axios.get('/api/attributes').catch(() => ({ data: [] }))
     ]);
     categories.value = catResponse?.data || [];
+    
+    // Auto pre-select "General" category when creating a new product if no category selected
+    if ((!form.value.category_ids || form.value.category_ids.length === 0) && !props.initialData?.id) {
+      const catList = Array.isArray(categories.value)
+        ? categories.value
+        : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
+      const generalCat = catList.find(c => c.name && c.name.toLowerCase() === 'general');
+      if (generalCat) {
+        form.value.category_ids = [generalCat.id];
+        form.value.category_id = generalCat.id;
+      } else if (catList.length > 0) {
+        form.value.category_ids = [catList[0].id];
+        form.value.category_id = catList[0].id;
+      }
+    }
     suppliers.value = supResponse?.data || [];
     units.value = unitResponse?.data || [];
     taxes.value = taxResponse?.data || [];
@@ -3456,6 +3471,25 @@ const submit = () => {
       const qty = parseInt(row.stock_qty);
       return sum + (isNaN(qty) ? 0 : qty);
     }, 0);
+  }
+
+  // Check for 0 stock quantity alert (both standard and variant items)
+  let totalStockQty = 0;
+  if (isVariantMode.value) {
+    totalStockQty = (form.value.variations || []).reduce((sum, row) => {
+      const qty = parseInt(row.stock_qty);
+      return sum + (isNaN(qty) ? 0 : qty);
+    }, 0);
+  } else {
+    totalStockQty = parseInt(form.value.stock_quantity || 0);
+    if (isNaN(totalStockQty)) totalStockQty = 0;
+  }
+
+  if (totalStockQty === 0) {
+    const confirmSave = confirm("Do You Want to Save with 0 quantity?");
+    if (!confirmSave) {
+      return;
+    }
   }
 
   // Clear localStorage status on successful form submission intent

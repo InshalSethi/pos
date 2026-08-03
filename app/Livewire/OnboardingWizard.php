@@ -332,6 +332,16 @@ class OnboardingWizard extends Component
             // Seed Enterprise Chart of Accounts for new company
             \App\Services\ChartOfAccountService::ensureDefaultAccountsForCompany($company->id);
 
+            // Seed Default "General" Category
+            \App\Models\Category::firstOrCreate([
+                'company_id' => $company->id,
+                'name' => 'General',
+            ], [
+                'slug' => 'general',
+                'description' => 'Default Category',
+                'is_active' => true,
+            ]);
+
             // Seed Default Cash Vault Bank Account
             $cashAccount = \App\Models\Account::where('company_id', $company->id)
                 ->where('account_code', '1010')
