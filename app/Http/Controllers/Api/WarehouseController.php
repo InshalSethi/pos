@@ -82,6 +82,19 @@ class WarehouseController extends Controller
             $q->where('status', 'active');
         }])->orderBy('name')->get();
 
+        foreach ($warehouses as $wh) {
+            if ($wh->counters->count() === 0) {
+                Counter::create([
+                    'company_id' => $companyId,
+                    'warehouse_id' => $wh->id,
+                    'name' => 'First Sales Counter',
+                    'counter_number' => 'C-01',
+                    'status' => 'active',
+                ]);
+                $wh->load('counters');
+            }
+        }
+
         return response()->json($warehouses);
     }
 
@@ -145,7 +158,7 @@ class WarehouseController extends Controller
             $warehouse->is_default = $isDefault;
             $warehouse->save();
 
-            if ($request->has('counters') && is_array($request->counters)) {
+            if ($request->has('counters') && is_array($request->counters) && count($request->counters) > 0) {
                 foreach ($request->counters as $counterData) {
                     if (!empty($counterData['name'])) {
                         Counter::create([
@@ -157,6 +170,14 @@ class WarehouseController extends Controller
                         ]);
                     }
                 }
+            } else {
+                Counter::create([
+                    'company_id' => $companyId,
+                    'warehouse_id' => $warehouse->id,
+                    'name' => 'First Sales Counter',
+                    'counter_number' => 'C-01',
+                    'status' => 'active',
+                ]);
             }
 
             \Illuminate\Support\Facades\DB::commit();

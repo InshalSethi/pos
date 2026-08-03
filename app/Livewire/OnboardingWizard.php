@@ -317,7 +317,7 @@ class OnboardingWizard extends Component
 
             // ── Baseline Seeding ──
             // Seed Default Branch Warehouse
-            \App\Models\Warehouse::firstOrCreate([
+            $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
                 'company_id' => $company->id,
                 'is_default' => true,
             ], [
@@ -327,6 +327,16 @@ class OnboardingWizard extends Component
                 'address' => $company->business_address ?: '',
                 'is_active' => true,
                 'is_saleable' => true,
+            ]);
+
+            // Seed Default Sales Counter for Default Warehouse
+            \App\Models\Counter::firstOrCreate([
+                'company_id' => $company->id,
+                'warehouse_id' => $defaultWarehouse->id,
+                'name' => 'First Sales Counter',
+            ], [
+                'counter_number' => 'C-01',
+                'status' => 'active',
             ]);
 
             // Seed Enterprise Chart of Accounts for new company
