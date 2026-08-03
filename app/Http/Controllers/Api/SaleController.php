@@ -104,36 +104,98 @@ class SaleController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Sale::with(['customer', 'user', 'saleItems.product']);
+        $query = Sale::with([
+            'customer',
+            'user',
+            'salesman',
+            'counter',
+            'warehouse',
+            'saleItems.product',
+            'saleItems.variation',
+            'saleItems.warehouse'
+        ]);
 
-        // Search functionality
-        if ($request->has('search') && $request->search) {
+        // General Search functionality (invoice number, customer, product name/sku)
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('sale_number', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($cq) use ($search) {
                         $cq->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('saleItems.product', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%")
+                            ->orWhere('barcode', 'like', "%{$search}%");
                     });
             });
         }
 
-        // Filter by date range
-        if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('sale_date', '>=', $request->date_from);
+        // Product search filter (explicit via product name / SKU / barcode or product_id)
+        if ($request->filled('product_id')) {
+            $query->whereHas('saleItems', function ($sq) use ($request) {
+                $sq->where('product_id', $request->product_id);
+            });
         }
 
-        if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('sale_date', '<=', $request->date_to);
+        if ($request->filled('product_search') || $request->filled('product')) {
+            $productSearch = $request->input('product_search') ?? $request->input('product');
+            $query->whereHas('saleItems.product', function ($sq) use ($productSearch) {
+                $sq->where('name', 'like', "%{$productSearch}%")
+                    ->orWhere('sku', 'like', "%{$productSearch}%")
+                    ->orWhere('barcode', 'like', "%{$productSearch}%");
+            });
         }
 
-        // Legacy support for start_date and end_date
-        if ($request->has('start_date')) {
-            $query->whereDate('sale_date', '>=', $request->start_date);
+        // Line-item level Multi-Warehouse Filter (supports array, comma-separated, or scalar)
+        if ($request->filled('warehouse_id') || $request->filled('warehouse_ids')) {
+            $rawWh = $request->input('warehouse_ids') ?? $request->input('warehouse_id');
+            $warehouseIds = is_array($rawWh) ? $rawWh : explode(',', $rawWh);
+            $warehouseIds = array_values(array_filter(array_map('trim', $warehouseIds)));
+
+            if (!empty($warehouseIds)) {
+                $query->where(function ($q) use ($warehouseIds) {
+                    $q->whereHas('saleItems', function ($sq) use ($warehouseIds) {
+                        $sq->whereIn('warehouse_id', $warehouseIds);
+                    })->orWhereIn('warehouse_id', $warehouseIds);
+                });
+            }
         }
 
-        if ($request->has('end_date')) {
-            $query->whereDate('sale_date', '<=', $request->end_date);
+        // Salesman tracking filter (supports array, comma-separated, or scalar)
+        if ($request->filled('salesman_id') || $request->filled('salesman_ids')) {
+            $rawSales = $request->input('salesman_ids') ?? $request->input('salesman_id');
+            $salesmanIds = is_array($rawSales) ? $rawSales : explode(',', $rawSales);
+            $salesmanIds = array_values(array_filter(array_map('trim', $salesmanIds)));
+
+            if (!empty($salesmanIds)) {
+                $query->whereIn('salesman_id', $salesmanIds);
+            }
+        }
+
+        // Counter tracking filter (supports array, comma-separated, or scalar)
+        if ($request->filled('counter_id') || $request->filled('counter_ids')) {
+            $rawCnt = $request->input('counter_ids') ?? $request->input('counter_id');
+            $counterIds = is_array($rawCnt) ? $rawCnt : explode(',', $rawCnt);
+            $counterIds = array_values(array_filter(array_map('trim', $counterIds)));
+
+            if (!empty($counterIds)) {
+                $query->whereIn('counter_id', $counterIds);
+            }
+        }
+
+        // Filter by date range (supports date_from / date_to and start_date / end_date)
+        $dateFrom = $request->input('date_from') ?? $request->input('start_date');
+        $dateTo = $request->input('date_to') ?? $request->input('end_date');
+
+        if ($dateFrom) {
+            $query->whereDate('sale_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('sale_date', '<=', $dateTo);
         }
 
         // Filter by status (supports array, comma-separated string, and multi-select with overdue)
@@ -764,10 +826,136 @@ class SaleController extends Controller
     }
 
     /**
+     * Determine if an edit request contains financial changes (items, prices, tax, discount, payment splits).
+     */
+    protected function isFinancialEdit(Sale $sale, Request $request): bool
+    {
+        $newSubtotal = $request->has('subtotal') && $request->subtotal !== null ? (float)$request->subtotal : null;
+        $newTax = $request->has('tax_amount') && $request->tax_amount !== null ? (float)$request->tax_amount : null;
+        $newDiscount = $request->has('discount_amount') && $request->discount_amount !== null ? (float)$request->discount_amount : null;
+        $newTotal = ($request->has('total_amount') || $request->has('grand_total')) 
+            ? (float)($request->total_amount ?? $request->grand_total) 
+            : null;
+        $newPaid = $request->has('paid_amount') ? (float)$request->paid_amount : null;
+
+        if ($newSubtotal !== null && abs($newSubtotal - (float)$sale->subtotal) > 0.001) return true;
+        if ($newTax !== null && abs($newTax - (float)$sale->tax_amount) > 0.001) return true;
+        if ($newDiscount !== null && abs($newDiscount - (float)$sale->discount_amount) > 0.001) return true;
+        if ($newTotal !== null && abs($newTotal - (float)$sale->total_amount) > 0.001) return true;
+        if ($newPaid !== null && abs($newPaid - (float)$sale->paid_amount) > 0.001) return true;
+
+        $oldItems = $sale->saleItems;
+        $newItems = $request->input('items', []);
+
+        if (is_array($newItems) && count($newItems) > 0) {
+            if (count($oldItems) !== count($newItems)) {
+                return true;
+            }
+
+            $oldMap = [];
+            foreach ($oldItems as $item) {
+                $key = $item->product_id . '_' . ($item->product_variation_id ?? 'null') . '_' . ($item->warehouse_id ?: $sale->warehouse_id);
+                if (!isset($oldMap[$key])) {
+                    $oldMap[$key] = [
+                        'quantity' => 0,
+                        'unit_price' => (float)$item->unit_price,
+                        'discount_amount' => (float)$item->discount_amount,
+                        'tax_amount' => (float)$item->tax_amount,
+                    ];
+                }
+                $oldMap[$key]['quantity'] += (float)$item->quantity;
+            }
+
+            $newMap = [];
+            foreach ($newItems as $item) {
+                $key = $item['product_id'] . '_' . ($item['product_variation_id'] ?? 'null') . '_' . ($item['warehouse_id'] ?? $sale->warehouse_id);
+                if (!isset($newMap[$key])) {
+                    $newMap[$key] = [
+                        'quantity' => 0,
+                        'unit_price' => (float)($item['unit_price'] ?? 0),
+                        'discount_amount' => (float)($item['discount_amount'] ?? 0),
+                        'tax_amount' => (float)($item['tax_amount'] ?? 0),
+                    ];
+                }
+                $newMap[$key]['quantity'] += (float)($item['quantity'] ?? 0);
+            }
+
+            if (count($oldMap) !== count($newMap)) {
+                return true;
+            }
+
+            foreach ($newMap as $key => $newVal) {
+                if (!isset($oldMap[$key])) return true;
+                $oldVal = $oldMap[$key];
+                if (abs($oldVal['quantity'] - $newVal['quantity']) > 0.0001) return true;
+                if (abs($oldVal['unit_price'] - $newVal['unit_price']) > 0.001) return true;
+                if (abs($oldVal['discount_amount'] - $newVal['discount_amount']) > 0.001) return true;
+                if (abs($oldVal['tax_amount'] - $newVal['tax_amount']) > 0.001) return true;
+            }
+        }
+
+        $rawPayments = $request->input('payments', []);
+        $newPayments = [];
+        if (is_array($rawPayments) && count($rawPayments) > 0) {
+            foreach ($rawPayments as $p) {
+                $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
+                $amount = (float)($p['amount'] ?? 0);
+                $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int)$p['bank_id'] : null;
+                if ($amount > 0) {
+                    $newPayments[] = [
+                        'type' => $type,
+                        'bank_id' => $bankId,
+                        'amount' => $amount,
+                    ];
+                }
+            }
+        }
+
+        $oldPayments = is_array($sale->payment_details) ? $sale->payment_details : [];
+        if (empty($oldPayments) && $sale->paid_amount > 0) {
+            $oldPayments[] = [
+                'type' => ($sale->payment_method === 'bank_transfer' || $sale->payment_method === 'card') ? 'bank' : 'cash',
+                'bank_id' => $sale->bank_id ? (int)$sale->bank_id : null,
+                'amount' => (float)$sale->paid_amount,
+            ];
+        }
+
+        if (count($oldPayments) !== count($newPayments)) {
+            return true;
+        }
+
+        for ($i = 0; $i < count($newPayments); $i++) {
+            $np = $newPayments[$i];
+            $op = $oldPayments[$i] ?? [];
+            $opType = strtolower($op['type'] ?? $op['method'] ?? 'cash');
+            $opBank = isset($op['bank_id']) && $op['bank_id'] !== null ? (int)$op['bank_id'] : null;
+            $opAmount = (float)($op['amount'] ?? 0);
+
+            if ($np['type'] !== $opType) return true;
+            if ($np['bank_id'] !== $opBank) return true;
+            if (abs($np['amount'] - $opAmount) > 0.001) return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Sale $sale): JsonResponse
     {
+        // 1. Guard against updating a voided or cancelled invoice
+        if (in_array(strtolower($sale->status), ['void', 'voided', 'cancelled'])) {
+            return response()->json([
+                'message' => "Cannot edit voided or cancelled invoice #{$sale->sale_number}."
+            ], 422);
+        }
+
+        // 2. Delegate to void procedure if status change to void is requested
+        if (strtolower($request->status ?? '') === 'void') {
+            return $this->void($request, $sale);
+        }
+
         $validator = Validator::make($request->all(), [
             'customer_id' => 'nullable|exists:customers,id',
             'customer_name' => 'nullable|string|max:255',
@@ -829,6 +1017,41 @@ class SaleController extends Controller
 
         try {
             DB::beginTransaction();
+
+            $companyId = auth()->user()->current_company_id;
+
+            // Determine if financial attributes (amounts, items, payment splits) were modified
+            $isFinancial = $this->isFinancialEdit($sale, $request);
+
+            // Handle Non-Financial Edit Protection: Update metadata ONLY
+            if (!$isFinancial) {
+                $customerId = $request->customer_id ?? $sale->customer_id;
+                $customerPhone = $request->customer_phone ?? $sale->customer_phone;
+                $customerEmail = $request->customer_email ?? $sale->customer_email;
+
+                $sale->update([
+                    'customer_id' => $customerId,
+                    'customer_phone' => $customerPhone,
+                    'customer_email' => $customerEmail,
+                    'category_id' => $request->category_id ?? $sale->category_id,
+                    'sale_date' => $request->sale_date ?? $sale->sale_date,
+                    'due_date' => $request->due_date ?? $sale->due_date,
+                    'order_number' => $request->order_number ?? $sale->order_number,
+                    'color' => $request->color ?? $sale->color,
+                    'notes' => $request->notes ?? $sale->notes,
+                    'footer' => $request->footer ?? $sale->footer,
+                    'attachments' => $request->attachments ? json_encode($request->attachments) : $sale->attachments,
+                ]);
+
+                DB::commit();
+
+                $sale->load(['customer', 'user', 'saleItems.product', 'saleItems.variation', 'saleItems.warehouse']);
+
+                return response()->json([
+                    'message' => 'Invoice metadata updated successfully (financial ledgers untouched)',
+                    'sale' => $sale
+                ], 200);
+            }
 
             $companyId = auth()->user()->current_company_id;
 
@@ -1499,6 +1722,9 @@ class SaleController extends Controller
                             'running_balance' => (float) $bankAccount->current_balance,
                             'status' => 'cleared',
                         ]);
+                        if ($bankAccount->chartAccount) {
+                            $bankAccount->chartAccount->updateCurrentBalance();
+                        }
                     }
                 }
             } catch (\Throwable $accountingError) {
@@ -1537,6 +1763,9 @@ class SaleController extends Controller
             'original_sale_id' => 'required|exists:sales,id',
             'return_date' => 'required|date',
             'return_reason' => 'required|string',
+            'salesman_id' => 'nullable|exists:employees,id',
+            'counter_id' => 'nullable|exists:counters,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'refund_method' => 'nullable|string',
             'payments' => 'nullable|array',
             'payments.*.type' => 'nullable|string',
@@ -1729,8 +1958,10 @@ class SaleController extends Controller
             $returnSale = Sale::create([
                 'sale_number' => $returnSaleNumber,
                 'customer_id' => $originalSale->customer_id,
+                'salesman_id' => $request->input('salesman_id', $originalSale->salesman_id),
+                'counter_id' => $request->input('counter_id', $originalSale->counter_id),
                 'user_id' => Auth::id(),
-                'warehouse_id' => $firstTargetWarehouseId,
+                'warehouse_id' => $request->input('warehouse_id') ?? $firstTargetWarehouseId ?? $originalSale->warehouse_id,
                 'sale_date' => $request->return_date,
                 'status' => 'completed',
                 'subtotal' => -$totalReturnAmount,

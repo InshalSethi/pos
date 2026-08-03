@@ -40,6 +40,8 @@ class EnsureOnboardingIsCompleted
         // ── CASE 3: First-time onboarding still incomplete ────────────────────
         if (!$user->onboarding_completed) {
             $exempt = $request->routeIs('company.setup')
+                   || $request->routeIs('company.initiate-new')
+                   || $request->is('initiate-new-company*')
                    || $request->routeIs('onboarding.wizard')
                    || $request->routeIs('abort-onboarding')
                    || $request->is('livewire*')
@@ -54,7 +56,7 @@ class EnsureOnboardingIsCompleted
         }
 
         // ── CASE 4: Allow access to company-setup for adding new company ──
-        if ($request->is('company-setup*')) {
+        if ($request->is('company-setup*') || $request->is('initiate-new-company*')) {
             return $next($request);
         }
 

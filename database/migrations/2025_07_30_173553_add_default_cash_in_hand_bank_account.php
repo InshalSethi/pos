@@ -26,7 +26,7 @@ return new class extends Migration
             ]
         );
 
-        $company = \App\Models\Company::first();
+        $company = \Illuminate\Support\Facades\Schema::hasTable('companies') ? \App\Models\Company::first() : null;
         $companyCurrency = $company?->base_currency ?? $company?->currency_code ?? 'PKR';
 
         // Create the default "Cash in Hand" bank account

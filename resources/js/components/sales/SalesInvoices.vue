@@ -2,11 +2,15 @@
   <div class="w-full max-w-full py-8 px-4 sm:px-6 lg:px-8 dark:bg-zinc-950">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Invoices</h1>
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Invoices</h1>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Manage and track sales invoices with multi-warehouse and salesman allocation</p>
+      </div>
       <button
         @click="createInvoice"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 animate-button"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 animate-button cursor-pointer"
       >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         <span>Create Invoice</span>
       </button>
     </div>
@@ -34,81 +38,90 @@
 
       <div class="flex items-center space-x-2">
         <!-- Sort Button -->
-        <button class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all">
-          <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-          Sort
-        </button>
-        <!-- Filter Button -->
-        <div class="relative">
-          <button
-            @click.stop="toggleFilterDropdown"
-            class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
-            :class="{ 'border-blue-600 text-blue-600 bg-blue-50/10': selectedFilters.length > 0 }"
-          >
-            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" :class="{ 'text-blue-600': selectedFilters.length > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/></svg>
-            <span>Filter</span>
-            <!-- Selected Filter Indicator -->
-            <span v-if="selectedFilters.length > 0" class="ml-1.5 text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
-              {{ selectedFilters.length }}
-            </span>
-          </button>
-
-          <!-- Filter Dropdown List -->
-          <div
-            v-if="showFilterDropdown"
-            class="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
-          >
-            <button
-              v-for="option in ['draft', 'paid', 'due', 'recurring', 'overdue', 'void']"
-              :key="option"
-              @click.stop="toggleFilterOption(option)"
-              class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors"
-              :class="selectedFilters.includes(option) ? 'text-blue-600 dark:text-blue-400 font-bold bg-blue-50/20 dark:bg-blue-900/20' : 'text-slate-700 dark:text-zinc-300'"
-            >
-              <span>{{ option.charAt(0).toUpperCase() + option.slice(1) }}</span>
-              <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Clear Button (shows when any search or filter applies) -->
         <button
-          v-if="searchQuery !== '' || dateFrom !== '' || dateTo !== '' || selectedFilters.length > 0"
-          @click="clearAllFilters"
-          class="inline-flex items-center px-3 py-1.5 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-xs font-semibold shadow-sm transition-all focus:outline-none cursor-pointer"
+          @click="toggleSortOrder"
+          class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all cursor-pointer"
         >
-          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          Clear
+          <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+          Sort: {{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}
+        </button>
+
+        <!-- Advanced Filter Drawer Button -->
+        <button
+          @click="openFilterDrawer"
+          class="inline-flex items-center px-3.5 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
+          :class="{ 'border-blue-600 text-blue-600 bg-blue-50/20 dark:bg-blue-900/20 dark:text-blue-400 font-bold': totalActiveFilterCount > 0 }"
+        >
+          <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" :class="{ 'text-blue-600 dark:text-blue-400': totalActiveFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
+          </svg>
+          <span>Filter</span>
+          <!-- Selected Filter Indicator Badge -->
+          <span v-if="totalActiveFilterCount > 0" class="ml-1.5 text-[10px] font-extrabold bg-blue-600 text-white px-1.5 py-0.2 rounded-full">
+            {{ totalActiveFilterCount }}
+          </span>
         </button>
       </div>
     </div>
 
-    <!-- Date Filters Card -->
-    <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || selectedFilters.length > 0" class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 shadow-soft grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
-      <div>
-        <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date From</label>
-        <input
-          v-model="dateFrom"
-          type="date"
-          @change="fetchInvoices(1)"
-          class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
-        />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date To</label>
-        <input
-          v-model="dateTo"
-          type="date"
-          @change="fetchInvoices(1)"
-          class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
-        />
-      </div>
+    <!-- Active Filters Pill Bar -->
+    <div v-if="totalActiveFilterCount > 0" class="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-soft animate-fade-in">
+      <span class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mr-1">Active Filters:</span>
+
+      <!-- Product Pill -->
+      <span v-if="advancedFilters.product_name || advancedFilters.product_search" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+        Item: {{ advancedFilters.product_name || advancedFilters.product_search }}
+        <button @click="removeSingleFilter('product')" class="ml-1.5 hover:text-blue-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Warehouse Pill -->
+      <span v-if="advancedFilters.warehouse_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+        Shops: {{ getWarehouseSummary() }}
+        <button @click="removeSingleFilter('warehouse')" class="ml-1.5 hover:text-emerald-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Salesman Pill -->
+      <span v-if="advancedFilters.salesman_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+        Reps: {{ getSalesmanSummary() }}
+        <button @click="removeSingleFilter('salesman')" class="ml-1.5 hover:text-purple-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Counter Pill -->
+      <span v-if="advancedFilters.counter_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+        Counters: {{ getCounterSummary() }}
+        <button @click="removeSingleFilter('counter')" class="ml-1.5 hover:text-amber-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Status Pill -->
+      <span v-if="advancedFilters.statuses?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+        Status: {{ getStatusSummary() }}
+        <button @click="removeSingleFilter('status')" class="ml-1.5 hover:text-indigo-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Date Range Pill -->
+      <span v-if="activeDateRangeLabel" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+        Date: {{ activeDateRangeLabel }}
+        <button @click="removeSingleFilter('date')" class="ml-1.5 hover:text-cyan-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Search Query Pill -->
+      <span v-if="searchQuery" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
+        Search: "{{ searchQuery }}"
+        <button @click="searchQuery = ''; fetchInvoices(1)" class="ml-1.5 hover:text-slate-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <button
+        @click="clearAllFilters"
+        class="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold ml-auto cursor-pointer"
+      >
+        Clear All
+      </button>
     </div>
 
     <!-- Table Container -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
       <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
-        <!-- Search -->
+        <!-- Global Search -->
         <div class="relative w-96">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -116,7 +129,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search by invoice number or customer name"
+            placeholder="Search by invoice #, customer, or product..."
             class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
             @input="debouncedSearch"
           />
@@ -153,7 +166,7 @@
                   <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
                 </div>
               </th>
-              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Client/Customer</th>
+              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Client & Allocation</th>
               <th class="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('total_amount')">
                 <div class="flex items-center justify-end space-x-1">
                   <span>Total Amount</span>
@@ -191,7 +204,7 @@
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
-                <span>No invoices found. Get started by creating your first sales invoice.</span>
+                <span>No invoices found matching selected filter criteria.</span>
               </td>
             </tr>
             <tr v-else v-for="item in invoices" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors">
@@ -202,24 +215,32 @@
 
               <!-- Invoice ID -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 cursor-pointer" @click="viewInvoice(item)">
-                  {{ item.sale_number }}
+                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 cursor-pointer flex items-center space-x-1.5" @click="viewInvoice(item)">
+                  <span>{{ item.sale_number }}</span>
                 </div>
                 <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
                   Created on: {{ formatLongDate(item.created_at) }}
                 </div>
               </td>
 
-              <!-- Client/Customer -->
+              <!-- Client & Multi-warehouse / Salesman Allocation -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
                 <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
                   {{ item.customer?.name || 'Walk-in Customer' }}
                 </div>
-                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center mt-0.5 space-x-1">
-                  <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
-                  </svg>
-                  <span>{{ item.customer?.city || 'Default Branch' }}</span>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex flex-wrap items-center mt-1 gap-x-2 gap-y-0.5">
+                  <span v-if="item.salesman" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
+                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    Rep: {{ item.salesman.first_name || item.salesman.full_name }}
+                  </span>
+                  <span v-if="item.counter" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
+                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Counter: {{ item.counter.name }}
+                  </span>
+                  <span v-if="item.warehouse" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"/></svg>
+                    {{ item.warehouse.name }}
+                  </span>
                 </div>
               </td>
 
@@ -265,7 +286,7 @@
               <td class="py-4 px-4 text-center relative align-middle bg-white dark:bg-zinc-900">
                 <button
                   @click.stop="toggleActionDropdown(item.id)"
-                  class="text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all focus:outline-none"
+                  class="text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all focus:outline-none cursor-pointer"
                 >
                   <svg class="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M12 5a2 2 0 100-4 2 2 0 000 4zm0 9a2 2 0 100-4 2 2 0 000 4zm0 9a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
@@ -363,6 +384,16 @@
           </nav>
         </div>
       </div>
+    </div>
+
+    <!-- Advanced Filter Drawer Component -->
+    <SalesFilter
+      v-model:isOpen="isFilterDrawerOpen"
+      :filters="advancedFilters"
+      @apply="handleApplyAdvancedFilters"
+      @reset="handleResetAdvancedFilters"
+    />
+
     <!-- Void Confirmation Modal -->
     <teleport to="body">
       <div v-if="voidModalState.isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
@@ -405,7 +436,6 @@
         </div>
       </div>
     </teleport>
-    </div>
   </div>
 </template>
 
@@ -416,6 +446,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { useToast } from '@/composables/useToast';
 import { debounce } from '@/utils/debounce';
+import SalesFilter from './SalesFilter.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -423,7 +454,7 @@ const currencyStore = useCurrencyStore();
 const router = useRouter();
 const { showToast } = useToast();
 
-// Reactive data
+// Reactive Data
 const invoices = ref([]);
 const searchQuery = ref('');
 const dateFrom = ref('');
@@ -434,27 +465,162 @@ const showEditModal = ref(false);
 const selectedInvoice = ref(null);
 const loading = ref(false);
 const openActionDropdown = ref(null);
-const showFilterDropdown = ref(false);
+const isFilterDrawerOpen = ref(false);
+
+// Advanced Filter State (Supports multi-select arrays & popovers)
+const advancedFilters = ref({
+  product_id: '',
+  product_name: '',
+  product_search: '',
+  warehouse_ids: [],
+  counter_ids: [],
+  salesman_ids: [],
+  statuses: [],
+  date_from: '',
+  date_to: ''
+});
+
+// Lookup data for active filter badges
+const warehouseList = ref([]);
+const salesmanList = ref([]);
+const counterList = ref([]);
+
+const extractArray = (resData) => {
+  if (Array.isArray(resData)) return resData;
+  if (resData && Array.isArray(resData.data)) return resData.data;
+  return [];
+};
+
+const loadFilterLookups = async () => {
+  try {
+    const [whRes, empRes, cntRes] = await Promise.all([
+      axios.get('/api/warehouses').catch(() => ({ data: [] })),
+      axios.get('/api/employees/for-dropdown').catch(() => ({ data: [] })),
+      axios.get('/api/counters').catch(() => ({ data: [] }))
+    ]);
+    warehouseList.value = extractArray(whRes.data);
+    salesmanList.value = extractArray(empRes.data);
+    counterList.value = extractArray(cntRes.data);
+  } catch (e) {
+    console.error('Error loading filter lookups:', e);
+  }
+};
+
+const getWarehouseSummary = () => {
+  const ids = advancedFilters.value.warehouse_ids || [];
+  if (ids.length === 0) return '';
+  const list = Array.isArray(warehouseList.value) ? warehouseList.value : [];
+  const first = list.find(w => String(w.id) === String(ids[0]));
+  const name = first ? first.name : `Shop #${ids[0]}`;
+  return ids.length > 1 ? `${name} (+${ids.length - 1})` : name;
+};
+
+const getSalesmanSummary = () => {
+  const ids = advancedFilters.value.salesman_ids || [];
+  if (ids.length === 0) return '';
+  const list = Array.isArray(salesmanList.value) ? salesmanList.value : [];
+  const first = list.find(s => String(s.id) === String(ids[0]));
+  const name = first ? first.full_name : `Rep #${ids[0]}`;
+  return ids.length > 1 ? `${name} (+${ids.length - 1})` : name;
+};
+
+const getCounterSummary = () => {
+  const ids = advancedFilters.value.counter_ids || [];
+  if (ids.length === 0) return '';
+  const list = Array.isArray(counterList.value) ? counterList.value : [];
+  const first = list.find(c => String(c.id) === String(ids[0]));
+  const name = first ? first.name : `Counter #${ids[0]}`;
+  return ids.length > 1 ? `${name} (+${ids.length - 1})` : name;
+};
+
+const getStatusSummary = () => {
+  const list = advancedFilters.value.statuses || [];
+  if (list.length === 0) return '';
+  const map = {
+    completed: 'Paid',
+    pending: 'Due',
+    overdue: 'Overdue',
+    draft: 'Draft',
+    recurring: 'Recurring',
+    void: 'Void'
+  };
+  const firstLabel = map[list[0]] || list[0];
+  return list.length > 1 ? `${firstLabel} (+${list.length - 1})` : firstLabel;
+};
+
+const activeDateRangeLabel = computed(() => {
+  const from = advancedFilters.value.date_from || dateFrom.value;
+  const to = advancedFilters.value.date_to || dateTo.value;
+  if (from && to) return `${from} to ${to}`;
+  if (from) return `From ${from}`;
+  if (to) return `Until ${to}`;
+  return '';
+});
+
+const totalActiveFilterCount = computed(() => {
+  let count = 0;
+  if (searchQuery.value) count++;
+  if (advancedFilters.value.product_id || advancedFilters.value.product_search) count++;
+  if (advancedFilters.value.warehouse_ids?.length > 0) count++;
+  if (advancedFilters.value.counter_ids?.length > 0) count++;
+  if (advancedFilters.value.salesman_ids?.length > 0) count++;
+  if (advancedFilters.value.statuses?.length > 0) count++;
+  if (advancedFilters.value.date_from || advancedFilters.value.date_to || dateFrom.value || dateTo.value) count++;
+  return count;
+});
 
 const isTabActive = (tabId) => {
   return currentTab.value === tabId;
 };
 
-const toggleFilterDropdown = () => {
-  showFilterDropdown.value = !showFilterDropdown.value;
+const openFilterDrawer = () => {
+  isFilterDrawerOpen.value = true;
 };
 
-const toggleFilterOption = (option) => {
-  const index = selectedFilters.value.indexOf(option);
-  if (index > -1) {
-    selectedFilters.value.splice(index, 1);
-    if (currentTab.value === option) {
-      currentTab.value = 'all';
-      fetchInvoices(1);
-    }
-  } else {
-    selectedFilters.value.push(option);
+const handleApplyAdvancedFilters = (newFilters) => {
+  advancedFilters.value = { ...newFilters };
+  if (newFilters.date_from) dateFrom.value = newFilters.date_from;
+  if (newFilters.date_to) dateTo.value = newFilters.date_to;
+  fetchInvoices(1);
+};
+
+const handleResetAdvancedFilters = () => {
+  advancedFilters.value = {
+    product_id: '',
+    product_name: '',
+    product_search: '',
+    warehouse_ids: [],
+    counter_ids: [],
+    salesman_ids: [],
+    statuses: [],
+    date_from: '',
+    date_to: ''
+  };
+  dateFrom.value = '';
+  dateTo.value = '';
+  fetchInvoices(1);
+};
+
+const removeSingleFilter = (key) => {
+  if (key === 'date') {
+    advancedFilters.value.date_from = '';
+    advancedFilters.value.date_to = '';
+    dateFrom.value = '';
+    dateTo.value = '';
+  } else if (key === 'product') {
+    advancedFilters.value.product_id = '';
+    advancedFilters.value.product_name = '';
+    advancedFilters.value.product_search = '';
+  } else if (key === 'warehouse') {
+    advancedFilters.value.warehouse_ids = [];
+  } else if (key === 'salesman') {
+    advancedFilters.value.salesman_ids = [];
+  } else if (key === 'counter') {
+    advancedFilters.value.counter_ids = [];
+  } else if (key === 'status') {
+    advancedFilters.value.statuses = [];
   }
+  fetchInvoices(1);
 };
 
 const clearAllFilters = () => {
@@ -463,13 +629,28 @@ const clearAllFilters = () => {
   searchQuery.value = '';
   dateFrom.value = '';
   dateTo.value = '';
-  showFilterDropdown.value = false;
+  advancedFilters.value = {
+    product_id: '',
+    product_name: '',
+    product_search: '',
+    warehouse_ids: [],
+    counter_ids: [],
+    salesman_ids: [],
+    statuses: [],
+    date_from: '',
+    date_to: ''
+  };
   fetchInvoices(1);
 };
 
 // Sorting
 const sortBy = ref('sale_date');
 const sortOrder = ref('desc');
+
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  fetchInvoices(1);
+};
 
 // Pagination
 const currentPage = ref(1);
@@ -555,12 +736,32 @@ const fetchInvoices = async (page = 1) => {
       params.status = statusParam;
     }
 
-    if (dateFrom.value) {
-      params.date_from = dateFrom.value;
+    if (advancedFilters.value.product_id) {
+      params.product_id = advancedFilters.value.product_id;
+    } else if (advancedFilters.value.product_search) {
+      params.product_search = advancedFilters.value.product_search;
     }
-    if (dateTo.value) {
-      params.date_to = dateTo.value;
+
+    if (advancedFilters.value.warehouse_ids?.length > 0) {
+      params.warehouse_id = advancedFilters.value.warehouse_ids.join(',');
     }
+
+    if (advancedFilters.value.salesman_ids?.length > 0) {
+      params.salesman_id = advancedFilters.value.salesman_ids.join(',');
+    }
+
+    if (advancedFilters.value.counter_ids?.length > 0) {
+      params.counter_id = advancedFilters.value.counter_ids.join(',');
+    }
+
+    if (advancedFilters.value.statuses?.length > 0) {
+      params.status = advancedFilters.value.statuses.join(',');
+    }
+
+    const dateFromVal = advancedFilters.value.date_from || dateFrom.value;
+    const dateToVal = advancedFilters.value.date_to || dateTo.value;
+    if (dateFromVal) params.date_from = dateFromVal;
+    if (dateToVal) params.date_to = dateToVal;
 
     const response = await axios.get('/api/sales', { params });
     invoices.value = response.data.data;
@@ -613,7 +814,6 @@ const toggleActionDropdown = (id) => {
 
 const closeAllDropdowns = () => {
   openActionDropdown.value = null;
-  showFilterDropdown.value = false;
 };
 
 // Date Format Helpers
@@ -645,21 +845,18 @@ const getBalanceState = (item) => {
   const diff = paid - total;
 
   if (diff < -0.01) {
-    // Case A: Underpayment -> Customer owes money
     return {
       type: 'due',
       amount: Math.abs(diff),
       label: 'Due'
     };
   } else if (diff > 0.01) {
-    // Case B: Overpayment -> Change due / Return amount to customer
     return {
       type: 'return',
       amount: diff,
       label: 'Return'
     };
   } else {
-    // Case C: Exact Payment
     return {
       type: 'paid',
       amount: 0,
@@ -671,10 +868,6 @@ const getBalanceState = (item) => {
 const isInvoiceVoided = (item) => {
   if (!item || !item.status) return false;
   return ['void', 'voided', 'cancelled'].includes(String(item.status).toLowerCase());
-};
-
-const getDueAmount = (item) => {
-  return getBalanceState(item).type === 'due' ? getBalanceState(item).amount : 0;
 };
 
 const getStatusLabel = (item) => {
@@ -789,18 +982,9 @@ const goToPage = (page) => {
   fetchInvoices(page);
 };
 
-const closeModal = () => {
-  showEditModal.value = false;
-  selectedInvoice.value = null;
-};
-
-const handleInvoiceSaved = () => {
-  closeModal();
-  fetchInvoices(currentPage.value);
-};
-
 // Lifecycle
 onMounted(() => {
+  loadFilterLookups();
   fetchInvoices(1);
   document.addEventListener('click', closeAllDropdowns);
 });
@@ -835,5 +1019,12 @@ onUnmounted(() => {
 }
 .animate-button:active {
   transform: translateY(0.5px);
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 4px;
 }
 </style>
