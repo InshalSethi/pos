@@ -1788,9 +1788,9 @@ class SaleController extends Controller
 
         $originalSale = Sale::with('saleItems.product')->find($request->original_sale_id);
 
-        if ($originalSale->status !== 'completed') {
+        if (in_array($originalSale->status, ['void', 'cancelled'])) {
             return response()->json([
-                'message' => 'Can only process returns for completed sales'
+                'message' => 'Cannot process returns for voided or cancelled sales'
             ], 422);
         }
 

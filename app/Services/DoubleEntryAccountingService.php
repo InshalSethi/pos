@@ -797,7 +797,7 @@ class DoubleEntryAccountingService
                     'account_code' => '4020',
                     'account_name' => 'Sales Returns & Allowances',
                     'account_type' => 'revenue',
-                    'account_subtype' => 'sales_return',
+                    'account_subtype' => 'operating_income',
                     'opening_balance' => 0,
                     'current_balance' => 0,
                     'is_active' => true,
@@ -1045,29 +1045,41 @@ class DoubleEntryAccountingService
                 }
             }
 
-            // 4. Handle remaining unrefunded return balance -> CREDIT Customer Accounts Receivable / Customer Payable
-            $remainingUnrefunded = max(0, $totalAmount - $totalRefunded);
-            if ($remainingUnrefunded > 0) {
-                $arAccount = Account::where('company_id', $companyId)
-                    ->where(function ($q) {
-                        $q->where('account_code', '2010')
-                          ->orWhere('account_code', '1030')
-                          ->orWhere('account_type', 'customer_payable')
-                          ->orWhere('account_name', 'LIKE', '%Customer Payable%')
-                          ->orWhere('account_name', 'LIKE', '%Accounts Receivable%');
-                    })->first();
+            // 4. Handle unrefunded return balance & original sale unpaid AR -> CREDIT Customer Accounts Receivable (1030)
+            $arAccount = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '1030')
+                      ->orWhere('account_code', '2010')
+                      ->orWhere('account_type', 'customer_payable')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Receivable%')
+                      ->orWhere('account_name', 'LIKE', '%Customer Payable%');
+                })->first();
 
-                if ($arAccount) {
-                    JournalEntryLine::create([
-                        'journal_entry_id' => $journalEntry->id,
-                        'account_id' => $arAccount->id,
-                        'description' => "Unrefunded Return Credit - Sales Return #{$saleReturn->sale_number}",
-                        'debit_amount' => 0,
-                        'credit_amount' => $remainingUnrefunded,
-                        'partner_type' => Customer::class,
-                        'partner_id' => $saleReturn->customer_id,
-                    ]);
+            $originalUnpaidDue = 0;
+            if ($saleReturn->original_sale_id) {
+                $origSale = Sale::find($saleReturn->original_sale_id);
+                if ($origSale) {
+                    $originalUnpaidDue = max(0, (float)$origSale->total_amount - (float)$origSale->paid_amount);
                 }
+            }
+
+            $arCreditAmount = max(0, $totalAmount - $totalRefunded);
+            if ($arCreditAmount <= 0 && $originalUnpaidDue > 0) {
+                $arCreditAmount = $originalUnpaidDue;
+            }
+
+            if ($arCreditAmount > 0 && $arAccount) {
+                JournalEntryLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'account_id' => $arAccount->id,
+                    'description' => "Accounts Receivable Adjustment - Sales Return #{$saleReturn->sale_number}",
+                    'debit_amount' => 0,
+                    'credit_amount' => $arCreditAmount,
+                    'partner_type' => Customer::class,
+                    'partner_id' => $saleReturn->customer_id,
+                ]);
+
+                Account::where('id', $arAccount->id)->decrement('current_balance', $arCreditAmount);
             }
 
             // 5. Inventory Reversal (DEBIT: Inventory Asset, CREDIT: COGS)
