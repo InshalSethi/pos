@@ -186,9 +186,9 @@
               :key="idx"
               class="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl space-y-3"
             >
-              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div class="flex flex-col sm:flex-row items-start sm:items-start justify-start gap-4">
                 <!-- Dynamic Unified Account Selector -->
-                <div class="flex-1 w-full space-y-1">
+                <div class="w-full sm:w-80 md:w-96 shrink-0 space-y-1">
                   <CustomFloatingSelect
                     label="Refund Account / Payment Source *"
                     v-model="split.selected_account_key"
@@ -223,7 +223,7 @@
                   v-if="paymentSplits.length > 1"
                   type="button"
                   @click="removePaymentSplit(idx)"
-                  class="p-2 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 sm:mt-4 cursor-pointer shrink-0"
+                  class="p-2 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 cursor-pointer shrink-0 mt-1 sm:mt-6"
                   title="Remove split"
                 >
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -432,18 +432,29 @@ const form = reactive({
 const refundAccountOptions = computed(() => {
   const options = []
   
-  // 1. Cash Vault Option (Default Cash Vault)
+  // 1. Single Clean Cash Entry ("Default Cash Vault")
   options.push({
     value: 'cash',
-    label: `Cash Vault (Default Cash Vault) — Avail: ${formatMoney(cashAccountBalance.value)}`,
+    label: `Default Cash Vault — Avail: ${formatMoney(cashAccountBalance.value)}`,
     type: 'cash',
     bank_id: null,
     availableBalance: cashAccountBalance.value,
     badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
   })
 
-  // 2. Active Bank Accounts
+  // 2. Active Bank Accounts (Filtering out duplicate cash entries)
   bankAccounts.value.forEach(bAcc => {
+    const isCashAccount = (bAcc.account_type && bAcc.account_type.toLowerCase().includes('cash')) ||
+      (bAcc.bank_name && bAcc.bank_name.toLowerCase().includes('cash')) ||
+      (bAcc.account_name && bAcc.account_name.toLowerCase().includes('cash'))
+
+    if (isCashAccount) {
+      if (bAcc.current_balance !== undefined && bAcc.current_balance !== null && parseFloat(bAcc.current_balance) > 0) {
+        cashAccountBalance.value = parseFloat(bAcc.current_balance)
+      }
+      return // Deduplicate: Skip adding cash bank account entries
+    }
+
     const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
       ? parseFloat(bAcc.current_balance)
       : 0
@@ -487,14 +498,26 @@ const onAccountKeyChange = (split) => {
 
 const getSplitAccountInfo = (split) => {
   return refundAccountOptions.value.find(opt => opt.value === split.selected_account_key) || {
-    label: 'Cash Vault',
+    label: 'Default Cash Vault',
     availableBalance: cashAccountBalance.value,
     badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
   }
 }
 
 const addPaymentSplit = () => {
-  paymentSplits.value.push({ selected_account_key: 'cash', type: 'cash', bank_id: null, amount: 0 })
+  // Find an unused account option or default to next option
+  const usedKeys = paymentSplits.value.map(s => s.selected_account_key)
+  const unusedOpt = refundAccountOptions.value.find(opt => !usedKeys.includes(opt.value)) || refundAccountOptions.value[0]
+  const defaultKey = unusedOpt ? unusedOpt.value : 'cash'
+  const optInfo = refundAccountOptions.value.find(o => o.value === defaultKey) || {}
+
+  const remaining = Math.max(0, remainingUnpaidLedger.value)
+  paymentSplits.value.push({
+    selected_account_key: defaultKey,
+    type: optInfo.type || 'cash',
+    bank_id: optInfo.bank_id || null,
+    amount: remaining
+  })
 }
 
 const removePaymentSplit = (idx) => {
