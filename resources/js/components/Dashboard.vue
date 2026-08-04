@@ -66,10 +66,91 @@
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="text-center py-16 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-black border-t-transparent dark:border-white dark:border-t-transparent"></div>
-        <p class="mt-3 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Loading dashboard telemetry...</p>
+      <!-- Skeleton Loading State -->
+      <div v-if="loading" class="space-y-8 animate-pulse">
+        <!-- 4 Stat Cards Skeleton -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div v-for="i in 4" :key="'stat-skel-' + i" class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="w-11 h-11 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
+              <div class="w-16 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+            </div>
+            <div class="mt-4 space-y-2">
+              <div class="w-24 h-3 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-36 h-7 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-28 h-3 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Inventory Overview Cards Skeleton -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div v-for="i in 3" :key="'inv-skel-' + i" class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="space-y-2">
+                <div class="w-32 h-3 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div class="w-40 h-8 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              </div>
+              <div class="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Analytics Chart Cards Skeleton -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-6">
+            <div class="flex items-center justify-between">
+              <div class="w-40 h-5 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-24 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
+            </div>
+            <div class="h-64 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl flex items-end justify-between p-4 gap-2">
+              <div v-for="bar in 12" :key="'bar-' + bar" class="w-full bg-zinc-200 dark:bg-zinc-800 rounded-t" :style="{ height: (20 + (bar * 7) % 70) + '%' }"></div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-6">
+            <div class="w-36 h-5 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div class="flex justify-center py-4">
+              <div class="w-44 h-44 rounded-full border-8 border-zinc-200 dark:border-zinc-800"></div>
+            </div>
+            <div class="space-y-2">
+              <div v-for="leg in 4" :key="'leg-' + leg" class="flex justify-between items-center">
+                <div class="w-20 h-3 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div class="w-10 h-3 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table & Stock History Skeleton -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="w-36 h-5 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-28 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
+            </div>
+            <div class="space-y-3 pt-2">
+              <div v-for="row in 4" :key="'tbl-row-' + row" class="h-12 bg-zinc-100 dark:bg-zinc-800/40 rounded-xl flex items-center justify-between px-4">
+                <div class="w-24 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div class="w-20 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div class="w-16 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div class="w-16 h-6 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-6">
+            <div class="flex justify-between items-center">
+              <div class="w-32 h-5 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-20 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
+            </div>
+            <div class="space-y-4">
+              <div class="w-28 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-20 h-8 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-full h-24 bg-zinc-100 dark:bg-zinc-800/40 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Dashboard Stats -->
