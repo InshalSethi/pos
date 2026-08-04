@@ -833,8 +833,14 @@ class DoubleEntryAccountingService
                 })->value('id');
 
             $totalAmount = abs((float)$saleReturn->total_amount);
-            $subtotalAmount = abs((float)($saleReturn->subtotal != 0 ? $saleReturn->subtotal : $saleReturn->total_amount));
             $taxAmount = abs((float)$saleReturn->tax_amount);
+            if ($taxAmount < 0.001 && $saleReturn->saleItems()->count() > 0) {
+                $taxAmount = abs((float)$saleReturn->saleItems()->sum('tax_amount'));
+            }
+            $subtotalAmount = abs((float)$saleReturn->subtotal);
+            if ($subtotalAmount < 0.001 || abs($subtotalAmount - $totalAmount) < 0.001) {
+                $subtotalAmount = max(0, $totalAmount - $taxAmount);
+            }
 
             $journalEntry = JournalEntry::create([
                 'company_id' => $companyId,
@@ -1590,6 +1596,8 @@ class DoubleEntryAccountingService
             return $journalEntry;
         });
     }
+
+
 
     /**
      * Generate journal entry number

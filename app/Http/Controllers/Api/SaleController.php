@@ -1003,7 +1003,7 @@ class SaleController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.product_variation_id' => 'nullable|exists:product_variations,id',
-            'items.*.warehouse_id' => 'required|exists:warehouses,id',
+            'items.*.warehouse_id' => 'nullable|exists:warehouses,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.is_wholesale' => 'nullable|boolean',
@@ -1087,7 +1087,7 @@ class SaleController extends Controller
             // Resolve selected or default warehouse
             $warehouseId = $request->warehouse_id;
             if (!$warehouseId) {
-                if (count($request->items) > 0) {
+                if (count($request->items) > 0 && isset($request->items[0]['warehouse_id'])) {
                     $warehouseId = $request->items[0]['warehouse_id'];
                 } else {
                     $warehouseId = $sale->warehouse_id;
@@ -1108,7 +1108,8 @@ class SaleController extends Controller
 
             $newMap = [];
             foreach ($request->items as $item) {
-                $key = "{$item['product_id']}_" . ($item['product_variation_id'] ?? 'null') . "_{$item['warehouse_id']}";
+                $itemWh = $item['warehouse_id'] ?? $warehouseId;
+                $key = "{$item['product_id']}_" . ($item['product_variation_id'] ?? 'null') . "_{$itemWh}";
                 if (!isset($newMap[$key])) {
                     $newMap[$key] = 0;
                 }
@@ -1211,10 +1212,12 @@ class SaleController extends Controller
             $totalTax = 0;
             $totalDiscount = 0;
 
+            $isReturn = $sale->is_refund || $sale->type === 'return';
+
             foreach ($request->items as $item) {
                 $product = Product::find($item['product_id']);
                 $variationId = $item['product_variation_id'] ?? null;
-                $itemWarehouseId = $item['warehouse_id'];
+                $itemWarehouseId = $item['warehouse_id'] ?? $warehouseId;
 
                 // Determine tax rate
                 $taxPercentage = 0;
@@ -1244,10 +1247,15 @@ class SaleController extends Controller
                     }
                 }
 
-                $itemSubtotal = $item['quantity'] * $item['unit_price'];
-                $itemDiscount = $item['discount_amount'] ?? 0;
-                $itemTax = ($itemSubtotal - $itemDiscount) * ($taxPercentage / 100);
-                $itemTotal = $itemSubtotal - $itemDiscount + $itemTax;
+                $rawQty = abs((float)($item['quantity'] ?? 1));
+                $itemSubtotal = $rawQty * (float)$item['unit_price'];
+                $itemDiscount = (float)($item['discount_amount'] ?? 0);
+                $itemTax = (isset($item['tax_amount']) && (float)$item['tax_amount'] != 0)
+                    ? abs((float)$item['tax_amount'])
+                    : (($itemSubtotal - $itemDiscount) * ($taxPercentage / 100));
+                $itemTotal = (isset($item['total']) || isset($item['total_amount']))
+                    ? abs((float)($item['total'] ?? $item['total_amount']))
+                    : ($itemSubtotal - $itemDiscount + $itemTax);
 
                 $subtotal += $itemSubtotal;
                 $totalDiscount += $itemDiscount;
@@ -1258,13 +1266,13 @@ class SaleController extends Controller
                     'product_id' => $item['product_id'],
                     'product_variation_id' => $variationId,
                     'warehouse_id' => $itemWarehouseId,
-                    'quantity' => $item['quantity'],
+                    'quantity' => $isReturn ? -$rawQty : $rawQty,
                     'unit_price' => $item['unit_price'],
                     'is_wholesale' => $item['is_wholesale'] ?? false,
                     'discount_type' => $item['discount_type'] ?? 'percentage',
                     'discount_amount' => $itemDiscount,
-                    'tax_amount' => $itemTax,
-                    'total_amount' => $itemTotal,
+                    'tax_amount' => $isReturn ? -$itemTax : $itemTax,
+                    'total_amount' => $isReturn ? -$itemTotal : $itemTotal,
                     'description' => $item['description'] ?? null,
                     'tax_id' => $item['tax_id'] ?? null,
                 ]);
@@ -1287,7 +1295,7 @@ class SaleController extends Controller
                 $totalTax = 0;
             } else {
                 if ($request->has('tax_amount') && $request->tax_amount !== null) {
-                    $totalTax = (float) $request->tax_amount;
+                    $totalTax = abs((float) $request->tax_amount);
                 } elseif ($request->has('grand_tax_rate')) {
                     $grandTaxPercentage = (float)$request->grand_tax_rate;
                     $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
@@ -1299,11 +1307,11 @@ class SaleController extends Controller
             }
 
             if ($request->has('subtotal') && $request->subtotal !== null) {
-                $subtotal = (float) $request->subtotal;
+                $subtotal = abs((float) $request->subtotal);
             }
 
             if ($request->has('total_amount') || $request->has('grand_total')) {
-                $totalAmount = (float) ($request->total_amount ?? $request->grand_total);
+                $totalAmount = abs((float) ($request->total_amount ?? $request->grand_total));
             } else {
                 $totalAmount = $subtotal - $totalDiscount + $totalTax;
             }
@@ -1428,11 +1436,11 @@ class SaleController extends Controller
                 'manual_discount_type' => $request->manual_discount_type ?? $request->discount_type ?? $sale->manual_discount_type ?? 'percentage',
                 'manual_discount_value' => (float)($request->manual_discount_value ?? $request->manual_discount_amount ?? $sale->manual_discount_value ?? 0),
                 'status' => $effectiveDirectPaid < $totalAmount ? 'pending' : (($request->status ?? $sale->status) === 'pending' ? 'completed' : ($request->status ?? $sale->status)),
-                'subtotal' => $subtotal,
-                'tax_amount' => $totalTax,
+                'subtotal' => $isReturn ? -$subtotal : $subtotal,
+                'tax_amount' => $isReturn ? -$totalTax : $totalTax,
                 'discount_amount' => $totalDiscount,
-                'total_amount' => $totalAmount,
-                'paid_amount' => $effectiveDirectPaid,
+                'total_amount' => $isReturn ? -$totalAmount : $totalAmount,
+                'paid_amount' => $isReturn ? -$effectiveDirectPaid : $effectiveDirectPaid,
                 'change_amount' => max(0, $effectiveDirectPaid - $totalAmount),
                 'payment_method' => $primaryPaymentMethod,
                 'payment_details' => $payments,
@@ -1475,7 +1483,7 @@ class SaleController extends Controller
             try {
                 $accountingService = new DoubleEntryAccountingService();
                 $accountingService->reverseSalesInvoiceAccounting($sale);
-                if ($sale->type === 'return') {
+                if ($sale->type === 'return' || $sale->is_refund) {
                     $accountingService->createSalesReturnEntry($sale);
                 } else {
                     $accountingService->processSalesInvoiceAccounting($sale, $payments);

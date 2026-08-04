@@ -774,6 +774,7 @@ const submitUpdate = async (andPrint = false) => {
       items: form.items.map(item => ({
         product_id: item.product_id,
         product_variation_id: item.product_variation_id,
+        warehouse_id: item.source_warehouse_id || form.warehouse_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
         tax_amount: item.tax_amount,
