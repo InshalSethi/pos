@@ -3,13 +3,13 @@
     <!-- Sidebar -->
     <div
       :class="[
-        'fixed inset-y-0 left-0 z-50 bg-[#f0f2fa] dark:bg-[#1E1E1E] border-r border-gray-200/50 dark:border-[#2E2E2E] transform transition-all duration-300 ease-in-out flex flex-col',
+        'fixed inset-y-0 left-0 z-50 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transform transition-all duration-300 ease-in-out flex flex-col',
         sidebarCollapsed ? 'w-20' : 'w-[260px]',
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
       ]"
     >
       <!-- Sidebar Header -->
-      <div class="relative flex items-center justify-between h-16 px-4 border-b border-gray-200/50 dark:border-[#2E2E2E]">
+      <div class="relative flex items-center justify-between h-16 px-4 border-b border-zinc-200 dark:border-zinc-800">
         <!-- Company Switcher -->
         <div class="relative flex-1 w-full min-w-0" v-if="activeCompany">
           <div class="flex items-center gap-3.5 p-1 min-w-0">
@@ -20,9 +20,8 @@
               :class="[
                 'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-sm transition-all duration-150 cursor-zoom-in focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-350 dark:focus-visible:ring-slate-700 hover:scale-105 active:scale-95 group',
                 activeCompany.company_logo 
-                  ? 'bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-neutral-800' 
-                  : 'bg-gradient-to-tr from-indigo-600 to-purple-500 text-white border border-white/10 font-bold text-lg',
-                sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
+                  ? 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800' 
+                  : 'bg-black text-white dark:bg-white dark:text-black border border-zinc-200 dark:border-zinc-800 font-extrabold text-lg'
               ]"
               :title="'Preview ' + activeCompany.company_name + ' logo'"
               :aria-label="'Preview ' + activeCompany.company_name + ' logo'"
@@ -86,7 +85,7 @@
                 :class="company.id === activeCompany.id ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-[#2D2D2D]/80 dark:hover:text-slate-200'"
               >
                 <div class="flex items-center overflow-hidden">
-                  <div class="mr-3 flex-shrink-0 h-5 w-5 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm overflow-hidden">
+                  <div class="mr-3 flex-shrink-0 h-5 w-5 rounded bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-black text-[10px] shadow-sm overflow-hidden">
                     <img v-if="company.company_logo" :src="`/storage/${company.company_logo}`" class="w-full h-full object-cover" />
                     <span v-else>{{ company.company_name.charAt(0).toUpperCase() }}</span>
                   </div>

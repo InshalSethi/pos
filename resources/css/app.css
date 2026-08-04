@@ -11,63 +11,127 @@
 @theme {
     --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    /* Monochrome Primary Overrides for Light Mode */
+    --color-indigo-50: #f4f4f5;
+    --color-indigo-100: #e4e4e7;
+    --color-indigo-200: #d4d4d8;
+    --color-indigo-300: #a1a1aa;
+    --color-indigo-400: #71717a;
+    --color-indigo-500: #3f3f46;
+    --color-indigo-600: #000000;
+    --color-indigo-700: #18181b;
+    --color-indigo-800: #09090b;
+    --color-indigo-900: #000000;
+    --color-indigo-950: #000000;
+
+    --color-blue-500: #000000;
+    --color-blue-600: #000000;
+    --color-blue-700: #18181b;
+    --color-blue-800: #09090b;
+    --color-blue-900: #000000;
 }
 
 /* Base tailwind v4 color overrides for dark mode */
 html.dark {
     color-scheme: dark;
-    --color-white: #1E1E1E;
-    --color-black: #f9fafb;
     
-    /* Gray */
-    --color-gray-50: #121212;
-    --color-gray-100: #1E1E1E;
-    --color-gray-200: #2E2E2E;
-    --color-gray-300: #4b5563;
-    --color-gray-400: #6b7280;
-    --color-gray-500: #9ca3af;
-    --color-gray-600: #d1d5db;
-    --color-gray-700: #e5e7eb;
-    --color-gray-800: #f3f4f6;
-    --color-gray-900: #f9fafb;
-    --color-gray-950: #ffffff;
-    
-    /* Indigo (Primary) */
-    --color-indigo-50: #312e81;
-    --color-indigo-100: #3730a3;
-    --color-indigo-200: #4338ca;
-    --color-indigo-300: #4f46e5;
-    --color-indigo-400: #6366f1;
-    --color-indigo-500: #818cf8;
-    --color-indigo-600: #a5b4fc;
-    --color-indigo-700: #c7d2fe;
-    --color-indigo-800: #e0e7ff;
-    --color-indigo-900: #eef2ff;
-    --color-indigo-950: #f5f3ff;
+    /* Monochrome Primary Overrides for Dark Mode */
+    --color-indigo-50: #18181b;
+    --color-indigo-100: #27272a;
+    --color-indigo-200: #3f3f46;
+    --color-indigo-300: #71717a;
+    --color-indigo-400: #a1a1aa;
+    --color-indigo-500: #d4d4d8;
+    --color-indigo-600: #ffffff;
+    --color-indigo-700: #f4f4f5;
+    --color-indigo-800: #ffffff;
+    --color-indigo-900: #ffffff;
+    --color-indigo-950: #ffffff;
+
+    --color-blue-500: #ffffff;
+    --color-blue-600: #ffffff;
+    --color-blue-700: #f4f4f5;
+    --color-blue-800: #ffffff;
+    --color-blue-900: #ffffff;
 }
 
 html.dark body {
-    background-color: #121212 !important;
-    color: var(--color-gray-900);
+    background-color: #09090b !important;
+    color: #f4f4f5;
 }
 
-/* Explicit Modal Backdrop Overlay Override (Bypasses theme color inversion) */
+html body {
+    background-color: #fcfcfc;
+    color: #09090b;
+}
+
+/* High Contrast Black & White Buttons & Action Controls */
+.btn-black,
+.btn-primary,
+button.bg-blue-600,
+button.bg-blue-500,
+button.bg-indigo-600,
+a.bg-blue-600,
+a.bg-indigo-600,
+.animate-button,
+button[type="submit"] {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
+}
+
+.btn-black:hover,
+.btn-primary:hover,
+button.bg-blue-600:hover,
+button.bg-blue-500:hover,
+button.bg-indigo-600:hover,
+a.bg-blue-600:hover,
+a.bg-indigo-600:hover,
+button[type="submit"]:hover {
+    background-color: #27272a !important;
+    color: #ffffff !important;
+}
+
+html.dark .btn-black,
+html.dark .btn-primary,
+html.dark button.bg-blue-600,
+html.dark button.bg-blue-500,
+html.dark button.bg-indigo-600,
+html.dark a.bg-blue-600,
+html.dark a.bg-indigo-600,
+html.dark .animate-button,
+html.dark button[type="submit"] {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+}
+
+html.dark .btn-black:hover,
+html.dark .btn-primary:hover,
+html.dark button.bg-blue-600:hover,
+html.dark button.bg-blue-500:hover,
+html.dark button.bg-indigo-600:hover,
+html.dark a.bg-blue-600:hover,
+html.dark a.bg-indigo-600:hover,
+html.dark button[type="submit"]:hover {
+    background-color: #e4e4e7 !important;
+    color: #000000 !important;
+}
+
+/* Explicit Modal Backdrop Overlay Override */
 .bg-modal-backdrop,
 .modal-backdrop-dark {
-    background-color: rgba(0, 0, 0, 0.75) !important;
-}
-
-/* Custom utility for black text in dark mode badges */
-html.dark .dark-text-black {
-    color: #000000 !important;
+    background-color: rgba(0, 0, 0, 0.85) !important;
 }
 
 html.dark select,
 html.dark option,
 html.dark input,
 html.dark textarea {
-    background-color: var(--color-gray-100);
-    color: var(--color-gray-900);
+    background-color: #18181b;
+    color: #ffffff;
+    border-color: #27272a;
 }
 
 /* Premium App-Wide Custom Scrollbars */
@@ -81,21 +145,19 @@ html.dark textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
+    background-color: #a1a1aa;
     border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
+    background-color: #71717a;
 }
 
-/* Firefox compatibility */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-color: #a1a1aa transparent;
 }
 
-/* Premium Custom Scrollbar Utility */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -104,23 +166,19 @@ html.dark textarea {
     background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
+    background-color: #a1a1aa;
     border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
+    background-color: #71717a;
 }
 
-/* Dark mode scrollbar tweaks */
-html.dark ::-webkit-scrollbar-track {
-    background: transparent;
-}
 html.dark ::-webkit-scrollbar-thumb {
-    background-color: #475569;
+    background-color: #3f3f46;
 }
 html.dark ::-webkit-scrollbar-thumb:hover {
-    background-color: #64748b;
+    background-color: #52525b;
 }
 html.dark * {
-    scrollbar-color: #475569 transparent;
+    scrollbar-color: #3f3f46 transparent;
 }

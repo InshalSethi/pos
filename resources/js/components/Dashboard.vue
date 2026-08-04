@@ -1,45 +1,64 @@
 <template>
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <!-- Header Bar -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold text-zinc-950 dark:text-white tracking-tight">Dashboard</h1>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">Real-time overview of performance and key metrics</p>
+        </div>
 
         <!-- Date Range Filter -->
-        <div class="flex items-center space-x-4">
+        <div class="flex flex-wrap items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <div class="flex items-center space-x-2">
-            <label class="text-sm font-medium text-gray-700">From:</label>
+            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pl-1">From:</label>
             <input
               type="date"
               v-model="dateRange.from"
               @change="loadDashboardData"
-              class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-black dark:focus:border-white shadow-inner"
             />
           </div>
           <div class="flex items-center space-x-2">
-            <label class="text-sm font-medium text-gray-700">To:</label>
+            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">To:</label>
             <input
               type="date"
               v-model="dateRange.to"
               @change="loadDashboardData"
-              class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-black dark:focus:border-white shadow-inner"
             />
           </div>
-          <div class="flex space-x-2">
+          <div class="flex space-x-1.5 pl-2 border-l border-zinc-200 dark:border-zinc-800">
             <button
               @click="setToday"
-              class="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm hover:bg-indigo-700"
+              :class="[
+                'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+                activePreset === 'today'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+                  : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              ]"
             >
               Today
             </button>
             <button
               @click="setThisWeek"
-              class="bg-green-600 text-white px-3 py-2 rounded-md text-sm hover:bg-green-700"
+              :class="[
+                'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+                activePreset === 'week'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+                  : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              ]"
             >
               This Week
             </button>
             <button
               @click="setThisMonth"
-              class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700"
+              :class="[
+                'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+                activePreset === 'month'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+                  : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              ]"
             >
               This Month
             </button>
@@ -48,34 +67,32 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        <p class="mt-2 text-gray-600">Loading dashboard data...</p>
+      <div v-if="loading" class="text-center py-16 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-black border-t-transparent dark:border-white dark:border-t-transparent"></div>
+        <p class="mt-3 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Loading dashboard telemetry...</p>
       </div>
 
       <!-- Dashboard Stats -->
       <div v-else>
-        <!-- Enhanced Statistics Cards -->
+        <!-- Primary Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <!-- Total Sales Card -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-purple-500">
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white">
             <div class="p-6">
               <div class="flex items-center justify-between">
-                <div>
-                  <div class="flex items-center">
-                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-full">
+                  <div class="flex items-center justify-between">
+                    <div class="w-11 h-11 bg-black text-white dark:bg-white dark:text-black rounded-xl flex items-center justify-center shadow-sm">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                       </svg>
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-500">Total Sales</p>
-                      <p class="text-2xl font-bold text-gray-900">{{ formatAmount(dashboardData.sales?.total_amount || 0) }}</p>
-                    </div>
+                    <span class="text-[11px] font-extrabold bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">+2.5%</span>
                   </div>
-                  <div class="mt-2 flex items-center text-sm">
-                    <span class="text-green-600 font-medium">+2.5%</span>
-                    <span class="text-gray-500 ml-1">Than Last Month</span>
+                  <div class="mt-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total Sales</p>
+                    <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ formatAmount(dashboardData.sales?.total_amount || 0) }}</p>
+                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Vs previous period</p>
                   </div>
                 </div>
               </div>
@@ -83,24 +100,22 @@
           </div>
 
           <!-- Total Expenses Card -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-orange-500">
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white">
             <div class="p-6">
               <div class="flex items-center justify-between">
-                <div>
-                  <div class="flex items-center">
-                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-full">
+                  <div class="flex items-center justify-between">
+                    <div class="w-11 h-11 bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black rounded-xl flex items-center justify-center shadow-sm">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                       </svg>
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-500">Total Expenses</p>
-                      <p class="text-2xl font-bold text-gray-900">{{ formatAmount(dashboardData.expenses?.total_amount || 0) }}</p>
-                    </div>
+                    <span class="text-[11px] font-extrabold bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">-2.1%</span>
                   </div>
-                  <div class="mt-2 flex items-center text-sm">
-                    <span class="text-red-600 font-medium">-2.1%</span>
-                    <span class="text-gray-500 ml-1">Than Last Month</span>
+                  <div class="mt-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total Expenses</p>
+                    <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ formatAmount(dashboardData.expenses?.total_amount || 0) }}</p>
+                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Vs previous period</p>
                   </div>
                 </div>
               </div>
@@ -108,27 +123,26 @@
           </div>
 
           <!-- Total Payments Card -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-blue-500">
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white">
             <div class="p-6">
               <div class="flex items-center justify-between">
-                <div>
-                  <div class="flex items-center">
-                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-full">
+                  <div class="flex items-center justify-between">
+                    <div class="w-11 h-11 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black rounded-xl flex items-center justify-center shadow-sm">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                       </svg>
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-500">Total Payments</p>
-                      <p class="text-2xl font-bold text-gray-900">{{ formatAmount(dashboardData.payments?.total_amount || 0) }}</p>
-                      <p class="text-xs text-gray-500">{{ dashboardData.payments?.total_payments || 0 }} payments</p>
-                    </div>
-                  </div>
-                  <div class="mt-2 flex items-center text-sm">
-                    <span :class="getChangeClass(dashboardData.payments?.payment_sent?.change_percentage || 0)">
-                      {{ formatPercentage(dashboardData.payments?.payment_sent?.change_percentage || 0) }}%
+                    <span class="text-[11px] font-extrabold bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded-full">
+                      {{ dashboardData.payments?.total_payments || 0 }} TXNS
                     </span>
-                    <span class="text-gray-500 ml-1">Than Last Month</span>
+                  </div>
+                  <div class="mt-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total Payments</p>
+                    <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ formatAmount(dashboardData.payments?.total_amount || 0) }}</p>
+                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                      {{ formatPercentage(dashboardData.payments?.payment_sent?.change_percentage || 0) }}% change
+                    </p>
                   </div>
                 </div>
               </div>
@@ -136,29 +150,34 @@
           </div>
 
           <!-- Pending Payments Card -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-yellow-500">
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white">
             <div class="p-6">
               <div class="flex items-center justify-between">
-                <div>
-                  <div class="flex items-center">
-                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-full">
+                  <div class="flex items-center justify-between">
+                    <div class="w-11 h-11 bg-black text-white dark:bg-white dark:text-black rounded-xl flex items-center justify-center shadow-sm">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-500">Pending Payments</p>
-                      <p class="text-2xl font-bold text-gray-900">{{ formatAmount(dashboardData.payments?.pending_amount || 0) }}</p>
-                      <p class="text-xs text-gray-500">{{ dashboardData.payments?.pending_payments || 0 }} pending</p>
-                    </div>
+                    <span class="text-[11px] font-extrabold bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-700">
+                      {{ dashboardData.payments?.pending_payments || 0 }} PENDING
+                    </span>
                   </div>
-                  <div class="mt-2">
-                    <router-link
-                      to="/payments?status=pending"
-                      class="text-sm text-yellow-600 hover:text-yellow-800 font-medium"
-                    >
-                      View Pending →
-                    </router-link>
+                  <div class="mt-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Pending Payments</p>
+                    <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ formatAmount(dashboardData.payments?.pending_amount || 0) }}</p>
+                    <div class="mt-2">
+                      <router-link
+                        to="/payments?status=pending"
+                        class="inline-flex items-center text-xs text-black dark:text-white font-extrabold hover:underline group"
+                      >
+                        View Pending
+                        <svg class="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </router-link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -166,38 +185,43 @@
           </div>
         </div>
 
-        <!-- Smart Inventory Valuation cards -->
+        <!-- Inventory Valuation Cards (Clean Light Cards in Light Mode, Dark Obsidian in Dark Mode) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div class="bg-gradient-to-br from-blue-500 to-indigo-600 overflow-hidden shadow-lg rounded-2xl p-6 text-white">
+          <!-- Total Cost Value -->
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-indigo-100 text-sm font-medium uppercase tracking-wider">Total Inventory Value (Cost)</p>
-                <p class="text-3xl font-black mt-1">{{ formatAmount(dashboardData.inventory_valuation?.total_cost_value || 0) }}</p>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total Inventory Value (Cost)</p>
+                <p class="text-3xl font-black text-zinc-950 dark:text-white mt-2 tracking-tight">{{ formatAmount(dashboardData.inventory_valuation?.total_cost_value || 0) }}</p>
               </div>
-              <div class="bg-white/20 p-3 rounded-xl">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <div class="w-12 h-12 bg-black text-white dark:bg-white dark:text-black rounded-xl flex items-center justify-center shadow-sm shrink-0 ml-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
               </div>
             </div>
           </div>
-          <div class="bg-gradient-to-br from-emerald-500 to-teal-600 overflow-hidden shadow-lg rounded-2xl p-6 text-white">
+
+          <!-- Total Retail Value -->
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-emerald-100 text-sm font-medium uppercase tracking-wider">Total Inventory Value (Retail)</p>
-                <p class="text-3xl font-black mt-1">{{ formatAmount(dashboardData.inventory_valuation?.total_retail_value || 0) }}</p>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total Inventory Value (Retail)</p>
+                <p class="text-3xl font-black text-zinc-950 dark:text-white mt-2 tracking-tight">{{ formatAmount(dashboardData.inventory_valuation?.total_retail_value || 0) }}</p>
               </div>
-              <div class="bg-white/20 p-3 rounded-xl">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
+              <div class="w-12 h-12 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black rounded-xl flex items-center justify-center shadow-sm shrink-0 ml-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
               </div>
             </div>
           </div>
-          <div class="bg-gradient-to-br from-purple-500 to-pink-600 overflow-hidden shadow-lg rounded-2xl p-6 text-white">
+
+          <!-- Potential Profit -->
+          <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-purple-100 text-sm font-medium uppercase tracking-wider">Potential Profit</p>
-                <p class="text-3xl font-black mt-1">{{ formatAmount(dashboardData.inventory_valuation?.potential_profit || 0) }}</p>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Potential Profit</p>
+                <p class="text-3xl font-black text-zinc-950 dark:text-white mt-2 tracking-tight">{{ formatAmount(dashboardData.inventory_valuation?.potential_profit || 0) }}</p>
               </div>
-              <div class="bg-white/20 p-3 rounded-xl">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              <div class="w-12 h-12 bg-zinc-800 text-white dark:bg-zinc-200 dark:text-black rounded-xl flex items-center justify-center shadow-sm shrink-0 ml-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
               </div>
             </div>
           </div>
@@ -206,79 +230,73 @@
         <!-- Product Intelligence & Expiry alerts -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <!-- Fast Moving Items -->
-          <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-            <div class="px-6 py-4 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
-              <h3 class="font-black text-indigo-900 uppercase tracking-wider text-sm flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+          <div class="bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+            <div class="px-6 py-4 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+              <h3 class="font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider text-xs flex items-center">
+                <svg class="w-4 h-4 mr-2 text-black dark:text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                 Fast-Moving Items
               </h3>
-              <span class="text-[10px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">TOP 5</span>
+              <span class="text-[10px] font-extrabold bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 rounded-full">TOP 5</span>
             </div>
-            <div class="p-4 space-y-3">
-              <div v-for="item in dashboardData.product_intelligence?.fast_moving" :key="item.name" class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <span class="text-sm font-bold text-gray-700 truncate mr-2">{{ item.name }}</span>
-                <span class="text-xs font-black text-indigo-600 bg-white px-2 py-1 rounded-lg shadow-sm">{{ item.total_sold }} sold</span>
+            <div class="p-4 space-y-2.5">
+              <div v-for="item in dashboardData.product_intelligence?.fast_moving" :key="item.name" class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
+                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate mr-2">{{ item.name }}</span>
+                <span class="text-[11px] font-black text-white bg-black dark:bg-white dark:text-black px-2.5 py-1 rounded-lg shadow-xs">{{ item.total_sold }} sold</span>
               </div>
-              <div v-if="!dashboardData.product_intelligence?.fast_moving?.length" class="text-center py-6 text-gray-400 text-xs italic">
+              <div v-if="!dashboardData.product_intelligence?.fast_moving?.length" class="text-center py-6 text-zinc-400 text-xs italic">
                 No sales data available.
               </div>
             </div>
           </div>
 
           <!-- Slow Moving Items -->
-          <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-            <div class="px-6 py-4 bg-orange-50 border-b border-orange-100 flex items-center justify-between">
-              <h3 class="font-black text-orange-900 uppercase tracking-wider text-sm flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v10z"></path></svg>
+          <div class="bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+            <div class="px-6 py-4 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+              <h3 class="font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider text-xs flex items-center">
+                <svg class="w-4 h-4 mr-2 text-black dark:text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v10z"></path></svg>
                 Slow-Moving Items
               </h3>
-              <span class="text-[10px] font-bold bg-orange-600 text-white px-2 py-0.5 rounded-full">IN STOCK</span>
+              <span class="text-[10px] font-extrabold bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 rounded-full">IN STOCK</span>
             </div>
-            <div class="p-4 space-y-3">
-              <div v-for="item in dashboardData.product_intelligence?.slow_moving" :key="item.name" class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <span class="text-sm font-bold text-gray-700 truncate mr-2">{{ item.name }}</span>
-                <span class="text-xs font-black text-orange-600 bg-white px-2 py-1 rounded-lg shadow-sm">{{ item.stock_quantity }} left</span>
+            <div class="p-4 space-y-2.5">
+              <div v-for="item in dashboardData.product_intelligence?.slow_moving" :key="item.name" class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
+                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate mr-2">{{ item.name }}</span>
+                <span class="text-[11px] font-black text-black bg-zinc-200 dark:bg-zinc-800 dark:text-white px-2.5 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700">{{ item.stock_quantity }} left</span>
               </div>
-              <div v-if="!dashboardData.product_intelligence?.slow_moving?.length" class="text-center py-6 text-gray-400 text-xs italic">
+              <div v-if="!dashboardData.product_intelligence?.slow_moving?.length" class="text-center py-6 text-zinc-400 text-xs italic">
                 No slow moving items found.
               </div>
             </div>
           </div>
 
           <!-- Expiry Management -->
-          <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-            <div class="px-6 py-4 bg-red-50 border-b border-red-100 flex items-center justify-between">
-              <h3 class="font-black text-red-900 uppercase tracking-wider text-sm flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v10z"></path></svg>
+          <div class="bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+            <div class="px-6 py-4 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+              <h3 class="font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider text-xs flex items-center">
+                <svg class="w-4 h-4 mr-2 text-black dark:text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v10z"></path></svg>
                 Expiring Soon
               </h3>
-              <span class="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">{{ dashboardData.expiry_alerts?.count }} ALERTS</span>
+              <span class="text-[10px] font-extrabold bg-black text-white dark:bg-white dark:text-black px-2.5 py-0.5 rounded-full">{{ dashboardData.expiry_alerts?.count || 0 }} ALERTS</span>
             </div>
-            <div class="p-4 space-y-3">
-              <div v-for="item in dashboardData.expiry_alerts?.items" :key="item.name" class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <div class="p-4 space-y-2.5">
+              <div v-for="item in dashboardData.expiry_alerts?.items" :key="item.name" class="p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col">
                 <div class="flex justify-between items-center mb-1">
-                  <span class="text-sm font-bold text-gray-700 truncate mr-2">{{ item.name }}</span>
-                  <span :class="[
-                    'text-[10px] font-black px-2 py-0.5 rounded-full uppercase',
-                    item.status === 'Expired' ? 'bg-red-600 text-white' : 
-                    item.status === 'Critical' ? 'bg-orange-500 text-white' : 'bg-yellow-400 text-gray-900'
-                  ]">{{ item.status }}</span>
+                  <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate mr-2">{{ item.name }}</span>
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full uppercase bg-black text-white dark:bg-white dark:text-black">{{ item.status }}</span>
                 </div>
-                <div class="flex justify-between text-[11px] font-medium text-gray-500 italic">
+                <div class="flex justify-between text-[11px] font-medium text-zinc-500 italic">
                   <span>Expires: {{ item.expiry_date }}</span>
-                  <span class="text-red-500 font-bold">{{ item.days_to_expire < 0 ? 'Expired' : item.days_to_expire + ' days' }}</span>
+                  <span class="text-black dark:text-white font-extrabold">{{ item.days_to_expire < 0 ? 'Expired' : item.days_to_expire + ' days' }}</span>
                 </div>
               </div>
-              <div v-if="!dashboardData.expiry_alerts?.items?.length" class="text-center py-6 text-gray-400 text-xs italic">
+              <div v-if="!dashboardData.expiry_alerts?.items?.length" class="text-center py-6 text-zinc-400 text-xs italic">
                 No items nearing expiry.
               </div>
             </div>
           </div>
         </div>
 
-
-
-        <!-- Enhanced Charts Section -->
+        <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <!-- Sales & Purchases Chart -->
           <SalesPurchasesChart :data="dashboardData.sales_purchases_chart || []" />
@@ -287,51 +305,51 @@
           <DevicesPieChart :data="dashboardData.devices_breakdown || []" />
         </div>
 
-        <!-- Bottom Section with Recent Invoices and Stock History -->
+        <!-- Recent Invoices and Stock History -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <!-- Recent Invoices -->
-          <div class="lg:col-span-2 bg-white overflow-hidden shadow-lg rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900">Recent Invoice</h3>
+          <!-- Recent Invoices Table -->
+          <div class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Recent Invoices</h3>
               <div class="flex items-center space-x-2">
                 <div class="relative group">
-                  <select class="pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-black text-[11px] text-gray-700 shadow-inner appearance-none cursor-pointer uppercase tracking-tight">
+                  <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-white transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
                     <option>Sales Invoice</option>
                     <option>Purchase Invoice</option>
                   </select>
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                    <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
                   </div>
                 </div>
               </div>
             </div>
             <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+              <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+                <thead class="bg-zinc-100 dark:bg-zinc-800/80">
                   <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Status</th>
+                    <th class="px-6 py-3 text-left text-[11px] font-extrabold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">Invoice ID</th>
+                    <th class="px-6 py-3 text-left text-[11px] font-extrabold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">Customer</th>
+                    <th class="px-6 py-3 text-left text-[11px] font-extrabold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">Sales Date</th>
+                    <th class="px-6 py-3 text-left text-[11px] font-extrabold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">Paid Amount</th>
+                    <th class="px-6 py-3 text-left text-[11px] font-extrabold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">Sales Status</th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="invoice in dashboardData.recent_invoices" :key="invoice.invoice_id" class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tbody class="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
+                  <tr v-for="invoice in dashboardData.recent_invoices" :key="invoice.invoice_id" class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-xs font-extrabold text-zinc-950 dark:text-white">
                       {{ invoice.invoice_id }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td class="px-6 py-4 whitespace-nowrap text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                       {{ invoice.customer }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 whitespace-nowrap text-xs text-zinc-500 dark:text-zinc-400">
                       {{ formatDate(invoice.sales_date) }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-zinc-950 dark:text-white">
                       {{ formatAmount(invoice.paid_amount) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <span :class="getStatusBadgeClass(invoice.status_color)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                      <span class="inline-flex px-2.5 py-0.5 text-[10px] font-extrabold rounded-full bg-black text-white dark:bg-white dark:text-black uppercase tracking-wider">
                         {{ invoice.sales_status }}
                       </span>
                     </td>
@@ -341,43 +359,43 @@
             </div>
           </div>
 
-          <!-- Stock History -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900">Stock History</h3>
+          <!-- Stock History Card -->
+          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Stock History</h3>
               <div class="relative group">
-                <select class="pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-black text-[11px] text-gray-700 shadow-inner appearance-none cursor-pointer uppercase tracking-tight">
+                <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-white transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
                   <option>7 Days</option>
                   <option>30 Days</option>
                   <option>90 Days</option>
                 </select>
-                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                  <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
                 </div>
               </div>
             </div>
             <div class="p-6 space-y-6">
               <!-- Total Sales Items -->
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
-                  <p class="text-sm font-medium text-gray-500">Total Sales Items</p>
-                  <p class="text-2xl font-bold text-gray-900">{{ dashboardData.stock_history?.total_sales_items?.count || 0 }}</p>
+                  <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total Sales Items</p>
+                  <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ dashboardData.stock_history?.total_sales_items?.count || 0 }}</p>
                 </div>
                 <div class="flex items-center">
-                  <span :class="getChangeClass(dashboardData.stock_history?.total_sales_items?.change_percentage || 0)" class="text-sm font-medium">
+                  <span class="text-xs font-extrabold bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-700">
                     {{ formatPercentage(dashboardData.stock_history?.total_sales_items?.change_percentage || 0) }}%
                   </span>
                 </div>
               </div>
 
               <!-- Total Purchase Items -->
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
-                  <p class="text-sm font-medium text-gray-500">Purchase Items</p>
-                  <p class="text-2xl font-bold text-gray-900">{{ dashboardData.stock_history?.total_purchase_items?.count || 0 }}</p>
+                  <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Purchase Items</p>
+                  <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ dashboardData.stock_history?.total_purchase_items?.count || 0 }}</p>
                 </div>
                 <div class="flex items-center">
-                  <span :class="getChangeClass(dashboardData.stock_history?.total_purchase_items?.change_percentage || 0)" class="text-sm font-medium">
+                  <span class="text-xs font-extrabold bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-700">
                     {{ formatPercentage(dashboardData.stock_history?.total_purchase_items?.change_percentage || 0) }}%
                   </span>
                 </div>
@@ -386,11 +404,11 @@
               <!-- Total Return Items -->
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm font-medium text-gray-500">Purchase Returns Items</p>
-                  <p class="text-2xl font-bold text-gray-900">{{ dashboardData.stock_history?.total_return_items?.count || 0 }}</p>
+                  <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Purchase Returns Items</p>
+                  <p class="text-2xl font-black text-zinc-950 dark:text-white mt-0.5 tracking-tight">{{ dashboardData.stock_history?.total_return_items?.count || 0 }}</p>
                 </div>
                 <div class="flex items-center">
-                  <span :class="getChangeClass(dashboardData.stock_history?.total_return_items?.change_percentage || 0)" class="text-sm font-medium">
+                  <span class="text-xs font-extrabold bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-700">
                     {{ formatPercentage(dashboardData.stock_history?.total_return_items?.change_percentage || 0) }}%
                   </span>
                 </div>
@@ -402,17 +420,17 @@
         <!-- Payment Trends and Stock Alert -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Payment Trends Chart -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900">Payments</h3>
+          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Payment Telemetry</h3>
               <div class="relative group">
-                <select class="pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-black text-[11px] text-gray-700 shadow-inner appearance-none cursor-pointer uppercase tracking-tight">
+                <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-white transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
                   <option>15 Days</option>
                   <option>30 Days</option>
                   <option>90 Days</option>
                 </select>
-                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                  <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
                 </div>
               </div>
             </div>
@@ -420,34 +438,39 @@
               <div class="h-64">
                 <canvas ref="paymentTrendsCanvas"></canvas>
               </div>
-              <!-- Payment Trends Legend -->
-              <div class="flex items-center justify-center space-x-6 mt-4">
+              <!-- Legend -->
+              <div class="flex items-center justify-center space-x-8 mt-6">
                 <div class="flex items-center">
-                  <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                  <span class="text-sm text-gray-600">Payment Sent</span>
+                  <div class="w-3 h-3 bg-black dark:bg-white rounded-full mr-2"></div>
+                  <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">Payment Sent</span>
                 </div>
                 <div class="flex items-center">
-                  <div class="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-                  <span class="text-sm text-gray-600">Payment Received</span>
+                  <div class="w-3 h-3 bg-zinc-400 dark:bg-zinc-500 rounded-full mr-2"></div>
+                  <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">Payment Received</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Stock Alert -->
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Stock Alert</h3>
+          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Stock Alert Thresholds</h3>
             </div>
             <div class="p-6">
-              <div class="space-y-4 max-h-64 overflow-y-auto">
-                <div v-for="alert in dashboardData.stock_alerts" :key="alert.product" class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+              <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                <div v-for="alert in dashboardData.stock_alerts" :key="alert.product" class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
                   <div>
-                    <p class="text-sm font-medium text-gray-900">{{ alert.product }}</p>
+                    <p class="text-xs font-bold text-zinc-900 dark:text-zinc-100">{{ alert.product }}</p>
                   </div>
                   <div class="text-right">
-                    <p class="text-sm font-bold text-red-600">{{ alert.quantity }}</p>
+                    <span class="text-xs font-black bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded-lg">
+                      {{ alert.quantity }} LEFT
+                    </span>
                   </div>
+                </div>
+                <div v-if="!dashboardData.stock_alerts?.length" class="text-center py-8 text-zinc-400 text-xs italic">
+                  All inventory items are within healthy operational thresholds.
                 </div>
               </div>
             </div>
@@ -455,28 +478,28 @@
         </div>
 
         <!-- Payment Breakdown Section -->
-        <div v-if="dashboardData.payments?.by_type?.length > 0" class="mt-6">
-          <div class="bg-white overflow-hidden shadow-lg rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900">Payment Breakdown</h3>
+        <div v-if="dashboardData.payments?.by_type?.length > 0" class="mt-8">
+          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Payment Breakdown</h3>
               <router-link
                 to="/payments"
-                class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                class="text-xs text-black dark:text-white font-extrabold hover:underline"
               >
                 View All →
               </router-link>
             </div>
             <div class="p-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- By Type -->
                 <div>
-                  <h4 class="text-sm font-medium text-gray-900 mb-3">By Type</h4>
-                  <div class="space-y-2">
-                    <div v-for="type in dashboardData.payments.by_type" :key="type.payment_type" class="flex items-center justify-between">
-                      <span class="text-sm text-gray-600">{{ getPaymentTypeDisplay(type.payment_type) }}</span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-4">By Type</h4>
+                  <div class="space-y-3">
+                    <div v-for="type in dashboardData.payments.by_type" :key="type.payment_type" class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-200/70 dark:border-zinc-800">
+                      <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">{{ getPaymentTypeDisplay(type.payment_type) }}</span>
                       <div class="text-right">
-                        <span class="text-sm font-medium text-gray-900">{{ formatAmount(type.total_amount) }}</span>
-                        <span class="text-xs text-gray-500 ml-1">({{ type.count }})</span>
+                        <span class="text-xs font-extrabold text-zinc-950 dark:text-white">{{ formatAmount(type.total_amount) }}</span>
+                        <span class="text-[10px] text-zinc-400 ml-1">({{ type.count }})</span>
                       </div>
                     </div>
                   </div>
@@ -484,17 +507,17 @@
 
                 <!-- By Status -->
                 <div>
-                  <h4 class="text-sm font-medium text-gray-900 mb-3">By Status</h4>
-                  <div class="space-y-2">
-                    <div v-for="status in dashboardData.payments.by_status" :key="status.status" class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-4">By Status</h4>
+                  <div class="space-y-3">
+                    <div v-for="status in dashboardData.payments.by_status" :key="status.status" class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-200/70 dark:border-zinc-800">
                       <div class="flex items-center">
-                        <span :class="getPaymentStatusBadgeClass(status.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full mr-2">
-                          {{ status.status.charAt(0).toUpperCase() + status.status.slice(1) }}
+                        <span class="inline-flex px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
+                          {{ status.status }}
                         </span>
                       </div>
                       <div class="text-right">
-                        <span class="text-sm font-medium text-gray-900">{{ formatAmount(status.total_amount) }}</span>
-                        <span class="text-xs text-gray-500 ml-1">({{ status.count }})</span>
+                        <span class="text-xs font-extrabold text-zinc-950 dark:text-white">{{ formatAmount(status.total_amount) }}</span>
+                        <span class="text-[10px] text-zinc-400 ml-1">({{ status.count }})</span>
                       </div>
                     </div>
                   </div>
@@ -533,6 +556,7 @@ Chart.register(CategoryScale, LinearScale, PointElement, LineElement, LineContro
 
 // Reactive data
 const loading = ref(false);
+const activePreset = ref('today');
 const dateRange = ref({
   from: new Date().toISOString().split('T')[0],
   to: new Date().toISOString().split('T')[0]
@@ -590,6 +614,7 @@ const loadDashboardData = async () => {
 };
 
 const setToday = () => {
+  activePreset.value = 'today';
   const today = new Date().toISOString().split('T')[0];
   dateRange.value.from = today;
   dateRange.value.to = today;
@@ -597,6 +622,7 @@ const setToday = () => {
 };
 
 const setThisWeek = () => {
+  activePreset.value = 'week';
   const today = new Date();
   const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
   const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
@@ -607,6 +633,7 @@ const setThisWeek = () => {
 };
 
 const setThisMonth = () => {
+  activePreset.value = 'month';
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -632,70 +659,23 @@ const getPaymentTypeDisplay = (type) => {
   return types[type] || type;
 };
 
-const getPaymentStatusBadgeClass = (status) => {
-  const classes = {
-    draft: 'bg-gray-100 text-gray-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-blue-100 text-blue-800',
-    paid: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-  };
-  return classes[status] || 'bg-gray-100 text-gray-800';
-};
-
 const formatDate = (date) => {
+  if (!date) return '';
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
   });
 };
 
-const formatDateTime = (datetime) => {
-  return new Date(datetime).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-const getTransactionIconClass = (type) => {
-  const classes = {
-    'sale': 'bg-green-500',
-    'return': 'bg-red-500',
-    'purchase': 'bg-orange-500',
-    'expense': 'bg-purple-500'
-  };
-  return classes[type] || 'bg-gray-500';
-};
-
 const formatPercentage = (percentage) => {
-  return Math.abs(percentage).toFixed(1);
-};
-
-const getChangeClass = (percentage) => {
-  if (percentage > 0) {
-    return 'text-green-600 font-medium';
-  } else if (percentage < 0) {
-    return 'text-red-600 font-medium';
-  }
-  return 'text-gray-600 font-medium';
-};
-
-const getStatusBadgeClass = (statusColor) => {
-  const classes = {
-    'green': 'bg-green-100 text-green-800',
-    'red': 'bg-red-100 text-red-800',
-    'yellow': 'bg-yellow-100 text-yellow-800',
-    'blue': 'bg-blue-100 text-blue-800'
-  };
-  return classes[statusColor] || 'bg-gray-100 text-gray-800';
+  return Math.abs(percentage || 0).toFixed(1);
 };
 
 const createPaymentTrendsChart = () => {
   if (!paymentTrendsCanvas.value || !dashboardData.value.payment_trends?.length) return;
 
   const ctx = paymentTrendsCanvas.value.getContext('2d');
+  const isDark = document.documentElement.classList.contains('dark');
 
   // Destroy existing chart if it exists
   if (paymentTrendsChart) {
@@ -706,6 +686,9 @@ const createPaymentTrendsChart = () => {
   const paymentSentData = dashboardData.value.payment_trends.map(item => item.payment_sent);
   const paymentReceivedData = dashboardData.value.payment_trends.map(item => item.payment_received);
 
+  const mainColor = isDark ? '#ffffff' : '#000000';
+  const secondaryColor = isDark ? '#a1a1aa' : '#71717a';
+
   paymentTrendsChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -714,13 +697,13 @@ const createPaymentTrendsChart = () => {
         {
           label: 'Payment Sent',
           data: paymentSentData,
-          borderColor: '#EF4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          borderWidth: 2,
-          fill: false,
-          tension: 0.4,
-          pointBackgroundColor: '#EF4444',
-          pointBorderColor: '#ffffff',
+          borderColor: mainColor,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: mainColor,
+          pointBorderColor: isDark ? '#09090b' : '#ffffff',
           pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 6
@@ -728,13 +711,14 @@ const createPaymentTrendsChart = () => {
         {
           label: 'Payment Received',
           data: paymentReceivedData,
-          borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: secondaryColor,
+          backgroundColor: 'transparent',
           borderWidth: 2,
+          borderDash: [4, 4],
           fill: false,
-          tension: 0.4,
-          pointBackgroundColor: '#3B82F6',
-          pointBorderColor: '#ffffff',
+          tension: 0.35,
+          pointBackgroundColor: secondaryColor,
+          pointBorderColor: isDark ? '#09090b' : '#ffffff',
           pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 6
@@ -751,12 +735,13 @@ const createPaymentTrendsChart = () => {
         tooltip: {
           mode: 'index',
           intersect: false,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          borderColor: '#374151',
+          backgroundColor: isDark ? '#18181b' : '#000000',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: isDark ? '#27272a' : '#27272a',
           borderWidth: 1,
-          cornerRadius: 8,
+          cornerRadius: 10,
+          padding: 12,
           callbacks: {
             label: function(context) {
               return `${context.dataset.label}: ${currencyStore.formatPrice(context.parsed.y)}`;
@@ -770,22 +755,23 @@ const createPaymentTrendsChart = () => {
             display: false
           },
           ticks: {
-            color: '#6B7280',
+            color: isDark ? '#a1a1aa' : '#71717a',
             font: {
-              size: 12
+              size: 11,
+              weight: 'bold'
             }
           }
         },
         y: {
           beginAtZero: true,
           grid: {
-            color: '#F3F4F6',
-            borderDash: [2, 2]
+            color: isDark ? '#27272a' : '#e4e4e7',
+            borderDash: [3, 3]
           },
           ticks: {
-            color: '#6B7280',
+            color: isDark ? '#a1a1aa' : '#71717a',
             font: {
-              size: 12
+              size: 11
             },
             callback: function(value) {
               return (currencyStore.activeCurrency?.symbol || '$') + value.toLocaleString();

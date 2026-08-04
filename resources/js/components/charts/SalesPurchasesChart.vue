@@ -1,10 +1,10 @@
 <template>
-  <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+  <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm rounded-2xl border border-zinc-200 dark:border-zinc-800">
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-gray-900">Sales & Purchases</h3>
+        <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Sales & Purchases</h3>
         <div class="flex items-center space-x-4">
-          <select class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select class="text-xs font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:outline-none focus:border-black dark:focus:border-white uppercase tracking-tight">
             <option>6 Months</option>
             <option>3 Months</option>
             <option>1 Month</option>
@@ -17,18 +17,18 @@
       </div>
       
       <!-- Legend -->
-      <div class="flex items-center justify-center space-x-6 mt-4">
+      <div class="flex items-center justify-center space-x-6 mt-6">
         <div class="flex items-center">
-          <div class="w-3 h-3 bg-gray-300 rounded mr-2"></div>
-          <span class="text-sm text-gray-600">Sales Target</span>
+          <div class="w-3 h-3 bg-zinc-300 dark:bg-zinc-700 rounded-full mr-2"></div>
+          <span class="text-xs font-bold text-zinc-600 dark:text-zinc-400">Sales Target</span>
         </div>
         <div class="flex items-center">
-          <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-          <span class="text-sm text-gray-600">Sales</span>
+          <div class="w-3 h-3 bg-black dark:bg-white rounded-full mr-2"></div>
+          <span class="text-xs font-bold text-zinc-900 dark:text-white">Sales</span>
         </div>
         <div class="flex items-center">
-          <div class="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-          <span class="text-sm text-gray-600">Purchases</span>
+          <div class="w-3 h-3 bg-zinc-500 dark:bg-zinc-400 rounded-full mr-2"></div>
+          <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">Purchases</span>
         </div>
       </div>
     </div>
@@ -68,6 +68,7 @@ const createChart = () => {
   if (!chartCanvas.value || !props.data.length) return;
 
   const ctx = chartCanvas.value.getContext('2d');
+  const isDark = document.documentElement.classList.contains('dark');
   
   // Destroy existing chart if it exists
   if (chartInstance) {
@@ -87,28 +88,28 @@ const createChart = () => {
         {
           label: 'Sales Target',
           data: salesTargetData,
-          backgroundColor: '#E5E7EB',
-          borderColor: '#D1D5DB',
+          backgroundColor: isDark ? '#27272a' : '#e4e4e7',
+          borderColor: isDark ? '#3f3f46' : '#d4d4d8',
           borderWidth: 1,
-          borderRadius: 4,
+          borderRadius: 6,
           borderSkipped: false,
         },
         {
           label: 'Sales',
           data: salesData,
-          backgroundColor: '#EF4444',
-          borderColor: '#DC2626',
+          backgroundColor: isDark ? '#ffffff' : '#000000',
+          borderColor: isDark ? '#ffffff' : '#000000',
           borderWidth: 1,
-          borderRadius: 4,
+          borderRadius: 6,
           borderSkipped: false,
         },
         {
           label: 'Purchases',
           data: purchasesData,
-          backgroundColor: '#3B82F6',
-          borderColor: '#2563EB',
+          backgroundColor: isDark ? '#71717a' : '#52525b',
+          borderColor: isDark ? '#a1a1aa' : '#3f3f46',
           borderWidth: 1,
-          borderRadius: 4,
+          borderRadius: 6,
           borderSkipped: false,
         }
       ]
@@ -118,17 +119,18 @@ const createChart = () => {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: false // We'll use custom legend
+          display: false
         },
         tooltip: {
           mode: 'index',
           intersect: false,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          borderColor: '#374151',
+          backgroundColor: isDark ? '#18181b' : '#000000',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: '#27272a',
           borderWidth: 1,
-          cornerRadius: 8,
+          cornerRadius: 10,
+          padding: 12,
           callbacks: {
             label: function(context) {
               return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
@@ -142,22 +144,23 @@ const createChart = () => {
             display: false
           },
           ticks: {
-            color: '#6B7280',
+            color: isDark ? '#a1a1aa' : '#71717a',
             font: {
-              size: 12
+              size: 11,
+              weight: 'bold'
             }
           }
         },
         y: {
           beginAtZero: true,
           grid: {
-            color: '#F3F4F6',
-            borderDash: [2, 2]
+            color: isDark ? '#27272a' : '#e4e4e7',
+            borderDash: [3, 3]
           },
           ticks: {
-            color: '#6B7280',
+            color: isDark ? '#a1a1aa' : '#71717a',
             font: {
-              size: 12
+              size: 11
             },
             callback: function(value) {
               return '$' + value.toLocaleString();
@@ -168,11 +171,6 @@ const createChart = () => {
       interaction: {
         mode: 'index',
         intersect: false
-      },
-      elements: {
-        bar: {
-          borderRadius: 4
-        }
       }
     }
   });
