@@ -10,8 +10,17 @@
     >
       <!-- Sidebar Header -->
       <div class="relative flex items-center justify-between h-16 px-4 border-b border-zinc-200 dark:border-zinc-800">
+        <!-- Skeleton Loader for Company Details -->
+        <div v-if="loadingCompanies || !activeCompany" class="flex items-center gap-3.5 p-1 min-w-0 w-full animate-pulse">
+          <div class="h-11 w-11 shrink-0 rounded-xl bg-zinc-200 dark:bg-zinc-800"></div>
+          <div v-if="!sidebarCollapsed" class="flex-1 space-y-1.5 min-w-0">
+            <div class="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-28"></div>
+            <div class="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-20"></div>
+          </div>
+        </div>
+
         <!-- Company Switcher -->
-        <div class="relative flex-1 w-full min-w-0" v-if="activeCompany">
+        <div class="relative flex-1 w-full min-w-0" v-else>
           <div class="flex items-center gap-3.5 p-1 min-w-0">
             <!-- AVATAR TRIGGER BUTTON -->
             <button
@@ -2036,6 +2045,7 @@ const purchaseMenuRef = ref(null);
 const notifications = ref([]);
 const companies = ref([]);
 const activeCompany = ref(null);
+const loadingCompanies = ref(true);
 const showCompanySwitcher = ref(false);
 const companySwitcherRef = ref(null);
 const uploadingLogo = ref(false);
@@ -2053,6 +2063,7 @@ const handleLogout = async () => {
 };
 
 const fetchCompanies = async () => {
+  loadingCompanies.value = true;
   try {
     const response = await axios.get('/api/companies/my-companies');
     companies.value = response.data.companies;
@@ -2061,6 +2072,8 @@ const fetchCompanies = async () => {
     }
   } catch (error) {
     console.error('Failed to load companies', error);
+  } finally {
+    loadingCompanies.value = false;
   }
 };
 
