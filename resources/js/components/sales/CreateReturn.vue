@@ -715,10 +715,20 @@ const onOriginalSaleSelect = async () => {
     }
 
     // Populate returned items from original sale with original dispatch warehouse info
+    const saleHeaderTax = Math.abs(parseFloat(sale.tax_amount || 0))
+    const saleSubtotal = parseFloat(sale.subtotal || 0)
+
     form.items = (sale.sale_items || sale.saleItems || []).map(item => {
       const unitPrice = parseFloat(item.unit_price || 0)
       const qty = parseInt(item.quantity || 1)
-      const tax = parseFloat(item.tax_amount || 0)
+      let tax = Math.abs(parseFloat(item.tax_amount || 0))
+
+      // Fallback: if item has no tax but invoice has header-level tax, distribute proportionally
+      if (tax === 0 && saleHeaderTax > 0 && saleSubtotal > 0) {
+        const itemSubtotal = qty * unitPrice
+        tax = (itemSubtotal / saleSubtotal) * saleHeaderTax
+        tax = Math.round(tax * 100) / 100
+      }
 
       return {
         original_item_id: item.id,
@@ -729,6 +739,7 @@ const onOriginalSaleSelect = async () => {
         original_qty: qty,
         unit_price: unitPrice,
         tax_amount: tax,
+        original_tax: tax,
         total_amount: (qty * unitPrice) + tax,
         source_warehouse_id: item.warehouse_id || sale.warehouse_id,
         source_warehouse_name: item.warehouse?.name || sale.warehouse?.name || 'Original Dispatch Warehouse'
@@ -757,6 +768,7 @@ const addProductToReturn = (prod) => {
     original_qty: null,
     unit_price: prod.price || 0,
     tax_amount: 0,
+    original_tax: 0,
     total_amount: prod.price || 0,
     source_warehouse_name: null
   })
@@ -769,8 +781,12 @@ const calculateRowTotal = (item) => {
   const qty = parseInt(item.quantity || 0)
   const price = parseFloat(item.unit_price || 0)
   const rowSubtotal = qty * price
-  item.tax_amount = item.tax_amount || 0
-  item.total_amount = rowSubtotal + parseFloat(item.tax_amount)
+  if (item.original_qty && item.original_tax !== undefined && item.original_tax > 0) {
+    item.tax_amount = (qty / item.original_qty) * item.original_tax
+  } else {
+    item.tax_amount = parseFloat(item.tax_amount || 0)
+  }
+  item.total_amount = rowSubtotal + parseFloat(item.tax_amount || 0)
 }
 
 const removeItem = (index) => {

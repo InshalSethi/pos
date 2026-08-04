@@ -629,11 +629,47 @@ const loadReturnData = async () => {
     selectedOriginalSaleId.value = sale.original_sale_id || null
 
     const rawItems = sale.sale_items || sale.saleItems || sale.items || []
+    const saleHeaderTax = Math.abs(parseFloat(sale.tax_amount || 0))
+    const saleSubtotal = Math.abs(parseFloat(sale.subtotal || 0))
+
+    // Try to fetch original sale for cross-referencing item-level taxes
+    let originalSaleItems = []
+    if (sale.original_sale_id) {
+      try {
+        const origRes = await axios.get(`/api/sales/${sale.original_sale_id}`)
+        const origSale = origRes.data?.sale || origRes.data
+        originalSaleItems = origSale?.sale_items || origSale?.saleItems || []
+      } catch (e) {
+        console.warn('Could not fetch original sale for tax cross-reference:', e)
+      }
+    }
+
     form.items = rawItems.map(item => {
       const qty = Math.abs(item.quantity || 1)
       const unitPrice = parseFloat(item.unit_price) || 0
-      const taxAmt = parseFloat(item.tax_amount) || 0
-      const totalAmt = parseFloat(item.total_amount || item.total) || (qty * unitPrice + taxAmt)
+      let taxAmt = Math.abs(parseFloat(item.tax_amount) || 0)
+
+      // Fallback 1: Cross-reference original sale item tax
+      if (taxAmt === 0 && originalSaleItems.length > 0) {
+        const origItem = originalSaleItems.find(oi => oi.product_id === item.product_id)
+        if (origItem) {
+          const origTax = Math.abs(parseFloat(origItem.tax_amount) || 0)
+          const origQty = parseInt(origItem.quantity || 1)
+          if (origTax > 0 && origQty > 0) {
+            taxAmt = (qty / origQty) * origTax
+            taxAmt = Math.round(taxAmt * 100) / 100
+          }
+        }
+      }
+
+      // Fallback 2: Proportional from return sale header tax
+      if (taxAmt === 0 && saleHeaderTax > 0 && saleSubtotal > 0) {
+        const itemSubtotal = qty * unitPrice
+        taxAmt = (itemSubtotal / saleSubtotal) * saleHeaderTax
+        taxAmt = Math.round(taxAmt * 100) / 100
+      }
+
+      const totalAmt = (qty * unitPrice) + taxAmt
       return {
         product_id: item.product_id,
         product_variation_id: item.product_variation_id || null,
@@ -643,6 +679,7 @@ const loadReturnData = async () => {
         unit_price: unitPrice,
         tax_rate: parseFloat(item.tax_rate) || 0,
         tax_amount: taxAmt,
+        original_tax: taxAmt,
         total_amount: totalAmt
       }
     })
@@ -658,7 +695,7 @@ const loadReturnData = async () => {
           selected_account_key: key,
           type: type,
           bank_id: bankId,
-          amount: parseFloat(p.amount) || 0
+          amount: Math.abs(parseFloat(p.amount)) || 0
         }
       })
     } else if (sale.payment_method) {

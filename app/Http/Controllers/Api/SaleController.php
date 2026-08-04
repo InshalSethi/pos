@@ -750,6 +750,35 @@ class SaleController extends Controller
                 }
             }
 
+            // --- PROPORTIONAL HEADER TAX DISTRIBUTION ---
+            // If header-level tax_amount > sum of per-item taxes, distribute the
+            // unaccounted header tax proportionally across items so every sale_item
+            // row stores its share. This is critical for accurate Sales Return
+            // tax reversal and Journal Entry generation.
+            if ($totalTax > 0) {
+                $saleItems = SaleItem::where('sale_id', $sale->id)->get();
+                $sumItemTax = $saleItems->sum('tax_amount');
+
+                if ($totalTax > $sumItemTax + 0.001) {
+                    $unaccountedTax = $totalTax - $sumItemTax;
+                    $itemSubtotalSum = $saleItems->sum(function ($si) {
+                        return (float) $si->quantity * (float) $si->unit_price;
+                    });
+
+                    if ($itemSubtotalSum > 0) {
+                        foreach ($saleItems as $si) {
+                            $itemSub = (float) $si->quantity * (float) $si->unit_price;
+                            $proportion = $itemSub / $itemSubtotalSum;
+                            $additionalTax = round($unaccountedTax * $proportion, 2);
+                            $si->update([
+                                'tax_amount' => (float) $si->tax_amount + $additionalTax,
+                                'total_amount' => (float) $si->total_amount + $additionalTax,
+                            ]);
+                        }
+                    }
+                }
+            }
+
             // Update customer total purchases
             if ($request->customer_id) {
                 if (!$customer) {
@@ -1812,6 +1841,7 @@ class SaleController extends Controller
             ];
 
             $totalReturnAmount = 0;
+            $totalReturnTax = 0;
             $returnItems = [];
 
             // Generate return sale number beforehand for stock history reference
@@ -1838,6 +1868,14 @@ class SaleController extends Controller
                 }
 
                 $totalReturnAmount += $returnItem['return_amount'];
+
+                $itemTaxReturn = 0;
+                if ((float)$originalItem->tax_amount > 0 && $originalItem->quantity > 0) {
+                    $itemTaxReturn = ($returnItem['quantity'] / $originalItem->quantity) * (float)$originalItem->tax_amount;
+                } elseif ((float)$originalSale->tax_amount > 0 && (float)$originalSale->total_amount > 0) {
+                    $itemTaxReturn = ($returnItem['return_amount'] / (float)$originalSale->total_amount) * (float)$originalSale->tax_amount;
+                }
+                $totalReturnTax += $itemTaxReturn;
 
                 // Determine target warehouse based on return reason mapping
                 if ($normalizedReason && in_array($normalizedReason, $cleanKeys)) {
@@ -1878,7 +1916,7 @@ class SaleController extends Controller
                     'quantity' => -$returnItem['quantity'], // Negative for returns
                     'unit_price' => $originalItem->unit_price,
                     'discount_amount' => 0,
-                    'tax_amount' => 0,
+                    'tax_amount' => -$itemTaxReturn,
                     'total_amount' => -$returnItem['return_amount'], // Negative for returns
                 ];
 
@@ -1964,8 +2002,8 @@ class SaleController extends Controller
                 'warehouse_id' => $request->input('warehouse_id') ?? $firstTargetWarehouseId ?? $originalSale->warehouse_id,
                 'sale_date' => $request->return_date,
                 'status' => 'completed',
-                'subtotal' => -$totalReturnAmount,
-                'tax_amount' => 0,
+                'subtotal' => -($totalReturnAmount - $totalReturnTax),
+                'tax_amount' => -$totalReturnTax,
                 'discount_amount' => 0,
                 'total_amount' => -$totalReturnAmount,
                 'paid_amount' => -$totalPaidRefund,
