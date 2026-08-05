@@ -321,7 +321,8 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { debounce } from '@/utils/debounce';
@@ -339,6 +340,8 @@ export default {
     CustomerLedger
   },
   setup() {
+    const route = useRoute();
+    const router = useRouter();
     const { showToast } = useToast();
     const authStore = useAuthStore();
     const currencyStore = useCurrencyStore();
@@ -356,6 +359,13 @@ export default {
     const typeFilter = ref('');
     const statusFilter = ref('');
     const openActionDropdown = ref(null);
+
+    const checkAutoOpenCreate = () => {
+      if (route.path.endsWith('/create') || route.query.create === 'true' || route.query.action === 'create') {
+        selectedCustomer.value = null;
+        showCreateModal.value = true;
+      }
+    };
 
     const setTab = (tab) => {
       activeTab.value = tab;
@@ -463,6 +473,9 @@ export default {
       showViewModal.value = false;
       showLedgerModal.value = false;
       selectedCustomer.value = null;
+      if (route.path.endsWith('/create')) {
+        router.replace('/customers');
+      }
     };
 
     const handleCustomerSaved = () => {
@@ -496,6 +509,15 @@ export default {
       loadCustomers();
       loadStatistics();
       document.addEventListener('click', closeAllDropdowns);
+      checkAutoOpenCreate();
+    });
+
+    watch(() => route.path, () => {
+      checkAutoOpenCreate();
+    });
+
+    watch(() => route.query, () => {
+      checkAutoOpenCreate();
     });
 
     onUnmounted(() => {

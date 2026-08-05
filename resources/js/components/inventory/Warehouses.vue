@@ -347,8 +347,8 @@
       </div>
 
       <!-- Create / Edit Modal -->
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all" role="dialog">
-        <div class="relative bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-[28px] max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+      <div v-if="showModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="showModal = false" role="dialog">
+        <div class="relative mx-auto border border-slate-200 dark:border-[#2E2E2E] w-full max-w-lg shadow-2xl rounded-[28px] bg-white dark:bg-[#1E1E1E] text-slate-800 dark:text-slate-100 overflow-hidden my-auto flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
           
           <!-- Header -->
           <div class="p-6 border-b border-slate-100 dark:border-[#2E2E2E]">

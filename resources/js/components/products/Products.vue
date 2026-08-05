@@ -468,11 +468,8 @@
 
 
     <!-- Drafts Workbench Modal -->
-    <div v-if="isDraftsModalOpen"
-         @click.self="isDraftsModalOpen = false"
-         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
-        
-        <div class="w-full max-w-5xl bg-white dark:bg-[#1E1E1E] border border-slate-200/80 dark:border-[#2E2E2E]/80 rounded-[28px] p-6 shadow-2xl flex flex-col max-h-[85vh] transition-all">
+    <div v-if="isDraftsModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="isDraftsModalOpen = false">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-5xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto flex flex-col">
             
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E]/60 pb-4 mb-5 px-1">
                 <div class="flex flex-col space-y-0.5">
@@ -618,8 +615,8 @@
     </div>
 
     <!-- Import Products Modal -->
-    <div v-if="showImportModal" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full z-50 transition-all">
-      <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div v-if="showImportModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeImportModal">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">Import Products</h3>
@@ -704,15 +701,14 @@
           </div>
         </div>
       </div>
-    </div>
 
 
 
 
 
     <!-- Bulk Sale Modal -->
-    <div v-if="showBulkSaleModal" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full z-50 transition-all">
-      <div class="relative top-20 mx-auto p-8 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white transform transition-all">
+    <div v-if="showBulkSaleModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeBulkSaleModal">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
         <div class="mt-2">
           <div class="flex justify-between items-center mb-6">
             <div class="flex items-center space-x-3">
@@ -772,8 +768,8 @@
     </div>
 
     <!-- View Product Modal -->
-    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 transition-all">
-      <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="showViewModal = false">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto flex flex-col">
 
         <!-- Header -->
         <div class="flex items-center justify-between px-6 pt-6 pb-5">
@@ -906,10 +902,8 @@
 
 
     <!-- Category Management Modal -->
-    <div v-if="showCategoryModal" class="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md overflow-y-auto h-full w-full transition-all" style="z-index: 9999;">
-      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+    <div v-if="showCategoryModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeCategoryModal">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto text-left">
             <div class="flex justify-between items-center mb-6">
               <h3 class="text-lg font-medium text-gray-900">Manage Categories</h3>
               <button
@@ -1027,15 +1021,13 @@
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Barcode Printer Modal -->
     <BarcodePrinter v-if="showBarcodeModal" :product="printingProduct" @close="showBarcodeModal = false" />
 
     <!-- Variations Modal -->
-    <div v-if="showVariationsModal && selectedVariationsProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all">
-        <div class="absolute inset-0" @click="showVariationsModal = false"></div>
-        <div class="relative w-full max-w-6xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+    <div v-if="showVariationsModal && selectedVariationsProduct" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="showVariationsModal = false">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-6xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto flex flex-col">
             
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E] pb-3 mb-4">
                 <div>

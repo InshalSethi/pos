@@ -1,9 +1,6 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 bg-black bg-opacity-80 transition-opacity" @click="closeModal"></div>
-      
-      <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" @click.stop>
+  <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
         <div class="bg-white">
           <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
             <div class="flex items-center justify-between">
@@ -79,7 +76,6 @@
             </div>
           </div>
         </div>
-      </div>
     </div>
   </div>
 </template>

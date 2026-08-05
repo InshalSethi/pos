@@ -1,12 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto">
-      <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs transition-opacity" @click="$emit('close')"></div>
-      
-      <!-- Modal -->
-      <div class="flex min-h-full items-center justify-center p-4">
-        <div class="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden transition-all">
+    <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
           <!-- Header -->
           <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 dark:from-indigo-700 dark:to-indigo-900 px-6 py-4">
             <div class="flex items-center justify-between">
@@ -126,7 +121,6 @@
             </form>
           </div>
         </div>
-      </div>
     </div>
   </Teleport>
 </template>

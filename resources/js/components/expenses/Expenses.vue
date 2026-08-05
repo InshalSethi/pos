@@ -119,13 +119,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import ExpenseList from './ExpenseList.vue';
 import ExpenseCategoryList from './ExpenseCategoryList.vue';
 import ExpenseReports from './ExpenseReports.vue';
 import ExpenseModal from './ExpenseModal.vue';
 import ExpenseCategoryModal from './ExpenseCategoryModal.vue';
 import ExpenseViewModal from './ExpenseViewModal.vue';
+
+const route = useRoute();
+const router = useRouter();
 
 // Reactive data
 const activeTab = ref('expenses');
@@ -135,6 +139,13 @@ const showExpenseViewModal = ref(false);
 const selectedExpense = ref(null);
 const selectedCategory = ref(null);
 const expenseListRef = ref(null);
+
+const checkAutoOpenCreate = () => {
+  if (route.path.endsWith('/create') || route.query.create === 'true' || route.query.action === 'create') {
+    selectedExpense.value = null;
+    showExpenseModal.value = true;
+  }
+};
 
 // Methods
 const editExpense = (expense) => {
@@ -155,6 +166,9 @@ const editCategory = (category) => {
 const closeExpenseModal = () => {
   showExpenseModal.value = false;
   selectedExpense.value = null;
+  if (route.path.endsWith('/create')) {
+    router.replace('/expenses');
+  }
 };
 
 const closeCategoryModal = () => {
@@ -210,7 +224,15 @@ const fetchCategories = () => {
 };
 
 onMounted(() => {
-  // Component initialization
+  checkAutoOpenCreate();
+});
+
+watch(() => route.path, () => {
+  checkAutoOpenCreate();
+});
+
+watch(() => route.query, () => {
+  checkAutoOpenCreate();
 });
 </script>
 

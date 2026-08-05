@@ -1187,8 +1187,8 @@
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
-      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-modal-backdrop backdrop-blur-sm overflow-y-auto" style="background-color: rgba(0, 0, 0, 0.75) !important;">
-        <div class="relative w-full max-w-5xl bg-white dark:bg-[#1E1E1E] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-5xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 overflow-hidden flex flex-col max-h-[90vh] my-auto">
           
           <!-- Modal Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2E2E2E] bg-slate-50 dark:bg-[#252525]">
@@ -1637,7 +1637,7 @@
     <!-- Quick Warehouse Switcher Modal -->
     <div
       v-if="showWarehouseSwitcherModal"
-      class="fixed inset-0 z-[10000] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
       @click.self="showWarehouseSwitcherModal = false"
     >
       <div class="bg-white dark:bg-zinc-900 rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-150">

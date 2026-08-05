@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="confirmState.isOpen"
-      class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-900/30 dark:bg-slate-950/80 backdrop-blur-md transition-all duration-200 animate-in fade-in"
+      class="fixed inset-0 z-[999999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200 animate-in fade-in" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
       @click.self="handleCancel"
     >
       <div class="relative bg-white dark:bg-[#141414] border border-slate-200/80 dark:border-[#2E2E2E] rounded-[28px] max-w-sm w-full p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">

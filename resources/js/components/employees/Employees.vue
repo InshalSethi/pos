@@ -166,7 +166,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import EmployeeList from './EmployeeList.vue';
 import DepartmentList from './DepartmentList.vue';
 import PositionList from './PositionList.vue';
@@ -177,6 +178,9 @@ import DepartmentModal from './DepartmentModal.vue';
 import PositionModal from './PositionModal.vue';
 import EmployeeViewModal from './EmployeeViewModal.vue';
 
+const route = useRoute();
+const router = useRouter();
+
 // Reactive data
 const activeTab = ref('employees');
 const showEmployeeModal = ref(false);
@@ -186,6 +190,13 @@ const showEmployeeViewModal = ref(false);
 const selectedEmployee = ref(null);
 const selectedDepartment = ref(null);
 const selectedPosition = ref(null);
+
+const checkAutoOpenCreate = () => {
+  if (route.path.endsWith('/create') || route.query.create === 'true' || route.query.action === 'create') {
+    selectedEmployee.value = null;
+    showEmployeeModal.value = true;
+  }
+};
 
 // Methods
 const editEmployee = (employee) => {
@@ -211,6 +222,9 @@ const editPosition = (position) => {
 const closeEmployeeModal = () => {
   showEmployeeModal.value = false;
   selectedEmployee.value = null;
+  if (route.path.endsWith('/create')) {
+    router.replace('/employees');
+  }
 };
 
 const closeDepartmentModal = () => {
@@ -266,7 +280,15 @@ const fetchPositions = () => {
 };
 
 onMounted(() => {
-  // Component initialization
+  checkAutoOpenCreate();
+});
+
+watch(() => route.path, () => {
+  checkAutoOpenCreate();
+});
+
+watch(() => route.query, () => {
+  checkAutoOpenCreate();
 });
 </script>
 

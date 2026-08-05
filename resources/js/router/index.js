@@ -364,10 +364,22 @@ const routes = [
         meta: { permission: 'expenses.view' }
       },
       {
+        path: 'expenses/create',
+        name: 'CreateExpense',
+        component: Expenses,
+        meta: { permission: 'expenses.create' }
+      },
+      {
         path: 'employees',
         name: 'Employees',
         component: Employees,
         meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'employees/create',
+        name: 'CreateEmployee',
+        component: Employees,
+        meta: { permission: 'employees.create' }
       },
       {
         path: 'customers',
@@ -376,10 +388,22 @@ const routes = [
         meta: { permission: 'customers.view' }
       },
       {
+        path: 'customers/create',
+        name: 'CreateCustomer',
+        component: Customers,
+        meta: { permission: 'customers.create' }
+      },
+      {
         path: 'suppliers',
         name: 'Suppliers',
         component: Suppliers,
         meta: { permission: 'suppliers.view' }
+      },
+      {
+        path: 'suppliers/create',
+        name: 'CreateSupplier',
+        component: Suppliers,
+        meta: { permission: 'suppliers.create' }
       },
       {
         path: 'payments',

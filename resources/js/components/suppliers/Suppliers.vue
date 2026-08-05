@@ -317,7 +317,8 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { debounce } from '@/utils/debounce';
@@ -336,6 +337,8 @@ export default {
     SupplierLedger
   },
   setup() {
+    const route = useRoute();
+    const router = useRouter();
     const { showToast } = useToast();
     const { confirm } = useConfirm();
     const authStore = useAuthStore();
@@ -352,6 +355,13 @@ export default {
     const perPage = ref(15);
     const statusFilter = ref('');
     const openActionDropdown = ref(null);
+
+    const checkAutoOpenCreate = () => {
+      if (route.path.endsWith('/create') || route.query.create === 'true' || route.query.action === 'create') {
+        selectedSupplier.value = null;
+        showCreateModal.value = true;
+      }
+    };
 
     const selectedSupplier = ref(null);
     const showCreateModal = ref(false);
@@ -437,6 +447,9 @@ export default {
       showViewModal.value = false;
       showLedgerModal.value = false;
       selectedSupplier.value = null;
+      if (route.path.endsWith('/create')) {
+        router.replace('/suppliers');
+      }
     };
 
     const handleSupplierSaved = () => {
@@ -477,6 +490,15 @@ export default {
       loadSuppliers();
       loadStatistics();
       document.addEventListener('click', closeAllDropdowns);
+      checkAutoOpenCreate();
+    });
+
+    watch(() => route.path, () => {
+      checkAutoOpenCreate();
+    });
+
+    watch(() => route.query, () => {
+      checkAutoOpenCreate();
     });
 
     onUnmounted(() => {

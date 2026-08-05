@@ -33,7 +33,7 @@
     </div>
 
     <!-- Success Message Toast -->
-    <transition enter-active-class="transform ease-out duration-300 transition" enter-from-class="trangray-y-2 opacity-0 sm:trangray-y-0 sm:trangray-x-2" enter-to-class="trangray-y-0 opacity-100 sm:trangray-x-0" leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+    <transition enter-active-class="transform ease-out duration-300 transition" enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2" enter-to-class="translate-y-0 opacity-100 sm:translate-x-0" leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="successMessage" class="fixed bottom-4 right-4 z-50 bg-[#0f172a] text-slate-50 border border-white/5 px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold max-w-sm w-80">
         <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -209,8 +209,8 @@
 
     </div>
     <!-- Drafts Modal -->
-    <div v-if="showDraftsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm" @click.self="showDraftsModal = false">
-      <div class="w-full max-w-xl mx-4 p-6 bg-white rounded-2xl shadow-2xl">
+    <div v-if="showDraftsModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="showDraftsModal = false">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
         <!-- Modal Header -->
         <div class="flex items-center justify-between pb-4 border-b border-gray-100">
             <div class="flex items-center gap-3">
@@ -298,13 +298,10 @@
     </div>
 
     <!-- View Company Premium Modal -->
-    <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 trangray-y-4 sm:trangray-y-0 sm:scale-95" enter-to-class="opacity-100 trangray-y-0 sm:scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 trangray-y-0 sm:scale-100" leave-to-class="opacity-0 trangray-y-4 sm:trangray-y-0 sm:scale-95">
-      <div v-if="selectedCompany" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
-        <!-- Backdrop -->
-        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="selectedCompany = null"></div>
-
+    <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to-class="opacity-100 translate-y-0 sm:scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 translate-y-0 sm:scale-100" leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+      <div v-if="selectedCompany" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="selectedCompany = null">
         <!-- Modal Panel -->
-        <div class="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-2xl w-full transform transition-all border border-gray-100 flex flex-col max-h-[90vh]">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-850 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 transition-all duration-300 z-10 max-h-[90vh] overflow-hidden my-auto flex flex-col">
           <!-- Premium Header -->
           <div class="px-8 py-6 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-10">
             <div class="flex items-center gap-5">
@@ -444,11 +441,8 @@
 
     <!-- Logo Preview/Upload Modal -->
     <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="previewLogoCompany" class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gray-950/70 backdrop-blur-md" @keydown.esc.window="previewLogoCompany = null">
-        
-        <div class="absolute inset-0 cursor-zoom-out" @click="previewLogoCompany = null"></div>
-
-        <div class="relative w-full max-w-sm p-5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-10 text-center animate-in fade-in zoom-in-95 duration-150">
+      <div v-if="previewLogoCompany" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="previewLogoCompany = null" @keydown.esc.window="previewLogoCompany = null">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-sm shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-5 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto text-center animate-in fade-in zoom-in-95 duration-150">
             
             <button @click="previewLogoCompany = null" type="button" class="absolute -top-2.5 -right-2.5 p-1.5 rounded-full bg-rose-500 text-white hover:bg-rose-600 shadow-md transition-all active:scale-95 focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -484,8 +478,8 @@
     </transition>
     <!-- Custom Confirmation Modal -->
     <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-      <div v-if="showConfirmModal" class="fixed inset-0 z-[150] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
-        <div class="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all">
+      <div v-if="showConfirmModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="showConfirmModal = false">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-sm shadow-2xl rounded-3xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto text-center transform transition-all">
           <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-rose-50 dark:bg-rose-500/10 mb-5 border border-rose-100 dark:border-rose-500/20">
             <svg class="h-7 w-7 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -507,12 +501,9 @@
 
     <!-- Delete Confirmation Modal -->
     <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-      <div v-if="companyToDelete" class="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-0">
-        <!-- Backdrop -->
-        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="companyToDelete = null"></div>
-
+      <div v-if="companyToDelete" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="companyToDelete = null">
         <!-- Modal Panel -->
-        <div class="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md w-full transform transition-all border border-gray-100">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-hidden my-auto">
           <div class="px-6 py-6 sm:p-8">
             <div class="sm:flex sm:items-start">
               <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">

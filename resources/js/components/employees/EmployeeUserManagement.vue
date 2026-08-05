@@ -195,8 +195,8 @@
     </div>
 
     <!-- Bulk Create Modal -->
-    <div v-if="showBulkCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div v-if="showBulkCreateModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 my-auto">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Bulk Create User Accounts</h3>
         <p class="text-sm text-gray-600 mb-4">
           Create user accounts for {{ selectedEmployees.length }} selected employees?

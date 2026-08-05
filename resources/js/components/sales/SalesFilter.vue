@@ -12,7 +12,8 @@
       <div
         v-if="isOpen"
         @click="close"
-        class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs"
+        class="fixed inset-0 z-[9999] bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200"
+        style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
       ></div>
     </transition>
 
@@ -27,7 +28,7 @@
     >
       <div
         v-if="isOpen"
-        class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-zinc-900 shadow-2xl border-l border-slate-200 dark:border-zinc-800 flex flex-col justify-between overflow-hidden"
+        class="fixed inset-y-0 right-0 z-[9999] w-full max-w-md bg-white dark:bg-zinc-900 shadow-2xl border-l border-slate-200 dark:border-zinc-800 flex flex-col justify-between overflow-hidden"
       >
         <!-- Header -->
         <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/50">

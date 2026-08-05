@@ -293,10 +293,8 @@
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="showTaxModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="closeTaxModal"></div>
-
-          <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-md p-6 rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-2xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div v-if="showTaxModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeTaxModal">
+          <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
             <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
               <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
                 {{ isEditingTax ? 'Edit Tax Rule' : 'New Tax Rule' }}
@@ -437,10 +435,8 @@
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="showTagModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="closeTagModal"></div>
-
-          <div class="relative bg-white dark:bg-[#1E1E1E] w-full max-w-md p-6 rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-2xl space-y-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div v-if="showTagModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeTagModal">
+          <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
             <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
               <h3 class="text-sm font-extrabold text-slate-808 dark:text-slate-100 uppercase tracking-wider">
                 {{ isEditingTag ? 'Edit Tag' : 'New Tag' }}

@@ -1959,10 +1959,22 @@ const currentMenuItem = computed(() => {
       item = menuItems.find(m => m.path === '/products');
     } else if (currentPath.startsWith('/sales/invoices')) {
       item = menuItems.find(m => m.path === '/sales/invoices');
+    } else if (currentPath.startsWith('/sales/returns')) {
+      item = menuItems.find(m => m.path === '/sales/returns');
     } else if (currentPath.startsWith('/purchase/orders')) {
       item = menuItems.find(m => m.path === '/purchase/orders');
+    } else if (currentPath.startsWith('/purchase/returns')) {
+      item = menuItems.find(m => m.path === '/purchase/returns');
     } else if (currentPath.startsWith('/inventory/transfer-orders')) {
       item = menuItems.find(m => m.path === '/inventory/transfer-orders');
+    } else if (currentPath.startsWith('/expenses')) {
+      item = menuItems.find(m => m.path === '/expenses');
+    } else if (currentPath.startsWith('/employees')) {
+      item = menuItems.find(m => m.path === '/employees');
+    } else if (currentPath.startsWith('/customers')) {
+      item = menuItems.find(m => m.path === '/customers');
+    } else if (currentPath.startsWith('/suppliers')) {
+      item = menuItems.find(m => m.path === '/suppliers');
     }
   }
   return item;

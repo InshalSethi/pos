@@ -1,6 +1,6 @@
 <template>
-  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+  <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <div>
@@ -203,8 +203,8 @@
     </div>
 
     <!-- Approval Modal -->
-    <div v-if="showApprovalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-60">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div v-if="showApprovalModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Approve Expense</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">Approval Notes (Optional)</label>
@@ -233,8 +233,8 @@
     </div>
 
     <!-- Rejection Modal -->
-    <div v-if="showRejectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-60">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div v-if="showRejectionModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Expense</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
@@ -265,8 +265,8 @@
     </div>
 
     <!-- Payment Modal -->
-    <div v-if="showPaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-60">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div v-if="showPaymentModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Mark as Paid</h3>
 
         <div class="mb-4">

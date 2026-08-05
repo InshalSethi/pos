@@ -723,8 +723,8 @@
     </div>
 
     <!-- Quick Supplier Creation Modal -->
-    <div v-if="showSupplierModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-      <div class="relative mx-auto p-6 border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-zinc-100 text-left transition-all duration-300">
+    <div v-if="showSupplierModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto text-left">
         
         <!-- Sleek Close Icon Button -->
         <button
@@ -991,8 +991,8 @@
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
-      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-modal-backdrop backdrop-blur-sm overflow-y-auto" style="background-color: rgba(0, 0, 0, 0.75) !important;">
-        <div class="relative w-full max-w-5xl bg-white dark:bg-[#1E1E1E] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-5xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 overflow-hidden flex flex-col max-h-[90vh] my-auto">
           
           <!-- Modal Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2E2E2E] bg-slate-50 dark:bg-[#252525]">
