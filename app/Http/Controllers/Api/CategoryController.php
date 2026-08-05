@@ -82,6 +82,14 @@ class CategoryController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'slug')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })
+            ],
             'description' => 'nullable|string',
             'parent_id' => [
                 'nullable',
@@ -110,6 +118,17 @@ class CategoryController extends Controller
         $category = new Category();
         $category->fill($request->all());
         $category->company_id = $companyId;
+
+        // Auto-generate slug
+        $slug = $request->input('slug') ?: \Illuminate\Support\Str::slug($request->input('name'));
+        $baseSlug = $slug;
+        $counter = 1;
+        while (Category::where('company_id', $companyId)->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        $category->slug = $slug;
+
         $category->save();
         $category->load('parent', 'children', 'tax');
 
@@ -145,6 +164,14 @@ class CategoryController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'slug')->ignore($category->id)->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })
+            ],
             'description' => 'nullable|string',
             'parent_id' => [
                 'nullable',
@@ -177,7 +204,24 @@ class CategoryController extends Controller
             ], 422);
         }
 
-        $category->update($request->all());
+        $category->fill($request->all());
+
+        // Update slug if name or slug changes
+        if ($request->has('name') || $request->has('slug')) {
+            $slug = $request->input('slug') ?: \Illuminate\Support\Str::slug($request->input('name'));
+            $baseSlug = $slug;
+            $counter = 1;
+            while (Category::where('company_id', $companyId)
+                ->where('slug', $slug)
+                ->where('id', '!=', $category->id)
+                ->exists()) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+            $category->slug = $slug;
+        }
+
+        $category->save();
         $category->load('parent', 'children', 'tax');
 
         return response()->json([

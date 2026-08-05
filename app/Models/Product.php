@@ -89,6 +89,7 @@ class Product extends Model
         'dimensions',
         'tax_rate',
         'category_id',
+        'brand_id',
         'unit_id',
         'supplier_id',
         'batch_number',
@@ -122,6 +123,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     public function unit(): BelongsTo

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\TaxController;
 use App\Http\Controllers\Api\TagController;
@@ -131,6 +132,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/products/download-template', [ProductController::class , 'downloadTemplate']);
     Route::apiResource('categories', CategoryController::class);
     Route::post('/categories/{category}/apply-pricing', [CategoryController::class, 'applyPricing']);
+    Route::apiResource('brands', BrandController::class);
     Route::apiResource('units', UnitController::class);
     Route::apiResource('taxes', TaxController::class);
     Route::apiResource('tags', TagController::class);

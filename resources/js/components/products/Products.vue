@@ -149,6 +149,27 @@
               </transition>
             </div>
 
+            <!-- Brand dropdown chip -->
+            <div class="relative">
+              <button
+                @click.stop="toggleDropdown('brand')"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              >
+                <span>Brand: {{ getBrandName(tableFilters.brand_id) || 'All' }}</span>
+                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
+                <div v-show="dropdownOpen.brand" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
+                  <div @click="selectBrand('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">All Brands</div>
+                  <div v-for="brand in brands" :key="brand.id" @click="selectBrand(brand.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">
+                    {{ brand.name }}
+                  </div>
+                </div>
+              </transition>
+            </div>
+
             <!-- Price sort chip -->
             <div class="relative">
               <button
@@ -233,7 +254,7 @@
                   </th>
                   <th class="px-6 py-3.5 text-left font-bold">Item Name &amp; Description</th>
                   <th class="px-6 py-3.5 text-center font-bold">SKU</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Category</th>
+                  <th class="px-6 py-3.5 text-center font-bold">Category / Brand</th>
                   <th class="px-6 py-3.5 text-center font-bold">Stock Status</th>
                   <th class="px-6 py-3.5 text-center font-bold">Price Matrix</th>
                 </tr>
@@ -347,12 +368,17 @@
                     </span>
                   </td>
 
-                  <!-- Category Badge -->
+                  <!-- Category & Brand Badge -->
                   <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
-                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-900/30">
-                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 shrink-0"></span>
-                      <span>{{ item.category ? item.category.name : 'General' }}</span>
-                    </span>
+                    <div class="flex flex-col items-center gap-1.5 justify-center">
+                      <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-900/30">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 shrink-0"></span>
+                        <span>{{ item.category ? item.category.name : 'General' }}</span>
+                      </span>
+                      <span v-if="item.brand" class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-650 dark:text-slate-350 border border-slate-200/60 dark:border-[#2E2E2E] uppercase">
+                        {{ item.brand.name }}
+                      </span>
+                    </div>
                   </td>
 
                   <!-- Stock Status -->
@@ -819,6 +845,11 @@
             </div>
 
             <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Brand</p>
+              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.brand?.name || 'No Brand' }}</p>
+            </div>
+
+            <div>
               <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Barcode</p>
               <p class="text-sm font-medium text-gray-800">{{ viewingProduct.barcode || 'N/A' }}</p>
             </div>
@@ -1274,6 +1305,7 @@ const showOptionsDropdown = ref(false);
 const loading = ref(false);
 const products = ref([]);
 const categories = ref([]);
+const brands = ref([]);
 // Lightbox State
 const showLightbox = ref(false);
 const lightboxImages = ref([]);
@@ -1572,6 +1604,7 @@ const tableFilters = ref({
   sort_field: '',
   sort_order: '',
   category_id: '',
+  brand_id: '',
   price_sort: '',
   on_sale: false,
   show_inactive: false
@@ -1581,17 +1614,27 @@ const tableFilters = ref({
 
 const dropdownOpen = ref({
   category: false,
+  brand: false,
   price: false
 });
 
 const toggleDropdown = (type) => {
   dropdownOpen.value[type] = !dropdownOpen.value[type];
-  if (type === 'category') dropdownOpen.value.price = false;
-  else if (type === 'price') dropdownOpen.value.category = false;
+  if (type === 'category') {
+    dropdownOpen.value.brand = false;
+    dropdownOpen.value.price = false;
+  } else if (type === 'brand') {
+    dropdownOpen.value.category = false;
+    dropdownOpen.value.price = false;
+  } else if (type === 'price') {
+    dropdownOpen.value.category = false;
+    dropdownOpen.value.brand = false;
+  }
 };
 
 const closeDropdowns = () => {
   dropdownOpen.value.category = false;
+  dropdownOpen.value.brand = false;
   dropdownOpen.value.price = false;
   showSalesPurchaseDropdown.value = false;
   showOptionsDropdown.value = false;
@@ -1600,6 +1643,12 @@ const closeDropdowns = () => {
 const selectCategory = (id) => {
   tableFilters.value.category_id = id;
   dropdownOpen.value.category = false;
+  fetchProductsForTable(1);
+};
+
+const selectBrand = (id) => {
+  tableFilters.value.brand_id = id;
+  dropdownOpen.value.brand = false;
   fetchProductsForTable(1);
 };
 
@@ -1613,6 +1662,12 @@ const getCategoryName = (id) => {
   if (!id) return '';
   const category = categories.value.find(c => c.id === id);
   return category ? category.name : '';
+};
+
+const getBrandName = (id) => {
+  if (!id) return '';
+  const brand = brands.value.find(b => b.id === id);
+  return brand ? brand.name : '';
 };
 
 const getPriceSortName = (sort) => {
@@ -1649,6 +1704,7 @@ const handlePriceSortChange = () => {
 const hasActiveFilters = computed(() => {
   return tableFilters.value.search !== '' ||
          tableFilters.value.category_id !== '' ||
+         tableFilters.value.brand_id !== '' ||
          tableFilters.value.price_sort !== '' ||
          tableFilters.value.on_sale ||
          tableFilters.value.show_inactive;
@@ -1657,6 +1713,7 @@ const hasActiveFilters = computed(() => {
 const clearFilters = () => {
   tableFilters.value.search = '';
   tableFilters.value.category_id = '';
+  tableFilters.value.brand_id = '';
   tableFilters.value.price_sort = '';
   tableFilters.value.sort_field = '';
   tableFilters.value.sort_order = '';
@@ -1671,6 +1728,15 @@ const fetchCategories = async () => {
     categories.value = response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);
+  }
+};
+
+const fetchBrands = async () => {
+  try {
+    const response = await axios.get('/api/brands');
+    brands.value = response.data;
+  } catch (error) {
+    console.error('Error fetching brands:', error);
   }
 };
 
@@ -2164,6 +2230,7 @@ watch(
     if (newCompanyId && newCompanyId !== oldCompanyId) {
       console.log('[Products] Company context changed, re-fetching products:', newCompanyId);
       fetchCategories();
+      fetchBrands();
       fetchProductsForTable(1);
       fetchDraftsData();
     }
@@ -2172,6 +2239,7 @@ watch(
 
 onMounted(() => {
   fetchCategories();
+  fetchBrands();
   fetchProductsForTable();
   fetchDraftsData();
   document.addEventListener('click', closeDropdowns);

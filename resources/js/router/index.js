@@ -116,6 +116,12 @@ const routes = [
         component: () => import('@/components/inventory/Groups.vue'),
         meta: { permission: 'inventory.view' }
       },
+      {
+        path: 'inventory/categories-brands',
+        name: 'CategoriesBrands',
+        component: () => import('@/components/inventory/CategoriesBrands.vue'),
+        meta: { permission: 'inventory.view' }
+      },
 
 
       {

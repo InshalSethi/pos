@@ -84,7 +84,7 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['category', 'unit', 'variations' => function($query) {
+        $query = Product::with(['category', 'brand', 'unit', 'variations' => function($query) {
             $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate', 'sku');
         }])->withCount('variations')->where('status', '!=', 'draft');
 
@@ -101,6 +101,11 @@ class ProductController extends Controller
         // Filter by category
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->get('category_id'));
+        }
+
+        // Filter by brand
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->get('brand_id'));
         }
 
         // Filter by tag
@@ -200,6 +205,13 @@ class ProductController extends Controller
             'category_id' => [
                 'nullable',
                 Rule::exists('categories', 'id')->where(function ($query) {
+                    $companyId = auth()->user()->current_company_id;
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'brand_id' => [
+                'nullable',
+                Rule::exists('brands', 'id')->where(function ($query) {
                     $companyId = auth()->user()->current_company_id;
                     return $query->where('company_id', $companyId);
                 })
@@ -502,7 +514,7 @@ class ProductController extends Controller
      */
     public function show(Product $product): JsonResponse
     {
-        $product->load('category', 'unit', 'saleItems.sale', 'variations', 'attributes');
+        $product->load('category', 'brand', 'unit', 'saleItems.sale', 'variations', 'attributes');
         $product->loadCount('variations');
 
         $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function($wh) use ($product) {
@@ -664,6 +676,13 @@ class ProductController extends Controller
             'category_id' => [
                 'nullable',
                 Rule::exists('categories', 'id')->where(function ($query) {
+                    $companyId = auth()->user()->current_company_id;
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'brand_id' => [
+                'nullable',
+                Rule::exists('brands', 'id')->where(function ($query) {
                     $companyId = auth()->user()->current_company_id;
                     return $query->where('company_id', $companyId);
                 })

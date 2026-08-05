@@ -80,8 +80,8 @@
                   />
                 </div>
 
-                <!-- Category & Tags Side-by-Side Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Category, Brand & Tags Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <!-- Multi-select Category Badge / Tag Input -->
                   <div>
                     <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
@@ -120,7 +120,7 @@
                           @focus="showCategoryDropdown = true"
                           @click.stop="showCategoryDropdown = true"
                           :placeholder="form.category_ids.length === 0 ? 'Add category' : ''"
-                          class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
+                          class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-550"
                         />
 
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
@@ -168,6 +168,25 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <!-- Brand Select Dropdown -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-1">
+                      Brand
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                          Select the brand associated with this product.
+                          <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                        </span>
+                      </span>
+                    </label>
+                    <SystemSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select Brand" />
                   </div>
  
                   <!-- Multi-select Tags Badge / Tag Input -->
@@ -1846,6 +1865,7 @@ const sanitizeInitialData = (data) => {
     status: 'active', // Baseline fallback state is active
     category_id: '',
     category_ids: [],
+    brand_id: '',
     weight: '',
     dimensions: '',
     tax_rate: '',
@@ -2670,7 +2690,15 @@ const unitOptions = computed(() => {
   return options;
 });
 
+const brands = ref([]);
 
+const brandOptions = computed(() => {
+  const list = Array.isArray(brands.value) ? brands.value : [];
+  return [
+    { label: 'None (No Brand)', value: '' },
+    ...list.map(b => ({ label: b?.name || '', value: b?.id || '' }))
+  ];
+});
 
 const warehouseOptions = computed(() => {
   const list = Array.isArray(availableWarehouses.value) ? availableWarehouses.value : [];
@@ -2679,14 +2707,15 @@ const warehouseOptions = computed(() => {
 
 onMounted(async () => {
   try {
-    const [catResponse, supResponse, unitResponse, taxResponse, tagResponse, whResponse, attrResponse] = await Promise.all([
+    const [catResponse, supResponse, unitResponse, taxResponse, tagResponse, whResponse, attrResponse, brandResponse] = await Promise.all([
       axios.get('/api/categories'),
       axios.get('/api/suppliers'),
       axios.get('/api/units'),
       axios.get('/api/taxes').catch(() => ({ data: [] })),
       axios.get('/api/tags').catch(() => ({ data: [] })),
       axios.get('/api/warehouses').catch(() => ({ data: [] })),
-      axios.get('/api/attributes').catch(() => ({ data: [] }))
+      axios.get('/api/attributes').catch(() => ({ data: [] })),
+      axios.get('/api/brands').catch(() => ({ data: [] }))
     ]);
     categories.value = catResponse?.data || [];
     
@@ -2710,6 +2739,7 @@ onMounted(async () => {
     allTags.value = tagResponse?.data || [];
     availableWarehouses.value = whResponse?.data || [];
     systemAttributes.value = attrResponse?.data || [];
+    brands.value = brandResponse?.data || [];
     
     // Re-hydrate attributes once systemAttributes are loaded
     hydrateAttributesAndCombos();
