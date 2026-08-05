@@ -77,14 +77,12 @@
             </span>
           </div>
           <div class="w-full sm:w-48">
-            <select
+            <CustomFloatingSelect
               v-model="categoryStatusFilter"
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100 font-semibold"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </select>
+              :options="statusFilterOptions"
+              placeholder="All Statuses"
+              buttonClass="!bg-slate-50 dark:!bg-zinc-950 border-slate-200 dark:border-[#2E2E2E] rounded-xl !py-2"
+            />
           </div>
         </div>
 
@@ -172,14 +170,12 @@
             </span>
           </div>
           <div class="w-full sm:w-48">
-            <select
+            <CustomFloatingSelect
               v-model="brandStatusFilter"
-              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-100 font-semibold"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </select>
+              :options="statusFilterOptions"
+              placeholder="All Statuses"
+              buttonClass="!bg-slate-50 dark:!bg-zinc-950 border-slate-200 dark:border-[#2E2E2E] rounded-xl !py-2"
+            />
           </div>
         </div>
 
@@ -281,15 +277,13 @@
             <!-- Sub Category (Parent Category) -->
             <div>
               <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 dark:text-slate-450">Sub Category Of</label>
-              <select
+              <CustomFloatingSelect
                 v-model="categoryForm.parent_id"
-                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200 font-semibold"
-              >
-                <option :value="null">None (Root Category)</option>
-                <option v-for="c in categoryOptions" :key="c.id" :value="c.id">
-                  {{ c.name }}
-                </option>
-              </select>
+                :options="categoryFloatingOptions"
+                placeholder="Select Parent Category..."
+                :searchable="true"
+                buttonClass="!bg-slate-50 dark:!bg-zinc-950 border-slate-200 dark:border-[#2E2E2E] rounded-xl !py-2"
+              />
             </div>
 
             <!-- Description -->
@@ -308,7 +302,7 @@
               <span class="text-xs font-semibold text-slate-650 dark:text-slate-400">Set Active Status</span>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" v-model="categoryForm.is_active" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-200 dark:bg-[#252525] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div class="w-11 h-6 bg-slate-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
@@ -362,15 +356,13 @@
             <!-- Sub Brand (Parent Brand) -->
             <div>
               <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 dark:text-slate-455">Sub Brand Of</label>
-              <select
+              <CustomFloatingSelect
                 v-model="brandForm.parent_id"
-                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-[#2E2E2E] rounded-xl outline-none focus:border-indigo-500 dark:text-slate-200 font-semibold"
-              >
-                <option :value="null">None (Root Brand)</option>
-                <option v-for="b in brandOptions" :key="b.id" :value="b.id">
-                  {{ b.name }}
-                </option>
-              </select>
+                :options="brandFloatingOptions"
+                placeholder="Select Parent Brand..."
+                :searchable="true"
+                buttonClass="!bg-slate-50 dark:!bg-zinc-950 border-slate-200 dark:border-[#2E2E2E] rounded-xl !py-2"
+              />
             </div>
 
             <!-- Brand Logo Upload -->
@@ -414,7 +406,7 @@
               <span class="text-xs font-semibold text-slate-650 dark:text-slate-400">Set Active Status</span>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" v-model="brandForm.is_active" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-200 dark:bg-[#252525] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div class="w-11 h-6 bg-slate-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
@@ -449,6 +441,7 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 
 const { showToast } = useToast();
 const { confirm } = useConfirm();
@@ -536,16 +529,39 @@ const filteredBrands = computed(() => {
   });
 });
 
+// Status filter options
+const statusFilterOptions = [
+  { label: 'All Statuses', value: 'all' },
+  { label: 'Active Only', value: 'active' },
+  { label: 'Inactive Only', value: 'inactive' }
+];
+
 // Category drop-down options (Filter out self and descendants when editing)
 const categoryOptions = computed(() => {
   if (!editingCategory.value) return categories.value;
   return categories.value.filter(c => c.id !== editingCategory.value.id && c.parent_id !== editingCategory.value.id);
 });
 
+const categoryFloatingOptions = computed(() => {
+  const options = [{ label: 'None (Root Category)', value: null }];
+  categoryOptions.value.forEach(c => {
+    options.push({ label: c.name, value: c.id });
+  });
+  return options;
+});
+
 // Brand drop-down options (Filter out self and descendants when editing)
 const brandOptions = computed(() => {
   if (!editingBrand.value) return brands.value;
   return brands.value.filter(b => b.id !== editingBrand.value.id && b.parent_id !== editingBrand.value.id);
+});
+
+const brandFloatingOptions = computed(() => {
+  const options = [{ label: 'None (Root Brand)', value: null }];
+  brandOptions.value.forEach(b => {
+    options.push({ label: b.name, value: b.id });
+  });
+  return options;
 });
 
 // Category Modal functions
