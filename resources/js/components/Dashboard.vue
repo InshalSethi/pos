@@ -8,60 +8,230 @@
           <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">Real-time overview of performance and key metrics</p>
         </div>
 
-        <!-- Date Range Filter -->
-        <div class="flex flex-wrap items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div class="flex items-center space-x-2">
-            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pl-1">From:</label>
-            <input
-              type="date"
-              v-model="dateRange.from"
-              @change="loadDashboardData"
-              class="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-black dark:focus:border-white shadow-inner"
-            />
+        <!-- Date Range Filter Container -->
+        <div class="flex flex-col gap-1 w-full md:w-auto">
+          <!-- Top Row with Label and Top Presets -->
+          <div class="flex items-center justify-between px-0.5">
+            <span class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Date Range</span>
+            <div class="flex gap-1.5">
+              <button
+                type="button"
+                @click="setQuickDate('today'); applyCurrentTempRange();"
+                class="px-2 py-0.5 text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded transition-colors cursor-pointer"
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                @click="setQuickDate('this_month'); applyCurrentTempRange();"
+                class="px-2 py-0.5 text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded transition-colors cursor-pointer"
+              >
+                This Month
+              </button>
+            </div>
           </div>
-          <div class="flex items-center space-x-2">
-            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">To:</label>
-            <input
-              type="date"
-              v-model="dateRange.to"
-              @change="loadDashboardData"
-              class="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-black dark:focus:border-white shadow-inner"
-            />
-          </div>
-          <div class="flex space-x-1.5 pl-2 border-l border-zinc-200 dark:border-zinc-800">
-            <button
-              @click="setToday"
-              :class="[
-                'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-                activePreset === 'today'
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
-                  : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              ]"
+
+          <!-- Date Input Button -->
+          <div ref="pickerRef" class="relative">
+            <button 
+              @click="showPicker = !showPicker" 
+              class="w-full md:w-80 flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer focus:outline-none"
             >
-              Today
+              <span class="truncate pr-2" :class="{ 'text-zinc-400 dark:text-zinc-500': !formattedDateRangeLabel }">
+                {{ formattedDateRangeLabel || 'Select Date Range' }}
+              </span>
+              <div class="flex items-center space-x-1.5">
+                <button
+                  v-if="dateRange.from || dateRange.to"
+                  @click.stop="clearDateRange"
+                  class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 px-1 font-bold text-xs cursor-pointer focus:outline-none"
+                  title="Clear date range"
+                >
+                  ✕
+                </button>
+              </div>
             </button>
-            <button
-              @click="setThisWeek"
-              :class="[
-                'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-                activePreset === 'week'
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
-                  : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              ]"
+
+            <!-- Dropdown Calendar Card -->
+            <transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="opacity-0 scale-95 translate-y-[-10px]"
+              enter-to-class="opacity-100 scale-100 translate-y-0"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="opacity-100 scale-100 translate-y-0"
+              leave-to-class="opacity-0 scale-95 translate-y-[-10px]"
             >
-              This Week
-            </button>
-            <button
-              @click="setThisMonth"
-              :class="[
-                'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-                activePreset === 'month'
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
-                  : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              ]"
-            >
-              This Month
-            </button>
+              <div 
+                v-show="showPicker" 
+                class="absolute right-0 mt-1.5 z-[100] w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-3 flex flex-col gap-3 text-left font-sans select-none"
+              >
+                <!-- Quick Preset Pills inside Calendar -->
+                <div class="flex flex-wrap gap-1.5 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                  <button
+                    v-for="p in presets"
+                    :key="p.id"
+                    type="button"
+                    @click="setQuickDate(p.id); applyCurrentTempRange();"
+                    class="px-2 py-1 text-[10px] font-bold bg-zinc-100 hover:bg-zinc-205 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors cursor-pointer"
+                  >
+                    {{ p.label }}
+                  </button>
+                  <button
+                    type="button"
+                    @click="clearDateRange"
+                    class="px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors ml-auto cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <!-- Calendar Header: Month & Year Selector -->
+                <div class="flex items-center justify-between pb-1.5 relative">
+                  <button
+                    type="button"
+                    @click="prevMonth"
+                    class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl font-bold cursor-pointer transition-colors"
+                  >
+                    &lt;
+                  </button>
+
+                  <div class="flex items-center space-x-1.5 relative">
+                    <!-- Month Selector Button -->
+                    <button
+                      type="button"
+                      @click.stop="toggleSubPicker('month')"
+                      class="px-2.5 py-1 font-bold text-zinc-800 dark:text-zinc-100 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                      :class="{ 'bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400': subPickerOpen === 'month' }"
+                    >
+                      <span>{{ monthNames[calendarMonth] }}</span>
+                      <span class="text-[8px] text-zinc-400">▲</span>
+                    </button>
+
+                    <!-- Year Selector Button -->
+                    <button
+                      type="button"
+                      @click.stop="toggleSubPicker('year')"
+                      class="px-2.5 py-1 font-bold text-zinc-800 dark:text-zinc-100 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                      :class="{ 'bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400': subPickerOpen === 'year' }"
+                    >
+                      <span>{{ calendarYear }}</span>
+                      <span class="text-[8px] text-zinc-400">▲</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    @click="nextMonth"
+                    class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl font-bold cursor-pointer transition-colors"
+                  >
+                    &gt;
+                  </button>
+
+                  <!-- Month dropdown list popup -->
+                  <div
+                    v-if="subPickerOpen === 'month'"
+                    class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-[110] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-2 w-56 grid grid-cols-3 gap-1 animate-in fade-in zoom-in-95 duration-100"
+                  >
+                    <button
+                      v-for="(mName, mIdx) in shortMonthNames"
+                      :key="mIdx"
+                      type="button"
+                      @click.stop="selectMonth(mIdx)"
+                      class="py-1.5 text-xs font-semibold rounded-xl text-center transition-colors cursor-pointer"
+                      :class="calendarMonth === mIdx ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-sm' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200'"
+                    >
+                      {{ mName }}
+                    </button>
+                  </div>
+
+                  <!-- Year dropdown list popup -->
+                  <div
+                    v-if="subPickerOpen === 'year'"
+                    class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-[110] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-2 w-52 max-h-48 overflow-y-auto grid grid-cols-3 gap-1 animate-in fade-in zoom-in-95 duration-100 custom-scrollbar"
+                  >
+                    <button
+                      v-for="y in availableYears"
+                      :key="y"
+                      type="button"
+                      @click.stop="selectYear(y)"
+                      class="py-1.5 text-xs font-semibold rounded-xl text-center transition-colors cursor-pointer"
+                      :class="calendarYear === y ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-sm' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200'"
+                    >
+                      {{ y }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Calendar Week Header -->
+                <div class="grid grid-cols-7 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mb-1">
+                  <span>Su</span>
+                  <span>Mo</span>
+                  <span>Tu</span>
+                  <span>We</span>
+                  <span>Th</span>
+                  <span>Fr</span>
+                  <span>Sa</span>
+                </div>
+
+                <!-- Days Grid -->
+                <div class="grid grid-cols-7 gap-y-1 text-center" @mouseleave="hoverDate = null">
+                  <div
+                    v-for="(day, idx) in calendarDays"
+                    :key="idx"
+                    class="relative py-0.5 flex items-center justify-center cursor-pointer"
+                    @click="handleDateClick(day.dateStr)"
+                    @mouseenter="hoverDate = day.dateStr"
+                  >
+                    <!-- Highlight range background overlay -->
+                    <div
+                      v-if="isDateInRange(day.dateStr)"
+                      class="absolute inset-y-0.5 inset-x-0 bg-blue-50 dark:bg-blue-900/20"
+                      :class="{
+                        'rounded-l-lg': isDateStart(day.dateStr),
+                        'rounded-r-lg': isDateEnd(day.dateStr) || isDateHoverEnd(day.dateStr)
+                      }"
+                    ></div>
+
+                    <!-- Day Number Button -->
+                    <button
+                      type="button"
+                      class="relative z-10 w-7 h-7 text-xs flex items-center justify-center rounded-xl font-bold transition-all cursor-pointer"
+                      :class="{
+                        'opacity-30': !day.isCurrentMonth,
+                        'bg-black text-white dark:bg-white dark:text-black font-bold shadow-sm': isDateStart(day.dateStr) || isDateEnd(day.dateStr),
+                        'text-blue-600 dark:text-blue-400 font-bold': isDateInRange(day.dateStr) && !isDateStart(day.dateStr) && !isDateEnd(day.dateStr),
+                        'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200': !isDateStart(day.dateStr) && !isDateEnd(day.dateStr) && !isDateInRange(day.dateStr),
+                        'border border-zinc-300 dark:border-zinc-700': isToday(day.dateStr) && !isDateStart(day.dateStr) && !isDateEnd(day.dateStr)
+                      }"
+                    >
+                      {{ day.dayNum }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Footer details and Done button -->
+                <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+                  <div>
+                    <span v-if="tempRange.from && !tempRange.to" class="text-blue-600 dark:text-blue-400 font-medium animate-pulse">
+                      Select end date...
+                    </span>
+                    <span v-else-if="tempRange.from && tempRange.to" class="font-bold text-zinc-700 dark:text-zinc-250">
+                      Range selected
+                    </span>
+                    <span v-else class="italic text-zinc-400">
+                      Click start date
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="applyCurrentTempRange"
+                    class="px-3 py-1.5 font-bold text-white bg-black dark:bg-white dark:text-black rounded-xl hover:opacity-90 transition-all text-[10px] cursor-pointer shadow-sm"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -613,8 +783,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import axios from 'axios';
+import { onClickOutside } from '@vueuse/core';
 import SalesPurchasesChart from '@/components/charts/SalesPurchasesChart.vue';
 import DevicesPieChart from '@/components/charts/DevicesPieChart.vue';
 import { useCurrencyStore } from '@/stores/currency';
@@ -641,6 +812,278 @@ const activePreset = ref('today');
 const dateRange = ref({
   from: new Date().toISOString().split('T')[0],
   to: new Date().toISOString().split('T')[0]
+});
+const showPicker = ref(false);
+const pickerRef = ref(null);
+const subPickerOpen = ref(null);
+
+const tempRange = ref({
+  from: dateRange.value.from,
+  to: dateRange.value.to
+});
+
+const calendarYear = ref(new Date().getFullYear());
+const calendarMonth = ref(new Date().getMonth());
+const hoverDate = ref(null);
+
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const shortMonthNames = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const presets = [
+  { id: 'today', label: 'Today' },
+  { id: 'yesterday', label: 'Yesterday' },
+  { id: 'this_week', label: 'This Week' },
+  { id: 'this_month', label: 'This Month' },
+  { id: 'last_month', label: 'Last Month' },
+  { id: 'this_year', label: 'This Year' },
+  { id: 'last_year', label: 'Last Year' }
+];
+
+const availableYears = computed(() => {
+  const currentY = new Date().getFullYear();
+  const startY = Math.min(currentY - 15, 2015);
+  const endY = Math.max(currentY + 15, 2040);
+  const years = [];
+  for (let y = startY; y <= endY; y++) {
+    years.push(y);
+  }
+  return years;
+});
+
+const toggleSubPicker = (type) => {
+  subPickerOpen.value = subPickerOpen.value === type ? null : type;
+};
+
+const selectMonth = (idx) => {
+  calendarMonth.value = idx;
+  subPickerOpen.value = null;
+};
+
+const selectYear = (y) => {
+  calendarYear.value = y;
+  subPickerOpen.value = null;
+};
+
+const prevMonth = () => {
+  if (calendarMonth.value === 0) {
+    calendarMonth.value = 11;
+    calendarYear.value--;
+  } else {
+    calendarMonth.value--;
+  }
+};
+
+const nextMonth = () => {
+  if (calendarMonth.value === 11) {
+    calendarMonth.value = 0;
+    calendarYear.value++;
+  } else {
+    calendarMonth.value++;
+  }
+};
+
+const calendarDays = computed(() => {
+  const year = calendarYear.value;
+  const month = calendarMonth.value;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  const days = [];
+
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrevMonth - i;
+    const prevM = month === 0 ? 11 : month - 1;
+    const prevY = month === 0 ? year - 1 : year;
+    const dateStr = `${prevY}-${String(prevM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ dayNum: d, dateStr, isCurrentMonth: false });
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ dayNum: d, dateStr, isCurrentMonth: true });
+  }
+
+  const totalSlots = days.length > 35 ? 42 : 35;
+  const remaining = totalSlots - days.length;
+  for (let d = 1; d <= remaining; d++) {
+    const nextM = month === 11 ? 0 : month + 1;
+    const nextY = month === 11 ? year + 1 : year;
+    const dateStr = `${nextY}-${String(nextM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ dayNum: d, dateStr, isCurrentMonth: false });
+  }
+
+  return days;
+});
+
+const todayDateStr = computed(() => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+});
+
+const isToday = (dateStr) => dateStr === todayDateStr.value;
+const isDateStart = (dateStr) => tempRange.value.from === dateStr;
+const isDateEnd = (dateStr) => tempRange.value.to === dateStr;
+
+const isDateHoverEnd = (dateStr) => {
+  return !!(tempRange.value.from && !tempRange.value.to && hoverDate.value === dateStr);
+};
+
+const isDateInRange = (dateStr) => {
+  const from = tempRange.value.from;
+  const to = tempRange.value.to || (from && hoverDate.value && hoverDate.value >= from ? hoverDate.value : null);
+  if (!from || !to) return false;
+  return dateStr >= from && dateStr <= to;
+};
+
+const handleDateClick = (dateStr) => {
+  const from = tempRange.value.from;
+  const to = tempRange.value.to;
+
+  if (!from || (from && to)) {
+    tempRange.value.from = dateStr;
+    tempRange.value.to = '';
+  } else if (from && !to) {
+    if (dateStr < from) {
+      tempRange.value.from = dateStr;
+      tempRange.value.to = '';
+    } else {
+      tempRange.value.to = dateStr;
+    }
+  }
+};
+
+const setQuickDate = (preset) => {
+  const now = new Date();
+  let from = '';
+  let to = '';
+
+  const format = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  if (preset === 'today') {
+    from = format(now);
+    to = format(now);
+  } else if (preset === 'yesterday') {
+    const y = new Date(now);
+    y.setDate(now.getDate() - 1);
+    from = format(y);
+    to = format(y);
+  } else if (preset === 'this_week') {
+    const dayOfWeek = now.getDay();
+    const distanceToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() - distanceToMon);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    from = format(mon);
+    to = format(sun);
+  } else if (preset === 'this_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    from = format(firstDay);
+    to = format(lastDay);
+  } else if (preset === 'last_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+    from = format(firstDay);
+    to = format(lastDay);
+  } else if (preset === 'this_year') {
+    const firstDay = new Date(now.getFullYear(), 0, 1);
+    const lastDay = new Date(now.getFullYear(), 11, 31);
+    from = format(firstDay);
+    to = format(lastDay);
+  } else if (preset === 'last_year') {
+    const firstDay = new Date(now.getFullYear() - 1, 0, 1);
+    const lastDay = new Date(now.getFullYear() - 1, 11, 31);
+    from = format(firstDay);
+    to = format(lastDay);
+  }
+
+  tempRange.value.from = from;
+  tempRange.value.to = to;
+
+  if (from) {
+    const parts = from.split('-');
+    if (parts.length === 3) {
+      calendarYear.value = parseInt(parts[0]);
+      calendarMonth.value = parseInt(parts[1]) - 1;
+    }
+  }
+};
+
+const applyCurrentTempRange = () => {
+  dateRange.value.from = tempRange.value.from;
+  dateRange.value.to = tempRange.value.to;
+  activePreset.value = 'custom';
+  showPicker.value = false;
+  loadDashboardData();
+};
+
+const clearDateRange = () => {
+  tempRange.value.from = '';
+  tempRange.value.to = '';
+  dateRange.value.from = '';
+  dateRange.value.to = '';
+  activePreset.value = 'custom';
+  showPicker.value = false;
+  loadDashboardData();
+};
+
+watch(dateRange, (newRange) => {
+  tempRange.value.from = newRange.from;
+  tempRange.value.to = newRange.to;
+}, { deep: true });
+
+watch(showPicker, (newVal) => {
+  if (newVal) {
+    tempRange.value.from = dateRange.value.from;
+    tempRange.value.to = dateRange.value.to;
+    subPickerOpen.value = null;
+    if (dateRange.value.from) {
+      const parts = dateRange.value.from.split('-');
+      if (parts.length === 3) {
+        calendarYear.value = parseInt(parts[0]);
+        calendarMonth.value = parseInt(parts[1]) - 1;
+      }
+    }
+  }
+});
+
+onClickOutside(pickerRef, () => {
+  showPicker.value = false;
+});
+
+const formattedDateRangeLabel = computed(() => {
+  if (!dateRange.value.from || !dateRange.value.to) return 'Select Date Range';
+  const [fromYear, fromMonth, fromDay] = dateRange.value.from.split('-').map(Number);
+  const [toYear, toMonth, toDay] = dateRange.value.to.split('-').map(Number);
+  
+  const fromDate = new Date(fromYear, fromMonth - 1, fromDay);
+  const toDate = new Date(toYear, toMonth - 1, toDay);
+  
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  
+  if (dateRange.value.from === dateRange.value.to) {
+    return fromDate.toLocaleDateString('en-US', options);
+  }
+  
+  return `${fromDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${toDate.toLocaleDateString('en-US', options)}`;
 });
 const paymentTrendsCanvas = ref(null);
 let paymentTrendsChart = null;
