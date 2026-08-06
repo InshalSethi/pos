@@ -573,23 +573,36 @@
                               <div
                                 v-for="bank in activeBankAccounts"
                                 :key="bank.id"
-                                @click.stop="toggleBankSelection(bank.id)"
-                                class="px-3 py-2.5 cursor-pointer flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
-                                :class="selectedBankIds.includes(bank.id) ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold' : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60'"
+                                @click.stop="isBankAccountInactive(bank) ? null : toggleBankSelection(bank.id)"
+                                class="px-3 py-2.5 flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
+                                :class="[
+                                  isBankAccountInactive(bank)
+                                    ? 'opacity-50 cursor-not-allowed bg-slate-100/60 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500'
+                                    : (selectedBankIds.includes(bank.id)
+                                        ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold cursor-pointer'
+                                        : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 cursor-pointer')
+                                ]"
                               >
                                 <div class="flex items-center gap-2.5 truncate min-w-0">
                                   <input
                                     type="checkbox"
                                     :checked="selectedBankIds.includes(bank.id)"
+                                    :disabled="isBankAccountInactive(bank)"
                                     class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none shrink-0"
                                   />
                                   <div class="truncate min-w-0">
-                                    <span class="truncate font-semibold block">{{ formatBankAccountLabel(bank) }}</span>
+                                    <span class="truncate font-semibold block">
+                                      {{ formatBankAccountLabel(bank) }}
+                                      <span v-if="isBankAccountInactive(bank)" class="text-rose-500 font-bold ml-1 text-[11px]">(Inactive)</span>
+                                    </span>
                                     <span class="text-[10px] text-slate-400 block font-normal truncate">{{ bank.bank_name || bank.account_name }}{{ (bank.masked_account_number || getMaskedAccountNumber(bank.account_number)) ? ' ' + (bank.masked_account_number || getMaskedAccountNumber(bank.account_number)) : '' }}</span>
                                   </div>
                                 </div>
-                                <span v-if="selectedBankIds.includes(bank.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
-                                  Active
+                                <span v-if="isBankAccountInactive(bank)" class="text-[9px] font-black uppercase tracking-wider text-slate-500 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-slate-300 dark:border-zinc-700 shrink-0 ml-2">
+                                  Inactive
+                                </span>
+                                <span v-else-if="selectedBankIds.includes(bank.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
+                                  Selected
                                 </span>
                               </div>
                             </div>
@@ -627,8 +640,11 @@
                                 :key="bankId"
                                 class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
                               >
-                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left" :title="formatBankAccountLabel(activeBankAccounts.find(b => b.id === bankId))">
-                                  {{ formatBankAccountLabel(activeBankAccounts.find(b => b.id === bankId)) }}
+                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left flex items-center gap-1.5" :title="formatBankAccountLabel(allAccounts.find(b => b.id == bankId))">
+                                  <span>{{ formatBankAccountLabel(allAccounts.find(b => b.id == bankId)) }}</span>
+                                  <span v-if="isBankAccountInactive(bankId)" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                    (Inactive)
+                                  </span>
                                 </label>
                                 <div class="relative w-24 shrink-0">
                                   <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
@@ -637,7 +653,10 @@
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7"
+                                    :disabled="isBankAccountInactive(bankId)"
+                                    :readonly="isBankAccountInactive(bankId)"
+                                    :tabindex="isBankAccountInactive(bankId) ? -1 : 0"
+                                    class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7 disabled:opacity-60 disabled:bg-slate-200/50 dark:disabled:bg-zinc-800/50 disabled:cursor-not-allowed disabled:text-slate-400 select-none"
                                   />
                                 </div>
                               </div>
@@ -2490,14 +2509,24 @@ const selectedBankAccounts = selectedBankIds; // Reference alias
 const bankPaymentAmounts = ref({});
 const isBankDropdownOpen = ref(false);
 
+const isBankAccountInactive = (bankOrId) => {
+  if (!bankOrId) return false;
+  const bank = typeof bankOrId === 'object'
+    ? bankOrId
+    : (allAccounts.value || []).find(b => b.id == bankOrId);
+  if (!bank) return false;
+  return bank.is_active === false || bank.is_active === 0 || bank.is_active === '0';
+};
+
 const loadBankAccounts = async () => {
   try {
     const response = await api.get('/bank-accounts');
     const rawData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
     allAccounts.value = rawData;
-    if (activeBankAccounts.value.length > 0 && selectedBankIds.value.length === 0) {
-      selectedBankIds.value = [activeBankAccounts.value[0].id];
-      bankPaymentAmounts.value[activeBankAccounts.value[0].id] = 0;
+    const defaultActiveBank = activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+    if (defaultActiveBank && selectedBankIds.value.length === 0) {
+      selectedBankIds.value = [defaultActiveBank.id];
+      bankPaymentAmounts.value[defaultActiveBank.id] = 0;
     }
   } catch (error) {
     console.error('Error loading bank accounts:', error);
@@ -2526,10 +2555,11 @@ const togglePaymentMethod = (methodId) => {
   } else {
     selectedPaymentMethods.value.push(methodId);
 
-    if ((methodId === 'card' || methodId === 'bank_transfer') && selectedBankIds.value.length === 0 && activeBankAccounts.value.length > 0) {
-      selectedBankIds.value = [activeBankAccounts.value[0].id];
-      if (bankPaymentAmounts.value[activeBankAccounts.value[0].id] === undefined) {
-        bankPaymentAmounts.value[activeBankAccounts.value[0].id] = 0;
+    const defaultActiveBank = activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+    if ((methodId === 'card' || methodId === 'bank_transfer') && selectedBankIds.value.length === 0 && defaultActiveBank) {
+      selectedBankIds.value = [defaultActiveBank.id];
+      if (bankPaymentAmounts.value[defaultActiveBank.id] === undefined) {
+        bankPaymentAmounts.value[defaultActiveBank.id] = 0;
       }
     }
     
@@ -2550,6 +2580,9 @@ const togglePaymentMethod = (methodId) => {
 };
 
 const toggleBankSelection = (bankId) => {
+  if (isBankAccountInactive(bankId)) {
+    return; // Cannot select or unselect inactive bank account
+  }
   const idx = selectedBankIds.value.indexOf(bankId);
   if (idx > -1) {
     if (selectedBankIds.value.length === 1 && (selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer')) && !selectedPaymentMethods.value.includes('cash')) {

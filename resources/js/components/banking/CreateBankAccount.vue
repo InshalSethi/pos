@@ -100,26 +100,54 @@
             </div>
           </div>
 
-          <!-- DEFAULT ACCOUNT TOGGLE -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">DEFAULT ACCOUNT</label>
-            <div class="inline-flex rounded-xl p-1 bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800">
-              <button
-                type="button"
-                @click="form.is_default = true"
-                :class="form.is_default ? 'bg-emerald-600 text-white font-semibold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium'"
-                class="px-5 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                @click="form.is_default = false"
-                :class="!form.is_default ? 'bg-rose-600 text-white font-semibold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium'"
-                class="px-5 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
-              >
-                No
-              </button>
+          <!-- DEFAULT ACCOUNT TOGGLE & ACCOUNT STATUS TOGGLE -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">DEFAULT ACCOUNT</label>
+              <div class="inline-flex rounded-xl p-1 bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800">
+                <button
+                  type="button"
+                  @click="form.is_default = true"
+                  :class="form.is_default ? 'bg-emerald-600 text-white font-semibold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium'"
+                  class="px-5 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  @click="form.is_default = false"
+                  :class="!form.is_default ? 'bg-rose-600 text-white font-semibold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium'"
+                  class="px-5 py-1.5 text-xs rounded-lg transition-all cursor-pointer"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">ACCOUNT STATUS</label>
+              <div class="flex items-center gap-3 pt-1">
+                <button 
+                  type="button" 
+                  @click="form.is_active = !form.is_active"
+                  :class="[
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    form.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                  ]"
+                  role="switch"
+                  :aria-checked="form.is_active"
+                >
+                  <span 
+                    :class="[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      form.is_active ? 'translate-x-5' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
+                <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                  {{ form.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -228,6 +256,7 @@ export default {
       account_type: 'bank',
       currency: 'PKR',
       opening_balance: 0.00,
+      is_active: true,
       is_default: false,
       bank_name: '',
       bank_phone: '',
@@ -244,6 +273,7 @@ export default {
           account_type: acc.account_type === 'credit_card' ? 'credit_card' : 'bank',
           currency: acc.currency || 'PKR',
           opening_balance: acc.opening_balance || 0.00,
+          is_active: acc.is_active !== undefined ? Boolean(acc.is_active) : true,
           is_default: Boolean(acc.is_default),
           bank_name: acc.bank_name || '',
           bank_phone: acc.bank_phone || '',

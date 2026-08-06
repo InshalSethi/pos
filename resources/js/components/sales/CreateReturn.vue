@@ -442,7 +442,7 @@ const refundAccountOptions = computed(() => {
     badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
   })
 
-  // 2. Active Bank Accounts (Filtering out duplicate cash entries)
+  // 2. Bank Accounts (Filtering out duplicate cash entries)
   bankAccounts.value.forEach(bAcc => {
     const isCashAccount = (bAcc.account_type && bAcc.account_type.toLowerCase().includes('cash')) ||
       (bAcc.bank_name && bAcc.bank_name.toLowerCase().includes('cash')) ||
@@ -452,16 +452,19 @@ const refundAccountOptions = computed(() => {
       return // Deduplicate: Skip adding cash bank account entries
     }
 
+    const isInactive = bAcc.is_active === false || bAcc.is_active === 0
     const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
       ? parseFloat(bAcc.current_balance)
       : 0
     options.push({
       value: `bank_${bAcc.id}`,
-      label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name}) — Avail: ${formatMoney(bal)}`,
+      label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name})${isInactive ? ' (Inactive)' : ''} — Avail: ${formatMoney(bal)}`,
       type: 'bank',
       bank_id: bAcc.id,
+      is_active: bAcc.is_active,
+      disabled: isInactive,
       availableBalance: bal,
-      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+      badgeClass: isInactive ? 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
     })
   })
 

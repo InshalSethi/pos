@@ -33,7 +33,18 @@ class BankAccountController extends Controller
 
         // Filter by active status
         if ($request->has('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+            $isActive = $request->boolean('is_active');
+            $includeId = $request->get('include_id');
+            $query->where(function ($q) use ($isActive, $includeId) {
+                if ($isActive) {
+                    $q->active();
+                } else {
+                    $q->where('is_active', false);
+                }
+                if ($includeId) {
+                    $q->orWhere('id', $includeId);
+                }
+            });
         }
 
         // Search functionality
@@ -200,6 +211,17 @@ class BankAccountController extends Controller
     public function update(Request $request, BankAccount $bankAccount): JsonResponse
     {
         $companyId = auth()->user()->current_company_id;
+
+        // Quick toggle update for is_active from table row
+        if ($request->has('is_active') && count($request->except(['_method', '_token'])) === 1) {
+            $bankAccount->update([
+                'is_active' => $request->boolean('is_active')
+            ]);
+            return response()->json([
+                'message' => 'Account status updated successfully',
+                'bank_account' => $bankAccount->fresh()->load('chartAccount')
+            ]);
+        }
 
         $rawType = $request->input('account_type', $bankAccount->account_type);
         if ($rawType === 'bank') {

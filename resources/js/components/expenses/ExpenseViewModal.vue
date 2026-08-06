@@ -277,8 +277,14 @@
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select Bank Account</option>
-            <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
-              {{ account.account_name }} - {{ account.bank_name }} ({{ account.formatted_account_number }})
+            <option
+              v-for="account in bankAccounts"
+              :key="account.id"
+              :value="account.id"
+              :disabled="(account.is_active === false || account.is_active === 0) && selectedBankAccount !== account.id"
+              :class="(account.is_active === false || account.is_active === 0) ? 'text-slate-400 opacity-50' : ''"
+            >
+              {{ account.account_name }} - {{ account.bank_name }} ({{ account.formatted_account_number }}){{ (account.is_active === false || account.is_active === 0) ? ' (Inactive)' : '' }}
             </option>
           </select>
           <p v-if="!selectedBankAccount && paymentError" class="text-red-500 text-sm mt-1">
@@ -446,10 +452,8 @@ const rejectExpense = async () => {
 
 const fetchBankAccounts = async () => {
   try {
-    const response = await axios.get('/api/bank-accounts', {
-      params: { is_active: true }
-    });
-    bankAccounts.value = response.data;
+    const response = await axios.get('/api/bank-accounts');
+    bankAccounts.value = Array.isArray(response.data) ? response.data : (response.data?.data || []);
   } catch (error) {
     console.error('Error fetching bank accounts:', error);
   }

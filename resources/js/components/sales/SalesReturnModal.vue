@@ -492,16 +492,19 @@ export default {
 
         if (isCashAccount) return;
 
+        const isInactive = bAcc.is_active === false || bAcc.is_active === 0;
         const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
           ? parseFloat(bAcc.current_balance)
           : 0;
         options.push({
           value: `bank_${bAcc.id}`,
-          label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name}) — Avail: ${formatCurrency(bal)}`,
+          label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name})${isInactive ? ' (Inactive)' : ''} — Avail: ${formatCurrency(bal)}`,
           type: 'bank',
           bank_id: bAcc.id,
+          is_active: bAcc.is_active,
+          disabled: isInactive,
           availableBalance: bal,
-          badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+          badgeClass: isInactive ? 'bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
         });
       });
 

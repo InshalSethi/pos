@@ -846,13 +846,27 @@
               ></textarea>
             </div>
 
-            <div class="flex items-center">
-              <input
-                v-model="bankAccountForm.is_active"
-                type="checkbox"
-                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label class="ml-2 block text-sm text-gray-900">Active</label>
+            <div class="flex items-center space-x-3">
+              <button 
+                type="button" 
+                @click="bankAccountForm.is_active = !bankAccountForm.is_active"
+                :class="[
+                  'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                  bankAccountForm.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                ]"
+                role="switch"
+                :aria-checked="bankAccountForm.is_active"
+              >
+                <span 
+                  :class="[
+                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                    bankAccountForm.is_active ? 'translate-x-5' : 'translate-x-0'
+                  ]"
+                />
+              </button>
+              <label class="block text-sm font-medium text-gray-900">
+                {{ bankAccountForm.is_active ? 'Active' : 'Inactive' }}
+              </label>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">

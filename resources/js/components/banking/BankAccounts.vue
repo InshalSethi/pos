@@ -124,7 +124,25 @@
             </div>
           </div>
 
-          <div class="flex items-center space-x-1">
+          <div class="flex items-center space-x-2">
+            <button 
+              type="button" 
+              @click="toggleAccountStatus(acc)"
+              :class="[
+                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                acc.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+              ]"
+              role="switch"
+              :aria-checked="Boolean(acc.is_active)"
+              :title="acc.is_active ? 'Active (Click to disable)' : 'Inactive (Click to enable)'"
+            >
+              <span 
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  acc.is_active ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
             <button
               @click="openEditPage(acc)"
               title="Edit Account"
@@ -159,6 +177,7 @@
               <th class="py-3.5 px-5">Account Number</th>
               <th class="py-3.5 px-5 text-center">Currency</th>
               <th class="py-3.5 px-5 text-right">Current Balance</th>
+              <th class="py-3.5 px-5 text-center">Status</th>
               <th class="py-3.5 px-5 text-center">Default</th>
               <th class="py-3.5 px-5 text-right">Actions</th>
             </tr>
@@ -205,6 +224,28 @@
               <!-- Current Balance -->
               <td class="py-4 px-5 text-right font-extrabold text-slate-900 dark:text-zinc-100 text-sm">
                 {{ formatCurrency(acc.current_balance ?? acc.calculateBalance, acc.currency) }}
+              </td>
+
+              <!-- Status Toggle Badge -->
+              <td class="py-4 px-5 text-center">
+                <button 
+                  type="button" 
+                  @click="toggleAccountStatus(acc)"
+                  :class="[
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    acc.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                  ]"
+                  role="switch"
+                  :aria-checked="Boolean(acc.is_active)"
+                  :title="acc.is_active ? 'Active (Click to disable)' : 'Inactive (Click to enable)'"
+                >
+                  <span 
+                    :class="[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      acc.is_active ? 'translate-x-5' : 'translate-x-0'
+                    ]"
+                  />
+                </button>
               </td>
 
               <!-- Default Badge -->
@@ -328,6 +369,19 @@ export default {
       }
     };
 
+    const toggleAccountStatus = async (acc) => {
+      const newStatus = !acc.is_active;
+      acc.is_active = newStatus;
+      try {
+        await axios.put(`/api/bank-accounts/${acc.id}`, { is_active: newStatus });
+        showToast(`Account set to ${newStatus ? 'Active' : 'Inactive'}`);
+      } catch (err) {
+        acc.is_active = !newStatus;
+        const msg = err.response?.data?.message || 'Failed to update account status';
+        showToast(msg, 'error');
+      }
+    };
+
     const openAddPage = () => {
       router.push('/banking/accounts/create');
     };
@@ -371,6 +425,7 @@ export default {
       viewMode,
       debouncedSearch,
       fetchAccounts,
+      toggleAccountStatus,
       openAddPage,
       openEditPage,
       deleteAccount,
