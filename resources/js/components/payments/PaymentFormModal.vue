@@ -73,7 +73,7 @@
             >
               <option value="">Select Bank Account</option>
               <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
-                {{ account.account_name }} - {{ account.bank_name }} ({{ account.account_number }})
+                {{ account.bank_name ? `${account.bank_name} (${account.account_name})` : account.account_name }}{{ account.account_number ? ' ' + (account.masked_account_number || ('****' + String(account.account_number).slice(-4))) : '' }}
               </option>
             </select>
             <span v-if="errors.bank_account_id" class="text-red-500 text-sm">{{ errors.bank_account_id[0] }}</span>

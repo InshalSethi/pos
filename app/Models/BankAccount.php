@@ -73,6 +73,10 @@ class BankAccount extends Model
         'last_reconciled_date' => 'date:Y-m-d',
     ];
 
+    protected $appends = [
+        'masked_account_number',
+    ];
+
     // Relationships
     public function chartAccount(): BelongsTo
     {
@@ -101,6 +105,13 @@ class BankAccount extends Model
     }
 
     // Accessors
+    public function getMaskedAccountNumberAttribute(): string
+    {
+        if (!$this->account_number) return '';
+        $last4 = substr((string)$this->account_number, -4);
+        return '****' . $last4;
+    }
+
     public function getFormattedAccountNumberAttribute(): string
     {
         $number = $this->account_number;

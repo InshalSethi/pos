@@ -547,10 +547,11 @@
                             <button
                               type="button"
                               @click.stop="isBankDropdownOpen = !isBankDropdownOpen"
-                              class="w-full px-3 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10"
+                              class="w-full px-3 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10 min-w-0"
+                              :title="getSelectedBanksLabel()"
                             >
-                              <span class="truncate">{{ getSelectedBanksLabel() }}</span>
-                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isBankDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <span class="truncate min-w-0 pr-1 flex-1">{{ getSelectedBanksLabel() }}</span>
+                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200 ml-1" :class="{ 'rotate-180': isBankDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
@@ -576,15 +577,15 @@
                                 class="px-3 py-2.5 cursor-pointer flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
                                 :class="selectedBankIds.includes(bank.id) ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold' : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60'"
                               >
-                                <div class="flex items-center gap-2.5 truncate">
+                                <div class="flex items-center gap-2.5 truncate min-w-0">
                                   <input
                                     type="checkbox"
                                     :checked="selectedBankIds.includes(bank.id)"
-                                    class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                                    class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none shrink-0"
                                   />
-                                  <div class="truncate">
+                                  <div class="truncate min-w-0">
                                     <span class="truncate font-semibold block">{{ formatBankAccountLabel(bank) }}</span>
-                                    <span class="text-[10px] text-slate-400 block font-normal">{{ bank.bank_name || bank.account_name }} - {{ bank.account_number }}</span>
+                                    <span class="text-[10px] text-slate-400 block font-normal truncate">{{ bank.bank_name || bank.account_name }}{{ (bank.masked_account_number || getMaskedAccountNumber(bank.account_number)) ? ' ' + (bank.masked_account_number || getMaskedAccountNumber(bank.account_number)) : '' }}</span>
                                   </div>
                                 </div>
                                 <span v-if="selectedBankIds.includes(bank.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
@@ -602,12 +603,12 @@
                             <!-- Cash Amount Input -->
                             <div
                               v-if="selectedPaymentMethods.includes('cash')"
-                              class="flex items-center justify-between gap-2 h-10 bg-white dark:bg-zinc-900 px-3 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
+                              class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
                             >
-                              <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate">
+                              <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left">
                                 Cash
                               </label>
-                              <div class="relative w-36 shrink-0">
+                              <div class="relative w-24 shrink-0">
                                 <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
                                 <input
                                   v-model.number="paymentAmounts.cash"
@@ -624,12 +625,12 @@
                               <div
                                 v-for="bankId in selectedBankIds"
                                 :key="bankId"
-                                class="flex items-center justify-between gap-2 h-10 bg-white dark:bg-zinc-900 px-3 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
+                                class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
                               >
-                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate">
+                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left" :title="formatBankAccountLabel(activeBankAccounts.find(b => b.id === bankId))">
                                   {{ formatBankAccountLabel(activeBankAccounts.find(b => b.id === bankId)) }}
                                 </label>
-                                <div class="relative w-36 shrink-0">
+                                <div class="relative w-24 shrink-0">
                                   <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
                                   <input
                                     v-model.number="bankPaymentAmounts[bankId]"
@@ -2600,23 +2601,41 @@ const toggleBankSelection = (bankId) => {
   }
 };
 
+const getMaskedAccountNumber = (accNumber) => {
+  if (!accNumber) return '';
+  const str = String(accNumber).trim();
+  if (!str) return '';
+  const last4 = str.length > 4 ? str.slice(-4) : str;
+  return '****' + last4;
+};
+
 const formatBankAccountLabel = (bank) => {
   if (!bank) return 'Bank';
   const bankName = (bank.bank_name || '').trim();
   const accountName = (bank.account_name || '').trim();
+  const maskedAcc = bank.masked_account_number || getMaskedAccountNumber(bank.account_number);
 
+  let baseLabel = '';
   if (bankName && accountName && bankName.toLowerCase() !== accountName.toLowerCase()) {
-    return `${bankName} (${accountName})`;
+    baseLabel = `${bankName} (${accountName})`;
+  } else {
+    baseLabel = accountName || bankName || 'Bank';
   }
-  return accountName || bankName || 'Bank';
+
+  if (maskedAcc) {
+    return `${baseLabel} ${maskedAcc}`;
+  }
+  return baseLabel;
 };
 
 const getSelectedBanksLabel = () => {
   if (selectedBankIds.value.length === 0) return 'Select Bank Account(s)';
-  const names = activeBankAccounts.value
-    .filter(b => selectedBankIds.value.includes(b.id))
-    .map(b => formatBankAccountLabel(b));
-  return names.join(', ') || 'Select Bank Account(s)';
+  const selected = activeBankAccounts.value.filter(b => selectedBankIds.value.includes(b.id));
+  if (selected.length === 0) return 'Select Bank Account(s)';
+  if (selected.length === 1) {
+    return formatBankAccountLabel(selected[0]);
+  }
+  return `${selected.length} Bank Accounts Selected`;
 };
 
 const totalReceivedAmount = computed(() => {
