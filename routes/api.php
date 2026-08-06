@@ -199,6 +199,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/purchase-orders/next-number', [PurchaseOrderController::class, 'getNextPurchaseOrderNumber']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class , 'receive']);
+    Route::post('/purchase-orders/{purchaseOrder}/void', [PurchaseOrderController::class , 'void']);
 
     Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'singleAdjustment']);
     Route::post('/inventory-adjustments/import', [InventoryAdjustmentController::class, 'import']);

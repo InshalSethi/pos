@@ -21,7 +21,7 @@ class PurchaseOrderController extends Controller
         $this->middleware('permission:purchases.view')->only(['index', 'show', 'getStatusCounts', 'getNextPurchaseOrderNumber']);
         $this->middleware('permission:purchases.create')->only(['store']);
         $this->middleware('permission:purchases.edit')->only(['update', 'receive']);
-        $this->middleware('permission:purchases.delete')->only(['destroy']);
+        $this->middleware('permission:purchases.delete')->only(['destroy', 'void']);
         $this->middleware('permission:purchases.approve')->only(['approve']);
     }
 
@@ -255,6 +255,17 @@ class PurchaseOrderController extends Controller
                 // Auto-stock inventory immediately upon creation
                 $product = Product::find($item['product_id']);
                 if ($product && $product->track_inventory) {
+                    // Calculate Weighted Average Cost (WAC) before adjusting stock
+                    $currentStock = (float) $product->stock_quantity;
+                    $currentCost = (float) $product->cost_price;
+                    $poUnitCost = (float) $item['unit_cost'];
+
+                    $newTotalStock = $currentStock + $qtyOrdered;
+                    if ($newTotalStock > 0) {
+                        $wac = (($currentStock * $currentCost) + ($qtyOrdered * $poUnitCost)) / $newTotalStock;
+                        $product->update(['cost_price' => round($wac, 2)]);
+                    }
+
                     $inventoryService->adjustStock(
                         $warehouseId,
                         $product->id,
@@ -264,11 +275,6 @@ class PurchaseOrderController extends Controller
                         'Bill',
                         $purchaseOrder->po_number
                     );
-
-                    // Update product cost_price if unit cost differs
-                    if ($product->cost_price != $item['unit_cost']) {
-                        $product->update(['cost_price' => $item['unit_cost']]);
-                    }
                 }
             }
 
@@ -349,16 +355,29 @@ class PurchaseOrderController extends Controller
 
             $inventoryService = new WarehouseInventoryService();
 
-            // Reverse previous stock adjustments if previously received
+            // Reverse previous stock adjustments and WAC if previously received
             foreach ($purchaseOrder->purchaseOrderItems as $oldItem) {
                 if ($oldItem->quantity_received > 0) {
                     $product = Product::find($oldItem->product_id);
                     if ($product && $product->track_inventory) {
+                        // Reverse WAC: revert cost_price before deducting stock
+                        $currentStock = (float) $product->stock_quantity;
+                        $currentCost = (float) $product->cost_price;
+                        $voidQty = (int) $oldItem->quantity_received;
+                        $voidUnitCost = (float) $oldItem->unit_cost;
+
+                        $remainingStock = $currentStock - $voidQty;
+                        if ($remainingStock > 0) {
+                            $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
+                            $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
+                        }
+                        // If remaining stock is 0, retain existing cost_price as base
+
                         $inventoryService->adjustStock(
                             $warehouseId,
                             $product->id,
                             $oldItem->product_variation_id ?? null,
-                            -$oldItem->quantity_received,
+                            -$voidQty,
                             $companyId,
                             'Purchase Order Reversal',
                             $purchaseOrder->po_number
@@ -421,9 +440,23 @@ class PurchaseOrderController extends Controller
                     'notes' => $item['notes'] ?? null,
                 ]);
 
-                // Adjust stock for new item
+                // Adjust stock for new item with WAC
                 $product = Product::find($item['product_id']);
                 if ($product && $product->track_inventory) {
+                    // Refresh product to get latest stock/cost after reversal
+                    $product->refresh();
+
+                    // Calculate WAC before adjusting stock
+                    $currentStock = (float) $product->stock_quantity;
+                    $currentCost = (float) $product->cost_price;
+                    $poUnitCost = (float) $item['unit_cost'];
+
+                    $newTotalStock = $currentStock + $qtyOrdered;
+                    if ($newTotalStock > 0) {
+                        $wac = (($currentStock * $currentCost) + ($qtyOrdered * $poUnitCost)) / $newTotalStock;
+                        $product->update(['cost_price' => round($wac, 2)]);
+                    }
+
                     $inventoryService->adjustStock(
                         $warehouseId,
                         $product->id,
@@ -433,10 +466,6 @@ class PurchaseOrderController extends Controller
                         'Bill',
                         $purchaseOrder->po_number
                     );
-
-                    if ($product->cost_price != $item['unit_cost']) {
-                        $product->update(['cost_price' => $item['unit_cost']]);
-                    }
                 }
             }
 
@@ -464,17 +493,135 @@ class PurchaseOrderController extends Controller
      */
     public function destroy(PurchaseOrder $purchaseOrder): JsonResponse
     {
-        if ($purchaseOrder->status !== 'draft') {
+        try {
+            DB::beginTransaction();
+
+            $companyId = auth()->user()->current_company_id ?? 1;
+            $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
+                ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
+            $warehouseId = $purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
+            $inventoryService = new WarehouseInventoryService();
+
+            // Reverse stock and WAC for all received items before deletion
+            foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
+                if ($poItem->quantity_received > 0) {
+                    $product = Product::find($poItem->product_id);
+                    if ($product && $product->track_inventory) {
+                        $currentStock = (float) $product->stock_quantity;
+                        $currentCost = (float) $product->cost_price;
+                        $voidQty = (int) $poItem->quantity_received;
+                        $voidUnitCost = (float) $poItem->unit_cost;
+
+                        $remainingStock = $currentStock - $voidQty;
+                        if ($remainingStock > 0) {
+                            $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
+                            $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
+                        }
+
+                        $inventoryService->adjustStock(
+                            $warehouseId,
+                            $product->id,
+                            $poItem->product_variation_id ?? null,
+                            -$voidQty,
+                            $companyId,
+                            'Purchase Order Deleted',
+                            $purchaseOrder->po_number
+                        );
+                    }
+                }
+            }
+
+            $purchaseOrder->purchaseOrderItems()->delete();
+            $purchaseOrder->delete();
+
+            DB::commit();
+
             return response()->json([
-                'message' => 'Can only delete draft purchase orders'
+                'message' => 'Purchase order deleted and inventory reversed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to delete purchase order',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Void a purchase order — cancels the PO and reverses inventory + WAC.
+     */
+    public function void(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        if ($purchaseOrder->status === 'voided') {
+            return response()->json([
+                'message' => 'This purchase order has already been voided'
             ], 422);
         }
 
-        $purchaseOrder->delete();
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'message' => 'Purchase order deleted successfully'
-        ]);
+            $companyId = auth()->user()->current_company_id ?? 1;
+            $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
+                ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
+            $warehouseId = $purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
+            $inventoryService = new WarehouseInventoryService();
+
+            // Reverse stock and WAC for all received items
+            foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
+                if ($poItem->quantity_received > 0) {
+                    $product = Product::find($poItem->product_id);
+                    if ($product && $product->track_inventory) {
+                        // Reverse WAC calculation
+                        $currentStock = (float) $product->stock_quantity;
+                        $currentCost = (float) $product->cost_price;
+                        $voidQty = (int) $poItem->quantity_received;
+                        $voidUnitCost = (float) $poItem->unit_cost;
+
+                        $remainingStock = $currentStock - $voidQty;
+                        if ($remainingStock > 0) {
+                            $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
+                            $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
+                        }
+                        // If remaining stock is 0 or less, retain existing cost_price as base
+
+                        // Deduct stock
+                        $inventoryService->adjustStock(
+                            $warehouseId,
+                            $product->id,
+                            $poItem->product_variation_id ?? null,
+                            -$voidQty,
+                            $companyId,
+                            'Purchase Order Voided',
+                            $purchaseOrder->po_number
+                        );
+                    }
+                }
+            }
+
+            // Mark PO as voided
+            $purchaseOrder->update([
+                'status' => 'voided',
+            ]);
+
+            DB::commit();
+
+            $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
+
+            return response()->json([
+                'message' => 'Purchase order voided and inventory reversed successfully',
+                'purchase_order' => $purchaseOrder
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to void purchase order',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -531,12 +678,21 @@ class PurchaseOrderController extends Controller
                     }
 
                     $inventoryService = new WarehouseInventoryService();
-                    $inventoryService->adjustStock($warehouseId, $product->id, null, $item['quantity_received'], $companyId, 'Bill', $purchaseOrder->po_number);
 
-                    // Update cost price if different
-                    if ($product->cost_price != $poItem->unit_cost) {
-                        $product->update(['cost_price' => $poItem->unit_cost]);
+                    // Calculate WAC BEFORE adjusting stock (use pre-adjustment values)
+                    $currentStock = (float) $product->stock_quantity;
+                    $currentCost = (float) $product->cost_price;
+                    $rcvQty = (int) $item['quantity_received'];
+                    $rcvUnitCost = (float) $poItem->unit_cost;
+
+                    $newTotalStock = $currentStock + $rcvQty;
+                    if ($newTotalStock > 0) {
+                        $wac = (($currentStock * $currentCost) + ($rcvQty * $rcvUnitCost)) / $newTotalStock;
+                        $product->update(['cost_price' => round($wac, 2)]);
                     }
+
+                    // Now adjust stock
+                    $inventoryService->adjustStock($warehouseId, $product->id, null, $item['quantity_received'], $companyId, 'Bill', $purchaseOrder->po_number);
                 }
             }
 
