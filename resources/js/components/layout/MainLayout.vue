@@ -395,18 +395,6 @@
                 Items
               </router-link>
               <router-link
-                to="/inventory/groups"
-                :class="[
-                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
-                  $route.path === '/inventory/groups'
-                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
-                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
-                ]"
-              >
-                <div v-if="$route.path === '/inventory/groups'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
-                Groups
-              </router-link>
-              <router-link
                 to="/inventory/categories-brands"
                 :class="[
                   'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',

@@ -198,8 +198,13 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class , 'receive']);
 
+    Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'singleAdjustment']);
     Route::post('/inventory-adjustments/import', [InventoryAdjustmentController::class, 'import']);
-    Route::apiResource('inventory-adjustments', InventoryAdjustmentController::class)->only(['index', 'store', 'show']);
+    Route::post('/inventory-adjustments/bulk-price', [InventoryAdjustmentController::class, 'bulkPriceAdjustment']);
+    Route::post('/inventory-adjustments/bulk-tax', [InventoryAdjustmentController::class, 'bulkTaxAdjustment']);
+    Route::get('/inventory-adjustments/preview-products', [InventoryAdjustmentController::class, 'previewProducts']);
+    Route::post('/inventory-adjustments/batch-matrix', [InventoryAdjustmentController::class, 'batchMatrixAdjustment']);
+    Route::apiResource('inventory-adjustments', InventoryAdjustmentController::class)->only(['index', 'store', 'show', 'update']);
     Route::get('/inventory/summary', [InventoryAdjustmentController::class , 'summary']);
     Route::get('/inventory/low-stock', [InventoryAdjustmentController::class , 'lowStock']);
 

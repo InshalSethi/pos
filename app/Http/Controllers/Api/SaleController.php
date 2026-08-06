@@ -36,13 +36,15 @@ class SaleController extends Controller
      */
     public function getStatusCounts(): JsonResponse
     {
-        $all = Sale::count();
-        $draft = Sale::where('status', 'draft')->count();
-        $paid = Sale::where('status', 'completed')->count();
-        $due = Sale::where('status', 'pending')->count();
-        $recurring = Sale::where('status', 'recurring')->count();
-        $overdue = Sale::where('status', 'pending')->where('due_date', '<', today())->count();
-        $void = Sale::whereIn('status', ['void', 'voided', 'cancelled'])->count();
+        $base = Sale::where('is_refund', false)->where('sale_number', 'not like', 'RETURN-%');
+
+        $all = (clone $base)->count();
+        $draft = (clone $base)->where('status', 'draft')->count();
+        $paid = (clone $base)->where('status', 'completed')->count();
+        $due = (clone $base)->where('status', 'pending')->count();
+        $recurring = (clone $base)->where('status', 'recurring')->count();
+        $overdue = (clone $base)->where('status', 'pending')->where('due_date', '<', today())->count();
+        $void = (clone $base)->whereIn('status', ['void', 'voided', 'cancelled'])->count();
 
         return response()->json([
             'all' => $all,
@@ -60,11 +62,16 @@ class SaleController extends Controller
      */
     public function getReturnStatusCounts(): JsonResponse
     {
-        $all = Sale::where('is_refund', true)->count();
-        $cash = Sale::where('is_refund', true)->where('payment_method', 'cash')->count();
-        $card = Sale::where('is_refund', true)->where('payment_method', 'card')->count();
-        $storeCredit = Sale::where('is_refund', true)->where('payment_method', 'store_credit')->count();
-        $exchange = Sale::where('is_refund', true)->where('payment_method', 'exchange')->count();
+        $base = Sale::where(function($q) {
+            $q->where('is_refund', true)
+              ->orWhere('sale_number', 'like', 'RETURN-%');
+        });
+
+        $all = (clone $base)->count();
+        $cash = (clone $base)->where('payment_method', 'cash')->count();
+        $card = (clone $base)->where('payment_method', 'card')->count();
+        $storeCredit = (clone $base)->where('payment_method', 'store_credit')->count();
+        $exchange = (clone $base)->where('payment_method', 'exchange')->count();
 
         return response()->json([
             'all' => $all,
@@ -232,9 +239,22 @@ class SaleController extends Controller
             $query->where('customer_id', $request->customer_id);
         }
 
-        // Filter by refund status
+        // Filter by refund status (exclusively separate Sales Invoices vs Sales Returns)
         if ($request->has('is_refund')) {
-            $query->where('is_refund', $request->boolean('is_refund'));
+            $isRefund = $request->boolean('is_refund');
+            if ($isRefund) {
+                $query->where(function ($q) {
+                    $q->where('is_refund', true)
+                      ->orWhere('sale_number', 'like', 'RETURN-%');
+                });
+            } else {
+                $query->where('is_refund', false)
+                      ->where('sale_number', 'not like', 'RETURN-%');
+            }
+        } else {
+            // Default for Sales Invoices listing: exclude returns
+            $query->where('is_refund', false)
+                  ->where('sale_number', 'not like', 'RETURN-%');
         }
 
         // Filter by payment method

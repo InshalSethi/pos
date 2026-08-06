@@ -5,8 +5,7 @@
       <!-- Header -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 class="text-xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <span class="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">🏷️</span>
+          <h1 class="text-xl font-extrabold text-slate-800 dark:text-slate-100">
             Categories & Brands
           </h1>
           <p class="text-xs text-gray-550 dark:text-slate-400 mt-1">

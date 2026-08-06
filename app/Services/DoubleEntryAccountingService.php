@@ -100,32 +100,56 @@ class DoubleEntryAccountingService
             $taxAmount = (float) ($sale->tax_amount > 0 ? $sale->tax_amount : 0);
             $discountAmount = (float) ($sale->discount_amount > 0 ? $sale->discount_amount : 0);
 
-            // 1. Resolve Revenue Account (4010 - Sales Revenue)
-            $revenueAccountId = $this->accountingSettings->sales_invoice_revenue_account_id;
-            if (!$revenueAccountId) {
-                $revenueAccount = Account::where('company_id', $companyId)
-                    ->where('account_type', 'revenue')
-                    ->where(function($q) {
-                        $q->where('account_code', '4010')
-                          ->orWhere('account_name', 'LIKE', '%Sales Revenue%')
-                          ->orWhere('account_name', 'LIKE', '%Revenue%');
-                    })->first();
-                $revenueAccountId = $revenueAccount?->id;
-            }
+            // 1. Resolve Parent Revenue Account (4000 - Total Sales Revenue)
+            $parentRevenueAccount = Account::firstOrCreate([
+                'company_id' => $companyId,
+                'account_code' => '4000',
+            ], [
+                'account_name' => 'Total Sales Revenue',
+                'account_type' => 'revenue',
+                'account_subtype' => 'operating_revenue',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
 
-            if (!$revenueAccountId) {
-                $revenueAccount = Account::create([
+            // Determine Wholesale vs Retail Revenue Ledger Posting
+            $isWholesale = (
+                (isset($sale->sale_type) && strtolower($sale->sale_type) === 'wholesale') ||
+                !empty($sale->is_wholesale)
+            );
+
+            if ($isWholesale) {
+                $revenueAccount = Account::firstOrCreate([
                     'company_id' => $companyId,
-                    'account_code' => '4010',
-                    'account_name' => 'Sales Revenue',
+                    'account_code' => '4020',
+                ], [
+                    'account_name' => 'Wholesale Sales Revenue',
                     'account_type' => 'revenue',
+                    'account_subtype' => 'operating_revenue',
+                    'parent_account_id' => $parentRevenueAccount->id,
                     'opening_balance' => 0,
                     'current_balance' => 0,
                     'is_active' => true,
                     'is_system_account' => true,
                 ]);
-                $revenueAccountId = $revenueAccount->id;
+            } else {
+                $revenueAccount = Account::firstOrCreate([
+                    'company_id' => $companyId,
+                    'account_code' => '4010',
+                ], [
+                    'account_name' => 'Retail Sales Revenue',
+                    'account_type' => 'revenue',
+                    'account_subtype' => 'operating_revenue',
+                    'parent_account_id' => $parentRevenueAccount->id,
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
             }
+            $revenueAccountId = $revenueAccount->id;
 
             // Total journal entry amount = Gross Subtotal + Tax
             $entryTotal = $subtotal + $taxAmount;

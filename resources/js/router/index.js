@@ -112,9 +112,7 @@ const routes = [
       },
       {
         path: 'inventory/groups',
-        name: 'Groups',
-        component: () => import('@/components/inventory/Groups.vue'),
-        meta: { permission: 'inventory.view' }
+        redirect: '/inventory/adjustments'
       },
       {
         path: 'inventory/categories-brands',
@@ -124,6 +122,18 @@ const routes = [
       },
 
 
+      {
+        path: 'inventory/adjustments/create',
+        name: 'CreateAdjustment',
+        component: () => import('@/components/inventory/CreateAdjustment.vue'),
+        meta: { permission: 'inventory.adjust' }
+      },
+      {
+        path: 'inventory/adjustments',
+        name: 'AdjustmentsIndex',
+        component: Inventory,
+        meta: { permission: 'inventory.view' }
+      },
       {
         path: 'inventory',
         name: 'Inventory',

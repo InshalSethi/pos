@@ -19,6 +19,12 @@ class Product extends Model
 
     protected static function booted()
     {
+        static::creating(function ($product) {
+            if (!isset($product->attributes['selling_price'])) {
+                $product->attributes['selling_price'] = 0;
+            }
+        });
+
         static::updated(function ($product) {
             if ($product->track_inventory && $product->isLowStock && $product->supplier_id) {
                 self::generateDraftPurchaseOrder($product);
@@ -190,5 +196,25 @@ class Product extends Model
     public function getFormattedPriceAttribute(): string
     {
         return '$' . number_format((float) ($this->selling_price ?? 0), 2);
+    }
+
+    public function getPurchasePriceAttribute()
+    {
+        return $this->attributes['cost_price'] ?? 0;
+    }
+
+    public function setPurchasePriceAttribute($value)
+    {
+        $this->attributes['cost_price'] = $value;
+    }
+
+    public function getStockQtyAttribute()
+    {
+        return $this->attributes['stock_quantity'] ?? 0;
+    }
+
+    public function setStockQtyAttribute($value)
+    {
+        $this->attributes['stock_quantity'] = $value;
     }
 }

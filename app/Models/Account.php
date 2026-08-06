@@ -170,6 +170,11 @@ class Account extends Model
             ->update(['current_balance' => $this->current_balance]);
     }
 
+    public function getCurrentBalance(): float
+    {
+        return (float) ($this->current_balance ?? $this->calculateBalance());
+    }
+
     public function getFormattedBalanceAttribute(): string
     {
         $val = (float) ($this->current_balance ?? 0);

@@ -33,6 +33,7 @@ class InventoryAdjustment extends Model
         'expiry_date',
         'notes',
         'attachment',
+        'journal_entry_id',
     ];
 
     protected $casts = [
@@ -60,6 +61,11 @@ class InventoryAdjustment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 
     // Scopes

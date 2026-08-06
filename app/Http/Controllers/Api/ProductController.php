@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
+use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\Product;
 use App\Services\StockThresholdService;
 use Illuminate\Http\Request;
@@ -489,6 +492,68 @@ class ProductController extends Controller
                 }
             }
 
+            // Perform Double-Entry Posting for initial item creation stock valuation
+            $freshProduct = $product->fresh();
+            $initialStock = (float)($freshProduct->stock_quantity ?? 0);
+            if ($initialStock > 0) {
+                $unitPurchasePrice = floatval(
+                    $request->input('purchase_price')
+                    ?? $request->input('cost_price')
+                    ?? $freshProduct->cost_price
+                    ?? $freshProduct->purchase_price
+                    ?? 0
+                );
+                $valuationImpact = round($initialStock * $unitPurchasePrice, 2);
+
+                if ($valuationImpact > 0) {
+                    $companyId = auth()->user()->current_company_id ?? $freshProduct->company_id;
+                    $assetAccount = Account::where('company_id', $companyId)->where('account_code', '1040')->first()
+                        ?? Account::where('company_id', $companyId)->where('account_code', '1500')->first()
+                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Asset%')->first();
+
+                    $gainAccount = Account::where('company_id', $companyId)->where('account_code', '5010')->first()
+                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Adjustment Gain%')->first();
+
+                    if ($assetAccount) {
+                        $absAmt = abs($valuationImpact);
+                        $je = JournalEntry::create([
+                            'company_id' => $companyId,
+                            'entry_number' => 'JE-ITEM-' . date('YmdHis') . '-' . rand(100, 999),
+                            'entry_date' => now(),
+                            'reference' => 'ITEM-CREATE-' . $freshProduct->id,
+                            'description' => "Item Creation Initial Stock Posting ({$freshProduct->name})",
+                            'entry_type' => 'adjustment',
+                            'status' => 'posted',
+                            'total_debit' => $absAmt,
+                            'total_credit' => $absAmt,
+                            'created_by' => auth()->id() ?? 1,
+                        ]);
+
+                        JournalEntryLine::create([
+                            'journal_entry_id' => $je->id,
+                            'account_id' => $assetAccount->id,
+                            'debit_amount' => $absAmt,
+                            'credit_amount' => 0,
+                            'description' => 'Item Initial Stock Asset Posting',
+                        ]);
+
+                        if ($gainAccount) {
+                            JournalEntryLine::create([
+                                'journal_entry_id' => $je->id,
+                                'account_id' => $gainAccount->id,
+                                'debit_amount' => 0,
+                                'credit_amount' => $absAmt,
+                                'description' => 'Item Initial Stock Gain Posting',
+                            ]);
+                            $gainAccount->increment('current_balance', $absAmt);
+                        }
+
+                        $assetAccount->increment('current_balance', $absAmt);
+                        $assetAccount->updateCurrentBalance();
+                    }
+                }
+            }
+
             \Illuminate\Support\Facades\DB::commit();
 
             // Evaluate stock thresholds and fire low-stock notifications
@@ -828,6 +893,7 @@ class ProductController extends Controller
                 unset($data['images']);
             }
 
+            $oldStock = (float)($product->stock_quantity ?? 0);
             $product->update($data);
             $product->load('category');
 
@@ -1006,6 +1072,92 @@ class ProductController extends Controller
                             ->where('product_id', $product->id)
                             ->whereNull('product_variation_id')
                             ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                    }
+                }
+            }
+
+            // Perform Double-Entry Posting for Item Edit stock delta valuation (COA 1040 Sync)
+            $freshProduct = $product->fresh();
+            $newStock = (float)($freshProduct->stock_quantity ?? 0);
+            $stockDelta = $newStock - $oldStock;
+
+            if ($stockDelta != 0) {
+                $unitPurchasePrice = floatval(
+                    $request->input('purchase_price')
+                    ?? $request->input('cost_price')
+                    ?? $freshProduct->cost_price
+                    ?? $freshProduct->purchase_price
+                    ?? 0
+                );
+                $valuationImpact = round($stockDelta * $unitPurchasePrice, 2);
+
+                if ($valuationImpact != 0) {
+                    $companyId = auth()->user()->current_company_id ?? $freshProduct->company_id;
+                    $assetAccount = Account::where('company_id', $companyId)->where('account_code', '1040')->first()
+                        ?? Account::where('company_id', $companyId)->where('account_code', '1500')->first()
+                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Asset%')->first();
+
+                    $gainAccount = Account::where('company_id', $companyId)->where('account_code', '5010')->first()
+                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Adjustment Gain%')->first();
+
+                    if ($assetAccount) {
+                        $absAmt = abs($valuationImpact);
+                        $je = JournalEntry::create([
+                            'company_id' => $companyId,
+                            'entry_number' => 'JE-ITEM-' . date('YmdHis') . '-' . rand(100, 999),
+                            'entry_date' => now(),
+                            'reference' => 'ITEM-UPDATE-' . $freshProduct->id,
+                            'description' => "Item Direct Stock Update Posting ({$freshProduct->name})",
+                            'entry_type' => 'adjustment',
+                            'status' => 'posted',
+                            'total_debit' => $absAmt,
+                            'total_credit' => $absAmt,
+                            'created_by' => auth()->id() ?? 1,
+                        ]);
+
+                        if ($valuationImpact > 0) {
+                            // DEBIT 1040 Asset, CREDIT 5010 Gain
+                            JournalEntryLine::create([
+                                'journal_entry_id' => $je->id,
+                                'account_id' => $assetAccount->id,
+                                'debit_amount' => $absAmt,
+                                'credit_amount' => 0,
+                                'description' => 'Item Direct Stock Increase Asset Posting',
+                            ]);
+                            if ($gainAccount) {
+                                JournalEntryLine::create([
+                                    'journal_entry_id' => $je->id,
+                                    'account_id' => $gainAccount->id,
+                                    'debit_amount' => 0,
+                                    'credit_amount' => $absAmt,
+                                    'description' => 'Item Direct Stock Increase Gain Posting',
+                                ]);
+                                $gainAccount->increment('current_balance', $absAmt);
+                            }
+                            $assetAccount->increment('current_balance', $absAmt);
+                        } else {
+                            // DEBIT 5010 Gain/Loss, CREDIT 1040 Asset
+                            if ($gainAccount) {
+                                JournalEntryLine::create([
+                                    'journal_entry_id' => $je->id,
+                                    'account_id' => $gainAccount->id,
+                                    'debit_amount' => $absAmt,
+                                    'credit_amount' => 0,
+                                    'description' => 'Item Direct Stock Reduction Gain/Loss Posting',
+                                ]);
+                                $gainAccount->decrement('current_balance', $absAmt);
+                            }
+                            JournalEntryLine::create([
+                                'journal_entry_id' => $je->id,
+                                'account_id' => $assetAccount->id,
+                                'debit_amount' => 0,
+                                'credit_amount' => $absAmt,
+                                'description' => 'Item Direct Stock Reduction Asset Posting',
+                            ]);
+                            $assetAccount->decrement('current_balance', $absAmt);
+                        }
+
+                        $assetAccount->updateCurrentBalance();
                     }
                 }
             }
