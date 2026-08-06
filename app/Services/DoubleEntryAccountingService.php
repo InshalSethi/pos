@@ -1075,41 +1075,101 @@ class DoubleEntryAccountingService
                 }
             }
 
-            // 4. Handle unrefunded return balance & original sale unpaid AR -> CREDIT Customer Accounts Receivable (1030)
-            $arAccount = Account::where('company_id', $companyId)
-                ->where(function ($q) {
-                    $q->where('account_code', '1030')
-                      ->orWhere('account_code', '2010')
-                      ->orWhere('account_type', 'customer_payable')
-                      ->orWhere('account_name', 'LIKE', '%Accounts Receivable%')
-                      ->orWhere('account_name', 'LIKE', '%Customer Payable%');
-                })->first();
+            // 4. Handle unrefunded return balance: Dynamic split between Clearing A/R (1030) and Customer Credit Liability (2010)
+            $unrefundedRemainder = max(0, $totalAmount - $totalRefunded);
 
-            $originalUnpaidDue = 0;
-            if ($saleReturn->original_sale_id) {
-                $origSale = Sale::find($saleReturn->original_sale_id);
-                if ($origSale) {
-                    $originalUnpaidDue = max(0, (float)$origSale->total_amount - (float)$origSale->paid_amount);
+            if ($unrefundedRemainder > 0) {
+                $originalUnpaidDue = 0;
+                if ($saleReturn->original_sale_id) {
+                    $origSale = Sale::find($saleReturn->original_sale_id);
+                    if ($origSale) {
+                        $originalUnpaidDue = max(0, (float)$origSale->total_amount - (float)$origSale->paid_amount);
+                    }
                 }
-            }
 
-            $arCreditAmount = max(0, $totalAmount - $totalRefunded);
-            if ($arCreditAmount <= 0 && $originalUnpaidDue > 0) {
-                $arCreditAmount = $originalUnpaidDue;
-            }
+                // Calculate split amounts
+                $arClearanceAmount = 0;
+                $storeCreditLiabilityAmount = 0;
 
-            if ($arCreditAmount > 0 && $arAccount) {
-                JournalEntryLine::create([
-                    'journal_entry_id' => $journalEntry->id,
-                    'account_id' => $arAccount->id,
-                    'description' => "Accounts Receivable Adjustment - Sales Return #{$saleReturn->sale_number}",
-                    'debit_amount' => 0,
-                    'credit_amount' => $arCreditAmount,
-                    'partner_type' => Customer::class,
-                    'partner_id' => $saleReturn->customer_id,
-                ]);
+                if ($originalUnpaidDue > 0) {
+                    $arClearanceAmount = min($unrefundedRemainder, $originalUnpaidDue);
+                    $storeCreditLiabilityAmount = max(0, $unrefundedRemainder - $arClearanceAmount);
+                } else {
+                    $storeCreditLiabilityAmount = $unrefundedRemainder;
+                }
 
-                Account::where('id', $arAccount->id)->decrement('current_balance', $arCreditAmount);
+                // 4a. Post Accounts Receivable Clearance Line (CREDIT COA 1030)
+                if ($arClearanceAmount > 0) {
+                    $arAccount = Account::where('company_id', $companyId)
+                        ->where(function ($q) {
+                            $q->where('account_code', '1030')
+                              ->orWhere('account_type', 'receivable')
+                              ->orWhere('account_type', 'accounts_receivable')
+                              ->orWhere('account_name', 'LIKE', '%Accounts Receivable%');
+                        })->first();
+
+                    if (!$arAccount) {
+                        $arAccount = Account::create([
+                            'company_id' => $companyId,
+                            'account_code' => '1030',
+                            'account_name' => 'Accounts Receivable',
+                            'account_type' => 'asset',
+                            'account_subtype' => 'current_asset',
+                            'opening_balance' => 0,
+                            'current_balance' => 0,
+                            'is_active' => true,
+                            'is_system_account' => true,
+                        ]);
+                    }
+
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $arAccount->id,
+                        'description' => "Accounts Receivable Clearance - Sales Return #{$saleReturn->sale_number}",
+                        'debit_amount' => 0,
+                        'credit_amount' => $arClearanceAmount,
+                        'partner_type' => Customer::class,
+                        'partner_id' => $saleReturn->customer_id,
+                    ]);
+
+                    Account::where('id', $arAccount->id)->decrement('current_balance', $arClearanceAmount);
+                }
+
+                // 4b. Post Customer Credit / Deposit Liability Line (CREDIT COA 2070)
+                if ($storeCreditLiabilityAmount > 0) {
+                    $creditLiabilityAccount = Account::where('company_id', $companyId)
+                        ->where(function ($q) {
+                            $q->where('account_name', 'LIKE', '%Customer Credit%')
+                              ->orWhere('account_name', 'LIKE', '%Store Credit%')
+                              ->orWhere('account_name', 'LIKE', '%Customer Deposit%');
+                        })->first();
+
+                    if (!$creditLiabilityAccount) {
+                        $creditLiabilityAccount = Account::create([
+                            'company_id' => $companyId,
+                            'account_code' => '2070',
+                            'account_name' => 'Customer Credit / Deposit Liability',
+                            'account_type' => 'liability',
+                            'account_subtype' => 'current_liability',
+                            'opening_balance' => 0,
+                            'current_balance' => 0,
+                            'is_active' => true,
+                            'is_system_account' => true,
+                        ]);
+                    }
+
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $creditLiabilityAccount->id,
+                        'description' => "Customer Store Credit Liability - Sales Return #{$saleReturn->sale_number}",
+                        'debit_amount' => 0,
+                        'credit_amount' => $storeCreditLiabilityAmount,
+                        'partner_type' => Customer::class,
+                        'partner_id' => $saleReturn->customer_id,
+                    ]);
+
+                    Account::where('id', $creditLiabilityAccount->id)->increment('current_balance', $storeCreditLiabilityAmount);
+                }
             }
 
             // 5. Inventory Reversal (DEBIT: Inventory Asset, CREDIT: COGS)
