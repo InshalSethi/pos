@@ -120,15 +120,9 @@ class PurchaseOrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $isWalkin = $request->boolean('is_walkin_supplier');
-
         $validator = Validator::make($request->all(), [
-            'is_walkin_supplier' => 'nullable|boolean',
-            'supplier_id' => $isWalkin ? 'nullable' : 'required|exists:suppliers,id',
-            'supplier_name' => $isWalkin ? 'required|string|max:255' : 'nullable|string|max:255',
-            'supplier_phone' => 'nullable|string|max:50',
-            'supplier_email' => 'nullable|string|max:255',
-            'expected_delivery_date' => 'nullable|date|after:today',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'expected_delivery_date' => 'nullable|date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity_ordered' => 'required|integer|min:1',
@@ -200,7 +194,7 @@ class PurchaseOrderController extends Controller
 
             // --- ADVANCE BALANCE APPLICATION ---
             $advanceApplied = 0;
-            $supplier = $request->supplier_id ? Supplier::find($request->supplier_id) : null;
+            $supplier = Supplier::findOrFail($request->supplier_id);
             if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0) {
                 $requestedAdvance = (float) ($request->advance_applied ?? $supplier->advance_balance);
                 $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $grandTotal);
@@ -212,22 +206,19 @@ class PurchaseOrderController extends Controller
             // Check for overpayment → store as advance
             $overpayment = max(0, $effectivePaid - $grandTotal);
 
-            $supplierName = $isWalkin ? $request->supplier_name : ($supplier?->name ?? $request->supplier_name);
-            $supplierPhone = $isWalkin ? $request->supplier_phone : ($supplier?->phone ?? $request->supplier_phone);
-            $supplierEmail = $isWalkin ? $request->supplier_email : ($supplier?->email ?? $request->supplier_email);
-
-            // Create purchase order
+            // Create purchase order with status received
             $purchaseOrder = PurchaseOrder::create([
                 'po_number' => $poNumber,
-                'supplier_id' => $isWalkin ? null : $request->supplier_id,
-                'is_walkin_supplier' => $isWalkin,
-                'supplier_name' => $supplierName,
-                'supplier_phone' => $supplierPhone,
-                'supplier_email' => $supplierEmail,
+                'supplier_id' => $supplier->id,
+                'is_walkin_supplier' => false,
+                'supplier_name' => $supplier->name,
+                'supplier_phone' => $supplier->phone,
+                'supplier_email' => $supplier->email,
                 'user_id' => auth()->id(),
                 'order_date' => now(),
                 'expected_delivery_date' => $request->expected_delivery_date,
-                'status' => 'draft',
+                'status' => 'received',
+                'actual_delivery_date' => now(),
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
                 'shipping_cost' => $shippingCost,
@@ -239,20 +230,51 @@ class PurchaseOrderController extends Controller
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
 
-            // Create purchase order items
+            $companyId = auth()->user()->current_company_id ?? 1;
+            $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
+                ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
+            $warehouseId = $request->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
+
+            $inventoryService = new WarehouseInventoryService();
+
+            // Create purchase order items and auto-stock inventory
             foreach ($request->items as $item) {
                 $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
+                $qtyOrdered = (int) $item['quantity_ordered'];
 
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'product_id' => $item['product_id'],
-                    'quantity_ordered' => $item['quantity_ordered'],
-                    'quantity_received' => 0,
+                    'quantity_ordered' => $qtyOrdered,
+                    'quantity_received' => $qtyOrdered,
                     'unit_cost' => $item['unit_cost'],
                     'total_cost' => $totalCost,
                     'notes' => $item['notes'] ?? null,
                 ]);
+
+                // Auto-stock inventory immediately upon creation
+                $product = Product::find($item['product_id']);
+                if ($product && $product->track_inventory) {
+                    $inventoryService->adjustStock(
+                        $warehouseId,
+                        $product->id,
+                        $item['product_variation_id'] ?? null,
+                        $qtyOrdered,
+                        $companyId,
+                        'Bill',
+                        $purchaseOrder->po_number
+                    );
+
+                    // Update product cost_price if unit cost differs
+                    if ($product->cost_price != $item['unit_cost']) {
+                        $product->update(['cost_price' => $item['unit_cost']]);
+                    }
+                }
             }
+
+            // Create double-entry accounting entries
+            $accountingService = new DoubleEntryAccountingService();
+            $accountingService->createPurchaseInvoiceEntry($purchaseOrder);
 
             // --- DEBIT ADVANCE if advance was applied ---
             if ($advanceApplied > 0 && $supplier) {
@@ -269,7 +291,7 @@ class PurchaseOrderController extends Controller
             $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
 
             return response()->json([
-                'message' => 'Purchase order created successfully',
+                'message' => 'Purchase order created successfully and items added to inventory',
                 'purchase_order' => $purchaseOrder
             ], 201);
 
@@ -289,7 +311,6 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder): JsonResponse
     {
         $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
-
         return response()->json($purchaseOrder);
     }
 
@@ -298,15 +319,9 @@ class PurchaseOrderController extends Controller
      */
     public function update(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
-        if ($purchaseOrder->status !== 'draft') {
-            return response()->json([
-                'message' => 'Can only edit draft purchase orders'
-            ], 422);
-        }
-
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'required|exists:suppliers,id',
-            'expected_delivery_date' => 'nullable|date|after:today',
+            'expected_delivery_date' => 'nullable|date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity_ordered' => 'required|integer|min:1',
@@ -314,7 +329,6 @@ class PurchaseOrderController extends Controller
             'items.*.notes' => 'nullable|string',
             'notes' => 'nullable|string',
             'terms_and_conditions' => 'nullable|string',
-            'status' => 'nullable|in:draft,sent,confirmed',
             'amount_paid' => 'nullable|numeric|min:0',
         ]);
 
@@ -327,6 +341,31 @@ class PurchaseOrderController extends Controller
 
         try {
             DB::beginTransaction();
+
+            $companyId = auth()->user()->current_company_id ?? 1;
+            $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
+                ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
+            $warehouseId = $request->warehouse_id ?? ($purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1));
+
+            $inventoryService = new WarehouseInventoryService();
+
+            // Reverse previous stock adjustments if previously received
+            foreach ($purchaseOrder->purchaseOrderItems as $oldItem) {
+                if ($oldItem->quantity_received > 0) {
+                    $product = Product::find($oldItem->product_id);
+                    if ($product && $product->track_inventory) {
+                        $inventoryService->adjustStock(
+                            $warehouseId,
+                            $product->id,
+                            $oldItem->product_variation_id ?? null,
+                            -$oldItem->quantity_received,
+                            $companyId,
+                            'Purchase Order Reversal',
+                            $purchaseOrder->po_number
+                        );
+                    }
+                }
+            }
 
             // Calculate new totals
             $subtotal = 0;
@@ -344,11 +383,16 @@ class PurchaseOrderController extends Controller
             $grandTotal = $totalAmount;
             $dueAmount = max(0, $grandTotal - $amountPaid);
 
+            $supplier = Supplier::findOrFail($request->supplier_id);
+
             // Update purchase order
             $purchaseOrder->update([
-                'supplier_id' => $request->supplier_id,
+                'supplier_id' => $supplier->id,
+                'supplier_name' => $supplier->name,
+                'supplier_phone' => $supplier->phone,
+                'supplier_email' => $supplier->email,
                 'expected_delivery_date' => $request->expected_delivery_date,
-                'status' => $request->get('status', $purchaseOrder->status),
+                'status' => 'received',
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
                 'shipping_cost' => $shippingCost,
@@ -360,21 +404,40 @@ class PurchaseOrderController extends Controller
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
 
-            // Delete existing items and recreate
+            // Delete existing items and recreate with new stock adjustments
             $purchaseOrder->purchaseOrderItems()->delete();
 
             foreach ($request->items as $item) {
                 $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
+                $qtyOrdered = (int) $item['quantity_ordered'];
 
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'product_id' => $item['product_id'],
-                    'quantity_ordered' => $item['quantity_ordered'],
-                    'quantity_received' => 0,
+                    'quantity_ordered' => $qtyOrdered,
+                    'quantity_received' => $qtyOrdered,
                     'unit_cost' => $item['unit_cost'],
                     'total_cost' => $totalCost,
                     'notes' => $item['notes'] ?? null,
                 ]);
+
+                // Adjust stock for new item
+                $product = Product::find($item['product_id']);
+                if ($product && $product->track_inventory) {
+                    $inventoryService->adjustStock(
+                        $warehouseId,
+                        $product->id,
+                        $item['product_variation_id'] ?? null,
+                        $qtyOrdered,
+                        $companyId,
+                        'Bill',
+                        $purchaseOrder->po_number
+                    );
+
+                    if ($product->cost_price != $item['unit_cost']) {
+                        $product->update(['cost_price' => $item['unit_cost']]);
+                    }
+                }
             }
 
             DB::commit();

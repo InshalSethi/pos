@@ -150,7 +150,7 @@
                     <tr class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-400 uppercase font-extrabold tracking-wider">
                       <th class="py-3 px-3 w-5/12 bg-slate-50 dark:bg-zinc-900">Item Details / SKU</th>
                       <th class="py-3 px-2 w-2/12 text-center bg-slate-50 dark:bg-zinc-900">Qty</th>
-                      <th class="py-3 px-2 w-2.5/12 text-right bg-slate-50 dark:bg-zinc-900">Unit Cost</th>
+                      <th class="py-3 px-2 w-2.5/12 text-right bg-slate-50 dark:bg-zinc-900">Purchase Price</th>
                       <th class="py-3 px-2 w-2.5/12 text-right bg-slate-50 dark:bg-zinc-900">Total Cost</th>
                       <th class="py-3 px-1 w-[40px] text-center bg-slate-50 dark:bg-zinc-900"></th>
                     </tr>
@@ -552,30 +552,10 @@
                 <div class="space-y-2 pt-1 pb-1 border-t border-b border-slate-100 dark:border-zinc-800/60">
                   <div class="flex items-center justify-between">
                     <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
-                    <label class="flex items-center space-x-1.5 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        v-model="orderForm.is_walkin_supplier"
-                        @change="onWalkinToggle"
-                        class="w-3.5 h-3.5 text-purple-600 rounded border-slate-300 focus:ring-purple-500 dark:border-zinc-700 dark:bg-zinc-900 cursor-pointer"
-                      />
-                      <span class="text-[11px] font-bold text-purple-700 dark:text-purple-400">Walk-in / One-Time</span>
-                    </label>
-                  </div>
-                  
-                  <!-- Walk-in Supplier Name Input (If Checked) -->
-                  <div v-if="orderForm.is_walkin_supplier" class="pt-1 text-left">
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Supplier Name <span class="text-rose-500">*</span></label>
-                    <input
-                      v-model="orderForm.supplier_name"
-                      type="text"
-                      placeholder="Enter supplier name..."
-                      class="w-full px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    />
                   </div>
 
-                  <!-- Standard Supplier Search & Selected Card (If Unchecked) -->
-                  <div v-else class="space-y-2">
+                  <!-- Supplier Search & Selected Card -->
+                  <div class="space-y-2">
                     <!-- Attached Supplier Search & Add Supplier Input Group -->
                     <div class="relative w-full" id="supplier-search-container">
                       <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
@@ -781,20 +761,7 @@
               </div>
             </div>
 
-              <!-- Status configurations -->
-              <div class="text-left">
-                <label class="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-1.5 block">Order Status</label>
-                <select
-                  v-model="orderForm.status"
-                  class="w-full px-2.5 py-2 border border-slate-200/80 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs cursor-pointer bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="received">Received</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
+
             </div>
 
           <!-- Sidebar Sticky Footer Actions -->
@@ -2515,13 +2482,8 @@ const closeSupplierModal = () => {
 };
 
 const updateOrder = async () => {
-  if (!orderForm.value.is_walkin_supplier && !selectedSupplier.value) {
+  if (!selectedSupplier.value) {
     showNotification('Please select a supplier', 'error');
-    return;
-  }
-
-  if (orderForm.value.is_walkin_supplier && !orderForm.value.supplier_name?.trim()) {
-    showNotification('Please enter the walk-in supplier name', 'error');
     return;
   }
 
@@ -2533,22 +2495,16 @@ const updateOrder = async () => {
   saving.value = true;
 
   try {
-    const isWalkin = orderForm.value.is_walkin_supplier;
     const orderData = {
-      is_walkin_supplier: isWalkin,
-      supplier_id: isWalkin ? null : orderForm.value.supplier_id,
-      supplier_name: isWalkin ? orderForm.value.supplier_name : (selectedSupplier.value?.name || null),
-      supplier_phone: orderForm.value.supplier_phone || null,
-      supplier_email: orderForm.value.supplier_email || null,
+      supplier_id: orderForm.value.supplier_id,
       po_number: orderForm.value.po_number || purchaseOrder.value?.po_number || null,
       order_date: orderForm.value.order_date,
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
-      status: orderForm.value.status,
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
       amount_paid: orderForm.value.amount_paid || 0,
-      use_advance_balance: isWalkin ? false : useAdvanceBalance.value,
-      advance_applied: isWalkin ? 0 : advanceToApply.value,
+      use_advance_balance: useAdvanceBalance.value,
+      advance_applied: advanceToApply.value,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       items: orderItems.value.map(item => ({
