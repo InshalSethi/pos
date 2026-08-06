@@ -207,6 +207,12 @@ class RoleController extends Controller
     public function permissions(): JsonResponse
     {
         $permissions = Permission::where('guard_name', 'web')->get()->groupBy(function ($permission) {
+            if ($permission->name === 'edit_invoice_number') {
+                return 'sales';
+            }
+            if ($permission->name === 'edit_po_number') {
+                return 'purchases';
+            }
             return explode('.', $permission->name)[0];
         });
 

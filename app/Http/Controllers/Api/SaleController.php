@@ -567,15 +567,26 @@ class SaleController extends Controller
                 }
             }
 
-            // Generate sale number
-            $saleNumber = $request->sale_number;
-            
-            // If sale number is provided but already exists, clear it to auto-generate
-            if ($saleNumber && Sale::where('sale_number', $saleNumber)->exists()) {
-                $saleNumber = null;
-            }
-            
-            if (!$saleNumber) {
+            // Generate or validate custom sale number
+            $providedSaleNumber = trim($request->sale_number ?? '');
+            if ($providedSaleNumber !== '') {
+                $user = auth()->user();
+                $hasPermission = $user->hasRole(['admin', 'owner', 'Admin', 'Owner']) || $user->can('edit_invoice_number') || $user->can('sales.edit_invoice_number');
+                if (!$hasPermission) {
+                    return response()->json([
+                        'message' => 'Permission denied: You do not have permission to manually edit invoice numbers.',
+                        'errors' => ['sale_number' => ['You do not have permission to manually edit invoice numbers.']]
+                    ], 403);
+                }
+
+                if (Sale::where('sale_number', $providedSaleNumber)->exists()) {
+                    return response()->json([
+                        'message' => "The invoice number '{$providedSaleNumber}' is already in use.",
+                        'errors' => ['sale_number' => ["The invoice number '{$providedSaleNumber}' is already in use."]]
+                    ], 422);
+                }
+                $saleNumber = $providedSaleNumber;
+            } else {
                 $settings = \App\Models\InvoicePurchaseSetting::getSettings();
                 $prefix = $settings->invoice_prefix ?: 'INV-';
                 $counter = Sale::count() + 1;

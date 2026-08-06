@@ -520,12 +520,31 @@
               <div class="space-y-2.5 text-xs">
                 <!-- PO Number -->
                 <div>
-                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">PO Number:</label>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-slate-500 dark:text-zinc-400 font-semibold text-xs">PO Number:</label>
+                    <label
+                      v-if="canEditPoNumber"
+                      class="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-semibold text-slate-600 dark:text-zinc-300"
+                    >
+                      <span>Manual</span>
+                      <div class="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          v-model="isManualPoNumber"
+                          @change="toggleManualPoNumber"
+                          class="sr-only peer"
+                        />
+                        <div class="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:after:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                      </div>
+                    </label>
+                  </div>
                   <input
                     v-model="orderForm.po_number"
                     type="text"
-                    readonly
-                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-slate-100 dark:bg-zinc-800/60 font-semibold text-xs"
+                    :disabled="!isManualPoNumber"
+                    :readonly="!isManualPoNumber"
+                    class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-colors"
+                    :class="!isManualPoNumber ? 'bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 cursor-not-allowed select-none' : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200'"
                   />
                 </div>
 
@@ -1574,6 +1593,22 @@ const taxSearchQuery = ref('');
 const taxHighlightedIndex = ref(0);
 const taxInputRef = ref(null);
 
+const isManualPoNumber = ref(false);
+const originalPoNumber = ref('');
+
+const canEditPoNumber = computed(() => {
+  return authStore.hasPermission('edit_po_number') ||
+    authStore.hasPermission('purchases.edit_po_number') ||
+    authStore.hasRole('admin') ||
+    authStore.hasRole('owner');
+});
+
+const toggleManualPoNumber = () => {
+  if (!isManualPoNumber.value) {
+    orderForm.value.po_number = originalPoNumber.value;
+  }
+};
+
 const orderForm = ref({
   supplier_id: '',
   is_walkin_supplier: false,
@@ -2202,6 +2237,8 @@ const fetchPurchaseOrder = async () => {
       notes: po.notes || '',
       terms_and_conditions: po.terms_and_conditions || 'Standard purchase order conditions apply.'
     };
+
+    originalPoNumber.value = po.po_number || '';
 
     // Set selected supplier
     if (po.supplier && !po.is_walkin_supplier) {

@@ -163,9 +163,25 @@ class PurchaseOrderController extends Controller
 
             $totalAmount = $subtotal + $taxAmount + $shippingCost;
 
-            // Generate PO number
-            if ($request->has('po_number') && $request->po_number) {
-                $poNumber = $request->po_number;
+            // Generate or validate custom PO number
+            $providedPoNumber = trim($request->po_number ?? '');
+            if ($providedPoNumber !== '') {
+                $user = auth()->user();
+                $hasPermission = $user->hasRole(['admin', 'owner', 'Admin', 'Owner']) || $user->can('edit_po_number') || $user->can('purchases.edit_po_number');
+                if (!$hasPermission) {
+                    return response()->json([
+                        'message' => 'Permission denied: You do not have permission to manually edit PO numbers.',
+                        'errors' => ['po_number' => ['You do not have permission to manually edit PO numbers.']]
+                    ], 403);
+                }
+
+                if (PurchaseOrder::where('po_number', $providedPoNumber)->exists()) {
+                    return response()->json([
+                        'message' => "The PO number '{$providedPoNumber}' is already in use.",
+                        'errors' => ['po_number' => ["The PO number '{$providedPoNumber}' is already in use."]]
+                    ], 422);
+                }
+                $poNumber = $providedPoNumber;
             } else {
                 $lastOrder = PurchaseOrder::orderBy('id', 'desc')->first();
                 $nextNumber = 1;

@@ -735,12 +735,32 @@
             <div class="space-y-2.5 text-xs">
               <!-- Invoice Number -->
               <div>
-                <label class="block text-slate-500 dark:text-zinc-400 font-semibold mb-1">Invoice Number:</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold text-xs">Invoice Number:</label>
+                  <label
+                    v-if="canEditInvoiceNumber"
+                    class="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-semibold text-slate-600 dark:text-zinc-300"
+                  >
+                    <span>Manual</span>
+                    <div class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        v-model="isManualInvoiceNumber"
+                        @change="toggleManualInvoiceNumber"
+                        class="sr-only peer"
+                      />
+                      <div class="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:after:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                    </div>
+                  </label>
+                </div>
                 <input
                   v-model="invoiceForm.sale_number"
                   type="text"
+                  :disabled="!isManualInvoiceNumber"
+                  :readonly="!isManualInvoiceNumber"
                   placeholder="Auto-generating..."
-                  class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+                  class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition-colors"
+                  :class="!isManualInvoiceNumber ? 'bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 cursor-not-allowed select-none' : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200'"
                 />
               </div>
 
@@ -2620,6 +2640,22 @@ const totalReceivedAmount = computed(() => {
   return sum;
 });
 
+const isManualInvoiceNumber = ref(false);
+const originalSaleNumber = ref('');
+
+const canEditInvoiceNumber = computed(() => {
+  return authStore.hasPermission('edit_invoice_number') ||
+    authStore.hasPermission('sales.edit_invoice_number') ||
+    authStore.hasRole('admin') ||
+    authStore.hasRole('owner');
+});
+
+const toggleManualInvoiceNumber = () => {
+  if (!isManualInvoiceNumber.value) {
+    invoiceForm.value.sale_number = originalSaleNumber.value;
+  }
+};
+
 const invoiceForm = ref({
   customer_id: '',
   sale_number: '',
@@ -3827,6 +3863,7 @@ const loadInvoiceData = async () => {
     const sale = response.data.sale || response.data;
     
     invoiceForm.value.customer_id = sale.customer_id || '';
+    originalSaleNumber.value = sale.sale_number || '';
     invoiceForm.value.sale_number = sale.sale_number || '';
     invoiceForm.value.category_id = sale.category_id || null;
     invoiceForm.value.sale_date = sale.sale_date || '';

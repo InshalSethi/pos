@@ -32,6 +32,7 @@ class RolePermissionSeeder extends Seeder
             'sales.edit',
             'sales.delete',
             'sales.refund',
+            'edit_invoice_number',
 
             // Purchase permissions
             'purchases.view',
@@ -39,6 +40,7 @@ class RolePermissionSeeder extends Seeder
             'purchases.edit',
             'purchases.delete',
             'purchases.approve',
+            'edit_po_number',
 
             // User permissions
             'users.view',
