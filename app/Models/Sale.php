@@ -56,6 +56,15 @@ class Sale extends Model
         'original_sale_id',
     ];
 
+    protected $appends = [
+        'formatted_total',
+        'balance_due',
+        'is_fully_returned',
+        'return_status',
+        'is_returned',
+        'is_void',
+    ];
+
     protected $casts = [
         'sale_date' => 'datetime',
         'due_date' => 'date',
@@ -142,5 +151,66 @@ class Sale extends Model
     public function getBalanceDueAttribute(): float
     {
         return $this->total_amount - $this->paid_amount;
+    }
+
+    public function getIsFullyReturnedAttribute(): bool
+    {
+        if ($this->is_refund) {
+            return false;
+        }
+
+        $refunds = $this->relationLoaded('refunds') ? $this->refunds : $this->refunds()->with('saleItems')->get();
+        if ($refunds->isEmpty()) {
+            return false;
+        }
+
+        $saleItems = $this->relationLoaded('saleItems') ? $this->saleItems : $this->saleItems()->get();
+        $origQty = $saleItems->sum('quantity');
+
+        $returnedQty = 0;
+        foreach ($refunds as $refund) {
+            $refItems = $refund->relationLoaded('saleItems') ? $refund->saleItems : $refund->saleItems()->get();
+            $returnedQty += abs($refItems->sum('quantity'));
+        }
+
+        if ($origQty > 0 && $returnedQty >= $origQty) {
+            return true;
+        }
+
+        $origTotal = abs((float)$this->total_amount);
+        $returnedTotal = abs((float)$refunds->sum('total_amount'));
+        if ($origTotal > 0 && $returnedTotal >= ($origTotal - 0.01)) {
+            return true;
+        }
+
+        return $refunds->isNotEmpty() && ($returnedQty >= $origQty || ($origTotal > 0 && $returnedTotal >= $origTotal));
+    }
+
+    public function getReturnStatusAttribute(): string
+    {
+        if ($this->is_refund) {
+            return 'none';
+        }
+
+        if ($this->is_fully_returned) {
+            return 'full';
+        }
+
+        $refunds = $this->relationLoaded('refunds') ? $this->refunds : $this->refunds()->get();
+        if ($refunds->isNotEmpty()) {
+            return 'partial';
+        }
+
+        return 'none';
+    }
+
+    public function getIsReturnedAttribute(): bool
+    {
+        return $this->return_status !== 'none';
+    }
+
+    public function getIsVoidAttribute(): bool
+    {
+        return in_array(strtolower((string)$this->status), ['void', 'voided', 'cancelled']);
     }
 }

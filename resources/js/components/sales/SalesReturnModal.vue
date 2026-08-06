@@ -42,11 +42,18 @@
                     <div
                       v-for="sale in searchResults"
                       :key="sale.id"
-                      @click="selectOriginalSale(sale)"
-                      class="px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0"
+                      @click="!(sale.is_void || ['void', 'voided', 'cancelled'].includes(String(sale.status).toLowerCase()) || sale.is_fully_returned || sale.is_returned || sale.return_status === 'full') && selectOriginalSale(sale)"
+                      :class="[
+                        'px-4 py-2 flex justify-between items-center text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0 select-none',
+                        (sale.is_void || ['void', 'voided', 'cancelled'].includes(String(sale.status).toLowerCase()) || sale.is_fully_returned || sale.is_returned || sale.return_status === 'full')
+                          ? 'cursor-not-allowed opacity-50 bg-slate-50/50 dark:bg-zinc-900/50 text-slate-400 dark:text-zinc-500'
+                          : 'hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer'
+                      ]"
                     >
                       <div class="text-left">
-                        <span class="font-bold text-slate-800 dark:text-zinc-105">{{ sale.sale_number }}</span>
+                        <span class="font-bold text-slate-800 dark:text-zinc-105">
+                          {{ sale.sale_number }}{{ (sale.is_void || ['void', 'voided', 'cancelled'].includes(String(sale.status).toLowerCase())) ? (String(sale.status).toLowerCase() === 'cancelled' ? ' (Cancelled)' : ' (Void)') : ((sale.is_fully_returned || sale.is_returned || sale.return_status === 'full') ? ' (Returned)' : '') }}
+                        </span>
                         <p class="text-[10px] text-slate-400 dark:text-zinc-500">{{ sale.customer?.name || 'Walk-in Customer' }} | {{ formatDate(sale.sale_date) }}</p>
                       </div>
                       <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ formatCurrency(sale.total_amount) }}</span>
@@ -676,6 +683,9 @@ export default {
     };
 
     const selectOriginalSale = async (sale) => {
+      if (sale.is_void || ['void', 'voided', 'cancelled'].includes(String(sale.status).toLowerCase()) || sale.is_fully_returned || sale.is_returned || sale.return_status === 'full') {
+        return;
+      }
       try {
         const response = await api.get(`/sales/${sale.id}`);
         originalSale.value = response.data;

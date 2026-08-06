@@ -511,10 +511,23 @@ const form = reactive({
 
 const completedInvoiceOptions = computed(() => [
   { value: '', label: '-- Select Original Invoice --' },
-  ...completedInvoices.value.map(inv => ({
-    value: inv.id,
-    label: `${inv.sale_number} - ${inv.customer?.name || 'Walk-in Customer'} (${formatDate(inv.sale_date)}) - ${formatMoney(inv.total_amount)}`
-  }))
+  ...completedInvoices.value.map(inv => {
+    const isCurrentlyEditingThisInv = String(inv.id) === String(selectedOriginalSaleId.value)
+    const isVoid = !!(inv.is_void || ['void', 'voided', 'cancelled'].includes(String(inv.status).toLowerCase()))
+    const isReturned = !isVoid && !!(inv.is_fully_returned || inv.is_returned || inv.return_status === 'full')
+    let badge = ''
+    if (isVoid) {
+      badge = String(inv.status).toLowerCase() === 'cancelled' ? ' (Cancelled)' : ' (Void)'
+    } else if (isReturned && !isCurrentlyEditingThisInv) {
+      badge = ' (Returned)'
+    }
+
+    return {
+      value: inv.id,
+      label: `${inv.sale_number} - ${inv.customer?.name || 'Walk-in Customer'} (${formatDate(inv.sale_date)}) - ${formatMoney(inv.total_amount)}${badge}`,
+      disabled: isVoid || (isReturned && !isCurrentlyEditingThisInv)
+    }
+  })
 ])
 
 const customerOptions = computed(() => [

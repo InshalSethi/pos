@@ -81,18 +81,21 @@
         <div
           v-for="option in filteredOptions"
           :key="option.value"
-          @click="selectOption(option.value)"
+          @click="!option.disabled && selectOption(option.value)"
           :class="[
-            'p-2.5 px-3.5 text-xs cursor-pointer transition-colors flex items-center justify-between select-none',
-            isOptionSelected(option.value)
-              ? 'bg-slate-900 text-white dark:bg-zinc-800 dark:text-slate-100 font-semibold'
-              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800/60 hover:text-slate-900 dark:hover:text-white font-normal'
+            'p-2.5 px-3.5 text-xs transition-colors flex items-center justify-between select-none',
+            option.disabled
+              ? 'cursor-not-allowed opacity-50 text-slate-400 dark:text-zinc-500 bg-slate-50/50 dark:bg-zinc-900/50'
+              : isOptionSelected(option.value)
+                ? 'bg-slate-900 text-white dark:bg-zinc-800 dark:text-slate-100 font-semibold cursor-pointer'
+                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800/60 hover:text-slate-900 dark:hover:text-white font-normal cursor-pointer'
           ]"
         >
           <div class="flex items-center gap-2">
             <input
               v-if="multiple"
               type="checkbox"
+              :disabled="option.disabled"
               :checked="isOptionSelected(option.value)"
               class="rounded text-indigo-600 pointer-events-none cursor-pointer"
             />
@@ -235,6 +238,9 @@ const toggleOpen = () => {
 };
 
 const selectOption = (val) => {
+  const opt = props.options.find(o => isSameValue(o.value, val));
+  if (opt && opt.disabled) return;
+
   if (props.multiple) {
     let currentArr = Array.isArray(props.modelValue) ? [...props.modelValue] : [];
     const idx = currentArr.findIndex(item => isSameValue(item, val));
@@ -254,7 +260,7 @@ const selectOption = (val) => {
 };
 
 const selectAllOptions = () => {
-  const allValues = filteredOptions.value.map(o => o.value);
+  const allValues = filteredOptions.value.filter(o => !o.disabled).map(o => o.value);
   emit('update:modelValue', allValues);
   emit('change', allValues);
 };

@@ -549,10 +549,22 @@ const showProductDropdown = ref(false)
 
 const completedInvoiceOptions = computed(() => [
   { value: '', label: '-- Select Original Invoice --' },
-  ...completedInvoices.value.map(inv => ({
-    value: inv.id,
-    label: `${inv.sale_number} - ${inv.customer?.name || 'Walk-in Customer'} (${formatDate(inv.sale_date)}) - ${formatMoney(inv.total_amount)}`
-  }))
+  ...completedInvoices.value.map(inv => {
+    const isVoid = !!(inv.is_void || ['void', 'voided', 'cancelled'].includes(String(inv.status).toLowerCase()))
+    const isReturned = !isVoid && !!(inv.is_fully_returned || inv.is_returned || inv.return_status === 'full')
+    let badge = ''
+    if (isVoid) {
+      badge = String(inv.status).toLowerCase() === 'cancelled' ? ' (Cancelled)' : ' (Void)'
+    } else if (isReturned) {
+      badge = ' (Returned)'
+    }
+
+    return {
+      value: inv.id,
+      label: `${inv.sale_number} - ${inv.customer?.name || 'Walk-in Customer'} (${formatDate(inv.sale_date)}) - ${formatMoney(inv.total_amount)}${badge}`,
+      disabled: isVoid || isReturned
+    }
+  })
 ])
 
 const customerOptions = computed(() => [
@@ -700,6 +712,17 @@ const onOriginalSaleSelect = async () => {
   if (!selectedOriginalSaleId.value) {
     form.original_sale_id = null
     return
+  }
+
+  const existingInv = completedInvoices.value.find(i => String(i.id) === String(selectedOriginalSaleId.value))
+  if (existingInv) {
+    const isVoid = !!(existingInv.is_void || ['void', 'voided', 'cancelled'].includes(String(existingInv.status).toLowerCase()))
+    const isReturned = !!(existingInv.is_fully_returned || existingInv.is_returned || existingInv.return_status === 'full')
+    if (isVoid || isReturned) {
+      selectedOriginalSaleId.value = ''
+      form.original_sale_id = null
+      return
+    }
   }
 
   try {

@@ -119,7 +119,8 @@ class SaleController extends Controller
             'warehouse',
             'saleItems.product',
             'saleItems.variation',
-            'saleItems.warehouse'
+            'saleItems.warehouse',
+            'refunds.saleItems',
         ]);
 
         // General Search functionality (invoice number, customer, product name/sku)
