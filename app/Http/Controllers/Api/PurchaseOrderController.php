@@ -61,6 +61,7 @@ class PurchaseOrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('po_number', 'like', "%{$search}%")
+                  ->orWhere('supplier_name', 'like', "%{$search}%")
                   ->orWhereHas('supplier', function ($sq) use ($search) {
                       $sq->where('name', 'like', "%{$search}%");
                   });
@@ -119,8 +120,14 @@ class PurchaseOrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $isWalkin = $request->boolean('is_walkin_supplier');
+
         $validator = Validator::make($request->all(), [
-            'supplier_id' => 'required|exists:suppliers,id',
+            'is_walkin_supplier' => 'nullable|boolean',
+            'supplier_id' => $isWalkin ? 'nullable' : 'required|exists:suppliers,id',
+            'supplier_name' => $isWalkin ? 'required|string|max:255' : 'nullable|string|max:255',
+            'supplier_phone' => 'nullable|string|max:50',
+            'supplier_email' => 'nullable|string|max:255',
             'expected_delivery_date' => 'nullable|date|after:today',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -177,7 +184,7 @@ class PurchaseOrderController extends Controller
 
             // --- ADVANCE BALANCE APPLICATION ---
             $advanceApplied = 0;
-            $supplier = Supplier::find($request->supplier_id);
+            $supplier = $request->supplier_id ? Supplier::find($request->supplier_id) : null;
             if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0) {
                 $requestedAdvance = (float) ($request->advance_applied ?? $supplier->advance_balance);
                 $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $grandTotal);
@@ -189,10 +196,18 @@ class PurchaseOrderController extends Controller
             // Check for overpayment → store as advance
             $overpayment = max(0, $effectivePaid - $grandTotal);
 
+            $supplierName = $isWalkin ? $request->supplier_name : ($supplier?->name ?? $request->supplier_name);
+            $supplierPhone = $isWalkin ? $request->supplier_phone : ($supplier?->phone ?? $request->supplier_phone);
+            $supplierEmail = $isWalkin ? $request->supplier_email : ($supplier?->email ?? $request->supplier_email);
+
             // Create purchase order
             $purchaseOrder = PurchaseOrder::create([
                 'po_number' => $poNumber,
-                'supplier_id' => $request->supplier_id,
+                'supplier_id' => $isWalkin ? null : $request->supplier_id,
+                'is_walkin_supplier' => $isWalkin,
+                'supplier_name' => $supplierName,
+                'supplier_phone' => $supplierPhone,
+                'supplier_email' => $supplierEmail,
                 'user_id' => auth()->id(),
                 'order_date' => now(),
                 'expected_delivery_date' => $request->expected_delivery_date,

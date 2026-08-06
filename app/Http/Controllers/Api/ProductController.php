@@ -1473,4 +1473,168 @@ class ProductController extends Controller
             ];
         }, $result);
     }
+
+    /**
+     * Advanced Item Search Endpoint
+     * Accepts: search_term, search, query, sku, category_id, tag_id, tag, tags, min_price, max_price
+     */
+    public function advancedSearch(Request $request): JsonResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        $query = Product::where('company_id', $companyId)
+            ->where('status', '!=', 'draft')
+            ->where('is_active', true)
+            ->with(['category', 'unit', 'variations']);
+
+        // Search term (Name, Description, SKU, Barcode)
+        $searchTerm = $request->input('search_term') ?? $request->input('search') ?? $request->input('query');
+        if ($searchTerm && trim($searchTerm) !== '') {
+            $term = trim($searchTerm);
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%")
+                  ->orWhere('sku', 'like', "%{$term}%")
+                  ->orWhere('barcode', 'like', "%{$term}%");
+            });
+        }
+
+        // SKU filter
+        if ($request->filled('sku')) {
+            $sku = trim($request->input('sku'));
+            $query->where(function ($q) use ($sku) {
+                $q->where('sku', 'like', "%{$sku}%")
+                  ->orWhereHas('variations', function ($vq) use ($sku) {
+                      $vq->where('sku', 'like', "%{$sku}%");
+                  });
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category_id') || $request->filled('categories')) {
+            $cats = $request->input('category_id') ?? $request->input('categories');
+            $catIds = is_array($cats) ? $cats : explode(',', $cats);
+            $catIds = array_values(array_filter(array_map('trim', $catIds)));
+            if (!empty($catIds)) {
+                $query->whereIn('category_id', $catIds);
+            }
+        }
+
+        // Tag filter
+        if ($request->filled('tag_id') || $request->filled('tag') || $request->filled('tags')) {
+            $rawTags = $request->input('tag_id') ?? $request->input('tag') ?? $request->input('tags');
+            $tagsList = is_array($rawTags) ? $rawTags : explode(',', $rawTags);
+            $tagsList = array_values(array_filter(array_map('trim', $tagsList)));
+            if (!empty($tagsList)) {
+                $query->where(function ($q) use ($tagsList) {
+                    foreach ($tagsList as $t) {
+                        $q->orWhereJsonContains('tags', $t);
+                    }
+                });
+            }
+        }
+
+        // Min price
+        if ($request->filled('min_price') && is_numeric($request->input('min_price'))) {
+            $query->where('selling_price', '>=', (float)$request->input('min_price'));
+        }
+
+        // Max price
+        if ($request->filled('max_price') && is_numeric($request->input('max_price'))) {
+            $query->where('selling_price', '<=', (float)$request->input('max_price'));
+        }
+
+        $products = $query->distinct()->groupBy('products.id')->take(100)->get();
+
+        $inventories = \App\Models\Inventory::where('company_id', $companyId)->get();
+        $stockMap = [];
+        foreach ($inventories as $inv) {
+            $key = $inv->product_id . '-' . ($inv->product_variation_id ?? 'null');
+            if (!isset($stockMap[$key])) {
+                $stockMap[$key] = [];
+            }
+            $stockMap[$key][$inv->warehouse_id] = $inv->stock_qty;
+        }
+
+        $warehouses = \App\Models\Warehouse::where('company_id', $companyId)->where('is_active', true)->get();
+        $flatItems = [];
+
+        foreach ($products as $product) {
+            if ($product->has_variations && count($product->variations) > 0) {
+                foreach ($product->variations as $variation) {
+                    $varKey = $product->id . '-' . $variation->id;
+                    $warehouseStocks = [];
+                    $totalStock = 0;
+                    foreach ($warehouses as $wh) {
+                        $qty = $stockMap[$varKey][$wh->id] ?? 0;
+                        $warehouseStocks[$wh->id] = $qty;
+                        $totalStock += $qty;
+                    }
+                    $flatItems[] = [
+                        'key' => 'var-' . $variation->id,
+                        'product_id' => $product->id,
+                        'product_variation_id' => $variation->id,
+                        'name' => $product->name . ' (' . $variation->variation_name_string . ')',
+                        'parent_name' => $product->name,
+                        'variant_name' => $variation->variation_name_string,
+                        'sku' => $variation->sku,
+                        'barcode' => $variation->barcode,
+                        'description' => $product->description ?? '',
+                        'tags' => $product->tags ?? [],
+                        'image' => $product->image ?? '/images/product-placeholder.png',
+                        'price' => (float)($variation->retail_price ?? $variation->selling_price ?? $product->selling_price ?? 0),
+                        'wholesale_price' => (float)($variation->wholesale_price ?? $product->wholesale_price ?? 0),
+                        'cost_price' => (float)($variation->cost_price ?? $product->cost_price ?? 0),
+                        'tax_rate' => (float)($variation->tax_rate ?? $product->tax_rate ?? 0),
+                        'tax_ids' => $variation->taxes ?? $product->taxes ?? [],
+                        'warehouse_stocks' => $warehouseStocks,
+                        'total_stock' => $totalStock,
+                        'track_inventory' => (bool)$product->track_inventory,
+                        'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
+                        'category' => $product->category?->name ?? 'Uncategorized',
+                        'category_id' => $product->category_id,
+                    ];
+                }
+            } else {
+                $prodKey = $product->id . '-null';
+                $warehouseStocks = [];
+                $totalStock = 0;
+                foreach ($warehouses as $wh) {
+                    $qty = $stockMap[$prodKey][$wh->id] ?? 0;
+                    $warehouseStocks[$wh->id] = $qty;
+                    $totalStock += $qty;
+                }
+                $flatItems[] = [
+                    'key' => 'prod-' . $product->id,
+                    'product_id' => $product->id,
+                    'product_variation_id' => null,
+                    'name' => $product->name,
+                    'parent_name' => $product->name,
+                    'variant_name' => null,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'description' => $product->description ?? '',
+                    'tags' => $product->tags ?? [],
+                    'image' => $product->image ?? '/images/product-placeholder.png',
+                    'price' => (float)($product->selling_price ?? 0),
+                    'wholesale_price' => (float)($product->wholesale_price ?? 0),
+                    'cost_price' => (float)($product->cost_price ?? 0),
+                    'tax_rate' => (float)($product->tax_rate ?? 0),
+                    'tax_ids' => $product->taxes ?? [],
+                    'warehouse_stocks' => $warehouseStocks,
+                    'total_stock' => $totalStock,
+                    'track_inventory' => (bool)$product->track_inventory,
+                    'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
+                    'category' => $product->category?->name ?? 'Uncategorized',
+                    'category_id' => $product->category_id,
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'items' => $flatItems,
+            'data' => $flatItems,
+        ]);
+    }
 }

@@ -43,10 +43,13 @@
           <div class="bg-gray-50 p-4 rounded-lg">
             <h3 class="text-lg font-semibold text-gray-900 mb-3">Supplier Information</h3>
             <div class="space-y-2">
-              <div><span class="font-medium">Name:</span> {{ purchaseOrder.supplier?.name }}</div>
+              <div>
+                <span class="font-medium">Name:</span> {{ purchaseOrder.supplier_name || purchaseOrder.supplier?.name || 'Walk-in Supplier' }}
+                <span v-if="purchaseOrder.is_walkin_supplier || !purchaseOrder.supplier_id" class="ml-2 px-2 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700">Walk-in Supplier</span>
+              </div>
               <div v-if="purchaseOrder.supplier?.company_name"><span class="font-medium">Company:</span> {{ purchaseOrder.supplier.company_name }}</div>
-              <div v-if="purchaseOrder.supplier?.email"><span class="font-medium">Email:</span> {{ purchaseOrder.supplier.email }}</div>
-              <div v-if="purchaseOrder.supplier?.phone"><span class="font-medium">Phone:</span> {{ purchaseOrder.supplier.phone }}</div>
+              <div v-if="purchaseOrder.supplier_email || purchaseOrder.supplier?.email"><span class="font-medium">Email:</span> {{ purchaseOrder.supplier_email || purchaseOrder.supplier?.email }}</div>
+              <div v-if="purchaseOrder.supplier_phone || purchaseOrder.supplier?.phone"><span class="font-medium">Phone:</span> {{ purchaseOrder.supplier_phone || purchaseOrder.supplier?.phone }}</div>
               <div v-if="purchaseOrder.supplier?.address"><span class="font-medium">Address:</span> {{ purchaseOrder.supplier.address }}</div>
             </div>
           </div>

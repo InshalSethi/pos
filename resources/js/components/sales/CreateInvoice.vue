@@ -2093,16 +2093,30 @@ const hasActiveAdvanceFilters = computed(() => {
   );
 });
 
+const dbTags = ref([]);
+
+const loadTags = async () => {
+  try {
+    const response = await api.get('/tags');
+    dbTags.value = response.data.data || response.data || [];
+  } catch (error) {
+    console.error('Error loading tags:', error);
+  }
+};
+
 const availableTags = computed(() => {
   const set = new Set();
+  if (Array.isArray(dbTags.value)) {
+    dbTags.value.forEach(t => {
+      if (t && t.name) set.add(t.name);
+      else if (typeof t === 'string') set.add(t);
+    });
+  }
   products.value.forEach(p => {
     if (Array.isArray(p.tags)) {
       p.tags.forEach(t => set.add(t));
     }
   });
-  if (set.size === 0) {
-    ['Apple', 'New', 'Featured', 'Best Seller', 'Sale', 'Trending', 'Clearance'].forEach(t => set.add(t));
-  }
   return Array.from(set);
 });
 
@@ -2296,6 +2310,51 @@ const removeAdvanceTaxItem = (taxId) => {
   }
 };
 
+const getProductUniqueKey = (p) => {
+  if (p.key) return String(p.key);
+  const prodId = p.product_id || p.id;
+  const varId = p.product_variation_id || p.variation_id || null;
+  return varId ? `var-${varId}` : `prod-${prodId}`;
+};
+
+const isSearchingAdvance = ref(false);
+
+const searchItemsFromBackend = debounce(async () => {
+  if (!hasActiveAdvanceFilters.value) return;
+  try {
+    isSearchingAdvance.value = true;
+    const f = advanceFilters.value;
+    const params = {};
+    if (f.query && f.query.trim()) params.search_term = f.query.trim();
+    if (f.sku && f.sku.trim()) params.sku = f.sku.trim();
+    if (f.categories.length > 0) params.category_id = f.categories.join(',');
+    if (f.tags.length > 0) params.tag_id = f.tags.join(',');
+    if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) params.min_price = f.minPrice;
+    if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) params.max_price = f.maxPrice;
+
+    const res = await api.get('/items/advanced-search', { params });
+    const remoteItems = res.data.items || res.data.data || [];
+    if (remoteItems.length > 0) {
+      const existingKeys = new Set(products.value.map(p => getProductUniqueKey(p)));
+      remoteItems.forEach(item => {
+        const itemKey = getProductUniqueKey(item);
+        if (!existingKeys.has(itemKey)) {
+          products.value.push(item);
+          existingKeys.add(itemKey);
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Advanced search API error:', err);
+  } finally {
+    isSearchingAdvance.value = false;
+  }
+}, 300);
+
+watch(advanceFilters, () => {
+  searchItemsFromBackend();
+}, { deep: true });
+
 const advanceFilteredProducts = computed(() => {
   if (!hasActiveAdvanceFilters.value) {
     return [];
@@ -2310,13 +2369,14 @@ const advanceFilteredProducts = computed(() => {
     list = list.filter(p =>
       (p.name && p.name.toLowerCase().includes(q)) ||
       (p.description && p.description.toLowerCase().includes(q)) ||
-      (p.sku && p.sku.toLowerCase().includes(q))
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
     );
   }
 
   if (f.sku && f.sku.trim()) {
     const s = f.sku.trim().toLowerCase();
-    list = list.filter(p => p.sku && p.sku.toLowerCase().includes(s));
+    list = list.filter(p => (p.sku && p.sku.toLowerCase().includes(s)) || (p.barcode && p.barcode.toLowerCase().includes(s)));
   }
 
   if (f.categories.length > 0) {
@@ -2338,14 +2398,24 @@ const advanceFilteredProducts = computed(() => {
   }
 
   if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) {
-    list = list.filter(p => (p.price || 0) >= parseFloat(f.minPrice));
+    list = list.filter(p => (p.price || p.selling_price || 0) >= parseFloat(f.minPrice));
   }
 
   if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) {
-    list = list.filter(p => (p.price || 0) <= parseFloat(f.maxPrice));
+    list = list.filter(p => (p.price || p.selling_price || 0) <= parseFloat(f.maxPrice));
   }
 
-  return list;
+  const seenKeys = new Set();
+  const uniqueList = [];
+  for (const item of list) {
+    const k = getProductUniqueKey(item);
+    if (!seenKeys.has(k)) {
+      seenKeys.add(k);
+      uniqueList.push(item);
+    }
+  }
+
+  return uniqueList;
 });
 
 const addAdvanceProductToInvoice = (product) => {
@@ -3792,6 +3862,7 @@ onMounted(async () => {
   await loadBankAccounts();
   await loadProducts();
   await loadCategories();
+  await loadTags();
   await loadTaxes();
   await loadSalesmen();
   await fetchNextInvoiceNumber();

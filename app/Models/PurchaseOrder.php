@@ -20,6 +20,10 @@ class PurchaseOrder extends Model
     protected $fillable = [
         'po_number',
         'supplier_id',
+        'is_walkin_supplier',
+        'supplier_name',
+        'supplier_phone',
+        'supplier_email',
         'user_id',
         'order_date',
         'expected_delivery_date',
@@ -37,6 +41,7 @@ class PurchaseOrder extends Model
     ];
 
     protected $casts = [
+        'is_walkin_supplier' => 'boolean',
         'order_date' => 'date',
         'expected_delivery_date' => 'date',
         'actual_delivery_date' => 'date',

@@ -123,6 +123,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/companies/my-companies', [CompanySwitcherController::class, 'index']);
     Route::post('/companies/switch', [CompanySwitcherController::class, 'switchCompany']);
     // Product management routes
+    Route::get('/items/advanced-search', [ProductController::class, 'advancedSearch']);
+    Route::get('/products/advanced-search', [ProductController::class, 'advancedSearch']);
     Route::get('/products/drafts-summary', [ProductController::class, 'fetchDraftsSummary']);
     Route::post('/products/drafts/bulk-destroy', [ProductController::class, 'bulkDestroyDrafts']);
     Route::apiResource('products', ProductController::class);

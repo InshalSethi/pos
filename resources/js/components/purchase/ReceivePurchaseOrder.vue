@@ -66,9 +66,12 @@
 
             <div class="bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-900 rounded-2xl p-4">
               <span class="text-[9px] font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider">Supplier details</span>
-              <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200 mt-1">{{ purchaseOrder.supplier?.name }}</h3>
-              <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">{{ purchaseOrder.supplier?.company_name || 'N/A' }}</p>
-              <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">{{ purchaseOrder.supplier?.phone || purchaseOrder.supplier?.email || 'No contact details available' }}</p>
+              <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200 mt-1 flex items-center gap-2">
+                <span>{{ purchaseOrder.supplier_name || purchaseOrder.supplier?.name || 'Walk-in Supplier' }}</span>
+                <span v-if="purchaseOrder.is_walkin_supplier || !purchaseOrder.supplier_id" class="px-2 py-0.5 text-[9px] font-bold rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300">Walk-in</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">{{ purchaseOrder.is_walkin_supplier ? 'One-Time Supplier' : (purchaseOrder.supplier?.company_name || 'N/A') }}</p>
+              <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">{{ purchaseOrder.supplier_phone || purchaseOrder.supplier_email || purchaseOrder.supplier?.phone || purchaseOrder.supplier?.email || 'No contact details available' }}</p>
             </div>
           </div>
         </div>

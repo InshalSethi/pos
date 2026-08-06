@@ -481,77 +481,123 @@
 
               <!-- BILL TO / SUPPLIER DETAILS SECTION (Moved under Order Number) -->
               <div class="space-y-2 pt-1 pb-1 border-t border-b border-slate-100 dark:border-zinc-800/60">
-                <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
-                
-                <!-- Attached Supplier Search & Add Supplier Input Group -->
-                <div class="relative w-full" id="supplier-search-container">
-                  <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                    <div class="pl-2.5 pr-1 text-slate-400 dark:text-zinc-500 shrink-0">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                    </div>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
+                  <label class="flex items-center space-x-1.5 cursor-pointer select-none">
                     <input
-                      v-model="supplierSearch"
-                      type="text"
-                      placeholder="Search supplier name or phone..."
-                      class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
-                      @input="debouncedSupplierSearch"
-                      @focus="searchSuppliers(supplierSearch)"
+                      type="checkbox"
+                      v-model="orderForm.is_walkin_supplier"
+                      @change="onWalkinToggle"
+                      class="w-3.5 h-3.5 text-purple-600 rounded border-slate-300 focus:ring-purple-500 dark:border-zinc-700 dark:bg-zinc-900 cursor-pointer"
                     />
-                    <button
-                      type="button"
-                      @click="showSupplierModal = true"
-                      title="Add New Supplier"
-                      class="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-200 flex items-center justify-center space-x-1 shrink-0 cursor-pointer border-0"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  <!-- Supplier Search Dropdown Results -->
-                  <div v-if="supplierSearchResults.length > 0" class="absolute z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 shadow-2xl max-h-[220px] rounded-xl border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
-                    <div
-                      v-for="supplier in supplierSearchResults"
-                      :key="supplier.id"
-                      @click="selectSupplier(supplier)"
-                      class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
-                    >
-                      <div class="flex items-center space-x-2.5 min-w-0">
-                        <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
-                          {{ supplier.name.charAt(0).toUpperCase() }}
-                        </div>
-                        <div class="min-w-0">
-                          <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ supplier.name }}</span>
-                          <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ supplier.phone || supplier.email }}</p>
+                    <span class="text-[11px] font-bold text-purple-700 dark:text-purple-400">Walk-in / One-Time</span>
+                  </label>
+                </div>
+                
+                <!-- Walk-in Supplier Name Input (If Checked) -->
+                <div v-if="orderForm.is_walkin_supplier" class="pt-1 text-left">
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Supplier Name <span class="text-rose-500">*</span></label>
+                  <input
+                    v-model="orderForm.supplier_name"
+                    type="text"
+                    placeholder="Enter supplier name..."
+                    class="w-full px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                </div>
+
+                <!-- Standard Supplier Search & Selected Card (If Unchecked) -->
+                <div v-else class="space-y-2">
+                  <!-- Attached Supplier Search & Add Supplier Input Group -->
+                  <div class="relative w-full" id="supplier-search-container">
+                    <div class="flex items-center w-full p-0.5 rounded-xl border border-slate-300/80 dark:border-zinc-700/80 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 bg-slate-50/50 dark:bg-zinc-900/90 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                      <div class="pl-2.5 pr-1 text-slate-400 dark:text-zinc-500 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+                      <input
+                        v-model="supplierSearch"
+                        type="text"
+                        placeholder="Search supplier name or phone..."
+                        class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
+                        @input="debouncedSupplierSearch"
+                        @focus="searchSuppliers(supplierSearch)"
+                      />
+                      <button
+                        type="button"
+                        @click="showSupplierModal = true"
+                        title="Add New Supplier"
+                        class="h-7 px-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm transition-all duration-200 flex items-center justify-center space-x-1 shrink-0 cursor-pointer border-0"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <!-- Supplier Search Dropdown Results -->
+                    <div v-if="supplierSearchResults.length > 0" class="absolute z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 shadow-2xl max-h-[220px] rounded-xl border border-slate-200 dark:border-zinc-800 py-1 text-xs overflow-y-auto custom-scrollbar">
+                      <div
+                        v-for="supplier in supplierSearchResults"
+                        :key="supplier.id"
+                        @click="selectSupplier(supplier)"
+                        class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
+                      >
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                          <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            {{ supplier.name.charAt(0).toUpperCase() }}
+                          </div>
+                          <div class="min-w-0">
+                            <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ supplier.name }}</span>
+                            <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ supplier.phone || supplier.email }}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Selected Supplier Details Card -->
-                <div v-if="selectedSupplier" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
-                  <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Remove
-                  </button>
-                  <div class="flex items-center space-x-2">
-                    <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                      {{ selectedSupplier.name.charAt(0).toUpperCase() }}
-                    </div>
-                    <div class="min-w-0">
-                      <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
-                      <p v-if="selectedSupplier.phone" class="text-[11px] text-slate-500 dark:text-zinc-400">{{ selectedSupplier.phone }}</p>
+                  <!-- Selected Supplier Details Card -->
+                  <div v-if="selectedSupplier" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
+                    <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer">
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Remove
+                    </button>
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                        {{ selectedSupplier.name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="min-w-0">
+                        <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
+                      </div>
                     </div>
                   </div>
+                  <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
+                    No supplier selected. Search above to assign.
+                  </div>
                 </div>
-                <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
-                  No supplier selected. Search above to assign.
+
+                <!-- ALWAYS VISIBLE: Phone Number & Email Address Inputs (Vertical Stack, Matching Sales Invoice Page) -->
+                <div class="flex flex-col gap-2 pt-1 text-left w-full">
+                  <div class="w-full">
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Phone Number</label>
+                    <input
+                      v-model="orderForm.supplier_phone"
+                      type="tel"
+                      placeholder="Enter phone number"
+                      class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div class="w-full">
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Email Address</label>
+                    <input
+                      v-model="orderForm.supplier_email"
+                      type="email"
+                      placeholder="Enter email address"
+                      class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1543,6 +1589,10 @@ const categoryInputRef = ref(null);
 
 const orderForm = ref({
   supplier_id: '',
+  is_walkin_supplier: false,
+  supplier_name: '',
+  supplier_phone: '',
+  supplier_email: '',
   po_number: '',
   order_date: new Date().toISOString().split('T')[0],
   expected_delivery_date: '',
@@ -1618,16 +1668,30 @@ const hasActiveAdvanceFilters = computed(() => {
   );
 });
 
+const dbTags = ref([]);
+
+const loadTags = async () => {
+  try {
+    const response = await api.get('/tags');
+    dbTags.value = response.data.data || response.data || [];
+  } catch (error) {
+    console.error('Error loading tags:', error);
+  }
+};
+
 const availableTags = computed(() => {
   const set = new Set();
+  if (Array.isArray(dbTags.value)) {
+    dbTags.value.forEach(t => {
+      if (t && t.name) set.add(t.name);
+      else if (typeof t === 'string') set.add(t);
+    });
+  }
   products.value.forEach(p => {
     if (Array.isArray(p.tags)) {
       p.tags.forEach(t => set.add(t));
     }
   });
-  if (set.size === 0) {
-    ['Apple', 'New', 'Featured', 'Best Seller', 'Sale', 'Trending', 'Clearance'].forEach(t => set.add(t));
-  }
   return Array.from(set);
 });
 
@@ -1752,6 +1816,51 @@ const removeAdvanceCategory = (catId) => {
   }
 };
 
+const getProductUniqueKey = (p) => {
+  if (p.key) return String(p.key);
+  const prodId = p.product_id || p.id;
+  const varId = p.product_variation_id || p.variation_id || null;
+  return varId ? `var-${varId}` : `prod-${prodId}`;
+};
+
+const isSearchingAdvance = ref(false);
+
+const searchItemsFromBackend = debounce(async () => {
+  if (!hasActiveAdvanceFilters.value) return;
+  try {
+    isSearchingAdvance.value = true;
+    const f = advanceFilters.value;
+    const params = {};
+    if (f.query && f.query.trim()) params.search_term = f.query.trim();
+    if (f.sku && f.sku.trim()) params.sku = f.sku.trim();
+    if (f.categories.length > 0) params.category_id = f.categories.join(',');
+    if (f.tags.length > 0) params.tag_id = f.tags.join(',');
+    if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) params.min_price = f.minPrice;
+    if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) params.max_price = f.maxPrice;
+
+    const res = await api.get('/items/advanced-search', { params });
+    const remoteItems = res.data.items || res.data.data || [];
+    if (remoteItems.length > 0) {
+      const existingKeys = new Set(products.value.map(p => getProductUniqueKey(p)));
+      remoteItems.forEach(item => {
+        const itemKey = getProductUniqueKey(item);
+        if (!existingKeys.has(itemKey)) {
+          products.value.push(item);
+          existingKeys.add(itemKey);
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Advanced search API error:', err);
+  } finally {
+    isSearchingAdvance.value = false;
+  }
+}, 300);
+
+watch(advanceFilters, () => {
+  searchItemsFromBackend();
+}, { deep: true });
+
 const advanceFilteredProducts = computed(() => {
   if (!hasActiveAdvanceFilters.value) {
     return [];
@@ -1765,13 +1874,14 @@ const advanceFilteredProducts = computed(() => {
     list = list.filter(p =>
       (p.name && p.name.toLowerCase().includes(q)) ||
       (p.description && p.description.toLowerCase().includes(q)) ||
-      (p.sku && p.sku.toLowerCase().includes(q))
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
     );
   }
 
   if (f.sku && f.sku.trim()) {
     const s = f.sku.trim().toLowerCase();
-    list = list.filter(p => p.sku && p.sku.toLowerCase().includes(s));
+    list = list.filter(p => (p.sku && p.sku.toLowerCase().includes(s)) || (p.barcode && p.barcode.toLowerCase().includes(s)));
   }
 
   if (f.categories.length > 0) {
@@ -1786,15 +1896,31 @@ const advanceFilteredProducts = computed(() => {
     });
   }
 
+  if (f.taxes.length > 0) {
+    list = list.filter(p => {
+      return f.taxes.some(taxId => p.tax_ids && p.tax_ids.includes(taxId));
+    });
+  }
+
   if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) {
-    list = list.filter(p => (p.cost_price || p.selling_price || p.price || 0) >= parseFloat(f.minPrice));
+    list = list.filter(p => (p.price || p.selling_price || 0) >= parseFloat(f.minPrice));
   }
 
   if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) {
-    list = list.filter(p => (p.cost_price || p.selling_price || p.price || 0) <= parseFloat(f.maxPrice));
+    list = list.filter(p => (p.price || p.selling_price || 0) <= parseFloat(f.maxPrice));
   }
 
-  return list;
+  const seenKeys = new Set();
+  const uniqueList = [];
+  for (const item of list) {
+    const k = getProductUniqueKey(item);
+    if (!seenKeys.has(k)) {
+      seenKeys.add(k);
+      uniqueList.push(item);
+    }
+  }
+
+  return uniqueList;
 });
 
 const addAdvanceProductToOrder = (product) => {
@@ -2200,16 +2326,41 @@ const updateItemTotal = (index) => {
   item.total_cost = qty * cost;
 };
 
+const onWalkinToggle = () => {
+  if (orderForm.value.is_walkin_supplier) {
+    if (selectedSupplier.value) {
+      orderForm.value.supplier_name = selectedSupplier.value.name || '';
+      if (!orderForm.value.supplier_phone) orderForm.value.supplier_phone = selectedSupplier.value.phone || '';
+      if (!orderForm.value.supplier_email) orderForm.value.supplier_email = selectedSupplier.value.email || '';
+    }
+    selectedSupplier.value = null;
+    orderForm.value.supplier_id = '';
+  } else {
+    orderForm.value.supplier_name = '';
+  }
+};
+
 const selectSupplier = (supplier) => {
   selectedSupplier.value = supplier;
   orderForm.value.supplier_id = supplier.id;
+  orderForm.value.supplier_name = supplier.name || '';
+  orderForm.value.supplier_phone = supplier.phone || supplier.mobile || '';
+  orderForm.value.supplier_email = supplier.email || '';
   supplierSearch.value = supplier.name;
   supplierSearchResults.value = [];
   useAdvanceBalance.value = false;
-  // Fetch fresh advance_balance from API
+  // Fetch fresh supplier details from API
   api.get(`/suppliers/${supplier.id}`).then(res => {
-    if (res.data && res.data.advance_balance !== undefined) {
-      selectedSupplier.value = { ...selectedSupplier.value, advance_balance: res.data.advance_balance };
+    if (res.data) {
+      if (res.data.advance_balance !== undefined) {
+        selectedSupplier.value = { ...selectedSupplier.value, advance_balance: res.data.advance_balance };
+      }
+      if (res.data.phone && !orderForm.value.supplier_phone) {
+        orderForm.value.supplier_phone = res.data.phone;
+      }
+      if (res.data.email && !orderForm.value.supplier_email) {
+        orderForm.value.supplier_email = res.data.email;
+      }
     }
   }).catch(() => {});
 };
@@ -2220,6 +2371,11 @@ const clearSupplier = () => {
   supplierSearch.value = '';
   supplierSearchResults.value = [];
   useAdvanceBalance.value = false;
+  if (!orderForm.value.is_walkin_supplier) {
+    orderForm.value.supplier_name = '';
+    orderForm.value.supplier_phone = '';
+    orderForm.value.supplier_email = '';
+  }
 };
 
 const createSupplier = async () => {
@@ -2269,8 +2425,13 @@ const closeSupplierModal = () => {
 };
 
 const saveOrder = async () => {
-  if (!selectedSupplier.value) {
+  if (!orderForm.value.is_walkin_supplier && !selectedSupplier.value) {
     showNotification('Please select a supplier', 'error');
+    return;
+  }
+
+  if (orderForm.value.is_walkin_supplier && !orderForm.value.supplier_name?.trim()) {
+    showNotification('Please enter the walk-in supplier name', 'error');
     return;
   }
 
@@ -2282,8 +2443,13 @@ const saveOrder = async () => {
   saving.value = true;
 
   try {
+    const isWalkin = orderForm.value.is_walkin_supplier;
     const orderData = {
-      supplier_id: orderForm.value.supplier_id,
+      is_walkin_supplier: isWalkin,
+      supplier_id: isWalkin ? null : orderForm.value.supplier_id,
+      supplier_name: isWalkin ? orderForm.value.supplier_name : (selectedSupplier.value?.name || null),
+      supplier_phone: isWalkin ? orderForm.value.supplier_phone : (selectedSupplier.value?.phone || null),
+      supplier_email: isWalkin ? orderForm.value.supplier_email : (selectedSupplier.value?.email || null),
       po_number: orderForm.value.po_number || null,
       order_date: orderForm.value.order_date,
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
@@ -2291,8 +2457,8 @@ const saveOrder = async () => {
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
       amount_paid: orderForm.value.amount_paid || 0,
-      use_advance_balance: useAdvanceBalance.value,
-      advance_applied: advanceToApply.value,
+      use_advance_balance: isWalkin ? false : useAdvanceBalance.value,
+      advance_applied: isWalkin ? 0 : advanceToApply.value,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       items: orderItems.value.map(item => ({
@@ -2330,6 +2496,10 @@ const clearOrder = () => {
   if (confirm('Are you sure you want to clear all purchase order inputs?')) {
     orderItems.value = [];
     clearSupplier();
+    orderForm.value.is_walkin_supplier = false;
+    orderForm.value.supplier_name = '';
+    orderForm.value.supplier_phone = '';
+    orderForm.value.supplier_email = '';
     orderForm.value.tax_amount = 0;
     orderForm.value.shipping_cost = 0;
     orderForm.value.amount_paid = 0;
@@ -2452,6 +2622,7 @@ onMounted(() => {
   fetchActiveCompany();
   loadProducts();
   loadCategories();
+  loadTags();
   loadSuppliers();
   loadTaxes();
   fetchNextPONumber();
