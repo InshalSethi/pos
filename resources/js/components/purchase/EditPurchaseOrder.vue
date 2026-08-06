@@ -1372,7 +1372,7 @@
       >
         <div
           v-if="openWarehouseItemIndex !== null && orderItems[openWarehouseItemIndex]"
-          :style="{ top: warehouseDropdownPos.top, bottom: warehouseDropdownPos.bottom, left: warehouseDropdownPos.left }"
+          :style="{ top: warehouseDropdownPos?.top || 'auto', bottom: warehouseDropdownPos?.bottom || 'auto', left: warehouseDropdownPos?.left || '0px' }"
           class="fixed z-[9999] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-64 overflow-y-auto custom-scrollbar backdrop-blur-md"
         >
           <div class="px-3 py-2 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/40">

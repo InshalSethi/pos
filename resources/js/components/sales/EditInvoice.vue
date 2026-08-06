@@ -1569,7 +1569,7 @@
       >
         <div
           v-if="openWarehouseItemIndex !== null && invoiceItems[openWarehouseItemIndex]"
-          :style="{ top: warehouseDropdownPos.top, bottom: warehouseDropdownPos.bottom, left: warehouseDropdownPos.left }"
+          :style="{ top: warehouseDropdownPos?.top || 'auto', bottom: warehouseDropdownPos?.bottom || 'auto', left: warehouseDropdownPos?.left || '0px' }"
           class="fixed z-[9999] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-64 overflow-y-auto custom-scrollbar backdrop-blur-md"
         >
           <div class="px-3 py-2 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/40">
@@ -1599,37 +1599,6 @@
             >
               Stock: {{ getProductWarehouseStock(invoiceItems[openWarehouseItemIndex]?.product, wh.id) }}
             </span>
-          </div>
-        </div>
-      </transition>
-    </teleport>
-
-    <!-- Teleported Floating Payment Method Dropdown Menu -->
-    <teleport to="body">
-      <transition
-        enter-active-class="transition duration-150 ease-out"
-        enter-from-class="transform opacity-0 scale-95"
-        enter-to-class="transform opacity-100 scale-100"
-        leave-active-class="transition duration-100 ease-in"
-        leave-from-class="transform opacity-100 scale-100"
-        leave-to-class="transform opacity-0 scale-95"
-      >
-        <div
-          v-if="isPaymentDropdownOpen"
-          :style="{ top: paymentDropdownPos.top, bottom: paymentDropdownPos.bottom, left: paymentDropdownPos.left, width: paymentDropdownPos.width }"
-          class="fixed z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-52 overflow-y-auto custom-scrollbar backdrop-blur-md"
-        >
-          <div
-            v-for="pm in paymentMethodsList"
-            :key="pm.value"
-            @click.stop="selectPaymentMethod(pm.value)"
-            class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
-            :class="invoiceForm.payment_method === pm.value ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
-          >
-            <span>{{ pm.label }}</span>
-            <svg v-if="invoiceForm.payment_method === pm.value" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-            </svg>
           </div>
         </div>
       </transition>
