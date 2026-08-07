@@ -7,8 +7,12 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\Payment;
+use App\Models\BankAccount;
+use App\Models\BankTransaction;
 use App\Services\DoubleEntryAccountingService;
 use App\Services\WarehouseInventoryService;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -140,6 +144,12 @@ class PurchaseOrderController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Validate payment balance availability against bank accounts / cash vault
+        $balanceErrorResponse = $this->validatePaymentBalances($request);
+        if ($balanceErrorResponse) {
+            return $balanceErrorResponse;
         }
 
         try {
@@ -278,9 +288,12 @@ class PurchaseOrderController extends Controller
                 }
             }
 
-            // Create double-entry accounting entries
+            // Create double-entry accounting entries (Entry #1: Merchandise Inventory Asset & Accounts Payable)
             $accountingService = new DoubleEntryAccountingService();
             $accountingService->createPurchaseInvoiceEntry($purchaseOrder);
+
+            // Process upfront payments (Entry #2: Accounts Payable Debit & Cash/Bank Credit + BankTransaction Subledger)
+            $this->processPurchaseOrderPayments($purchaseOrder, $request, $supplier);
 
             // --- DEBIT ADVANCE if advance was applied ---
             if ($advanceApplied > 0 && $supplier) {
@@ -345,8 +358,34 @@ class PurchaseOrderController extends Controller
             ], 422);
         }
 
+        // Validate payment balance availability against bank accounts / cash vault
+        $balanceErrorResponse = $this->validatePaymentBalances($request);
+        if ($balanceErrorResponse) {
+            return $balanceErrorResponse;
+        }
+
+        // Validate that proposed PO total is not less than already settled/paid amount
+        $proposedSubtotal = 0;
+        foreach ($request->items as $item) {
+            $proposedSubtotal += $item['quantity_ordered'] * $item['unit_cost'];
+        }
+        $proposedTotal = $proposedSubtotal + (float) $request->get('tax_amount', 0) + (float) $request->get('shipping_cost', 0);
+        $alreadyPaid = (float) $purchaseOrder->amount_paid;
+
+        if ($proposedTotal < $alreadyPaid) {
+            return response()->json([
+                'message' => "Cannot reduce Purchase Order total (" . number_format($proposedTotal, 2) . ") below total payments already settled (" . number_format($alreadyPaid, 2) . ").",
+                'errors' => [
+                    'items' => ["Cannot reduce Purchase Order total below total payments already settled ($" . number_format($alreadyPaid, 2) . ")."]
+                ]
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
+
+            // Lock Purchase Order record for update
+            $purchaseOrder = PurchaseOrder::where('id', $purchaseOrder->id)->lockForUpdate()->firstOrFail();
 
             $companyId = auth()->user()->current_company_id ?? 1;
             $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
@@ -354,11 +393,15 @@ class PurchaseOrderController extends Controller
             $warehouseId = $request->warehouse_id ?? ($purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1));
 
             $inventoryService = new WarehouseInventoryService();
+            $accountingService = new DoubleEntryAccountingService();
 
-            // Reverse previous stock adjustments and WAC if previously received
+            // 1. Reverse original GL Accounting Entry (Storno mechanism)
+            $accountingService->reverseJournalEntryBySource('purchase_order', $purchaseOrder->id);
+
+            // 2. Reverse previous physical stock adjustments and WAC if previously received
             foreach ($purchaseOrder->purchaseOrderItems as $oldItem) {
                 if ($oldItem->quantity_received > 0) {
-                    $product = Product::find($oldItem->product_id);
+                    $product = Product::where('id', $oldItem->product_id)->lockForUpdate()->first();
                     if ($product && $product->track_inventory) {
                         // Reverse WAC: revert cost_price before deducting stock
                         $currentStock = (float) $product->stock_quantity;
@@ -371,7 +414,6 @@ class PurchaseOrderController extends Controller
                             $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
                             $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
                         }
-                        // If remaining stock is 0, retain existing cost_price as base
 
                         $inventoryService->adjustStock(
                             $warehouseId,
@@ -386,7 +428,7 @@ class PurchaseOrderController extends Controller
                 }
             }
 
-            // Calculate new totals
+            // 3. Calculate new totals
             $subtotal = 0;
             $taxAmount = 0;
             $shippingCost = $request->get('shipping_cost', 0);
@@ -398,13 +440,14 @@ class PurchaseOrderController extends Controller
 
             $totalAmount = $subtotal + $taxAmount + $shippingCost;
 
-            $amountPaid = $request->get('amount_paid', 0);
+            $reqPaid = (float) $request->get('amount_paid', 0);
+            $amountPaid = max($alreadyPaid, $reqPaid);
             $grandTotal = $totalAmount;
             $dueAmount = max(0, $grandTotal - $amountPaid);
 
             $supplier = Supplier::findOrFail($request->supplier_id);
 
-            // Update purchase order
+            // 4. Update purchase order record
             $purchaseOrder->update([
                 'supplier_id' => $supplier->id,
                 'supplier_name' => $supplier->name,
@@ -423,7 +466,7 @@ class PurchaseOrderController extends Controller
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
 
-            // Delete existing items and recreate with new stock adjustments
+            // 5. Delete existing items and recreate with new stock adjustments & WAC
             $purchaseOrder->purchaseOrderItems()->delete();
 
             foreach ($request->items as $item) {
@@ -440,13 +483,11 @@ class PurchaseOrderController extends Controller
                     'notes' => $item['notes'] ?? null,
                 ]);
 
-                // Adjust stock for new item with WAC
-                $product = Product::find($item['product_id']);
+                // Adjust stock for new item with WAC calculation
+                $product = Product::where('id', $item['product_id'])->lockForUpdate()->first();
                 if ($product && $product->track_inventory) {
-                    // Refresh product to get latest stock/cost after reversal
                     $product->refresh();
 
-                    // Calculate WAC before adjusting stock
                     $currentStock = (float) $product->stock_quantity;
                     $currentCost = (float) $product->cost_price;
                     $poUnitCost = (float) $item['unit_cost'];
@@ -469,12 +510,21 @@ class PurchaseOrderController extends Controller
                 }
             }
 
+            // 6. Post fresh GL Accounting Entry for updated PO total
+            $accountingService->createPurchaseInvoiceEntry($purchaseOrder->fresh());
+
+            // 7. Process upfront payments for updated PO
+            $supplier = Supplier::find($purchaseOrder->supplier_id);
+            if ($supplier) {
+                $this->processPurchaseOrderPayments($purchaseOrder->fresh(), $request, $supplier);
+            }
+
             DB::commit();
 
             $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
 
             return response()->json([
-                'message' => 'Purchase order updated successfully',
+                'message' => 'Purchase order updated, inventory re-calculated, and GL journal re-posted successfully',
                 'purchase_order' => $purchaseOrder
             ]);
 
@@ -757,5 +807,152 @@ class PurchaseOrderController extends Controller
             'success' => true,
             'po_number' => $poNumber
         ]);
+    }
+
+    /**
+     * Validate payment balances against bank accounts / cash vaults with pessimistic row locking.
+     */
+    protected function validatePaymentBalances(Request $request): ?JsonResponse
+    {
+        // 1. Check array of payment_details if provided
+        if ($request->has('payment_details') && is_array($request->payment_details)) {
+            foreach ($request->payment_details as $payDetail) {
+                $payAmt = (float) ($payDetail['amount'] ?? 0);
+                if ($payAmt > 0 && !empty($payDetail['bank_account_id'])) {
+                    $bankAcc = \App\Models\BankAccount::where('id', $payDetail['bank_account_id'])->lockForUpdate()->first();
+                    if ($bankAcc) {
+                        $available = (float) $bankAcc->current_balance;
+                        if ($payAmt > $available) {
+                            $accountName = $bankAcc->account_name ?: ($bankAcc->bank_name ?: 'Selected Account');
+                            return response()->json([
+                                'message' => "Payment failed due to insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($payAmt, 2) . ".",
+                                'errors' => [
+                                    'payment_details' => ["Insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($payAmt, 2) . "."]
+                                ]
+                            ], 422);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Check direct amount_paid & bank_account_id if provided
+        $amountPaid = (float) $request->get('amount_paid', 0);
+        if ($amountPaid > 0 && $request->filled('bank_account_id')) {
+            $bankAcc = \App\Models\BankAccount::where('id', $request->bank_account_id)->lockForUpdate()->first();
+            if ($bankAcc) {
+                $available = (float) $bankAcc->current_balance;
+                if ($amountPaid > $available) {
+                    $accountName = $bankAcc->account_name ?: ($bankAcc->bank_name ?: 'Selected Account');
+                    return response()->json([
+                        'message' => "Payment failed due to insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($amountPaid, 2) . ".",
+                        'errors' => [
+                            'payment_details' => ["Insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($amountPaid, 2) . "."]
+                        ]
+                    ], 422);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Process upfront payments for purchase order.
+     */
+    protected function processPurchaseOrderPayments(PurchaseOrder $purchaseOrder, Request $request, Supplier $supplier): void
+    {
+        $paymentService = new PaymentService();
+
+        // 1. Process split payments if payment_details array is provided
+        if ($request->has('payment_details') && is_array($request->payment_details)) {
+            foreach ($request->payment_details as $payDetail) {
+                $payAmt = (float) ($payDetail['amount'] ?? 0);
+                if ($payAmt <= 0) continue;
+
+                $bankAccId = $payDetail['bank_account_id'] ?? null;
+                if (!$bankAccId && ($payDetail['payment_method'] ?? 'cash') === 'cash') {
+                    $companyId = auth()->user()?->current_company_id ?? 1;
+                    $defaultCashAcc = BankAccount::where('company_id', $companyId)
+                        ->where(function ($q) {
+                            $q->where('account_type', 'cash')
+                              ->orWhere('account_name', 'LIKE', '%Cash%');
+                        })
+                        ->first();
+                    $bankAccId = $defaultCashAcc ? $defaultCashAcc->id : null;
+                }
+
+                if ($bankAccId) {
+                    $payment = Payment::create([
+                        'payment_number' => Payment::generatePaymentNumber(),
+                        'payment_type' => 'supplier_payment',
+                        'payee_type' => Supplier::class,
+                        'payee_id' => $supplier->id,
+                        'payee_name' => $supplier->name,
+                        'bank_account_id' => $bankAccId,
+                        'amount' => $payAmt,
+                        'payment_date' => now()->toDateString(),
+                        'payment_method' => $payDetail['payment_method'] ?? 'cash',
+                        'reference_type' => PurchaseOrder::class,
+                        'reference_id' => $purchaseOrder->id,
+                        'reference_number' => $purchaseOrder->po_number,
+                        'description' => "Upfront Payment for PO #{$purchaseOrder->po_number}",
+                        'status' => 'paid',
+                        'created_by' => auth()->id() ?? 1,
+                        'paid_by' => auth()->id() ?? 1,
+                        'paid_at' => now(),
+                    ]);
+
+                    $paymentService->markPaymentAsPaid($payment, auth()->id() ?? 1);
+                }
+            }
+        }
+        // 2. Fallback to single payment if amount_paid > 0 and no payment_details array
+        else {
+            $existingPaid = Payment::where('reference_type', PurchaseOrder::class)
+                ->where('reference_id', $purchaseOrder->id)
+                ->where('status', 'paid')
+                ->sum('amount');
+            $requestedPaid = (float) $request->get('amount_paid', 0);
+            $newPaymentAmount = max(0, $requestedPaid - $existingPaid);
+
+            if ($newPaymentAmount > 0) {
+                $bankAccId = $request->bank_account_id;
+                if (!$bankAccId) {
+                    $companyId = auth()->user()?->current_company_id ?? 1;
+                    $defaultCashAcc = BankAccount::where('company_id', $companyId)
+                        ->where(function ($q) {
+                            $q->where('account_type', 'cash')
+                              ->orWhere('account_name', 'LIKE', '%Cash%');
+                        })
+                        ->first();
+                    $bankAccId = $defaultCashAcc ? $defaultCashAcc->id : null;
+                }
+
+                if ($bankAccId) {
+                    $payment = Payment::create([
+                        'payment_number' => Payment::generatePaymentNumber(),
+                        'payment_type' => 'supplier_payment',
+                        'payee_type' => Supplier::class,
+                        'payee_id' => $supplier->id,
+                        'payee_name' => $supplier->name,
+                        'bank_account_id' => $bankAccId,
+                        'amount' => $newPaymentAmount,
+                        'payment_date' => now()->toDateString(),
+                        'payment_method' => $request->payment_method ?? 'cash',
+                        'reference_type' => PurchaseOrder::class,
+                        'reference_id' => $purchaseOrder->id,
+                        'reference_number' => $purchaseOrder->po_number,
+                        'description' => "Upfront Payment for PO #{$purchaseOrder->po_number}",
+                        'status' => 'paid',
+                        'created_by' => auth()->id() ?? 1,
+                        'paid_by' => auth()->id() ?? 1,
+                        'paid_at' => now(),
+                    ]);
+
+                    $paymentService->markPaymentAsPaid($payment, auth()->id() ?? 1);
+                }
+            }
+        }
     }
 }

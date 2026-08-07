@@ -89,6 +89,38 @@ class DoubleEntryAccountingService
     }
 
     /**
+     * Reverse all GL journal entries and recalculate account balances for a given source entity.
+     */
+    public function reverseJournalEntryBySource(string $sourceType, int $sourceId): void
+    {
+        DB::transaction(function () use ($sourceType, $sourceId) {
+            $oldEntries = JournalEntry::where('source_type', $sourceType)
+                ->where('source_id', $sourceId)
+                ->get();
+
+            $affectedAccountIds = [];
+
+            foreach ($oldEntries as $entry) {
+                foreach ($entry->journalEntryLines as $line) {
+                    if ($line->account_id) {
+                        $affectedAccountIds[] = $line->account_id;
+                    }
+                }
+                JournalEntryLine::where('journal_entry_id', $entry->id)->delete();
+                $entry->delete();
+            }
+
+            // Recalculate ground-truth balances for affected Chart of Accounts ledgers
+            foreach (array_unique($affectedAccountIds) as $accId) {
+                $acc = Account::find($accId);
+                if ($acc) {
+                    $acc->updateCurrentBalance();
+                }
+            }
+        });
+    }
+
+    /**
      * Atomic Multi-Payment Double-Entry Accounting Posting for Sales Invoice
      */
     public function processSalesInvoiceAccounting(Sale $sale, array $payments = []): ?JournalEntry
@@ -495,7 +527,8 @@ class DoubleEntryAccountingService
         $companyId = $sale->company_id ?: auth()->user()?->current_company_id;
 
         // Load sale items with product and variation relationships
-        $sale->loadMissing(['saleItems.product', 'saleItems.variation']);
+        $sale->unsetRelation('saleItems');
+        $sale->load(['saleItems.product', 'saleItems.variation']);
 
         $totalCogs = 0;
         foreach ($sale->saleItems as $item) {
@@ -609,12 +642,9 @@ class DoubleEntryAccountingService
                 'partner_id' => $sale->customer_id,
             ]);
 
-            // 4. Update current balances in chart_of_accounts
-            $cogsAccount->current_balance = (float) $cogsAccount->current_balance + $totalCogs;
-            $cogsAccount->save();
-
-            $inventoryAccount->current_balance = (float) $inventoryAccount->current_balance - $totalCogs;
-            $inventoryAccount->save();
+            // 4. Recalculate exact ground-truth balances in chart_of_accounts
+            $cogsAccount->updateCurrentBalance();
+            $inventoryAccount->updateCurrentBalance();
 
             return $journalEntry;
         });
@@ -1213,17 +1243,66 @@ class DoubleEntryAccountingService
      */
     public function createPurchaseInvoiceEntry(PurchaseOrder $purchaseOrder): ?JournalEntry
     {
-        if (!$this->accountingSettings->purchase_invoice_expense_account_id || 
-            !$this->accountingSettings->purchase_invoice_payable_account_id) {
-            return null;
+        $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
+
+        // Prioritize Inventory Asset Account (COA 1040 / Merchandise Inventory Asset) for Perpetual Inventory System
+        $inventoryAssetAccountId = $this->accountingSettings->inventory_asset_account_id 
+            ?: $this->accountingSettings->purchase_invoice_expense_account_id;
+
+        if (!$inventoryAssetAccountId) {
+            $invAcc = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '1040')
+                      ->orWhere('account_code', '10100')
+                      ->orWhere('account_name', 'LIKE', '%Inventory%');
+                })->first();
+            if (!$invAcc) {
+                $invAcc = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1040',
+                    'account_name' => 'Inventory',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+            $inventoryAssetAccountId = $invAcc->id;
         }
 
-        return DB::transaction(function () use ($purchaseOrder) {
+        $payableAccountId = $this->accountingSettings->purchase_invoice_payable_account_id;
+
+        if (!$payableAccountId) {
+            $apAcc = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '20100')
+                      ->orWhere('account_code', '2010')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Payable%');
+                })->first();
+            if (!$apAcc) {
+                $apAcc = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '20100',
+                    'account_name' => 'Accounts Payable',
+                    'account_type' => 'liability',
+                    'account_subtype' => 'current_liability',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+            $payableAccountId = $apAcc->id;
+        }
+
+        return DB::transaction(function () use ($purchaseOrder, $inventoryAssetAccountId, $payableAccountId) {
             $journalEntry = JournalEntry::create([
                 'entry_number' => $this->generateEntryNumber('PI'),
                 'entry_date' => $purchaseOrder->order_date,
                 'reference' => "Purchase Order #{$purchaseOrder->po_number}",
-                'description' => "Purchase from {$purchaseOrder->supplier->name}",
+                'description' => "Purchase Receipt from {$purchaseOrder->supplier->name}",
                 'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $purchaseOrder->total_amount,
@@ -1235,18 +1314,18 @@ class DoubleEntryAccountingService
                 'source_id' => $purchaseOrder->id,
             ]);
 
-            // Debit: Expense/Inventory Account
+            // DEBIT: Merchandise Inventory Asset Account (COA 10100 / Stock in Hand)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
-                'account_id' => $this->accountingSettings->purchase_invoice_expense_account_id,
-                'description' => "Purchase #{$purchaseOrder->po_number}",
+                'account_id' => $inventoryAssetAccountId,
+                'description' => "Merchandise Inventory Receipt #{$purchaseOrder->po_number}",
                 'debit_amount' => $purchaseOrder->subtotal,
                 'credit_amount' => 0,
                 'partner_type' => Supplier::class,
                 'partner_id' => $purchaseOrder->supplier_id,
             ]);
 
-            // Debit: Tax Account (if tax exists)
+            // DEBIT: Tax Account (if tax exists)
             if ($purchaseOrder->tax_amount > 0 && $this->accountingSettings->purchase_invoice_tax_account_id) {
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
@@ -1259,11 +1338,11 @@ class DoubleEntryAccountingService
                 ]);
             }
 
-            // Credit: Accounts Payable
+            // CREDIT: Accounts Payable Liability Account (COA 20100)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
-                'account_id' => $this->accountingSettings->purchase_invoice_payable_account_id,
-                'description' => "Purchase Payable #{$purchaseOrder->po_number}",
+                'account_id' => $payableAccountId,
+                'description' => "Accounts Payable #{$purchaseOrder->po_number}",
                 'debit_amount' => 0,
                 'credit_amount' => $purchaseOrder->total_amount,
                 'partner_type' => Supplier::class,
@@ -1335,17 +1414,67 @@ class DoubleEntryAccountingService
      */
     public function createPurchaseReturnEntry(PurchaseReturn $purchaseReturn): ?JournalEntry
     {
-        if (!$this->accountingSettings->purchase_return_expense_account_id ||
-            !$this->accountingSettings->purchase_return_payable_account_id) {
-            return null;
+        $companyId = $purchaseReturn->company_id ?: (auth()->user()?->current_company_id ?? 1);
+
+        $payableAccountId = $this->accountingSettings->purchase_return_payable_account_id 
+            ?: $this->accountingSettings->purchase_invoice_payable_account_id;
+
+        if (!$payableAccountId) {
+            $apAcc = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '20100')
+                      ->orWhere('account_code', '2010')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Payable%');
+                })->first();
+            if (!$apAcc) {
+                $apAcc = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '20100',
+                    'account_name' => 'Accounts Payable',
+                    'account_type' => 'liability',
+                    'account_subtype' => 'current_liability',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+            $payableAccountId = $apAcc->id;
         }
 
-        return DB::transaction(function () use ($purchaseReturn) {
+        $inventoryAssetAccountId = $this->accountingSettings->inventory_asset_account_id 
+            ?: $this->accountingSettings->purchase_return_expense_account_id 
+            ?: $this->accountingSettings->purchase_invoice_expense_account_id;
+
+        if (!$inventoryAssetAccountId) {
+            $invAcc = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '1040')
+                      ->orWhere('account_code', '10100')
+                      ->orWhere('account_name', 'LIKE', '%Inventory%');
+                })->first();
+            if (!$invAcc) {
+                $invAcc = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1040',
+                    'account_name' => 'Inventory',
+                    'account_type' => 'asset',
+                    'account_subtype' => 'current_asset',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+            $inventoryAssetAccountId = $invAcc->id;
+        }
+
+        return DB::transaction(function () use ($purchaseReturn, $payableAccountId, $inventoryAssetAccountId) {
             $journalEntry = JournalEntry::create([
                 'entry_number' => $this->generateEntryNumber('PRR'),
                 'entry_date' => $purchaseReturn->return_date,
                 'reference' => "Purchase Return #{$purchaseReturn->return_number}",
-                'description' => "Return to {$purchaseReturn->supplier->name}",
+                'description' => "Purchase Return to {$purchaseReturn->supplier->name}",
                 'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $purchaseReturn->total_amount,
@@ -1357,24 +1486,26 @@ class DoubleEntryAccountingService
                 'source_id' => $purchaseReturn->id,
             ]);
 
-            // Debit: Accounts Payable (reducing liability)
+            // DEBIT: Accounts Payable (reducing liability owed to supplier)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
-                'account_id' => $this->accountingSettings->purchase_return_payable_account_id,
-                'description' => "Purchase Return Payable #{$purchaseReturn->return_number}",
+                'account_id' => $payableAccountId,
+                'description' => "Purchase Return AP Reduction #{$purchaseReturn->return_number}",
                 'debit_amount' => $purchaseReturn->total_amount,
                 'credit_amount' => 0,
                 'partner_type' => Supplier::class,
                 'partner_id' => $purchaseReturn->supplier_id,
             ]);
 
-            // Credit: Purchase Returns (reducing expense)
+            // CREDIT: Merchandise Inventory Asset Account (reducing inventory valuation)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
-                'account_id' => $this->accountingSettings->purchase_return_expense_account_id,
-                'description' => "Purchase Return #{$purchaseReturn->return_number}",
+                'account_id' => $inventoryAssetAccountId,
+                'description' => "Purchase Return Inventory Deduction #{$purchaseReturn->return_number}",
                 'debit_amount' => 0,
                 'credit_amount' => $purchaseReturn->total_amount,
+                'partner_type' => Supplier::class,
+                'partner_id' => $purchaseReturn->supplier_id,
             ]);
 
             $this->updateAccountBalances($journalEntry);
@@ -1659,12 +1790,9 @@ class DoubleEntryAccountingService
                 'partner_id' => $sale->customer_id,
             ]);
 
-            // 4. Update balances in chart_of_accounts
-            $receivingAccount->current_balance = (float) $receivingAccount->current_balance + $paymentAmount;
-            $receivingAccount->save();
-
-            $arAccount->current_balance = (float) $arAccount->current_balance - $paymentAmount;
-            $arAccount->save();
+            // 4. Update ground-truth balances in chart_of_accounts
+            $receivingAccount->updateCurrentBalance();
+            $arAccount->updateCurrentBalance();
 
             // 5. Update Sale Invoice balances
             $newPaidAmount = (float) $sale->paid_amount + $paymentAmount;
@@ -1696,8 +1824,14 @@ class DoubleEntryAccountingService
                                 ->first();
 
         $sequence = $lastEntry ? (int) substr($lastEntry->entry_number, -4) + 1 : 1;
+        $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
 
-        return sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        while (JournalEntry::where('entry_number', $entryNumber)->exists()) {
+            $sequence++;
+            $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        }
+
+        return $entryNumber;
     }
 
     /**

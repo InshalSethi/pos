@@ -465,9 +465,22 @@
                               type="number"
                               step="0.01"
                               min="0"
-                              class="w-full pl-7 pr-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              class="w-full pl-7 pr-3 py-1.5 border rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+                              :class="isEditPaymentBalanceExceeded ? 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500 ring-1 ring-rose-500/30' : 'border-slate-300 dark:border-zinc-700'"
                               :placeholder="grandTotal.toFixed(2)"
                             />
+                          </div>
+                          <!-- Available Balance & Insufficient Balance Error Message -->
+                          <div class="text-[11px] font-semibold text-left px-1 mt-1">
+                            <span v-if="selectedAccountAvailableBalance !== null" :class="isEditPaymentBalanceExceeded ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                              Available Balance: {{ currencySymbol }}{{ selectedAccountAvailableBalance.toFixed(2) }}
+                            </span>
+                            <div v-if="isEditPaymentBalanceExceeded" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              <span>Insufficient balance! Available: {{ currencySymbol }}{{ selectedAccountAvailableBalance.toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (orderForm.amount_paid || 0).toFixed(2) }}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -770,8 +783,9 @@
               <!-- Row 1: Primary Action (Update Purchase Order) -->
               <button
                 @click="updateOrder"
-                :disabled="orderItems.length === 0 || saving || !selectedSupplier"
+                :disabled="orderItems.length === 0 || saving || !selectedSupplier || isEditPaymentBalanceExceeded"
                 class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
+                :title="isEditPaymentBalanceExceeded ? 'Cannot update: Insufficient balance in selected payment account' : ''"
               >
                 <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2091,24 +2105,8 @@ const getItemAvailableStock = (item) => {
   return whIds.reduce((sum, whId) => sum + (item.product.warehouse_stocks?.[whId] ?? item.product.stock_quantity ?? 0), 0);
 };
 
-const isItemStockExceeded = (item) => {
-  if (!item || !item.product) return false;
-  const stock = getItemAvailableStock(item);
-  if (typeof stock !== 'number') return false;
-  const qty = parseFloat(item.quantity_ordered) || 0;
-  return qty > stock;
-};
-
-const validateItemStock = (item, notify = false) => {
-  if (!item || !item.product) return;
-  const stock = getItemAvailableStock(item);
-  if (typeof stock !== 'number') return;
-
-  const qty = parseFloat(item.quantity_ordered) || 0;
-  if (qty > stock && notify) {
-    showNotification(`Requested quantity ${qty} exceeds combined available stock ${stock} across selected warehouses`, 'error');
-  }
-};
+const isItemStockExceeded = (item) => false;
+const validateItemStock = (item, notify = false) => {};
 
 const toggleWarehouseSelection = (itemIndex, whId) => {
   const item = orderItems.value[itemIndex];
@@ -2492,6 +2490,11 @@ const updateOrder = async () => {
     return;
   }
 
+  if (isEditPaymentBalanceExceeded.value) {
+    showNotification('Cannot update purchase order: Insufficient balance in selected payment account', 'error');
+    return;
+  }
+
   saving.value = true;
 
   try {
@@ -2636,6 +2639,44 @@ const loadTaxes = async () => {
   }
 };
 
+const allAccounts = ref([]);
+
+const loadBankAccounts = async () => {
+  try {
+    const response = await api.get('/bank-accounts');
+    allAccounts.value = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+  } catch (err) {
+    console.error('Error loading bank accounts:', err);
+  }
+};
+
+const selectedAccountAvailableBalance = computed(() => {
+  if (!allAccounts.value || allAccounts.value.length === 0) return null;
+  const method = (orderForm.value.payment_method || 'cash').toLowerCase();
+  
+  if (method === 'cash') {
+    const cashAcc = allAccounts.value.find(acc => {
+      const type = (acc.type || acc.account_type || '').toLowerCase();
+      const name = (acc.account_name || acc.bank_name || '').toLowerCase();
+      return type === 'cash' || name.includes('cash') || name.includes('vault');
+    });
+    return cashAcc ? parseFloat(cashAcc.current_balance || 0) : null;
+  } else {
+    const bankId = orderForm.value.bank_account_id;
+    let bank = bankId ? allAccounts.value.find(b => b.id == bankId) : null;
+    if (!bank) {
+      bank = allAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+    }
+    return bank ? parseFloat(bank.current_balance || 0) : null;
+  }
+});
+
+const isEditPaymentBalanceExceeded = computed(() => {
+  if (selectedAccountAvailableBalance.value === null) return false;
+  const payAmt = parseFloat(orderForm.value.amount_paid) || 0;
+  return payAmt > selectedAccountAvailableBalance.value;
+});
+
 // Lifecycle
 onMounted(() => {
   updateDateTime();
@@ -2647,6 +2688,7 @@ onMounted(() => {
   loadTags();
   loadSuppliers();
   loadTaxes();
+  loadBankAccounts();
   document.addEventListener('click', handleClickOutside);
 });
 

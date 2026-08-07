@@ -521,22 +521,37 @@
                           <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs">Pay Amount(s):</label>
                           <div class="space-y-3">
                             <!-- Cash Amount Input -->
-                            <div
-                              v-if="selectedPaymentMethods.includes('cash')"
-                              class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
-                            >
-                              <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left">
-                                Cash
-                              </label>
-                              <div class="relative w-24 shrink-0">
-                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
-                                <input
-                                  v-model.number="paymentAmounts.cash"
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7"
-                                />
+                            <div v-if="selectedPaymentMethods.includes('cash')" class="space-y-1">
+                              <div
+                                class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border shadow-2xs shrink-0 transition-colors"
+                                :class="isCashBalanceExceeded ? 'border-rose-500 ring-1 ring-rose-500/30 dark:border-rose-500' : 'border-slate-200 dark:border-zinc-750'"
+                              >
+                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left">
+                                  Cash
+                                </label>
+                                <div class="relative w-24 shrink-0">
+                                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                  <input
+                                    v-model.number="paymentAmounts.cash"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7"
+                                    :class="{ 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500': isCashBalanceExceeded }"
+                                  />
+                                </div>
+                              </div>
+                              <!-- Available Balance & Insufficient Error Message -->
+                              <div class="text-[11px] font-semibold text-left px-1">
+                                <span v-if="cashAvailableBalance !== null" :class="isCashBalanceExceeded ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                                  Available Balance: {{ currencySymbol }}{{ cashAvailableBalance.toFixed(2) }}
+                                </span>
+                                <div v-if="isCashBalanceExceeded" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                  <span>Insufficient balance! Available: {{ currencySymbol }}{{ cashAvailableBalance.toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (paymentAmounts.cash || 0).toFixed(2) }}</span>
+                                </div>
                               </div>
                             </div>
 
@@ -545,26 +560,44 @@
                               <div
                                 v-for="bankId in selectedBankIds"
                                 :key="bankId"
-                                class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-750 shadow-2xs shrink-0"
+                                class="space-y-1"
                               >
-                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left flex items-center gap-1.5" :title="formatBankAccountLabel(allAccounts.find(b => b.id == bankId))">
-                                  <span>{{ formatBankAccountLabel(allAccounts.find(b => b.id == bankId)) }}</span>
-                                  <span v-if="isBankAccountInactive(bankId)" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-                                    (Inactive)
+                                <div
+                                  class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border shadow-2xs shrink-0 transition-colors"
+                                  :class="isBankBalanceExceeded(bankId) ? 'border-rose-500 ring-1 ring-rose-500/30 dark:border-rose-500' : 'border-slate-200 dark:border-zinc-750'"
+                                >
+                                  <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left flex items-center gap-1.5" :title="formatBankAccountLabel(allAccounts.find(b => b.id == bankId))">
+                                    <span>{{ formatBankAccountLabel(allAccounts.find(b => b.id == bankId)) }}</span>
+                                    <span v-if="isBankAccountInactive(bankId)" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                      (Inactive)
+                                    </span>
+                                  </label>
+                                  <div class="relative w-24 shrink-0">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                    <input
+                                      v-model.number="bankPaymentAmounts[bankId]"
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      :disabled="isBankAccountInactive(bankId)"
+                                      :readonly="isBankAccountInactive(bankId)"
+                                      :tabindex="isBankAccountInactive(bankId) ? -1 : 0"
+                                      class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7 disabled:opacity-60 disabled:bg-slate-200/50 dark:disabled:bg-zinc-800/50 disabled:cursor-not-allowed disabled:text-slate-400 select-none"
+                                      :class="{ 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500': isBankBalanceExceeded(bankId) }"
+                                    />
+                                  </div>
+                                </div>
+                                <!-- Available Balance & Insufficient Error Message -->
+                                <div class="text-[11px] font-semibold text-left px-1">
+                                  <span :class="isBankBalanceExceeded(bankId) ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                                    Available Balance: {{ currencySymbol }}{{ getBankAccountBalance(bankId).toFixed(2) }}
                                   </span>
-                                </label>
-                                <div class="relative w-24 shrink-0">
-                                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
-                                  <input
-                                    v-model.number="bankPaymentAmounts[bankId]"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    :disabled="isBankAccountInactive(bankId)"
-                                    :readonly="isBankAccountInactive(bankId)"
-                                    :tabindex="isBankAccountInactive(bankId) ? -1 : 0"
-                                    class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7 disabled:opacity-60 disabled:bg-slate-200/50 dark:disabled:bg-zinc-800/50 disabled:cursor-not-allowed disabled:text-slate-400 select-none"
-                                  />
+                                  <div v-if="isBankBalanceExceeded(bankId)" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span>Insufficient balance! Available: {{ currencySymbol }}{{ getBankAccountBalance(bankId).toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (bankPaymentAmounts[bankId] || 0).toFixed(2) }}</span>
+                                  </div>
                                 </div>
                               </div>
                             </template>
@@ -886,8 +919,9 @@
             <!-- Row 1: Primary Action (Save Purchase Order) -->
             <button
               @click="saveOrder"
-              :disabled="orderItems.length === 0 || saving || !selectedSupplier"
+              :disabled="orderItems.length === 0 || saving || !selectedSupplier || hasInsufficientPaymentBalance"
               class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
+              :title="hasInsufficientPaymentBalance ? 'Cannot save: Insufficient balance in selected payment account(s)' : ''"
             >
               <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1608,6 +1642,49 @@ const activeBankAccounts = computed(() => {
 const selectedBankIds = ref([]);
 const bankPaymentAmounts = ref({});
 const isBankDropdownOpen = ref(false);
+
+const cashAccount = computed(() => {
+  return (allAccounts.value || []).find(acc => {
+    const type = (acc.type || acc.account_type || '').toLowerCase();
+    const name = (acc.account_name || acc.bank_name || '').toLowerCase();
+    return type === 'cash' || name.includes('cash') || name.includes('vault');
+  });
+});
+
+const cashAvailableBalance = computed(() => {
+  if (cashAccount.value && cashAccount.value.current_balance !== undefined) {
+    return parseFloat(cashAccount.value.current_balance || 0);
+  }
+  return null;
+});
+
+const isCashBalanceExceeded = computed(() => {
+  if (!selectedPaymentMethods.value.includes('cash')) return false;
+  if (cashAvailableBalance.value === null) return false;
+  const payAmt = parseFloat(paymentAmounts.value.cash) || 0;
+  return payAmt > cashAvailableBalance.value;
+});
+
+const getBankAccountBalance = (bankId) => {
+  const bank = (allAccounts.value || []).find(b => b.id == bankId);
+  if (!bank) return 0;
+  return parseFloat(bank.current_balance || 0);
+};
+
+const isBankBalanceExceeded = (bankId) => {
+  if (!selectedPaymentMethods.value.includes('card') && !selectedPaymentMethods.value.includes('bank_transfer')) return false;
+  const bal = getBankAccountBalance(bankId);
+  const payAmt = parseFloat(bankPaymentAmounts.value[bankId]) || 0;
+  return payAmt > bal;
+};
+
+const hasInsufficientPaymentBalance = computed(() => {
+  if (isCashBalanceExceeded.value) return true;
+  if (selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer')) {
+    return selectedBankIds.value.some(bankId => isBankBalanceExceeded(bankId));
+  }
+  return false;
+});
 
 const isBankAccountInactive = (bankOrId) => {
   if (!bankOrId) return false;
@@ -2373,24 +2450,8 @@ const getItemAvailableStock = (item) => {
   return whIds.reduce((sum, whId) => sum + (item.product.warehouse_stocks?.[whId] ?? item.product.stock_quantity ?? 0), 0);
 };
 
-const isItemStockExceeded = (item) => {
-  if (!item || !item.product) return false;
-  const stock = getItemAvailableStock(item);
-  if (typeof stock !== 'number') return false;
-  const qty = parseFloat(item.quantity_ordered) || 0;
-  return qty > stock;
-};
-
-const validateItemStock = (item, notify = false) => {
-  if (!item || !item.product) return;
-  const stock = getItemAvailableStock(item);
-  if (typeof stock !== 'number') return;
-
-  const qty = parseFloat(item.quantity_ordered) || 0;
-  if (qty > stock && notify) {
-    showNotification(`Requested quantity ${qty} exceeds combined available stock ${stock} across selected warehouses`, 'error');
-  }
-};
+const isItemStockExceeded = (item) => false;
+const validateItemStock = (item, notify = false) => {};
 
 const toggleWarehouseSelection = (itemIndex, whId) => {
   const item = orderItems.value[itemIndex];
@@ -2719,6 +2780,11 @@ const saveOrder = async () => {
     return;
   }
 
+  if (hasInsufficientPaymentBalance.value) {
+    showNotification('Cannot submit purchase order: Insufficient balance in selected payment account(s)', 'error');
+    return;
+  }
+
   saving.value = true;
 
   try {
@@ -2734,6 +2800,23 @@ const saveOrder = async () => {
       advance_applied: advanceToApply.value,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
+      payment_details: [
+        ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{
+          payment_method: 'cash',
+          bank_account_id: cashAccount.value?.id || null,
+          account_name: cashAccount.value?.account_name || 'Cash Vault',
+          amount: parseFloat(paymentAmounts.value.cash) || 0
+        }] : []),
+        ...(selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer') ? selectedBankIds.value.map(bankId => {
+          const bank = (allAccounts.value || []).find(b => b.id == bankId);
+          return {
+            payment_method: 'bank_transfer',
+            bank_account_id: bankId,
+            account_name: bank ? (bank.account_name || bank.bank_name) : `Bank #${bankId}`,
+            amount: parseFloat(bankPaymentAmounts.value[bankId]) || 0
+          };
+        }).filter(p => p.amount > 0) : [])
+      ],
       items: orderItems.value.map(item => ({
         product_id: item.product_id,
         quantity_ordered: item.quantity_ordered,

@@ -101,7 +101,10 @@ class PurchaseReturnController extends Controller
                 'notes' => $request->notes,
             ]);
 
-            // Create return items
+            // Create return items and deduct inventory stock
+            $inventoryService = new \App\Services\WarehouseInventoryService();
+            $companyId = auth()->user()?->current_company_id ?? 1;
+
             foreach ($request->items as $item) {
                 $purchaseReturn->items()->create([
                     'product_id' => $item['product_id'],
@@ -109,6 +112,19 @@ class PurchaseReturnController extends Controller
                     'unit_cost' => $item['unit_cost'],
                     'total_cost' => $item['quantity'] * $item['unit_cost'],
                 ]);
+
+                $product = \App\Models\Product::find($item['product_id']);
+                if ($product && $product->track_inventory) {
+                    $inventoryService->adjustStock(
+                        $request->warehouse_id ?? 1,
+                        $product->id,
+                        null,
+                        -$item['quantity'],
+                        $companyId,
+                        'Purchase Return',
+                        $returnNumber
+                    );
+                }
             }
 
             // Create accounting entries

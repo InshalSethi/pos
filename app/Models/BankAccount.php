@@ -19,6 +19,12 @@ class BankAccount extends Model
 
     protected static function booted()
     {
+        static::creating(function ($bankAccount) {
+            if ($bankAccount->current_balance === null || $bankAccount->current_balance === '') {
+                $bankAccount->current_balance = $bankAccount->opening_balance ?? 0;
+            }
+        });
+
         static::saved(function ($bankAccount) {
             if ($bankAccount->chart_account_id) {
                 $balanceToSync = $bankAccount->current_balance ?? $bankAccount->opening_balance ?? 0;
@@ -55,6 +61,7 @@ class BankAccount extends Model
         'iban',
         'currency',
         'opening_balance',
+        'current_balance',
         'opening_date',
         'description',
         'is_active',

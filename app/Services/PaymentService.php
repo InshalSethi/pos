@@ -145,6 +145,16 @@ class PaymentService
             // Create journal entry lines based on payment type
             $this->createJournalEntryLines($journalEntry, $payment);
 
+            // Recalculate COA ledger balances for affected accounts
+            foreach ($journalEntry->journalEntryLines as $line) {
+                if ($line->account_id) {
+                    $acc = Account::find($line->account_id);
+                    if ($acc) {
+                        $acc->updateCurrentBalance();
+                    }
+                }
+            }
+
             return $journalEntry;
         });
     }
@@ -181,10 +191,63 @@ class PaymentService
      */
     protected function createSupplierPaymentLines(JournalEntry $journalEntry, Payment $payment): void
     {
+        $companyId = $payment->company_id ?? auth()->user()?->current_company_id ?? 1;
+
+        $payableAccountId = $this->accountingSettings->purchase_invoice_payable_account_id;
+        if (!$payableAccountId) {
+            $apAcc = Account::where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '20100')
+                      ->orWhere('account_code', '2010')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Payable%');
+                })->first();
+            if (!$apAcc) {
+                $apAcc = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '20100',
+                    'account_name' => 'Accounts Payable',
+                    'account_type' => 'liability',
+                    'account_subtype' => 'current_liability',
+                    'opening_balance' => 0,
+                    'current_balance' => 0,
+                    'is_active' => true,
+                    'is_system_account' => true,
+                ]);
+            }
+            $payableAccountId = $apAcc->id;
+        }
+
+        $bankChartAccountId = $payment->bankAccount?->chart_account_id;
+        if (!$bankChartAccountId && $payment->bankAccount) {
+            $bAccount = $payment->bankAccount;
+            $bankChartAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'asset')
+                ->where(function ($q) use ($bAccount) {
+                    $q->where('account_name', 'LIKE', "%{$bAccount->bank_name}%")
+                      ->orWhere('account_name', 'LIKE', "%{$bAccount->account_name}%")
+                      ->orWhere('account_code', '1610')
+                      ->orWhere('account_code', '1600')
+                      ->orWhere('account_code', '1010');
+                })->first();
+            if (!$bankChartAccount) {
+                $bankChartAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1610',
+                    'account_name' => $bAccount->account_name,
+                    'account_type' => 'asset',
+                    'opening_balance' => $bAccount->opening_balance ?? 0,
+                    'current_balance' => $bAccount->current_balance ?? 0,
+                    'is_active' => true,
+                ]);
+            }
+            $bAccount->update(['chart_account_id' => $bankChartAccount->id]);
+            $bankChartAccountId = $bankChartAccount->id;
+        }
+
         // Debit: Accounts Payable
         JournalEntryLine::create([
             'journal_entry_id' => $journalEntry->id,
-            'account_id' => $this->accountingSettings->purchase_invoice_payable_account_id,
+            'account_id' => $payableAccountId,
             'description' => "Payment to supplier: {$payment->payee_name}",
             'debit_amount' => $payment->amount,
             'credit_amount' => 0,
@@ -195,7 +258,7 @@ class PaymentService
         // Credit: Bank Account
         JournalEntryLine::create([
             'journal_entry_id' => $journalEntry->id,
-            'account_id' => $payment->bankAccount->chart_account_id,
+            'account_id' => $bankChartAccountId,
             'description' => "Payment from {$payment->bankAccount->account_name}",
             'debit_amount' => 0,
             'credit_amount' => $payment->amount,
@@ -336,7 +399,7 @@ class PaymentService
         $currentBalance = $lastTransaction ? $lastTransaction->running_balance : $bankAccount->opening_balance;
         $newBalance = $currentBalance - $payment->amount; // Debit reduces balance
 
-        return BankTransaction::create([
+        $transaction = BankTransaction::create([
             'bank_account_id' => $bankAccount->id,
             'transaction_date' => $payment->payment_date,
             'reference_number' => $payment->reference_number ?: $payment->payment_number,
@@ -348,6 +411,14 @@ class PaymentService
             'partner_type' => $payment->payee_type ? $this->getPartnerTypeClass($payment->payee_type) : null,
             'partner_id' => $payment->payee_id,
         ]);
+
+        // Sync bank account current_balance and COA balance
+        $bankAccount->update(['current_balance' => $newBalance]);
+        if ($bankAccount->chartAccount) {
+            $bankAccount->chartAccount->updateCurrentBalance();
+        }
+
+        return $transaction;
     }
 
     /**
@@ -424,15 +495,20 @@ class PaymentService
     /**
      * Get partner type class name
      */
-    protected function getPartnerTypeClass(string $payeeType): string
+    protected function getPartnerTypeClass(?string $payeeType): ?string
     {
+        if (!$payeeType) return null;
+        if (str_contains($payeeType, '\\')) {
+            return $payeeType;
+        }
+
         $classes = [
             'supplier' => 'App\\Models\\Supplier',
             'employee' => 'App\\Models\\Employee',
             'customer' => 'App\\Models\\Customer',
         ];
 
-        return $classes[$payeeType] ?? null;
+        return $classes[strtolower($payeeType)] ?? $payeeType;
     }
 
     /**
@@ -450,8 +526,14 @@ class PaymentService
                                ->first();
 
         $sequence = $lastEntry ? (int) substr($lastEntry->entry_number, -4) + 1 : 1;
+        $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
 
-        return sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        while (JournalEntry::where('entry_number', $entryNumber)->exists()) {
+            $sequence++;
+            $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        }
+
+        return $entryNumber;
     }
 
     /**

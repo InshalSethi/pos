@@ -2048,7 +2048,7 @@ class SaleController extends Controller
                 'total_amount' => -$totalReturnAmount,
                 'paid_amount' => -$totalPaidRefund,
                 'change_amount' => 0,
-                'payment_method' => count($payments) > 1 ? 'mixed' : ($payments[0]['method'] ?? $request->refund_method ?? 'cash'),
+                'payment_method' => count($payments) > 1 ? 'mixed' : (!empty($payments) ? ($payments[0]['method'] ?? 'cash') : (in_array($request->refund_method, ['cash', 'card', 'bank_transfer', 'mobile_payment']) ? $request->refund_method : 'cash')),
                 'payment_details' => $payments,
                 'notes' => $request->return_notes,
                 'is_refund' => true,
