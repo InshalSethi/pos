@@ -139,7 +139,7 @@ class Sale extends Model
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('sale_date', now()->month)
-                    ->whereYear('sale_date', now()->year);
+            ->whereYear('sale_date', now()->year);
     }
 
     // Accessors
@@ -177,8 +177,8 @@ class Sale extends Model
             return true;
         }
 
-        $origTotal = abs((float)$this->total_amount);
-        $returnedTotal = abs((float)$refunds->sum('total_amount'));
+        $origTotal = abs((float) $this->total_amount);
+        $returnedTotal = abs((float) $refunds->sum('total_amount'));
         if ($origTotal > 0 && $returnedTotal >= ($origTotal - 0.01)) {
             return true;
         }
@@ -211,6 +211,6 @@ class Sale extends Model
 
     public function getIsVoidAttribute(): bool
     {
-        return in_array(strtolower((string)$this->status), ['void', 'voided', 'cancelled']);
+        return in_array(strtolower((string) $this->status), ['void', 'voided', 'cancelled']);
     }
 }

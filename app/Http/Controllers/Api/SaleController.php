@@ -62,9 +62,9 @@ class SaleController extends Controller
      */
     public function getReturnStatusCounts(): JsonResponse
     {
-        $base = Sale::where(function($q) {
+        $base = Sale::where(function ($q) {
             $q->where('is_refund', true)
-              ->orWhere('sale_number', 'like', 'RETURN-%');
+                ->orWhere('sale_number', 'like', 'RETURN-%');
         });
 
         $all = (clone $base)->count();
@@ -94,7 +94,7 @@ class SaleController extends Controller
         $nextNumber = 1;
         if ($lastSale) {
             if (preg_match('/(\d+)/i', $lastSale->sale_number, $matches)) {
-                $nextNumber = (int)$matches[1] + 1;
+                $nextNumber = (int) $matches[1] + 1;
             } else {
                 $nextNumber = Sale::count() + 1;
             }
@@ -210,7 +210,7 @@ class SaleController extends Controller
         if ($request->has('status') && $request->status) {
             $statusInput = $request->status;
             $statuses = is_array($statusInput) ? $statusInput : explode(',', $statusInput);
-            
+
             $query->where(function ($q) use ($statuses) {
                 foreach ($statuses as $st) {
                     $st = trim($st);
@@ -246,16 +246,16 @@ class SaleController extends Controller
             if ($isRefund) {
                 $query->where(function ($q) {
                     $q->where('is_refund', true)
-                      ->orWhere('sale_number', 'like', 'RETURN-%');
+                        ->orWhere('sale_number', 'like', 'RETURN-%');
                 });
             } else {
                 $query->where('is_refund', false)
-                      ->where('sale_number', 'not like', 'RETURN-%');
+                    ->where('sale_number', 'not like', 'RETURN-%');
             }
         } else {
             // Default for Sales Invoices listing: exclude returns
             $query->where('is_refund', false)
-                  ->where('sale_number', 'not like', 'RETURN-%');
+                ->where('sale_number', 'not like', 'RETURN-%');
         }
 
         // Filter by payment method
@@ -364,7 +364,7 @@ class SaleController extends Controller
                 } else {
                     $warehouse = Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
                         ?? Warehouse::where('company_id', $companyId)->first();
-                    
+
                     if (!$warehouse) {
                         $warehouse = Warehouse::create([
                             'company_id' => $companyId,
@@ -400,7 +400,7 @@ class SaleController extends Controller
                         ->where('product_id', $product->id)
                         ->where('product_variation_id', $variationId)
                         ->sum('stock_qty');
-                    
+
                     if ($availableQty < $item['quantity']) {
                         return response()->json([
                             'message' => "Requested quantity {$item['quantity']} exceeds combined available stock {$availableQty} across selected warehouses for '{$product->name}'."
@@ -411,7 +411,7 @@ class SaleController extends Controller
                 // Determine tax rate: manual override or fallback
                 $taxPercentage = 0;
                 if (isset($item['tax_rate']) && $item['tax_rate'] !== null) {
-                    $taxPercentage = (float)$item['tax_rate'];
+                    $taxPercentage = (float) $item['tax_rate'];
                 } else {
                     $taxIds = [];
                     $fallbackTaxRate = 0;
@@ -447,7 +447,7 @@ class SaleController extends Controller
 
             // Apply grand total discount and tax overrides if provided
             if ($request->has('grand_discount_amount')) {
-                $totalDiscount += (float)$request->grand_discount_amount;
+                $totalDiscount += (float) $request->grand_discount_amount;
             }
 
             // Tax Toggle Status (enable_tax or is_tax_enabled)
@@ -464,7 +464,7 @@ class SaleController extends Controller
                 if ($request->has('tax_amount') && $request->tax_amount !== null) {
                     $totalTax = (float) $request->tax_amount;
                 } elseif ($request->has('grand_tax_rate')) {
-                    $grandTaxPercentage = (float)$request->grand_tax_rate;
+                    $grandTaxPercentage = (float) $request->grand_tax_rate;
                     $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
                 }
             }
@@ -507,10 +507,13 @@ class SaleController extends Controller
                 }
             } elseif ($typedName !== '' || $customerPhone || $customerEmail) {
                 $existingCustomer = Customer::where('company_id', $companyId)
-                    ->where(function($q) use ($typedName, $customerPhone, $customerEmail) {
-                        if ($typedName !== '') $q->where('name', $typedName);
-                        if ($customerPhone) $q->orWhere('phone', $customerPhone);
-                        if ($customerEmail) $q->orWhere('email', $customerEmail);
+                    ->where(function ($q) use ($typedName, $customerPhone, $customerEmail) {
+                        if ($typedName !== '')
+                            $q->where('name', $typedName);
+                        if ($customerPhone)
+                            $q->orWhere('phone', $customerPhone);
+                        if ($customerEmail)
+                            $q->orWhere('email', $customerEmail);
                     })->first();
 
                 if ($existingCustomer) {
@@ -601,8 +604,8 @@ class SaleController extends Controller
             if (is_array($rawPayments) && count($rawPayments) > 0) {
                 foreach ($rawPayments as $p) {
                     $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
-                    $amount = (float)($p['amount'] ?? 0);
-                    $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int)$p['bank_id'] : null;
+                    $amount = (float) ($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int) $p['bank_id'] : null;
                     if ($amount > 0) {
                         $payments[] = [
                             'type' => $type,
@@ -618,13 +621,13 @@ class SaleController extends Controller
                 $payments[] = [
                     'type' => ($request->payment_method === 'bank_transfer' || $request->payment_method === 'card') ? 'bank' : 'cash',
                     'method' => $request->payment_method,
-                    'bank_id' => $request->bank_id ? (int)$request->bank_id : null,
-                    'amount' => (float)($request->paid_amount ?? 0)
+                    'bank_id' => $request->bank_id ? (int) $request->bank_id : null,
+                    'amount' => (float) ($request->paid_amount ?? 0)
                 ];
             }
 
-            $totalPaidFromPayments = array_reduce($payments, fn($sum, $p) => $sum + (float)$p['amount'], 0);
-            $effectiveDirectPaid = count($payments) > 0 ? $totalPaidFromPayments : (float)($request->paid_amount ?? 0);
+            $totalPaidFromPayments = array_reduce($payments, fn($sum, $p) => $sum + (float) $p['amount'], 0);
+            $effectiveDirectPaid = count($payments) > 0 ? $totalPaidFromPayments : (float) ($request->paid_amount ?? 0);
 
             $primaryPaymentMethod = $request->payment_method ?? 'cash';
             if (count($payments) > 1) {
@@ -655,10 +658,10 @@ class SaleController extends Controller
                 'sales_mode' => $request->sales_mode ?? 'retail',
                 'tax_type' => $request->tax_type ?? 'percentage',
                 'manual_tax_type' => $request->manual_tax_type ?? $request->tax_type ?? 'percentage',
-                'manual_tax_value' => (float)($request->manual_tax_value ?? $request->manual_tax_amount ?? 0),
+                'manual_tax_value' => (float) ($request->manual_tax_value ?? $request->manual_tax_amount ?? 0),
                 'discount_type' => $request->discount_type ?? 'percentage',
                 'manual_discount_type' => $request->manual_discount_type ?? $request->discount_type ?? 'percentage',
-                'manual_discount_value' => (float)($request->manual_discount_value ?? $request->manual_discount_amount ?? 0),
+                'manual_discount_value' => (float) ($request->manual_discount_value ?? $request->manual_discount_amount ?? 0),
                 'color' => $request->color,
                 'subtotal' => $subtotal,
                 'tax_amount' => $totalTax,
@@ -668,7 +671,7 @@ class SaleController extends Controller
                 'change_amount' => $changeAmount,
                 'payment_method' => $primaryPaymentMethod,
                 'payment_details' => $payments,
-                'disabled_tax_ids' => (function() use ($request) {
+                'disabled_tax_ids' => (function () use ($request) {
                     $disabled = $request->disabled_tax_ids ?? $request->excluded_tax_ids;
                     if ($disabled === null && $request->has('applied_tax_ids')) {
                         $applied = is_array($request->applied_tax_ids) ? $request->applied_tax_ids : json_decode($request->applied_tax_ids, true);
@@ -701,7 +704,7 @@ class SaleController extends Controller
                 // Determine tax rate: manual override or fallback
                 $taxPercentage = 0;
                 if (isset($item['tax_rate']) && $item['tax_rate'] !== null) {
-                    $taxPercentage = (float)$item['tax_rate'];
+                    $taxPercentage = (float) $item['tax_rate'];
                 } else {
                     $taxIds = [];
                     $fallbackTaxRate = 0;
@@ -752,7 +755,8 @@ class SaleController extends Controller
                 if ($product->track_inventory) {
                     $remainingQty = $item['quantity'];
                     foreach ($targetWarehouseIds as $whId) {
-                        if ($remainingQty <= 0) break;
+                        if ($remainingQty <= 0)
+                            break;
 
                         $inv = Inventory::where('warehouse_id', $whId)
                             ->where('product_id', $product->id)
@@ -891,19 +895,24 @@ class SaleController extends Controller
      */
     protected function isFinancialEdit(Sale $sale, Request $request): bool
     {
-        $newSubtotal = $request->has('subtotal') && $request->subtotal !== null ? (float)$request->subtotal : null;
-        $newTax = $request->has('tax_amount') && $request->tax_amount !== null ? (float)$request->tax_amount : null;
-        $newDiscount = $request->has('discount_amount') && $request->discount_amount !== null ? (float)$request->discount_amount : null;
-        $newTotal = ($request->has('total_amount') || $request->has('grand_total')) 
-            ? (float)($request->total_amount ?? $request->grand_total) 
+        $newSubtotal = $request->has('subtotal') && $request->subtotal !== null ? (float) $request->subtotal : null;
+        $newTax = $request->has('tax_amount') && $request->tax_amount !== null ? (float) $request->tax_amount : null;
+        $newDiscount = $request->has('discount_amount') && $request->discount_amount !== null ? (float) $request->discount_amount : null;
+        $newTotal = ($request->has('total_amount') || $request->has('grand_total'))
+            ? (float) ($request->total_amount ?? $request->grand_total)
             : null;
-        $newPaid = $request->has('paid_amount') ? (float)$request->paid_amount : null;
+        $newPaid = $request->has('paid_amount') ? (float) $request->paid_amount : null;
 
-        if ($newSubtotal !== null && abs($newSubtotal - (float)$sale->subtotal) > 0.001) return true;
-        if ($newTax !== null && abs($newTax - (float)$sale->tax_amount) > 0.001) return true;
-        if ($newDiscount !== null && abs($newDiscount - (float)$sale->discount_amount) > 0.001) return true;
-        if ($newTotal !== null && abs($newTotal - (float)$sale->total_amount) > 0.001) return true;
-        if ($newPaid !== null && abs($newPaid - (float)$sale->paid_amount) > 0.001) return true;
+        if ($newSubtotal !== null && abs($newSubtotal - (float) $sale->subtotal) > 0.001)
+            return true;
+        if ($newTax !== null && abs($newTax - (float) $sale->tax_amount) > 0.001)
+            return true;
+        if ($newDiscount !== null && abs($newDiscount - (float) $sale->discount_amount) > 0.001)
+            return true;
+        if ($newTotal !== null && abs($newTotal - (float) $sale->total_amount) > 0.001)
+            return true;
+        if ($newPaid !== null && abs($newPaid - (float) $sale->paid_amount) > 0.001)
+            return true;
 
         $oldItems = $sale->saleItems;
         $newItems = $request->input('items', []);
@@ -919,12 +928,12 @@ class SaleController extends Controller
                 if (!isset($oldMap[$key])) {
                     $oldMap[$key] = [
                         'quantity' => 0,
-                        'unit_price' => (float)$item->unit_price,
-                        'discount_amount' => (float)$item->discount_amount,
-                        'tax_amount' => (float)$item->tax_amount,
+                        'unit_price' => (float) $item->unit_price,
+                        'discount_amount' => (float) $item->discount_amount,
+                        'tax_amount' => (float) $item->tax_amount,
                     ];
                 }
-                $oldMap[$key]['quantity'] += (float)$item->quantity;
+                $oldMap[$key]['quantity'] += (float) $item->quantity;
             }
 
             $newMap = [];
@@ -933,12 +942,12 @@ class SaleController extends Controller
                 if (!isset($newMap[$key])) {
                     $newMap[$key] = [
                         'quantity' => 0,
-                        'unit_price' => (float)($item['unit_price'] ?? 0),
-                        'discount_amount' => (float)($item['discount_amount'] ?? 0),
-                        'tax_amount' => (float)($item['tax_amount'] ?? 0),
+                        'unit_price' => (float) ($item['unit_price'] ?? 0),
+                        'discount_amount' => (float) ($item['discount_amount'] ?? 0),
+                        'tax_amount' => (float) ($item['tax_amount'] ?? 0),
                     ];
                 }
-                $newMap[$key]['quantity'] += (float)($item['quantity'] ?? 0);
+                $newMap[$key]['quantity'] += (float) ($item['quantity'] ?? 0);
             }
 
             if (count($oldMap) !== count($newMap)) {
@@ -946,12 +955,17 @@ class SaleController extends Controller
             }
 
             foreach ($newMap as $key => $newVal) {
-                if (!isset($oldMap[$key])) return true;
+                if (!isset($oldMap[$key]))
+                    return true;
                 $oldVal = $oldMap[$key];
-                if (abs($oldVal['quantity'] - $newVal['quantity']) > 0.0001) return true;
-                if (abs($oldVal['unit_price'] - $newVal['unit_price']) > 0.001) return true;
-                if (abs($oldVal['discount_amount'] - $newVal['discount_amount']) > 0.001) return true;
-                if (abs($oldVal['tax_amount'] - $newVal['tax_amount']) > 0.001) return true;
+                if (abs($oldVal['quantity'] - $newVal['quantity']) > 0.0001)
+                    return true;
+                if (abs($oldVal['unit_price'] - $newVal['unit_price']) > 0.001)
+                    return true;
+                if (abs($oldVal['discount_amount'] - $newVal['discount_amount']) > 0.001)
+                    return true;
+                if (abs($oldVal['tax_amount'] - $newVal['tax_amount']) > 0.001)
+                    return true;
             }
         }
 
@@ -960,8 +974,8 @@ class SaleController extends Controller
         if (is_array($rawPayments) && count($rawPayments) > 0) {
             foreach ($rawPayments as $p) {
                 $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
-                $amount = (float)($p['amount'] ?? 0);
-                $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int)$p['bank_id'] : null;
+                $amount = (float) ($p['amount'] ?? 0);
+                $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int) $p['bank_id'] : null;
                 if ($amount > 0) {
                     $newPayments[] = [
                         'type' => $type,
@@ -976,8 +990,8 @@ class SaleController extends Controller
         if (empty($oldPayments) && $sale->paid_amount > 0) {
             $oldPayments[] = [
                 'type' => ($sale->payment_method === 'bank_transfer' || $sale->payment_method === 'card') ? 'bank' : 'cash',
-                'bank_id' => $sale->bank_id ? (int)$sale->bank_id : null,
-                'amount' => (float)$sale->paid_amount,
+                'bank_id' => $sale->bank_id ? (int) $sale->bank_id : null,
+                'amount' => (float) $sale->paid_amount,
             ];
         }
 
@@ -989,12 +1003,15 @@ class SaleController extends Controller
             $np = $newPayments[$i];
             $op = $oldPayments[$i] ?? [];
             $opType = strtolower($op['type'] ?? $op['method'] ?? 'cash');
-            $opBank = isset($op['bank_id']) && $op['bank_id'] !== null ? (int)$op['bank_id'] : null;
-            $opAmount = (float)($op['amount'] ?? 0);
+            $opBank = isset($op['bank_id']) && $op['bank_id'] !== null ? (int) $op['bank_id'] : null;
+            $opAmount = (float) ($op['amount'] ?? 0);
 
-            if ($np['type'] !== $opType) return true;
-            if ($np['bank_id'] !== $opBank) return true;
-            if (abs($np['amount'] - $opAmount) > 0.001) return true;
+            if ($np['type'] !== $opType)
+                return true;
+            if ($np['bank_id'] !== $opBank)
+                return true;
+            if (abs($np['amount'] - $opAmount) > 0.001)
+                return true;
         }
 
         return false;
@@ -1152,9 +1169,9 @@ class SaleController extends Controller
             $allKeys = array_unique(array_merge(array_keys($oldMap), array_keys($newMap)));
             foreach ($allKeys as $key) {
                 $parts = explode('_', $key);
-                $productId = (int)$parts[0];
-                $variationId = $parts[1] === 'null' ? null : (int)$parts[1];
-                $warehouseId = (int)$parts[2];
+                $productId = (int) $parts[0];
+                $variationId = $parts[1] === 'null' ? null : (int) $parts[1];
+                $warehouseId = (int) $parts[2];
 
                 $oldQty = $oldMap[$key] ?? 0;
                 $newQty = $newMap[$key] ?? 0;
@@ -1167,7 +1184,7 @@ class SaleController extends Controller
                             ->where('product_id', $productId)
                             ->where('product_variation_id', $variationId)
                             ->first();
-                        
+
                         $availableQty = $inventory ? $inventory->stock_qty : 0;
                         if ($availableQty < $diff) {
                             return response()->json([
@@ -1182,9 +1199,9 @@ class SaleController extends Controller
             $inventoryService = new WarehouseInventoryService();
             foreach ($allKeys as $key) {
                 $parts = explode('_', $key);
-                $productId = (int)$parts[0];
-                $variationId = $parts[1] === 'null' ? null : (int)$parts[1];
-                $warehouseId = (int)$parts[2];
+                $productId = (int) $parts[0];
+                $variationId = $parts[1] === 'null' ? null : (int) $parts[1];
+                $warehouseId = (int) $parts[2];
 
                 $oldQty = $oldMap[$key] ?? 0;
                 $newQty = $newMap[$key] ?? 0;
@@ -1254,7 +1271,7 @@ class SaleController extends Controller
                 // Determine tax rate
                 $taxPercentage = 0;
                 if (isset($item['tax_rate']) && $item['tax_rate'] !== null) {
-                    $taxPercentage = (float)$item['tax_rate'];
+                    $taxPercentage = (float) $item['tax_rate'];
                 } else {
                     $taxIds = [];
                     $fallbackTaxRate = 0;
@@ -1279,14 +1296,14 @@ class SaleController extends Controller
                     }
                 }
 
-                $rawQty = abs((float)($item['quantity'] ?? 1));
-                $itemSubtotal = $rawQty * (float)$item['unit_price'];
-                $itemDiscount = (float)($item['discount_amount'] ?? 0);
-                $itemTax = (isset($item['tax_amount']) && (float)$item['tax_amount'] != 0)
-                    ? abs((float)$item['tax_amount'])
+                $rawQty = abs((float) ($item['quantity'] ?? 1));
+                $itemSubtotal = $rawQty * (float) $item['unit_price'];
+                $itemDiscount = (float) ($item['discount_amount'] ?? 0);
+                $itemTax = (isset($item['tax_amount']) && (float) $item['tax_amount'] != 0)
+                    ? abs((float) $item['tax_amount'])
                     : (($itemSubtotal - $itemDiscount) * ($taxPercentage / 100));
                 $itemTotal = (isset($item['total']) || isset($item['total_amount']))
-                    ? abs((float)($item['total'] ?? $item['total_amount']))
+                    ? abs((float) ($item['total'] ?? $item['total_amount']))
                     : ($itemSubtotal - $itemDiscount + $itemTax);
 
                 $subtotal += $itemSubtotal;
@@ -1312,7 +1329,7 @@ class SaleController extends Controller
 
             // Apply grand total discount and tax overrides
             if ($request->has('grand_discount_amount')) {
-                $totalDiscount += (float)$request->grand_discount_amount;
+                $totalDiscount += (float) $request->grand_discount_amount;
             }
 
             // Tax Toggle Status (enable_tax or is_tax_enabled)
@@ -1329,7 +1346,7 @@ class SaleController extends Controller
                 if ($request->has('tax_amount') && $request->tax_amount !== null) {
                     $totalTax = abs((float) $request->tax_amount);
                 } elseif ($request->has('grand_tax_rate')) {
-                    $grandTaxPercentage = (float)$request->grand_tax_rate;
+                    $grandTaxPercentage = (float) $request->grand_tax_rate;
                     $totalTax += ($subtotal - $totalDiscount) * ($grandTaxPercentage / 100);
                 }
             }
@@ -1364,8 +1381,8 @@ class SaleController extends Controller
             if (is_array($rawPayments) && count($rawPayments) > 0) {
                 foreach ($rawPayments as $p) {
                     $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
-                    $amount = (float)($p['amount'] ?? 0);
-                    $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int)$p['bank_id'] : null;
+                    $amount = (float) ($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) && $p['bank_id'] !== null ? (int) $p['bank_id'] : null;
                     if ($amount > 0) {
                         $payments[] = [
                             'type' => $type,
@@ -1381,13 +1398,13 @@ class SaleController extends Controller
                 $payments[] = [
                     'type' => ($request->payment_method === 'bank_transfer' || $request->payment_method === 'card') ? 'bank' : 'cash',
                     'method' => $request->payment_method,
-                    'bank_id' => $request->bank_id ? (int)$request->bank_id : null,
-                    'amount' => (float)($request->paid_amount ?? $sale->paid_amount ?? 0)
+                    'bank_id' => $request->bank_id ? (int) $request->bank_id : null,
+                    'amount' => (float) ($request->paid_amount ?? $sale->paid_amount ?? 0)
                 ];
             }
 
-            $totalPaidFromPayments = array_reduce($payments, fn($sum, $p) => $sum + (float)$p['amount'], 0);
-            $effectiveDirectPaid = count($payments) > 0 ? $totalPaidFromPayments : (float)($request->paid_amount ?? $sale->paid_amount);
+            $totalPaidFromPayments = array_reduce($payments, fn($sum, $p) => $sum + (float) $p['amount'], 0);
+            $effectiveDirectPaid = count($payments) > 0 ? $totalPaidFromPayments : (float) ($request->paid_amount ?? $sale->paid_amount);
 
             $primaryPaymentMethod = $request->payment_method ?? $sale->payment_method;
             if (count($payments) > 1) {
@@ -1418,10 +1435,13 @@ class SaleController extends Controller
                 }
             } elseif ($typedName !== '' || $customerPhone || $customerEmail) {
                 $existingCustomer = Customer::where('company_id', $companyId)
-                    ->where(function($q) use ($typedName, $customerPhone, $customerEmail) {
-                        if ($typedName !== '') $q->where('name', $typedName);
-                        if ($customerPhone) $q->orWhere('phone', $customerPhone);
-                        if ($customerEmail) $q->orWhere('email', $customerEmail);
+                    ->where(function ($q) use ($typedName, $customerPhone, $customerEmail) {
+                        if ($typedName !== '')
+                            $q->where('name', $typedName);
+                        if ($customerPhone)
+                            $q->orWhere('phone', $customerPhone);
+                        if ($customerEmail)
+                            $q->orWhere('email', $customerEmail);
                     })->first();
 
                 if ($existingCustomer) {
@@ -1463,10 +1483,10 @@ class SaleController extends Controller
                 'sales_mode' => $request->sales_mode ?? $sale->sales_mode ?? 'retail',
                 'tax_type' => $request->tax_type ?? $sale->tax_type ?? 'percentage',
                 'manual_tax_type' => $request->manual_tax_type ?? $request->tax_type ?? $sale->manual_tax_type ?? 'percentage',
-                'manual_tax_value' => (float)($request->manual_tax_value ?? $request->manual_tax_amount ?? $sale->manual_tax_value ?? 0),
+                'manual_tax_value' => (float) ($request->manual_tax_value ?? $request->manual_tax_amount ?? $sale->manual_tax_value ?? 0),
                 'discount_type' => $request->discount_type ?? $sale->discount_type ?? 'percentage',
                 'manual_discount_type' => $request->manual_discount_type ?? $request->discount_type ?? $sale->manual_discount_type ?? 'percentage',
-                'manual_discount_value' => (float)($request->manual_discount_value ?? $request->manual_discount_amount ?? $sale->manual_discount_value ?? 0),
+                'manual_discount_value' => (float) ($request->manual_discount_value ?? $request->manual_discount_amount ?? $sale->manual_discount_value ?? 0),
                 'status' => $effectiveDirectPaid < $totalAmount ? 'pending' : (($request->status ?? $sale->status) === 'pending' ? 'completed' : ($request->status ?? $sale->status)),
                 'subtotal' => $isReturn ? -$subtotal : $subtotal,
                 'tax_amount' => $isReturn ? -$totalTax : $totalTax,
@@ -1476,7 +1496,7 @@ class SaleController extends Controller
                 'change_amount' => max(0, $effectiveDirectPaid - $totalAmount),
                 'payment_method' => $primaryPaymentMethod,
                 'payment_details' => $payments,
-                'disabled_tax_ids' => (function() use ($request, $sale) {
+                'disabled_tax_ids' => (function () use ($request, $sale) {
                     if ($request->has('disabled_tax_ids') || $request->has('excluded_tax_ids')) {
                         $disabled = $request->disabled_tax_ids ?? $request->excluded_tax_ids;
                         return is_string($disabled) ? json_decode($disabled, true) : $disabled;
@@ -1910,10 +1930,10 @@ class SaleController extends Controller
                 $totalReturnAmount += $returnItem['return_amount'];
 
                 $itemTaxReturn = 0;
-                if ((float)$originalItem->tax_amount > 0 && $originalItem->quantity > 0) {
-                    $itemTaxReturn = ($returnItem['quantity'] / $originalItem->quantity) * (float)$originalItem->tax_amount;
-                } elseif ((float)$originalSale->tax_amount > 0 && (float)$originalSale->total_amount > 0) {
-                    $itemTaxReturn = ($returnItem['return_amount'] / (float)$originalSale->total_amount) * (float)$originalSale->tax_amount;
+                if ((float) $originalItem->tax_amount > 0 && $originalItem->quantity > 0) {
+                    $itemTaxReturn = ($returnItem['quantity'] / $originalItem->quantity) * (float) $originalItem->tax_amount;
+                } elseif ((float) $originalSale->tax_amount > 0 && (float) $originalSale->total_amount > 0) {
+                    $itemTaxReturn = ($returnItem['return_amount'] / (float) $originalSale->total_amount) * (float) $originalSale->tax_amount;
                 }
                 $totalReturnTax += $itemTaxReturn;
 
@@ -1983,8 +2003,8 @@ class SaleController extends Controller
             if (is_array($rawPayments) && count($rawPayments) > 0) {
                 foreach ($rawPayments as $p) {
                     $type = strtolower($p['type'] ?? $p['method'] ?? 'cash');
-                    $amount = (float)($p['amount'] ?? 0);
-                    $bankId = isset($p['bank_id']) ? (int)$p['bank_id'] : null;
+                    $amount = (float) ($p['amount'] ?? 0);
+                    $bankId = isset($p['bank_id']) ? (int) $p['bank_id'] : null;
                     if ($amount > 0) {
                         $payments[] = [
                             'type' => $type,
@@ -2015,16 +2035,17 @@ class SaleController extends Controller
                 if ($p['type'] === 'cash') {
                     $cashAccount = Account::where('company_id', $companyId)
                         ->where('account_type', 'asset')
-                        ->where(function ($q) { $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%'); })
+                        ->where(function ($q) {
+                            $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%'); })
                         ->first();
-                    $cashBalance = $cashAccount ? (float)$cashAccount->current_balance : 0;
+                    $cashBalance = $cashAccount ? (float) $cashAccount->current_balance : 0;
                     if ($p['amount'] > $cashBalance) {
                         throw new \Exception("Insufficient cash funds! Maximum available cash is Rs " . number_format($cashBalance, 2));
                     }
                 } elseif (in_array($p['type'], ['bank', 'card', 'bank_transfer']) && !empty($p['bank_id'])) {
                     $bankAcc = \App\Models\BankAccount::where('company_id', $companyId)->find($p['bank_id']);
                     if ($bankAcc) {
-                        $bankBalance = (float)$bankAcc->current_balance > 0 ? (float)$bankAcc->current_balance : $bankAcc->calculateBalance();
+                        $bankBalance = (float) $bankAcc->current_balance > 0 ? (float) $bankAcc->current_balance : $bankAcc->calculateBalance();
                         if ($p['amount'] > $bankBalance) {
                             throw new \Exception("Insufficient funds! Maximum available in {$bankAcc->bank_name} ({$bankAcc->account_name}) is Rs " . number_format($bankBalance, 2));
                         }
@@ -2306,12 +2327,16 @@ class SaleController extends Controller
         // Fetch warehouses with counters and counters_count
         $warehouses = Warehouse::where('company_id', $companyId)
             ->where('is_active', true)
-            ->with(['counters' => function ($q) {
-                $q->where('status', 'active');
-            }])
-            ->withCount(['counters' => function ($q) {
-                $q->where('status', 'active');
-            }])
+            ->with([
+                'counters' => function ($q) {
+                    $q->where('status', 'active');
+                }
+            ])
+            ->withCount([
+                'counters' => function ($q) {
+                    $q->where('status', 'active');
+                }
+            ])
             ->orderBy('name')
             ->get();
 
@@ -2342,7 +2367,7 @@ class SaleController extends Controller
 
         foreach ($products as $product) {
             $productTaxes = $product->taxes ?? [];
-            
+
             // Calculate combined tax rate from product taxes array, fallback to tax_rate
             $productTaxPercentage = 0;
             if (!empty($productTaxes) && is_array($productTaxes)) {
@@ -2354,7 +2379,7 @@ class SaleController extends Controller
             if ($product->has_variations && count($product->variations) > 0) {
                 foreach ($product->variations as $variation) {
                     $varKey = $product->id . '-' . $variation->id;
-                    
+
                     // Stock per warehouse
                     $warehouseStocks = [];
                     $totalStock = 0;
@@ -2385,14 +2410,14 @@ class SaleController extends Controller
                         'description' => $product->description ?? '',
                         'tags' => $product->tags ?? [],
                         'image' => $product->image ?? '/images/product-placeholder.png',
-                        'price' => (float)($variation->retail_price ?? $variation->selling_price ?? $product->selling_price ?? 0),
-                        'wholesale_price' => (float)($variation->wholesale_price ?? $product->wholesale_price ?? 0),
-                        'cost_price' => (float)($variation->cost_price ?? $product->cost_price ?? 0),
-                        'tax_rate' => (float)$varTaxPercentage,
+                        'price' => (float) ($variation->retail_price ?? $variation->selling_price ?? $product->selling_price ?? 0),
+                        'wholesale_price' => (float) ($variation->wholesale_price ?? $product->wholesale_price ?? 0),
+                        'cost_price' => (float) ($variation->cost_price ?? $product->cost_price ?? 0),
+                        'tax_rate' => (float) $varTaxPercentage,
                         'tax_ids' => $varTaxes,
                         'warehouse_stocks' => $warehouseStocks,
                         'total_stock' => $totalStock,
-                        'track_inventory' => (bool)$product->track_inventory,
+                        'track_inventory' => (bool) $product->track_inventory,
                         'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                         'category' => $product->category?->name ?? 'Uncategorized',
                         'category_id' => $product->category_id,
@@ -2400,7 +2425,7 @@ class SaleController extends Controller
                 }
             } else {
                 $prodKey = $product->id . '-null';
-                
+
                 // Stock per warehouse
                 $warehouseStocks = [];
                 $totalStock = 0;
@@ -2422,14 +2447,14 @@ class SaleController extends Controller
                     'description' => $product->description ?? '',
                     'tags' => $product->tags ?? [],
                     'image' => $product->image ?? '/images/product-placeholder.png',
-                    'price' => (float)($product->selling_price ?? 0),
-                    'wholesale_price' => (float)($product->wholesale_price ?? 0),
-                    'cost_price' => (float)($product->cost_price ?? 0),
-                    'tax_rate' => (float)$productTaxPercentage,
+                    'price' => (float) ($product->selling_price ?? 0),
+                    'wholesale_price' => (float) ($product->wholesale_price ?? 0),
+                    'cost_price' => (float) ($product->cost_price ?? 0),
+                    'tax_rate' => (float) $productTaxPercentage,
                     'tax_ids' => $productTaxes,
                     'warehouse_stocks' => $warehouseStocks,
                     'total_stock' => $totalStock,
-                    'track_inventory' => (bool)$product->track_inventory,
+                    'track_inventory' => (bool) $product->track_inventory,
                     'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                     'category' => $product->category?->name ?? 'Uncategorized',
                     'category_id' => $product->category_id,

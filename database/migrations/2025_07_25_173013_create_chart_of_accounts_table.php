@@ -17,11 +17,22 @@ return new class extends Migration
             $table->string('account_name');
             $table->enum('account_type', ['asset', 'liability', 'equity', 'revenue', 'expense']);
             $table->enum('account_subtype', [
-                'current_asset', 'fixed_asset', 'other_asset',
-                'current_liability', 'long_term_liability', 'other_liability',
+                'current_asset',
+                'fixed_asset',
+                'other_asset',
+                'cash_and_bank',
+                'current_liability',
+                'long_term_liability',
+                'other_liability',
                 'equity',
-                'operating_revenue', 'other_revenue',
-                'cost_of_goods_sold', 'operating_expense', 'other_expense'
+                'owner_equity',
+                'operating_revenue',
+                'other_revenue',
+                'operating_income',
+                'cost_of_goods_sold',
+                'cost_of_sales',
+                'operating_expense',
+                'other_expense'
             ]);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
