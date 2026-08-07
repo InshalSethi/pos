@@ -109,7 +109,7 @@ class GoogleAuthController extends Controller
             // If user has no company linked, force them to setup
             $destination = (is_null($user->company_id) || !$user->is_setup_completed)
                 ? '/company-setup'
-                : '/';
+                : '/dashboard';
 
             return redirect()->to('/login?token=' . urlencode($token) . '&redirect=' . urlencode($destination));
 

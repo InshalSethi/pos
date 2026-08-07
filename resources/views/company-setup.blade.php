@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="notranslate {{ request()->cookie('theme') === 'dark' ? 'dark' : '' }}" translate="no">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="notranslate" translate="no">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="google" content="notranslate" />
 
-    <title>{{ config('app.name', 'Company Setup') }} - Onboarding</title>
+    <title>{{ config('app.name', 'POS') }} - Business Onboarding</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.0.91/build/spline-viewer.js"></script>
 </head>
 <body class="font-sans antialiased bg-slate-50 text-slate-900">
     <!-- Embed the Livewire Component -->

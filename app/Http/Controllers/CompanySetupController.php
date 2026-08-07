@@ -38,7 +38,7 @@ class CompanySetupController extends Controller
 
         // Prevent already-onboarded users from accessing /company-setup directly unless explicitly adding a new company or resuming a draft
         if ($hasExistingActiveCompany && !$isCreateMode && !$request->filled('continue_draft_id')) {
-            return redirect()->to('/');
+            return redirect()->to('/dashboard');
         }
 
         if ($isCreateMode) {
@@ -134,7 +134,7 @@ class CompanySetupController extends Controller
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/')->with('info', 'Sub-company setup discarded safely.');
+        return redirect('/dashboard')->with('info', 'Sub-company setup discarded safely.');
     }
 
     /**
@@ -159,7 +159,7 @@ class CompanySetupController extends Controller
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/')->with('status', 'Progress saved as draft.');
+        return redirect('/dashboard')->with('status', 'Progress saved as draft.');
     }
 
     /**
@@ -219,7 +219,7 @@ class CompanySetupController extends Controller
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/')->with('status', 'Company setup discarded.');
+        return redirect('/dashboard')->with('status', 'Company setup discarded.');
     }
 
     /**

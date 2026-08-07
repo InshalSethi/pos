@@ -28,7 +28,7 @@
 
       <!-- Top Right Navbar Auth Links -->
       <div class="flex items-center gap-3">
-        <template v-if="authStore.isAuthenticated">
+        <template v-if="showDashboardButton">
           <router-link
             to="/dashboard"
             class="bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow-md transition-all flex items-center gap-2"
@@ -40,7 +40,7 @@
           </router-link>
         </template>
 
-        <template v-else>
+        <template v-else-if="!authStore.isAuthenticated">
           <router-link
             to="/login"
             class="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 px-4 py-2 rounded-full hover:bg-slate-100 transition-all"
@@ -61,7 +61,35 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
+const props = defineProps({
+  hideDashboardButton: {
+    type: Boolean,
+    default: false
+  }
+});
+
 const authStore = useAuthStore();
+const route = useRoute();
+
+const showDashboardButton = computed(() => {
+  if (props.hideDashboardButton) return false;
+  
+  const currentPath = route?.path || (typeof window !== 'undefined' ? window.location.pathname : '');
+  if (currentPath.startsWith('/company-setup') || currentPath.startsWith('/company/setup')) {
+    return false;
+  }
+  
+  if (!authStore.isAuthenticated) return false;
+  
+  // Hide if user has no company or onboarding is not completed
+  if (authStore.user && (!authStore.user.company_id || !authStore.user.onboarding_completed)) {
+    return false;
+  }
+  
+  return true;
+});
 </script>

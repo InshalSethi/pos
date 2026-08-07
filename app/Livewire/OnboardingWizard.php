@@ -187,7 +187,7 @@ class OnboardingWizard extends Component
 
         session()->forget('creating_subsequent_company');
 
-        return redirect('/')->with('status', 'Progress saved as draft.');
+        return redirect('/dashboard')->with('status', 'Progress saved as draft.');
     }
 
     public function discardSetup()
@@ -196,7 +196,7 @@ class OnboardingWizard extends Component
             Company::where('id', $this->company_id)->where('status', 'draft')->delete();
         }
         session()->forget('creating_subsequent_company');
-        return redirect('/')->with('status', 'Company setup discarded.');
+        return redirect('/dashboard')->with('status', 'Company setup discarded.');
     }
 
     public function nextStep()
@@ -421,7 +421,7 @@ class OnboardingWizard extends Component
 
         session()->flash('success', 'Onboarding completed successfully! Welcome to Aura.');
 
-        return redirect()->to('/');
+        return redirect()->to('/dashboard');
     }
 
 
