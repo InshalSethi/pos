@@ -440,30 +440,48 @@
               <!-- Floating Multi-Select Popover -->
               <div
                 v-if="activePopover === 'customer'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-72 flex flex-col animate-fade-in"
               >
-                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>Select Customers</span>
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase shrink-0">
+                  <span>Select Customers (Top 20)</span>
                   <button @click="localFilters.customer_ids = []" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
                 </div>
-                <div v-if="customers.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
-                  No customers found.
+
+                <!-- Dropdown Search Input Header -->
+                <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input
+                      v-model="customerSearchQuery"
+                      type="text"
+                      placeholder="Search customer by name, phone..."
+                      class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
                 </div>
-                <label
-                  v-for="c in customers"
-                  :key="c.id"
-                  class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
-                >
-                  <input
-                    type="checkbox"
-                    :value="String(c.id)"
-                    v-model="localFilters.customer_ids"
-                    class="rounded border-slate-300 text-slate-900 focus:ring-slate-300 cursor-pointer w-4 h-4"
-                  />
-                  <span class="font-medium text-slate-800 dark:text-zinc-200">
-                    {{ c.name || c.full_name }} {{ c.phone ? `(${c.phone})` : '' }}
-                  </span>
-                </label>
+
+                <div class="overflow-y-auto max-h-48 custom-scrollbar">
+                  <div v-if="filteredCustomers.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                    No customers found matching "{{ customerSearchQuery }}".
+                  </div>
+                  <label
+                    v-for="c in filteredCustomers"
+                    :key="c.id"
+                    class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="String(c.id)"
+                      v-model="localFilters.customer_ids"
+                      class="rounded border-slate-300 text-slate-900 focus:ring-slate-300 cursor-pointer w-4 h-4"
+                    />
+                    <span class="font-medium text-slate-800 dark:text-zinc-200">
+                      {{ c.name || c.full_name }} {{ c.phone ? `(${c.phone})` : '' }}
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -779,6 +797,28 @@ const salesmen = ref([]);
 const counters = ref([]);
 const loadingTopProducts = ref(false);
 const loadingDropdowns = ref(false);
+
+const customerSearchQuery = ref('');
+
+const filteredCustomers = computed(() => {
+  const list = Array.isArray(customers.value) ? customers.value : [];
+  const selectedIds = (localFilters.value.customer_ids || []).map(id => String(id));
+
+  if (!customerSearchQuery.value.trim()) {
+    const selectedList = list.filter(c => selectedIds.includes(String(c.id)));
+    const unselectedList = list.filter(c => !selectedIds.includes(String(c.id))).slice(0, Math.max(0, 20 - selectedList.length));
+    return [...selectedList, ...unselectedList];
+  }
+
+  const q = customerSearchQuery.value.toLowerCase().trim();
+  const matched = list.filter(c => {
+    const name = (c.name || c.full_name || '').toLowerCase();
+    const phone = (c.phone || '').toLowerCase();
+    const email = (c.email || '').toLowerCase();
+    return name.includes(q) || phone.includes(q) || email.includes(q);
+  });
+  return matched.slice(0, 20);
+});
 
 // Date Range Picker State & Helpers
 const calendarYear = ref(new Date().getFullYear());

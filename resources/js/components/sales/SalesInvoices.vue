@@ -28,7 +28,7 @@
       <!-- Tabs -->
       <div class="flex items-center space-x-1 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
         <button
-          v-for="tab in tabs"
+          v-for="tab in visibleTabs"
           :key="tab.id"
           @click="switchTab(tab.id)"
           class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5"
@@ -655,8 +655,7 @@ const counts = ref({
   void: 0
 });
 
-const tabs = [
-  { id: 'all', label: 'All Invoices' },
+const allStatusTabs = [
   { id: 'draft', label: 'Draft' },
   { id: 'paid', label: 'Paid' },
   { id: 'due', label: 'Due' },
@@ -664,6 +663,31 @@ const tabs = [
   { id: 'overdue', label: 'Overdue' },
   { id: 'void', label: 'Void' }
 ];
+
+const visibleTabs = computed(() => {
+  const selectedStatuses = advancedFilters.value.statuses || [];
+  const allTab = { id: 'all', label: 'All Invoices' };
+
+  if (selectedStatuses.length === 0) {
+    return [allTab];
+  }
+
+  const activeIds = selectedStatuses.map(st => {
+    if (st === 'completed') return 'paid';
+    if (st === 'pending') return 'due';
+    return st;
+  });
+
+  const filtered = allStatusTabs.filter(t => activeIds.includes(t.id));
+  return [allTab, ...filtered];
+});
+
+watch(visibleTabs, (newTabs) => {
+  const isCurrentStillVisible = newTabs.some(t => t.id === currentTab.value);
+  if (!isCurrentStillVisible) {
+    currentTab.value = 'all';
+  }
+});
 
 // Computed
 const paginationRange = computed(() => {
