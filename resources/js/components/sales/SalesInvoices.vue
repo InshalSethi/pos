@@ -1,63 +1,76 @@
 <template>
-  <div class="w-full max-w-full py-8 px-4 sm:px-6 lg:px-8 dark:bg-zinc-950">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
+  <div class="space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Invoices</h1>
-        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Manage and track sales invoices with multi-warehouse and salesman allocation</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Sales Invoices</h1>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+          Manage sales transactions, track payment statuses, filter by counter/salesman & issue invoices.
+        </p>
       </div>
-      <button
-        @click="createInvoice"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 animate-button cursor-pointer"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        <span>Create Invoice</span>
-      </button>
+
+      <div class="flex items-center space-x-3">
+        <!-- New Sale Invoice Button -->
+        <button
+          @click="createNewSale"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Create Sales Invoice</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Tabs Bar -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 dark:border-zinc-800 mb-6 pb-0.5 space-y-4 sm:space-y-0">
-      <div class="flex flex-wrap gap-x-6 gap-y-2">
+    <!-- Status Tabs & Quick Stats -->
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-3">
+      <!-- Tabs -->
+      <div class="flex items-center space-x-1 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          v-show="tab.id === 'all' || selectedFilters.includes(tab.id)"
-          @click="setActiveTab(tab.id)"
-          class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
-          :class="isTabActive(tab.id) ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
+          @click="switchTab(tab.id)"
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5"
+          :class="isTabActive(tab.id) 
+            ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs' 
+            : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200'"
         >
           <span>{{ tab.label }}</span>
           <span
-            class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-            :class="isTabActive(tab.id) ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'"
+            v-if="counts[tab.id] !== undefined"
+            class="px-1.5 py-0.2 text-[10px] rounded-full font-bold"
+            :class="isTabActive(tab.id)
+              ? 'bg-slate-700 text-slate-100 dark:bg-zinc-300 dark:text-zinc-900'
+              : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'"
           >
-            {{ counts[tab.id] || 0 }}
+            {{ counts[tab.id] }}
           </span>
         </button>
       </div>
 
-      <div class="flex items-center space-x-2">
-        <!-- Sort Button -->
+      <!-- Sorting & Filter Controls -->
+      <div class="flex items-center space-x-2 shrink-0">
+        <!-- Sort Direction Toggle -->
         <button
           @click="toggleSortOrder"
-          class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all cursor-pointer"
+          class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors border border-slate-200 dark:border-zinc-700 cursor-pointer"
         >
-          <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
           Sort: {{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}
         </button>
 
-        <!-- Advanced Filter Drawer Button -->
+        <!-- Filter Drawer Button -->
         <button
           @click="openFilterDrawer"
           class="inline-flex items-center px-3.5 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
-          :class="{ 'border-blue-600 text-blue-600 bg-blue-50/20 dark:bg-blue-900/20 dark:text-blue-400 font-bold': totalActiveFilterCount > 0 }"
+          :class="{ 'border-slate-900 text-slate-900 bg-slate-100/50 dark:bg-zinc-800 dark:border-zinc-100 dark:text-zinc-100 font-bold': totalActiveFilterCount > 0 }"
         >
-          <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" :class="{ 'text-blue-600 dark:text-blue-400': totalActiveFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" :class="{ 'text-slate-900 dark:text-zinc-100': totalActiveFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
           </svg>
           <span>Filter</span>
           <!-- Selected Filter Indicator Badge -->
-          <span v-if="totalActiveFilterCount > 0" class="ml-1.5 text-[10px] font-extrabold bg-blue-600 text-white px-1.5 py-0.2 rounded-full">
+          <span v-if="totalActiveFilterCount > 0" class="ml-1.5 text-[10px] font-extrabold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-1.5 py-0.2 rounded-full">
             {{ totalActiveFilterCount }}
           </span>
         </button>
@@ -72,6 +85,12 @@
       <span v-if="advancedFilters.product_name || advancedFilters.product_search" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
         Item: {{ advancedFilters.product_name || advancedFilters.product_search }}
         <button @click="removeSingleFilter('product')" class="ml-1.5 hover:text-blue-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Customer Pill -->
+      <span v-if="advancedFilters.customer_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+        Client: {{ getCustomerSummary() }}
+        <button @click="removeSingleFilter('customer')" class="ml-1.5 hover:text-teal-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </span>
 
       <!-- Warehouse Pill -->
@@ -129,74 +148,38 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search by invoice #, customer, or product..."
-            class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
-            @input="debouncedSearch"
+            placeholder="Search by invoice #, customer name..."
+            class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-800 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-500"
           />
         </div>
 
-        <!-- Showing selection counts -->
-        <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-zinc-400">
-          <span>Showing</span>
-          <select
-            v-model="perPage"
-            @change="handlePerPageChange"
-            class="border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer bg-white dark:bg-zinc-800 dark:text-zinc-200"
-          >
-            <option :value="10">10</option>
-            <option :value="15">15</option>
-            <option :value="25">25</option>
-            <option :value="50">50</option>
-          </select>
-          <span>of {{ totalItems }} results</span>
+        <div class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+          Showing <span class="font-bold text-slate-900 dark:text-zinc-100">{{ invoices.length }}</span> of <span class="font-bold text-slate-900 dark:text-zinc-100">{{ pagination.total }}</span> invoices
         </div>
       </div>
 
-      <!-- Invoices List Table -->
-      <div class="overflow-x-auto custom-scrollbar">
-        <table class="w-full text-left text-xs border-collapse">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
-              <th class="py-3.5 px-4 w-[40px] text-center bg-slate-50 dark:bg-zinc-800/50">
+            <tr class="bg-slate-50/50 dark:bg-zinc-800/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800">
+              <th class="py-3 px-4 text-center w-10">
                 <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-3.5 h-3.5" />
               </th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_number')">
-                <div class="flex items-center space-x-1">
-                  <span>Invoice</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Client & Allocation</th>
-              <th class="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('total_amount')">
-                <div class="flex items-center justify-end space-x-1">
-                  <span>Total Amount</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Paid Amount</th>
-              <th class="py-3.5 px-4 text-right bg-slate-50 dark:bg-zinc-800/50">Due Amount</th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('due_date')">
-                <div class="flex items-center space-x-1">
-                  <span>Due Date</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-center cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('status')">
-                <div class="flex items-center justify-center space-x-1">
-                  <span>Status</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
+              <th class="py-3 px-4">Invoice #</th>
+              <th class="py-3 px-4">Client / Allocation</th>
+              <th class="py-3 px-4 text-right">Total</th>
+              <th class="py-3 px-4 text-right">Paid</th>
+              <th class="py-3 px-4 text-right">Due / Return</th>
+              <th class="py-3 px-4">Due Date</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-center w-16">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100/70 dark:divide-zinc-800">
+          <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
               <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
-                <div class="flex flex-col items-center justify-center space-y-2">
-                  <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600"></div>
-                  <span class="text-xs font-semibold">Loading invoices...</span>
-                </div>
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
+                Loading sales invoices...
               </td>
             </tr>
             <tr v-else-if="invoices.length === 0" class="bg-white dark:bg-zinc-900">
@@ -326,67 +309,44 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div class="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <div class="flex-1 flex justify-between sm:hidden">
+      <!-- Pagination Footer -->
+      <div class="px-4 py-3 bg-slate-50/50 dark:bg-zinc-800/50 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+        <div class="text-xs text-slate-500 dark:text-zinc-400">
+          Showing <span class="font-bold text-slate-700 dark:text-zinc-200">{{ pagination.from }}</span> to <span class="font-bold text-slate-700 dark:text-zinc-200">{{ pagination.to }}</span> of <span class="font-bold text-slate-700 dark:text-zinc-200">{{ pagination.total }}</span> results
+        </div>
+        <div class="flex items-center space-x-1">
           <button
-            @click="previousPage"
-            :disabled="currentPage === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50"
+            @click="fetchInvoices(pagination.current_page - 1)"
+            :disabled="pagination.current_page <= 1"
+            class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 cursor-pointer"
           >
-            Previous
+            Prev
           </button>
+          <template v-for="page in paginationRange" :key="page">
+            <span v-if="page === '...'" class="px-2 text-xs text-slate-400">...</span>
+            <button
+              v-else
+              @click="fetchInvoices(page)"
+              class="px-2.5 py-1 text-xs font-semibold rounded transition-colors cursor-pointer"
+              :class="page === pagination.current_page 
+                ? 'bg-blue-600 text-white font-bold' 
+                : 'border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+            >
+              {{ page }}
+            </button>
+          </template>
           <button
-            @click="nextPage"
-            :disabled="currentPage === pagination.last_page"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50"
+            @click="fetchInvoices(pagination.current_page + 1)"
+            :disabled="pagination.current_page >= pagination.last_page"
+            class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 cursor-pointer"
           >
             Next
           </button>
         </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
-          <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
-            <!-- Prev -->
-            <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              class="relative inline-flex items-center px-2.5 py-2 rounded-l-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
-            >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            
-            <!-- Page Numbers -->
-            <template v-for="(page, idx) in paginationRange" :key="idx">
-              <span
-                v-if="page === '...'"
-                class="relative inline-flex items-center px-3.5 py-2 border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-slate-400 dark:text-zinc-500 select-none"
-              >
-                ...
-              </span>
-              <button
-                v-else
-                @click="goToPage(page)"
-                class="relative inline-flex items-center px-3.5 py-2 border text-xs font-bold transition-all cursor-pointer"
-                :class="currentPage === page ? 'z-10 bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-600 text-slate-800 dark:text-zinc-100' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800'"
-              >
-                {{ page }}
-              </button>
-            </template>
-            
-            <!-- Next -->
-            <button
-              @click="nextPage"
-              :disabled="currentPage === pagination.last_page"
-              class="relative inline-flex items-center px-2.5 py-2 rounded-r-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
-            >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          </nav>
-        </div>
       </div>
     </div>
 
-    <!-- Advanced Filter Drawer Component -->
+    <!-- Slide-over Filter Drawer Component -->
     <SalesFilter
       v-model:isOpen="isFilterDrawerOpen"
       :filters="advancedFilters"
@@ -396,7 +356,8 @@
 
     <!-- Void Confirmation Modal -->
     <teleport to="body">
-      <div v-if="voidModalState.isOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div v-if="voidModalState.isOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" @click="closeVoidModal"></div>
         <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
           <div class="flex items-center space-x-3 text-amber-600 dark:text-amber-400">
             <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center shrink-0">
@@ -440,7 +401,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
@@ -472,6 +433,7 @@ const advancedFilters = ref({
   product_id: '',
   product_name: '',
   product_search: '',
+  customer_ids: [],
   warehouse_ids: [],
   counter_ids: [],
   salesman_ids: [],
@@ -484,6 +446,7 @@ const advancedFilters = ref({
 const warehouseList = ref([]);
 const salesmanList = ref([]);
 const counterList = ref([]);
+const customerList = ref([]);
 
 const extractArray = (resData) => {
   if (Array.isArray(resData)) return resData;
@@ -493,17 +456,28 @@ const extractArray = (resData) => {
 
 const loadFilterLookups = async () => {
   try {
-    const [whRes, empRes, cntRes] = await Promise.all([
+    const [whRes, empRes, cntRes, custRes] = await Promise.all([
       axios.get('/api/warehouses').catch(() => ({ data: [] })),
       axios.get('/api/employees/for-dropdown').catch(() => ({ data: [] })),
-      axios.get('/api/counters').catch(() => ({ data: [] }))
+      axios.get('/api/counters').catch(() => ({ data: [] })),
+      axios.get('/api/customers').catch(() => ({ data: [] }))
     ]);
     warehouseList.value = extractArray(whRes.data);
     salesmanList.value = extractArray(empRes.data);
     counterList.value = extractArray(cntRes.data);
+    customerList.value = extractArray(custRes.data);
   } catch (e) {
     console.error('Error loading filter lookups:', e);
   }
+};
+
+const getCustomerSummary = () => {
+  const ids = advancedFilters.value.customer_ids || [];
+  if (ids.length === 0) return '';
+  const list = Array.isArray(customerList.value) ? customerList.value : [];
+  const first = list.find(c => String(c.id) === String(ids[0]));
+  const name = first ? (first.name || first.full_name) : `Customer #${ids[0]}`;
+  return ids.length > 1 ? `${name} (+${ids.length - 1})` : name;
 };
 
 const getWarehouseSummary = () => {
@@ -561,6 +535,7 @@ const totalActiveFilterCount = computed(() => {
   let count = 0;
   if (searchQuery.value) count++;
   if (advancedFilters.value.product_id || advancedFilters.value.product_search) count++;
+  if (advancedFilters.value.customer_ids?.length > 0) count++;
   if (advancedFilters.value.warehouse_ids?.length > 0) count++;
   if (advancedFilters.value.counter_ids?.length > 0) count++;
   if (advancedFilters.value.salesman_ids?.length > 0) count++;
@@ -589,6 +564,7 @@ const handleResetAdvancedFilters = () => {
     product_id: '',
     product_name: '',
     product_search: '',
+    customer_ids: [],
     warehouse_ids: [],
     counter_ids: [],
     salesman_ids: [],
@@ -611,6 +587,8 @@ const removeSingleFilter = (key) => {
     advancedFilters.value.product_id = '';
     advancedFilters.value.product_name = '';
     advancedFilters.value.product_search = '';
+  } else if (key === 'customer') {
+    advancedFilters.value.customer_ids = [];
   } else if (key === 'warehouse') {
     advancedFilters.value.warehouse_ids = [];
   } else if (key === 'salesman') {
@@ -633,6 +611,7 @@ const clearAllFilters = () => {
     product_id: '',
     product_name: '',
     product_search: '',
+    customer_ids: [],
     warehouse_ids: [],
     counter_ids: [],
     salesman_ids: [],
@@ -655,7 +634,6 @@ const toggleSortOrder = () => {
 // Pagination
 const currentPage = ref(1);
 const perPage = ref(15);
-const totalItems = ref(0);
 
 const pagination = ref({
   current_page: 1,
@@ -742,6 +720,10 @@ const fetchInvoices = async (page = 1) => {
       params.product_search = advancedFilters.value.product_search;
     }
 
+    if (advancedFilters.value.customer_ids?.length > 0) {
+      params.customer_id = advancedFilters.value.customer_ids.join(',');
+    }
+
     if (advancedFilters.value.warehouse_ids?.length > 0) {
       params.warehouse_id = advancedFilters.value.warehouse_ids.join(',');
     }
@@ -772,14 +754,12 @@ const fetchInvoices = async (page = 1) => {
       last_page: response.data.last_page,
       per_page: response.data.per_page,
       total: response.data.total,
-      from: response.data.from,
-      to: response.data.to
+      from: response.data.from || 0,
+      to: response.data.to || 0,
     };
-    totalItems.value = response.data.total;
-    
-    await fetchStatusCounts();
   } catch (error) {
     console.error('Error fetching invoices:', error);
+    showToast('Failed to load invoices', 'error');
   } finally {
     loading.value = false;
   }
@@ -789,120 +769,25 @@ const debouncedSearch = debounce(() => {
   fetchInvoices(1);
 }, 300);
 
-const handleSort = (field) => {
-  if (sortBy.value === field) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortBy.value = field;
-    sortOrder.value = 'desc';
-  }
-  fetchInvoices(1);
-};
+watch(searchQuery, () => {
+  debouncedSearch();
+});
 
-const handlePerPageChange = () => {
-  fetchInvoices(1);
-};
-
-const setActiveTab = (tabId) => {
+const switchTab = (tabId) => {
   currentTab.value = tabId;
   fetchInvoices(1);
 };
 
-const toggleActionDropdown = (id) => {
-  openActionDropdown.value = openActionDropdown.value === id ? null : id;
-};
-
-const closeAllDropdowns = () => {
-  openActionDropdown.value = null;
-};
-
-// Date Format Helpers
-const formatLongDate = (dateString) => {
-  if (!dateString) return '-';
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', options);
-};
-
-const formatShortDate = (dateString) => {
-  if (!dateString) return '-';
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', options);
-};
-
-const currencySymbol = computed(() => {
-  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
-});
-
-const formatCurrency = (val) => {
-  const num = parseFloat(val);
-  if (isNaN(num)) return currencySymbol.value + '0.00';
-  return currencySymbol.value + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-};
-
-const getBalanceState = (item) => {
-  const total = parseFloat(item.total_amount) || 0;
-  const paid = parseFloat(item.paid_amount) || 0;
-  const diff = paid - total;
-
-  if (diff < -0.01) {
-    return {
-      type: 'due',
-      amount: Math.abs(diff),
-      label: 'Due'
-    };
-  } else if (diff > 0.01) {
-    return {
-      type: 'return',
-      amount: diff,
-      label: 'Return'
-    };
-  } else {
-    return {
-      type: 'paid',
-      amount: 0,
-      label: 'Paid'
-    };
-  }
-};
-
-const isInvoiceVoided = (item) => {
-  if (!item || !item.status) return false;
-  return ['void', 'voided', 'cancelled'].includes(String(item.status).toLowerCase());
-};
-
-const getStatusLabel = (item) => {
-  if (isInvoiceVoided(item)) return 'Void';
-  const total = parseFloat(item.total_amount) || 0;
-  const paid = parseFloat(item.paid_amount) || 0;
-  if (item.status === 'completed' || paid >= total) return 'Paid';
-  if (item.status === 'pending' || paid < total) {
-    const dueDate = item.due_date ? new Date(item.due_date) : null;
-    if (dueDate && dueDate < new Date().setHours(0,0,0,0)) {
-      return 'Overdue';
-    }
-    return 'Due';
-  }
-  if (item.status === 'draft') return 'Draft';
-  if (item.status === 'recurring') return 'Recurring';
-  return item.status.charAt(0).toUpperCase() + item.status.slice(1);
-};
-
-const getStatusBadgeClass = (item) => {
-  const label = getStatusLabel(item);
-  if (label === 'Void') return 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-semibold border border-slate-200 dark:border-zinc-700';
-  if (label === 'Paid') return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400';
-  if (label === 'Due') return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400';
-  if (label === 'Overdue') return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
-  if (label === 'Draft') return 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400';
-  return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
-};
-
-// Void Modal State
-const voiding = ref(false);
+// Void Modal State & Handler
 const voidModalState = ref({
   isOpen: false,
   invoice: null
 });
+const voiding = ref(false);
+
+const isInvoiceVoided = (invoice) => {
+  return invoice.status === 'void' || invoice.status === 'voided' || invoice.status === 'cancelled';
+};
 
 const promptVoidInvoice = (invoice) => {
   openActionDropdown.value = null;
@@ -921,82 +806,149 @@ const closeVoidModal = () => {
 
 const confirmVoidInvoice = async () => {
   if (!voidModalState.value.invoice) return;
+  voiding.value = true;
   try {
-    voiding.value = true;
     const invId = voidModalState.value.invoice.id;
-    const response = await axios.post(`/api/sales/${invId}/void`);
-    showToast(response.data.message || 'Invoice voided successfully', 'success');
+    await axios.post(`/api/sales/${invId}/void`);
+    showToast(`Invoice #${voidModalState.value.invoice.sale_number} successfully voided and inventory restored.`, 'success');
     closeVoidModal();
     fetchInvoices(currentPage.value);
-  } catch (error) {
-    console.error('Error voiding invoice:', error);
-    showToast(error.response?.data?.message || 'Failed to void invoice', 'error');
+    fetchStatusCounts();
+  } catch (err) {
+    console.error('Void invoice error:', err);
+    showToast(err.response?.data?.message || 'Failed to void invoice', 'error');
   } finally {
     voiding.value = false;
   }
 };
 
-// Actions
-const createInvoice = () => {
-  router.push('/sales/invoices/create');
+const createNewSale = () => {
+  router.push('/sales/create');
 };
 
-const viewInvoice = (invoice) => {
-  router.push(`/sales/invoices/${invoice.id}`);
+const viewInvoice = (item) => {
+  openActionDropdown.value = null;
+  router.push(`/sales/${item.id}`);
 };
 
-const printInvoice = (invoice) => {
-  const printUrl = router.resolve(`/sales/invoices/${invoice.id}/print`).href;
-  window.open(printUrl, '_blank');
+const editInvoice = (item) => {
+  openActionDropdown.value = null;
+  router.push(`/sales/${item.id}/edit`);
 };
 
-const editInvoice = (invoice) => {
-  router.push(`/sales/invoices/${invoice.id}/edit`);
+const printInvoice = (item) => {
+  openActionDropdown.value = null;
+  window.open(`/sales/${item.id}/print`, '_blank');
 };
 
-const deleteInvoice = async (invoiceId) => {
-  if (confirm('Are you sure you want to delete this invoice?')) {
+const deleteInvoice = async (id) => {
+  openActionDropdown.value = null;
+  if (confirm('Are you sure you want to delete this invoice? This operation cannot be undone.')) {
     try {
-      await axios.delete(`/api/sales/${invoiceId}`);
+      await axios.delete(`/api/sales/${id}`);
+      showToast('Invoice deleted successfully', 'success');
       fetchInvoices(currentPage.value);
+      fetchStatusCounts();
     } catch (error) {
       console.error('Error deleting invoice:', error);
+      showToast(error.response?.data?.message || 'Failed to delete invoice', 'error');
     }
   }
 };
 
-// Pagination Methods
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    fetchInvoices(currentPage.value - 1);
+const toggleActionDropdown = (id) => {
+  if (openActionDropdown.value === id) {
+    openActionDropdown.value = null;
+  } else {
+    openActionDropdown.value = id;
   }
 };
 
-const nextPage = () => {
-  if (currentPage.value < pagination.value.last_page) {
-    fetchInvoices(currentPage.value + 1);
+const handleClickOutside = (e) => {
+  if (openActionDropdown.value !== null) {
+    openActionDropdown.value = null;
   }
 };
 
-const goToPage = (page) => {
-  fetchInvoices(page);
+const formatCurrency = (val) => {
+  if (currencyStore && typeof currencyStore.formatPrice === 'function') {
+    return currencyStore.formatPrice(val);
+  }
+  if (currencyStore && typeof currencyStore.formatCurrency === 'function') {
+    return currencyStore.formatCurrency(val);
+  }
+  const amt = parseFloat(val) || 0;
+  return `$${amt.toFixed(2)}`;
+};
+
+const formatShortDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatLongDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
+const getStatusBadgeClass = (item) => {
+  const st = item.status;
+  if (st === 'completed') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+  if (st === 'pending') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+  if (st === 'draft') return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
+  if (st === 'recurring') return 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+  return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
+};
+
+const getStatusLabel = (item) => {
+  const st = item.status;
+  if (st === 'completed') return 'Paid';
+  if (st === 'pending') return 'Due';
+  if (st === 'draft') return 'Draft';
+  if (st === 'recurring') return 'Recurring';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'Void';
+  return st ? st.charAt(0).toUpperCase() + st.slice(1) : '-';
+};
+
+const getBalanceState = (item) => {
+  const total = parseFloat(item.total_amount || 0);
+  const paid = parseFloat(item.paid_amount || 0);
+  const diff = paid - total;
+
+  if (diff > 0.001) {
+    return { type: 'return', amount: diff };
+  } else if (diff < -0.001) {
+    return { type: 'due', amount: Math.abs(diff) };
+  }
+  return { type: 'settled', amount: 0 };
 };
 
 // Lifecycle
 onMounted(() => {
-  loadFilterLookups();
+  document.addEventListener('click', handleClickOutside);
+  fetchStatusCounts();
   fetchInvoices(1);
-  document.addEventListener('click', closeAllDropdowns);
+  loadFilterLookups();
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeAllDropdowns);
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
 <style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 4px;
+}
 .shadow-soft {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
 }
 .animate-fade-in {
   animation: fadeIn 0.15s ease-out;
@@ -1010,21 +962,5 @@ onUnmounted(() => {
     opacity: 1;
     transform: scale(1);
   }
-}
-.animate-button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.animate-button:hover {
-  transform: translateY(-0.5px);
-}
-.animate-button:active {
-  transform: translateY(0.5px);
-}
-.custom-scrollbar::-webkit-scrollbar {
-  height: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.4);
-  border-radius: 4px;
 }
 </style>

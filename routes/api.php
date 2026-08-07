@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\Api\InvoicePurchaseSettingsController;
 use App\Http\Controllers\Api\PurchaseReturnController;
+use App\Http\Controllers\Api\SalesReturnController;
 use App\Http\Controllers\Api\FinancialReportController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ExpenseCategoryController;
@@ -165,6 +166,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::post('/sales/{sale}/void', [SaleController::class , 'void']);
     Route::post('/invoices/{sale}/void', [SaleController::class , 'void']);
     Route::get('/sales/returns/status-counts', [SaleController::class , 'getReturnStatusCounts']);
+    Route::get('/sales/returns', [SalesReturnController::class , 'index']);
     Route::post('/sales/returns', [SaleController::class , 'processReturn']);
     Route::get('/sales/returns/{sale}', [SaleController::class , 'show']);
     Route::put('/sales/returns/{sale}', [SaleController::class , 'update']);
@@ -200,6 +202,12 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class , 'receive']);
     Route::post('/purchase-orders/{purchaseOrder}/void', [PurchaseOrderController::class , 'void']);
+
+    Route::get('/purchase-returns/next-number', [PurchaseReturnController::class, 'getNextReturnNumber']);
+    Route::get('/purchase-returns/po-items/{poId}', [PurchaseReturnController::class, 'getPoItems']);
+    Route::post('/purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve']);
+    Route::post('/purchase-returns/{purchaseReturn}/reject', [PurchaseReturnController::class, 'reject']);
+    Route::apiResource('purchase-returns', PurchaseReturnController::class);
 
     Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'singleAdjustment']);
     Route::post('/inventory-adjustments/import', [InventoryAdjustmentController::class, 'import']);

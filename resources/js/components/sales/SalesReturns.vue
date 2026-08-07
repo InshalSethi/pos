@@ -56,66 +56,79 @@
           Sort Date
         </button>
 
-        <!-- Filter Button -->
-        <div class="relative">
-          <button
-            @click.stop="toggleFilterDropdown"
-            class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
-            :class="{ 'border-rose-600 text-rose-600 dark:text-rose-400 bg-rose-50/10': selectedFilters.length > 0 }"
-          >
-            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" :class="{ 'text-rose-600 dark:text-rose-400': selectedFilters.length > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
-            </svg>
-            <span>Filter</span>
-            <!-- Selected Filter Indicator -->
-            <span v-if="selectedFilters.length > 0" class="ml-1.5 text-[10px] font-bold bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-full">
-              {{ selectedFilters.length }}
-            </span>
-          </button>
-
-          <!-- Filter Dropdown List -->
-          <div
-            v-if="showFilterDropdown"
-            class="absolute right-0 mt-1 w-44 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
-          >
-            <button
-              v-for="option in ['cash', 'card', 'store_credit', 'exchange']"
-              :key="option"
-              @click.stop="toggleFilterOption(option)"
-              class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors cursor-pointer"
-              :class="selectedFilters.includes(option) ? 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50/20 dark:bg-rose-900/20' : 'text-slate-700 dark:text-zinc-300'"
-            >
-              <span>{{ formatRefundLabel(option) }}</span>
-              <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-              </svg>
-            </button>
-            <div v-if="selectedFilters.length > 0" class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
-            <button
-              v-if="selectedFilters.length > 0"
-              @click.stop="clearFilterSelection"
-              class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 font-semibold flex items-center justify-between transition-colors cursor-pointer"
-            >
-              <span>Clear Filter</span>
-              <svg class="w-3 h-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Clear Button (shows when any filter applies) -->
+        <!-- Advanced Filter Button -->
         <button
-          v-if="selectedFilters.length > 0 || searchQuery !== '' || dateFrom !== '' || dateTo !== '' || originalInvoice !== ''"
-          @click="clearAllFilters"
-          class="inline-flex items-center px-3 py-1.5 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-xs font-semibold shadow-sm transition-all focus:outline-none cursor-pointer"
+          @click="openFilterDrawer"
+          class="inline-flex items-center px-3.5 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
+          :class="{ 'border-slate-900 text-slate-900 bg-slate-100/50 dark:bg-zinc-800 dark:border-zinc-100 dark:text-zinc-100 font-bold': totalActiveFilterCount > 0 }"
         >
-          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" :class="{ 'text-slate-900 dark:text-zinc-100': totalActiveFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
           </svg>
-          Clear
+          <span>Filter</span>
+          <!-- Selected Filter Indicator Badge -->
+          <span v-if="totalActiveFilterCount > 0" class="ml-1.5 text-[10px] font-extrabold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-1.5 py-0.2 rounded-full">
+            {{ totalActiveFilterCount }}
+          </span>
         </button>
       </div>
+    </div>
+
+    <!-- Active Filters Pill Bar -->
+    <div v-if="totalActiveFilterCount > 0" class="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-soft animate-fade-in">
+      <span class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mr-1">Active Filters:</span>
+
+      <!-- Product Pill -->
+      <span v-if="advancedFilters.product_name || advancedFilters.product_search" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+        Product: {{ advancedFilters.product_name || advancedFilters.product_search }}
+        <button @click="removeSingleFilter('product')" class="ml-1.5 hover:text-rose-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Original Invoice Pill -->
+      <span v-if="advancedFilters.original_invoice" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+        Invoice: {{ advancedFilters.original_invoice }}
+        <button @click="removeSingleFilter('invoice')" class="ml-1.5 hover:text-amber-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Customers Pill -->
+      <span v-if="advancedFilters.customer_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+        Clients: {{ advancedFilters.customer_ids.length }} selected
+        <button @click="removeSingleFilter('customer')" class="ml-1.5 hover:text-blue-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Salesmen Pill -->
+      <span v-if="advancedFilters.salesman_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+        Reps: {{ advancedFilters.salesman_ids.length }} selected
+        <button @click="removeSingleFilter('salesman')" class="ml-1.5 hover:text-purple-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Warehouses Pill -->
+      <span v-if="advancedFilters.warehouse_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+        Warehouses: {{ advancedFilters.warehouse_ids.length }} selected
+        <button @click="removeSingleFilter('warehouse')" class="ml-1.5 hover:text-emerald-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Counters Pill -->
+      <span v-if="advancedFilters.counter_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+        Counters: {{ advancedFilters.counter_ids.length }} selected
+        <button @click="removeSingleFilter('counter')" class="ml-1.5 hover:text-amber-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Return Reasons Pill -->
+      <span v-if="advancedFilters.return_reasons?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+        Reasons: {{ advancedFilters.return_reasons.join(', ') }}
+        <button @click="removeSingleFilter('reason')" class="ml-1.5 hover:text-indigo-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Date Range Pill -->
+      <span v-if="advancedFilters.date_from || advancedFilters.date_to" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
+        Date: {{ advancedFilters.date_from }} to {{ advancedFilters.date_to }}
+        <button @click="removeSingleFilter('date')" class="ml-1.5 hover:text-slate-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <button @click="handleResetAdvancedFilters" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline ml-auto cursor-pointer">
+        Clear All
+      </button>
     </div>
 
     <!-- Collapsible Date & Invoice Filter Bar -->
@@ -426,16 +439,25 @@
       @close="closeModal"
       @saved="handleReturnSaved"
     />
+
+    <!-- Advanced Filter Drawer Component -->
+    <SalesReturnFilter
+      v-model:isOpen="isFilterDrawerOpen"
+      :filters="advancedFilters"
+      @apply="handleApplyAdvancedFilters"
+      @reset="handleResetAdvancedFilters"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { debounce } from '@/utils/debounce';
 import SalesReturnModal from './SalesReturnModal.vue';
+import SalesReturnFilter from './SalesReturnFilter.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -454,6 +476,102 @@ const loading = ref(false);
 const openActionDropdown = ref(null);
 const showFilterDropdown = ref(false);
 const currentTab = ref('all');
+
+// Advanced Filter Drawer State
+const isFilterDrawerOpen = ref(false);
+const advancedFilters = ref({
+  product_id: '',
+  product_name: '',
+  product_search: '',
+  original_invoice: '',
+  customer_ids: [],
+  salesman_ids: [],
+  warehouse_ids: [],
+  counter_ids: [],
+  return_reasons: [],
+  date_from: '',
+  date_to: ''
+});
+
+// Advanced Filter Count Computed
+const totalActiveFilterCount = computed(() => {
+  let count = 0;
+  if (advancedFilters.value.product_id || advancedFilters.value.product_search) count++;
+  if (advancedFilters.value.original_invoice) count++;
+  if (advancedFilters.value.customer_ids?.length > 0) count++;
+  if (advancedFilters.value.salesman_ids?.length > 0) count++;
+  if (advancedFilters.value.warehouse_ids?.length > 0) count++;
+  if (advancedFilters.value.counter_ids?.length > 0) count++;
+  if (advancedFilters.value.return_reasons?.length > 0) count++;
+  if (advancedFilters.value.date_from || advancedFilters.value.date_to) count++;
+  return count;
+});
+
+const openFilterDrawer = () => {
+  isFilterDrawerOpen.value = true;
+};
+
+const handleApplyAdvancedFilters = (newFilters) => {
+  advancedFilters.value = { ...newFilters };
+  if (newFilters.original_invoice !== undefined) {
+    originalInvoice.value = newFilters.original_invoice;
+  }
+  if (newFilters.date_from !== undefined) {
+    dateFrom.value = newFilters.date_from;
+  }
+  if (newFilters.date_to !== undefined) {
+    dateTo.value = newFilters.date_to;
+  }
+  fetchReturns(1);
+};
+
+const handleResetAdvancedFilters = () => {
+  advancedFilters.value = {
+    product_id: '',
+    product_name: '',
+    product_search: '',
+    original_invoice: '',
+    customer_ids: [],
+    salesman_ids: [],
+    warehouse_ids: [],
+    counter_ids: [],
+    return_reasons: [],
+    date_from: '',
+    date_to: ''
+  };
+  originalInvoice.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
+  fetchReturns(1);
+};
+
+const removeSingleFilter = (key) => {
+  if (key === 'product') {
+    advancedFilters.value.product_id = '';
+    advancedFilters.value.product_name = '';
+    advancedFilters.value.product_search = '';
+  } else if (key === 'invoice') {
+    advancedFilters.value.original_invoice = '';
+    originalInvoice.value = '';
+  } else if (key === 'customer') {
+    advancedFilters.value.customer_ids = [];
+  } else if (key === 'salesman') {
+    advancedFilters.value.salesman_ids = [];
+  } else if (key === 'warehouse') {
+    advancedFilters.value.warehouse_ids = [];
+    advancedFilters.value.counter_ids = [];
+  } else if (key === 'counter') {
+    advancedFilters.value.counter_ids = [];
+  } else if (key === 'reason') {
+    advancedFilters.value.return_reasons = [];
+  } else if (key === 'date') {
+    advancedFilters.value.date_from = '';
+    advancedFilters.value.date_to = '';
+    dateFrom.value = '';
+    dateTo.value = '';
+  }
+  fetchReturns(1);
+};
 
 // Sorting
 const sortBy = ref('sale_date');
@@ -557,7 +675,7 @@ const clearAllFilters = () => {
   dateFrom.value = '';
   dateTo.value = '';
   showFilterDropdown.value = false;
-  fetchReturns(1);
+  handleResetAdvancedFilters();
 };
 
 // Computed
@@ -598,9 +716,16 @@ const fetchReturns = async (page = 1) => {
       page,
       per_page: perPage.value,
       search: searchQuery.value,
-      original_invoice: originalInvoice.value,
-      date_from: dateFrom.value,
-      date_to: dateTo.value,
+      original_invoice: advancedFilters.value.original_invoice || originalInvoice.value,
+      date_from: advancedFilters.value.date_from || dateFrom.value,
+      date_to: advancedFilters.value.date_to || dateTo.value,
+      product_id: advancedFilters.value.product_id,
+      product_search: advancedFilters.value.product_search,
+      customer_ids: advancedFilters.value.customer_ids?.join(','),
+      salesman_ids: advancedFilters.value.salesman_ids?.join(','),
+      warehouse_ids: advancedFilters.value.warehouse_ids?.join(','),
+      counter_ids: advancedFilters.value.counter_ids?.join(','),
+      return_reasons: advancedFilters.value.return_reasons?.join(','),
       is_refund: true,
       sort_by: sortBy.value,
       sort_order: sortOrder.value,

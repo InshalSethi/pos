@@ -58,7 +58,7 @@
             </button>
           </div>
 
-          <!-- 1. Product / Line Item (Top 20) -->
+          <!-- 1. Product / Line Item (Top Returned / Selling) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
               Product / Line Item (Top 20)
@@ -71,7 +71,7 @@
                 :class="{ 'border-slate-300 dark:border-zinc-600 ring-2 ring-slate-100 dark:ring-zinc-800 bg-white dark:bg-zinc-800': activePopover === 'product' }"
               >
                 <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedProductLabel }">
-                  {{ selectedProductLabel || 'Select a Top Selling Product' }}
+                  {{ selectedProductLabel || 'Select a Top Selling / Returned Product' }}
                 </span>
                 <div class="flex items-center space-x-1">
                   <button
@@ -91,7 +91,7 @@
                 class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-64 overflow-y-auto custom-scrollbar animate-fade-in"
               >
                 <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex justify-between items-center">
-                  <span>Top 20 Frequently Sold Items</span>
+                  <span>Top Items</span>
                   <span v-if="topProducts.length > 0" class="text-slate-700 dark:text-zinc-300 font-bold">{{ topProducts.length }} available</span>
                 </div>
 
@@ -130,14 +130,14 @@
                 </div>
               </div>
             </div>
-            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Select from the top 20 items to isolate invoices containing that product.</p>
+            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Select from top items to isolate returns containing that product.</p>
           </div>
 
-          <!-- 2. Date Range Section: Single Unified Date Range Picker Popover -->
+          <!-- 2. Date Range Section: Unified Full Calendar Component -->
           <div class="space-y-1.5 relative" @click.stop>
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-                Date Range
+                Return Date Range
               </label>
               <div class="flex gap-1.5">
                 <button
@@ -395,7 +395,29 @@
             </div>
           </div>
 
-          <!-- 3. Customer Name (Client) (Multi-Select) -->
+          <!-- 3. Original Invoice Number Search -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+              Original Invoice Number
+            </label>
+            <div class="relative">
+              <input
+                type="text"
+                v-model="localFilters.original_invoice"
+                placeholder="Search invoice # (e.g. INV-0001)..."
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-800 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-500"
+              />
+              <button
+                v-if="localFilters.original_invoice"
+                @click="localFilters.original_invoice = ''"
+                class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 font-bold text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Customer Name (Client) (Multi-Select) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
               Customer Name (Client) (Multi-Select)
@@ -446,58 +468,61 @@
             </div>
           </div>
 
-          <!-- 4. Multi-Select Floating Dropdown: Invoice Status -->
+          <!-- 5. Sales Representative / Salesman (Multi-Select) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Invoice Status (Multi-Select)
+              Sales Representative / Salesman (Multi-Select)
             </label>
             <div class="relative">
               <button
                 type="button"
-                @click="togglePopover('status')"
+                @click="togglePopover('salesman')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-800 transition-all cursor-pointer"
-                :class="{ 'border-slate-300 dark:border-zinc-600 ring-2 ring-slate-100 dark:ring-zinc-800 bg-white dark:bg-zinc-800': activePopover === 'status' }"
+                :class="{ 'border-slate-300 dark:border-zinc-600 ring-2 ring-slate-100 dark:ring-zinc-800 bg-white dark:bg-zinc-800': activePopover === 'salesman' }"
               >
-                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.statuses.length === 0 }">
-                  {{ statusSummaryLabel }}
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.salesman_ids.length === 0 }">
+                  {{ salesmanSummaryLabel }}
                 </span>
-                <span v-if="localFilters.statuses.length > 0" class="text-[10px] font-bold bg-slate-200 text-slate-800 dark:bg-zinc-700 dark:text-zinc-200 px-1.5 py-0.2 rounded-full shrink-0">
-                  {{ localFilters.statuses.length }}
+                <span v-if="localFilters.salesman_ids.length > 0" class="text-[10px] font-bold bg-slate-200 text-slate-800 dark:bg-zinc-700 dark:text-zinc-200 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.salesman_ids.length }}
                 </span>
               </button>
 
               <!-- Floating Multi-Select Popover -->
               <div
-                v-if="activePopover === 'status'"
+                v-if="activePopover === 'salesman'"
                 class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
               >
                 <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>Select Invoice Statuses</span>
-                  <button @click="localFilters.statuses = []" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
+                  <span>Select Sales Representatives</span>
+                  <button @click="localFilters.salesman_ids = []" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
+                </div>
+                <div v-if="salesmen.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                  No sales reps found.
                 </div>
                 <label
-                  v-for="st in availableStatuses"
-                  :key="st.id"
+                  v-for="s in salesmen"
+                  :key="s.id"
                   class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
                 >
                   <input
                     type="checkbox"
-                    :value="st.id"
-                    v-model="localFilters.statuses"
+                    :value="String(s.id)"
+                    v-model="localFilters.salesman_ids"
                     class="rounded border-slate-300 text-slate-900 focus:ring-slate-300 cursor-pointer w-4 h-4"
                   />
-                  <span class="font-semibold" :class="st.colorClass">
-                    {{ st.label }}
+                  <span class="font-medium text-slate-800 dark:text-zinc-200">
+                    {{ s.full_name || s.name }} {{ s.employee_number ? `(${s.employee_number})` : '' }}
                   </span>
                 </label>
               </div>
             </div>
           </div>
 
-          <!-- 5. Multi-Select Floating Dropdown: Warehouse / Shop Location -->
+          <!-- 6. Destination Return Warehouse (Multi-Select) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Warehouse / Shop Location (Multi-Select)
+              Destination Return Warehouse (Multi-Select)
             </label>
             <div class="relative">
               <button
@@ -533,7 +558,7 @@
                 >
                   <input
                     type="checkbox"
-                    :value="wh.id"
+                    :value="String(wh.id)"
                     v-model="localFilters.warehouse_ids"
                     class="rounded border-slate-300 text-slate-900 focus:ring-slate-300 cursor-pointer w-4 h-4"
                   />
@@ -543,10 +568,10 @@
                 </label>
               </div>
             </div>
-            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Multi-warehouse isolation; filters line items and counter options below.</p>
+            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Filters POS counter options below based on selected warehouse.</p>
           </div>
 
-          <!-- 6. Multi-Select Floating Dropdown: POS Counter (Cascading) -->
+          <!-- 7. POS Counter (Multi-Select, Cascading) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
               POS Counter (Multi-Select)
@@ -577,8 +602,8 @@
                   </span>
                   <button @click="localFilters.counter_ids = []" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
                 </div>
-                <div v-if="filteredCounters.length === 0" class="py-4 text-center text-slate-400 text-xs italic px-3">
-                  No counters available for the selected warehouse(s).
+                <div v-if="filteredCounters.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                  No POS counters found.
                 </div>
                 <label
                   v-for="c in filteredCounters"
@@ -587,65 +612,61 @@
                 >
                   <input
                     type="checkbox"
-                    :value="c.id"
+                    :value="String(c.id)"
                     v-model="localFilters.counter_ids"
                     class="rounded border-slate-300 text-slate-900 focus:ring-slate-300 cursor-pointer w-4 h-4"
                   />
                   <span class="font-medium text-slate-800 dark:text-zinc-200">
                     {{ c.name }} {{ c.counter_number ? `(#${c.counter_number})` : '' }}
-                    <span v-if="c.warehouse?.name" class="text-slate-400 text-[10px]">({{ c.warehouse.name }})</span>
                   </span>
                 </label>
               </div>
             </div>
-            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Cascades based on selected warehouse location above.</p>
+            <p class="text-[11px] text-slate-400 dark:text-zinc-500">Cascades based on selected destination return warehouse above.</p>
           </div>
 
-          <!-- 7. Multi-Select Floating Dropdown: Sales Representative / Salesman -->
+          <!-- 8. Return Reason (Multi-Select) -->
           <div class="space-y-1.5 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Sales Representative / Salesman (Multi-Select)
+              Return Reason (Multi-Select)
             </label>
             <div class="relative">
               <button
                 type="button"
-                @click="togglePopover('salesman')"
+                @click="togglePopover('reason')"
                 class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-800 transition-all cursor-pointer"
-                :class="{ 'border-slate-300 dark:border-zinc-600 ring-2 ring-slate-100 dark:ring-zinc-800 bg-white dark:bg-zinc-800': activePopover === 'salesman' }"
+                :class="{ 'border-slate-300 dark:border-zinc-600 ring-2 ring-slate-100 dark:ring-zinc-800 bg-white dark:bg-zinc-800': activePopover === 'reason' }"
               >
-                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.salesman_ids.length === 0 }">
-                  {{ salesmanSummaryLabel }}
+                <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': localFilters.return_reasons.length === 0 }">
+                  {{ reasonSummaryLabel }}
                 </span>
-                <span v-if="localFilters.salesman_ids.length > 0" class="text-[10px] font-bold bg-slate-200 text-slate-800 dark:bg-zinc-700 dark:text-zinc-200 px-1.5 py-0.2 rounded-full shrink-0">
-                  {{ localFilters.salesman_ids.length }}
+                <span v-if="localFilters.return_reasons.length > 0" class="text-[10px] font-bold bg-slate-200 text-slate-800 dark:bg-zinc-700 dark:text-zinc-200 px-1.5 py-0.2 rounded-full shrink-0">
+                  {{ localFilters.return_reasons.length }}
                 </span>
               </button>
 
               <!-- Floating Multi-Select Popover -->
               <div
-                v-if="activePopover === 'salesman'"
+                v-if="activePopover === 'reason'"
                 class="absolute left-0 right-0 bottom-full mb-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto custom-scrollbar animate-fade-in"
               >
                 <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
-                  <span>Select Sales Representatives</span>
-                  <button @click="localFilters.salesman_ids = []" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
-                </div>
-                <div v-if="salesmen.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
-                  No sales reps found.
+                  <span>Select Return Reasons</span>
+                  <button @click="localFilters.return_reasons = []" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
                 </div>
                 <label
-                  v-for="emp in salesmen"
-                  :key="emp.id"
+                  v-for="r in availableReturnReasons"
+                  :key="r"
                   class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
                 >
                   <input
                     type="checkbox"
-                    :value="emp.id"
-                    v-model="localFilters.salesman_ids"
+                    :value="r"
+                    v-model="localFilters.return_reasons"
                     class="rounded border-slate-300 text-slate-900 focus:ring-slate-300 cursor-pointer w-4 h-4"
                   />
                   <span class="font-medium text-slate-800 dark:text-zinc-200">
-                    {{ emp.full_name }}
+                    {{ r }}
                   </span>
                 </label>
               </div>
@@ -654,15 +675,16 @@
         </div>
 
         <!-- Footer Actions -->
-        <div class="p-6 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between space-x-3">
+        <div class="p-6 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between gap-3">
           <button
             type="button"
             @click="resetFilters"
-            class="px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+            class="text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
           >
             Reset Filters
           </button>
-          <div class="flex items-center space-x-2">
+          
+          <div class="flex items-center gap-3">
             <button
               type="button"
               @click="close"
@@ -670,10 +692,11 @@
             >
               Cancel
             </button>
+
             <button
               type="button"
               @click="applyFilters"
-              class="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-black active:scale-95 rounded-lg shadow-sm transition-all flex items-center cursor-pointer"
+              class="bg-slate-900 hover:bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer"
             >
               Apply Filters
             </button>
@@ -685,7 +708,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -723,16 +746,27 @@ const close = () => {
   emit('update:isOpen', false);
 };
 
-// Local state for multi-select & popover filters
+// Available Return Reasons
+const availableReturnReasons = [
+  'Damaged',
+  'Customer Changed Mind',
+  'Defective',
+  'Expired',
+  'Wrong Item Received',
+  'Other'
+];
+
+// Local state for filter inputs
 const localFilters = ref({
   product_id: '',
   product_name: '',
   product_search: '',
+  original_invoice: '',
   customer_ids: [],
+  salesman_ids: [],
   warehouse_ids: [],
   counter_ids: [],
-  salesman_ids: [],
-  statuses: [],
+  return_reasons: [],
   date_from: '',
   date_to: ''
 });
@@ -759,15 +793,6 @@ const monthNames = [
 const shortMonthNames = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-];
-
-const availableStatuses = [
-  { id: 'completed', label: 'Paid / Completed', colorClass: 'text-emerald-600 dark:text-emerald-400' },
-  { id: 'pending', label: 'Due / Pending', colorClass: 'text-orange-600 dark:text-orange-400' },
-  { id: 'overdue', label: 'Overdue', colorClass: 'text-rose-600 dark:text-rose-400' },
-  { id: 'draft', label: 'Draft', colorClass: 'text-slate-600 dark:text-zinc-400' },
-  { id: 'recurring', label: 'Recurring', colorClass: 'text-blue-600 dark:text-blue-400' },
-  { id: 'void', label: 'Void / Cancelled', colorClass: 'text-slate-500 dark:text-zinc-500' },
 ];
 
 const availableYears = computed(() => {
@@ -983,11 +1008,12 @@ const setQuickDate = (preset) => {
 const activeFilterCount = computed(() => {
   let count = 0;
   if (localFilters.value.product_id || localFilters.value.product_search) count++;
-  if (localFilters.value.customer_ids && localFilters.value.customer_ids.length > 0) count++;
-  if (localFilters.value.warehouse_ids && localFilters.value.warehouse_ids.length > 0) count++;
-  if (localFilters.value.counter_ids && localFilters.value.counter_ids.length > 0) count++;
-  if (localFilters.value.salesman_ids && localFilters.value.salesman_ids.length > 0) count++;
-  if (localFilters.value.statuses && localFilters.value.statuses.length > 0) count++;
+  if (localFilters.value.original_invoice) count++;
+  if (localFilters.value.customer_ids?.length > 0) count++;
+  if (localFilters.value.salesman_ids?.length > 0) count++;
+  if (localFilters.value.warehouse_ids?.length > 0) count++;
+  if (localFilters.value.counter_ids?.length > 0) count++;
+  if (localFilters.value.return_reasons?.length > 0) count++;
   if (localFilters.value.date_from || localFilters.value.date_to) count++;
   return count;
 });
@@ -1012,7 +1038,7 @@ const fetchCounters = async (whIds = []) => {
     const cntRes = await axios.get('/api/counters', { params });
     counters.value = extractArray(cntRes.data);
   } catch (err) {
-    console.error('Failed to fetch counters for selected warehouses:', err);
+    console.error('Failed to fetch counters:', err);
   }
 };
 
@@ -1024,7 +1050,7 @@ watch(() => [...localFilters.value.warehouse_ids], async (newWhs) => {
   }
 }, { deep: true, immediate: true });
 
-// UI Labels for Button Triggers
+// UI Summary Labels
 const selectedProductLabel = computed(() => {
   if (localFilters.value.product_name) return localFilters.value.product_name;
   if (localFilters.value.product_search) return localFilters.value.product_search;
@@ -1049,13 +1075,13 @@ const customerSummaryLabel = computed(() => {
 
 const warehouseSummaryLabel = computed(() => {
   const ids = localFilters.value.warehouse_ids || [];
-  if (ids.length === 0) return 'All Warehouses / Shops';
+  if (ids.length === 0) return 'All Destination Warehouses';
   if (ids.length === 1) {
     const wh = warehouses.value.find(w => String(w.id) === String(ids[0]));
     return wh ? wh.name : `Warehouse #${ids[0]}`;
   }
   const firstWh = warehouses.value.find(w => String(w.id) === String(ids[0]));
-  const firstName = firstWh ? firstWh.name : `Shop #${ids[0]}`;
+  const firstName = firstWh ? firstWh.name : `Warehouse #${ids[0]}`;
   return `${firstName} (+${ids.length - 1} more)`;
 });
 
@@ -1076,54 +1102,110 @@ const salesmanSummaryLabel = computed(() => {
   if (ids.length === 0) return 'All Sales Representatives';
   if (ids.length === 1) {
     const emp = salesmen.value.find(item => String(item.id) === String(ids[0]));
-    return emp ? emp.full_name : `Rep #${ids[0]}`;
+    return emp ? (emp.full_name || emp.name) : `Rep #${ids[0]}`;
   }
   const firstEmp = salesmen.value.find(item => String(item.id) === String(ids[0]));
-  const firstName = firstEmp ? firstEmp.full_name : `Rep #${ids[0]}`;
+  const firstName = firstEmp ? (firstEmp.full_name || firstEmp.name) : `Rep #${ids[0]}`;
   return `${firstName} (+${ids.length - 1} more)`;
 });
 
-const statusSummaryLabel = computed(() => {
-  const list = localFilters.value.statuses || [];
-  if (list.length === 0) return 'All Statuses';
-  if (list.length === 1) {
-    const st = availableStatuses.find(item => item.id === list[0]);
-    return st ? st.label : list[0];
-  }
-  const firstSt = availableStatuses.find(item => item.id === list[0]);
-  const firstName = firstSt ? firstSt.label : list[0];
-  return `${firstName} (+${list.length - 1} more)`;
+const reasonSummaryLabel = computed(() => {
+  const list = localFilters.value.return_reasons || [];
+  if (list.length === 0) return 'All Return Reasons';
+  if (list.length === 1) return list[0];
+  return `${list[0]} (+${list.length - 1} more)`;
 });
+
+const extractArray = (resData) => {
+  if (Array.isArray(resData)) return resData;
+  if (resData && Array.isArray(resData.data)) return resData.data;
+  return [];
+};
+
+const fetchTopProducts = async () => {
+  if (topProducts.value.length > 0) return;
+  loadingTopProducts.value = true;
+  try {
+    const res = await axios.get('/api/products', { params: { per_page: 20 } });
+    topProducts.value = extractArray(res.data);
+  } catch (err) {
+    console.error('Failed fetching top products:', err);
+  } finally {
+    loadingTopProducts.value = false;
+  }
+};
+
+const fetchDropdownData = async () => {
+  if (warehouses.value.length > 0 && salesmen.value.length > 0 && customers.value.length > 0) {
+    return;
+  }
+  loadingDropdowns.value = true;
+  try {
+    const [whRes, salesRes, custRes] = await Promise.all([
+      axios.get('/api/warehouses').catch(() => ({ data: [] })),
+      axios.get('/api/employees/for-dropdown').catch(() => axios.get('/api/test-dropdown')).catch(() => ({ data: [] })),
+      axios.get('/api/customers').catch(() => ({ data: [] })),
+    ]);
+    warehouses.value = extractArray(whRes.data);
+    salesmen.value = extractArray(salesRes.data);
+    customers.value = extractArray(custRes.data);
+    await fetchCounters(localFilters.value.warehouse_ids);
+  } catch (err) {
+    console.error('Failed loading filter dropdown data:', err);
+  } finally {
+    loadingDropdowns.value = false;
+  }
+};
+
+const selectProduct = (p) => {
+  if (!p) {
+    localFilters.value.product_id = '';
+    localFilters.value.product_name = '';
+    localFilters.value.product_search = '';
+  } else {
+    localFilters.value.product_id = p.id;
+    localFilters.value.product_name = p.name;
+    localFilters.value.product_search = p.name;
+  }
+  activePopover.value = null;
+};
+
+const clearProduct = () => {
+  localFilters.value.product_id = '';
+  localFilters.value.product_name = '';
+  localFilters.value.product_search = '';
+};
 
 const syncPropsToLocal = () => {
   const p = props.filters || {};
 
   let custs = p.customer_ids || p.customer_id || [];
   if (!Array.isArray(custs)) custs = String(custs).split(',').filter(Boolean);
-  
-  let whs = p.warehouse_ids || p.warehouse_id || [];
-  if (!Array.isArray(whs)) whs = String(whs).split(',').filter(Boolean);
-  
-  let cnts = p.counter_ids || p.counter_id || [];
-  if (!Array.isArray(cnts)) cnts = String(cnts).split(',').filter(Boolean);
 
   let sales = p.salesman_ids || p.salesman_id || [];
   if (!Array.isArray(sales)) sales = String(sales).split(',').filter(Boolean);
 
-  let stList = p.statuses || p.status || [];
-  if (!Array.isArray(stList)) stList = String(stList).split(',').filter(Boolean);
+  let whs = p.warehouse_ids || p.warehouse_id || [];
+  if (!Array.isArray(whs)) whs = String(whs).split(',').filter(Boolean);
+
+  let cnts = p.counter_ids || p.counter_id || [];
+  if (!Array.isArray(cnts)) cnts = String(cnts).split(',').filter(Boolean);
+
+  let rsns = p.return_reasons || p.return_reason || p.reason || [];
+  if (!Array.isArray(rsns)) rsns = String(rsns).split(',').filter(Boolean);
 
   localFilters.value = {
     product_id: p.product_id || '',
     product_name: p.product_name || '',
     product_search: p.product_search || '',
+    original_invoice: p.original_invoice || p.invoice_number || '',
     customer_ids: custs.map(id => String(id)),
+    salesman_ids: sales.map(id => String(id)),
     warehouse_ids: whs.map(id => String(id)),
     counter_ids: cnts.map(id => String(id)),
-    salesman_ids: sales.map(id => String(id)),
-    statuses: stList,
-    date_from: p.date_from || '',
-    date_to: p.date_to || ''
+    return_reasons: rsns,
+    date_from: p.date_from || p.start_date || '',
+    date_to: p.date_to || p.end_date || ''
   };
 
   if (localFilters.value.date_from) {
@@ -1160,76 +1242,17 @@ watch(() => props.filters, () => {
   syncPropsToLocal();
 }, { deep: true });
 
-const extractArray = (resData) => {
-  if (Array.isArray(resData)) return resData;
-  if (resData && Array.isArray(resData.data)) return resData.data;
-  return [];
-};
-
-const fetchTopProducts = async () => {
-  if (topProducts.value.length > 0) return;
-  loadingTopProducts.value = true;
-  try {
-    const res = await axios.get('/api/products', { params: { per_page: 20 } });
-    topProducts.value = extractArray(res.data);
-  } catch (err) {
-    console.error('Failed fetching top products:', err);
-  } finally {
-    loadingTopProducts.value = false;
-  }
-};
-
-const fetchDropdownData = async () => {
-  if (warehouses.value.length > 0 && salesmen.value.length > 0 && customers.value.length > 0) {
-    return;
-  }
-  loadingDropdowns.value = true;
-  try {
-    const [whRes, salesRes, custRes] = await Promise.all([
-      axios.get('/api/warehouses').catch(() => ({ data: [] })),
-      axios.get('/api/employees/for-dropdown').catch(() => ({ data: [] })),
-      axios.get('/api/customers').catch(() => ({ data: [] })),
-    ]);
-    warehouses.value = extractArray(whRes.data);
-    salesmen.value = extractArray(salesRes.data);
-    customers.value = extractArray(custRes.data);
-    await fetchCounters(localFilters.value.warehouse_ids);
-  } catch (err) {
-    console.error('Failed to load filter dropdown data:', err);
-  } finally {
-    loadingDropdowns.value = false;
-  }
-};
-
-const selectProduct = (p) => {
-  if (!p) {
-    localFilters.value.product_id = '';
-    localFilters.value.product_name = '';
-    localFilters.value.product_search = '';
-  } else {
-    localFilters.value.product_id = p.id;
-    localFilters.value.product_name = p.name;
-    localFilters.value.product_search = p.name;
-  }
-  activePopover.value = null;
-};
-
-const clearProduct = () => {
-  localFilters.value.product_id = '';
-  localFilters.value.product_name = '';
-  localFilters.value.product_search = '';
-};
-
 const resetFilters = () => {
   localFilters.value = {
     product_id: '',
     product_name: '',
     product_search: '',
+    original_invoice: '',
     customer_ids: [],
+    salesman_ids: [],
     warehouse_ids: [],
     counter_ids: [],
-    salesman_ids: [],
-    statuses: [],
+    return_reasons: [],
     date_from: '',
     date_to: ''
   };

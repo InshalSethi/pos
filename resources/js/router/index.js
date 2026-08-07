@@ -41,6 +41,9 @@ import EditPurchaseOrder from '@/components/purchase/EditPurchaseOrder.vue';
 import PurchaseOrderView from '@/components/purchase/PurchaseOrderView.vue';
 import ReceivePurchaseOrder from '@/components/purchase/ReceivePurchaseOrder.vue';
 import PurchaseReturns from '@/components/purchase/PurchaseReturns.vue';
+import CreatePurchaseReturn from '@/components/purchase/CreatePurchaseReturn.vue';
+import EditPurchaseReturn from '@/components/purchase/EditPurchaseReturn.vue';
+import PurchaseReturnView from '@/components/purchase/PurchaseReturnView.vue';
 import Expenses from '@/components/expenses/Expenses.vue';
 import Employees from '@/components/employees/Employees.vue';
 import Customers from '@/components/customers/Customers.vue';
@@ -384,6 +387,24 @@ const routes = [
         name: 'PurchaseReturns',
         component: PurchaseReturns,
         meta: { permission: 'purchases.view' }
+      },
+      {
+        path: 'purchase/returns/create',
+        name: 'CreatePurchaseReturn',
+        component: CreatePurchaseReturn,
+        meta: { permission: 'purchases.create' }
+      },
+      {
+        path: 'purchase/returns/:id',
+        name: 'PurchaseReturnView',
+        component: PurchaseReturnView,
+        meta: { permission: 'purchases.view' }
+      },
+      {
+        path: 'purchase/returns/:id/edit',
+        name: 'EditPurchaseReturn',
+        component: EditPurchaseReturn,
+        meta: { permission: 'purchases.edit' }
       },
       {
         path: 'expenses',

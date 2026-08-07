@@ -235,9 +235,42 @@ class SaleController extends Controller
             $query->where('status', 'pending')->where('due_date', '<', today());
         }
 
-        // Filter by customer
-        if ($request->has('customer_id') && $request->customer_id) {
-            $query->where('customer_id', $request->customer_id);
+        // Filter by customer (supports array, comma-separated, or scalar)
+        if ($request->filled('customer_id') || $request->filled('customer_ids')) {
+            $rawCust = $request->input('customer_ids') ?? $request->input('customer_id');
+            $custIds = is_array($rawCust) ? $rawCust : explode(',', $rawCust);
+            $custIds = array_values(array_filter(array_map('trim', $custIds)));
+
+            if (!empty($custIds)) {
+                $query->whereIn('customer_id', $custIds);
+            }
+        }
+
+        // Original Invoice Number filter
+        if ($request->filled('original_invoice') || $request->filled('invoice_number')) {
+            $origInv = $request->input('original_invoice') ?? $request->input('invoice_number');
+            $query->where(function ($q) use ($origInv) {
+                $q->where('sale_number', 'like', "%{$origInv}%")
+                    ->orWhere('order_number', 'like', "%{$origInv}%")
+                    ->orWhereHas('originalSale', function ($sq) use ($origInv) {
+                        $sq->where('sale_number', 'like', "%{$origInv}%");
+                    });
+            });
+        }
+
+        // Return Reason filter (multi-select / search)
+        if ($request->filled('return_reason') || $request->filled('return_reasons') || $request->filled('reason')) {
+            $rawReasons = $request->input('return_reasons') ?? $request->input('return_reason') ?? $request->input('reason');
+            $reasons = is_array($rawReasons) ? $rawReasons : explode(',', $rawReasons);
+            $reasons = array_values(array_filter(array_map('trim', $reasons)));
+
+            if (!empty($reasons)) {
+                $query->where(function ($q) use ($reasons) {
+                    foreach ($reasons as $r) {
+                        $q->orWhere('notes', 'like', "%{$r}%");
+                    }
+                });
+            }
         }
 
         // Filter by refund status (exclusively separate Sales Invoices vs Sales Returns)
