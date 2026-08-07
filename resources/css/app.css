@@ -173,12 +173,32 @@ html.dark textarea {
     background-color: #71717a;
 }
 
+/* Custom Ultra-Thin Professional Scrollbar */
+::-webkit-scrollbar {
+    width: 5px !important;
+    height: 5px !important;
+}
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 10px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
 html.dark ::-webkit-scrollbar-thumb {
-    background-color: #3f3f46;
+    background: rgba(255, 255, 255, 0.2) !important;
 }
 html.dark ::-webkit-scrollbar-thumb:hover {
-    background-color: #52525b;
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+* {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
 }
 html.dark * {
-    scrollbar-color: #3f3f46 transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
 }
+

@@ -15,6 +15,10 @@
         })();
     </script>
     <style>
+        ::-webkit-scrollbar { width: 5px !important; height: 5px !important; }
+        ::-webkit-scrollbar-track { background: transparent !important; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.25) !important; border-radius: 10px !important; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.5) !important; }
         html.dark, html.dark body {
             background-color: #111827 !important;
             color: #f9fafb !important;
@@ -42,7 +46,7 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="notranslate font-sans antialiased text-[13px] font-medium text-gray-600 tracking-wide">
+<body class="notranslate font-sans antialiased text-[13px] font-medium text-gray-600 tracking-wide scrollbar-none no-scrollbar">
     <div id="app"></div>
 
     <!-- THE VARIANT PRICING LAYOUT MODAL -->

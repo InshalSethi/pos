@@ -20,6 +20,15 @@ Route::get('/reset-password/{token}', function (string $token) {
     return view('app', ['token' => $token]);
 })->middleware('guest')->name('password.reset');
 
+// Public Landing Page & Plans
+Route::get('/', function () {
+    return view('app');
+})->name('landing');
+
+Route::get('/plans', function () {
+    return view('app');
+})->name('plans');
+
 // Authentication & Registration routes
 Route::get('/login', function (\Illuminate\Http\Request $request) {
     if ($request->has('token')) {
@@ -30,7 +39,7 @@ Route::get('/login', function (\Illuminate\Http\Request $request) {
         if (is_null($user->company_id) || !$user->is_setup_completed) {
             return redirect()->route('company.setup');
         }
-        return redirect()->to('/');
+        return redirect()->to('/dashboard');
     }
     return view('app');
 })->name('login');
@@ -44,7 +53,7 @@ Route::get('/register', function (\Illuminate\Http\Request $request) {
         if (is_null($user->company_id) || !$user->is_setup_completed) {
             return redirect()->route('company.setup');
         }
-        return redirect()->to('/');
+        return redirect()->to('/dashboard');
     }
     return view('app');
 })->name('register');
@@ -76,8 +85,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureCompanySetup::class])->gro
     Route::delete('/company/{id}/destroy', [\App\Http\Controllers\CompanySetupController::class, 'destroyCompany'])
         ->name('company.destroy');
 
-    // 3. Root route
-    Route::get('/', function () {
+    // 3. Authenticated Dashboard Route
+    Route::get('/dashboard', function () {
         return view('app');
     })->name('dashboard');
 

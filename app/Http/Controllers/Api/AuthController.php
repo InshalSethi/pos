@@ -79,7 +79,7 @@ class AuthController extends Controller
             'user'            => $user,
             'permissions'     => $permissions,
             'roles'           => $roles,
-            'redirect_url'    => $user->onboarding_completed ? '/' : '/company-setup',
+            'redirect_url'    => $user->onboarding_completed ? '/dashboard' : '/company-setup',
             'company_context' => $company ? [
                 'base_currency'   => $company->base_currency   ?? 'USD',
                 'system_language' => $company->system_language ?? 'en',

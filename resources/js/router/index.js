@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 // Import components
+import Landing from '@/components/Landing.vue';
+import Plans from '@/components/Plans.vue';
 import Login from '@/components/auth/Login.vue';
 import Register from '@/components/auth/Register.vue';
 import ForgotPassword from '@/components/auth/ForgotPassword.vue';
@@ -49,6 +51,16 @@ import PaymentReceipts from '@/components/payment-receipts/PaymentReceipts.vue';
 
 const routes = [
   {
+    path: '/',
+    name: 'Landing',
+    component: Landing
+  },
+  {
+    path: '/plans',
+    name: 'Plans',
+    component: Plans
+  },
+  {
     path: '/login',
     name: 'Login',
     component: Login,
@@ -78,7 +90,7 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
-        path: '',
+        path: 'dashboard',
         name: 'Dashboard',
         component: Dashboard
       },
@@ -495,9 +507,9 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next('/');
+    next('/dashboard');
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
-    next('/'); // Redirect to dashboard if no permission
+    next('/dashboard'); // Redirect to dashboard if no permission
   } else {
     next();
   }
