@@ -1,118 +1,140 @@
 <template>
-  <div class="w-full max-w-full py-8 px-4 sm:px-6 lg:px-8 dark:bg-zinc-950 min-h-screen">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
+  <div class="space-y-6 w-full min-w-0">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Purchase Orders</h1>
-        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Manage and track all purchase orders</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Purchase Orders</h1>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+          Manage purchase orders, track supplier payment status, filter by warehouse/location & issue bills.
+        </p>
       </div>
-      <button
-        @click="createPurchaseOrder"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 animate-button cursor-pointer"
-      >
-        <span>Create Purchase Order</span>
-      </button>
+
+      <div class="flex items-center space-x-3">
+        <!-- New Purchase Order Button -->
+        <button
+          @click="createPurchaseOrder"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Create Purchase Order</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Tabs Bar -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 dark:border-zinc-800 mb-6 pb-0.5 space-y-4 sm:space-y-0">
-      <div class="flex flex-wrap gap-x-6 gap-y-2">
+    <!-- Status Tabs & Quick Controls -->
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-3">
+      <!-- Dynamic Status Tabs -->
+      <div class="flex items-center space-x-1 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
         <button
-          v-for="tab in tabs"
+          v-for="tab in visibleTabs"
           :key="tab.id"
-          v-show="tab.id === 'all' || selectedFilters.includes(tab.id)"
-          @click="setActiveTab(tab.id)"
-          class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
-          :class="isTabActive(tab.id) ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
+          @click="switchTab(tab.id)"
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5"
+          :class="isTabActive(tab.id) 
+            ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs' 
+            : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200'"
         >
           <span>{{ tab.label }}</span>
           <span
-            class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-            :class="isTabActive(tab.id) ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'"
+            v-if="counts[tab.id] !== undefined"
+            class="px-1.5 py-0.2 text-[10px] rounded-full font-bold"
+            :class="isTabActive(tab.id)
+              ? 'bg-slate-700 text-slate-100 dark:bg-zinc-300 dark:text-zinc-900'
+              : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'"
           >
-            {{ counts[tab.id] || 0 }}
+            {{ counts[tab.id] }}
           </span>
         </button>
       </div>
 
-      <div class="flex items-center space-x-2">
-        <!-- Sort Button -->
-        <button class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all cursor-pointer">
-          <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-          Sort
+      <!-- Sorting & Filter Controls -->
+      <div class="flex items-center space-x-2 shrink-0">
+        <!-- Sort Direction Toggle -->
+        <button
+          @click="toggleSortOrder"
+          class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors border border-slate-200 dark:border-zinc-700 cursor-pointer"
+        >
+          Sort: {{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}
         </button>
 
-        <!-- Filter Button -->
-        <div class="relative">
-          <button
-            @click.stop="toggleFilterDropdown"
-            class="inline-flex items-center px-3 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
-            :class="{ 'border-blue-600 text-blue-600 bg-blue-50/10': selectedFilters.length > 0 }"
-          >
-            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" :class="{ 'text-blue-600': selectedFilters.length > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/></svg>
-            <span>Filter</span>
-            <!-- Selected Filter Indicator -->
-            <span v-if="selectedFilters.length > 0" class="ml-1.5 text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
-              {{ selectedFilters.length }}
-            </span>
-          </button>
-
-          <!-- Filter Dropdown List -->
-          <div
-            v-if="showFilterDropdown"
-            class="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1.5 z-50 animate-fade-in"
-          >
-            <button
-              v-for="option in ['draft', 'sent', 'confirmed', 'partially_received', 'received', 'cancelled']"
-              :key="option"
-              @click.stop="toggleFilterOption(option)"
-              class="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors cursor-pointer border-0 bg-transparent"
-              :class="selectedFilters.includes(option) ? 'text-blue-600 dark:text-blue-400 font-bold bg-blue-50/20 dark:bg-blue-900/20' : 'text-slate-700 dark:text-zinc-300'"
-            >
-              <span>{{ option === 'partially_received' ? 'Partially' : option.charAt(0).toUpperCase() + option.slice(1) }}</span>
-              <svg v-if="selectedFilters.includes(option)" class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Clear Button (shows when any search or filter applies) -->
+        <!-- Filter Drawer Trigger Button -->
         <button
-          v-if="searchQuery !== '' || dateFrom !== '' || dateTo !== '' || selectedFilters.length > 0"
-          @click="clearAllFilters"
-          class="inline-flex items-center px-3 py-1.5 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-xs font-semibold shadow-sm transition-all focus:outline-none cursor-pointer"
+          @click="openFilterDrawer"
+          class="inline-flex items-center px-3.5 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-all focus:outline-none cursor-pointer"
+          :class="{ 'border-slate-900 text-slate-900 bg-slate-100/50 dark:bg-zinc-800 dark:border-zinc-100 dark:text-zinc-100 font-bold': totalActiveFilterCount > 0 }"
         >
-          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          Clear
+          <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" :class="{ 'text-slate-900 dark:text-zinc-100': totalActiveFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
+          </svg>
+          <span>Filter</span>
+          <!-- Selected Filter Indicator Badge -->
+          <span v-if="totalActiveFilterCount > 0" class="ml-1.5 text-[10px] font-extrabold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-1.5 py-0.2 rounded-full">
+            {{ totalActiveFilterCount }}
+          </span>
         </button>
       </div>
     </div>
 
-    <!-- Date Filters Card -->
-    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 shadow-soft grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
-      <div>
-        <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date From</label>
-        <input
-          v-model="dateFrom"
-          type="date"
-          @change="fetchPurchaseOrders(1)"
-          class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
-        />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date To</label>
-        <input
-          v-model="dateTo"
-          type="date"
-          @change="fetchPurchaseOrders(1)"
-          class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
-        />
-      </div>
+    <!-- Active Filters Pill Bar -->
+    <div v-if="totalActiveFilterCount > 0" class="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-soft animate-fade-in">
+      <span class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mr-1">Active Filters:</span>
+
+      <!-- Product Pill -->
+      <span v-if="advancedFilters.product_name || advancedFilters.product_search" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+        Item: {{ advancedFilters.product_name || advancedFilters.product_search }}
+        <button @click="removeSingleFilter('product')" class="ml-1.5 hover:text-blue-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- PO Number Pill -->
+      <span v-if="advancedFilters.po_number" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+        Bill #: {{ advancedFilters.po_number }}
+        <button @click="removeSingleFilter('po_number')" class="ml-1.5 hover:text-violet-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Supplier Pill -->
+      <span v-if="advancedFilters.supplier_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+        Supplier: {{ getSupplierSummary() }}
+        <button @click="removeSingleFilter('supplier')" class="ml-1.5 hover:text-teal-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Warehouse Pill -->
+      <span v-if="advancedFilters.warehouse_ids?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+        Location: {{ getWarehouseSummary() }}
+        <button @click="removeSingleFilter('warehouse')" class="ml-1.5 hover:text-emerald-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Status Pill -->
+      <span v-if="advancedFilters.statuses?.length > 0" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+        Status: {{ getStatusSummary() }}
+        <button @click="removeSingleFilter('status')" class="ml-1.5 hover:text-indigo-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Date Range Pill -->
+      <span v-if="activeDateRangeLabel" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+        Date: {{ activeDateRangeLabel }}
+        <button @click="removeSingleFilter('date')" class="ml-1.5 hover:text-cyan-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <!-- Search Query Pill -->
+      <span v-if="searchQuery" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
+        Search: "{{ searchQuery }}"
+        <button @click="searchQuery = ''; fetchPurchaseOrders(1)" class="ml-1.5 hover:text-slate-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </span>
+
+      <button
+        @click="clearAllFilters"
+        class="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold ml-auto cursor-pointer"
+      >
+        Clear All
+      </button>
     </div>
 
     <!-- Table Container -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
       <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
-        <!-- Search -->
+        <!-- Global Search -->
         <div class="relative w-96">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -120,171 +142,115 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search by order number or supplier name"
-            class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-0 focus:bg-white dark:focus:bg-zinc-800 transition-all text-slate-700 dark:text-zinc-200 dark:placeholder-zinc-500"
-            @input="debouncedSearch"
+            placeholder="Search by bill #, supplier name..."
+            class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-800 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-500"
           />
         </div>
 
-        <!-- Showing selection counts -->
-        <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-zinc-400">
-          <span>Showing</span>
-          <select
-            v-model="perPage"
-            @change="handlePerPageChange"
-            class="border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer bg-white dark:bg-zinc-800 dark:text-zinc-200"
-          >
-            <option :value="10">10</option>
-            <option :value="15">15</option>
-            <option :value="25">25</option>
-            <option :value="50">50</option>
-          </select>
-          <span>of {{ totalItems }} results</span>
+        <div class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+          Showing <span class="font-bold text-slate-900 dark:text-zinc-100">{{ orders.length }}</span> of <span class="font-bold text-slate-900 dark:text-zinc-100">{{ pagination.total }}</span> purchase orders
         </div>
       </div>
 
-      <!-- Purchase Orders Table -->
-      <div class="overflow-x-auto custom-scrollbar">
-        <table class="w-full text-left text-xs border-collapse">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
-              <th class="py-3.5 px-4 w-[40px] text-center bg-slate-50 dark:bg-zinc-800/50">
+            <tr class="bg-slate-50/50 dark:bg-zinc-800/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800">
+              <th class="py-3 px-4 text-center w-10">
                 <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-3.5 h-3.5" />
               </th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('po_number')">
-                <div class="flex items-center space-x-1">
-                  <span>PO #</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Supplier</th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('order_date')">
-                <div class="flex items-center space-x-1">
-                  <span>Order Date</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('expected_delivery_date')">
-                <div class="flex items-center space-x-1">
-                  <span>Expected Delivery</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('total_amount')">
-                <div class="flex items-center justify-end space-x-1">
-                  <span>Total Amount</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('due_amount')">
-                <div class="flex items-center justify-end space-x-1">
-                  <span>Due Amount</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-center cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('status')">
-                <div class="flex items-center justify-center space-x-1">
-                  <span>Status</span>
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-                </div>
-              </th>
-              <th class="py-3.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
+              <th class="py-3 px-4">Bill #</th>
+              <th class="py-3 px-4">Supplier / Allocation</th>
+              <th class="py-3 px-4 text-right">Total</th>
+              <th class="py-3 px-4 text-right">Paid</th>
+              <th class="py-3 px-4 text-right">Due / Return</th>
+              <th class="py-3 px-4">Due Date</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-center w-16">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100/70 dark:divide-zinc-800">
+          <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
               <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
-                <div class="flex flex-col items-center justify-center space-y-2">
-                  <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600"></div>
-                  <span class="text-xs font-semibold">Loading orders...</span>
-                </div>
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
+                Loading purchase orders...
               </td>
             </tr>
-            <tr v-else-if="purchaseOrders.length === 0" class="bg-white dark:bg-zinc-900">
+            <tr v-else-if="orders.length === 0" class="bg-white dark:bg-zinc-900">
               <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
-                <span>No purchase orders found. Get started by creating your first purchase order.</span>
+                <span>No purchase orders found matching selected filter criteria.</span>
               </td>
             </tr>
-            <tr v-else v-for="item in purchaseOrders" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+            <tr v-else v-for="item in orders" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors">
               <!-- Checkbox -->
               <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
                 <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-3.5 h-3.5" />
               </td>
 
-              <!-- PO ID -->
+              <!-- Bill # / PO # -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 cursor-pointer" @click="viewOrder(item)">
-                  {{ item.po_number }}
+                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 cursor-pointer flex items-center space-x-1.5" @click="viewPurchaseOrder(item)">
+                  <span>{{ item.po_number }}</span>
                 </div>
                 <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
-                  Created on: {{ formatLongDate(item.created_at) }}
+                  Order Date: {{ formatLongDate(item.order_date || item.created_at) }}
                 </div>
               </td>
 
-              <!-- Supplier -->
+              <!-- Supplier & Allocation -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm flex items-center gap-1.5 flex-wrap">
-                  <span>{{ item.supplier_name || item.supplier?.name || 'Walk-in Supplier' }}</span>
-                  <span v-if="item.is_walkin_supplier || !item.supplier_id" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
-                    Walk-in
+                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
+                  {{ item.supplier?.name || item.supplier_name || 'Walk-in Supplier' }}
+                </div>
+                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex flex-wrap items-center mt-1 gap-x-2 gap-y-0.5">
+                  <span v-if="item.supplier?.company_name" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
+                    {{ item.supplier.company_name }}
+                  </span>
+                  <span v-if="item.warehouse" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"/></svg>
+                    {{ item.warehouse.name }}
                   </span>
                 </div>
-                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center mt-0.5 space-x-1">
-                  <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
-                  </svg>
-                  <span>
-                    <template v-if="item.is_walkin_supplier || !item.supplier_id">
-                      {{ [item.supplier_phone, item.supplier_email].filter(Boolean).join(' • ') || 'One-Time Supplier' }}
-                    </template>
-                    <template v-else>
-                      {{ item.supplier?.company_name || 'No Company' }}
-                    </template>
-                  </span>
-                </div>
-              </td>
-
-              <!-- Order Date -->
-              <td class="py-4 px-4 text-slate-600 dark:text-zinc-300 text-sm align-middle bg-white dark:bg-zinc-900">
-                {{ item.order_date ? formatShortDate(item.order_date) : '-' }}
-              </td>
-
-              <!-- Expected Delivery -->
-              <td class="py-4 px-4 text-slate-600 dark:text-zinc-300 text-sm align-middle bg-white dark:bg-zinc-900">
-                {{ item.expected_delivery_date ? formatShortDate(item.expected_delivery_date) : '-' }}
               </td>
 
               <!-- Total Amount -->
               <td class="py-4 px-4 text-right font-bold text-slate-800 dark:text-zinc-100 text-sm align-middle bg-white dark:bg-zinc-900">
-                {{ formatCurrency(item.total_amount) }}
+                {{ formatCurrency(item.total_amount || item.grand_total) }}
               </td>
 
-              <!-- Due Amount -->
-              <td class="py-4 px-4 text-right align-middle bg-white dark:bg-zinc-900 font-bold">
-                <span
-                  v-if="parseFloat(item.due_amount) > 0"
-                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-rose-600 bg-rose-50/50 dark:text-rose-450 dark:bg-rose-950/20"
-                >
-                  {{ formatCurrency(item.due_amount) }}
+              <!-- Paid Amount -->
+              <td class="py-4 px-4 text-right font-semibold text-emerald-600 dark:text-emerald-400 text-sm align-middle bg-white dark:bg-zinc-900">
+                {{ parseFloat(item.amount_paid || item.paid_amount || 0) > 0 ? formatCurrency(item.amount_paid || item.paid_amount) : '-' }}
+              </td>
+
+              <!-- Due / Return Amount -->
+              <td class="py-4 px-4 text-right text-xs align-middle bg-white dark:bg-zinc-900">
+                <span v-if="getBalanceState(item).type === 'due'" class="font-semibold text-rose-600 dark:text-rose-400">
+                  {{ formatCurrency(getBalanceState(item).amount) }}
                 </span>
-                <span
-                  v-else
-                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold text-emerald-600 bg-emerald-50/30 dark:text-emerald-450 dark:bg-emerald-950/10"
-                >
-                  Settled
+                <span v-else-if="getBalanceState(item).type === 'return'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800" title="Overpayment Change">
+                  Return: {{ formatCurrency(getBalanceState(item).amount) }}
                 </span>
+                <span v-else class="text-slate-400 dark:text-zinc-500 font-medium">
+                  -
+                </span>
+              </td>
+
+              <!-- Due Date -->
+              <td class="py-4 px-4 text-slate-600 dark:text-zinc-300 text-sm align-middle bg-white dark:bg-zinc-900">
+                {{ item.expected_delivery_date ? formatShortDate(item.expected_delivery_date) : '-' }}
               </td>
 
               <!-- Status Badge -->
               <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
                 <span
-                  :class="getStatusBadgeClass(item.status)"
+                  :class="getStatusBadgeClass(item)"
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all"
                 >
-                  {{ formatStatus(item.status) }}
+                  {{ getStatusLabel(item) }}
                 </span>
               </td>
 
@@ -302,22 +268,26 @@
                 <!-- Action Dropdown Overlay -->
                 <div
                   v-if="openActionDropdown === item.id"
-                  class="absolute right-4 mt-1 w-32 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in text-left"
+                  class="absolute right-4 mt-1 w-36 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in"
                 >
-                  <button @click="viewOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                  <button @click="viewPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     <span>View</span>
                   </button>
-                  <button v-if="item.status === 'draft'" @click="editOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
+                  <button v-if="!isOrderVoided(item)" @click="editPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span>Edit</span>
                   </button>
-                  <button v-if="['sent', 'confirmed', 'partially_received'].includes(item.status)" @click="receiveOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 cursor-pointer">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                    <span>Receive</span>
+                  <button @click="printPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print</span>
+                  </button>
+                  <button v-if="!isOrderVoided(item)" @click="promptVoidPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center space-x-1.5 font-semibold">
+                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    <span>Void</span>
                   </button>
                   <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
-                  <button v-if="item.status === 'draft'" @click="deleteOrder(item.id)" class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center space-x-1.5 cursor-pointer">
+                  <button @click="deletePurchaseOrder(item.id)" class="w-full text-left px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     <span>Delete</span>
                   </button>
@@ -328,116 +298,318 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div class="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <div class="flex-1 flex justify-between sm:hidden">
+      <!-- Pagination Footer -->
+      <div class="px-4 py-3 bg-slate-50/50 dark:bg-zinc-800/50 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+        <div class="text-xs text-slate-500 dark:text-zinc-400">
+          Showing <span class="font-bold text-slate-700 dark:text-zinc-200">{{ pagination.from }}</span> to <span class="font-bold text-slate-700 dark:text-zinc-200">{{ pagination.to }}</span> of <span class="font-bold text-slate-700 dark:text-zinc-200">{{ pagination.total }}</span> results
+        </div>
+        <div class="flex items-center space-x-1">
           <button
-            @click="previousPage"
-            :disabled="currentPage === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+            @click="fetchPurchaseOrders(pagination.current_page - 1)"
+            :disabled="pagination.current_page <= 1"
+            class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 cursor-pointer"
           >
-            Previous
+            Prev
           </button>
+          <template v-for="page in paginationRange" :key="page">
+            <span v-if="page === '...'" class="px-2 text-xs text-slate-400">...</span>
+            <button
+              v-else
+              @click="fetchPurchaseOrders(page)"
+              class="px-2.5 py-1 text-xs font-semibold rounded transition-colors cursor-pointer"
+              :class="page === pagination.current_page 
+                ? 'bg-blue-600 text-white font-bold' 
+                : 'border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
+            >
+              {{ page }}
+            </button>
+          </template>
           <button
-            @click="nextPage"
-            :disabled="currentPage === pagination.last_page"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+            @click="fetchPurchaseOrders(pagination.current_page + 1)"
+            :disabled="pagination.current_page >= pagination.last_page"
+            class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 cursor-pointer"
           >
             Next
           </button>
         </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
-          <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
-            <!-- Prev -->
-            <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              class="relative inline-flex items-center px-2.5 py-2 rounded-l-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
-            >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            
-            <!-- Page Numbers -->
-            <template v-for="(page, idx) in paginationRange" :key="idx">
-              <span
-                v-if="page === '...'"
-                class="relative inline-flex items-center px-3.5 py-2 border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-slate-400 dark:text-zinc-500 select-none"
-              >
-                ...
-              </span>
-              <button
-                v-else
-                @click="goToPage(page)"
-                class="relative inline-flex items-center px-3.5 py-2 border text-xs font-bold transition-all cursor-pointer rounded-lg"
-                :class="currentPage === page ? 'z-10 bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-600 text-slate-800 dark:text-zinc-100' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800'"
-              >
-                {{ page }}
-              </button>
-            </template>
-            
-            <!-- Next -->
-            <button
-              @click="nextPage"
-              :disabled="currentPage === pagination.last_page"
-              class="relative inline-flex items-center px-2.5 py-2 rounded-r-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
-            >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          </nav>
-        </div>
       </div>
     </div>
+
+    <!-- Slide-over Filter Drawer Component -->
+    <PurchaseFilter
+      v-model:isOpen="isFilterDrawerOpen"
+      :filters="advancedFilters"
+      @apply="handleApplyAdvancedFilters"
+      @reset="handleResetAdvancedFilters"
+    />
+
+    <!-- Void Confirmation Modal -->
+    <teleport to="body">
+      <div v-if="voidModalState.isOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" @click="closeVoidModal"></div>
+        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
+          <div class="flex items-center space-x-3 text-amber-600 dark:text-amber-400">
+            <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="text-left">
+              <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100">Void Bill #{{ voidModalState.order?.po_number }}</h3>
+              <p class="text-xs text-slate-500 dark:text-zinc-400">Inventory Deduction & Cancellation</p>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed text-left">
+            Are you sure you want to void purchase order <strong class="text-slate-900 dark:text-zinc-100 font-bold">#{{ voidModalState.order?.po_number }}</strong>? This will cancel the order and update inventory balances accordingly.
+          </p>
+
+          <div class="flex items-center justify-end space-x-3 pt-2">
+            <button
+              type="button"
+              @click="closeVoidModal"
+              :disabled="voiding"
+              class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="confirmVoidPurchaseOrder"
+              :disabled="voiding"
+              class="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <span v-if="voiding" class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent mr-1"></span>
+              <span>{{ voiding ? 'Voiding...' : 'Confirm Void' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
+import { useToast } from '@/composables/useToast';
 import { debounce } from '@/utils/debounce';
+import PurchaseFilter from './PurchaseFilter.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
 const router = useRouter();
+const { showToast } = useToast();
 
-// Reactive data
-const purchaseOrders = ref([]);
+// Reactive Data
+const orders = ref([]);
 const searchQuery = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
 const currentTab = ref('all');
 const loading = ref(false);
 const openActionDropdown = ref(null);
-const selectedFilters = ref([]);
-const showFilterDropdown = ref(false);
+const isFilterDrawerOpen = ref(false);
 
-const toggleFilterDropdown = () => {
-  showFilterDropdown.value = !showFilterDropdown.value;
+// Advanced Filter State
+const advancedFilters = ref({
+  product_id: '',
+  product_name: '',
+  product_search: '',
+  po_number: '',
+  supplier_ids: [],
+  warehouse_ids: [],
+  statuses: [],
+  date_from: '',
+  date_to: ''
+});
+
+// Lookup data for active filter badges
+const supplierList = ref([]);
+const warehouseList = ref([]);
+
+const extractArray = (resData) => {
+  if (Array.isArray(resData)) return resData;
+  if (resData && Array.isArray(resData.data)) return resData.data;
+  return [];
 };
 
-const toggleFilterOption = (option) => {
-  const index = selectedFilters.value.indexOf(option);
-  if (index > -1) {
-    selectedFilters.value.splice(index, 1);
-    if (currentTab.value === option) {
-      currentTab.value = 'all';
-      fetchPurchaseOrders(1);
-    }
-  } else {
-    selectedFilters.value.push(option);
+const loadFilterLookups = async () => {
+  try {
+    const [suppRes, whRes] = await Promise.all([
+      axios.get('/api/suppliers').catch(() => ({ data: [] })),
+      axios.get('/api/warehouses').catch(() => ({ data: [] }))
+    ]);
+    supplierList.value = extractArray(suppRes.data);
+    warehouseList.value = extractArray(whRes.data);
+  } catch (e) {
+    console.error('Error loading filter lookups:', e);
   }
 };
+
+const getSupplierSummary = () => {
+  const ids = advancedFilters.value.supplier_ids || [];
+  if (ids.length === 0) return '';
+  const list = Array.isArray(supplierList.value) ? supplierList.value : [];
+  const first = list.find(s => String(s.id) === String(ids[0]));
+  const name = first ? first.name : `Supplier #${ids[0]}`;
+  return ids.length > 1 ? `${name} (+${ids.length - 1})` : name;
+};
+
+const getWarehouseSummary = () => {
+  const ids = advancedFilters.value.warehouse_ids || [];
+  if (ids.length === 0) return '';
+  const list = Array.isArray(warehouseList.value) ? warehouseList.value : [];
+  const first = list.find(w => String(w.id) === String(ids[0]));
+  const name = first ? first.name : `Location #${ids[0]}`;
+  return ids.length > 1 ? `${name} (+${ids.length - 1})` : name;
+};
+
+const getStatusSummary = () => {
+  const list = advancedFilters.value.statuses || [];
+  if (list.length === 0) return '';
+  const map = {
+    draft: 'Draft',
+    approved: 'Approved',
+    paid: 'Paid',
+    partial: 'Partial',
+    overdue: 'Overdue',
+    void: 'Void'
+  };
+  const firstLabel = map[list[0]] || list[0];
+  return list.length > 1 ? `${firstLabel} (+${list.length - 1})` : firstLabel;
+};
+
+const activeDateRangeLabel = computed(() => {
+  const from = advancedFilters.value.date_from || dateFrom.value;
+  const to = advancedFilters.value.date_to || dateTo.value;
+  if (from && to) return `${from} to ${to}`;
+  if (from) return `From ${from}`;
+  if (to) return `Until ${to}`;
+  return '';
+});
+
+const totalActiveFilterCount = computed(() => {
+  let count = 0;
+  if (searchQuery.value) count++;
+  if (advancedFilters.value.product_id || advancedFilters.value.product_search) count++;
+  if (advancedFilters.value.po_number) count++;
+  if (advancedFilters.value.supplier_ids?.length > 0) count++;
+  if (advancedFilters.value.warehouse_ids?.length > 0) count++;
+  if (advancedFilters.value.statuses?.length > 0) count++;
+  if (advancedFilters.value.date_from || advancedFilters.value.date_to || dateFrom.value || dateTo.value) count++;
+  return count;
+});
+
+const allStatusTabs = [
+  { id: 'draft', label: 'Draft' },
+  { id: 'approved', label: 'Approved' },
+  { id: 'paid', label: 'Paid' },
+  { id: 'partial', label: 'Partial' },
+  { id: 'overdue', label: 'Overdue' },
+  { id: 'void', label: 'Void' }
+];
+
+const visibleTabs = computed(() => {
+  const selectedStatuses = advancedFilters.value.statuses || [];
+  const allTab = { id: 'all', label: 'All Orders' };
+
+  if (selectedStatuses.length === 0) {
+    return [allTab];
+  }
+
+  const activeIds = selectedStatuses.map(st => {
+    if (st === 'completed') return 'paid';
+    if (st === 'partially_paid' || st === 'partially_received') return 'partial';
+    if (st === 'confirmed' || st === 'sent') return 'approved';
+    if (st === 'cancelled') return 'void';
+    return st;
+  });
+
+  const filtered = allStatusTabs.filter(t => activeIds.includes(t.id));
+  return [allTab, ...filtered];
+});
+
+watch(visibleTabs, (newTabs) => {
+  const isCurrentStillVisible = newTabs.some(t => t.id === currentTab.value);
+  if (!isCurrentStillVisible) {
+    currentTab.value = 'all';
+  }
+});
 
 const isTabActive = (tabId) => {
   return currentTab.value === tabId;
 };
 
+const openFilterDrawer = () => {
+  isFilterDrawerOpen.value = true;
+};
+
+const handleApplyAdvancedFilters = (newFilters) => {
+  advancedFilters.value = { ...newFilters };
+  if (newFilters.date_from) dateFrom.value = newFilters.date_from;
+  if (newFilters.date_to) dateTo.value = newFilters.date_to;
+  fetchPurchaseOrders(1);
+};
+
+const handleResetAdvancedFilters = () => {
+  advancedFilters.value = {
+    product_id: '',
+    product_name: '',
+    product_search: '',
+    po_number: '',
+    supplier_ids: [],
+    warehouse_ids: [],
+    statuses: [],
+    date_from: '',
+    date_to: ''
+  };
+  dateFrom.value = '';
+  dateTo.value = '';
+  fetchPurchaseOrders(1);
+};
+
+const removeSingleFilter = (key) => {
+  if (key === 'date') {
+    advancedFilters.value.date_from = '';
+    advancedFilters.value.date_to = '';
+    dateFrom.value = '';
+    dateTo.value = '';
+  } else if (key === 'product') {
+    advancedFilters.value.product_id = '';
+    advancedFilters.value.product_name = '';
+    advancedFilters.value.product_search = '';
+  } else if (key === 'po_number') {
+    advancedFilters.value.po_number = '';
+  } else if (key === 'supplier') {
+    advancedFilters.value.supplier_ids = [];
+  } else if (key === 'warehouse') {
+    advancedFilters.value.warehouse_ids = [];
+  } else if (key === 'status') {
+    advancedFilters.value.statuses = [];
+  }
+  fetchPurchaseOrders(1);
+};
+
 const clearAllFilters = () => {
-  selectedFilters.value = [];
   currentTab.value = 'all';
   searchQuery.value = '';
   dateFrom.value = '';
   dateTo.value = '';
+  advancedFilters.value = {
+    product_id: '',
+    product_name: '',
+    product_search: '',
+    po_number: '',
+    supplier_ids: [],
+    warehouse_ids: [],
+    statuses: [],
+    date_from: '',
+    date_to: ''
+  };
   fetchPurchaseOrders(1);
 };
 
@@ -445,10 +617,14 @@ const clearAllFilters = () => {
 const sortBy = ref('order_date');
 const sortOrder = ref('desc');
 
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  fetchPurchaseOrders(1);
+};
+
 // Pagination
 const currentPage = ref(1);
 const perPage = ref(15);
-const totalItems = ref(0);
 
 const pagination = ref({
   current_page: 1,
@@ -463,24 +639,14 @@ const pagination = ref({
 const counts = ref({
   all: 0,
   draft: 0,
-  sent: 0,
-  confirmed: 0,
-  partially_received: 0,
-  received: 0,
-  cancelled: 0
+  approved: 0,
+  paid: 0,
+  partial: 0,
+  overdue: 0,
+  void: 0
 });
 
-const tabs = [
-  { id: 'all', label: 'All Orders' },
-  { id: 'draft', label: 'Draft' },
-  { id: 'sent', label: 'Sent' },
-  { id: 'confirmed', label: 'Confirmed' },
-  { id: 'partially_received', label: 'Partially' },
-  { id: 'received', label: 'Received' },
-  { id: 'cancelled', label: 'Cancelled' }
-];
-
-// Computed
+// Computed Pagination Range
 const paginationRange = computed(() => {
   const range = [];
   const lastPage = pagination.value.last_page || 1;
@@ -525,30 +691,47 @@ const fetchPurchaseOrders = async (page = 1) => {
     if (currentTab.value !== 'all') {
       params.status = currentTab.value;
     }
-    if (dateFrom.value) {
-      params.date_from = dateFrom.value;
-    }
-    if (dateTo.value) {
-      params.date_to = dateTo.value;
+
+    if (advancedFilters.value.product_id) {
+      params.product_id = advancedFilters.value.product_id;
     }
 
+    if (advancedFilters.value.po_number) {
+      params.po_number = advancedFilters.value.po_number;
+    }
+
+    if (advancedFilters.value.supplier_ids?.length > 0) {
+      params.supplier_ids = advancedFilters.value.supplier_ids.join(',');
+    }
+
+    if (advancedFilters.value.warehouse_ids?.length > 0) {
+      params.warehouse_ids = advancedFilters.value.warehouse_ids.join(',');
+    }
+
+    if (advancedFilters.value.statuses?.length > 0 && currentTab.value === 'all') {
+      params.status = advancedFilters.value.statuses.join(',');
+    }
+
+    const dateFromVal = advancedFilters.value.date_from || dateFrom.value;
+    const dateToVal = advancedFilters.value.date_to || dateTo.value;
+    if (dateFromVal) params.date_from = dateFromVal;
+    if (dateToVal) params.date_to = dateToVal;
+
     const response = await axios.get('/api/purchase-orders', { params });
-    purchaseOrders.value = response.data.data;
+    orders.value = response.data.data || [];
     
     // Update pagination
     pagination.value = {
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-      from: response.data.from,
-      to: response.data.to
+      current_page: response.data.current_page || 1,
+      last_page: response.data.last_page || 1,
+      per_page: response.data.per_page || 15,
+      total: response.data.total || 0,
+      from: response.data.from || 0,
+      to: response.data.to || 0,
     };
-    totalItems.value = response.data.total;
-    
-    await fetchStatusCounts();
   } catch (error) {
     console.error('Error fetching purchase orders:', error);
+    showToast('Failed to load purchase orders', 'error');
   } finally {
     loading.value = false;
   }
@@ -558,126 +741,182 @@ const debouncedSearch = debounce(() => {
   fetchPurchaseOrders(1);
 }, 300);
 
-const handleSort = (field) => {
-  if (sortBy.value === field) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortBy.value = field;
-    sortOrder.value = 'desc';
-  }
-  fetchPurchaseOrders(1);
-};
+watch(searchQuery, () => {
+  debouncedSearch();
+});
 
-const handlePerPageChange = () => {
-  fetchPurchaseOrders(1);
-};
-
-const setActiveTab = (tabId) => {
+const switchTab = (tabId) => {
   currentTab.value = tabId;
   fetchPurchaseOrders(1);
 };
 
-const toggleActionDropdown = (id) => {
-  openActionDropdown.value = openActionDropdown.value === id ? null : id;
+// Void Modal State & Handler
+const voidModalState = ref({
+  isOpen: false,
+  order: null
+});
+const voiding = ref(false);
+
+const isOrderVoided = (order) => {
+  return order.status === 'void' || order.status === 'voided' || order.status === 'cancelled';
 };
 
-const closeAllDropdowns = () => {
+const promptVoidPurchaseOrder = (order) => {
   openActionDropdown.value = null;
-  showFilterDropdown.value = false;
+  voidModalState.value = {
+    isOpen: true,
+    order
+  };
 };
 
-// Date Format Helpers
-const formatLongDate = (dateString) => {
-  if (!dateString) return '-';
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', options);
+const closeVoidModal = () => {
+  voidModalState.value = {
+    isOpen: false,
+    order: null
+  };
 };
 
-const formatShortDate = (dateString) => {
-  if (!dateString) return '-';
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', options);
+const confirmVoidPurchaseOrder = async () => {
+  if (!voidModalState.value.order) return;
+  voiding.value = true;
+  try {
+    const poId = voidModalState.value.order.id;
+    await axios.post(`/api/purchase-orders/${poId}/void`);
+    showToast(`Purchase order #${voidModalState.value.order.po_number} successfully voided.`, 'success');
+    closeVoidModal();
+    fetchPurchaseOrders(currentPage.value);
+    fetchStatusCounts();
+  } catch (err) {
+    console.error('Void purchase order error:', err);
+    showToast(err.response?.data?.message || 'Failed to void purchase order', 'error');
+  } finally {
+    voiding.value = false;
+  }
 };
 
-const formatCurrency = (val) => {
-  const num = parseFloat(val);
-  if (isNaN(num)) return '$0.00';
-  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-};
-
-const formatStatus = (status) => {
-  if (!status) return '';
-  return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-};
-
-const getStatusBadgeClass = (status) => {
-  if (status === 'received') return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400';
-  if (status === 'partially_received') return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400';
-  if (status === 'confirmed') return 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400';
-  if (status === 'sent') return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
-  if (status === 'cancelled') return 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
-  return 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400';
-};
-
-// Actions
 const createPurchaseOrder = () => {
   router.push('/purchase/orders/create');
 };
 
-const viewOrder = (order) => {
-  router.push(`/purchase/orders/${order.id}`);
+const viewPurchaseOrder = (item) => {
+  openActionDropdown.value = null;
+  router.push(`/purchase/orders/${item.id}`);
 };
 
-const editOrder = (order) => {
-  router.push(`/purchase/orders/${order.id}/edit`);
+const editPurchaseOrder = (item) => {
+  openActionDropdown.value = null;
+  router.push(`/purchase/orders/${item.id}/edit`);
 };
 
-const receiveOrder = (order) => {
-  router.push(`/purchase/orders/${order.id}/receive`);
+const printPurchaseOrder = (item) => {
+  openActionDropdown.value = null;
+  window.open(`/purchase/orders/${item.id}/print`, '_blank');
 };
 
-const deleteOrder = async (orderId) => {
-  if (confirm('Are you sure you want to delete this purchase order?')) {
+const deletePurchaseOrder = async (id) => {
+  openActionDropdown.value = null;
+  if (confirm('Are you sure you want to delete this purchase order? This operation cannot be undone.')) {
     try {
-      await axios.delete(`/api/purchase-orders/${orderId}`);
+      await axios.delete(`/api/purchase-orders/${id}`);
+      showToast('Purchase order deleted successfully', 'success');
       fetchPurchaseOrders(currentPage.value);
+      fetchStatusCounts();
     } catch (error) {
       console.error('Error deleting purchase order:', error);
+      showToast(error.response?.data?.message || 'Failed to delete purchase order', 'error');
     }
   }
 };
 
-// Pagination Methods
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    fetchPurchaseOrders(currentPage.value - 1);
+const toggleActionDropdown = (id) => {
+  if (openActionDropdown.value === id) {
+    openActionDropdown.value = null;
+  } else {
+    openActionDropdown.value = id;
   }
 };
 
-const nextPage = () => {
-  if (currentPage.value < pagination.value.last_page) {
-    fetchPurchaseOrders(currentPage.value + 1);
+const handleClickOutside = () => {
+  if (openActionDropdown.value !== null) {
+    openActionDropdown.value = null;
   }
 };
 
-const goToPage = (page) => {
-  fetchPurchaseOrders(page);
+const formatCurrency = (val) => {
+  if (currencyStore && typeof currencyStore.formatPrice === 'function') {
+    return currencyStore.formatPrice(val);
+  }
+  const amt = parseFloat(val) || 0;
+  return `$${amt.toFixed(2)}`;
+};
+
+const formatShortDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatLongDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getStatusBadgeClass = (item) => {
+  const st = item.status;
+  if (st === 'received' || st === 'paid' || st === 'completed') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+  if (st === 'partially_received' || st === 'partial') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+  if (st === 'draft') return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
+  if (st === 'approved' || st === 'confirmed' || st === 'sent') return 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+  return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
+};
+
+const getStatusLabel = (item) => {
+  const st = item.status;
+  if (st === 'received') return 'Paid';
+  if (st === 'partially_received') return 'Partial';
+  if (st === 'confirmed' || st === 'sent') return 'Approved';
+  if (st === 'cancelled' || st === 'voided') return 'Void';
+  return st ? st.charAt(0).toUpperCase() + st.slice(1) : '-';
+};
+
+const getBalanceState = (item) => {
+  const total = parseFloat(item.total_amount || item.grand_total || 0);
+  const paid = parseFloat(item.amount_paid || item.paid_amount || 0);
+  const due = parseFloat(item.due_amount !== undefined ? item.due_amount : (total - paid));
+
+  if (due < -0.001) {
+    return { type: 'return', amount: Math.abs(due) };
+  } else if (due > 0.001) {
+    return { type: 'due', amount: due };
+  }
+  return { type: 'settled', amount: 0 };
 };
 
 // Lifecycle
 onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  fetchStatusCounts();
   fetchPurchaseOrders(1);
-  document.addEventListener('click', closeAllDropdowns);
+  loadFilterLookups();
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeAllDropdowns);
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
 <style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 4px;
+}
 .shadow-soft {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
 }
 .animate-fade-in {
   animation: fadeIn 0.15s ease-out;
@@ -691,14 +930,5 @@ onUnmounted(() => {
     opacity: 1;
     transform: scale(1);
   }
-}
-.animate-button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.animate-button:hover {
-  transform: translateY(-0.5px);
-}
-.animate-button:active {
-  transform: translateY(0.5px);
 }
 </style>

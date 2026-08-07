@@ -41,9 +41,29 @@ class PurchaseReturnController extends Controller
             });
         }
 
-        // Filter by status
+        // Specific Original PO / Bill Number search
+        if ($request->filled('original_po') || $request->filled('po_number')) {
+            $poSearch = $request->input('original_po') ?? $request->input('po_number');
+            $query->whereHas('originalPurchaseOrder', function ($poq) use ($poSearch) {
+                $poq->where('po_number', 'like', "%{$poSearch}%");
+            });
+        }
+
+        // Filter by status (supports array, comma-separated, or scalar)
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $statusInput = $request->status;
+            $statuses = is_array($statusInput) ? $statusInput : explode(',', $statusInput);
+
+            $query->where(function ($q) use ($statuses) {
+                foreach ($statuses as $st) {
+                    $st = trim($st);
+                    if ($st === 'cancelled' || $st === 'void') {
+                        $q->orWhereIn('status', ['cancelled', 'void', 'voided']);
+                    } else {
+                        $q->orWhere('status', $st);
+                    }
+                }
+            });
         }
 
         // Filter by refund status
@@ -51,9 +71,42 @@ class PurchaseReturnController extends Controller
             $query->where('refund_status', $request->refund_status);
         }
 
-        // Filter by supplier
-        if ($request->filled('supplier_id')) {
-            $query->where('supplier_id', $request->supplier_id);
+        // Filter by supplier (supports array, comma-separated, or scalar)
+        if ($request->filled('supplier_id') || $request->filled('supplier_ids')) {
+            $rawSupp = $request->input('supplier_ids') ?? $request->input('supplier_id');
+            $suppIds = is_array($rawSupp) ? $rawSupp : array_filter(explode(',', $rawSupp));
+            if (!empty($suppIds)) {
+                $query->whereIn('supplier_id', $suppIds);
+            }
+        }
+
+        // Filter by warehouse (supports array, comma-separated, or scalar)
+        if ($request->filled('warehouse_id') || $request->filled('warehouse_ids')) {
+            $rawWh = $request->input('warehouse_ids') ?? $request->input('warehouse_id');
+            $whIds = is_array($rawWh) ? $rawWh : array_filter(explode(',', $rawWh));
+            if (!empty($whIds)) {
+                $query->whereIn('warehouse_id', $whIds);
+            }
+        }
+
+        // Filter by return reason (supports array, comma-separated, or scalar)
+        if ($request->filled('reason') || $request->filled('reasons') || $request->filled('return_reasons')) {
+            $rawReasons = $request->input('reasons') ?? $request->input('return_reasons') ?? $request->input('reason');
+            $reasons = is_array($rawReasons) ? $rawReasons : array_filter(explode(',', $rawReasons));
+            if (!empty($reasons)) {
+                $query->where(function ($q) use ($reasons) {
+                    foreach ($reasons as $r) {
+                        $q->orWhere('reason', 'like', '%' . trim($r) . '%');
+                    }
+                });
+            }
+        }
+
+        // Filter by product
+        if ($request->filled('product_id')) {
+            $query->whereHas('purchaseReturnItems', function ($q) use ($request) {
+                $q->where('product_id', $request->product_id);
+            });
         }
 
         // Filter by date range
@@ -72,11 +125,11 @@ class PurchaseReturnController extends Controller
             'pending'   => PurchaseReturn::where('company_id', $companyId)->where('status', 'pending')->count(),
             'approved'  => PurchaseReturn::where('company_id', $companyId)->where('status', 'approved')->count(),
             'completed' => PurchaseReturn::where('company_id', $companyId)->where('status', 'completed')->count(),
-            'cancelled' => PurchaseReturn::where('company_id', $companyId)->where('status', 'cancelled')->count(),
+            'cancelled' => PurchaseReturn::where('company_id', $companyId)->whereIn('status', ['cancelled', 'void', 'voided'])->count(),
         ];
 
         // Sorting
-        $sortField = $request->get('sort_field', 'created_at');
+        $sortField = $request->get('sort_by', $request->get('sort_field', 'created_at'));
         $sortOrder = $request->get('sort_order', 'desc');
         $allowedSorts = ['return_number', 'return_date', 'total_amount', 'status', 'refund_status', 'created_at'];
 

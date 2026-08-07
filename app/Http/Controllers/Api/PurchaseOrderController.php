@@ -36,20 +36,31 @@ class PurchaseOrderController extends Controller
     {
         $all = PurchaseOrder::count();
         $draft = PurchaseOrder::where('status', 'draft')->count();
-        $sent = PurchaseOrder::where('status', 'sent')->count();
-        $confirmed = PurchaseOrder::where('status', 'confirmed')->count();
-        $partiallyReceived = PurchaseOrder::where('status', 'partially_received')->count();
-        $received = PurchaseOrder::where('status', 'received')->count();
-        $cancelled = PurchaseOrder::where('status', 'cancelled')->count();
+        $approved = PurchaseOrder::whereIn('status', ['approved', 'confirmed', 'sent'])->count();
+        $paid = PurchaseOrder::where(function ($q) {
+            $q->where('status', 'received')
+              ->orWhere(function ($sub) {
+                  $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
+              });
+        })->count();
+        $partial = PurchaseOrder::where(function ($q) {
+            $q->where('status', 'partially_received')
+              ->orWhere(function ($sub) {
+                  $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+              });
+        })->count();
+        $overdue = PurchaseOrder::whereNotIn('status', ['received', 'cancelled', 'void'])
+            ->where('expected_delivery_date', '<', today())->count();
+        $void = PurchaseOrder::whereIn('status', ['cancelled', 'void', 'voided'])->count();
 
         return response()->json([
             'all' => $all,
             'draft' => $draft,
-            'sent' => $sent,
-            'confirmed' => $confirmed,
-            'partially_received' => $partiallyReceived,
-            'received' => $received,
-            'cancelled' => $cancelled,
+            'approved' => $approved,
+            'paid' => $paid,
+            'partial' => $partial,
+            'overdue' => $overdue,
+            'void' => $void,
         ]);
     }
 
@@ -61,7 +72,7 @@ class PurchaseOrderController extends Controller
         $query = PurchaseOrder::with(['supplier', 'user', 'purchaseOrderItems.product']);
 
         // Search functionality
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('po_number', 'like', "%{$search}%")
@@ -72,31 +83,87 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        // Filter by status
-        if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
+        // Specific PO Number search
+        if ($request->filled('po_number')) {
+            $query->where('po_number', 'like', '%' . $request->input('po_number') . '%');
         }
 
-        // Filter by supplier
-        if ($request->has('supplier_id') && $request->supplier_id) {
-            $query->where('supplier_id', $request->supplier_id);
+        // Filter by status (supports array, comma-separated, or scalar)
+        if ($request->filled('status')) {
+            $statusInput = $request->status;
+            $statuses = is_array($statusInput) ? $statusInput : explode(',', $statusInput);
+
+            $query->where(function ($q) use ($statuses) {
+                foreach ($statuses as $st) {
+                    $st = trim($st);
+                    if ($st === 'overdue') {
+                        $q->orWhere(function ($sub) {
+                            $sub->whereNotIn('status', ['received', 'cancelled', 'void'])
+                                ->where('expected_delivery_date', '<', today());
+                        });
+                    } elseif ($st === 'paid' || $st === 'completed') {
+                        $q->orWhere('status', 'received')
+                          ->orWhere(function ($sub) {
+                              $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
+                          });
+                    } elseif ($st === 'partial' || $st === 'partially_paid' || $st === 'partially_received') {
+                        $q->orWhere('status', 'partially_received')
+                          ->orWhere(function ($sub) {
+                              $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+                          });
+                    } elseif ($st === 'approved' || $st === 'confirmed') {
+                        $q->orWhereIn('status', ['approved', 'confirmed', 'sent']);
+                    } elseif ($st === 'void' || $st === 'cancelled') {
+                        $q->orWhereIn('status', ['void', 'voided', 'cancelled']);
+                    } else {
+                        $q->orWhere('status', $st);
+                    }
+                }
+            });
+        }
+
+        // Filter by supplier (supports array, comma-separated, or scalar)
+        if ($request->filled('supplier_id') || $request->filled('supplier_ids')) {
+            $rawSupp = $request->input('supplier_ids') ?? $request->input('supplier_id');
+            $suppIds = is_array($rawSupp) ? $rawSupp : array_filter(explode(',', $rawSupp));
+            if (!empty($suppIds)) {
+                $query->whereIn('supplier_id', $suppIds);
+            }
+        }
+
+        // Filter by warehouse (supports array, comma-separated, or scalar)
+        if ($request->filled('warehouse_id') || $request->filled('warehouse_ids')) {
+            $rawWh = $request->input('warehouse_ids') ?? $request->input('warehouse_id');
+            $whIds = is_array($rawWh) ? $rawWh : array_filter(explode(',', $rawWh));
+            if (!empty($whIds)) {
+                if (\Schema::hasColumn('purchase_orders', 'warehouse_id')) {
+                    $query->whereIn('warehouse_id', $whIds);
+                }
+            }
+        }
+
+        // Filter by product
+        if ($request->filled('product_id')) {
+            $query->whereHas('purchaseOrderItems', function ($q) use ($request) {
+                $q->where('product_id', $request->product_id);
+            });
         }
 
         // Filter by date range
-        if ($request->has('date_from') && $request->date_from) {
+        if ($request->filled('date_from')) {
             $query->whereDate('order_date', '>=', $request->date_from);
         }
 
-        if ($request->has('date_to') && $request->date_to) {
+        if ($request->filled('date_to')) {
             $query->whereDate('order_date', '<=', $request->date_to);
         }
 
         // Legacy support for start_date and end_date
-        if ($request->has('start_date')) {
+        if ($request->filled('start_date')) {
             $query->whereDate('order_date', '>=', $request->start_date);
         }
 
-        if ($request->has('end_date')) {
+        if ($request->filled('end_date')) {
             $query->whereDate('order_date', '<=', $request->end_date);
         }
 
