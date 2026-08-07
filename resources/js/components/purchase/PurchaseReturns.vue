@@ -167,8 +167,7 @@
               </th>
               <th class="py-3 px-4">Return #</th>
               <th class="py-3 px-4">PO / Bill Ref</th>
-              <th class="py-3 px-4">Supplier</th>
-              <th class="py-3 px-4">Warehouse</th>
+              <th class="py-3 px-4">Supplier / Allocation</th>
               <th class="py-3 px-4 text-right">Total Refund</th>
               <th class="py-3 px-4">Return Date</th>
               <th class="py-3 px-4 text-center">Status</th>
@@ -177,13 +176,13 @@
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+              <td colspan="8" class="py-12 text-center text-slate-400 dark:text-zinc-500">
                 <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
                 Loading purchase returns...
               </td>
             </tr>
             <tr v-else-if="returns.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+              <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -213,19 +212,22 @@
                 </div>
               </td>
 
-              <!-- Supplier -->
+              <!-- Supplier / Allocation -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
+                <div class="font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                   {{ item.supplier?.name || 'Walk-in Supplier' }}
                 </div>
-                <div v-if="item.supplier?.company_name" class="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
-                  {{ item.supplier.company_name }}
+                <div class="flex flex-wrap gap-2 text-xs mt-1 text-slate-500">
+                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                    🏢 {{ item.warehouse.name }}
+                  </span>
+                  <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
+                    🖥️ Counter: {{ item.counter.name }}
+                  </span>
+                  <span v-if="item.user?.name || item.user?.full_name" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
+                    👤 Created By: {{ item.user.name || item.user.full_name }}
+                  </span>
                 </div>
-              </td>
-
-              <!-- Warehouse -->
-              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 font-medium">
-                {{ item.warehouse?.name || 'Default Warehouse' }}
               </td>
 
               <!-- Total Refund -->

@@ -85,31 +85,49 @@
               <!-- Floating Top Products Popover -->
               <div
                 v-if="activePopover === 'product'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-64 overflow-y-auto custom-scrollbar animate-fade-in"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-72 flex flex-col animate-fade-in"
               >
-                <div class="px-3 py-2 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex justify-between items-center shrink-0">
                   <span>Top Returned Products</span>
                   <button @click="clearProductFilter" class="text-slate-600 dark:text-zinc-300 hover:underline cursor-pointer">Clear</button>
                 </div>
-                <div v-if="loadingTopProducts" class="py-4 text-center text-slate-400 text-xs italic">
-                  Loading top products...
+
+                <!-- Search Bar Header -->
+                <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input
+                      v-model="productSearchQuery"
+                      type="text"
+                      placeholder="Search product by name or SKU..."
+                      class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
                 </div>
-                <div v-else-if="topProducts.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
-                  No top products found.
+
+                <div class="overflow-y-auto max-h-48 custom-scrollbar">
+                  <div v-if="loadingTopProducts" class="py-4 text-center text-slate-400 text-xs italic">
+                    Loading top products...
+                  </div>
+                  <div v-else-if="filteredProducts.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                    No matching products found.
+                  </div>
+                  <template v-else>
+                    <button
+                      v-for="p in filteredProducts"
+                      :key="p.id"
+                      type="button"
+                      @click="selectProduct(p)"
+                      class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                      :class="{ 'bg-slate-100/70 dark:bg-zinc-800 font-bold text-slate-900 dark:text-zinc-100': localFilters.product_id === p.id }"
+                    >
+                      <span class="truncate pr-2 text-slate-800 dark:text-zinc-200">{{ p.name }}</span>
+                      <span v-if="p.code || p.sku" class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono shrink-0">{{ p.code || p.sku }}</span>
+                    </button>
+                  </template>
                 </div>
-                <template v-else>
-                  <button
-                    v-for="p in topProducts"
-                    :key="p.id"
-                    type="button"
-                    @click="selectProduct(p)"
-                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
-                    :class="{ 'bg-slate-100/70 dark:bg-zinc-800 font-bold text-slate-900 dark:text-zinc-100': localFilters.product_id === p.id }"
-                  >
-                    <span class="truncate pr-2">{{ p.name }}</span>
-                    <span v-if="p.code" class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono shrink-0">{{ p.code }}</span>
-                  </button>
-                </template>
               </div>
             </div>
             <p class="text-[11px] text-slate-400 dark:text-zinc-500">
@@ -627,6 +645,18 @@ const loadingTopProducts = ref(false);
 const loadingDropdowns = ref(false);
 
 const supplierSearchQuery = ref('');
+const productSearchQuery = ref('');
+
+const filteredProducts = computed(() => {
+  const list = Array.isArray(topProducts.value) ? topProducts.value : [];
+  if (!productSearchQuery.value.trim()) return list;
+  const q = productSearchQuery.value.toLowerCase().trim();
+  return list.filter(p => 
+    (p.name && p.name.toLowerCase().includes(q)) ||
+    (p.code && p.code.toLowerCase().includes(q)) ||
+    (p.sku && p.sku.toLowerCase().includes(q))
+  );
+});
 
 const filteredSuppliers = computed(() => {
   const list = Array.isArray(suppliers.value) ? suppliers.value : [];
@@ -957,6 +987,7 @@ const selectProduct = (prod) => {
   localFilters.value.product_id = prod.id;
   localFilters.value.product_name = prod.name;
   localFilters.value.product_search = prod.name;
+  productSearchQuery.value = '';
   closeAllPopovers();
 };
 
@@ -964,6 +995,7 @@ const clearProductFilter = () => {
   localFilters.value.product_id = '';
   localFilters.value.product_name = '';
   localFilters.value.product_search = '';
+  productSearchQuery.value = '';
 };
 
 const activeFilterCount = computed(() => {
@@ -1034,6 +1066,7 @@ const resetFilters = () => {
     date_from: '',
     date_to: ''
   };
+  productSearchQuery.value = '';
   supplierSearchQuery.value = '';
   activePresetId.value = '';
   closeAllPopovers();

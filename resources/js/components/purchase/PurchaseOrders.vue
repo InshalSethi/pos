@@ -202,16 +202,18 @@
 
               <!-- Supplier & Allocation -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
+                <div class="font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                   {{ item.supplier?.name || item.supplier_name || 'Walk-in Supplier' }}
                 </div>
-                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex flex-wrap items-center mt-1 gap-x-2 gap-y-0.5">
-                  <span v-if="item.supplier?.company_name" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
-                    {{ item.supplier.company_name }}
+                <div class="flex flex-wrap gap-2 text-xs mt-1 text-slate-500">
+                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                    🏢 {{ item.warehouse.name }}
                   </span>
-                  <span v-if="item.warehouse" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
-                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"/></svg>
-                    {{ item.warehouse.name }}
+                  <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
+                    🖥️ Counter: {{ item.counter.name }}
+                  </span>
+                  <span v-if="item.user?.name || item.user?.full_name" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
+                    👤 Created By: {{ item.user.name || item.user.full_name }}
                   </span>
                 </div>
               </td>

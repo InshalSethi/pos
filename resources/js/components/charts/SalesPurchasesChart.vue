@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Sales & Purchases</h3>
         <div class="flex items-center space-x-4">
-          <select class="text-xs font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:outline-none focus:border-black dark:focus:border-white uppercase tracking-tight">
+          <select class="text-xs font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 uppercase tracking-tight">
             <option>6 Months</option>
             <option>3 Months</option>
             <option>1 Month</option>

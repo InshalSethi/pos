@@ -245,16 +245,18 @@
                               class="flex-1 min-w-0 h-[38px] bg-slate-50/50 dark:bg-zinc-900/60 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 focus:bg-white dark:focus:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-2 text-slate-600 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-[11px] leading-tight resize-y"
                             ></textarea>
                             
-                            <!-- Warehouse Dropdown (Custom Floating Dropup Inline Right) -->
-                            <div v-if="warehouses.length > 0" class="shrink-0 flex items-center gap-1.5 relative" :id="`item-wh-dropdown-${index}`">
-                              <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider shrink-0">WH:</span>
+                            <!-- Warehouse Allocation Field (Inline Multi-Warehouse Popover Button) -->
+                            <div v-if="warehouses.length > 0" class="shrink-0 flex items-center gap-1.5 relative text-left" :id="`item-wh-dropdown-${index}`" @click.stop>
+                              <span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider shrink-0">Allocation:</span>
                               
                               <button
+                                :id="`item-wh-btn-${index}`"
                                 type="button"
                                 @click.stop="toggleItemWarehouseDropdown(index, $event)"
-                                class="h-[38px] px-2.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer flex items-center justify-between gap-1.5 min-w-[170px] max-w-[220px] shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
+                                class="h-[38px] px-2.5 border rounded-lg text-[10px] font-bold bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 cursor-pointer flex items-center justify-between gap-1.5 min-w-[180px] max-w-[250px] shadow-xs transition-all select-none"
+                                :class="!isItemAllocationValid(item) ? 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500 ring-1 ring-rose-500/50' : 'border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 focus:ring-indigo-500 hover:border-slate-400'"
                               >
-                                <span class="truncate">{{ getSelectedWarehouseLabel(item) }}</span>
+                                <span class="truncate">{{ getItemAllocationSummary(item) }}</span>
                                 <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': openWarehouseItemIndex === index }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -682,6 +684,58 @@
                     />
                   </div>
                 </div>
+
+                <!-- Global Floating Multi-Select Warehouse Field -->
+                <div class="space-y-1 relative pt-2 text-left" @click.stop id="global-warehouse-dropdown-container">
+                  <label class="block text-slate-500 dark:text-zinc-400 font-semibold text-xs mb-1">Destination Warehouse(s) *</label>
+                  <div class="relative">
+                    <button
+                      type="button"
+                      @click="isGlobalWarehouseDropdownOpen = !isGlobalWarehouseDropdownOpen"
+                      class="w-full px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-lg text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 text-xs font-medium cursor-pointer flex justify-between items-center h-[34px] shadow-xs hover:border-slate-400 transition-all select-none"
+                    >
+                      <span class="truncate pr-2 font-semibold" :class="{ 'text-slate-400 dark:text-zinc-500': selectedGlobalWarehouseIds.length === 0 }">
+                        {{ globalWarehouseSummaryLabel }}
+                      </span>
+                      <span v-if="selectedGlobalWarehouseIds.length > 0" class="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded-full shrink-0">
+                        {{ selectedGlobalWarehouseIds.length }}
+                      </span>
+                      <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': isGlobalWarehouseDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    <div
+                      v-if="isGlobalWarehouseDropdownOpen"
+                      class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl py-1 max-h-60 overflow-y-auto custom-scrollbar"
+                    >
+                      <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                        <input
+                          v-model="globalWarehouseSearch"
+                          type="text"
+                          placeholder="Search warehouse..."
+                          class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                        />
+                      </div>
+                      <div class="overflow-y-auto max-h-44 custom-scrollbar">
+                        <label
+                          v-for="w in searchableGlobalWarehouses"
+                          :key="w.id"
+                          class="px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-2.5 cursor-pointer text-xs select-none border-b border-slate-50 dark:border-zinc-800/40"
+                        >
+                          <input
+                            type="checkbox"
+                            :value="w.id"
+                            v-model="selectedGlobalWarehouseIds"
+                            @change="onGlobalWarehouseChange"
+                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-4 h-4"
+                          />
+                          <span class="font-medium text-slate-800 dark:text-zinc-200">{{ w.name }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -774,10 +828,7 @@
               </div>
             </div>
 
-
-            </div>
-
-          <!-- Sidebar Sticky Footer Actions -->
+<!-- Sidebar Sticky Footer Actions -->
           <div class="p-5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/40 mt-auto">
             <div class="space-y-3">
               <!-- Row 1: Primary Action (Update Purchase Order) -->
@@ -809,6 +860,7 @@
               </div>
             </div>
         </div>
+            </div>
       </div>
     </div>
 
@@ -1360,52 +1412,7 @@
       </div>
     </transition>
 
-    <!-- Teleported Floating Line Item Warehouse Dropdown Menu -->
-    <teleport to="body">
-      <transition
-        enter-active-class="transition duration-150 ease-out"
-        enter-from-class="transform opacity-0 scale-95"
-        enter-to-class="transform opacity-100 scale-100"
-        leave-active-class="transition duration-100 ease-in"
-        leave-from-class="transform opacity-100 scale-100"
-        leave-to-class="transform opacity-0 scale-95"
-      >
-        <div
-          v-if="openWarehouseItemIndex !== null && orderItems[openWarehouseItemIndex]"
-          :style="{ top: warehouseDropdownPos?.top || 'auto', bottom: warehouseDropdownPos?.bottom || 'auto', left: warehouseDropdownPos?.left || '0px' }"
-          class="fixed z-[9999] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-64 overflow-y-auto custom-scrollbar backdrop-blur-md"
-        >
-          <div class="px-3 py-2 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/40">
-            <span>Select Warehouse(s)</span>
-            <span class="text-indigo-600 dark:text-indigo-400 font-bold">
-              Selected: {{ (orderItems[openWarehouseItemIndex]?.warehouse_ids || (orderItems[openWarehouseItemIndex]?.warehouse_id ? [orderItems[openWarehouseItemIndex].warehouse_id] : [])).length }} | Combined Stock: {{ getItemAvailableStock(orderItems[openWarehouseItemIndex]) }}
-            </span>
-          </div>
-          <div
-            v-for="wh in warehouses"
-            :key="wh.id"
-            @click.stop="toggleWarehouseSelection(openWarehouseItemIndex, wh.id)"
-            class="px-3 py-2 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
-            :class="isWarehouseSelected(openWarehouseItemIndex, wh.id) ? 'bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold' : 'text-slate-700 dark:text-zinc-300'"
-          >
-            <div class="flex items-center gap-2 truncate">
-              <input
-                type="checkbox"
-                :checked="isWarehouseSelected(openWarehouseItemIndex, wh.id)"
-                class="w-3.5 h-3.5 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
-              />
-              <span class="truncate">{{ wh.name }}</span>
-            </div>
-            <span
-              class="text-[10px] font-mono shrink-0 px-1.5 py-0.5 rounded font-semibold ml-2"
-              :class="getProductWarehouseStock(orderItems[openWarehouseItemIndex]?.product, wh.id) > 0 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'"
-            >
-              Stock: {{ getProductWarehouseStock(orderItems[openWarehouseItemIndex]?.product, wh.id) }}
-            </span>
-          </div>
-        </div>
-      </transition>
-    </teleport>
+
 
     <!-- Success/Error Notifications -->
     <div v-if="notifications.length > 0" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm w-full">
@@ -1433,6 +1440,54 @@
         </button>
       </div>
     </div>
+    <!-- Teleported Floating Line Item Warehouse Allocation Popover (High Z-Index, Floating Above Side Panel) -->
+    <teleport to="body">
+      <div
+        id="teleport-wh-popover"
+        v-if="openWarehouseItemIndex !== null && orderItems[openWarehouseItemIndex]"
+        @click.stop
+        :style="{ top: warehousePopPos.top, left: warehousePopPos.left }"
+        class="fixed z-[99999] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-3 animate-fade-in text-left backdrop-blur-md"
+      >
+        <div class="flex justify-between items-center pb-2 mb-2 border-b border-slate-100 dark:border-zinc-800">
+          <div>
+            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-100">Warehouse Allocation</h4>
+            <p class="text-[10px] text-slate-400">Total Item Qty: {{ orderItems[openWarehouseItemIndex].quantity_ordered }}</p>
+          </div>
+          <button type="button" @click="openWarehouseItemIndex = null" class="text-slate-400 hover:text-slate-600 text-xs font-bold border-0 bg-transparent cursor-pointer">✕</button>
+        </div>
+
+        <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+          <div
+            v-for="alloc in orderItems[openWarehouseItemIndex].allocations"
+            :key="alloc.warehouse_id"
+            class="flex items-center justify-between gap-2"
+          >
+            <span class="text-xs font-medium text-slate-700 dark:text-zinc-300 truncate min-w-0">
+              {{ warehouses.find(w => w.id == alloc.warehouse_id)?.name || 'Warehouse' }}
+            </span>
+            <input
+              v-model.number="alloc.quantity"
+              type="number"
+              min="0"
+              :max="orderItems[openWarehouseItemIndex].quantity_ordered"
+              class="w-20 px-2 py-1 text-right text-xs font-bold border border-slate-300 dark:border-zinc-700 rounded-md bg-slate-50 dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <!-- Allocation Validation Status -->
+        <div class="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-[11px] font-bold">
+          <span>Total Allocated:</span>
+          <span :class="isItemAllocationValid(orderItems[openWarehouseItemIndex]) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            {{ getItemAllocatedSum(orderItems[openWarehouseItemIndex]) }} / {{ orderItems[openWarehouseItemIndex].quantity_ordered }} Qty
+          </span>
+        </div>
+        <p v-if="!isItemAllocationValid(orderItems[openWarehouseItemIndex])" class="text-[10px] text-rose-500 font-semibold mt-1">
+          ⚠️ Allocated quantity must equal {{ orderItems[openWarehouseItemIndex].quantity_ordered }}.
+        </p>
+      </div>
+    </teleport>
   </div>
 </template>
 
@@ -1482,8 +1537,6 @@ const showSupplierModal = ref(false);
 const error = ref(null);
 const notifications = ref([]);
 
-const openWarehouseItemIndex = ref(null);
-const warehouseDropdownPos = ref({ top: 'auto', bottom: 'auto', left: '0px' });
 const isPaymentDropdownOpen = ref(false);
 
 const paymentMethodsList = [
@@ -1505,29 +1558,7 @@ const getSelectedPaymentMethodLabel = (val) => {
   return found ? found.label : (val || 'Cash');
 };
 
-const toggleItemWarehouseDropdown = (index, event) => {
-  if (openWarehouseItemIndex.value === index) {
-    openWarehouseItemIndex.value = null;
-    return;
-  }
-  
-  isPaymentDropdownOpen.value = false;
-  openWarehouseItemIndex.value = index;
 
-  nextTick(() => {
-    const btn = event?.currentTarget;
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const bottomVal = Math.max(10, window.innerHeight - rect.top + 2);
-    const leftVal = Math.max(10, Math.min(window.innerWidth - 266, rect.right - 256));
-
-    warehouseDropdownPos.value = {
-      top: 'auto',
-      bottom: `${bottomVal}px`,
-      left: `${leftVal}px`
-    };
-  });
-};
 
 const selectItemWarehouse = (index, whId) => {
   if (orderItems.value[index]) {
@@ -2083,6 +2114,138 @@ const updateDateTime = () => {
 };
 
 const warehouses = ref([]);
+const selectedGlobalWarehouseIds = ref([]);
+const isGlobalWarehouseDropdownOpen = ref(false);
+const openWarehouseItemIndex = ref(null);
+const warehousePopPos = ref({ top: '0px', left: '0px' });
+
+const toggleItemWarehouseDropdown = (index, event) => {
+  if (event) event.stopPropagation();
+  if (openWarehouseItemIndex.value === index) {
+    openWarehouseItemIndex.value = null;
+    return;
+  }
+  openWarehouseItemIndex.value = index;
+
+  nextTick(() => {
+    const btn = event?.currentTarget || document.getElementById(`item-wh-btn-${index}`);
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const popoverWidth = 288;
+      const popoverHeight = 220;
+      
+      let top = rect.top - popoverHeight - 8;
+      if (top < 10) {
+        top = rect.bottom + 8;
+      }
+      
+      let left = rect.right - popoverWidth;
+      if (left < 10) left = 10;
+      if (left + popoverWidth > window.innerWidth - 10) {
+        left = window.innerWidth - popoverWidth - 10;
+      }
+
+      warehousePopPos.value = {
+        top: `${top}px`,
+        left: `${left}px`
+      };
+    }
+  });
+};
+
+const searchableGlobalWarehouses = computed(() => {
+  if (!globalWarehouseSearch.value) return warehouses.value;
+  const q = globalWarehouseSearch.value.toLowerCase();
+  return warehouses.value.filter(w => w.name && w.name.toLowerCase().includes(q));
+});
+
+const globalWarehouseSummaryLabel = computed(() => {
+  if (selectedGlobalWarehouseIds.value.length === 0) return 'Select Warehouse(s)';
+  const firstWh = warehouses.value.find(w => selectedGlobalWarehouseIds.value.includes(w.id));
+  const firstName = firstWh ? firstWh.name : 'Warehouse';
+  if (selectedGlobalWarehouseIds.value.length === 1) return firstName;
+  return `${firstName} +${selectedGlobalWarehouseIds.value.length - 1} (${selectedGlobalWarehouseIds.value.length} WHs)`;
+});
+
+const syncItemAllocations = (item) => {
+  if (!item) return;
+  const activeWhIds = selectedGlobalWarehouseIds.value.length > 0
+    ? selectedGlobalWarehouseIds.value
+    : (warehouses.value.length > 0 ? [warehouses.value[0].id] : [1]);
+
+  if (!Array.isArray(item.allocations)) {
+    item.allocations = [];
+  }
+
+  item.allocations = item.allocations.filter(a => activeWhIds.includes(a.warehouse_id));
+
+  activeWhIds.forEach((whId, idx) => {
+    const existing = item.allocations.find(a => a.warehouse_id == whId);
+    if (!existing) {
+      item.allocations.push({
+        warehouse_id: whId,
+        quantity: idx === 0 && item.allocations.length === 0 ? (item.quantity_ordered || 1) : 0
+      });
+    }
+  });
+
+  const sum = getItemAllocatedSum(item);
+  if (sum === 0 && item.allocations.length > 0) {
+    item.allocations[0].quantity = item.quantity_ordered || 1;
+  }
+};
+
+const onGlobalWarehouseChange = () => {
+  orderItems.value.forEach(item => {
+    syncItemAllocations(item);
+  });
+};
+
+const getItemAllocatedSum = (item) => {
+  if (!item || !Array.isArray(item.allocations)) return 0;
+  return item.allocations.reduce((s, a) => s + (parseInt(a.quantity) || 0), 0);
+};
+
+const isItemAllocationValid = (item) => {
+  if (!item) return true;
+  const target = parseInt(item.quantity_ordered) || 0;
+  return getItemAllocatedSum(item) === target;
+};
+
+const getItemAllocationSummary = (item) => {
+  if (!item || !Array.isArray(item.allocations) || item.allocations.length === 0) {
+    return 'Select Warehouse';
+  }
+
+  const activeAllocations = item.allocations.filter(a => (parseInt(a.quantity) || 0) > 0);
+  if (activeAllocations.length === 0) {
+    const firstWh = warehouses.value.find(w => w.id == item.allocations[0].warehouse_id);
+    return firstWh ? `${firstWh.name} (0 Qty)` : 'Allocate Qty';
+  }
+
+  if (activeAllocations.length === 1) {
+    const wh = warehouses.value.find(w => w.id == activeAllocations[0].warehouse_id);
+    const name = wh ? wh.name : 'Warehouse';
+    return `${name} (${activeAllocations[0].quantity} Qty)`;
+  }
+
+  const sum = getItemAllocatedSum(item);
+  return `${activeAllocations.length} WHs Split (${sum}/${item.quantity_ordered} Qty)`;
+};
+
+const loadWarehouses = async () => {
+  try {
+    const response = await api.get('/warehouses');
+    warehouses.value = response.data.data || response.data || [];
+    if (warehouses.value.length > 0 && selectedGlobalWarehouseIds.value.length === 0) {
+      const defaultWh = warehouses.value.find(w => w.is_default) || warehouses.value[0];
+      selectedGlobalWarehouseIds.value = [defaultWh.id];
+    }
+    orderItems.value.forEach(item => syncItemAllocations(item));
+  } catch (error) {
+    console.error('Error loading warehouses:', error);
+  }
+};
 
 const getProductStock = (product) => {
   return getProductWarehouseStock(product, null);
@@ -2108,62 +2271,12 @@ const getItemAvailableStock = (item) => {
 const isItemStockExceeded = (item) => false;
 const validateItemStock = (item, notify = false) => {};
 
-const toggleWarehouseSelection = (itemIndex, whId) => {
-  const item = orderItems.value[itemIndex];
-  if (!item) return;
-
-  if (!Array.isArray(item.warehouse_ids)) {
-    item.warehouse_ids = item.warehouse_id ? [item.warehouse_id] : [];
-  }
-
-  const strId = Number(whId);
-  const existingIdx = item.warehouse_ids.findIndex(id => Number(id) === strId);
-  if (existingIdx > -1) {
-    item.warehouse_ids.splice(existingIdx, 1);
-  } else {
-    item.warehouse_ids.push(whId);
-  }
-
-  item.warehouse_id = item.warehouse_ids[0] || null;
-  item.combined_stock = getItemAvailableStock(item);
-  item.warehouses = item.warehouse_ids.map(id => ({
-    warehouse_id: id,
-    stock: getProductWarehouseStock(item.product, id)
-  }));
-
-  validateItemStock(item, true);
-};
-
-const isWarehouseSelected = (itemIndex, whId) => {
-  const item = orderItems.value[itemIndex];
-  if (!item) return false;
-  if (!Array.isArray(item.warehouse_ids)) {
-    return Number(item.warehouse_id) === Number(whId);
-  }
-  return item.warehouse_ids.some(id => Number(id) === Number(whId));
-};
-
-const getSelectedWarehouseLabel = (item) => {
-  if (!item) return 'Select Warehouse(s)';
-  const ids = (Array.isArray(item.warehouse_ids) && item.warehouse_ids.length > 0)
-    ? item.warehouse_ids
-    : (item.warehouse_id ? [item.warehouse_id] : []);
-
-  if (ids.length === 0) return 'Select Warehouse(s) (Stock: 0)';
-
-  const combinedStock = getItemAvailableStock(item);
-  const firstWh = warehouses.value.find(w => Number(w.id) === Number(ids[0]));
-  const firstName = firstWh ? firstWh.name : 'Warehouse';
-
-  if (ids.length === 1) {
-    return `${firstName} (Stock: ${combinedStock})`;
-  }
-  return `${firstName} +${ids.length - 1} (${ids.length} WH) (Stock: ${combinedStock})`;
-};
-
 const onItemQtyChange = (index) => {
   const item = orderItems.value[index];
   if (item) {
+    if (Array.isArray(item.allocations) && item.allocations.length === 1) {
+      item.allocations[0].quantity = item.quantity_ordered;
+    }
     validateItemStock(item, true);
     updateItemTotal(index);
   }
@@ -2205,6 +2318,13 @@ const fetchPurchaseOrder = async () => {
 
     originalPoNumber.value = po.po_number || '';
 
+    // Set global destination warehouse(s)
+    if (Array.isArray(po.warehouse_ids) && po.warehouse_ids.length > 0) {
+      selectedGlobalWarehouseIds.value = po.warehouse_ids;
+    } else if (po.warehouse_id) {
+      selectedGlobalWarehouseIds.value = [po.warehouse_id];
+    }
+
     // Set selected supplier
     if (po.supplier && !po.is_walkin_supplier) {
       selectedSupplier.value = po.supplier;
@@ -2214,14 +2334,19 @@ const fetchPurchaseOrder = async () => {
     // Populate order items
     const rawItems = po.purchase_order_items || po.items || [];
     if (Array.isArray(rawItems)) {
-      orderItems.value = rawItems.map(item => ({
-        product: item.product || { id: item.product_id, name: item.product_name || 'Product', sku: item.product_sku || '' },
-        product_id: item.product_id,
-        quantity_ordered: parseFloat(item.quantity_ordered) || 1,
-        unit_cost: parseFloat(item.unit_cost) || 0,
-        total_cost: parseFloat(item.total_cost) || (parseFloat(item.quantity_ordered || 1) * parseFloat(item.unit_cost || 0)),
-        notes: item.notes || ''
-      }));
+      orderItems.value = rawItems.map(item => {
+        const mappedItem = {
+          product: item.product || { id: item.product_id, name: item.product_name || 'Product', sku: item.product_sku || '' },
+          product_id: item.product_id,
+          quantity_ordered: parseFloat(item.quantity_ordered) || 1,
+          unit_cost: parseFloat(item.unit_cost) || 0,
+          total_cost: parseFloat(item.total_cost) || (parseFloat(item.quantity_ordered || 1) * parseFloat(item.unit_cost || 0)),
+          notes: item.notes || '',
+          allocations: Array.isArray(item.warehouse_allocations) ? item.warehouse_allocations : []
+        };
+        syncItemAllocations(mappedItem);
+        return mappedItem;
+      });
     }
 
   } catch (err) {
@@ -2595,7 +2720,11 @@ const handleClickOutside = (event) => {
 
   if (openWarehouseItemIndex.value !== null) {
     const itemWhContainer = document.getElementById(`item-wh-dropdown-${openWarehouseItemIndex.value}`);
-    if (itemWhContainer && !itemWhContainer.contains(event.target)) {
+    const popoverContainer = document.getElementById('teleport-wh-popover');
+    if (
+      itemWhContainer && !itemWhContainer.contains(event.target) &&
+      popoverContainer && !popoverContainer.contains(event.target)
+    ) {
       openWarehouseItemIndex.value = null;
     }
   }
@@ -2682,6 +2811,7 @@ onMounted(() => {
   updateDateTime();
   setInterval(updateDateTime, 1000);
   fetchActiveCompany();
+  loadWarehouses();
   fetchPurchaseOrder();
   loadProducts();
   loadCategories();

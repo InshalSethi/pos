@@ -88,45 +88,59 @@
               <!-- Floating Product Popover Dropdown -->
               <div
                 v-if="activePopover === 'product'"
-                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-64 overflow-y-auto custom-scrollbar animate-fade-in"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-72 flex flex-col animate-fade-in"
               >
-                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex justify-between items-center">
-                  <span>Top Items</span>
+                <div class="px-3 py-1.5 border-b border-slate-100 dark:border-zinc-800 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex justify-between items-center shrink-0">
+                  <span>Top Returned Items</span>
                   <span v-if="topProducts.length > 0" class="text-slate-700 dark:text-zinc-300 font-bold">{{ topProducts.length }} available</span>
                 </div>
 
-                <div v-if="loadingTopProducts" class="py-6 text-center text-slate-400 text-xs">
-                  <div class="animate-spin rounded-full h-5 w-5 border-2 border-slate-300 border-t-slate-800 mx-auto mb-1"></div>
-                  Loading top products...
-                </div>
-                <div v-else-if="topProducts.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
-                  No products available.
-                </div>
-                <div v-else>
-                  <button
-                    type="button"
-                    @click="selectProduct(null)"
-                    class="w-full px-3 py-2 text-left text-xs font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-slate-500 dark:text-zinc-400"
-                    :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold text-slate-900 dark:text-zinc-100': !localFilters.product_id && !localFilters.product_search }"
-                  >
-                    <span>All Products / No Filter</span>
-                  </button>
-                  <button
-                    v-for="p in topProducts"
-                    :key="p.id"
-                    type="button"
-                    @click="selectProduct(p)"
-                    class="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between space-x-2 border-t border-slate-50 dark:border-zinc-800/60 cursor-pointer"
-                    :class="{ 'bg-slate-100 dark:bg-zinc-800/80 font-bold text-slate-900 dark:text-zinc-100': String(localFilters.product_id) === String(p.id) }"
-                  >
-                    <div class="truncate">
-                      <div class="font-medium text-slate-800 dark:text-zinc-100 truncate">{{ p.name }}</div>
-                      <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ p.sku || 'N/A' }}</div>
-                    </div>
-                    <span v-if="p.selling_price" class="text-[11px] font-bold text-slate-600 dark:text-zinc-300 shrink-0">
-                      ${{ parseFloat(p.selling_price).toFixed(2) }}
+                <!-- Search Bar Header -->
+                <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </span>
-                  </button>
+                    <input
+                      v-model="productSearchQuery"
+                      type="text"
+                      placeholder="Search product by name or SKU..."
+                      class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div class="overflow-y-auto max-h-48 custom-scrollbar">
+                  <div v-if="loadingTopProducts" class="py-6 text-center text-slate-400 text-xs">
+                    <div class="animate-spin rounded-full h-5 w-5 border-2 border-slate-300 border-t-slate-800 mx-auto mb-1"></div>
+                    Loading top products...
+                  </div>
+                  <div v-else-if="filteredProducts.length === 0" class="py-4 text-center text-slate-400 text-xs italic">
+                    No matching products found.
+                  </div>
+                  <div v-else>
+                    <button
+                      type="button"
+                      @click="selectProduct(null)"
+                      class="w-full px-3 py-2 text-left text-xs font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-slate-500 dark:text-zinc-400 border-b border-slate-50 dark:border-zinc-800/40"
+                      :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold text-slate-900 dark:text-zinc-100': !localFilters.product_id && !localFilters.product_search }"
+                    >
+                      <span>All Products / No Filter</span>
+                    </button>
+                    <button
+                      v-for="p in filteredProducts"
+                      :key="p.id"
+                      type="button"
+                      @click="selectProduct(p)"
+                      class="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between space-x-2 border-b border-slate-50 dark:border-zinc-800/60 cursor-pointer"
+                      :class="{ 'bg-slate-100 dark:bg-zinc-800/80 font-bold text-slate-900 dark:text-zinc-100': String(localFilters.product_id) === String(p.id) }"
+                    >
+                      <div class="truncate">
+                        <div class="font-medium text-slate-800 dark:text-zinc-100 truncate">{{ p.name }}</div>
+                        <div class="text-[10px] text-slate-400 dark:text-zinc-500">SKU: {{ p.sku || p.code || 'N/A' }}</div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -799,6 +813,18 @@ const loadingTopProducts = ref(false);
 const loadingDropdowns = ref(false);
 
 const customerSearchQuery = ref('');
+const productSearchQuery = ref('');
+
+const filteredProducts = computed(() => {
+  const list = Array.isArray(topProducts.value) ? topProducts.value : [];
+  if (!productSearchQuery.value.trim()) return list;
+  const q = productSearchQuery.value.toLowerCase().trim();
+  return list.filter(p => 
+    (p.name && p.name.toLowerCase().includes(q)) ||
+    (p.code && p.code.toLowerCase().includes(q)) ||
+    (p.sku && p.sku.toLowerCase().includes(q))
+  );
+});
 
 const filteredCustomers = computed(() => {
   const list = Array.isArray(customers.value) ? customers.value : [];
@@ -1207,6 +1233,7 @@ const selectProduct = (p) => {
     localFilters.value.product_name = p.name;
     localFilters.value.product_search = p.name;
   }
+  productSearchQuery.value = '';
   activePopover.value = null;
 };
 
@@ -1214,6 +1241,7 @@ const clearProduct = () => {
   localFilters.value.product_id = '';
   localFilters.value.product_name = '';
   localFilters.value.product_search = '';
+  productSearchQuery.value = '';
 };
 
 const syncPropsToLocal = () => {
@@ -1296,6 +1324,8 @@ const resetFilters = () => {
     date_from: '',
     date_to: ''
   };
+  productSearchQuery.value = '';
+  customerSearchQuery.value = '';
   emit('reset');
 };
 

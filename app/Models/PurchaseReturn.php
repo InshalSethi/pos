@@ -67,6 +67,11 @@ class PurchaseReturn extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function counter(): BelongsTo
+    {
+        return $this->belongsTo(Counter::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseReturnItem::class);

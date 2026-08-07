@@ -20,6 +20,8 @@ class PurchaseOrder extends Model
     protected $fillable = [
         'po_number',
         'supplier_id',
+        'warehouse_id',
+        'warehouse_ids',
         'is_walkin_supplier',
         'supplier_name',
         'supplier_phone',
@@ -41,6 +43,7 @@ class PurchaseOrder extends Model
     ];
 
     protected $casts = [
+        'warehouse_ids' => 'array',
         'is_walkin_supplier' => 'boolean',
         'order_date' => 'date',
         'expected_delivery_date' => 'date',
@@ -63,6 +66,16 @@ class PurchaseOrder extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function counter(): BelongsTo
+    {
+        return $this->belongsTo(Counter::class);
     }
 
     public function purchaseOrderItems(): HasMany

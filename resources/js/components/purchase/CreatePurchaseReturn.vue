@@ -39,48 +39,155 @@
             />
           </div>
 
-          <!-- Supplier (Required) -->
-          <div>
+          <!-- Supplier (Required Floating Searchable Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Supplier *</label>
-            <select
-              v-model="form.supplier_id"
-              @change="onSupplierChange"
-              required
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100"
-            >
-              <option value="">Select Supplier</option>
-              <option v-for="sup in suppliers" :key="sup.id" :value="sup.id">
-                {{ sup.name }}
-              </option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('supplier')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'supplier' }"
+              >
+                <span class="truncate font-semibold" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedSupplierName }">
+                  {{ selectedSupplierName || 'Select Supplier' }}
+                </span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'supplier'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 flex flex-col animate-fade-in"
+              >
+                <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                  <input
+                    v-model="supplierSearch"
+                    type="text"
+                    placeholder="Search supplier..."
+                    class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600"
+                  />
+                </div>
+                <div class="overflow-y-auto max-h-44 custom-scrollbar">
+                  <div v-if="searchableSuppliers.length === 0" class="py-3 px-3 text-center text-slate-400 text-xs italic">
+                    No suppliers found.
+                  </div>
+                  <button
+                    v-for="sup in searchableSuppliers"
+                    :key="sup.id"
+                    type="button"
+                    @click="selectSupplier(sup.id)"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center"
+                    :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold': form.supplier_id == sup.id }"
+                  >
+                    <span>{{ sup.name }}</span>
+                    <span v-if="sup.phone" class="text-[10px] text-slate-400 font-mono">{{ sup.phone }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- PO Reference (Optional) -->
-          <div>
+          <!-- PO Reference (Optional Floating Searchable Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">PO Reference</label>
-            <select
-              v-model="form.purchase_order_id"
-              @change="onPoChange"
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100"
-            >
-              <option value="">Standalone / None</option>
-              <option v-for="po in filteredPurchaseOrders" :key="po.id" :value="po.id">
-                {{ po.po_number }} ({{ formatDate(po.order_date) }})
-              </option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('po')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'po' }"
+              >
+                <span class="truncate font-semibold" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedPoLabel }">
+                  {{ selectedPoLabel || 'Standalone / None' }}
+                </span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'po'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 flex flex-col animate-fade-in"
+              >
+                <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                  <input
+                    v-model="poSearch"
+                    type="text"
+                    placeholder="Search PO number..."
+                    class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600"
+                  />
+                </div>
+                <div class="overflow-y-auto max-h-44 custom-scrollbar">
+                  <button
+                    type="button"
+                    @click="selectPo('')"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-500 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                    :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold': !form.purchase_order_id }"
+                  >
+                    Standalone / None
+                  </button>
+                  <div v-if="searchablePurchaseOrders.length === 0" class="py-3 px-3 text-center text-slate-400 text-xs italic">
+                    No matching POs found.
+                  </div>
+                  <button
+                    v-for="po in searchablePurchaseOrders"
+                    :key="po.id"
+                    type="button"
+                    @click="selectPo(po.id)"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center"
+                    :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold': form.purchase_order_id == po.id }"
+                  >
+                    <span class="font-medium">{{ po.po_number }}</span>
+                    <span class="text-[10px] text-slate-400">{{ formatDate(po.order_date) }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Warehouse -->
-          <div>
+          <!-- Warehouse (Floating Searchable Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Warehouse</label>
-            <select
-              v-model="form.warehouse_id"
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100"
-            >
-              <option v-for="wh in warehouses" :key="wh.id" :value="wh.id">
-                {{ wh.name }}
-              </option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('warehouse')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'warehouse' }"
+              >
+                <span class="truncate font-semibold" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedWarehouseName }">
+                  {{ selectedWarehouseName || 'Select Warehouse' }}
+                </span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'warehouse'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 max-h-60 flex flex-col animate-fade-in"
+              >
+                <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                  <input
+                    v-model="warehouseSearch"
+                    type="text"
+                    placeholder="Search warehouse..."
+                    class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600"
+                  />
+                </div>
+                <div class="overflow-y-auto max-h-44 custom-scrollbar">
+                  <div v-if="searchableWarehouses.length === 0" class="py-3 px-3 text-center text-slate-400 text-xs italic">
+                    No warehouses found.
+                  </div>
+                  <button
+                    v-for="wh in searchableWarehouses"
+                    :key="wh.id"
+                    type="button"
+                    @click="selectWarehouse(wh.id)"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                    :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold': form.warehouse_id == wh.id }"
+                  >
+                    {{ wh.name }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Return Date -->
@@ -90,7 +197,7 @@
               v-model="form.return_date"
               type="date"
               required
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100"
+              class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none text-slate-800 dark:text-zinc-100"
             />
           </div>
         </div>
@@ -336,7 +443,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
@@ -355,6 +462,23 @@ const isProductDropdownOpen = ref(false);
 const submitting = ref(false);
 const selectedPoNumber = ref('');
 
+const activeDropdown = ref(null);
+const supplierSearch = ref('');
+const poSearch = ref('');
+const warehouseSearch = ref('');
+
+const toggleDropdown = (name) => {
+  if (activeDropdown.value === name) {
+    activeDropdown.value = null;
+  } else {
+    activeDropdown.value = name;
+  }
+};
+
+const closeAllDropdowns = () => {
+  activeDropdown.value = null;
+};
+
 const form = reactive({
   return_number: '',
   supplier_id: '',
@@ -372,6 +496,71 @@ const filteredPurchaseOrders = computed(() => {
   if (!form.supplier_id) return purchaseOrders.value;
   return purchaseOrders.value.filter(po => po.supplier_id == form.supplier_id);
 });
+
+const searchableSuppliers = computed(() => {
+  if (!supplierSearch.value) return suppliers.value;
+  const q = supplierSearch.value.toLowerCase();
+  return suppliers.value.filter(s =>
+    (s.name && s.name.toLowerCase().includes(q)) ||
+    (s.phone && s.phone.includes(q)) ||
+    (s.email && s.email.toLowerCase().includes(q))
+  );
+});
+
+const searchablePurchaseOrders = computed(() => {
+  const list = filteredPurchaseOrders.value;
+  if (!poSearch.value) return list;
+  const q = poSearch.value.toLowerCase();
+  return list.filter(po =>
+    po.po_number && po.po_number.toLowerCase().includes(q)
+  );
+});
+
+const searchableWarehouses = computed(() => {
+  if (!warehouseSearch.value) return warehouses.value;
+  const q = warehouseSearch.value.toLowerCase();
+  return warehouses.value.filter(w =>
+    w.name && w.name.toLowerCase().includes(q)
+  );
+});
+
+const selectedSupplierName = computed(() => {
+  if (!form.supplier_id) return '';
+  const found = suppliers.value.find(s => s.id == form.supplier_id);
+  return found ? found.name : '';
+});
+
+const selectedPoLabel = computed(() => {
+  if (!form.purchase_order_id) return '';
+  const found = purchaseOrders.value.find(po => po.id == form.purchase_order_id);
+  return found ? `${found.po_number}` : '';
+});
+
+const selectedWarehouseName = computed(() => {
+  if (!form.warehouse_id) return '';
+  const found = warehouses.value.find(w => w.id == form.warehouse_id);
+  return found ? found.name : '';
+});
+
+const selectSupplier = (id) => {
+  form.supplier_id = id;
+  onSupplierChange();
+  activeDropdown.value = null;
+  supplierSearch.value = '';
+};
+
+const selectPo = (id) => {
+  form.purchase_order_id = id;
+  onPoChange();
+  activeDropdown.value = null;
+  poSearch.value = '';
+};
+
+const selectWarehouse = (id) => {
+  form.warehouse_id = id;
+  activeDropdown.value = null;
+  warehouseSearch.value = '';
+};
 
 const filteredProducts = computed(() => {
   if (!productSearch.value) return [];
@@ -566,5 +755,10 @@ onMounted(() => {
   fetchPurchaseOrders();
   fetchWarehouses();
   fetchProducts();
+  document.addEventListener('click', closeAllDropdowns);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeAllDropdowns);
 });
 </script>

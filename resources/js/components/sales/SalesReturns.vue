@@ -289,14 +289,19 @@
 
               <!-- Client/Customer -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
+                <div class="font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                   {{ item.customer?.name || 'Walk-in Customer' }}
                 </div>
-                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center mt-0.5 space-x-1">
-                  <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
-                  </svg>
-                  <span>{{ item.customer?.city || 'Default Branch' }}</span>
+                <div class="flex flex-wrap gap-2 text-xs mt-1 text-slate-500">
+                  <span v-if="item.salesman?.full_name || item.salesman?.name" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
+                    👤 Rep: {{ item.salesman.full_name || item.salesman.name }}
+                  </span>
+                  <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
+                    🖥️ Counter: {{ item.counter.name }}
+                  </span>
+                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                    🏢 {{ item.warehouse.name }}
+                  </span>
                 </div>
               </td>
 

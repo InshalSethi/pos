@@ -23,8 +23,15 @@ class PurchaseReturnController extends Controller
     {
         $companyId = auth()->user()?->current_company_id ?? 1;
 
-        $query = PurchaseReturn::where('company_id', $companyId)
-            ->with(['supplier', 'originalPurchaseOrder', 'warehouse', 'user']);
+        $withRelations = ['supplier', 'originalPurchaseOrder', 'user'];
+        if (\Schema::hasColumn('purchase_returns', 'warehouse_id')) {
+            $withRelations[] = 'warehouse';
+        }
+        if (\Schema::hasColumn('purchase_returns', 'counter_id')) {
+            $withRelations[] = 'counter';
+        }
+
+        $query = PurchaseReturn::where('company_id', $companyId)->with($withRelations);
 
         // Search functionality
         if ($request->filled('search')) {

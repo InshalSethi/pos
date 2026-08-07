@@ -30,38 +30,97 @@ class PurchaseOrderController extends Controller
     }
 
     /**
+     * Get next sequential Purchase Order number.
+     */
+    public function getNextPurchaseOrderNumber(): JsonResponse
+    {
+        try {
+            $companyId = auth()->user()?->current_company_id ?? 1;
+            $prefix = 'BILL-';
+
+            $lastOrder = PurchaseOrder::where('company_id', $companyId)
+                ->where('po_number', 'like', $prefix . '%')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $nextNum = 1;
+            if ($lastOrder && preg_match('/' . preg_quote($prefix, '/') . '(\d+)/', $lastOrder->po_number, $matches)) {
+                $nextNum = (int)$matches[1] + 1;
+            } else {
+                $count = PurchaseOrder::where('company_id', $companyId)->count();
+                $nextNum = $count + 1;
+            }
+
+            $poNumber = $prefix . str_pad($nextNum, 5, '0', STR_PAD_LEFT);
+
+            return response()->json([
+                'success' => true,
+                'po_number' => $poNumber,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'po_number' => 'BILL-' . str_pad(time() % 100000, 5, '0', STR_PAD_LEFT),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Get the count of purchase orders grouped by status.
      */
     public function getStatusCounts(): JsonResponse
     {
-        $all = PurchaseOrder::count();
-        $draft = PurchaseOrder::where('status', 'draft')->count();
-        $approved = PurchaseOrder::whereIn('status', ['approved', 'confirmed', 'sent'])->count();
-        $paid = PurchaseOrder::where(function ($q) {
-            $q->where('status', 'received')
-              ->orWhere(function ($sub) {
-                  $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
-              });
-        })->count();
-        $partial = PurchaseOrder::where(function ($q) {
-            $q->where('status', 'partially_received')
-              ->orWhere(function ($sub) {
-                  $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
-              });
-        })->count();
-        $overdue = PurchaseOrder::whereNotIn('status', ['received', 'cancelled', 'void'])
-            ->where('expected_delivery_date', '<', today())->count();
-        $void = PurchaseOrder::whereIn('status', ['cancelled', 'void', 'voided'])->count();
+        try {
+            $hasDueCol = \Schema::hasColumn('purchase_orders', 'due_amount');
+            $hasPaidCol = \Schema::hasColumn('purchase_orders', 'amount_paid');
 
-        return response()->json([
-            'all' => $all,
-            'draft' => $draft,
-            'approved' => $approved,
-            'paid' => $paid,
-            'partial' => $partial,
-            'overdue' => $overdue,
-            'void' => $void,
-        ]);
+            $all = PurchaseOrder::count();
+            $draft = PurchaseOrder::where('status', 'draft')->count();
+            $approved = PurchaseOrder::whereIn('status', ['approved', 'confirmed', 'sent'])->count();
+            
+            $paid = PurchaseOrder::where(function ($q) use ($hasDueCol) {
+                $q->where('status', 'received');
+                if ($hasDueCol) {
+                    $q->orWhere(function ($sub) {
+                        $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
+                    });
+                }
+            })->count();
+
+            $partial = PurchaseOrder::where(function ($q) use ($hasDueCol, $hasPaidCol) {
+                $q->where('status', 'partially_received');
+                if ($hasDueCol && $hasPaidCol) {
+                    $q->orWhere(function ($sub) {
+                        $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+                    });
+                }
+            })->count();
+
+            $overdue = PurchaseOrder::whereNotIn('status', ['received', 'cancelled', 'void'])
+                ->where('expected_delivery_date', '<', today())->count();
+            $void = PurchaseOrder::whereIn('status', ['cancelled', 'void', 'voided'])->count();
+
+            return response()->json([
+                'all' => $all,
+                'draft' => $draft,
+                'approved' => $approved,
+                'paid' => $paid,
+                'partial' => $partial,
+                'overdue' => $overdue,
+                'void' => $void,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'all' => 0,
+                'draft' => 0,
+                'approved' => 0,
+                'paid' => 0,
+                'partial' => 0,
+                'overdue' => 0,
+                'void' => 0,
+            ]);
+        }
     }
 
     /**
@@ -69,7 +128,15 @@ class PurchaseOrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = PurchaseOrder::with(['supplier', 'user', 'purchaseOrderItems.product']);
+        $withRelations = ['supplier', 'user', 'purchaseOrderItems.product'];
+        if (\Schema::hasColumn('purchase_orders', 'warehouse_id')) {
+            $withRelations[] = 'warehouse';
+        }
+        if (\Schema::hasColumn('purchase_orders', 'counter_id')) {
+            $withRelations[] = 'counter';
+        }
+
+        $query = PurchaseOrder::with($withRelations);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -168,8 +235,8 @@ class PurchaseOrderController extends Controller
         }
 
         // Sorting
-        $sortBy = $request->get('sort_by', 'order_date');
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortBy = $request->input('sort_by', 'order_date');
+        $sortOrder = $request->input('sort_order', 'desc');
 
         // Validate sort fields
         $allowedSortFields = ['order_date', 'po_number', 'total_amount', 'due_amount', 'status', 'expected_delivery_date', 'created_at'];
@@ -180,7 +247,7 @@ class PurchaseOrderController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->input('per_page', 15);
         $purchaseOrders = $query->paginate($perPage);
 
         return response()->json($purchaseOrders);
@@ -311,6 +378,16 @@ class PurchaseOrderController extends Controller
             $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $request->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
+            $rawWhIds = $request->warehouse_ids ?? [$warehouseId];
+            if (is_string($rawWhIds)) {
+                $rawWhIds = array_filter(explode(',', $rawWhIds));
+            }
+            $warehouseIds = array_map('intval', (array) $rawWhIds);
+
+            $purchaseOrder->update([
+                'warehouse_id' => $warehouseId,
+                'warehouse_ids' => $warehouseIds,
+            ]);
 
             $inventoryService = new WarehouseInventoryService();
 
@@ -319,9 +396,20 @@ class PurchaseOrderController extends Controller
                 $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
                 $qtyOrdered = (int) $item['quantity_ordered'];
 
+                $allocations = $item['allocations'] ?? $item['warehouse_allocations'] ?? null;
+                if (!is_array($allocations) || empty($allocations)) {
+                    $allocations = [
+                        ['warehouse_id' => $warehouseId, 'quantity' => $qtyOrdered]
+                    ];
+                }
+
+                $itemWarehouseId = $allocations[0]['warehouse_id'] ?? $warehouseId;
+
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'product_id' => $item['product_id'],
+                    'warehouse_id' => $itemWarehouseId,
+                    'warehouse_allocations' => $allocations,
                     'quantity_ordered' => $qtyOrdered,
                     'quantity_received' => $qtyOrdered,
                     'unit_cost' => $item['unit_cost'],
@@ -343,15 +431,21 @@ class PurchaseOrderController extends Controller
                         $product->update(['cost_price' => round($wac, 2)]);
                     }
 
-                    $inventoryService->adjustStock(
-                        $warehouseId,
-                        $product->id,
-                        $item['product_variation_id'] ?? null,
-                        $qtyOrdered,
-                        $companyId,
-                        'Bill',
-                        $purchaseOrder->po_number
-                    );
+                    foreach ($allocations as $alloc) {
+                        $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                        $allocQty = (int) ($alloc['quantity'] ?? 0);
+                        if ($allocQty > 0) {
+                            $inventoryService->adjustStock(
+                                $allocWhId,
+                                $product->id,
+                                $item['product_variation_id'] ?? null,
+                                $allocQty,
+                                $companyId,
+                                'Bill',
+                                $purchaseOrder->po_number
+                            );
+                        }
+                    }
                 }
             }
 
@@ -853,27 +947,6 @@ class PurchaseOrderController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Get the next available purchase order number.
-     */
-    public function getNextPurchaseOrderNumber(): JsonResponse
-    {
-        $lastOrder = PurchaseOrder::orderBy('id', 'desc')->first();
-        $nextNumber = 1;
-        if ($lastOrder) {
-            if (preg_match('/BIll-(\d+)/i', $lastOrder->po_number, $matches)) {
-                $nextNumber = (int)$matches[1] + 1;
-            } else {
-                $nextNumber = PurchaseOrder::count() + 1;
-            }
-        }
-        $poNumber = 'BIll-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-        return response()->json([
-            'success' => true,
-            'po_number' => $poNumber
-        ]);
     }
 
     /**

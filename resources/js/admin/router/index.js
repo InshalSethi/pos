@@ -24,19 +24,19 @@ const routes = [
         meta: { requiresAuth: true },
         children: [
             { path: '', name: 'admin.dashboard', component: Dashboard },
-            
+
             { path: 'admins', name: 'admin.admins.index', component: AdminsIndex },
             { path: 'admins/create', name: 'admin.admins.create', component: AdminsForm },
             { path: 'admins/:id/edit', name: 'admin.admins.edit', component: AdminsForm },
-            
+
             { path: 'users', name: 'admin.users.index', component: UsersIndex },
             { path: 'users/create', name: 'admin.users.create', component: UsersForm },
             { path: 'users/:id/edit', name: 'admin.users.edit', component: UsersForm },
-            
+
             { path: 'roles', name: 'admin.roles.index', component: RolesIndex },
             { path: 'roles/create', name: 'admin.roles.create', component: RolesForm },
             { path: 'roles/:id/edit', name: 'admin.roles.edit', component: RolesForm },
-            
+
             { path: 'profile', name: 'admin.profile', component: ProfileIndex },
             { path: 'settings', name: 'admin.settings', component: SettingsIndex },
         ]

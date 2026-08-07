@@ -137,7 +137,7 @@
       <!-- Sidebar Navigation -->
       <nav class="mt-6 px-4 space-y-1 overflow-y-auto flex-1 custom-scrollbar pb-20">
         <router-link
-          to="/"
+          to="/dashboard"
           :class="[
             'group flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative',
             $route.path === '/'
@@ -1910,7 +1910,7 @@ watch(() => router.currentRoute.value.path, (newPath) => {
 const favorites = ref(JSON.parse(localStorage.getItem('pos_favorites') || '[]'));
 
 const menuItems = [
-  { path: '/', name: 'Dashboard', category: 'General', icon: 'home' },
+  { path: '/dashboard', name: 'Dashboard', category: 'General', icon: 'home' },
   { path: '/sales/invoices', name: 'Sales Invoices', category: 'Sales', icon: 'invoice' },
   { path: '/sales/returns', name: 'Sales Returns', category: 'Sales', icon: 'return' },
   { path: '/purchase/orders', name: 'Purchase Orders', category: 'Purchases', icon: 'purchase' },

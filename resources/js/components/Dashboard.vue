@@ -564,7 +564,7 @@
               <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Recent Invoices</h3>
               <div class="flex items-center space-x-2">
                 <div class="relative group">
-                  <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-white transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
+                  <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
                     <option>Sales Invoice</option>
                     <option>Purchase Invoice</option>
                   </select>
@@ -615,7 +615,7 @@
             <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Stock History</h3>
               <div class="relative group">
-                <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-white transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
+                <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
                   <option>7 Days</option>
                   <option>30 Days</option>
                   <option>90 Days</option>
@@ -675,7 +675,7 @@
             <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Payment Telemetry</h3>
               <div class="relative group">
-                <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-white transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
+                <select class="pl-3 pr-8 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 transition-all font-bold text-xs text-zinc-900 dark:text-white appearance-none cursor-pointer uppercase tracking-tight">
                   <option>15 Days</option>
                   <option>30 Days</option>
                   <option>90 Days</option>

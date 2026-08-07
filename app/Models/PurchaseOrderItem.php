@@ -16,6 +16,8 @@ class PurchaseOrderItem extends Model
     protected $fillable = [
         'purchase_order_id',
         'product_id',
+        'warehouse_id',
+        'warehouse_allocations',
         'quantity_ordered',
         'quantity_received',
         'unit_cost',
@@ -24,9 +26,16 @@ class PurchaseOrderItem extends Model
     ];
 
     protected $casts = [
+        'warehouse_allocations' => 'array',
         'unit_cost' => 'decimal:2',
         'total_cost' => 'decimal:2',
     ];
+
+    // Relationships
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
 
     // Relationships
     public function purchaseOrder(): BelongsTo
