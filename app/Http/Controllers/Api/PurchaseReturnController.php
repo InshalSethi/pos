@@ -23,7 +23,7 @@ class PurchaseReturnController extends Controller
     {
         $companyId = auth()->user()?->current_company_id ?? 1;
 
-        $withRelations = ['supplier', 'originalPurchaseOrder', 'user'];
+        $withRelations = ['supplier', 'originalPurchaseOrder', 'user', 'bankAccount'];
         if (\Schema::hasColumn('purchase_returns', 'warehouse_id')) {
             $withRelations[] = 'warehouse';
         }
@@ -183,38 +183,70 @@ class PurchaseReturnController extends Controller
     /**
      * Get items of a Purchase Order with remaining returnable quantity limits.
      */
-    public function getPoItems(int $poId): JsonResponse
+    public function getPoItems(Request $request, int $poId): JsonResponse
     {
         $companyId = auth()->user()?->current_company_id ?? 1;
 
         $po = PurchaseOrder::where('company_id', $companyId)
-            ->with(['supplier', 'items.product'])
+            ->with(['supplier', 'items.product', 'items.warehouse', 'warehouse', 'returns'])
             ->findOrFail($poId);
 
+        // Optional: exclude a specific return (used in Edit mode so the current
+        // return's own quantities are not counted as "previously returned")
+        $excludeReturnId = $request->query('exclude_return_id');
+
         // Calculate total previously returned quantities for each product on this PO
-        $previousReturns = PurchaseReturnItem::whereHas('purchaseReturn', function ($q) use ($poId) {
+        $previousReturns = PurchaseReturnItem::whereHas('purchaseReturn', function ($q) use ($poId, $excludeReturnId) {
                 $q->where('purchase_order_id', $poId)->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
+                if ($excludeReturnId) {
+                    $q->where('purchase_returns.id', '!=', $excludeReturnId);
+                }
             })
             ->select('product_id', DB::raw('SUM(quantity) as returned_qty'))
             ->groupBy('product_id')
             ->pluck('returned_qty', 'product_id');
 
-        $poItems = $po->items->map(function ($item) use ($previousReturns) {
-            $receivedQty = $item->quantity_received ?? $item->quantity;
+        $poItems = $po->items->map(function ($item) use ($previousReturns, $po) {
+            $receivedQty = $item->quantity_received ?? $item->quantity_ordered ?? $item->quantity;
             $alreadyReturned = $previousReturns[$item->product_id] ?? 0;
             $maxReturnable = max(0, $receivedQty - $alreadyReturned);
 
+            $allocations = [];
+            if (!empty($item->warehouse_allocations) && is_array($item->warehouse_allocations)) {
+                foreach ($item->warehouse_allocations as $alloc) {
+                    $name = $alloc['warehouse_name'] ?? $alloc['name'] ?? null;
+                    $qty = $alloc['quantity'] ?? $alloc['qty'] ?? 0;
+                    if ($name) {
+                        $allocations[] = [
+                            'name'     => $name,
+                            'quantity' => (int) $qty,
+                        ];
+                    }
+                }
+            } elseif ($item->warehouse) {
+                $allocations[] = [
+                    'name'     => $item->warehouse->name,
+                    'quantity' => (int) ($item->quantity_ordered ?? $item->quantity ?? 0),
+                ];
+            } elseif ($po->warehouse) {
+                $allocations[] = [
+                    'name'     => $po->warehouse->name,
+                    'quantity' => (int) ($item->quantity_ordered ?? $item->quantity ?? 0),
+                ];
+            }
+
             return [
-                'product_id'        => $item->product_id,
-                'product_name'      => $item->product?->name ?? 'Unknown Product',
-                'product_sku'       => $item->product?->sku ?? '',
-                'unit_cost'         => (float) ($item->unit_cost ?? $item->unit_price ?? 0),
-                'quantity_ordered'  => (int) $item->quantity,
-                'quantity_received' => (int) $receivedQty,
-                'already_returned'  => (int) $alreadyReturned,
-                'max_returnable'    => (int) $maxReturnable,
-                'tax_amount'        => (float) ($item->tax_amount ?? 0),
-                'discount_amount'   => (float) ($item->discount_amount ?? 0),
+                'product_id'            => $item->product_id,
+                'product_name'          => $item->product?->name ?? 'Unknown Product',
+                'product_sku'           => $item->product?->sku ?? '',
+                'unit_cost'             => (float) ($item->unit_cost ?? $item->unit_price ?? 0),
+                'quantity_ordered'      => (int) ($item->quantity_ordered ?? $item->quantity),
+                'quantity_received'     => (int) $receivedQty,
+                'already_returned'      => (int) $alreadyReturned,
+                'max_returnable'        => (int) $maxReturnable,
+                'tax_amount'            => (float) ($item->tax_amount ?? 0),
+                'discount_amount'       => (float) ($item->discount_amount ?? 0),
+                'warehouse_allocations' => $allocations,
             ];
         });
 
@@ -237,6 +269,10 @@ class PurchaseReturnController extends Controller
             'reason'            => 'required|string|max:255',
             'status'            => 'nullable|in:draft,pending,approved,completed',
             'refund_status'     => 'nullable|in:pending,partial,refunded',
+            'payment_method'    => 'nullable|string',
+            'bank_account_id'   => 'nullable|exists:bank_accounts,id',
+            'reference_number'  => 'nullable|string',
+            'refund_splits'     => 'nullable|array',
             'notes'             => 'nullable|string',
             'items'             => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -258,9 +294,10 @@ class PurchaseReturnController extends Controller
         // If PO-linked, validate max returnable quantity limits
         if ($request->filled('purchase_order_id')) {
             $poId = $request->purchase_order_id;
-            $po = PurchaseOrder::find($poId);
+            $po = PurchaseOrder::with(['purchaseOrderItems', 'items'])->find($poId);
 
             if ($po) {
+                $poItemsCollection = $po->purchaseOrderItems->isNotEmpty() ? $po->purchaseOrderItems : $po->items;
                 $previousReturns = PurchaseReturnItem::whereHas('purchaseReturn', function ($q) use ($poId) {
                         $q->where('purchase_order_id', $poId)->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
                     })
@@ -269,7 +306,8 @@ class PurchaseReturnController extends Controller
                     ->pluck('returned_qty', 'product_id');
 
                 foreach ($request->items as $item) {
-                    $poItem = $po->items->firstWhere('product_id', $item['product_id']);
+                    $poItem = $poItemsCollection ? $poItemsCollection->firstWhere('product_id', $item['product_id']) : null;
+
                     if ($poItem) {
                         $receivedQty = $poItem->quantity_received ?? $poItem->quantity;
                         $alreadyReturned = $previousReturns[$item['product_id']] ?? 0;
@@ -283,6 +321,30 @@ class PurchaseReturnController extends Controller
                             ], 422);
                         }
                     }
+                }
+
+                // Validate AP Credit amount against PO due amount
+                $apCreditAmount = 0;
+                if ($request->payment_method === 'mixed' && is_array($request->refund_splits)) {
+                    foreach ($request->refund_splits as $split) {
+                        if (($split['type'] ?? '') === 'ap_credit' || ($split['type'] ?? '') === 'ap') {
+                            $apCreditAmount += (float) ($split['amount'] ?? 0);
+                        }
+                    }
+                } elseif ($request->payment_method === 'ap_credit') {
+                    // Calculate total from items since grandTotal isn't computed yet
+                    foreach ($request->items as $item) {
+                        $apCreditAmount += max(0, ((float)$item['quantity'] * (float)$item['unit_cost']) + (float)($item['tax_amount'] ?? 0) - (float)($item['discount_amount'] ?? 0));
+                    }
+                }
+
+                $poDueAmount = (float) $po->due_amount;
+                // Add a small epsilon to avoid floating point precision issues
+                if ($apCreditAmount > ($poDueAmount + 0.01)) {
+                    return response()->json([
+                        'message' => 'AP Credit amount exceeds the outstanding PO due amount.',
+                        'errors'  => ['payment_method' => ["AP Credit ({$apCreditAmount}) cannot be greater than outstanding Udhaar ({$poDueAmount})."]]
+                    ], 422);
                 }
             }
         }
@@ -338,6 +400,10 @@ class PurchaseReturnController extends Controller
                 'total_amount'      => $grandTotal,
                 'status'            => $status,
                 'refund_status'     => $request->refund_status ?? 'pending',
+                'payment_method'    => $request->payment_method ?? 'cash',
+                'bank_account_id'   => $request->bank_account_id,
+                'reference_number'  => $request->reference_number,
+                'refund_splits'     => $request->refund_splits,
                 'notes'             => $request->notes,
             ]);
 
@@ -352,7 +418,7 @@ class PurchaseReturnController extends Controller
 
                 $purchaseReturn->items()->create([
                     'product_id'      => $item['product_id'],
-                    'warehouse_id'    => $request->warehouse_id,
+                    'warehouse_id'    => $item['warehouse_id'] ?? $request->warehouse_id,
                     'quantity'        => $qty,
                     'unit_cost'       => $unitCost,
                     'tax_amount'      => $itemTax,
@@ -363,14 +429,21 @@ class PurchaseReturnController extends Controller
                 ]);
             }
 
-            // Deduct stock & create double-entry journal if approved/completed
+            $purchaseReturn->update([
+                'subtotal'       => $subtotal,
+                'tax_amount'     => $totalTax,
+                'discount_amount'=> $totalDiscount,
+                'total_amount'   => $grandTotal,
+            ]);
+
+            // Auto deduct inventory and post GL accounting entry if status is approved/completed
             if (in_array($status, ['approved', 'completed'])) {
-                $this->processStockDeductionAndAccounting($purchaseReturn);
+                $this->processStockDeductionAndAccounting($purchaseReturn->fresh());
             }
 
             DB::commit();
 
-            $purchaseReturn->load(['supplier', 'originalPurchaseOrder', 'warehouse', 'items.product', 'user']);
+            $purchaseReturn->load(['supplier', 'warehouse', 'items.product']);
 
             return response()->json([
                 'message'         => 'Purchase return created successfully',
@@ -379,7 +452,6 @@ class PurchaseReturnController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-
             return response()->json([
                 'message' => 'Failed to create purchase return',
                 'error'   => $e->getMessage()
@@ -388,27 +460,22 @@ class PurchaseReturnController extends Controller
     }
 
     /**
-     * Display the specified purchase return.
+     * Display the specified resource.
      */
     public function show($id): JsonResponse
     {
         $companyId = auth()->user()?->current_company_id ?? 1;
-
         $purchaseReturn = PurchaseReturn::where('company_id', $companyId)
-            ->with([
-                'supplier',
-                'originalPurchaseOrder',
-                'warehouse',
-                'items.product',
-                'user'
-            ])
+            ->with(['supplier', 'warehouse', 'originalPurchaseOrder', 'user', 'items.product'])
             ->findOrFail($id);
 
-        return response()->json($purchaseReturn);
+        return response()->json([
+            'purchase_return' => $purchaseReturn
+        ]);
     }
 
     /**
-     * Update the specified purchase return.
+     * Update the specified resource in storage.
      */
     public function update(Request $request, $id): JsonResponse
     {
@@ -429,6 +496,10 @@ class PurchaseReturnController extends Controller
             'reason'            => 'sometimes|string|max:255',
             'status'            => 'nullable|in:draft,pending,approved,completed,cancelled',
             'refund_status'     => 'nullable|in:pending,partial,refunded',
+            'payment_method'    => 'nullable|string',
+            'bank_account_id'   => 'nullable|exists:bank_accounts,id',
+            'reference_number'  => 'nullable|string',
+            'refund_splits'     => 'nullable|array',
             'notes'             => 'nullable|string',
             'items'             => 'sometimes|array|min:1',
             'items.*.product_id' => 'required_with:items|exists:products,id',
@@ -448,6 +519,43 @@ class PurchaseReturnController extends Controller
 
             $oldStatus = $purchaseReturn->status;
             $newStatus = $request->status ?? $oldStatus;
+            $wasApproved = in_array($oldStatus, ['approved', 'completed']);
+
+            $inventoryService = new WarehouseInventoryService();
+            $accountingService = new DoubleEntryAccountingService();
+            $warehouseId = $purchaseReturn->warehouse_id ?? 1;
+
+            // Step A: If return was previously approved/completed, reverse old stock deduction & old GL journal entry
+            if ($wasApproved) {
+                foreach ($purchaseReturn->items as $oldItem) {
+                    $product = $oldItem->product ?: Product::find($oldItem->product_id);
+                    if ($product && $product->track_inventory) {
+                        $inventoryService->adjustStock(
+                            $oldItem->warehouse_id ?? $warehouseId,
+                            $product->id,
+                            null,
+                            $oldItem->quantity, // Reverse previous deduction by adding stock back
+                            $companyId,
+                            'Purchase Return Reversal',
+                            $purchaseReturn->return_number
+                        );
+                    }
+                }
+                
+                // Reverse Vendor Store Credit if it was issued
+                if (is_array($purchaseReturn->refund_splits)) {
+                    foreach ($purchaseReturn->refund_splits as $split) {
+                        if (($split['type'] ?? '') === 'vendor_credit') {
+                            $amt = (float)($split['amount'] ?? 0);
+                            if ($amt > 0 && $purchaseReturn->supplier) {
+                                $purchaseReturn->supplier->debitAdvance($amt);
+                            }
+                        }
+                    }
+                }
+
+                $accountingService->reverseJournalEntryBySource('purchase_return', $purchaseReturn->id);
+            }
 
             // Update basic fields
             $purchaseReturn->fill($request->only([
@@ -458,6 +566,10 @@ class PurchaseReturnController extends Controller
                 'reason',
                 'status',
                 'refund_status',
+                'payment_method',
+                'bank_account_id',
+                'reference_number',
+                'refund_splits',
                 'notes',
             ]));
 
@@ -484,8 +596,9 @@ class PurchaseReturnController extends Controller
 
                     $purchaseReturn->items()->create([
                         'product_id'      => $item['product_id'],
-                        'warehouse_id'    => $request->warehouse_id ?? $purchaseReturn->warehouse_id,
+                        'warehouse_id'    => $item['warehouse_id'] ?? $request->warehouse_id ?? $purchaseReturn->warehouse_id,
                         'quantity'        => $qty,
+
                         'unit_cost'       => $unitCost,
                         'tax_amount'      => $itemTax,
                         'discount_amount' => $itemDiscount,
@@ -503,9 +616,9 @@ class PurchaseReturnController extends Controller
 
             $purchaseReturn->save();
 
-            // Trigger stock deduction and accounting if status changed from draft/pending to approved/completed
-            if (!in_array($oldStatus, ['approved', 'completed']) && in_array($newStatus, ['approved', 'completed'])) {
-                $this->processStockDeductionAndAccounting($purchaseReturn);
+            // Step B & C: Apply new stock deduction & re-post GL journal entry if new status is approved or completed
+            if (in_array($newStatus, ['approved', 'completed'])) {
+                $this->processStockDeductionAndAccounting($purchaseReturn->fresh());
             }
 
             DB::commit();
@@ -513,7 +626,7 @@ class PurchaseReturnController extends Controller
             $purchaseReturn->load(['supplier', 'originalPurchaseOrder', 'warehouse', 'items.product', 'user']);
 
             return response()->json([
-                'message'         => 'Purchase return updated successfully',
+                'message'         => 'Purchase return updated, inventory re-calculated, and GL journal re-posted successfully',
                 'purchase_return' => $purchaseReturn
             ]);
 
@@ -530,6 +643,54 @@ class PurchaseReturnController extends Controller
     /**
      * Remove the specified purchase return from storage.
      */
+    
+    /**
+     * Quick status update endpoint
+     */
+    public function updateStatus(Request $request, $id): JsonResponse
+    {
+        $companyId = auth()->user()?->current_company_id ?? 1;
+        $purchaseReturn = PurchaseReturn::where('company_id', $companyId)->findOrFail($id);
+
+        $request->validate([
+            'status' => 'required|in:draft,pending,approved,completed,cancelled'
+        ]);
+
+        $newStatus = $request->status;
+
+        // Redirect to existing complex logic if approving or rejecting
+        if ($newStatus === 'approved' && !in_array($purchaseReturn->status, ['approved', 'completed'])) {
+            return $this->approve($id);
+        }
+
+        if ($newStatus === 'cancelled' && $purchaseReturn->status !== 'cancelled') {
+            return $this->reject($id);
+        }
+
+        if ($newStatus === 'completed') {
+            if (!in_array($purchaseReturn->status, ['approved'])) {
+                return response()->json([
+                    'message' => 'Return must be approved before it can be marked as completed.'
+                ], 400);
+            }
+            $purchaseReturn->status = 'completed';
+            $purchaseReturn->save();
+
+            return response()->json([
+                'message' => 'Purchase return marked as completed',
+                'purchase_return' => $purchaseReturn
+            ]);
+        }
+
+        $purchaseReturn->status = $newStatus;
+        $purchaseReturn->save();
+
+        return response()->json([
+            'message' => 'Status updated successfully',
+            'purchase_return' => $purchaseReturn
+        ]);
+    }
+
     public function destroy($id): JsonResponse
     {
         $companyId = auth()->user()?->current_company_id ?? 1;
@@ -614,12 +775,60 @@ class PurchaseReturnController extends Controller
             ], 400);
         }
 
-        $purchaseReturn->update(['status' => 'cancelled']);
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'message'         => 'Purchase return cancelled successfully',
-            'purchase_return' => $purchaseReturn
-        ]);
+            if ($purchaseReturn->status === 'approved') {
+                $inventoryService = new WarehouseInventoryService();
+                $accountingService = new DoubleEntryAccountingService();
+                $warehouseId = $purchaseReturn->warehouse_id ?? 1;
+
+                foreach ($purchaseReturn->items as $item) {
+                    $product = $item->product ?: Product::find($item->product_id);
+                    if ($product && $product->track_inventory) {
+                        $inventoryService->adjustStock(
+                            $item->warehouse_id ?? $warehouseId,
+                            $product->id,
+                            null,
+                            $item->quantity, // Add back stock
+                            $companyId,
+                            'Purchase Return Cancelled',
+                            $purchaseReturn->return_number
+                        );
+                    }
+                }
+
+                // Reverse Vendor Store Credit if it was issued
+                if (is_array($purchaseReturn->refund_splits)) {
+                    foreach ($purchaseReturn->refund_splits as $split) {
+                        if (($split['type'] ?? '') === 'vendor_credit') {
+                            $amt = (float)($split['amount'] ?? 0);
+                            if ($amt > 0 && $purchaseReturn->supplier) {
+                                $purchaseReturn->supplier->debitAdvance($amt);
+                            }
+                        }
+                    }
+                }
+
+                $accountingService->reverseJournalEntryBySource('purchase_return', $purchaseReturn->id);
+            }
+
+            $purchaseReturn->update(['status' => 'rejected']);
+
+            DB::commit();
+
+            return response()->json([
+                'message'         => 'Purchase return cancelled successfully and inventory/GL entries reversed',
+                'purchase_return' => $purchaseReturn
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to cancel purchase return',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

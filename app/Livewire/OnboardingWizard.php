@@ -74,6 +74,10 @@ class OnboardingWizard extends Component
         ]
     ];
 
+    protected $messages = [
+        'company_name.required' => 'Company Name is required to create or save a setup draft.',
+    ];
+
     public $company_id = null;
     public $currentStep = 1;
     public $hasExistingActiveCompany = false;
@@ -112,7 +116,7 @@ class OnboardingWizard extends Component
         } else {
             $user = Auth::user();
             $this->company_email        = $user->email ?? '';
-            $this->company_name         = 'Untitled Draft Workspace';
+            $this->company_name         = '';
             $this->fiscal_year_start    = date('Y-01-01');
         }
     }
@@ -158,13 +162,17 @@ class OnboardingWizard extends Component
 
     public function saveDraft()
     {
+        $this->validate([
+            'company_name' => 'required|string|max:255',
+        ]);
+
         $user = Auth::user();
 
         // Update or create draft company record
         $company = Company::updateOrCreate(
             ['id' => $this->company_id, 'user_id' => $user->id],
             [
-                'company_name' => $this->company_name ?? 'Draft Company',
+                'company_name' => $this->company_name,
                 'company_email' => $this->company_email ?? '',
                 'company_phone' => $this->company_phone ?? '',
                 'tax_number' => $this->tax_number ?? '',
@@ -223,7 +231,7 @@ class OnboardingWizard extends Component
             : null;
 
         $updateData = [
-            'company_name' => $this->company_name ?? 'Untitled Draft Workspace',
+            'company_name' => $this->company_name ?? '',
             'company_email' => $this->company_email,
             'company_phone' => $this->company_phone,
             'registration_number' => $this->registration_number,

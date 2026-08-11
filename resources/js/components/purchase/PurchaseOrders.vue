@@ -152,7 +152,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto min-h-[400px]">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50/50 dark:bg-zinc-800/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800">
@@ -160,10 +160,11 @@
                 <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-3.5 h-3.5" />
               </th>
               <th class="py-3 px-4">Bill #</th>
-              <th class="py-3 px-4">Supplier / Allocation</th>
+              <th class="py-3 px-4">Supplier</th>
+              <th class="py-3 px-4">Warehouse / Location</th>
               <th class="py-3 px-4 text-right">Total</th>
               <th class="py-3 px-4 text-right">Paid</th>
-              <th class="py-3 px-4 text-right">Due / Return</th>
+              <th class="py-3 px-4 text-right">Due</th>
               <th class="py-3 px-4">Due Date</th>
               <th class="py-3 px-4 text-center">Status</th>
               <th class="py-3 px-4 text-center w-16">Actions</th>
@@ -171,13 +172,13 @@
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
                 <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
                 Loading purchase orders...
               </td>
             </tr>
             <tr v-else-if="orders.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -200,15 +201,12 @@
                 </div>
               </td>
 
-              <!-- Supplier & Allocation -->
+              <!-- Supplier -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
                 <div class="font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                   {{ item.supplier?.name || item.supplier_name || 'Walk-in Supplier' }}
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs mt-1 text-slate-500">
-                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
-                    🏢 {{ item.warehouse.name }}
-                  </span>
                   <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
                     🖥️ Counter: {{ item.counter.name }}
                   </span>
@@ -218,9 +216,37 @@
                 </div>
               </td>
 
+              <!-- Warehouse / Location -->
+              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div v-if="getWarehouseAllocations(item).length > 0" class="flex flex-col gap-1 items-start">
+                  <span
+                    v-for="wh in getWarehouseAllocations(item).slice(0, 2)"
+                    :key="wh.id"
+                    class="inline-flex items-center text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded text-xs font-medium"
+                  >
+                    🏢 {{ wh.name }}{{ wh.qty > 0 ? ` (${wh.qty} Qty)` : '' }}
+                  </span>
+
+                  <span
+                    v-if="getWarehouseAllocations(item).length > 2"
+                    @click.stop="openWarehouseModal(item)"
+                    class="inline-flex items-center text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 cursor-pointer px-2 py-0.5 rounded text-xs font-medium transition-colors"
+                    title="Click to view all allocated warehouses"
+                  >
+                    +{{ getWarehouseAllocations(item).length - 2 }} More
+                  </span>
+                </div>
+                <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic">
+                  Unassigned
+                </div>
+              </td>
+
               <!-- Total Amount -->
               <td class="py-4 px-4 text-right font-bold text-slate-800 dark:text-zinc-100 text-sm align-middle bg-white dark:bg-zinc-900">
-                {{ formatCurrency(item.total_amount || item.grand_total) }}
+                <div>{{ formatCurrency(item.total_amount || item.grand_total) }}</div>
+                <div v-if="parseFloat(item.returns_sum_total_amount || 0) > 0" class="text-[10px] text-purple-600 dark:text-purple-400 mt-0.5">
+                  Returned: {{ formatCurrency(item.returns_sum_total_amount) }}
+                </div>
               </td>
 
               <!-- Paid Amount -->
@@ -228,13 +254,10 @@
                 {{ parseFloat(item.amount_paid || item.paid_amount || 0) > 0 ? formatCurrency(item.amount_paid || item.paid_amount) : '-' }}
               </td>
 
-              <!-- Due / Return Amount -->
+              <!-- Due Amount -->
               <td class="py-4 px-4 text-right text-xs align-middle bg-white dark:bg-zinc-900">
                 <span v-if="getBalanceState(item).type === 'due'" class="font-semibold text-rose-600 dark:text-rose-400">
                   {{ formatCurrency(getBalanceState(item).amount) }}
-                </span>
-                <span v-else-if="getBalanceState(item).type === 'return'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800" title="Overpayment Change">
-                  Return: {{ formatCurrency(getBalanceState(item).amount) }}
                 </span>
                 <span v-else class="text-slate-400 dark:text-zinc-500 font-medium">
                   -
@@ -248,12 +271,17 @@
 
               <!-- Status Badge -->
               <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
-                <span
-                  :class="getStatusBadgeClass(item)"
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all"
-                >
-                  {{ getStatusLabel(item) }}
-                </span>
+                <div class="flex flex-col items-center gap-1">
+                  <span
+                    :class="getStatusBadgeClass(item)"
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all"
+                  >
+                    {{ getStatusLabel(item) }}
+                  </span>
+                  <span v-if="isPartiallyReturned(item) && !isFullyReturned(item)" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    Partially Returned
+                  </span>
+                </div>
               </td>
 
               <!-- Action Menu Dropdown -->
@@ -388,6 +416,97 @@
         </div>
       </div>
     </teleport>
+
+    <!-- Warehouse Overflow Modal -->
+    <teleport to="body">
+      <div
+        v-if="showWarehouseModal && selectedOrderForWarehouses"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
+        @click.self="closeWarehouseModal"
+      >
+        <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50">
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-zinc-100">
+                Allocated Warehouses
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5">
+                PO #{{ selectedOrderForWarehouses.po_number }}
+              </p>
+            </div>
+            <button
+              @click="closeWarehouseModal"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Content: List of Allocated Warehouses -->
+          <div class="p-5 space-y-3 max-h-[380px] overflow-y-auto custom-scrollbar">
+            <div
+              v-for="wh in getWarehouseAllocations(selectedOrderForWarehouses)"
+              :key="wh.id"
+              class="flex items-center justify-between p-3 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/70 dark:border-zinc-700/60 rounded-xl"
+            >
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                  🏢
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-800 dark:text-zinc-100">
+                    {{ wh.name }}
+                  </div>
+                  <div class="text-[10px] text-slate-400 dark:text-zinc-500">
+                    Destination Warehouse
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                  {{ wh.qty > 0 ? `${wh.qty} Qty` : 'Allocated' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Item Level Breakdown if available -->
+            <div v-if="(selectedOrderForWarehouses.purchase_order_items || selectedOrderForWarehouses.purchaseOrderItems || selectedOrderForWarehouses.items)?.length > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-2">
+                Itemized Allocation Breakdown
+              </div>
+              <div class="space-y-2">
+                <div
+                  v-for="poItem in (selectedOrderForWarehouses.purchase_order_items || selectedOrderForWarehouses.purchaseOrderItems || selectedOrderForWarehouses.items)"
+                  :key="poItem.id"
+                  class="flex items-center justify-between text-xs py-2 px-2.5 bg-slate-50/50 dark:bg-zinc-800/40 rounded-lg border border-slate-100 dark:border-zinc-800"
+                >
+                  <div class="truncate max-w-[200px] text-slate-700 dark:text-zinc-300 font-medium">
+                    {{ poItem.product?.name || poItem.product_name || 'Product Item' }}
+                  </div>
+                  <div class="text-slate-500 dark:text-zinc-400 text-[11px] flex items-center space-x-2">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-medium">🏢 {{ poItem.warehouse?.name || selectedOrderForWarehouses.warehouse?.name || 'Warehouse' }}</span>
+                    <span class="font-bold text-slate-800 dark:text-zinc-200">({{ poItem.quantity_ordered || poItem.quantity || 0 }} pcs)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-5 py-3 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 flex justify-end">
+            <button
+              @click="closeWarehouseModal"
+              class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </teleport>
   </div>
 </template>
 
@@ -415,6 +534,66 @@ const currentTab = ref('all');
 const loading = ref(false);
 const openActionDropdown = ref(null);
 const isFilterDrawerOpen = ref(false);
+
+// Warehouse Modal State
+const showWarehouseModal = ref(false);
+const selectedOrderForWarehouses = ref(null);
+
+const openWarehouseModal = (item) => {
+  selectedOrderForWarehouses.value = item;
+  showWarehouseModal.value = true;
+};
+
+const closeWarehouseModal = () => {
+  showWarehouseModal.value = false;
+  selectedOrderForWarehouses.value = null;
+};
+
+const getWarehouseAllocations = (item) => {
+  if (!item) return [];
+  
+  const allocationsMap = new Map();
+
+  const addAllocation = (id, name, qty) => {
+    if (!name) return;
+    const key = id || name;
+    const existing = allocationsMap.get(key) || { id: key, name, qty: 0 };
+    existing.qty += (parseFloat(qty) || 0);
+    allocationsMap.set(key, existing);
+  };
+
+  // 1. Check item.purchase_order_items / purchaseOrderItems / items
+  const itemsList = item.purchase_order_items || item.purchaseOrderItems || item.items || [];
+  if (Array.isArray(itemsList) && itemsList.length > 0) {
+    itemsList.forEach(poItem => {
+      if (poItem.warehouse?.name) {
+        addAllocation(poItem.warehouse.id, poItem.warehouse.name, poItem.quantity_ordered || poItem.quantity || 0);
+      }
+      if (poItem.warehouse_allocations && Array.isArray(poItem.warehouse_allocations)) {
+        poItem.warehouse_allocations.forEach(alloc => {
+          if (alloc.warehouse_name || alloc.name) {
+            addAllocation(alloc.warehouse_id || alloc.id, alloc.warehouse_name || alloc.name, alloc.quantity || alloc.qty || 0);
+          }
+        });
+      }
+    });
+  }
+
+  // 2. Check item.warehouses array
+  if (item.warehouses && Array.isArray(item.warehouses) && item.warehouses.length > 0) {
+    item.warehouses.forEach(w => {
+      addAllocation(w.id, w.name, w.pivot?.quantity || w.allocated_quantity || w.qty || 0);
+    });
+  }
+
+  // 3. Fallback to order-level warehouse
+  if (allocationsMap.size === 0 && item.warehouse?.name) {
+    const totalItemsQty = itemsList.reduce((sum, i) => sum + (parseFloat(i.quantity_ordered || i.quantity || 0)), 0);
+    addAllocation(item.warehouse.id, item.warehouse.name, totalItemsQty);
+  }
+
+  return Array.from(allocationsMap.values());
+};
 
 // Advanced Filter State
 const advancedFilters = ref({
@@ -864,7 +1043,24 @@ const formatLongDate = (dateStr) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const isFullyReturned = (item) => {
+  const returnAmount = parseFloat(item.returns_sum_total_amount || 0);
+  const totalAmount = parseFloat(item.total_amount || item.grand_total || 0);
+  if (returnAmount > 0 && returnAmount >= totalAmount) return true;
+  if (item.return_status === 'returned') return true;
+  return false;
+};
+
+const isPartiallyReturned = (item) => {
+  const returnAmount = parseFloat(item.returns_sum_total_amount || 0);
+  const totalAmount = parseFloat(item.total_amount || item.grand_total || 0);
+  if (returnAmount > 0 && returnAmount < totalAmount) return true;
+  if (item.return_status === 'partially_returned') return true;
+  return false;
+};
+
 const getStatusBadgeClass = (item) => {
+  if (isFullyReturned(item)) return 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300';
   const st = item.status;
   if (st === 'received' || st === 'paid' || st === 'completed') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
   if (st === 'partially_received' || st === 'partial') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
@@ -875,6 +1071,7 @@ const getStatusBadgeClass = (item) => {
 };
 
 const getStatusLabel = (item) => {
+  if (isFullyReturned(item)) return 'Returned';
   const st = item.status;
   if (st === 'received') return 'Paid';
   if (st === 'partially_received') return 'Partial';

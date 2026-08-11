@@ -286,36 +286,45 @@
               </div>
 
               <!-- Customer Picker -->
-              <div>
+              <div class="relative">
                 <CustomFloatingSelect
                   label="Customer *"
                   v-model="form.customer_id"
                   :options="customerOptions"
                   placeholder="Walk-in Customer"
                   searchable
+                  :disabled="!!form.original_sale_id"
+                  :buttonClass="form.original_sale_id ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300' : ''"
                 />
+                <span v-if="form.original_sale_id" class="absolute top-0 right-0 mt-0 text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 rounded">Auto-filled</span>
               </div>
 
               <!-- Sales Representative / Salesman -->
-              <div>
+              <div class="relative">
                 <CustomFloatingSelect
                   label="Sales Representative / Salesman"
                   v-model="form.salesman_id"
                   :options="salesmanOptions"
                   placeholder="-- Select Sales Representative --"
                   searchable
+                  :disabled="!!form.original_sale_id"
+                  :buttonClass="form.original_sale_id ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300' : ''"
                 />
+                <span v-if="form.original_sale_id" class="absolute top-0 right-0 mt-0 text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 rounded">Auto-filled</span>
               </div>
 
               <!-- POS Counter -->
-              <div>
+              <div class="relative">
                 <CustomFloatingSelect
                   label="POS Counter"
                   v-model="form.counter_id"
                   :options="counterOptions"
                   placeholder="-- Select POS Counter --"
                   searchable
+                  :disabled="!!form.original_sale_id"
+                  :buttonClass="form.original_sale_id ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300' : ''"
                 />
+                <span v-if="form.original_sale_id" class="absolute top-0 right-0 mt-0 text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 rounded">Auto-filled</span>
               </div>
 
               <!-- Return Date -->
@@ -382,6 +391,15 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  
+  <!-- Floating Grand Total Badge -->
+  <div class="fixed bottom-[10px] right-6 z-50 animate-fade-in-down">
+    <div class="bg-slate-900 dark:bg-zinc-800 text-white px-10 py-2.5 min-w-[300px] rounded-xl shadow-xl flex items-center justify-between border border-slate-700 dark:border-zinc-700 cursor-default">
+      <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">Grand Total</span>
+      <span class="text-2xl font-black leading-tight text-emerald-400">{{ formatMoney(totals.total_amount) }}</span>
     </div>
   </div>
 </template>
@@ -621,6 +639,9 @@ watch(selectedOriginalSaleId, (newVal) => {
     onOriginalSaleSelect()
   } else {
     form.original_sale_id = null
+    form.customer_id = ''
+    form.salesman_id = null
+    form.counter_id = null
   }
 })
 
@@ -732,9 +753,9 @@ const onOriginalSaleSelect = async () => {
     const res = await axios.get(`/api/sales/${selectedOriginalSaleId.value}`)
     const sale = res.data
     form.original_sale_id = sale.id
-    form.customer_id = sale.customer_id
-    if (sale.salesman_id) form.salesman_id = sale.salesman_id
-    if (sale.counter_id) form.counter_id = sale.counter_id
+    form.customer_id = sale.customer_id || ''
+    form.salesman_id = sale.salesman_id || sale.user_id || ''
+    form.counter_id = sale.counter_id || ''
 
     if (sale.warehouse_id) {
       form.warehouse_id = sale.warehouse_id

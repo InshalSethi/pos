@@ -30,6 +30,10 @@ class PurchaseReturn extends Model
         'total_amount',
         'status',
         'refund_status',
+        'payment_method',
+        'bank_account_id',
+        'reference_number',
+        'refund_splits',
         'notes',
     ];
 
@@ -39,6 +43,7 @@ class PurchaseReturn extends Model
         'tax_amount'      => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total_amount'    => 'decimal:2',
+        'refund_splits'   => 'array',
     ];
 
     // Relationships
@@ -60,6 +65,11 @@ class PurchaseReturn extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
     }
 
     public function user(): BelongsTo

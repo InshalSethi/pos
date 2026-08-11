@@ -158,7 +158,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto min-h-[400px]">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50/50 dark:bg-zinc-800/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800">
@@ -176,13 +176,13 @@
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="8" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+              <td colspan="8" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
                 <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
                 Loading purchase returns...
               </td>
             </tr>
             <tr v-else-if="returns.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="8" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+              <td colspan="8" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -232,7 +232,15 @@
 
               <!-- Total Refund -->
               <td class="py-4 px-4 text-right font-bold text-slate-800 dark:text-zinc-100 text-sm align-middle bg-white dark:bg-zinc-900">
-                {{ formatCurrency(item.total_amount) }}
+                <div>{{ formatCurrency(item.total_amount) }}</div>
+                <div class="mt-1">
+                  <span
+                    :class="getRefundMethodBadge(item).class"
+                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border"
+                  >
+                    {{ getRefundMethodBadge(item).label }}
+                  </span>
+                </div>
               </td>
 
               <!-- Return Date -->
@@ -264,18 +272,26 @@
                 <!-- Action Dropdown Overlay -->
                 <div
                   v-if="openActionDropdown === item.id"
-                  class="absolute right-4 mt-1 w-36 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in"
+                  class="absolute right-4 mt-1 w-48 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 z-50 animate-fade-in"
                 >
-                  <button @click="viewPurchaseReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  <button @click="viewPurchaseReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     <span>View</span>
                   </button>
-                  <button v-if="item.status !== 'completed' && item.status !== 'cancelled'" @click="editPurchaseReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <button v-if="item.status === 'draft' || item.status === 'pending'" @click="quickApprove(item)" class="w-full text-left px-3 py-1.5 text-xs font-normal text-slate-700 hover:text-slate-900 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 transition-colors whitespace-nowrap">
+                    <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Approve Return</span>
+                  </button>
+                  <button v-if="item.status === 'approved'" @click="quickComplete(item)" class="w-full text-left px-3 py-1.5 text-xs font-normal text-slate-700 hover:text-slate-900 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 transition-colors whitespace-nowrap">
+                    <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Mark as Completed</span>
+                  </button>
+                  <button v-if="item.status !== 'completed' && item.status !== 'cancelled'" @click="editPurchaseReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span>Edit</span>
                   </button>
-                  <button @click="printPurchaseReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                  <button @click="printPurchaseReturn(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     <span>Print</span>
                   </button>
                   <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
@@ -338,6 +354,7 @@
 </template>
 
 <script setup>
+import Swal from 'sweetalert2';
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -397,6 +414,36 @@ const loadFilterLookups = async () => {
   } catch (e) {
     console.error('Error loading filter lookups:', e);
   }
+};
+
+const getRefundMethodBadge = (item) => {
+  const method = item.payment_method || 'cash';
+  if (method === 'bank') {
+    const bankName = item.bank_account?.bank_name || item.bank_account?.account_name || 'Bank';
+    return {
+      label: `Bank: ${bankName}`,
+      class: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+    };
+  } else if (method === 'vendor_credit' || method === 'vendor_advance') {
+    return {
+      label: 'Vendor Credit',
+      class: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+    };
+  } else if (method === 'ap_credit') {
+    return {
+      label: 'AP Credit',
+      class: 'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+    };
+  } else if (method === 'mixed' || (item.refund_splits && item.refund_splits.length > 1)) {
+    return {
+      label: 'Mixed',
+      class: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+    };
+  }
+  return {
+    label: 'Cash',
+    class: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+  };
 };
 
 const getSupplierSummary = () => {
@@ -722,6 +769,51 @@ const editPurchaseReturn = (item) => {
 const printPurchaseReturn = (item) => {
   openActionDropdown.value = null;
   window.open(`/purchase/returns/${item.id}/print`, '_blank');
+};
+
+
+const quickApprove = async (item) => {
+  const result = await Swal.fire({
+    title: 'Approve Return?',
+    text: "This will deduct stock and post to the General Ledger in 1-click.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#10b981',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: 'Yes, Approve'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await axios.patch(`/api/purchase-returns/${item.id}/status`, { status: 'approved' });
+      fetchReturns();
+      Swal.fire({ icon: 'success', title: 'Success', text: 'Return Approved', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || 'Failed to approve return' });
+    }
+  }
+};
+
+const quickComplete = async (item) => {
+  const result = await Swal.fire({
+    title: 'Mark as Completed?',
+    text: "This will permanently lock the record from further edits.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3b82f6',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: 'Yes, Complete'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await axios.patch(`/api/purchase-returns/${item.id}/status`, { status: 'completed' });
+      fetchReturns();
+      Swal.fire({ icon: 'success', title: 'Success', text: 'Return Completed', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || 'Failed to complete return' });
+    }
+  }
 };
 
 const deletePurchaseReturn = async (id) => {

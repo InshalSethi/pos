@@ -158,7 +158,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto min-h-[400px]">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50/50 dark:bg-zinc-800/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800">
@@ -167,6 +167,7 @@
               </th>
               <th class="py-3 px-4">Invoice #</th>
               <th class="py-3 px-4">Client / Allocation</th>
+              <th class="py-3 px-4">Salesman</th>
               <th class="py-3 px-4 text-right">Total</th>
               <th class="py-3 px-4 text-right">Paid</th>
               <th class="py-3 px-4 text-right">Due / Return</th>
@@ -177,13 +178,13 @@
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
                 <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
                 Loading sales invoices...
               </td>
             </tr>
             <tr v-else-if="invoices.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -208,22 +209,29 @@
 
               <!-- Client & Multi-warehouse / Salesman Allocation -->
               <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
-                <div class="font-semibold text-slate-700 dark:text-zinc-200 text-sm">
+                <div class="font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                   {{ item.customer?.name || 'Walk-in Customer' }}
                 </div>
-                <div class="text-[10px] text-slate-400 dark:text-zinc-500 flex flex-wrap items-center mt-1 gap-x-2 gap-y-0.5">
-                  <span v-if="item.salesman" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
-                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    Rep: {{ item.salesman.first_name || item.salesman.full_name }}
+                <div class="flex flex-col gap-1 items-start mt-1">
+                  <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded text-xs font-medium">
+                    🖥️ Counter: {{ item.counter.name }}
                   </span>
-                  <span v-if="item.counter" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
-                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Counter: {{ item.counter.name }}
+                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded text-xs font-medium">
+                    🏢 {{ item.warehouse.name }}
                   </span>
-                  <span v-if="item.warehouse" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
-                    <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"/></svg>
-                    {{ item.warehouse.name }}
+                </div>
+              </td>
+
+              <!-- Salesman Column -->
+              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div v-if="getSalesmanName(item)" class="flex items-center space-x-1.5 text-slate-800 dark:text-zinc-200 font-semibold text-xs">
+                  <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs">
+                    👤
                   </span>
+                  <span>{{ getSalesmanName(item) }}</span>
+                </div>
+                <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic">
+                  Unassigned
                 </div>
               </td>
 
@@ -710,6 +718,21 @@ const paginationRange = computed(() => {
 });
 
 // Methods
+const getSalesmanName = (item) => {
+  if (!item) return '';
+  if (item.salesman) {
+    if (item.salesman.full_name) return item.salesman.full_name;
+    if (item.salesman.name) return item.salesman.name;
+    if (item.salesman.first_name) {
+      return `${item.salesman.first_name} ${item.salesman.last_name || ''}`.trim();
+    }
+  }
+  if (item.user?.name) {
+    return item.user.name;
+  }
+  return '';
+};
+
 const fetchStatusCounts = async () => {
   try {
     const response = await axios.get('/api/sales/status-counts');
@@ -847,22 +870,22 @@ const confirmVoidInvoice = async () => {
 };
 
 const createNewSale = () => {
-  router.push('/sales/create');
+  router.push('/sales/invoices/create');
 };
 
 const viewInvoice = (item) => {
   openActionDropdown.value = null;
-  router.push(`/sales/${item.id}`);
+  router.push(`/sales/invoices/${item.id}`);
 };
 
 const editInvoice = (item) => {
   openActionDropdown.value = null;
-  router.push(`/sales/${item.id}/edit`);
+  router.push(`/sales/invoices/${item.id}/edit`);
 };
 
 const printInvoice = (item) => {
   openActionDropdown.value = null;
-  window.open(`/sales/${item.id}/print`, '_blank');
+  window.open(`/sales/invoices/${item.id}/print`, '_blank');
 };
 
 const deleteInvoice = async (id) => {

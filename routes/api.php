@@ -205,6 +205,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
 
     Route::get('/purchase-returns/next-number', [PurchaseReturnController::class, 'getNextReturnNumber']);
     Route::get('/purchase-returns/po-items/{poId}', [PurchaseReturnController::class, 'getPoItems']);
+    Route::patch('/purchase-returns/{id}/status', [PurchaseReturnController::class, 'updateStatus']);
     Route::post('/purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve']);
     Route::post('/purchase-returns/{purchaseReturn}/reject', [PurchaseReturnController::class, 'reject']);
     Route::apiResource('purchase-returns', PurchaseReturnController::class);

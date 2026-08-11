@@ -178,7 +178,7 @@ class Payment extends Model
 
     public function markAsPaid($userId, $journalEntryId = null, $bankTransactionId = null): bool
     {
-        if (!in_array($this->status, ['approved', 'pending'])) {
+        if (!in_array($this->status, ['approved', 'pending', 'paid', 'draft'])) {
             return false;
         }
 
@@ -192,6 +192,7 @@ class Payment extends Model
 
         return true;
     }
+
 
     public function cancel(): bool
     {

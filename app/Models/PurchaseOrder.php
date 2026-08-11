@@ -83,6 +83,17 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
+    public function items(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class, 'purchase_order_id');
+    }
+
+
     // Scopes
     public function scopeDraft($query)
     {

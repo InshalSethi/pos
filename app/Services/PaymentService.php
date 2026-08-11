@@ -422,50 +422,77 @@ class PaymentService
     }
 
     /**
+     * Cancel payment, reverse bank transaction & balance, and reverse journal entry
+     */
+    public function cancelPayment(Payment $payment): void
+    {
+        DB::transaction(function () use ($payment) {
+            if ($payment->status === 'cancelled') {
+                return;
+            }
+
+            // 1. Reverse accounting journal entry for payment first
+            if ($payment->journal_entry_id) {
+                $oldEntries = JournalEntry::where('id', $payment->journal_entry_id)->get();
+                foreach ($oldEntries as $entry) {
+                    $affectedAccountIds = [];
+                    foreach ($entry->journalEntryLines as $line) {
+                        if ($line->account_id) {
+                            $affectedAccountIds[] = $line->account_id;
+                        }
+                    }
+                    JournalEntryLine::where('journal_entry_id', $entry->id)->delete();
+                    $entry->delete();
+                    foreach (array_unique($affectedAccountIds) as $accId) {
+                        $acc = Account::find($accId);
+                        if ($acc) {
+                            $acc->updateCurrentBalance();
+                        }
+                    }
+                }
+            }
+
+            // 2. Reverse bank transaction and restore bank account current balance
+            if ($payment->bank_transaction_id) {
+                $tx = BankTransaction::find($payment->bank_transaction_id);
+                if ($tx) {
+                    $bAccount = BankAccount::find($tx->bank_account_id);
+                    if ($bAccount) {
+                        if ($tx->transaction_type === 'debit') {
+                            $bAccount->increment('current_balance', $tx->amount);
+                        } elseif ($tx->transaction_type === 'credit') {
+                            $bAccount->decrement('current_balance', $tx->amount);
+                        }
+                        if ($bAccount->chartAccount) {
+                            $bAccount->chartAccount->updateCurrentBalance();
+                        }
+                    }
+                    $tx->delete();
+                }
+            } elseif ($payment->bank_account_id && $payment->status === 'paid') {
+                $bAccount = BankAccount::find($payment->bank_account_id);
+                if ($bAccount) {
+                    $bAccount->increment('current_balance', $payment->amount);
+                    if ($bAccount->chartAccount) {
+                        $bAccount->chartAccount->updateCurrentBalance();
+                    }
+                }
+            }
+
+            // 3. Update payment status to cancelled
+            $payment->update(['status' => 'cancelled']);
+        });
+    }
+
+
+    /**
      * Reverse accounting entries for cancelled payment
      */
     protected function reverseAccountingEntries(Payment $payment): void
     {
-        if (!$payment->journal_entry_id) {
-            return;
-        }
-
-        $originalEntry = $payment->journalEntry;
-
-        // Create reversal journal entry
-        $reversalEntry = JournalEntry::create([
-            'entry_number' => $this->generateJournalEntryNumber(),
-            'entry_date' => now()->toDateString(),
-            'reference' => $payment->payment_number . '-REV',
-            'description' => "Reversal of cancelled payment: {$originalEntry->description}",
-            'entry_type' => 'adjustment',
-            'status' => 'posted',
-            'total_debit' => $originalEntry->total_debit,
-            'total_credit' => $originalEntry->total_credit,
-            'created_by' => auth()->id() ?? 1,
-            'posted_by' => auth()->id() ?? 1,
-            'posted_at' => now(),
-        ]);
-
-        // Create reversal lines (swap debit and credit)
-        foreach ($originalEntry->journalEntryLines as $line) {
-            JournalEntryLine::create([
-                'journal_entry_id' => $reversalEntry->id,
-                'account_id' => $line->account_id,
-                'description' => "Reversal: {$line->description}",
-                'debit_amount' => $line->credit_amount,
-                'credit_amount' => $line->debit_amount,
-                'partner_type' => $line->partner_type,
-                'partner_id' => $line->partner_id,
-            ]);
-        }
-
-        // Update account balances
-        foreach ($reversalEntry->journalEntryLines as $line) {
-            $account = Account::find($line->account_id);
-            $account->updateCurrentBalance();
-        }
+        $this->cancelPayment($payment);
     }
+
 
     /**
      * Get journal entry description based on payment type

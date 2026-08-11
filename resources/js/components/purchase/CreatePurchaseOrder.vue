@@ -770,34 +770,14 @@
                         {{ selectedSupplier.name.charAt(0).toUpperCase() }}
                       </div>
                       <div class="min-w-0">
-                        <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
+                        <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">
+                          <span class="font-medium text-slate-800 dark:text-zinc-100">{{ selectedSupplier.name }}</span> <span v-if="selectedSupplier.phone" class="text-slate-500 text-xs ml-1">({{ selectedSupplier.phone }})</span>
+                        </p>
                       </div>
                     </div>
                   </div>
                   <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
                     No supplier selected. Search above to assign.
-                  </div>
-                </div>
-
-                <!-- ALWAYS VISIBLE: Phone Number & Email Address Inputs (Vertical Stack, Matching Sales Invoice Page) -->
-                <div class="flex flex-col gap-2 pt-1 text-left w-full">
-                  <div class="w-full">
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Phone Number</label>
-                    <input
-                      v-model="orderForm.supplier_phone"
-                      type="tel"
-                      placeholder="Enter phone number"
-                      class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div class="w-full">
-                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Email Address</label>
-                    <input
-                      v-model="orderForm.supplier_email"
-                      type="email"
-                      placeholder="Enter email address"
-                      class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
                   </div>
                 </div>
               </div>
@@ -1005,8 +985,8 @@
     </div>
 
     <!-- Quick Supplier Creation Modal -->
-    <div v-if="showSupplierModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto text-left">
+    <div v-if="showSupplierModal" @click.self.prevent class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[85vh] overflow-y-auto custom-scrollbar my-auto text-left">
         
         <!-- Sleek Close Icon Button -->
         <button
@@ -1035,11 +1015,12 @@
           </button>
           <button
             type="button"
-            class="flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer"
+            class="flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer relative"
             :class="activeSupplierTab === 'contact' ? 'text-indigo-600 border-indigo-600 bg-indigo-50/30 dark:bg-indigo-950/20' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent bg-transparent'"
             @click="activeSupplierTab = 'contact'"
           >
-            Contact
+            <span>Contact</span>
+            <span v-if="supplierErrors.phone" class="w-2 h-2 rounded-full bg-red-500 absolute top-1 right-1"></span>
           </button>
           <button
             type="button"
@@ -1067,11 +1048,13 @@
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Supplier Name *</label>
                 <input
                   v-model="newSupplier.name"
+                  @input="supplierErrors.name = ''"
                   type="text"
-                  required
                   placeholder="e.g. Acme Corporation"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-955 transition-all"
+                  :class="supplierErrors.name ? 'border-red-500 focus:ring-red-200 dark:border-red-500' : 'border-slate-200 dark:border-zinc-700'"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-955 transition-all"
                 />
+                <span v-if="supplierErrors.name" class="text-xs text-red-500 mt-1 block font-medium">{{ supplierErrors.name }}</span>
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Company Name</label>
@@ -1130,13 +1113,16 @@
                 />
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone *</label>
                 <input
                   v-model="newSupplier.phone"
+                  @input="supplierErrors.phone = ''"
                   type="text"
                   placeholder="e.g. +1 555 1234"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-955 transition-all"
+                  :class="supplierErrors.phone ? 'border-red-500 focus:ring-red-200 dark:border-red-500' : 'border-slate-200 dark:border-zinc-700'"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-955 transition-all"
                 />
+                <span v-if="supplierErrors.phone" class="text-xs text-red-500 mt-1 block font-medium">{{ supplierErrors.phone }}</span>
               </div>
             </div>
 
@@ -1254,7 +1240,7 @@
             </button>
             <button
               type="submit"
-              :disabled="!newSupplier.name || creatingSupplier"
+              :disabled="creatingSupplier"
               class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
             >
               {{ creatingSupplier ? 'Creating...' : 'Add Supplier' }}
@@ -1627,6 +1613,14 @@
       </div>
     </teleport>
   </div>
+
+  <!-- Floating Grand Total Badge -->
+  <div class="fixed bottom-[10px] right-6 z-50 animate-fade-in-down">
+    <div class="relative bg-slate-900 dark:bg-zinc-800 text-white pl-4 pr-5 py-1.5 min-w-[300px] rounded-xl shadow-xl flex flex-col items-end border border-slate-700 dark:border-zinc-700 cursor-default">
+      <span class="absolute top-1.5 left-4 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">Grand Total</span>
+      <span class="text-2xl font-black leading-tight text-emerald-400 pt-3">{{ currencySymbol }}{{ grandTotal.toFixed(2) }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -1874,6 +1868,9 @@ const totalPaidAmount = computed(() => {
       sum += parseFloat(bankPaymentAmounts.value[bankId]) || 0;
     });
   }
+  if (useAdvanceBalance.value) {
+    sum += parseFloat(advanceToApply.value) || 0;
+  }
   return sum;
 });
 
@@ -2014,6 +2011,19 @@ const newSupplier = ref({
   credit_limit: 0,
   payment_terms_days: 30,
   is_active: true
+});
+
+const supplierErrors = ref({
+  name: '',
+  phone: ''
+});
+
+watch(showSupplierModal, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 });
 
 // Advance Search Helpers
@@ -2426,11 +2436,10 @@ const advanceToApply = computed(() => {
 });
 
 const effectiveDueAmount = computed(() => {
-  const baseDue = dueAmount.value;
   if (useAdvanceBalance.value) {
-    return Math.max(0, baseDue - advanceToApply.value);
+    return Math.max(0, grandTotal.value - advanceToApply.value);
   }
-  return baseDue;
+  return grandTotal.value;
 });
 
 watch(grandTotal, (newGrandTotal) => {
@@ -2838,8 +2847,26 @@ const clearSupplier = () => {
 };
 
 const createSupplier = async () => {
-  if (!newSupplier.value.name) {
-    showNotification('Supplier name is required', 'error');
+  supplierErrors.value = { name: '', phone: '' };
+
+  let isValid = true;
+  if (!newSupplier.value.name?.trim()) {
+    supplierErrors.value.name = 'Supplier name is required';
+    activeSupplierTab.value = 'basic';
+    isValid = false;
+  }
+
+  const hasPhone = (newSupplier.value.phone && newSupplier.value.phone.trim()) || 
+                   (newSupplier.value.mobile && newSupplier.value.mobile.trim());
+  if (!hasPhone) {
+    supplierErrors.value.phone = 'Phone number is required';
+    if (isValid) {
+      activeSupplierTab.value = 'contact';
+    }
+    isValid = false;
+  }
+
+  if (!isValid) {
     return;
   }
 
@@ -2853,7 +2880,18 @@ const createSupplier = async () => {
     showNotification('Supplier created successfully', 'success');
     closeSupplierModal();
   } catch (error) {
-    showNotification('Error creating supplier', 'error');
+    if (error.response?.data?.errors) {
+      if (error.response.data.errors.name) {
+        supplierErrors.value.name = error.response.data.errors.name[0];
+        activeSupplierTab.value = 'basic';
+      }
+      if (error.response.data.errors.phone) {
+        supplierErrors.value.phone = error.response.data.errors.phone[0];
+        activeSupplierTab.value = 'contact';
+      }
+    } else {
+      showNotification('Error creating supplier', 'error');
+    }
     console.error('Error:', error);
   } finally {
     creatingSupplier.value = false;
@@ -2863,6 +2901,7 @@ const createSupplier = async () => {
 const closeSupplierModal = () => {
   showSupplierModal.value = false;
   activeSupplierTab.value = 'basic';
+  supplierErrors.value = { name: '', phone: '' };
   newSupplier.value = {
     name: '',
     company_name: '',
@@ -2923,6 +2962,11 @@ const saveOrder = async () => {
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       payment_details: [
+        ...(useAdvanceBalance.value && advanceToApply.value > 0 ? [{
+          payment_method: 'vendor_advance',
+          account_id: 'COA_10500',
+          amount: parseFloat(advanceToApply.value) || 0
+        }] : []),
         ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{
           payment_method: 'cash',
           bank_account_id: cashAccount.value?.id || null,

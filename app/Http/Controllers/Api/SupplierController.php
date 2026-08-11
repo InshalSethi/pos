@@ -70,7 +70,7 @@ class SupplierController extends Controller
                 'email',
                 Rule::unique('suppliers', 'email')->where('company_id', $companyId),
             ],
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required_without:mobile|nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',

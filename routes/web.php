@@ -64,6 +64,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureCompanySetup::class])->gro
     // Wizard entry point — handles fresh start and draft resume via query params
     Route::get('/company-setup', [\App\Http\Controllers\CompanySetupController::class, 'index'])
         ->name('company.setup');
+    Route::get('/company/setup', [\App\Http\Controllers\CompanySetupController::class, 'index']);
 
     // Permanently delete a specific draft by ID
     Route::delete('/onboarding/draft/purge/{id}', [\App\Http\Controllers\CompanySetupController::class, 'purgeIndividualDraft'])

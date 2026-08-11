@@ -52,7 +52,18 @@
                 <span class="truncate font-semibold" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedSupplierName }">
                   {{ selectedSupplierName || 'Select Supplier' }}
                 </span>
-                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <div class="flex items-center">
+                  <button
+                    v-if="form.supplier_id"
+                    type="button"
+                    @click.stop="selectSupplier('')"
+                    class="mr-1 text-slate-400 hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-700"
+                    title="Clear supplier selection"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                  <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
               </button>
 
               <div
@@ -100,7 +111,12 @@
                 <span class="truncate font-semibold" :class="{ 'text-slate-400 dark:text-zinc-500': !selectedPoLabel }">
                   {{ selectedPoLabel || 'Standalone / None' }}
                 </span>
-                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <div class="flex items-center">
+                  <button v-if="form.purchase_order_id" @click.stop="selectPo('')" class="mr-1 text-slate-400 hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-700">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                  <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
               </button>
 
               <div
@@ -133,9 +149,13 @@
                     type="button"
                     @click="selectPo(po.id)"
                     class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center"
-                    :class="{ 'bg-slate-100 dark:bg-zinc-800 font-bold': form.purchase_order_id == po.id }"
+                    :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.purchase_order_id == po.id }"
                   >
-                    <span class="font-medium">{{ po.po_number }}</span>
+                    <span class="flex items-center gap-2">
+                      <span class="font-medium">{{ po.po_number }}</span>
+                        <span v-if="!form.supplier_id" class="text-[10px] text-slate-500 ml-2 bg-slate-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded truncate max-w-[120px]">{{ getSupplierName(po.supplier_id) }}</span>
+                      <svg v-if="form.purchase_order_id == po.id" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    </span>
                     <span class="text-[10px] text-slate-400">{{ formatDate(po.order_date) }}</span>
                   </button>
                 </div>
@@ -354,9 +374,9 @@
               <span>Discount Total</span>
               <span class="font-bold text-emerald-600">-{{ currencySymbol }}{{ formatCurrency(computedDiscount) }}</span>
             </div>
-            <div class="border-t border-slate-100 dark:border-zinc-800 pt-3 flex justify-between text-sm font-black text-slate-900 dark:text-zinc-100">
-              <span>Grand Total</span>
-              <span class="text-blue-600 dark:text-blue-400">{{ currencySymbol }}{{ formatCurrency(computedGrandTotal) }}</span>
+            <div class="border-t border-slate-200 dark:border-zinc-700 mt-4 pt-4 flex justify-between items-center font-black">
+              <span class="text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Grand Total</span>
+              <span class="text-2xl text-emerald-500 dark:text-emerald-400 leading-none">{{ currencySymbol }}{{ formatCurrency(computedGrandTotal) }}</span>
             </div>
           </div>
 
@@ -404,6 +424,113 @@
             </select>
           </div>
 
+          <!-- REFUND COLLECTION DETAILS (Directly below Refund Status) -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">REFUND COLLECTION DETAILS</label>
+              <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-bold">Balanced</span>
+            </div>
+
+            <!-- Refund Method Tabs (Cash, Bank, AP Credit, Split / Mixed) -->
+            <div class="bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl grid grid-cols-4 gap-1 text-center text-xs">
+              <button
+                type="button"
+                @click="!isUnpaidPo && (form.payment_method = 'cash')"
+                :disabled="isUnpaidPo"
+                class="py-1.5 px-2 rounded-lg font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="form.payment_method === 'cash' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-zinc-100 shadow-sm font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800'"
+                :title="isUnpaidPo ? 'This PO is unpaid. Returns must be processed as AP Credit.' : 'Refund via Cash'"
+              >
+                Cash
+              </button>
+              <button
+                type="button"
+                @click="!isUnpaidPo && (form.payment_method = 'bank')"
+                :disabled="isUnpaidPo"
+                class="py-1.5 px-2 rounded-lg font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="form.payment_method === 'bank' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-zinc-100 shadow-sm font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800'"
+                :title="isUnpaidPo ? 'This PO is unpaid. Returns must be processed as AP Credit.' : 'Refund via Bank'"
+              >
+                Bank
+              </button>
+              <button
+                type="button"
+                @click="form.payment_method = 'ap_credit'"
+                class="py-1.5 px-2 rounded-lg font-semibold transition-all cursor-pointer"
+                :class="form.payment_method === 'ap_credit' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-zinc-100 shadow-sm font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800'"
+                title="Reduce Accounts Payable balance"
+              >
+                AP Credit
+              </button>
+              <button
+                type="button"
+                @click="form.payment_method = 'mixed'"
+                class="py-1.5 px-2 rounded-lg font-semibold transition-all cursor-pointer"
+                :class="form.payment_method === 'mixed' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-zinc-100 shadow-sm font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800'"
+                title="Split allocation between AP Credit & Cash/Bank"
+              >
+                Split / Mixed
+              </button>
+            </div>
+
+            <!-- UNPAID PO TOOLTIP / HINT -->
+            <div v-if="isUnpaidPo" class="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
+              <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>This PO is unpaid. Returns must be processed as AP Credit.</span>
+            </div>
+
+            <!-- FULLY PAID PO HINT -->
+            <div v-if="isFullyPaidPo" class="p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-lg text-[11px] text-blue-700 dark:text-blue-300 flex items-start gap-2">
+              <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>This PO is fully paid. AP Credit is capped at $0.00. Refund can be collected as Cash, Bank, or Vendor Credit.</span>
+            </div>
+
+            <!-- PARTIALLY PAID PO HINT & CAP ALLOCATION -->
+            <div v-if="isPartiallyPaidPo" class="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-lg text-[11px] text-indigo-700 dark:text-indigo-300 flex items-start gap-2">
+              <svg class="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>This PO is partially paid. AP Credit is capped at <strong>${{ formatCurrency(poDueAmount) }}</strong> (pending due amount). Any excess return amount must be allocated via Cash, Bank, or Vendor Credit.</span>
+            </div>
+
+            <!-- Split Allocation Breakdown for Partially Paid / Mixed -->
+            <div v-if="form.payment_method === 'mixed' || (isPartiallyPaidPo && returnGrandTotal > poDueAmount)" class="bg-slate-50 dark:bg-zinc-800/80 p-3 rounded-lg border border-slate-200 dark:border-zinc-700 space-y-2 text-xs">
+              <div class="font-bold text-slate-700 dark:text-zinc-300 text-[11px] uppercase tracking-wider">Split Allocation Breakdown</div>
+              <div class="flex justify-between text-slate-600 dark:text-zinc-400">
+                <span>AP Credit (Bill Reduction):</span>
+                <span class="font-bold text-slate-800 dark:text-zinc-200">${{ formatCurrency(apCreditAllocation) }}</span>
+              </div>
+              <div class="flex justify-between text-slate-600 dark:text-zinc-400">
+                <span>Cash / Bank Refund (Excess):</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400">${{ formatCurrency(cashBankAllocation) }}</span>
+              </div>
+            </div>
+
+            <!-- Account Field -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Account:</label>
+              <select
+                v-model="form.bank_account_id"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
+              >
+                <option value="">Select Account / Default Cash</option>
+                <option v-for="acc in bankAccounts" :key="acc.id" :value="acc.id">
+                  {{ acc.name || acc.account_name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Amount Received Field -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">Amount Received:</label>
+              <input
+                v-model.number="form.amount_received"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-bold"
+              />
+            </div>
+          </div>
+
           <!-- Notes -->
           <div>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Notes &amp; Remarks</label>
@@ -439,11 +566,19 @@
       </div>
 
     </div>
+
+    <!-- Floating Grand Total Bar -->
+    <div class="fixed bottom-4 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-4 z-40">
+      <div class="flex flex-col text-right">
+        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">GRAND TOTAL</span>
+        <span class="text-2xl font-bold text-emerald-400">${{ formatCurrency(returnGrandTotal) }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
@@ -456,11 +591,54 @@ const suppliers = ref([]);
 const purchaseOrders = ref([]);
 const warehouses = ref([]);
 const products = ref([]);
+const bankAccounts = ref([]);
 
 const productSearch = ref('');
 const isProductDropdownOpen = ref(false);
 const submitting = ref(false);
 const selectedPoNumber = ref('');
+const selectedPoData = ref(null);
+
+const isPoLinked = computed(() => !!form.purchase_order_id && !!selectedPoData.value);
+
+const poTotalAmount = computed(() => parseFloat(selectedPoData.value?.total_amount || 0));
+const poAmountPaid = computed(() => parseFloat(selectedPoData.value?.amount_paid || 0));
+const poDueAmount = computed(() => {
+  if (!selectedPoData.value) return 0;
+  if (selectedPoData.value.due_amount !== undefined && selectedPoData.value.due_amount !== null) {
+    return parseFloat(selectedPoData.value.due_amount);
+  }
+  return Math.max(0, poTotalAmount.value - poAmountPaid.value);
+});
+
+// 1. UNPAID PO (100% Unpaid / Due)
+const isUnpaidPo = computed(() => {
+  if (!isPoLinked.value) return false;
+  return poDueAmount.value > 0 && poAmountPaid.value <= 0;
+});
+
+// 2. FULLY PAID PO
+const isFullyPaidPo = computed(() => {
+  if (!isPoLinked.value) return false;
+  return poDueAmount.value <= 0 || (poAmountPaid.value >= poTotalAmount.value && poTotalAmount.value > 0);
+});
+
+// 3. PARTIALLY PAID PO
+const isPartiallyPaidPo = computed(() => {
+  if (!isPoLinked.value) return false;
+  return poAmountPaid.value > 0 && poDueAmount.value > 0;
+});
+
+const apCreditAllocation = computed(() => {
+  if (!isPoLinked.value) return returnGrandTotal.value;
+  if (isUnpaidPo.value) return returnGrandTotal.value;
+  if (isFullyPaidPo.value) return 0;
+  return Math.min(returnGrandTotal.value, poDueAmount.value);
+});
+
+const cashBankAllocation = computed(() => {
+  return Math.max(0, returnGrandTotal.value - apCreditAllocation.value);
+});
 
 const activeDropdown = ref(null);
 const supplierSearch = ref('');
@@ -488,6 +666,9 @@ const form = reactive({
   reason: 'Damaged Goods',
   status: 'approved',
   refund_status: 'pending',
+  payment_method: 'cash',
+  bank_account_id: '',
+  amount_received: 0,
   notes: '',
   items: [],
 });
@@ -584,9 +765,11 @@ const computedDiscount = computed(() => {
   return form.items.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
 });
 
-const computedGrandTotal = computed(() => {
+const returnGrandTotal = computed(() => {
   return Math.max(0, (computedSubtotal.value + computedTax.value) - computedDiscount.value);
 });
+
+const computedGrandTotal = returnGrandTotal;
 
 const fetchNextNumber = async () => {
   try {
@@ -636,47 +819,97 @@ const fetchProducts = async () => {
   }
 };
 
+
+const getSupplierName = (id) => {
+  const sup = suppliers.value.find(s => s.id == id);
+  return sup ? sup.name : '';
+};
+
 const onSupplierChange = () => {
   if (form.purchase_order_id) {
     const selectedPo = purchaseOrders.value.find(po => po.id == form.purchase_order_id);
     if (selectedPo && selectedPo.supplier_id != form.supplier_id) {
       form.purchase_order_id = '';
       selectedPoNumber.value = '';
+      selectedPoData.value = null;
     }
   }
 };
 
-const onPoChange = async () => {
-  if (!form.purchase_order_id) {
+const onPoChange = async (poIdOverride = null) => {
+  const poId = poIdOverride || form.purchase_order_id;
+  if (!poId) {
     selectedPoNumber.value = '';
+    selectedPoData.value = null;
+    form.items = [];
     return;
   }
 
   try {
-    const res = await axios.get(`/api/purchase-returns/po-items/${form.purchase_order_id}`);
-    const po = res.data.purchase_order;
-    const poItems = res.data.items || [];
+    let poData = null;
+    let rawItems = [];
 
-    if (po) {
-      form.supplier_id = po.supplier_id;
-      selectedPoNumber.value = po.po_number;
+    try {
+      const res = await axios.get(`/api/purchase-orders/${poId}`);
+      poData = res.data;
+      rawItems = poData.purchase_order_items || poData.purchaseOrderItems || poData.items || [];
+    } catch (e) {
+      const res = await axios.get(`/api/purchase-returns/po-items/${poId}`);
+      poData = res.data.purchase_order || res.data;
+      rawItems = res.data.items || poData.purchase_order_items || [];
     }
 
-    form.items = poItems.map(i => ({
-      product_id: i.product_id,
-      product_name: i.product_name,
-      product_sku: i.product_sku,
-      unit_cost: i.unit_cost,
-      quantity: i.max_returnable > 0 ? 1 : 0,
-      max_returnable: i.max_returnable,
-      tax_amount: i.tax_amount || 0,
-      discount_amount: i.discount_amount || 0,
-    })).filter(i => i.max_returnable > 0);
+    if (poData) {
+      selectedPoData.value = poData;
+      if (!form.supplier_id && poData.supplier_id) {
+        form.supplier_id = poData.supplier_id;
+      }
+      selectedPoNumber.value = poData.po_number || '';
+
+      const due = poData.due_amount !== undefined ? parseFloat(poData.due_amount) : Math.max(0, parseFloat(poData.total_amount || 0) - parseFloat(poData.amount_paid || 0));
+      const paid = parseFloat(poData.amount_paid || 0);
+
+      if (due > 0 && paid <= 0) {
+        form.payment_method = 'ap_credit';
+      } else if (paid > 0 && due > 0) {
+        form.payment_method = 'mixed';
+      } else if (due <= 0 && form.payment_method === 'ap_credit') {
+        form.payment_method = 'cash';
+      }
+    }
+
+    if (rawItems.length > 0) {
+      form.items = rawItems.map(i => {
+        const qtyPurchased = Number(
+          i.qty_purchased ?? i.quantity_received ?? i.quantity_ordered ?? i.quantity ?? 0
+        );
+        return {
+          product_id: i.product_id,
+          product_name: i.product?.name || i.product_name || 'Unknown Product',
+          product_sku: i.product?.sku || i.product_sku || '',
+          unit_cost: parseFloat(i.unit_cost || i.unit_price || 0),
+          quantity: qtyPurchased > 0 ? qtyPurchased : 1,
+          qty_returned: qtyPurchased > 0 ? qtyPurchased : 1,
+          max_returnable: qtyPurchased > 0 ? qtyPurchased : undefined,
+          tax_amount: parseFloat(i.tax_amount || 0),
+          discount_amount: parseFloat(i.discount_amount || 0),
+        };
+      });
+    }
 
   } catch (err) {
     console.error('Error loading PO items:', err);
   }
 };
+
+watch(
+  () => form.purchase_order_id,
+  (newPoId, oldPoId) => {
+    if (newPoId && newPoId !== oldPoId) {
+      onPoChange(newPoId);
+    }
+  }
+);
 
 const addProductToReturn = (product) => {
   const existing = form.items.find(i => i.product_id === product.id);
@@ -749,12 +982,22 @@ const submitReturn = async (overrideStatus = null) => {
   }
 };
 
+const fetchBankAccounts = async () => {
+  try {
+    const res = await axios.get('/api/bank-accounts');
+    bankAccounts.value = res.data.data || res.data || [];
+  } catch (err) {
+    console.error('Error fetching bank accounts:', err);
+  }
+};
+
 onMounted(() => {
   fetchNextNumber();
   fetchSuppliers();
   fetchPurchaseOrders();
   fetchWarehouses();
   fetchProducts();
+  fetchBankAccounts();
   document.addEventListener('click', closeAllDropdowns);
 });
 

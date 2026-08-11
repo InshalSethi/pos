@@ -353,7 +353,15 @@
         </div>
       </div>
     </div>
-  </div>
+
+    </div>
+    <!-- Floating Grand Total Badge -->
+    <div class="fixed bottom-[10px] right-6 z-50 animate-fade-in-down">
+      <div class="relative bg-slate-900 dark:bg-zinc-800 text-white pl-4 pr-5 py-1.5 min-w-[300px] rounded-xl shadow-xl flex flex-col items-end border border-slate-700 dark:border-zinc-700 cursor-default">
+        <span class="absolute top-1.5 left-4 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">Grand Total</span>
+        <span class="text-2xl font-black leading-tight text-emerald-400 pt-3">{{ formatMoney(totals.total_amount) }}</span>
+      </div>
+    </div>
 </template>
 
 <script setup>

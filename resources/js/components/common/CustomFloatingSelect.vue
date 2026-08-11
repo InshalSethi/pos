@@ -7,9 +7,11 @@
     <!-- Trigger Button -->
     <button
       type="button"
-      @click="toggleOpen"
+      @click="!disabled && toggleOpen()"
+      :disabled="disabled"
       :class="[
-        'w-full text-left text-xs py-2 px-3 border rounded-xl bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 flex justify-between items-center shadow-sm hover:border-slate-400 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all cursor-pointer font-normal',
+        'w-full text-left text-xs py-2 px-3 border rounded-xl bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 flex justify-between items-center shadow-sm hover:border-slate-400 dark:hover:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all font-normal',
+        disabled ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-zinc-900/50' : 'cursor-pointer',
         buttonClass
       ]"
     >
@@ -126,7 +128,8 @@ const props = defineProps({
   searchable: { type: Boolean, default: false },
   multiple: { type: Boolean, default: false },
   placement: { type: String, default: 'auto' }, // 'auto', 'top', 'bottom'
-  buttonClass: { type: String, default: '' }
+  buttonClass: { type: String, default: '' },
+  disabled: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);

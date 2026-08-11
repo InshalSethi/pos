@@ -12,6 +12,8 @@ use App\Models\PurchaseReturn;
 use App\Models\Expense;
 use App\Models\Customer;
 use App\Models\Supplier;
+use App\Models\BankAccount;
+use App\Models\BankTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -1469,41 +1471,209 @@ class DoubleEntryAccountingService
             $inventoryAssetAccountId = $invAcc->id;
         }
 
-        return DB::transaction(function () use ($purchaseReturn, $payableAccountId, $inventoryAssetAccountId) {
+        // Cash Vault Account (COA 10100)
+        $cashAcc = Account::where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '10100')
+                  ->orWhere('account_code', '1010')
+                  ->orWhere('account_name', 'LIKE', '%Cash Vault%')
+                  ->orWhere('account_name', 'LIKE', '%Cash in Hand%');
+            })->first();
+        if (!$cashAcc) {
+            $cashAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '10100',
+                'account_name' => 'Cash Vault',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $cashAccountId = $cashAcc->id;
+
+        // Vendor Advance / Prepaid Expenses (COA 10500)
+        $vendorAdvanceAcc = Account::where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '10500')
+                  ->orWhere('account_code', '1050')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Credit%');
+            })->first();
+        if (!$vendorAdvanceAcc) {
+            $vendorAdvanceAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '10500',
+                'account_name' => 'Vendor Advance',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $vendorAdvanceAccountId = $vendorAdvanceAcc->id;
+
+        return DB::transaction(function () use ($purchaseReturn, $companyId, $payableAccountId, $inventoryAssetAccountId, $cashAccountId, $vendorAdvanceAccountId) {
+            $totalAmount = (float) $purchaseReturn->total_amount;
+
             $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
                 'entry_number' => $this->generateEntryNumber('PRR'),
                 'entry_date' => $purchaseReturn->return_date,
                 'reference' => "Purchase Return #{$purchaseReturn->return_number}",
-                'description' => "Purchase Return to {$purchaseReturn->supplier->name}",
+                'description' => "Purchase Return Refund to " . ($purchaseReturn->supplier?->name ?? 'Supplier'),
                 'entry_type' => 'automatic',
                 'status' => 'posted',
-                'total_debit' => $purchaseReturn->total_amount,
-                'total_credit' => $purchaseReturn->total_amount,
-                'created_by' => $purchaseReturn->user_id,
-                'posted_by' => $purchaseReturn->user_id,
+                'total_debit' => $totalAmount,
+                'total_credit' => $totalAmount,
+                'created_by' => $purchaseReturn->user_id ?: auth()->id(),
+                'posted_by' => $purchaseReturn->user_id ?: auth()->id(),
                 'posted_at' => now(),
                 'source_type' => 'purchase_return',
                 'source_id' => $purchaseReturn->id,
             ]);
 
-            // DEBIT: Accounts Payable (reducing liability owed to supplier)
-            JournalEntryLine::create([
-                'journal_entry_id' => $journalEntry->id,
-                'account_id' => $payableAccountId,
-                'description' => "Purchase Return AP Reduction #{$purchaseReturn->return_number}",
-                'debit_amount' => $purchaseReturn->total_amount,
-                'credit_amount' => 0,
-                'partner_type' => Supplier::class,
-                'partner_id' => $purchaseReturn->supplier_id,
-            ]);
+            // Resolve refund splits/payment channels
+            $splits = [];
+            if (!empty($purchaseReturn->refund_splits) && is_array($purchaseReturn->refund_splits)) {
+                $splits = $purchaseReturn->refund_splits;
+            } else {
+                $method = $purchaseReturn->payment_method ?? 'cash';
+                $splits[] = [
+                    'type' => $method,
+                    'bank_id' => $purchaseReturn->bank_account_id,
+                    'amount' => $totalAmount,
+                    'reference_number' => $purchaseReturn->reference_number,
+                ];
+            }
 
-            // CREDIT: Merchandise Inventory Asset Account (reducing inventory valuation)
+            foreach ($splits as $split) {
+                $splitAmt = (float) ($split['amount'] ?? 0);
+                if ($splitAmt <= 0) continue;
+
+                $type = $split['type'] ?? 'cash';
+                $bankId = $split['bank_id'] ?? null;
+                $refNo = $split['reference_number'] ?? $purchaseReturn->reference_number;
+
+                if ($type === 'bank' && $bankId) {
+                    $bankAccount = BankAccount::find($bankId);
+                    $debitAccountId = $bankAccount?->chart_of_account_id ?: $cashAccountId;
+
+                    // DEBIT: Bank Account
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $debitAccountId,
+                        'description' => "Purchase Return Bank Refund #{$purchaseReturn->return_number}" . ($refNo ? " (Ref: {$refNo})" : ""),
+                        'debit_amount' => $splitAmt,
+                        'credit_amount' => 0,
+                        'partner_type' => Supplier::class,
+                        'partner_id' => $purchaseReturn->supplier_id,
+                    ]);
+
+                    // Sync BankTransaction & update Bank Account balance
+                    if ($bankAccount) {
+                        $lastTx = BankTransaction::where('bank_account_id', $bankAccount->id)->orderBy('id', 'desc')->first();
+                        $runningBalance = ($lastTx ? (float)$lastTx->running_balance : (float)$bankAccount->opening_balance) + $splitAmt;
+
+                        BankTransaction::create([
+                            'company_id' => $companyId,
+                            'bank_account_id' => $bankAccount->id,
+                            'transaction_date' => $purchaseReturn->return_date,
+                            'reference_number' => $refNo ?: $purchaseReturn->return_number,
+                            'description' => "Purchase Return Refund #{$purchaseReturn->return_number} - " . ($purchaseReturn->supplier?->name ?? 'Supplier'),
+                            'transaction_type' => 'deposit',
+                            'amount' => $splitAmt,
+                            'running_balance' => $runningBalance,
+                            'status' => 'cleared',
+                            'journal_entry_id' => $journalEntry->id,
+                            'partner_type' => Supplier::class,
+                            'partner_id' => $purchaseReturn->supplier_id,
+                        ]);
+
+                        $bankAccount->current_balance = $runningBalance;
+                        $bankAccount->save();
+                    }
+                } elseif ($type === 'vendor_credit') {
+                    // DEBIT: Vendor Advance (COA 10500)
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $vendorAdvanceAccountId,
+                        'description' => "Purchase Return Vendor Credit #{$purchaseReturn->return_number}",
+                        'debit_amount' => $splitAmt,
+                        'credit_amount' => 0,
+                        'partner_type' => Supplier::class,
+                        'partner_id' => $purchaseReturn->supplier_id,
+                    ]);
+
+                    // Increase Supplier Advance Balance
+                    if ($purchaseReturn->supplier) {
+                        $purchaseReturn->supplier->creditAdvance($splitAmt);
+                    }
+                } elseif ($type === 'ap_credit' || $type === 'ap') {
+                    // DEBIT: Accounts Payable (COA 20100)
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $payableAccountId,
+                        'description' => "Purchase Return AP Adjustment #{$purchaseReturn->return_number}",
+                        'debit_amount' => $splitAmt,
+                        'credit_amount' => 0,
+                        'partner_type' => Supplier::class,
+                        'partner_id' => $purchaseReturn->supplier_id,
+                    ]);
+                } else {
+                    // Default: Cash Vault (COA 10100)
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $journalEntry->id,
+                        'account_id' => $cashAccountId,
+                        'description' => "Purchase Return Cash Refund #{$purchaseReturn->return_number}",
+                        'debit_amount' => $splitAmt,
+                        'credit_amount' => 0,
+                        'partner_type' => Supplier::class,
+                        'partner_id' => $purchaseReturn->supplier_id,
+                    ]);
+
+                    // Sync Cash Vault Bank Account if present
+                    $cashBankAcc = BankAccount::where('company_id', $companyId)
+                        ->where(function ($q) {
+                            $q->where('is_default_cash_vault', true)
+                              ->orWhere('account_name', 'LIKE', '%Cash Vault%');
+                        })->first();
+                    if ($cashBankAcc) {
+                        $lastTx = BankTransaction::where('bank_account_id', $cashBankAcc->id)->orderBy('id', 'desc')->first();
+                        $runningBalance = ($lastTx ? (float)$lastTx->running_balance : (float)$cashBankAcc->opening_balance) + $splitAmt;
+
+                        BankTransaction::create([
+                            'company_id' => $companyId,
+                            'bank_account_id' => $cashBankAcc->id,
+                            'transaction_date' => $purchaseReturn->return_date,
+                            'reference_number' => $purchaseReturn->return_number,
+                            'description' => "Purchase Return Cash Refund #{$purchaseReturn->return_number}",
+                            'transaction_type' => 'deposit',
+                            'amount' => $splitAmt,
+                            'running_balance' => $runningBalance,
+                            'status' => 'cleared',
+                            'journal_entry_id' => $journalEntry->id,
+                            'partner_type' => Supplier::class,
+                            'partner_id' => $purchaseReturn->supplier_id,
+                        ]);
+
+                        $cashBankAcc->current_balance = $runningBalance;
+                        $cashBankAcc->save();
+                    }
+                }
+            }
+
+            // CREDIT: Merchandise Inventory Asset Account (COA 1040)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $inventoryAssetAccountId,
                 'description' => "Purchase Return Inventory Deduction #{$purchaseReturn->return_number}",
                 'debit_amount' => 0,
-                'credit_amount' => $purchaseReturn->total_amount,
+                'credit_amount' => $totalAmount,
                 'partner_type' => Supplier::class,
                 'partner_id' => $purchaseReturn->supplier_id,
             ]);
@@ -1809,7 +1979,86 @@ class DoubleEntryAccountingService
         });
     }
 
+    /**
+     * Create journal entry for applying Vendor Advance/Store Credit to a Purchase Order.
+     */
+    public function createVendorAdvanceApplicationEntry(PurchaseOrder $purchaseOrder, float $advanceApplied): ?JournalEntry
+    {
+        if ($advanceApplied <= 0) return null;
 
+        $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
+
+        $apAcc = Account::where('company_id', $companyId)->where('account_code', '20100')->first();
+        $payableAccountId = $apAcc?->id;
+
+        $vendorAdvanceAcc = Account::where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '10500')
+                  ->orWhere('account_code', '1050')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Credit%');
+            })->first();
+        if (!$vendorAdvanceAcc) {
+            $vendorAdvanceAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '10500',
+                'account_name' => 'Vendor Advance',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $vendorAdvanceAccountId = $vendorAdvanceAcc->id;
+
+        if (!$payableAccountId || !$vendorAdvanceAccountId) return null;
+
+        return DB::transaction(function () use ($purchaseOrder, $companyId, $payableAccountId, $vendorAdvanceAccountId, $advanceApplied) {
+            $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('ADV'),
+                'entry_date' => $purchaseOrder->order_date ?? now()->toDateString(),
+                'reference' => "Vendor Credit Applied - PO #{$purchaseOrder->po_number}",
+                'description' => "Vendor Credit Application to PO #{$purchaseOrder->po_number}",
+                'entry_type' => 'automatic',
+                'status' => 'posted',
+                'total_debit' => $advanceApplied,
+                'total_credit' => $advanceApplied,
+                'created_by' => auth()->id() ?? 1,
+                'posted_by' => auth()->id() ?? 1,
+                'posted_at' => now(),
+                'source_type' => 'purchase_order',
+                'source_id' => $purchaseOrder->id,
+            ]);
+
+            // DEBIT: Accounts Payable (20100)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $payableAccountId,
+                'description' => "Vendor Credit Application - PO #{$purchaseOrder->po_number}",
+                'debit_amount' => $advanceApplied,
+                'credit_amount' => 0,
+                'partner_type' => Supplier::class,
+                'partner_id' => $purchaseOrder->supplier_id,
+            ]);
+
+            // CREDIT: Vendor Advance (10500)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $vendorAdvanceAccountId,
+                'description' => "Vendor Credit Utilized - PO #{$purchaseOrder->po_number}",
+                'debit_amount' => 0,
+                'credit_amount' => $advanceApplied,
+                'partner_type' => Supplier::class,
+                'partner_id' => $purchaseOrder->supplier_id,
+            ]);
+
+            $this->updateAccountBalances($journalEntry);
+            return $journalEntry;
+        });
+    }
 
     /**
      * Generate journal entry number

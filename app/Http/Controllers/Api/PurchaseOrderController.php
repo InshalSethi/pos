@@ -128,7 +128,7 @@ class PurchaseOrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $withRelations = ['supplier', 'user', 'purchaseOrderItems.product'];
+        $withRelations = ['supplier', 'user', 'purchaseOrderItems.product', 'purchaseOrderItems.warehouse'];
         if (\Schema::hasColumn('purchase_orders', 'warehouse_id')) {
             $withRelations[] = 'warehouse';
         }
@@ -136,7 +136,7 @@ class PurchaseOrderController extends Controller
             $withRelations[] = 'counter';
         }
 
-        $query = PurchaseOrder::with($withRelations);
+        $query = PurchaseOrder::with($withRelations)->withSum('returns', 'total_amount');
 
         // Search functionality
         if ($request->filled('search')) {
@@ -459,6 +459,7 @@ class PurchaseOrderController extends Controller
             // --- DEBIT ADVANCE if advance was applied ---
             if ($advanceApplied > 0 && $supplier) {
                 $supplier->debitAdvance($advanceApplied);
+                $accountingService->createVendorAdvanceApplicationEntry($purchaseOrder, $advanceApplied);
             }
 
             // --- CAPTURE OVERPAYMENT into advance balance ---
@@ -475,8 +476,9 @@ class PurchaseOrderController extends Controller
                 'purchase_order' => $purchaseOrder
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error("Failed to create purchase order: " . $e->getMessage() . " \n " . $e->getTraceAsString());
 
             return response()->json([
                 'message' => 'Failed to create purchase order',
@@ -576,15 +578,34 @@ class PurchaseOrderController extends Controller
                             $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
                         }
 
-                        $inventoryService->adjustStock(
-                            $warehouseId,
-                            $product->id,
-                            $oldItem->product_variation_id ?? null,
-                            -$voidQty,
-                            $companyId,
-                            'Purchase Order Reversal',
-                            $purchaseOrder->po_number
-                        );
+                        $oldAllocations = $oldItem->warehouse_allocations;
+                        if (is_array($oldAllocations) && !empty($oldAllocations)) {
+                            foreach ($oldAllocations as $alloc) {
+                                $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                                $allocQty = (int) ($alloc['quantity'] ?? 0);
+                                if ($allocQty > 0) {
+                                    $inventoryService->adjustStock(
+                                        $allocWhId,
+                                        $product->id,
+                                        $oldItem->product_variation_id ?? null,
+                                        -$allocQty,
+                                        $companyId,
+                                        'Purchase Order Reversal',
+                                        $purchaseOrder->po_number
+                                    );
+                                }
+                            }
+                        } else {
+                            $inventoryService->adjustStock(
+                                $oldItem->warehouse_id ?? $warehouseId,
+                                $product->id,
+                                $oldItem->product_variation_id ?? null,
+                                -$voidQty,
+                                $companyId,
+                                'Purchase Order Reversal',
+                                $purchaseOrder->po_number
+                            );
+                        }
                     }
                 }
             }
@@ -634,9 +655,20 @@ class PurchaseOrderController extends Controller
                 $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
                 $qtyOrdered = (int) $item['quantity_ordered'];
 
+                $allocations = $item['allocations'] ?? $item['warehouse_allocations'] ?? null;
+                if (!is_array($allocations) || empty($allocations)) {
+                    $allocations = [
+                        ['warehouse_id' => $warehouseId, 'quantity' => $qtyOrdered]
+                    ];
+                }
+
+                $itemWarehouseId = $allocations[0]['warehouse_id'] ?? $warehouseId;
+
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'product_id' => $item['product_id'],
+                    'warehouse_id' => $itemWarehouseId,
+                    'warehouse_allocations' => $allocations,
                     'quantity_ordered' => $qtyOrdered,
                     'quantity_received' => $qtyOrdered,
                     'unit_cost' => $item['unit_cost'],
@@ -659,15 +691,21 @@ class PurchaseOrderController extends Controller
                         $product->update(['cost_price' => round($wac, 2)]);
                     }
 
-                    $inventoryService->adjustStock(
-                        $warehouseId,
-                        $product->id,
-                        $item['product_variation_id'] ?? null,
-                        $qtyOrdered,
-                        $companyId,
-                        'Bill',
-                        $purchaseOrder->po_number
-                    );
+                    foreach ($allocations as $alloc) {
+                        $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                        $allocQty = (int) ($alloc['quantity'] ?? 0);
+                        if ($allocQty > 0) {
+                            $inventoryService->adjustStock(
+                                $allocWhId,
+                                $product->id,
+                                $item['product_variation_id'] ?? null,
+                                $allocQty,
+                                $companyId,
+                                'Bill',
+                                $purchaseOrder->po_number
+                            );
+                        }
+                    }
                 }
             }
 
@@ -712,6 +750,20 @@ class PurchaseOrderController extends Controller
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
             $inventoryService = new WarehouseInventoryService();
+            $accountingService = new DoubleEntryAccountingService();
+            $paymentService = new PaymentService();
+
+            // Reverse GL accounting entries for this Purchase Order
+            $accountingService->reverseJournalEntryBySource('purchase_order', $purchaseOrder->id);
+
+            // Reverse attached payments, bank transactions, and payment GL entries
+            $payments = Payment::where('reference_type', PurchaseOrder::class)
+                ->where('reference_id', $purchaseOrder->id)
+                ->where('status', '!=', 'cancelled')
+                ->get();
+            foreach ($payments as $payment) {
+                $paymentService->cancelPayment($payment);
+            }
 
             // Reverse stock and WAC for all received items before deletion
             foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
@@ -729,15 +781,34 @@ class PurchaseOrderController extends Controller
                             $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
                         }
 
-                        $inventoryService->adjustStock(
-                            $warehouseId,
-                            $product->id,
-                            $poItem->product_variation_id ?? null,
-                            -$voidQty,
-                            $companyId,
-                            'Purchase Order Deleted',
-                            $purchaseOrder->po_number
-                        );
+                        $oldAllocations = $poItem->warehouse_allocations;
+                        if (is_array($oldAllocations) && !empty($oldAllocations)) {
+                            foreach ($oldAllocations as $alloc) {
+                                $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                                $allocQty = (int) ($alloc['quantity'] ?? 0);
+                                if ($allocQty > 0) {
+                                    $inventoryService->adjustStock(
+                                        $allocWhId,
+                                        $product->id,
+                                        $poItem->product_variation_id ?? null,
+                                        -$allocQty,
+                                        $companyId,
+                                        'Purchase Order Deleted',
+                                        $purchaseOrder->po_number
+                                    );
+                                }
+                            }
+                        } else {
+                            $inventoryService->adjustStock(
+                                $poItem->warehouse_id ?? $warehouseId,
+                                $product->id,
+                                $poItem->product_variation_id ?? null,
+                                -$voidQty,
+                                $companyId,
+                                'Purchase Order Deleted',
+                                $purchaseOrder->po_number
+                            );
+                        }
                     }
                 }
             }
@@ -779,8 +850,13 @@ class PurchaseOrderController extends Controller
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
             $inventoryService = new WarehouseInventoryService();
+            $accountingService = new DoubleEntryAccountingService();
+            $paymentService = new PaymentService();
 
-            // Reverse stock and WAC for all received items
+            // 1. Reverse GL Accounting Entry (Storno mechanism) for Purchase Order
+            $accountingService->reverseJournalEntryBySource('purchase_order', $purchaseOrder->id);
+
+            // 2. Reverse physical stock and WAC for all received items
             foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
                 if ($poItem->quantity_received > 0) {
                     $product = Product::find($poItem->product_id);
@@ -796,33 +872,64 @@ class PurchaseOrderController extends Controller
                             $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
                             $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
                         }
-                        // If remaining stock is 0 or less, retain existing cost_price as base
 
-                        // Deduct stock
-                        $inventoryService->adjustStock(
-                            $warehouseId,
-                            $product->id,
-                            $poItem->product_variation_id ?? null,
-                            -$voidQty,
-                            $companyId,
-                            'Purchase Order Voided',
-                            $purchaseOrder->po_number
-                        );
+                        // Deduct stock per warehouse allocation
+                        $oldAllocations = $poItem->warehouse_allocations;
+                        if (is_array($oldAllocations) && !empty($oldAllocations)) {
+                            foreach ($oldAllocations as $alloc) {
+                                $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                                $allocQty = (int) ($alloc['quantity'] ?? 0);
+                                if ($allocQty > 0) {
+                                    $inventoryService->adjustStock(
+                                        $allocWhId,
+                                        $product->id,
+                                        $poItem->product_variation_id ?? null,
+                                        -$allocQty,
+                                        $companyId,
+                                        'Purchase Order Voided',
+                                        $purchaseOrder->po_number
+                                    );
+                                }
+                            }
+                        } else {
+                            $inventoryService->adjustStock(
+                                $poItem->warehouse_id ?? $warehouseId,
+                                $product->id,
+                                $poItem->product_variation_id ?? null,
+                                -$voidQty,
+                                $companyId,
+                                'Purchase Order Voided',
+                                $purchaseOrder->po_number
+                            );
+                        }
                     }
                 }
             }
 
-            // Mark PO as voided
+            // 3. Cancel attached payments & reverse bank transactions / accounting entries
+            $payments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder', 'purchase_order'])
+                ->where('reference_id', $purchaseOrder->id)
+                ->where('status', '!=', 'cancelled')
+                ->get();
+            foreach ($payments as $payment) {
+                $paymentService->cancelPayment($payment);
+            }
+
+
+            // 4. Mark PO as voided/cancelled and reset paid / due amounts
             $purchaseOrder->update([
-                'status' => 'voided',
+                'status' => 'cancelled',
+                'amount_paid' => 0,
+                'due_amount' => 0,
             ]);
+
 
             DB::commit();
 
             $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
 
             return response()->json([
-                'message' => 'Purchase order voided and inventory reversed successfully',
+                'message' => 'Purchase order voided, GL journal reversed, and inventory adjusted successfully',
                 'purchase_order' => $purchaseOrder
             ]);
 
@@ -1037,7 +1144,7 @@ class PurchaseOrderController extends Controller
                         'reference_id' => $purchaseOrder->id,
                         'reference_number' => $purchaseOrder->po_number,
                         'description' => "Upfront Payment for PO #{$purchaseOrder->po_number}",
-                        'status' => 'paid',
+                        'status' => 'pending',
                         'created_by' => auth()->id() ?? 1,
                         'paid_by' => auth()->id() ?? 1,
                         'paid_at' => now(),
@@ -1049,7 +1156,7 @@ class PurchaseOrderController extends Controller
         }
         // 2. Fallback to single payment if amount_paid > 0 and no payment_details array
         else {
-            $existingPaid = Payment::where('reference_type', PurchaseOrder::class)
+            $existingPaid = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
                 ->where('reference_id', $purchaseOrder->id)
                 ->where('status', 'paid')
                 ->sum('amount');
@@ -1084,13 +1191,14 @@ class PurchaseOrderController extends Controller
                         'reference_id' => $purchaseOrder->id,
                         'reference_number' => $purchaseOrder->po_number,
                         'description' => "Upfront Payment for PO #{$purchaseOrder->po_number}",
-                        'status' => 'paid',
+                        'status' => 'pending',
                         'created_by' => auth()->id() ?? 1,
                         'paid_by' => auth()->id() ?? 1,
                         'paid_at' => now(),
                     ]);
 
                     $paymentService->markPaymentAsPaid($payment, auth()->id() ?? 1);
+
                 }
             }
         }

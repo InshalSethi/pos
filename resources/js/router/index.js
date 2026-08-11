@@ -293,6 +293,14 @@ const routes = [
         component: () => import('@/components/settings/TaxTags.vue')
       },
       {
+        path: 'sales',
+        redirect: '/sales/invoices'
+      },
+      {
+        path: 'sales/create',
+        redirect: '/sales/invoices/create'
+      },
+      {
         path: 'sales/invoices',
         name: 'SalesInvoices',
         component: SalesInvoices,
@@ -302,7 +310,8 @@ const routes = [
         path: 'sales/invoices/create',
         name: 'CreateInvoice',
         component: CreateInvoice,
-        meta: { permission: 'sales.create' }
+        meta: { permission: 'sales.create' },
+        alias: ['/sales/create']
       },
       {
         path: 'sales/invoices/:id',
@@ -321,6 +330,18 @@ const routes = [
         name: 'SalesInvoicePrint',
         component: SalesInvoicePrint,
         meta: { permission: 'sales.view' }
+      },
+      {
+        path: 'sales/:id',
+        redirect: to => `/sales/invoices/${to.params.id}`
+      },
+      {
+        path: 'sales/:id/edit',
+        redirect: to => `/sales/invoices/${to.params.id}/edit`
+      },
+      {
+        path: 'sales/:id/print',
+        redirect: to => `/sales/invoices/${to.params.id}/print`
       },
       {
         path: 'sales/returns',
@@ -478,6 +499,7 @@ const routes = [
   {
     path: '/company-setup',
     name: 'CompanySetup',
+    component: () => import('@/components/companies/CompanySetup.vue'),
     beforeEnter: (to, from, next) => {
       // If we are already on the server-rendered company-setup page, do not trigger a reload
       if (window.location.pathname === '/company-setup' || window.location.pathname.startsWith('/company-setup')) {

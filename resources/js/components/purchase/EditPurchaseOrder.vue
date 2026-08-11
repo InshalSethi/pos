@@ -411,7 +411,7 @@
                     <td class="w-[40px]"></td>
                   </tr>
 
-                  <!-- 6. Payment Method & Receiving Amount -->
+                  <!-- 6. Payment Method & Payment Amount -->
                   <tr class="bg-slate-50/90 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
                     <td colspan="5" class="p-3">
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
@@ -459,7 +459,7 @@
                           </transition>
                         </div>
                         <div>
-                          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Receiving Amount</label>
+                          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Amount</label>
                           <div class="relative">
                             <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs font-bold">{{ currencySymbol }}</span>
                             <input
@@ -639,28 +639,6 @@
                     </div>
                     <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
                       No supplier selected. Search above to assign.
-                    </div>
-                  </div>
-
-                  <!-- ALWAYS VISIBLE: Phone Number & Email Address Inputs (Vertical Stack, Matching Sales Invoice Page) -->
-                  <div class="flex flex-col gap-2 pt-1 text-left w-full">
-                    <div class="w-full">
-                      <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Phone Number</label>
-                      <input
-                        v-model="orderForm.supplier_phone"
-                        type="tel"
-                        placeholder="Enter phone number"
-                        class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                    <div class="w-full">
-                      <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 mb-1">Email Address</label>
-                      <input
-                        v-model="orderForm.supplier_email"
-                        type="email"
-                        placeholder="Enter email address"
-                        class="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      />
                     </div>
                   </div>
                 </div>
@@ -859,14 +837,14 @@
                 </button>
               </div>
             </div>
+          </div>
         </div>
-            </div>
       </div>
     </div>
 
     <!-- Quick Supplier Creation Modal -->
-    <div v-if="showSupplierModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto text-left">
+    <div v-if="showSupplierModal" @click.self.prevent class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[85vh] overflow-y-auto custom-scrollbar my-auto text-left">
         
         <!-- Sleek Close Icon Button -->
         <button
@@ -895,11 +873,12 @@
           </button>
           <button
             type="button"
-            class="flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer"
+            class="flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer relative"
             :class="activeSupplierTab === 'contact' ? 'text-indigo-600 border-indigo-600 bg-indigo-50/30 dark:bg-indigo-950/20' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent bg-transparent'"
             @click="activeSupplierTab = 'contact'"
           >
-            Contact
+            <span>Contact</span>
+            <span v-if="supplierErrors.phone" class="w-2 h-2 rounded-full bg-red-500 absolute top-1 right-1"></span>
           </button>
           <button
             type="button"
@@ -927,11 +906,13 @@
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Supplier Name *</label>
                 <input
                   v-model="newSupplier.name"
+                  @input="supplierErrors.name = ''"
                   type="text"
-                  required
                   placeholder="e.g. Acme Corporation"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                  :class="supplierErrors.name ? 'border-red-500 focus:ring-red-200 dark:border-red-500' : 'border-slate-200 dark:border-zinc-700'"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
                 />
+                <span v-if="supplierErrors.name" class="text-xs text-red-500 mt-1 block font-medium">{{ supplierErrors.name }}</span>
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Company Name</label>
@@ -990,13 +971,16 @@
                 />
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone *</label>
                 <input
                   v-model="newSupplier.phone"
+                  @input="supplierErrors.phone = ''"
                   type="text"
                   placeholder="e.g. +1 555 1234"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-955 transition-all"
+                  :class="supplierErrors.phone ? 'border-red-500 focus:ring-red-200 dark:border-red-500' : 'border-slate-200 dark:border-zinc-700'"
+                  class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-955 transition-all"
                 />
+                <span v-if="supplierErrors.phone" class="text-xs text-red-500 mt-1 block font-medium">{{ supplierErrors.phone }}</span>
               </div>
             </div>
 
@@ -1114,7 +1098,7 @@
             </button>
             <button
               type="submit"
-              :disabled="!newSupplier.name || creatingSupplier"
+              :disabled="creatingSupplier"
               class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
             >
               {{ creatingSupplier ? 'Creating...' : 'Add Supplier' }}
@@ -1489,6 +1473,14 @@
       </div>
     </teleport>
   </div>
+
+  <!-- Floating Grand Total Badge -->
+  <div class="fixed bottom-[10px] right-6 z-50 animate-fade-in-down">
+    <div class="relative bg-slate-900 dark:bg-zinc-800 text-white pl-4 pr-5 py-1.5 min-w-[300px] rounded-xl shadow-xl flex flex-col items-end border border-slate-700 dark:border-zinc-700 cursor-default">
+      <span class="absolute top-1.5 left-4 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">Grand Total</span>
+      <span class="text-2xl font-black leading-tight text-emerald-400 pt-3">{{ currencySymbol }}{{ grandTotal.toFixed(2) }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -1640,6 +1632,19 @@ const orderForm = ref({
   amount_paid: 0,
   notes: '',
   terms_and_conditions: ''
+});
+
+const supplierErrors = ref({
+  name: '',
+  phone: ''
+});
+
+watch(showSupplierModal, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 });
 
 const activeSupplierTab = ref('basic');
@@ -2118,6 +2123,7 @@ const selectedGlobalWarehouseIds = ref([]);
 const isGlobalWarehouseDropdownOpen = ref(false);
 const openWarehouseItemIndex = ref(null);
 const warehousePopPos = ref({ top: '0px', left: '0px' });
+const globalWarehouseSearch = ref('');
 
 const toggleItemWarehouseDropdown = (index, event) => {
   if (event) event.stopPropagation();
@@ -2559,8 +2565,17 @@ const clearSupplier = () => {
 };
 
 const createSupplier = async () => {
-  if (!newSupplier.value.name) {
+  if (!newSupplier.value.name?.trim()) {
     showNotification('Supplier name is required', 'error');
+    activeSupplierTab.value = 'basic';
+    return;
+  }
+
+  const hasPhone = (newSupplier.value.phone && newSupplier.value.phone.trim()) || 
+                   (newSupplier.value.mobile && newSupplier.value.mobile.trim());
+  if (!hasPhone) {
+    showNotification('Phone number is required to add a supplier', 'error');
+    activeSupplierTab.value = 'contact';
     return;
   }
 
@@ -2574,7 +2589,10 @@ const createSupplier = async () => {
     showNotification('Supplier created successfully', 'success');
     closeSupplierModal();
   } catch (error) {
-    showNotification('Error creating supplier', 'error');
+    const errorMsg = error.response?.data?.errors?.phone?.[0] || 
+                     error.response?.data?.message || 
+                     'Error creating supplier';
+    showNotification(errorMsg, 'error');
     console.error('Error:', error);
   } finally {
     creatingSupplier.value = false;

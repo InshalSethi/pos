@@ -17,7 +17,15 @@ class JournalEntry extends Model
     use HasUtcDatabaseTimezones;
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::deleting(function ($journalEntry) {
+            $journalEntry->journalEntryLines()->delete();
+        });
+    }
+
     protected $fillable = [
+
         'company_id',
         'entry_number',
         'entry_date',

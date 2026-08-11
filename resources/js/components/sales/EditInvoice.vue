@@ -1703,6 +1703,15 @@
       </div>
     </div>
   </div>
+
+    
+    <!-- Floating Grand Total Badge -->
+    <div class="fixed bottom-[10px] right-6 z-50 animate-fade-in-down">
+      <div class="bg-slate-900 dark:bg-zinc-800 text-white px-10 py-2.5 min-w-[300px] rounded-xl shadow-xl flex items-center justify-between border border-slate-700 dark:border-zinc-700 cursor-default">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">Grand Total</span>
+        <span class="text-2xl font-black leading-tight text-emerald-400">{{ currencySymbol }}{{ grandTotal.toFixed(2) }}</span>
+      </div>
+    </div>
 </template>
 
 <script setup>

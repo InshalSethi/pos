@@ -70,7 +70,7 @@ class CompanySetupController extends Controller
         // ── Context B: Start fresh flow for new company ────────────────
         $company = Company::create([
             'user_id'           => $user->id,
-            'company_name'      => 'Untitled Draft Workspace',
+            'company_name'      => '',
             'company_email'     => $user->email,
             'company_phone'     => '',
             'owner_role'        => 'Owner/CEO',
@@ -148,11 +148,15 @@ class CompanySetupController extends Controller
         $validated = $request->validate([
             'company_id'   => ['required', 'integer', 'exists:companies,id'],
             'current_step' => ['required', 'integer', 'between:1,4'],
+            'company_name' => ['required', 'string', 'max:255'],
+        ], [
+            'company_name.required' => 'Company Name is required to create or save a setup draft.',
         ]);
 
         Company::where('id', $validated['company_id'])
             ->where('user_id', auth()->id())
             ->update([
+                'company_name' => $validated['company_name'],
                 'status'     => 'draft',
                 'draft_step' => $validated['current_step'],
             ]);

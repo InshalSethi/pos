@@ -1,33 +1,46 @@
 <template>
-  <div class="w-full max-w-full py-8 px-4 sm:px-6 lg:px-8 dark:bg-zinc-950">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">Sales Returns</h1>
-      <button
-        @click="createReturn"
-        class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center space-x-1.5 active:scale-95 animate-button cursor-pointer"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-        </svg>
-        <span>Process Return</span>
-      </button>
+  <div class="space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Sales Returns</h1>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+          Manage sales return requests, supplier debit notes & inventory refund tracking.
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <!-- Process Return Button -->
+        <button
+          @click="createReturn"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+          </svg>
+          <span>Process Return</span>
+        </button>
+      </div>
     </div>
 
     <!-- Tabs Bar -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 dark:border-zinc-800 mb-6 pb-0.5 space-y-4 sm:space-y-0">
-      <div class="flex flex-wrap gap-x-6 gap-y-2">
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-3">
+      <div class="flex items-center space-x-1 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
         <button
           v-for="tab in visibleTabs"
           :key="tab.id"
           @click="setActiveTab(tab.id)"
-          class="pb-3 px-1 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 focus:outline-none relative animate-fade-in cursor-pointer"
-          :class="isTabActive(tab.id) ? 'border-rose-600 text-rose-600 dark:text-rose-400 dark:border-rose-400' : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-600'"
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5"
+          :class="isTabActive(tab.id) 
+            ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs' 
+            : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200'"
         >
           <span>{{ tab.label }}</span>
           <span
-            class="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-            :class="isTabActive(tab.id) ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'"
+            class="px-1.5 py-0.2 text-[10px] rounded-full font-bold"
+            :class="isTabActive(tab.id) 
+              ? 'bg-slate-700 text-slate-100 dark:bg-zinc-300 dark:text-zinc-900' 
+              : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'"
           >
             {{ counts[tab.id] || 0 }}
           </span>
@@ -75,13 +88,13 @@
     </div>
 
     <!-- Active Filters Pill Bar -->
-    <div v-if="totalActiveFilterCount > 0" class="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-soft animate-fade-in">
+    <div v-if="totalActiveFilterCount > 0" class="flex flex-wrap items-center gap-2 mb-3 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-soft animate-fade-in">
       <span class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mr-1">Active Filters:</span>
 
       <!-- Product Pill -->
-      <span v-if="advancedFilters.product_name || advancedFilters.product_search" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+      <span v-if="advancedFilters.product_name || advancedFilters.product_search" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
         Product: {{ advancedFilters.product_name || advancedFilters.product_search }}
-        <button @click="removeSingleFilter('product')" class="ml-1.5 hover:text-rose-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        <button @click="removeSingleFilter('product')" class="ml-1.5 hover:text-blue-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </span>
 
       <!-- Original Invoice Pill -->
@@ -126,7 +139,7 @@
         <button @click="removeSingleFilter('date')" class="ml-1.5 hover:text-slate-900 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </span>
 
-      <button @click="handleResetAdvancedFilters" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline ml-auto cursor-pointer">
+      <button @click="handleResetAdvancedFilters" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline ml-auto cursor-pointer">
         Clear All
       </button>
     </div>
@@ -140,7 +153,7 @@
       leave-from-class="transform translate-y-0 opacity-100"
       leave-to-class="transform -translate-y-2 opacity-0"
     >
-      <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || originalInvoice !== '' || selectedFilters.length > 0" class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between shadow-sm">
+      <div v-if="showFilterDropdown || dateFrom !== '' || dateTo !== '' || originalInvoice !== '' || selectedFilters.length > 0" class="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-3.5 mb-3 flex flex-wrap gap-4 items-center justify-between shadow-sm">
         <div class="flex flex-wrap gap-4 items-center">
           <div class="flex items-center space-x-2">
             <label class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Original Invoice:</label>
@@ -148,7 +161,7 @@
               v-model="originalInvoice"
               type="text"
               placeholder="Original Invoice #..."
-              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700 dark:text-zinc-200"
+              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
               @input="debouncedSearch"
             />
           </div>
@@ -157,7 +170,7 @@
             <input
               v-model="dateFrom"
               type="date"
-              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700 dark:text-zinc-200"
+              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
               @change="fetchReturns(1)"
             />
           </div>
@@ -166,7 +179,7 @@
             <input
               v-model="dateTo"
               type="date"
-              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700 dark:text-zinc-200"
+              class="px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
               @change="fetchReturns(1)"
             />
           </div>
@@ -176,7 +189,7 @@
 
     <!-- Table Container -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-soft">
-      <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
         <!-- Search -->
         <div class="relative w-96">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -199,7 +212,7 @@
           <select
             v-model="perPage"
             @change="handlePerPageChange"
-            class="border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer bg-white dark:bg-zinc-800 dark:text-zinc-200"
+            class="border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer bg-white dark:bg-zinc-800 dark:text-zinc-200"
           >
             <option :value="10">10</option>
             <option :value="15">15</option>
@@ -211,14 +224,14 @@
       </div>
 
       <!-- Returns Table -->
-      <div class="overflow-x-auto custom-scrollbar">
+      <div class="overflow-x-auto custom-scrollbar min-h-[400px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
-              <th class="py-3.5 px-4 w-[40px] text-center bg-slate-50 dark:bg-zinc-800/50">
-                <input type="checkbox" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer w-3.5 h-3.5" />
+              <th class="py-2.5 px-4 w-[40px] text-center bg-slate-50 dark:bg-zinc-800/50">
+                <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-3.5 h-3.5" />
               </th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_number')">
+              <th class="py-2.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_number')">
                 <div class="flex items-center space-x-1">
                   <span>Return #</span>
                   <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,9 +239,10 @@
                   </svg>
                 </div>
               </th>
-              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Original Invoice</th>
-              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Client/Customer</th>
-              <th class="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('total_amount')">
+              <th class="py-2.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Original Invoice</th>
+              <th class="py-2.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Client/Customer</th>
+              <th class="py-2.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Salesman</th>
+              <th class="py-2.5 px-4 text-right cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('total_amount')">
                 <div class="flex items-center justify-end space-x-1">
                   <span>Refund Amount</span>
                   <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,8 +250,8 @@
                   </svg>
                 </div>
               </th>
-              <th class="py-3.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Refund Method</th>
-              <th class="py-3.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_date')">
+              <th class="py-2.5 px-4 bg-slate-50 dark:bg-zinc-800/50">Refund Method</th>
+              <th class="py-2.5 px-4 cursor-pointer hover:bg-slate-100/50 bg-slate-50 dark:bg-zinc-800/50" @click="handleSort('sale_date')">
                 <div class="flex items-center space-x-1">
                   <span>Return Date</span>
                   <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,21 +259,21 @@
                   </svg>
                 </div>
               </th>
-              <th class="py-3.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50">Status</th>
-              <th class="py-3.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
+              <th class="py-2.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50">Status</th>
+              <th class="py-2.5 px-4 text-center bg-slate-50 dark:bg-zinc-800/50 w-[80px]">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100/70 dark:divide-zinc-800">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
                 <div class="flex flex-col items-center justify-center space-y-2">
-                  <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-rose-600"></div>
+                  <div class="animate-spin rounded-full h-7 w-7 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600"></div>
                   <span class="text-xs font-semibold">Loading returns...</span>
                 </div>
               </td>
             </tr>
             <tr v-else-if="returns.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="9" class="py-16 text-center text-slate-400 dark:text-zinc-500 italic">
+              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                 </svg>
@@ -268,13 +282,13 @@
             </tr>
             <tr v-else v-for="item in returns" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors">
               <!-- Checkbox -->
-              <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
-                <input type="checkbox" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer w-3.5 h-3.5" />
+              <td class="py-2.5 px-4 text-center align-middle bg-white dark:bg-zinc-900">
+                <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer w-3.5 h-3.5" />
               </td>
 
               <!-- Return Number -->
-              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 font-mono text-xs">
-                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-rose-600 cursor-pointer" @click="viewReturn(item)">
+              <td class="py-2.5 px-4 align-middle bg-white dark:bg-zinc-900 font-mono text-xs">
+                <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm hover:text-blue-600 cursor-pointer" @click="viewReturn(item)">
                   {{ item.sale_number }}
                 </div>
                 <div class="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
@@ -283,54 +297,64 @@
               </td>
 
               <!-- Original Invoice -->
-              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 font-semibold text-slate-700 dark:text-zinc-300">
+              <td class="py-2.5 px-4 align-middle bg-white dark:bg-zinc-900 font-semibold text-slate-700 dark:text-zinc-300">
                 {{ item.original_sale?.sale_number || 'N/A' }}
               </td>
 
               <!-- Client/Customer -->
-              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900">
+              <td class="py-2.5 px-4 align-middle bg-white dark:bg-zinc-900">
                 <div class="font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                   {{ item.customer?.name || 'Walk-in Customer' }}
                 </div>
-                <div class="flex flex-wrap gap-2 text-xs mt-1 text-slate-500">
-                  <span v-if="item.salesman?.full_name || item.salesman?.name" class="inline-flex items-center text-purple-600 dark:text-purple-400 font-medium">
-                    👤 Rep: {{ item.salesman.full_name || item.salesman.name }}
-                  </span>
-                  <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
+                <div class="flex flex-col gap-0.5 items-start mt-1">
+                  <span v-if="item.counter?.name" class="inline-flex items-center text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded text-[11px] font-medium">
                     🖥️ Counter: {{ item.counter.name }}
                   </span>
-                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span v-if="item.warehouse?.name" class="inline-flex items-center text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded text-[11px] font-medium">
                     🏢 {{ item.warehouse.name }}
                   </span>
                 </div>
               </td>
 
+              <!-- Salesman Column -->
+              <td class="py-2.5 px-4 align-middle bg-white dark:bg-zinc-900">
+                <div v-if="getSalesmanName(item) !== 'N/A'" class="flex items-center space-x-1.5 text-slate-800 dark:text-zinc-200 font-semibold text-xs">
+                  <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs">
+                    👤
+                  </span>
+                  <span>{{ getSalesmanName(item) }}</span>
+                </div>
+                <div v-else class="text-slate-400 dark:text-zinc-500 text-xs italic">
+                  Unassigned
+                </div>
+              </td>
+
               <!-- Refund Amount -->
-              <td class="py-4 px-4 text-right font-bold text-rose-600 dark:text-rose-400 text-sm align-middle bg-white dark:bg-zinc-900">
+              <td class="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-zinc-100 text-sm align-middle bg-white dark:bg-zinc-900">
                 {{ formatCurrency(Math.abs(item.total_amount)) }}
               </td>
 
               <!-- Refund Method -->
-              <td class="py-4 px-4 align-middle bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-medium">
+              <td class="py-2.5 px-4 align-middle bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-medium">
                 <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px]">
                   {{ formatRefundLabel(item.payment_method) }}
                 </span>
               </td>
 
               <!-- Return Date -->
-              <td class="py-4 px-4 text-slate-600 dark:text-zinc-300 text-sm align-middle bg-white dark:bg-zinc-900">
+              <td class="py-2.5 px-4 text-slate-600 dark:text-zinc-300 text-sm align-middle bg-white dark:bg-zinc-900">
                 {{ formatDate(item.sale_date) }}
               </td>
 
               <!-- Status Badge -->
-              <td class="py-4 px-4 text-center align-middle bg-white dark:bg-zinc-900">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">
+              <td class="py-2.5 px-4 text-center align-middle bg-white dark:bg-zinc-900">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40">
                   Returned
                 </span>
               </td>
 
               <!-- Action Menu Dropdown -->
-              <td class="py-4 px-4 text-center relative align-middle bg-white dark:bg-zinc-900">
+              <td class="py-2.5 px-4 text-center relative align-middle bg-white dark:bg-zinc-900">
                 <button
                   @click.stop="toggleActionDropdown(item.id)"
                   class="text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all focus:outline-none cursor-pointer"
@@ -663,6 +687,41 @@ const toggleFilterOption = (option) => {
 
 const removeFilterOption = (option) => {
   toggleFilterOption(option);
+};
+
+const getSalesmanName = (item) => {
+  if (!item) return 'N/A';
+
+  // 1. Direct salesman relation
+  if (item.salesman) {
+    if (item.salesman.full_name) return item.salesman.full_name;
+    if (item.salesman.first_name) {
+      return `${item.salesman.first_name} ${item.salesman.last_name || ''}`.trim();
+    }
+    if (item.salesman.name) return item.salesman.name;
+  }
+
+  // 2. Salesman on original sale
+  if (item.original_sale?.salesman) {
+    const orig = item.original_sale.salesman;
+    if (orig.full_name) return orig.full_name;
+    if (orig.first_name) {
+      return `${orig.first_name} ${orig.last_name || ''}`.trim();
+    }
+    if (orig.name) return orig.name;
+  }
+
+  // 3. User relation
+  if (item.user?.name) {
+    return item.user.name;
+  }
+
+  // 4. User on original sale
+  if (item.original_sale?.user?.name) {
+    return item.original_sale.user.name;
+  }
+
+  return 'N/A';
 };
 
 const clearFilterSelection = () => {
