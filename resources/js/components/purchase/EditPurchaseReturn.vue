@@ -617,12 +617,12 @@
             <div v-if="form.payment_method === 'mixed'" class="bg-slate-50 dark:bg-zinc-800/80 p-3 rounded-xl border border-slate-200 dark:border-zinc-700 space-y-3">
               <div class="font-bold text-slate-700 dark:text-zinc-300 text-[11px] uppercase tracking-wider">Split Refund Allocation</div>
               
-              <!-- 1. AP Credit Input -->
-              <div>
+              <!-- 1. AP Credit Input (Bill Reduction) -->
+              <div v-if="!isPoLinked || poDueAmount > 0">
                 <div class="flex justify-between items-center mb-1">
                   <label class="text-xs font-semibold text-slate-600 dark:text-zinc-400">AP Credit (Bill Reduction):</label>
-                  <span v-if="isPoLinked" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
-                    Max: ${{ formatCurrency(poDueAmount) }}
+                  <span v-if="isPoLinked" class="text-[10px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                    Pending Due on Bill: ${{ formatCurrency(poDueAmount) }}
                   </span>
                 </div>
                 <input
@@ -655,10 +655,12 @@
               </div>
 
               <!-- 3. Vendor Store Credit Input (COA 10500) -->
-              <div>
+              <div v-if="!isPoLinked || selectedSupplierAdvanceBalance > 0 || returnGrandTotal > poDueAmount">
                 <div class="flex justify-between items-center mb-1">
                   <label class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Vendor Store Credit (Advance Balance):</label>
-                  <span class="text-[10px] text-slate-400 font-semibold font-mono">COA 10500</span>
+                  <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    Supplier Advance Wallet: ${{ formatCurrency(selectedSupplierAdvanceBalance) }}
+                  </span>
                 </div>
                 <input
                   v-model.number="form.vendor_credit_amount"
@@ -918,6 +920,17 @@ const poDueAmount = computed(() => {
     return parseFloat(selectedPoData.value.due_amount);
   }
   return Math.max(0, poTotalAmount.value - poAmountPaid.value);
+});
+
+const selectedSupplierData = computed(() => {
+  if (!form.supplier_id) return null;
+  return suppliers.value.find(s => s.id == form.supplier_id) || null;
+});
+
+const selectedSupplierAdvanceBalance = computed(() => {
+  const sup = selectedSupplierData.value;
+  if (!sup) return 0;
+  return parseFloat(sup.advance_balance || sup.wallet_balance || sup.advance || sup.opening_balance || 0);
 });
 
 // 1. UNPAID PO (100% Unpaid / Due)
