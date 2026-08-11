@@ -360,7 +360,12 @@ class PurchaseReturnController extends Controller
                     ->where('return_number', 'like', "{$prefix}%")
                     ->orderBy('id', 'desc')
                     ->first();
-                $lastSeq = $lastReturn ? (int) end(explode('-', $lastReturn->return_number)) : 0;
+                if ($lastReturn) {
+                    $returnParts = explode('-', $lastReturn->return_number);
+                    $lastSeq = (int) end($returnParts);
+                } else {
+                    $lastSeq = 0;
+                }
                 $returnNumber = "{$prefix}-" . str_pad($lastSeq + 1, 4, '0', STR_PAD_LEFT);
             }
 

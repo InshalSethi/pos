@@ -1585,7 +1585,7 @@ class DoubleEntryAccountingService
                             'transaction_date' => $purchaseReturn->return_date,
                             'reference_number' => $refNo ?: $purchaseReturn->return_number,
                             'description' => "Purchase Return Refund #{$purchaseReturn->return_number} - " . ($purchaseReturn->supplier?->name ?? 'Supplier'),
-                            'transaction_type' => 'deposit',
+                            'transaction_type' => 'credit',
                             'amount' => $splitAmt,
                             'running_balance' => $runningBalance,
                             'status' => 'cleared',
@@ -1639,7 +1639,7 @@ class DoubleEntryAccountingService
                     // Sync Cash Vault Bank Account if present
                     $cashBankAcc = BankAccount::where('company_id', $companyId)
                         ->where(function ($q) {
-                            $q->where('is_default_cash_vault', true)
+                            $q->where('is_default', true)
                               ->orWhere('account_name', 'LIKE', '%Cash Vault%');
                         })->first();
                     if ($cashBankAcc) {
@@ -1652,7 +1652,7 @@ class DoubleEntryAccountingService
                             'transaction_date' => $purchaseReturn->return_date,
                             'reference_number' => $purchaseReturn->return_number,
                             'description' => "Purchase Return Cash Refund #{$purchaseReturn->return_number}",
-                            'transaction_type' => 'deposit',
+                            'transaction_type' => 'credit',
                             'amount' => $splitAmt,
                             'running_balance' => $runningBalance,
                             'status' => 'cleared',
