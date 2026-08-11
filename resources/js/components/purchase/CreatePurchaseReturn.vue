@@ -631,10 +631,10 @@
               
               <!-- 1. AP Credit Input (Bill Reduction) -->
               <div v-if="!isPoLinked || poDueAmount > 0">
-                <div class="flex justify-between items-center mb-1">
-                  <label class="text-xs font-semibold text-slate-600 dark:text-zinc-400">AP Credit (Bill Reduction):</label>
-                  <span v-if="isPoLinked" class="text-[10px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                    Pending Due on Bill: ${{ formatCurrency(poDueAmount) }}
+                <div class="flex items-center justify-between gap-1 mb-1 flex-wrap">
+                  <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">AP Credit (Bill Reduction)</span>
+                  <span v-if="isPoLinked" class="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800 shrink-0">
+                    Max: ${{ formatCurrency(poDueAmount) }}
                   </span>
                 </div>
                 <input
@@ -653,9 +653,9 @@
 
               <!-- 2. Cash Refund Input -->
               <div>
-                <div class="flex justify-between items-center mb-1">
-                  <label class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Cash Refund (Vault):</label>
-                  <span class="text-[10px] text-slate-400 font-semibold">COA 10100</span>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Cash Refund (Vault)</span>
+                  <span class="text-[10px] font-mono text-slate-400 dark:text-zinc-500 shrink-0">COA 10100</span>
                 </div>
                 <input
                   v-model.number="form.cash_amount"
@@ -668,11 +668,9 @@
 
               <!-- 3. Vendor Store Credit Input (COA 10500) -->
               <div v-if="!isPoLinked || selectedSupplierAdvanceBalance > 0 || returnGrandTotal > poDueAmount">
-                <div class="flex justify-between items-center mb-1">
-                  <label class="text-xs font-semibold text-slate-600 dark:text-zinc-400">Vendor Store Credit (Advance Balance):</label>
-                  <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                    Supplier Advance Wallet: ${{ formatCurrency(selectedSupplierAdvanceBalance) }}
-                  </span>
+                <div class="flex items-center justify-between gap-1 mb-1 flex-wrap">
+                  <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Vendor Store Credit (Advance)</span>
+                  <span class="text-[10px] font-mono text-slate-400 dark:text-zinc-500 shrink-0">COA 10500</span>
                 </div>
                 <input
                   v-model.number="form.vendor_credit_amount"
@@ -702,13 +700,13 @@
                   No bank accounts added. Click "+ Add Bank Account" to split across banks.
                 </div>
 
-                <div v-for="(split, sIdx) in form.bank_splits" :key="sIdx" class="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg space-y-2 w-full max-w-full overflow-hidden">
-                  <!-- Bank Account Selector -->
+                <div v-for="(split, sIdx) in form.bank_splits" :key="sIdx" class="p-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl space-y-2 w-full max-w-full overflow-hidden">
+                  <!-- Bank Account Selector (Full Width) -->
                   <div class="relative w-full">
                     <button
                       type="button"
                       @click.stop="toggleBankSplitDropdown(sIdx)"
-                      class="w-full flex items-center justify-between gap-1 py-1.5 px-2.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-md font-semibold text-slate-800 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-750 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-colors text-left"
+                      class="w-full flex items-center justify-between gap-1 py-1.5 px-2.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg font-semibold text-slate-800 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-750 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-colors text-left"
                     >
                       <span class="truncate">{{ getBankSplitLabel(split.bank_account_id) }}</span>
                       <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -736,20 +734,22 @@
                     </div>
                   </div>
 
-                  <!-- Amount & Remove Button Row -->
+                  <!-- Amount Input and Remove Button (Stacked Row) -->
                   <div class="flex items-center gap-2">
-                    <input
-                      v-model.number="split.amount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      class="flex-1 text-xs py-1.5 px-2 rounded-md border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 font-bold text-slate-800 dark:text-zinc-100 text-right focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                    <div class="relative flex-1 min-w-0">
+                      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        v-model.number="split.amount"
+                        placeholder="0.00"
+                        class="w-full text-xs pl-6 pr-2 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 font-bold text-slate-800 dark:text-zinc-100 text-right focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
                     <button
                       type="button"
                       @click="removeBankSplit(sIdx)"
-                      class="text-xs text-rose-500 hover:text-rose-700 px-2 py-1 font-medium border border-rose-200 dark:border-rose-900/50 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 transition shrink-0 cursor-pointer"
+                      class="px-2.5 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 rounded-lg transition shrink-0 cursor-pointer"
                     >
                       Remove
                     </button>
