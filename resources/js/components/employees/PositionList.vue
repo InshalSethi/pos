@@ -1,5 +1,23 @@
 <template>
   <div class="position-list">
+    <!-- Top Toolbar Header -->
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl shadow-xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-bold text-slate-900 dark:text-white">Position Directory</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">View and manage employee job positions and levels</p>
+      </div>
+      <button
+        type="button"
+        @click="$emit('add-position')"
+        class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all duration-200 cursor-pointer shadow-xs self-start sm:self-auto"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add Position
+      </button>
+    </div>
+
     <!-- Position Table -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xs overflow-hidden">
       <div class="overflow-x-auto">
@@ -113,7 +131,7 @@ import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
 // Props and Emits
-const emit = defineEmits(['edit-position', 'refresh']);
+const emit = defineEmits(['add-position', 'edit-position', 'refresh']);
 
 const currencyStore = useCurrencyStore();
 const authStore = useAuthStore();

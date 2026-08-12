@@ -1,44 +1,16 @@
 <template>
   <div class="employees-container max-w-full font-sans">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-      <div>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Employee Management</h1>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage employees, departments, and positions</p>
-      </div>
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <button
-          @click="showDepartmentModal = true"
-          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
-        >
-          Add Department
-        </button>
-        <button
-          @click="showPositionModal = true"
-          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
-        >
-          Add Position
-        </button>
-        <button
-          @click="openAddManagerModal"
-          class="bg-indigo-600 text-white hover:bg-indigo-700 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
-        >
-          Add Manager
-        </button>
-        <button
-          @click="openAddEmployeeModal"
-          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
-        >
-          Add Employee
-        </button>
-      </div>
+    <div class="mb-6">
+      <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Employee Management</h1>
+      <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage employees, departments, and positions</p>
     </div>
 
     <!-- Tabs -->
     <div class="border-b border-slate-200 dark:border-zinc-800 mb-6">
       <nav class="-mb-px flex space-x-8">
         <button
-          @click="activeTab = 'employees'"
+          @click="switchTab('employees')"
           :class="[
             'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'employees'
@@ -49,7 +21,7 @@
           Employees
         </button>
         <button
-          @click="activeTab = 'managers'"
+          @click="switchTab('managers')"
           :class="[
             'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'managers'
@@ -60,7 +32,7 @@
           Managers
         </button>
         <button
-          @click="activeTab = 'departments'"
+          @click="switchTab('departments')"
           :class="[
             'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'departments'
@@ -71,7 +43,7 @@
           Departments
         </button>
         <button
-          @click="activeTab = 'positions'"
+          @click="switchTab('positions')"
           :class="[
             'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'positions'
@@ -82,7 +54,7 @@
           Positions
         </button>
         <button
-          @click="activeTab = 'reports'"
+          @click="switchTab('reports')"
           :class="[
             'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'reports'
@@ -93,7 +65,7 @@
           Reports
         </button>
         <button
-          @click="activeTab = 'user-management'"
+          @click="switchTab('user-management')"
           :class="[
             'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'user-management'
@@ -110,6 +82,7 @@
     <div v-show="activeTab === 'employees'">
       <EmployeeList 
         ref="employeeListRef"
+        @add-employee="openAddEmployeeModal"
         @edit-employee="editEmployee"
         @view-employee="viewEmployee"
         @refresh="fetchEmployees"
@@ -119,6 +92,7 @@
     <div v-show="activeTab === 'managers'">
       <ManagerList 
         ref="managerListRef"
+        @add-manager="openAddManagerModal"
         @edit-employee="editManager"
         @view-employee="viewEmployee"
         @refresh="fetchEmployees"
@@ -128,6 +102,7 @@
     <div v-show="activeTab === 'departments'">
       <DepartmentList 
         ref="departmentListRef"
+        @add-department="showDepartmentModal = true"
         @edit-department="editDepartment"
         @refresh="fetchDepartments"
       />
@@ -136,6 +111,7 @@
     <div v-show="activeTab === 'positions'">
       <PositionList 
         ref="positionListRef"
+        @add-position="showPositionModal = true"
         @edit-position="editPosition"
         @refresh="fetchPositions"
       />
@@ -376,7 +352,28 @@ const fetchPositions = () => {
   });
 };
 
+const VALID_TABS = ['employees', 'managers', 'departments', 'positions', 'reports', 'user-management'];
+
+const syncTabFromUrl = () => {
+  const queryTab = route.query.tab;
+  if (queryTab && VALID_TABS.includes(queryTab)) {
+    activeTab.value = queryTab;
+  }
+};
+
+const switchTab = (tabName) => {
+  if (!VALID_TABS.includes(tabName)) return;
+  activeTab.value = tabName;
+  router.replace({
+    query: {
+      ...route.query,
+      tab: tabName
+    }
+  });
+};
+
 onMounted(() => {
+  syncTabFromUrl();
   checkAutoOpenCreate();
 });
 
@@ -384,6 +381,12 @@ watch(activeTab, () => {
   fetchEmployees();
   fetchDepartments();
   fetchPositions();
+});
+
+watch(() => route.query.tab, (newTab) => {
+  if (newTab && VALID_TABS.includes(newTab)) {
+    activeTab.value = newTab;
+  }
 });
 
 watch(() => route.path, () => {

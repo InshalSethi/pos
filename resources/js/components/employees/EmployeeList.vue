@@ -8,37 +8,51 @@
           <p class="text-xs text-slate-500 dark:text-slate-400">View and manage all company employees</p>
         </div>
         
-        <!-- View Mode Switcher Buttons -->
-        <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-xl self-start md:self-auto border border-slate-200/50 dark:border-zinc-700/50">
+        <div class="flex items-center gap-3 self-start md:self-auto flex-wrap">
+          <!-- View Mode Switcher Buttons -->
+          <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-slate-200/50 dark:border-zinc-700/50">
+            <button
+              type="button"
+              @click="viewMode = 'grid'"
+              :class="[
+                'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              ]"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+              </svg>
+              Grid View
+            </button>
+            <button
+              type="button"
+              @click="viewMode = 'table'"
+              :class="[
+                'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              ]"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+              </svg>
+              Table View
+            </button>
+          </div>
+
+          <!-- Add Employee Action Button -->
           <button
             type="button"
-            @click="viewMode = 'grid'"
-            :class="[
-              'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
-              viewMode === 'grid'
-                ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-            ]"
+            @click="$emit('add-employee')"
+            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all duration-200 cursor-pointer shadow-xs"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Grid View
-          </button>
-          <button
-            type="button"
-            @click="viewMode = 'table'"
-            :class="[
-              'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
-              viewMode === 'table'
-                ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-            ]"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-            </svg>
-            Table View
+            Add Employee
           </button>
         </div>
       </div>
@@ -359,7 +373,7 @@ import axios from 'axios';
 const authStore = useAuthStore();
 
 // Props and Emits
-const emit = defineEmits(['edit-employee', 'view-employee', 'refresh']);
+const emit = defineEmits(['add-employee', 'edit-employee', 'view-employee', 'refresh']);
 
 // Filter options for FloatingSelect
 const statusOptions = [
