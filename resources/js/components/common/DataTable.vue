@@ -1,25 +1,25 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-800">
     <!-- Header with Title and Actions -->
-    <div class="p-3 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+    <div class="p-4 border-b border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
       <div v-if="title || subtitle" class="mr-4">
-        <h2 v-if="title" class="text-lg font-semibold text-gray-900">{{ title }}</h2>
-        <p v-if="subtitle" class="text-sm text-gray-600">{{ subtitle }}</p>
+        <h2 v-if="title" class="text-lg font-bold text-gray-900 dark:text-white">{{ title }}</h2>
+        <p v-if="subtitle" class="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">{{ subtitle }}</p>
       </div>
       
       <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 flex-1" :class="title || subtitle ? 'sm:justify-end' : 'sm:justify-start'">
         <!-- Search -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </div>
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search"
-            class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:border-slate-300 w-full sm:w-64"
+            placeholder="Search..."
+            class="pl-9 pr-4 py-2 border border-gray-300 dark:border-zinc-700/80 rounded-xl bg-slate-50 dark:bg-zinc-800/80 text-xs font-semibold text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 dark:focus:border-zinc-500 w-full sm:w-64 transition-all shadow-xs"
             @input="handleSearch"
           />
         </div>
@@ -36,15 +36,15 @@
     <div class="w-full overflow-x-auto custom-scrollbar">
       <table class="w-full min-w-max divide-y divide-slate-100 dark:divide-zinc-800/80 table-auto align-middle">
         <!-- Table Header -->
-        <thead class="bg-slate-50/70 dark:bg-zinc-800/30">
+        <thead class="bg-slate-50/80 dark:bg-zinc-800/40">
           <tr>
             <th
               v-for="column in actualColumns"
               :key="column.key"
               :class="[
-                'px-3 py-2 text-[11px] font-bold tracking-wider text-slate-500 uppercase',
+                'px-3.5 py-2.5 text-[11px] font-bold tracking-wider text-slate-500 dark:text-zinc-400 uppercase',
                 column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left',
-                column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800/60' : ''
               ]"
               @click="column.sortable ? handleSort(column.key) : null"
             >
@@ -62,7 +62,7 @@
                   <template v-if="column.sortable">
                   <svg
                     v-if="sortField === column.key && sortOrder === 'asc'"
-                    class="ml-1 h-4 w-4"
+                    class="ml-1 h-3.5 w-3.5 text-slate-700 dark:text-zinc-300"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -70,7 +70,7 @@
                   </svg>
                   <svg
                     v-else-if="sortField === column.key && sortOrder === 'desc'"
-                    class="ml-1 h-4 w-4"
+                    class="ml-1 h-3.5 w-3.5 text-slate-700 dark:text-zinc-300"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -78,7 +78,7 @@
                   </svg>
                   <svg
                     v-else
-                    class="ml-1 h-4 w-4 text-gray-300"
+                    class="ml-1 h-3.5 w-3.5 text-gray-300 dark:text-zinc-600"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -95,9 +95,9 @@
         <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-xs">
           <!-- Loading State -->
           <tr v-if="loading">
-            <td :colspan="actualColumns.length" class="px-6 py-8 text-center text-gray-500">
+            <td :colspan="actualColumns.length" class="px-6 py-8 text-center text-gray-500 dark:text-zinc-400">
               <div class="flex justify-center items-center">
-                <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                <svg class="animate-spin h-5 w-5 mr-2 text-slate-700 dark:text-zinc-300" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -108,26 +108,26 @@
 
           <!-- Empty State -->
           <tr v-else-if="!data || data.length === 0">
-            <td :colspan="actualColumns.length" class="px-6 py-8 text-center text-gray-500">
+            <td :colspan="actualColumns.length" class="px-6 py-10 text-center text-gray-500 dark:text-zinc-400">
               <div class="flex flex-col items-center">
-                <svg class="h-12 w-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <svg class="h-12 w-12 text-gray-300 dark:text-zinc-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <p class="text-lg font-medium text-gray-900 mb-1">{{ emptyMessage || 'No data found' }}</p>
-                <p class="text-gray-500">{{ emptySubMessage || 'Try adjusting your search or filter criteria.' }}</p>
+                <p class="text-base font-bold text-gray-900 dark:text-slate-100 mb-1">{{ emptyMessage || 'No data found' }}</p>
+                <p class="text-xs text-gray-500 dark:text-zinc-400">{{ emptySubMessage || 'Try adjusting your search or filter criteria.' }}</p>
               </div>
             </td>
           </tr>
 
           <!-- Data Rows -->
-          <tr v-else v-for="(item, index) in data" :key="getRowKey(item, index)" class="hover:bg-white transition-colors">
+          <tr v-else v-for="(item, index) in data" :key="getRowKey(item, index)" class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors">
             <td
               v-for="column in actualColumns"
               :key="column.key"
               :class="[
-                'px-3 py-1.5 text-xs align-middle',
+                'px-3.5 py-2.5 text-xs align-middle text-gray-900 dark:text-slate-100',
                 column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left',
-                column.class || 'text-gray-900'
+                column.class || ''
               ]"
             >
               <!-- Custom slot for column content -->
@@ -154,7 +154,7 @@
                   {{ formatDate(getNestedValue(item, column.key)) }}
                 </template>
                 <template v-else-if="column.type === 'badge'">
-                  <span :class="getBadgeClass(getNestedValue(item, column.key), column.badgeColors)" class="px-2 py-1 text-xs font-medium rounded-full">
+                  <span :class="getBadgeClass(getNestedValue(item, column.key), column.badgeColors)" class="px-2.5 py-1 text-[11px] font-semibold rounded-full border">
                     {{ column.badgeLabels ? column.badgeLabels[getNestedValue(item, column.key)] : getNestedValue(item, column.key) }}
                   </span>
                 </template>
@@ -169,43 +169,43 @@
     </div>
 
     <!-- Footer with Pagination -->
-    <div v-if="pagination && !loading" class="px-6 py-3 border-t border-gray-200 bg-gray-50">
+    <div v-if="pagination && !loading" class="px-5 py-3 border-t border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/60">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
         <!-- Results Info -->
-        <div class="text-sm text-gray-700">
+        <div class="text-xs font-medium text-gray-600 dark:text-zinc-400">
           Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total || 0 }} results
         </div>
 
         <!-- Items per page -->
         <div class="flex items-center space-x-3">
-          <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rows:</label>
+          <label class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Rows:</label>
           <div class="relative group">
             <select
               v-model="perPage"
               @change="handlePerPageChange"
-              class="pl-4 pr-10 py-2 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 transition-all font-black text-[11px] text-gray-700 dark:text-slate-300 shadow-sm appearance-none cursor-pointer uppercase tracking-tight"
+              class="pl-3.5 pr-8 py-1.5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 dark:focus:border-zinc-500 transition-all font-bold text-xs text-gray-800 dark:text-slate-100 shadow-xs appearance-none cursor-pointer"
             >
-              <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
+              <option v-for="option in perPageOptions" :key="option" :value="option" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">{{ option }}</option>
             </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg class="w-4 h-4 text-gray-400 group-hover:text-green-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-gray-400 dark:text-zinc-500">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </div>
           </div>
         </div>
 
         <!-- Pagination Controls -->
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center space-x-1 text-xs">
           <button
             @click="goToPage(1)"
             :disabled="pagination.current_page === 1"
-            class="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-2.5 py-1 font-semibold border border-gray-200 dark:border-zinc-700/80 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             First
           </button>
           <button
             @click="goToPage(pagination.current_page - 1)"
             :disabled="pagination.current_page === 1"
-            class="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-2.5 py-1 font-semibold border border-gray-200 dark:border-zinc-700/80 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Previous
           </button>
@@ -214,10 +214,10 @@
             <button
               @click="goToPage(page)"
               :class="[
-                'px-3 py-1 text-sm border rounded-md',
+                'px-3 py-1 font-bold rounded-lg transition-all cursor-pointer',
                 page === pagination.current_page
-                  ? 'bg-green-600 text-white border-green-600'
-                  : 'border-gray-300 hover:bg-gray-50'
+                  ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-slate-900 dark:border-zinc-100'
+                  : 'border border-gray-200 dark:border-zinc-700/80 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
               ]"
             >
               {{ page }}
@@ -227,14 +227,14 @@
           <button
             @click="goToPage(pagination.current_page + 1)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-2.5 py-1 font-semibold border border-gray-200 dark:border-zinc-700/80 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Next
           </button>
           <button
             @click="goToPage(pagination.last_page)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-2.5 py-1 font-semibold border border-gray-200 dark:border-zinc-700/80 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Last
           </button>

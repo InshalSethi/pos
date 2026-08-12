@@ -482,6 +482,12 @@ const routes = [
         meta: { permission: 'payments.view' }
       },
       {
+        path: 'payments-out',
+        name: 'PaymentsOut',
+        component: Payments,
+        meta: { permission: 'payments.view' }
+      },
+      {
         path: 'payment-receipts',
         name: 'PaymentReceipts',
         component: PaymentReceipts,

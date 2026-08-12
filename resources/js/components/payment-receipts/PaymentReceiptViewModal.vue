@@ -1,137 +1,146 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
+  <div
+    v-if="show"
+    class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200"
+    style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
+  >
+    <!-- Modal Card Container -->
+    <div class="relative mx-auto border border-slate-200/90 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-3xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 p-6 sm:p-7 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar my-auto">
+      
       <!-- Header -->
-      <div class="flex justify-between items-center pb-4 border-b border-gray-200">
+      <div class="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-zinc-800">
         <div>
-          <h3 class="text-lg font-medium text-gray-900">Payment Receipt Details</h3>
-          <p class="text-sm text-gray-600">{{ receipt.receipt_number }}</p>
+          <h3 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Payment Receipt Details</h3>
+          <p class="text-xs font-mono font-bold text-slate-500 dark:text-zinc-400 mt-0.5">{{ receipt.receipt_number }}</p>
         </div>
         <button
+          type="button"
           @click="$emit('close')"
-          class="text-gray-400 hover:text-gray-600"
+          class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
       <!-- Receipt Information -->
-      <div class="mt-6">
+      <div class="mt-5 space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Basic Information -->
-          <div class="space-y-4">
-            <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Basic Information</h4>
+          
+          <!-- Basic Information Card -->
+          <div class="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200 dark:border-zinc-700 pb-2">Basic Information</h4>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Receipt Number</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.receipt_number }}</p>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Receipt Number</span>
+              <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ receipt.receipt_number }}</span>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Receipt Type</label>
-              <p class="mt-1 text-sm text-gray-900">{{ getReceiptTypeDisplay(receipt.receipt_type) }}</p>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Receipt Type</span>
+              <span class="font-semibold text-slate-900 dark:text-slate-100">{{ getReceiptTypeDisplay(receipt.receipt_type) }}</span>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Amount</label>
-              <p class="mt-1 text-lg font-semibold text-gray-900">${{ formatAmount(receipt.amount) }}</p>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Amount</span>
+              <span class="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">${{ formatAmount(receipt.amount) }}</span>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Receipt Date</label>
-              <p class="mt-1 text-sm text-gray-900">{{ formatDate(receipt.receipt_date) }}</p>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Receipt Date</span>
+              <span class="font-medium text-slate-900 dark:text-slate-100">{{ formatDate(receipt.receipt_date) }}</span>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Payment Method</label>
-              <p class="mt-1 text-sm text-gray-900">{{ getPaymentMethodDisplay(receipt.payment_method) }}</p>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Payment Method</span>
+              <span class="font-medium text-slate-900 dark:text-slate-100">{{ getPaymentMethodDisplay(receipt.payment_method) }}</span>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Status</label>
-              <span :class="getStatusBadgeClass(receipt.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
-                {{ receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1) }}
+            <div class="flex justify-between items-center text-xs pt-1">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Status</span>
+              <span :class="getStatusBadgeClass(receipt.status)" class="inline-flex px-2.5 py-1 text-[11px] font-semibold rounded-full border">
+                {{ receipt.status ? receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1) : 'Unknown' }}
               </span>
             </div>
           </div>
 
-          <!-- Payer Information -->
-          <div class="space-y-4">
-            <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Payer Information</h4>
+          <!-- Payer Information Card -->
+          <div class="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200 dark:border-zinc-700 pb-2">Payer Information</h4>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Payer Name</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.payer_name }}</p>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Payer Name</span>
+              <span class="font-bold text-slate-900 dark:text-slate-100">{{ receipt.payer_name || 'N/A' }}</span>
             </div>
 
-            <div v-if="receipt.payer_type">
-              <label class="block text-sm font-medium text-gray-700">Payer Type</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.payer_type.charAt(0).toUpperCase() + receipt.payer_type.slice(1) }}</p>
+            <div v-if="receipt.payer_type" class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Payer Type</span>
+              <span class="font-medium text-slate-900 dark:text-slate-100">{{ receipt.payer_type.charAt(0).toUpperCase() + receipt.payer_type.slice(1) }}</span>
             </div>
 
-            <div v-if="receipt.bank_account">
-              <label class="block text-sm font-medium text-gray-700">Bank Account</label>
-              <p class="mt-1 text-sm text-gray-900">
-                {{ receipt.bank_account.account_name }} - {{ receipt.bank_account.bank_name }}
-                <br>
-                <span class="text-gray-600">{{ receipt.bank_account.account_number }}</span>
-              </p>
+            <div v-if="receipt.bank_account" class="space-y-1 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500 dark:text-zinc-400 font-semibold">Bank Account</span>
+                <span class="font-bold text-slate-900 dark:text-slate-100">{{ receipt.bank_account.account_name }}</span>
+              </div>
+              <div class="text-right text-[11px] text-slate-500 dark:text-zinc-400">
+                {{ receipt.bank_account.bank_name }} ({{ receipt.bank_account.account_number }})
+              </div>
             </div>
 
-            <div v-if="receipt.transaction_reference">
-              <label class="block text-sm font-medium text-gray-700">Transaction Reference</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.transaction_reference }}</p>
+            <div v-if="receipt.transaction_reference" class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Txn Reference</span>
+              <span class="font-mono text-slate-900 dark:text-slate-100">{{ receipt.transaction_reference }}</span>
             </div>
 
-            <div v-if="receipt.reference_number">
-              <label class="block text-sm font-medium text-gray-700">Reference Number</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.reference_number }}</p>
+            <div v-if="receipt.reference_number" class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-zinc-400 font-semibold">Ref Number</span>
+              <span class="font-mono text-slate-900 dark:text-slate-100">{{ receipt.reference_number }}</span>
             </div>
           </div>
         </div>
 
         <!-- Description and Notes -->
-        <div class="mt-6 space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Description</label>
-            <p class="mt-1 text-sm text-gray-900">{{ receipt.description }}</p>
+        <div class="space-y-3">
+          <div class="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Description</h4>
+            <p class="text-xs text-slate-700 dark:text-zinc-300 font-medium">{{ receipt.description || 'No description provided.' }}</p>
           </div>
 
-          <div v-if="receipt.notes">
-            <label class="block text-sm font-medium text-gray-700">Notes</label>
-            <p class="mt-1 text-sm text-gray-900">{{ receipt.notes }}</p>
+          <div v-if="receipt.notes" class="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Notes</h4>
+            <p class="text-xs text-slate-700 dark:text-zinc-300 font-medium">{{ receipt.notes }}</p>
           </div>
         </div>
 
         <!-- Invoice Allocations -->
-        <div v-if="receipt.invoice_allocations && receipt.invoice_allocations.length > 0" class="mt-6 space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Invoice Allocations</h4>
+        <div v-if="receipt.invoice_allocations && receipt.invoice_allocations.length > 0" class="space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200 dark:border-zinc-800 pb-2">Invoice Allocations</h4>
           
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800">
+            <table class="min-w-full divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
+              <thead class="bg-slate-50 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400">
                 <tr>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
-                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th class="px-4 py-2 text-left font-bold uppercase">Invoice</th>
+                  <th class="px-4 py-2 text-right font-bold uppercase">Amount</th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60">
                 <tr v-for="allocation in receipt.invoice_allocations" :key="allocation.invoice_id">
-                  <td class="px-4 py-2 text-sm text-gray-900">
+                  <td class="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">
                     Invoice #{{ allocation.invoice_id }}
                   </td>
-                  <td class="px-4 py-2 text-sm text-gray-900 text-right">
+                  <td class="px-4 py-2.5 font-bold font-mono text-slate-900 dark:text-slate-100 text-right">
                     ${{ formatAmount(allocation.amount) }}
                   </td>
                 </tr>
               </tbody>
-              <tfoot class="bg-gray-50">
+              <tfoot class="bg-slate-50 dark:bg-zinc-800/60 font-bold">
                 <tr>
-                  <td class="px-4 py-2 text-sm font-medium text-gray-900">Total Allocated</td>
-                  <td class="px-4 py-2 text-sm font-medium text-gray-900 text-right">
-                    ${{ formatAmount(getTotalAllocated()) }}
+                  <td class="px-4 py-2 text-slate-900 dark:text-white">Total Allocated</td>
+                  <td class="px-4 py-2 font-mono text-slate-900 dark:text-white text-right">
+                    ${{ formatAmount(getTotalAllocated) }}
                   </td>
                 </tr>
               </tfoot>
@@ -139,143 +148,48 @@
           </div>
         </div>
 
-        <!-- Verification Information -->
-        <div v-if="receipt.verified_by || receipt.verified_at" class="mt-6 space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Verification Information</h4>
+        <!-- Audit & Actions Footer -->
+        <div class="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <button
+            type="button"
+            @click="$emit('close')"
+            class="px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+          >
+            Close
+          </button>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-if="receipt.verified_by">
-              <label class="block text-sm font-medium text-gray-700">Verified By</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.verified_by.name }}</p>
-            </div>
+          <button
+            v-if="authStore.hasPermission('payment_receipts.edit') && receipt.can_be_edited"
+            @click="$emit('edit', receipt)"
+            class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            Edit
+          </button>
 
-            <div v-if="receipt.verified_at">
-              <label class="block text-sm font-medium text-gray-700">Verified At</label>
-              <p class="mt-1 text-sm text-gray-900">{{ formatDateTime(receipt.verified_at) }}</p>
-            </div>
-          </div>
+          <button
+            v-if="authStore.hasPermission('payment_receipts.verify') && receipt.can_be_verified"
+            @click="$emit('verify', receipt)"
+            class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white dark:bg-zinc-200 dark:text-zinc-900 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            Verify
+          </button>
 
-          <div v-if="receipt.verification_notes">
-            <label class="block text-sm font-medium text-gray-700">Verification Notes</label>
-            <p class="mt-1 text-sm text-gray-900">{{ receipt.verification_notes }}</p>
-          </div>
+          <button
+            v-if="authStore.hasPermission('payment_receipts.deposit') && receipt.can_be_deposited"
+            @click="$emit('mark-as-deposited', receipt)"
+            class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            Mark as Deposited
+          </button>
+
+          <button
+            v-if="authStore.hasPermission('payment_receipts.delete') && receipt.can_be_deleted"
+            @click="$emit('delete', receipt)"
+            class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            Delete
+          </button>
         </div>
-
-        <!-- Deposit Information -->
-        <div v-if="receipt.deposited_by || receipt.deposited_at" class="mt-6 space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Deposit Information</h4>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-if="receipt.deposited_by">
-              <label class="block text-sm font-medium text-gray-700">Deposited By</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.deposited_by.name }}</p>
-            </div>
-
-            <div v-if="receipt.deposited_at">
-              <label class="block text-sm font-medium text-gray-700">Deposited At</label>
-              <p class="mt-1 text-sm text-gray-900">{{ formatDateTime(receipt.deposited_at) }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Journal Entry Information -->
-        <div v-if="receipt.journal_entry" class="mt-6 space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Accounting Information</h4>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Journal Entry</label>
-            <p class="mt-1 text-sm text-gray-900">{{ receipt.journal_entry.entry_number }}</p>
-          </div>
-
-          <div v-if="receipt.journal_entry.journal_entry_lines && receipt.journal_entry.journal_entry_lines.length > 0">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Journal Entry Lines</label>
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Debit</th>
-                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Credit</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="line in receipt.journal_entry.journal_entry_lines" :key="line.id">
-                    <td class="px-4 py-2 text-sm text-gray-900">
-                      {{ line.account ? line.account.account_name : 'N/A' }}
-                    </td>
-                    <td class="px-4 py-2 text-sm text-gray-900">{{ line.description }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-900 text-right">
-                      {{ line.debit_amount > 0 ? '$' + formatAmount(line.debit_amount) : '-' }}
-                    </td>
-                    <td class="px-4 py-2 text-sm text-gray-900 text-right">
-                      {{ line.credit_amount > 0 ? '$' + formatAmount(line.credit_amount) : '-' }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Created Information -->
-        <div class="mt-6 space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b border-gray-200 pb-2">Created Information</h4>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Created By</label>
-              <p class="mt-1 text-sm text-gray-900">{{ receipt.created_by ? receipt.created_by.name : 'N/A' }}</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Created At</label>
-              <p class="mt-1 text-sm text-gray-900">{{ formatDateTime(receipt.created_at) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-200">
-        <button
-          @click="$emit('close')"
-          class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Close
-        </button>
-        
-        <button
-          v-if="authStore.hasPermission('payment_receipts.edit') && receipt.can_be_edited"
-          @click="$emit('edit', receipt)"
-          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Edit
-        </button>
-
-        <button
-          v-if="authStore.hasPermission('payment_receipts.verify') && receipt.can_be_verified"
-          @click="$emit('verify', receipt)"
-          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-        >
-          Verify
-        </button>
-
-        <button
-          v-if="authStore.hasPermission('payment_receipts.deposit') && receipt.can_be_deposited"
-          @click="$emit('mark-as-deposited', receipt)"
-          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-        >
-          Mark as Deposited
-        </button>
-
-        <button
-          v-if="authStore.hasPermission('payment_receipts.delete') && receipt.can_be_deleted"
-          @click="$emit('delete', receipt)"
-          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          Delete
-        </button>
       </div>
     </div>
   </div>
@@ -310,11 +224,12 @@ const getTotalAllocated = computed(() => {
 
 // Utility functions
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString();
-};
-
-const formatDateTime = (datetime) => {
-  return new Date(datetime).toLocaleString();
+  if (!date) return 'N/A';
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 };
 
 const formatAmount = (amount) => {
@@ -339,7 +254,7 @@ const getReceiptTypeDisplay = (type) => {
     miscellaneous_income: 'Miscellaneous Income',
     other_receipt: 'Other Receipt',
   };
-  return types[type] || type;
+  return types[type] || type || 'General Receipt';
 };
 
 const getPaymentMethodDisplay = (method) => {
@@ -350,17 +265,17 @@ const getPaymentMethodDisplay = (method) => {
     card: 'Card',
     online: 'Online Payment',
   };
-  return methods[method] || method;
+  return methods[method] || method || 'Bank Transfer';
 };
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    draft: 'bg-gray-100 text-gray-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    verified: 'bg-blue-100 text-blue-800',
-    deposited: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
+    deposited: 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100',
+    verified: 'bg-slate-800 text-white border-slate-800 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
+    pending: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-zinc-800 dark:text-slate-200 dark:border-zinc-700',
+    draft: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-zinc-800/60 dark:text-slate-400 dark:border-zinc-700/60',
+    cancelled: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60',
   };
-  return classes[status] || 'bg-gray-100 text-gray-800';
+  return classes[status] || 'bg-slate-100 text-slate-700 border-slate-200';
 };
 </script>

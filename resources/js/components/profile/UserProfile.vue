@@ -1,180 +1,210 @@
 <template>
-  <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
-      <div class="bg-white shadow rounded-lg">
-        <!-- Header -->
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h1 class="text-2xl font-bold text-gray-900">User Profile</h1>
-          <p class="text-sm text-gray-600">Manage your account information and preferences</p>
+  <div class="p-6 space-y-6 max-w-[1200px] mx-auto font-sans">
+    <!-- Top Header Bar (Black & White System Theme) -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-xl shadow-xs">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
         </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">Account Profile</h1>
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 font-sans">Manage your personal account details, credentials, and preferences</p>
+        </div>
+      </div>
+    </div>
 
-        <!-- Profile Content -->
-        <div class="p-6">
-          <!-- Profile Image Section -->
-          <div class="flex items-center space-x-6 mb-8">
-            <div class="relative">
-              <div class="h-24 w-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
-                <img 
-                  v-if="profileImage" 
-                  :src="getProfileImageUrl(profileImage)" 
-                  alt="Profile" 
-                  class="h-full w-full object-cover"
-                />
-                <div 
-                  v-else 
-                  class="h-full w-full bg-indigo-500 flex items-center justify-center"
-                >
-                  <span class="text-white font-bold text-2xl">
-                    {{ authStore.user?.name?.charAt(0).toUpperCase() }}
-                  </span>
-                </div>
-              </div>
-              <button
-                @click="triggerFileInput"
-                class="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-              </button>
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/*"
-                @change="handleImageUpload"
-                class="hidden"
-              />
-            </div>
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900">{{ authStore.user?.name }}</h2>
-              <p class="text-gray-600">{{ authStore.user?.email }}</p>
-              <p class="text-sm text-gray-500 mt-1">
-                Member since {{ formatDate(authStore.user?.created_at) }}
-              </p>
+    <!-- Main Profile Card Container (White and Black High-Contrast Style) -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-8 font-sans">
+      
+      <!-- Profile Header / Avatar Hero Section -->
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-slate-100 dark:border-zinc-800">
+        <div class="relative shrink-0">
+          <div class="h-24 w-24 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center">
+            <img 
+              v-if="profileImage" 
+              :src="getProfileImageUrl(profileImage)" 
+              alt="Profile Avatar" 
+              class="h-full w-full object-cover"
+            />
+            <div 
+              v-else 
+              class="h-full w-full bg-slate-900 dark:bg-zinc-100 flex items-center justify-center"
+            >
+              <span class="text-white dark:text-zinc-900 font-bold text-2xl font-sans">
+                {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+              </span>
             </div>
           </div>
 
-          <!-- Profile Form -->
-          <form @submit.prevent="updateProfile" class="space-y-6">
-            <!-- Error Messages -->
-            <div v-if="formErrors.length > 0" class="bg-red-50 border border-red-200 rounded-md p-4">
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                  </svg>
-                </div>
-                <div class="ml-3">
-                  <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
-                  <div class="mt-2 text-sm text-red-700">
-                    <ul class="list-disc pl-5 space-y-1">
-                      <li v-for="error in formErrors" :key="error">{{ error }}</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <!-- Camera Upload Button -->
+          <button
+            type="button"
+            @click="triggerFileInput"
+            class="absolute bottom-0 right-0 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white rounded-full p-2 shadow-md hover:scale-105 transition-all cursor-pointer"
+            title="Update Profile Picture"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
 
-            <!-- Success Message -->
-            <div v-if="showSuccessMessage" class="bg-green-50 border border-green-200 rounded-md p-4">
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                  </svg>
-                </div>
-                <div class="ml-3">
-                  <p class="text-sm font-medium text-green-800">Profile updated successfully!</p>
-                </div>
-              </div>
-            </div>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            @change="handleImageUpload"
+            class="hidden"
+          />
+        </div>
 
-            <!-- Basic Information -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  v-model="profileForm.name"
-                  type="text"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  v-model="profileForm.email"
-                  type="email"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            <!-- Password Change Section -->
-            <div class="border-t border-gray-200 pt-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
-                    Current Password
-                  </label>
-                  <input
-                    id="current_password"
-                    v-model="profileForm.current_password"
-                    type="password"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">
-                    New Password
-                  </label>
-                  <input
-                    id="new_password"
-                    v-model="profileForm.new_password"
-                    type="password"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password
-                  </label>
-                  <input
-                    id="new_password_confirmation"
-                    v-model="profileForm.new_password_confirmation"
-                    type="password"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="flex justify-end pt-6 border-t border-gray-200">
-              <button
-                type="submit"
-                :disabled="submitting"
-                class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span v-if="submitting">Updating...</span>
-                <span v-else>Update Profile</span>
-              </button>
-            </div>
-          </form>
+        <div class="text-center sm:text-left space-y-1">
+          <div class="flex items-center gap-2 justify-center sm:justify-start">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white font-sans">{{ authStore.user?.name || 'User' }}</h2>
+            <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-sans">
+              Account Active
+            </span>
+          </div>
+          <p class="text-xs font-sans font-medium text-slate-500 dark:text-slate-400">{{ authStore.user?.email }}</p>
+          <p class="text-xs font-sans font-semibold text-slate-400 dark:text-zinc-500 pt-1">
+            Member since {{ formatDate(authStore.user?.created_at) || 'N/A' }}
+          </p>
         </div>
       </div>
+
+      <!-- Profile Form -->
+      <form @submit.prevent="updateProfile" class="space-y-6">
+        
+        <!-- Error Alerts -->
+        <div v-if="formErrors.length > 0" class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl p-4 transition-all">
+          <div class="flex items-start gap-3">
+            <svg class="h-5 w-5 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 class="text-xs font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider font-sans">Form Submission Issues</h3>
+              <ul class="mt-1.5 list-disc pl-4 text-xs font-medium text-rose-700 dark:text-rose-300 space-y-1 font-sans">
+                <li v-for="error in formErrors" :key="error">{{ error }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Alert -->
+        <div v-if="showSuccessMessage" class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 transition-all">
+          <div class="flex items-center gap-3">
+            <svg class="h-5 w-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <p class="text-xs font-bold text-emerald-800 dark:text-emerald-300 font-sans">Profile updated successfully!</p>
+          </div>
+        </div>
+
+        <!-- Basic Information Section -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
+            <svg class="w-4 h-4 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Basic Information</h3>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label for="name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+                Full Name <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="name"
+                v-model="profileForm.name"
+                type="text"
+                required
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="Enter full name"
+              />
+            </div>
+
+            <div>
+              <label for="email" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+                Email Address <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="email"
+                v-model="profileForm.email"
+                type="email"
+                required
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="Enter email address"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Security & Password Change Section -->
+        <div class="space-y-4 pt-4">
+          <div class="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
+            <svg class="w-4 h-4 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Security & Password</h3>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <label for="current_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+                Current Password
+              </label>
+              <input
+                id="current_password"
+                v-model="profileForm.current_password"
+                type="password"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <label for="new_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+                New Password
+              </label>
+              <input
+                id="new_password"
+                v-model="profileForm.new_password"
+                type="password"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <label for="new_password_confirmation" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+                Confirm Password
+              </label>
+              <input
+                id="new_password_confirmation"
+                v-model="profileForm.new_password_confirmation"
+                type="password"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button Footer -->
+        <div class="flex items-center justify-end pt-5 border-t border-slate-100 dark:border-zinc-800">
+          <button
+            type="submit"
+            :disabled="submitting"
+            class="bg-slate-900 hover:bg-black active:scale-[0.98] text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white font-bold rounded-xl text-xs px-6 py-2.5 transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 font-sans"
+          >
+            <div v-if="submitting" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
+            <span>{{ submitting ? 'Updating...' : 'Update Profile' }}</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>

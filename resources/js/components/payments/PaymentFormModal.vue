@@ -1,220 +1,222 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
-      <!-- Header -->
-      <div class="flex justify-between items-center pb-4 border-b border-gray-200">
-        <h3 class="text-lg font-medium text-gray-900">
-          {{ isEditing ? 'Edit Payment' : 'Create New Payment' }}
-        </h3>
+  <div
+    v-if="show"
+    class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200"
+    style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
+  >
+    <!-- Modal Container Card (White and Black High-Contrast Modern System Style) -->
+    <div class="relative mx-auto border border-slate-200/90 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-3xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 p-6 sm:p-7 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar my-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-zinc-800">
+        <div>
+          <h3 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+            {{ isEditing ? 'Edit Payment' : 'Create New Payment' }}
+          </h3>
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+            Fill in transaction details for outgoing payment record
+          </p>
+        </div>
+
         <button
+          type="button"
           @click="$emit('close')"
-          class="text-gray-400 hover:text-gray-600"
+          class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <!-- Form -->
-      <form @submit.prevent="submitForm" class="mt-4">
+      <!-- Form Body -->
+      <form @submit.prevent="submitForm" class="mt-5 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Payment Type -->
+          
+          <!-- Payment Type Floating Dropdown -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Type *</label>
-            <select
+            <FloatingSelect
               v-model="form.payment_type"
+              label="Payment Type"
+              placeholder="Select Payment Type"
+              :options="formattedPaymentTypes"
+              :required="true"
+              :error="errors.payment_type ? errors.payment_type[0] : ''"
               @change="onPaymentTypeChange"
-              required
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select Payment Type</option>
-              <option v-for="type in paymentTypes" :key="type.value" :value="type.value">
-                {{ type.label }}
-              </option>
-            </select>
-            <span v-if="errors.payment_type" class="text-red-500 text-sm">{{ errors.payment_type[0] }}</span>
-          </div>
-
-          <!-- Amount -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
-            <input
-              v-model="form.amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="0.00"
             />
-            <span v-if="errors.amount" class="text-red-500 text-sm">{{ errors.amount[0] }}</span>
           </div>
 
-          <!-- Payment Date -->
+          <!-- Amount Input -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Date *</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Amount <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 pointer-events-none">$</span>
+              <input
+                v-model="form.amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                class="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+                placeholder="0.00"
+              />
+            </div>
+            <span v-if="errors.amount" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.amount[0] }}</span>
+          </div>
+
+          <!-- Payment Date Input -->
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Payment Date <span class="text-rose-500">*</span>
+            </label>
             <input
               v-model="form.payment_date"
               type="date"
               required
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs cursor-pointer"
             />
-            <span v-if="errors.payment_date" class="text-red-500 text-sm">{{ errors.payment_date[0] }}</span>
+            <span v-if="errors.payment_date" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.payment_date[0] }}</span>
           </div>
 
-          <!-- Bank Account -->
+          <!-- Bank Account Floating Dropdown -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Bank Account *</label>
-            <select
+            <FloatingSelect
               v-model="form.bank_account_id"
-              required
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select Bank Account</option>
-              <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
-                {{ account.bank_name ? `${account.bank_name} (${account.account_name})` : account.account_name }}{{ account.account_number ? ' ' + (account.masked_account_number || ('****' + String(account.account_number).slice(-4))) : '' }}
-              </option>
-            </select>
-            <span v-if="errors.bank_account_id" class="text-red-500 text-sm">{{ errors.bank_account_id[0] }}</span>
+              label="Bank Account"
+              placeholder="Select Bank Account"
+              :options="formattedBankAccounts"
+              :required="true"
+              :error="errors.bank_account_id ? errors.bank_account_id[0] : ''"
+            />
           </div>
 
-          <!-- Payment Method -->
+          <!-- Payment Method Floating Dropdown -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method *</label>
-            <select
+            <FloatingSelect
               v-model="form.payment_method"
-              required
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select Payment Method</option>
-              <option v-for="method in paymentMethods" :key="method.value" :value="method.value">
-                {{ method.label }}
-              </option>
-            </select>
-            <span v-if="errors.payment_method" class="text-red-500 text-sm">{{ errors.payment_method[0] }}</span>
+              label="Payment Method"
+              placeholder="Select Payment Method"
+              :options="formattedPaymentMethods"
+              :required="true"
+              :error="errors.payment_method ? errors.payment_method[0] : ''"
+            />
           </div>
 
-          <!-- Payee Type -->
+          <!-- Payee Type Floating Dropdown -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Payee Type</label>
-            <select
+            <FloatingSelect
               v-model="form.payee_type"
+              label="Payee Type"
+              placeholder="Select Payee Type"
+              :options="payeeTypeOptions"
+              :error="errors.payee_type ? errors.payee_type[0] : ''"
               @change="onPayeeTypeChange"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select Payee Type</option>
-              <option value="supplier">Supplier</option>
-              <option value="employee">Employee</option>
-              <option value="customer">Customer</option>
-              <option value="other">Other</option>
-            </select>
-            <span v-if="errors.payee_type" class="text-red-500 text-sm">{{ errors.payee_type[0] }}</span>
+            />
           </div>
 
-          <!-- Payee Selection -->
+          <!-- Payee Selection Floating Dropdown -->
           <div v-if="form.payee_type && form.payee_type !== 'other'">
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ getPayeeLabel() }}</label>
-            <select
+            <FloatingSelect
               v-model="form.payee_id"
+              :label="getPayeeLabel()"
+              :placeholder="'Select ' + getPayeeLabel()"
+              :options="formattedPayeeOptions"
+              :error="errors.payee_id ? errors.payee_id[0] : ''"
               @change="onPayeeChange"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select {{ getPayeeLabel() }}</option>
-              <option v-for="payee in getPayeeOptions()" :key="payee.id" :value="payee.id">
-                {{ payee.name }}
-              </option>
-            </select>
-            <span v-if="errors.payee_id" class="text-red-500 text-sm">{{ errors.payee_id[0] }}</span>
+            />
           </div>
 
-          <!-- Payee Name -->
+          <!-- Payee Name Input -->
           <div :class="form.payee_type && form.payee_type !== 'other' ? '' : 'md:col-span-2'">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Payee Name *</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Payee Name <span class="text-rose-500">*</span>
+            </label>
             <input
               v-model="form.payee_name"
               type="text"
               required
               :readonly="form.payee_type && form.payee_type !== 'other' && form.payee_id"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+              :class="{ 'opacity-70 cursor-not-allowed bg-slate-100 dark:bg-zinc-900': form.payee_type && form.payee_type !== 'other' && form.payee_id }"
               placeholder="Enter payee name"
             />
-            <span v-if="errors.payee_name" class="text-red-500 text-sm">{{ errors.payee_name[0] }}</span>
+            <span v-if="errors.payee_name" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.payee_name[0] }}</span>
           </div>
 
-          <!-- Reference Number -->
+          <!-- Reference Number Input -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Reference Number
+            </label>
             <input
               v-model="form.reference_number"
               type="text"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
               placeholder="Enter reference number"
             />
-            <span v-if="errors.reference_number" class="text-red-500 text-sm">{{ errors.reference_number[0] }}</span>
+            <span v-if="errors.reference_number" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.reference_number[0] }}</span>
           </div>
 
-          <!-- Status -->
+          <!-- Status Floating Dropdown (Editing Mode) -->
           <div v-if="isEditing">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
+            <FloatingSelect
               v-model="form.status"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-            </select>
-            <span v-if="errors.status" class="text-red-500 text-sm">{{ errors.status[0] }}</span>
+              label="Status"
+              placeholder="Select Status"
+              :options="statusOptions"
+              :error="errors.status ? errors.status[0] : ''"
+            />
           </div>
 
-          <!-- Description -->
+          <!-- Description Textarea -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Description <span class="text-rose-500">*</span>
+            </label>
             <textarea
               v-model="form.description"
               required
               rows="3"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
               placeholder="Enter payment description"
             ></textarea>
-            <span v-if="errors.description" class="text-red-500 text-sm">{{ errors.description[0] }}</span>
+            <span v-if="errors.description" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.description[0] }}</span>
           </div>
 
-          <!-- Notes -->
+          <!-- Notes Textarea -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Notes
+            </label>
             <textarea
               v-model="form.notes"
               rows="2"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
               placeholder="Enter additional notes (optional)"
             ></textarea>
-            <span v-if="errors.notes" class="text-red-500 text-sm">{{ errors.notes[0] }}</span>
+            <span v-if="errors.notes" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.notes[0] }}</span>
           </div>
         </div>
 
-        <!-- Form Actions -->
-        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+        <!-- Form Action Buttons (High Contrast Black Theme) -->
+        <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <button
             type="button"
             @click="$emit('close')"
-            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
           >
             Cancel
           </button>
+
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            class="px-5 py-2.5 bg-slate-900 hover:bg-black active:scale-[0.98] text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white font-bold rounded-xl text-xs shadow-sm transition-all disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
           >
-            <span v-if="loading" class="flex items-center">
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              {{ isEditing ? 'Updating...' : 'Creating...' }}
-            </span>
-            <span v-else>
-              {{ isEditing ? 'Update Payment' : 'Create Payment' }}
-            </span>
+            <div v-if="loading" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
+            <span>{{ isEditing ? 'Update Payment' : 'Create Payment' }}</span>
           </button>
         </div>
       </form>
@@ -225,6 +227,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
+import FloatingSelect from '@/components/common/FloatingSelect.vue';
 
 // Props
 const props = defineProps({
@@ -251,6 +254,7 @@ const paymentOptions = ref({
   customers: [],
   paymentTypes: [],
   paymentMethods: [],
+  statuses: [],
 });
 
 // Form data
@@ -276,12 +280,53 @@ const paymentTypes = computed(() => paymentOptions.value.paymentTypes);
 const paymentMethods = computed(() => paymentOptions.value.paymentMethods);
 const bankAccounts = computed(() => paymentOptions.value.bankAccounts);
 
+const formattedPaymentTypes = computed(() => {
+  return paymentTypes.value.map(t => ({
+    value: t.value,
+    label: t.label
+  }));
+});
+
+const formattedBankAccounts = computed(() => {
+  return bankAccounts.value.map(acc => ({
+    value: acc.id,
+    label: acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name,
+    sublabel: acc.account_number ? (acc.masked_account_number || ('****' + String(acc.account_number).slice(-4))) : ''
+  }));
+});
+
+const formattedPaymentMethods = computed(() => {
+  return paymentMethods.value.map(m => ({
+    value: m.value,
+    label: m.label
+  }));
+});
+
+const payeeTypeOptions = [
+  { value: 'supplier', label: 'Supplier' },
+  { value: 'employee', label: 'Employee' },
+  { value: 'customer', label: 'Customer' },
+  { value: 'other', label: 'Other' },
+];
+
+const formattedPayeeOptions = computed(() => {
+  return getPayeeOptions().map(p => ({
+    value: p.id,
+    label: p.name
+  }));
+});
+
+const statusOptions = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+];
+
 // Methods
 const loadPaymentOptions = async () => {
   try {
     const response = await axios.get('/api/payment-options');
 
-    // Map the API response to match our component structure
     paymentOptions.value = {
       bankAccounts: response.data.bank_accounts || [],
       suppliers: response.data.suppliers || [],
@@ -293,7 +338,6 @@ const loadPaymentOptions = async () => {
     };
   } catch (error) {
     console.error('Error loading payment options:', error);
-    // Set empty arrays as fallback
     paymentOptions.value = {
       bankAccounts: [],
       suppliers: [],
@@ -325,12 +369,10 @@ const loadPaymentOptions = async () => {
 };
 
 const onPaymentTypeChange = () => {
-  // Reset payee fields when payment type changes
   form.payee_type = '';
   form.payee_id = '';
   form.payee_name = '';
 
-  // Set default payee type based on payment type
   if (form.payment_type === 'supplier_payment' || form.payment_type === 'purchase_invoice_payment') {
     form.payee_type = 'supplier';
   } else if (form.payment_type === 'salary_payment') {
@@ -439,22 +481,15 @@ const submitForm = async () => {
 // Watchers
 watch(() => props.show, (newValue) => {
   if (newValue) {
-    // Load payment options when modal is shown
     loadPaymentOptions();
 
     if (isEditing.value) {
       populateForm();
     } else {
       resetForm();
-      // Pre-fill from URL parameters if creating new payment
       prefillFromUrlParams();
     }
   }
-});
-
-// Initialize
-onMounted(() => {
-  loadPaymentOptions();
 });
 
 // Pre-fill form from URL parameters
@@ -476,11 +511,6 @@ const prefillFromUrlParams = () => {
 
   if (urlParams.get('description')) {
     form.description = decodeURIComponent(urlParams.get('description'));
-  }
-
-  if (urlParams.get('reference_id')) {
-    form.reference_id = urlParams.get('reference_id');
-    form.reference_type = 'App\\Models\\Expense'; // Default for expense payments
   }
 };
 
