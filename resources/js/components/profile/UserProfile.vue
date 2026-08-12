@@ -76,31 +76,6 @@
 
       <!-- Profile Form -->
       <form @submit.prevent="updateProfile" class="space-y-4">
-        
-        <!-- Error Alerts -->
-        <div v-if="formErrors.length > 0" class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl p-3.5 transition-all">
-          <div class="flex items-start gap-2.5">
-            <svg class="h-4 w-4 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <h3 class="text-xs font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider font-sans">Form Submission Issues</h3>
-              <ul class="mt-1 list-disc pl-4 text-xs font-medium text-rose-700 dark:text-rose-300 space-y-0.5 font-sans">
-                <li v-for="error in formErrors" :key="error">{{ error }}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Success Alert -->
-        <div v-if="showSuccessMessage" class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 transition-all">
-          <div class="flex items-center gap-2.5">
-            <svg class="h-4 w-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <p class="text-xs font-bold text-emerald-800 dark:text-emerald-300 font-sans">Profile updated successfully!</p>
-          </div>
-        </div>
 
         <!-- Basic Information Section -->
         <div class="space-y-3">
@@ -263,15 +238,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useToast } from '@/composables/useToast';
 import axios from 'axios';
 
 const authStore = useAuthStore();
+const { showToast } = useToast();
 
 // Reactive data
 const profileImage = ref(null);
 const submitting = ref(false);
-const formErrors = ref([]);
-const showSuccessMessage = ref(false);
 const fileInput = ref(null);
 
 // Password visibility toggles
@@ -311,13 +286,13 @@ const handleImageUpload = async (event) => {
 
   // Validate file type
   if (!file.type.startsWith('image/')) {
-    formErrors.value = ['Please select a valid image file'];
+    showToast('Please select a valid image file', 'error');
     return;
   }
 
   // Validate file size (max 2MB)
   if (file.size > 2 * 1024 * 1024) {
-    formErrors.value = ['Image size must be less than 2MB'];
+    showToast('Image size must be less than 2MB', 'error');
     return;
   }
 
@@ -333,13 +308,9 @@ const handleImageUpload = async (event) => {
     });
 
     profileImage.value = response.data.profile_image_url;
-    showSuccessMessage.value = true;
-    setTimeout(() => {
-      showSuccessMessage.value = false;
-    }, 3000);
-
+    showToast('Profile image updated successfully!', 'success');
   } catch (error) {
-    formErrors.value = [error.response?.data?.message || 'Failed to upload image'];
+    showToast(error.response?.data?.message || 'Failed to upload image', 'error');
   } finally {
     submitting.value = false;
   }
@@ -347,8 +318,6 @@ const handleImageUpload = async (event) => {
 
 const updateProfile = async () => {
   submitting.value = true;
-  formErrors.value = [];
-  showSuccessMessage.value = false;
 
   try {
     const response = await axios.put('/api/user/profile', profileForm.value);
@@ -356,22 +325,18 @@ const updateProfile = async () => {
     // Update auth store with new user data
     await authStore.fetchUser();
     
-    showSuccessMessage.value = true;
+    showToast('Profile updated successfully!', 'success');
     
     // Clear password fields
     profileForm.value.current_password = '';
     profileForm.value.new_password = '';
     profileForm.value.new_password_confirmation = '';
-    
-    setTimeout(() => {
-      showSuccessMessage.value = false;
-    }, 3000);
-
   } catch (error) {
     if (error.response?.data?.errors) {
-      formErrors.value = Object.values(error.response.data.errors).flat();
+      const msgs = Object.values(error.response.data.errors).flat();
+      msgs.forEach(msg => showToast(msg, 'error'));
     } else {
-      formErrors.value = [error.response?.data?.message || 'An error occurred'];
+      showToast(error.response?.data?.message || 'Failed to update profile', 'error');
     }
   } finally {
     submitting.value = false;

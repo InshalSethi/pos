@@ -48,7 +48,7 @@
             <router-link
               v-if="authStore.hasPermission('products.create')"
               :to="{ name: 'CreateProduct' }"
-              class="inline-flex items-center px-5 py-2 bg-emerald-600 hover:bg-emerald-750 text-white font-medium rounded-full shadow-sm transition-all duration-200 text-sm"
+              class="inline-flex items-center px-5 py-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-full shadow-sm transition-all duration-200 text-sm cursor-pointer"
             >
               + New Item
             </router-link>
