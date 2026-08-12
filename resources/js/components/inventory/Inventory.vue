@@ -1,11 +1,11 @@
 <template>
-  <div class="w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
-    <div class="w-full max-w-7xl mx-auto">
+  <div class="w-full mx-auto p-3 sm:p-4 lg:p-5 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
+    <div class="w-full max-w-full mx-auto">
       
       <!-- HEADER SECTION -->
-      <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="flex items-center gap-3">
-          <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Stock Adjustments</h1>
+          <h1 class="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Stock Adjustments</h1>
           <span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-full font-bold">
             {{ pagination.total || 0 }} Logs
           </span>
@@ -37,11 +37,11 @@
       </div>
 
       <!-- STATS SUMMARY CARDS -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <!-- Card 1: Total Adjustments -->
         <div
           @click="openCardModal('total')"
-          class="bg-white dark:bg-[#1E1E1E] p-5 rounded-3xl border border-slate-200/80 dark:border-[#2E2E2E] shadow-sm flex items-center gap-4 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all hover:shadow-md"
+          class="bg-white dark:bg-[#1E1E1E] p-3.5 rounded-2xl border border-slate-200/80 dark:border-[#2E2E2E] shadow-sm flex items-center gap-3.5 cursor-pointer hover:scale-[1.01] active:scale-[0.98] transition-all"
         >
           <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

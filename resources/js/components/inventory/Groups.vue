@@ -1,6 +1,6 @@
 <template>
-  <div class="w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
-    <div class="w-full max-w-7xl mx-auto space-y-6">
+  <div class="w-full mx-auto p-3 sm:p-4 lg:p-5 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
+    <div class="w-full max-w-full mx-auto space-y-4">
       <!-- Header Page Title -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

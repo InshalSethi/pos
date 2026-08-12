@@ -1,9 +1,9 @@
 <template>
-  <div class="w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
-    <div class="w-full max-w-7xl mx-auto">
+  <div class="w-full mx-auto p-3 sm:p-4 lg:p-5 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
+    <div class="w-full max-w-full mx-auto">
       
       <!-- Header Section -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
         <div class="flex items-center gap-3">
           <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Stock Transfers</h1>
           <span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-full font-bold">

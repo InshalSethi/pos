@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen">
-    <div class="w-full max-w-7xl mx-auto">
+  <div class="w-full mx-auto p-3 sm:p-4 lg:p-5 bg-slate-50/50 dark:bg-zinc-950 min-h-screen">
+    <div class="w-full max-w-full mx-auto">
         <!-- Header -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="flex items-center gap-3 flex-wrap">
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Items</h1>
             <button @click="isFavorite = !isFavorite" class="transition-colors duration-200 focus:outline-none cursor-pointer">

@@ -1,9 +1,9 @@
 <template>
-  <div class="w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
-    <div class="w-full max-w-4xl mx-auto">
+  <div class="w-full mx-auto p-3 sm:p-4 lg:p-5 bg-slate-50/50 dark:bg-zinc-950 min-h-screen font-sans">
+    <div class="w-full max-w-7xl mx-auto">
       
       <!-- Breadcrumb & Back -->
-      <div class="mb-6">
+      <div class="mb-3">
         <router-link to="/inventory/transfer-orders" class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-202 flex items-center gap-1 dark:text-slate-400">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
