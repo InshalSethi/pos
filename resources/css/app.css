@@ -202,3 +202,19 @@ html.dark * {
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
 }
 
+/* Eliminate Black Border & Ring on Selected / Focused Inputs */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+    border-color: #3f3f46 !important;
+}
+

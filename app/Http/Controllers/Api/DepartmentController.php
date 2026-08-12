@@ -25,7 +25,22 @@ class DepartmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Department::with(['manager', 'parent', 'children', 'employees']);
+        $query = Department::with([
+            'manager', 
+            'parent', 
+            'children', 
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ])->withCount([
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ]);
 
         if ($request->has('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
@@ -86,7 +101,23 @@ class DepartmentController extends Controller
      */
     public function show(Department $department): JsonResponse
     {
-        $department->load(['manager', 'parent', 'children', 'employees', 'positions']);
+        $department->load([
+            'manager', 
+            'parent', 
+            'children', 
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }, 
+            'positions'
+        ])->loadCount([
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ]);
 
         return response()->json($department);
     }

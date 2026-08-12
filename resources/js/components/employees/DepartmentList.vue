@@ -1,7 +1,7 @@
 <template>
   <div class="department-list">
     <!-- Top Toolbar Header -->
-    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl shadow-xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-3 sm:p-3.5 rounded-2xl shadow-xs mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <h2 class="text-base font-bold text-slate-900 dark:text-white">Department Directory</h2>
         <p class="text-xs text-slate-500 dark:text-slate-400">View and manage company departments</p>
@@ -24,54 +24,54 @@
         <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
           <thead class="bg-slate-50 dark:bg-zinc-800/60">
             <tr>
-              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Name
               </th>
-              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Code
               </th>
-              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Manager
               </th>
-              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Parent Department
               </th>
-              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Employees
               </th>
-              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Status
               </th>
-              <th class="px-6 py-3 text-right text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              <th class="px-4 py-2.5 text-right text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-zinc-900 divide-y divide-slate-100 dark:divide-zinc-800/60">
             <tr v-for="department in departments" :key="department.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-4 py-2.5 whitespace-nowrap">
                 <div class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ department.name }}</div>
-                <div class="text-xs text-slate-500 dark:text-slate-400" v-if="department.description">{{ department.description }}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400" v-if="department.description">{{ department.description }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
+              <td class="px-4 py-2.5 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
                 {{ department.code }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
+              <td class="px-4 py-2.5 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
                 {{ department.manager?.full_name || '-' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
+              <td class="px-4 py-2.5 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
                 {{ department.parent?.name || '-' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
-                {{ department.employees?.length || 0 }}
+              <td class="px-4 py-2.5 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
+                {{ department.employees_count !== undefined ? department.employees_count : (department.employees ? department.employees.filter(e => !e.is_manager).length : 0) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-4 py-2.5 whitespace-nowrap">
                 <span :class="department.is_active ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-400'" 
                       class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider">
                   {{ department.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-xs font-medium">
+              <td class="px-4 py-2.5 whitespace-nowrap text-right text-xs font-medium">
                 <div class="flex justify-end space-x-2">
                   <button
                     @click="$emit('edit-department', department)"

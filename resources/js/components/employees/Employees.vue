@@ -1,18 +1,18 @@
 <template>
   <div class="employees-container max-w-full font-sans">
     <!-- Header -->
-    <div class="mb-6">
+    <div class="mb-3">
       <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Employee Management</h1>
       <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage employees, departments, and positions</p>
     </div>
 
     <!-- Tabs -->
-    <div class="border-b border-slate-200 dark:border-zinc-800 mb-6">
-      <nav class="-mb-px flex space-x-8">
+    <div class="border-b border-slate-200 dark:border-zinc-800 mb-3.5">
+      <nav class="-mb-px flex space-x-6">
         <button
           @click="switchTab('employees')"
           :class="[
-            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
+            'py-1.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'employees'
               ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -23,7 +23,7 @@
         <button
           @click="switchTab('managers')"
           :class="[
-            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
+            'py-1.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'managers'
               ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -34,7 +34,7 @@
         <button
           @click="switchTab('departments')"
           :class="[
-            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
+            'py-1.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'departments'
               ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -45,7 +45,7 @@
         <button
           @click="switchTab('positions')"
           :class="[
-            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
+            'py-1.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'positions'
               ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -56,7 +56,7 @@
         <button
           @click="switchTab('reports')"
           :class="[
-            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
+            'py-1.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'reports'
               ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -67,7 +67,7 @@
         <button
           @click="switchTab('user-management')"
           :class="[
-            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
+            'py-1.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'user-management'
               ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -400,6 +400,6 @@ watch(() => route.query, () => {
 
 <style scoped>
 .employees-container {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 </style>

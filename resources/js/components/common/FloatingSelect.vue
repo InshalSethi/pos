@@ -9,10 +9,10 @@
       type="button"
       @click="toggle"
       :disabled="disabled"
-      class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border rounded-xl text-left flex items-center justify-between shadow-xs transition-all cursor-pointer"
+      class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border rounded-xl text-left flex items-center justify-between shadow-xs transition-all cursor-pointer focus:outline-none"
       :class="[
         error ? 'border-rose-400 dark:border-rose-600 focus:ring-2 focus:ring-rose-500/20' : 'border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600',
-        isOpen ? 'ring-2 ring-slate-900/10 border-slate-900 dark:border-zinc-500 bg-white dark:bg-zinc-800' : 'hover:bg-white dark:hover:bg-zinc-800',
+        isOpen ? 'border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' : 'hover:bg-white dark:hover:bg-zinc-800',
         disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900' : ''
       ]"
     >
@@ -47,7 +47,7 @@
           v-model="searchQuery"
           type="text"
           placeholder="Search..."
-          class="w-full px-2.5 py-1.5 text-xs font-medium bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-400"
+          class="w-full px-2.5 py-1.5 text-xs font-medium bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-0 focus:border-slate-300 dark:focus:border-zinc-600"
           @click.stop
         />
       </div>

@@ -1,8 +1,8 @@
 <template>
   <div class="employee-list">
     <!-- Top Action & Filter Controls -->
-    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl shadow-xs mb-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-3 sm:p-3.5 rounded-2xl shadow-xs mb-3">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-white">Workforce Directory</h2>
           <p class="text-xs text-slate-500 dark:text-slate-400">View and manage all company employees</p>
@@ -43,6 +43,22 @@
             </button>
           </div>
 
+          <!-- Filter Drawer Trigger Button -->
+          <button
+            type="button"
+            @click="isFilterDrawerOpen = true"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border border-slate-200/80 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-xs"
+            :class="{ 'border-slate-900 text-slate-900 bg-slate-100/80 dark:bg-zinc-800 dark:border-white dark:text-white': activeFilterCount > 0 }"
+          >
+            <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" :class="{ 'text-slate-900 dark:text-white': activeFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
+            </svg>
+            <span>Filter</span>
+            <span v-if="activeFilterCount > 0" class="ml-0.5 px-1.5 py-0.2 text-[10px] font-extrabold bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full">
+              {{ activeFilterCount }}
+            </span>
+          </button>
+
           <!-- Add Employee Action Button -->
           <button
             type="button"
@@ -57,45 +73,36 @@
         </div>
       </div>
 
-      <!-- Filters Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Search</label>
-          <input
-            v-model="filters.search"
-            type="text"
-            placeholder="Search employees..."
-            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-            @input="debouncedSearch"
-          />
-        </div>
-        <div>
-          <FloatingSelect
-            v-model="filters.employment_status"
-            label="Status"
-            placeholder="All Statuses"
-            :options="statusOptions"
-            @update:modelValue="fetchEmployees"
-          />
-        </div>
-        <div>
-          <FloatingSelect
-            v-model="filters.department_id"
-            label="Department"
-            placeholder="All Departments"
-            :options="departmentOptions"
-            @update:modelValue="fetchEmployees"
-          />
-        </div>
-        <div>
-          <FloatingSelect
-            v-model="filters.employment_type"
-            label="Employment Type"
-            placeholder="All Types"
-            :options="typeOptions"
-            @update:modelValue="fetchEmployees"
-          />
-        </div>
+      <!-- Active Filters Pill Bar -->
+      <div v-if="activeFilterCount > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 flex flex-wrap items-center gap-2">
+        <span class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mr-1">Active Filters:</span>
+
+        <span v-if="filters.search" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700">
+          Search: {{ filters.search }}
+          <button @click="removeSingleFilter('search')" class="ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </span>
+
+        <span v-if="filters.employment_status" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700">
+          Status: {{ getStatusLabel(filters.employment_status) }}
+          <button @click="removeSingleFilter('employment_status')" class="ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </span>
+
+        <span v-if="filters.department_id" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700">
+          Department: {{ getDepartmentLabel(filters.department_id) }}
+          <button @click="removeSingleFilter('department_id')" class="ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </span>
+
+        <span v-if="filters.employment_type" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700">
+          Type: {{ getTypeLabel(filters.employment_type) }}
+          <button @click="removeSingleFilter('employment_type')" class="ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </span>
+
+        <button 
+          @click="clearFilters"
+          class="ml-auto text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer flex items-center gap-1"
+        >
+          Clear All
+        </button>
       </div>
     </div>
 
@@ -123,11 +130,11 @@
       </div>
 
       <!-- Employee Grid Cards -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
         <div
           v-for="item in employeeList"
           :key="item.id"
-          class="group relative bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 rounded-2xl p-5 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
+          class="group relative bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 rounded-2xl p-4 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
         >
           <!-- Card Header: Checkbox & Status -->
           <div class="flex items-center justify-between w-full mb-2">
@@ -358,6 +365,112 @@
       :subtitle="previewImageSubtitle"
       @close="showImagePreview = false"
     />
+
+    <!-- Slide-Over Filter Drawer Panel -->
+    <Teleport to="body">
+      <div v-if="isFilterDrawerOpen" class="fixed inset-0 z-[99999] overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div 
+          class="fixed inset-0 bg-slate-900/50 dark:bg-zinc-950/80 backdrop-blur-xs transition-opacity duration-300"
+          @click="isFilterDrawerOpen = false"
+        ></div>
+
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+          <div class="w-screen max-w-md bg-white dark:bg-zinc-900 border-l border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col justify-between">
+            
+            <!-- Drawer Header -->
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-900 dark:text-white">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white" id="slide-over-title">Filter Employees</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Refine workforce search parameters</p>
+                </div>
+              </div>
+              <button 
+                @click="isFilterDrawerOpen = false"
+                class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Drawer Body -->
+            <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+              <!-- Search -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-2">Search</label>
+                <input
+                  v-model="filters.search"
+                  type="text"
+                  placeholder="Search employees..."
+                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-0 focus:border-slate-300 dark:focus:border-zinc-600 transition-all"
+                  @input="debouncedSearch"
+                />
+              </div>
+
+              <!-- Status -->
+              <div>
+                <FloatingSelect
+                  v-model="filters.employment_status"
+                  label="Status"
+                  placeholder="All Statuses"
+                  :options="statusOptions"
+                  @update:modelValue="fetchEmployees"
+                />
+              </div>
+
+              <!-- Department -->
+              <div>
+                <FloatingSelect
+                  v-model="filters.department_id"
+                  label="Department"
+                  placeholder="All Departments"
+                  :options="departmentOptions"
+                  @update:modelValue="fetchEmployees"
+                />
+              </div>
+
+              <!-- Employment Type -->
+              <div>
+                <FloatingSelect
+                  v-model="filters.employment_type"
+                  label="Employment Type"
+                  placeholder="All Types"
+                  :options="typeOptions"
+                  @update:modelValue="fetchEmployees"
+                />
+              </div>
+            </div>
+
+            <!-- Drawer Footer -->
+            <div class="p-6 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center gap-3">
+              <button
+                type="button"
+                @click="clearFilters"
+                class="flex-1 py-2.5 px-4 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-center"
+              >
+                Clear Filters
+              </button>
+              <button
+                type="button"
+                @click="isFilterDrawerOpen = false"
+                class="flex-1 py-2.5 px-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all cursor-pointer shadow-xs text-center"
+              >
+                Apply Filters
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -413,6 +526,8 @@ const employeeList = computed(() => {
 });
 
 const loading = ref(false);
+const isFilterDrawerOpen = ref(false);
+
 const filters = ref({
   search: '',
   employment_status: '',
@@ -422,6 +537,48 @@ const filters = ref({
   sort_field: '',
   sort_order: ''
 });
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filters.value.search && filters.value.search.trim() !== '') count++;
+  if (filters.value.employment_status) count++;
+  if (filters.value.department_id) count++;
+  if (filters.value.employment_type) count++;
+  return count;
+});
+
+const clearFilters = () => {
+  filters.value.search = '';
+  filters.value.employment_status = '';
+  filters.value.department_id = '';
+  filters.value.employment_type = '';
+  filters.value.page = 1;
+  fetchEmployees();
+};
+
+const removeSingleFilter = (key) => {
+  if (key === 'search') filters.value.search = '';
+  if (key === 'employment_status') filters.value.employment_status = '';
+  if (key === 'department_id') filters.value.department_id = '';
+  if (key === 'employment_type') filters.value.employment_type = '';
+  filters.value.page = 1;
+  fetchEmployees();
+};
+
+const getDepartmentLabel = (id) => {
+  const d = departments.value.find(item => item.id == id);
+  return d ? d.name : id;
+};
+
+const getStatusLabel = (val) => {
+  const opt = statusOptions.find(o => o.value === val);
+  return opt ? opt.label : val;
+};
+
+const getTypeLabel = (val) => {
+  const opt = typeOptions.find(o => o.value === val);
+  return opt ? opt.label : val;
+};
 
 // DataTable pagination
 const pagination = ref({

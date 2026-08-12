@@ -1,9 +1,9 @@
 <template>
-  <div class="employee-user-management space-y-6">
+  <div class="employee-user-management space-y-3.5">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
       <div>
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white">User Account Management</h2>
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">User Account Management</h2>
         <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage system access for employees</p>
       </div>
       <div class="flex items-center gap-2.5">
@@ -23,8 +23,8 @@
     </div>
 
     <!-- Audit Summary Cards -->
-    <div v-if="auditData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 rounded-2xl shadow-xs">
+    <div v-if="auditData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-3.5">
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-3.5 rounded-2xl shadow-xs">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-6 w-6 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

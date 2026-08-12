@@ -25,7 +25,20 @@ class PositionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Position::with(['department', 'employees']);
+        $query = Position::with([
+            'department', 
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ])->withCount([
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ]);
 
         if ($request->has('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
@@ -98,7 +111,20 @@ class PositionController extends Controller
      */
     public function show(Position $position): JsonResponse
     {
-        $position->load(['department', 'employees']);
+        $position->load([
+            'department', 
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ])->loadCount([
+            'employees' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('is_manager', false)->orWhereNull('is_manager');
+                });
+            }
+        ]);
 
         return response()->json($position);
     }
