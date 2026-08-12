@@ -213,6 +213,9 @@ class RoleController extends Controller
             if ($permission->name === 'edit_po_number') {
                 return 'purchases';
             }
+            if ($permission->name === 'manage_employees') {
+                return 'employees';
+            }
             return explode('.', $permission->name)[0];
         });
 

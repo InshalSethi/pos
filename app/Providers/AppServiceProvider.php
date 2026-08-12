@@ -27,9 +27,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Implicitly grant "admin" and "owner" roles all permissions
+        // Implicitly grant "admin", "owner" roles and current company owner all permissions
         Gate::before(function ($user, $ability) {
-            return $user->hasRole(['admin', 'owner']) ? true : null;
+            if ($user->hasRole(['admin', 'owner', 'super-admin']) || (int)$user->id === 1) {
+                return true;
+            }
+            if ($user->currentCompany && (int)$user->id === (int)$user->currentCompany->user_id) {
+                return true;
+            }
+            return null;
         });
 
         // Register event listeners for expense accounting

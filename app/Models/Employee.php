@@ -244,4 +244,50 @@ class Employee extends Model
 
         return sprintf('%s%s%04d', $prefix, $year, $sequence);
     }
+
+    /**
+     * Scope a query to strictly exclude company owners/admins and account creators dynamically.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeNonAdmin($query)
+    {
+        $user = auth()->user();
+        $companyId = $user ? ($user->current_company_id ?? $user->company_id) : null;
+        $company = $companyId ? \App\Models\Company::find($companyId) : ($user ? $user->currentCompany : null);
+        $ownerId = $company ? $company->user_id : null;
+        $ownerEmail = ($company && $company->owner) ? $company->owner->email : null;
+
+        // 1. Exclude direct owner user_id & email if known
+        if ($ownerId) {
+            $query->where(function ($q) use ($ownerId) {
+                $q->whereNull('user_id')->orWhere('user_id', '!=', $ownerId);
+            });
+        }
+
+        if ($ownerEmail) {
+            $query->where('email', '!=', $ownerEmail);
+        }
+
+        // 2. Exclude any employee whose linked user has admin / owner roles or is owner/admin
+        $query->whereDoesntHave('user', function ($uq) use ($ownerId, $companyId) {
+            $uq->where(function ($sq) use ($ownerId, $companyId) {
+                if ($ownerId) {
+                    $sq->orWhere('id', $ownerId);
+                }
+                $sq->orWhereHas('roles', function ($rq) {
+                    $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['admin', 'owner', 'super-admin', 'company admin', 'company owner']);
+                });
+                if ($companyId) {
+                    $sq->orWhereHas('companies', function ($cq) use ($companyId) {
+                        $cq->where('company_id', $companyId)
+                           ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(company_user.role)'), ['admin', 'owner', 'super-admin']);
+                    });
+                }
+            });
+        });
+
+        return $query;
+    }
 }

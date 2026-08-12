@@ -101,6 +101,7 @@ class RolePermissionSeeder extends Seeder
             'employees.create',
             'employees.edit',
             'employees.delete',
+            'manage_employees',
 
             // Reports permissions
             'reports.view',

@@ -219,8 +219,9 @@ class EmployeeUserService
      */
     public function getEmployeesWithoutUserAccounts()
     {
-        return Employee::whereNull('user_id')
-                      ->active()
+        return Employee::nonAdmin()
+                      ->whereNull('user_id')
+                      ->where('is_active', true)
                       ->with(['department', 'position'])
                       ->get();
     }
@@ -234,7 +235,7 @@ class EmployeeUserService
         
         foreach ($employeeIds as $employeeId) {
             try {
-                $employee = Employee::findOrFail($employeeId);
+                $employee = Employee::nonAdmin()->findOrFail($employeeId);
                 $user = $this->createUserAccountForEmployee($employee);
                 $results[] = [
                     'employee_id' => $employee->id,
@@ -273,12 +274,13 @@ class EmployeeUserService
     public function auditUserEmployeeRelationships(): array
     {
         return [
-            'employees_without_users' => Employee::whereNull('user_id')->active()->count(),
+            'employees_without_users' => Employee::nonAdmin()->whereNull('user_id')->where('is_active', true)->count(),
             'users_without_employees' => User::whereDoesntHave('employee')->count(),
-            'inactive_employees_with_active_users' => Employee::where('is_active', false)
+            'inactive_employees_with_active_users' => Employee::nonAdmin()
+                                                              ->where('is_active', false)
                                                               ->whereHas('user')
                                                               ->count(),
-            'mismatched_emails' => Employee::whereHas('user', function($query) {
+            'mismatched_emails' => Employee::nonAdmin()->whereHas('user', function($query) {
                                        $query->whereColumn('users.email', '!=', 'employees.email');
                                    })->count(),
         ];
