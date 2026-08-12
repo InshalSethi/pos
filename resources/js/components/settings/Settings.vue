@@ -1,18 +1,23 @@
 <template>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  <div class="settings-container max-w-full font-sans">
     <div class="px-4 py-6 sm:px-0">
-      <h1 class="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Settings</h1>
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage application preferences, user accounts, security roles, payment integrations, and accounting mappings</p>
+        </div>
+      </div>
 
       <!-- Tab Navigation -->
-      <div class="border-b border-gray-200 mb-6">
-        <nav class="-mb-px flex space-x-8">
+      <div class="border-b border-slate-200 dark:border-zinc-800 mb-6">
+        <nav class="-mb-px flex space-x-2 overflow-x-auto pb-1">
           <button
             @click="activeTab = 'general'"
             :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm',
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap',
               activeTab === 'general'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
             ]"
           >
             General Settings
@@ -22,10 +27,10 @@
             v-if="authStore.hasPermission('users.view')"
             @click="activeTab = 'users'"
             :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm',
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap',
               activeTab === 'users'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
             ]"
           >
             Users
@@ -34,10 +39,10 @@
             v-if="authStore.hasPermission('roles.view')"
             @click="activeTab = 'roles'"
             :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm',
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap',
               activeTab === 'roles'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
             ]"
           >
             Roles
@@ -46,10 +51,10 @@
             v-if="authStore.hasPermission('settings.payment_gateways')"
             @click="activeTab = 'payments'"
             :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm',
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap',
               activeTab === 'payments'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
             ]"
           >
             Payment Gateways
@@ -57,10 +62,10 @@
           <button
             @click="activeTab = 'accounting'"
             :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm',
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap',
               activeTab === 'accounting'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
             ]"
           >
             Accounting
@@ -69,10 +74,10 @@
           <button
             @click="activeTab = 'invoice-purchase'"
             :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap',
               activeTab === 'invoice-purchase'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
             ]"
           >
             Invoice & Purchase Settings
@@ -81,38 +86,37 @@
       </div>
 
       <!-- Tab Content -->
-      <div class="bg-white shadow rounded-lg">
-
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xs overflow-hidden text-slate-900 dark:text-slate-100">
 
         <!-- General Settings Tab -->
         <div v-if="activeTab === 'general'" class="p-6">
 
           <div class="space-y-8">
             <!-- Header -->
-            <div class="border-b border-gray-200 pb-4">
-              <h3 class="text-lg font-medium text-gray-900">General Settings</h3>
-              <p class="text-sm text-gray-600">Manage your application preferences and account settings</p>
+            <div class="border-b border-slate-200/80 dark:border-zinc-800 pb-4">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">General Settings</h3>
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Manage your application preferences and account settings</p>
             </div>
 
             <!-- Notification Settings -->
             <div>
-              <h4 class="text-md font-medium text-gray-900 mb-4">Notifications</h4>
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Notifications</h4>
               <div class="space-y-4">
                 <div class="flex items-center justify-between">
                   <div>
-                    <label class="text-sm font-medium text-gray-700">Email Notifications</label>
-                    <p class="text-sm text-gray-500">Receive email notifications for important updates</p>
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Email Notifications</label>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Receive email notifications for important updates</p>
                   </div>
                   <button
                     @click="toggleSetting('email_notifications')"
                     :class="[
-                      'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                      settings.email_notifications ? 'bg-indigo-600' : 'bg-gray-200'
+                      'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                      settings.email_notifications ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                     ]"
                   >
                     <span
                       :class="[
-                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                         settings.email_notifications ? 'translate-x-5' : 'translate-x-0'
                       ]"
                     ></span>
@@ -121,19 +125,19 @@
 
               <div class="flex items-center justify-between">
                 <div>
-                  <label class="text-sm font-medium text-gray-700">Sales Alerts</label>
-                  <p class="text-sm text-gray-500">Get notified when sales are completed</p>
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Sales Alerts</label>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Get notified when sales are completed</p>
                 </div>
                 <button
                   @click="toggleSetting('sales_alerts')"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    settings.sales_alerts ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    settings.sales_alerts ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       settings.sales_alerts ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -142,19 +146,19 @@
 
               <div class="flex items-center justify-between">
                 <div>
-                  <label class="text-sm font-medium text-gray-700">Low Stock Alerts</label>
-                  <p class="text-sm text-gray-500">Receive alerts when products are running low</p>
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Low Stock Alerts</label>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Receive alerts when products are running low</p>
                 </div>
                 <button
                   @click="toggleSetting('low_stock_alerts')"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    settings.low_stock_alerts ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    settings.low_stock_alerts ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       settings.low_stock_alerts ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -164,8 +168,8 @@
           </div>
 
           <!-- Display Settings -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Display</h3>
+          <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Display</h3>
             <div class="space-y-4">
               <div class="max-w-md w-full">
                 <SystemSelect
@@ -184,8 +188,8 @@
           </div>
 
           <!-- POS Settings -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Point of Sale</h3>
+          <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Point of Sale</h3>
             <div class="space-y-4">
               <div class="max-w-md w-full">
                 <SystemSelect
@@ -202,19 +206,19 @@
 
               <div class="flex items-center justify-between">
                 <div>
-                  <label class="text-sm font-medium text-gray-700">Auto-print receipts</label>
-                  <p class="text-sm text-gray-500">Automatically print receipts after each sale</p>
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Auto-print receipts</label>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Automatically print receipts after each sale</p>
                 </div>
                 <button
                   @click="toggleSetting('auto_print_receipts')"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    settings.auto_print_receipts ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    settings.auto_print_receipts ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       settings.auto_print_receipts ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -223,19 +227,19 @@
 
               <div class="flex items-center justify-between">
                 <div>
-                  <label class="text-sm font-medium text-gray-700">Sound Effects</label>
-                  <p class="text-sm text-gray-500">Play sounds for POS actions</p>
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Sound Effects</label>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Play sounds for POS actions</p>
                 </div>
                 <button
                   @click="toggleSetting('sound_effects')"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    settings.sound_effects ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    settings.sound_effects ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       settings.sound_effects ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -245,8 +249,8 @@
           </div>
 
           <!-- Security Settings -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Security</h3>
+          <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Security</h3>
             <div class="space-y-4">
               <div class="max-w-md w-full">
                 <SystemSelect
@@ -265,19 +269,19 @@
 
               <div class="flex items-center justify-between">
                 <div>
-                  <label class="text-sm font-medium text-gray-700">Two-Factor Authentication</label>
-                  <p class="text-sm text-gray-500">Add an extra layer of security to your account</p>
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Two-Factor Authentication</label>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Add an extra layer of security to your account</p>
                 </div>
                 <button
                   @click="toggleSetting('two_factor_auth')"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    settings.two_factor_auth ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    settings.two_factor_auth ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       settings.two_factor_auth ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -287,20 +291,20 @@
           </div>
 
           <!-- Fiscal Year Settings -->
-          <div class="border-t border-gray-200 pt-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-1">Fiscal Year</h3>
-            <p class="text-sm text-gray-500 mb-4">Set the start date of your company's 12-month accounting cycle</p>
+          <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Fiscal Year</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Set the start date of your company's 12-month accounting cycle</p>
 
             <div class="max-w-md w-full space-y-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Fiscal Year Start Date</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Fiscal Year Start Date</label>
                 <input
                   type="date"
                   v-model="companyData.fiscal_year_start"
                   :disabled="companyData.can_edit_fiscal_year === false"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl focus:outline-none text-xs font-semibold disabled:bg-slate-100 dark:disabled:bg-zinc-800/40 disabled:text-slate-400 disabled:cursor-not-allowed"
                 />
-                <p v-if="companyData.can_edit_fiscal_year === false" class="text-xs text-amber-600 font-medium mt-1.5 flex items-center gap-1">
+                <p v-if="companyData.can_edit_fiscal_year === false" class="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1.5 flex items-center gap-1">
                   <svg class="w-4 h-4 inline-block text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                   </svg>
@@ -308,23 +312,23 @@
                 </p>
               </div>
 
-              <div v-if="calculatedFiscalYearEnd" class="text-xs text-indigo-700 bg-indigo-50/70 border border-indigo-100 p-2.5 rounded-md flex items-center justify-between">
+              <div v-if="calculatedFiscalYearEnd" class="text-xs text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-3 rounded-xl flex items-center justify-between">
                 <span class="font-semibold">Calculated Fiscal Year End:</span>
-                <span class="font-medium bg-white px-2 py-0.5 rounded border border-indigo-200 shadow-sm">{{ calculatedFiscalYearEnd }}</span>
+                <span class="font-bold bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-xs">{{ calculatedFiscalYearEnd }}</span>
               </div>
             </div>
           </div>
 
           <!-- Save Button -->
-          <div class="border-t border-gray-200 pt-8">
+          <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
             <div class="flex justify-end">
               <button
                 id="save-settings-btn"
                 @click="saveAllSettings"
                 :disabled="saving"
-                class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center space-x-2"
+                class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-6 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition-all cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg v-if="saving" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                <svg v-if="saving" class="animate-spin h-4 w-4 text-current" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
@@ -336,68 +340,68 @@
         </div>
 
         <!-- Users Tab -->
-        <div v-else-if="activeTab === 'users'" class="p-6 bg-gray-50 min-h-screen">
+        <div v-else-if="activeTab === 'users'" class="p-6 bg-slate-50/50 dark:bg-zinc-950/40 min-h-screen">
           <!-- Statistics Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-zinc-800 p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-12 h-12 bg-slate-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-slate-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                 </div>
                 <div class="ml-4">
-                  <p class="text-sm font-medium text-gray-500">Total Users</p>
-                  <p class="text-2xl font-semibold text-gray-900">{{ formatNumber(userStatistics.total_users || 0) }}</p>
+                  <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Users</p>
+                  <p class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ formatNumber(userStatistics.total_users || 0) }}</p>
                 </div>
               </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-zinc-800 p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
                 <div class="ml-4">
-                  <p class="text-sm font-medium text-gray-500">Active Users</p>
-                  <p class="text-2xl font-semibold text-gray-900">{{ formatNumber(userStatistics.active_users || 0) }}</p>
+                  <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Users</p>
+                  <p class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ formatNumber(userStatistics.active_users || 0) }}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Filters and Search -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-zinc-800 p-6 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Search Users</label>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-4 w-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                   <input
                     v-model="userSearchQuery"
                     type="text"
-                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                    class="block w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
                     placeholder="Search by name, email..."
                     @input="debouncedUserSearch"
                   />
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Role</label>
                 <select
                   v-model="userRoleFilter"
                   @change="loadUsers(1)"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                  class="block w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none"
                 >
                   <option value="">All Roles</option>
                   <option v-for="role in roles" :key="role.id" :value="role.name">
@@ -406,11 +410,11 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Status</label>
                 <select
                   v-model="userStatusFilter"
                   @change="loadUsers(1)"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                  class="block w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none"
                 >
                   <option value="">All Status</option>
                   <option value="1">Active</option>
@@ -418,11 +422,11 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Per Page</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Per Page</label>
                 <select
                   v-model="userPerPage"
                   @change="handleUserPerPageChange"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                  class="block w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none"
                 >
                   <option :value="15">15 per page</option>
                   <option :value="25">25 per page</option>
@@ -433,7 +437,7 @@
           </div>
 
           <!-- User Cards/Table -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-zinc-800">
             <!-- Desktop Table View -->
             <div class="hidden lg:block">
               <DataTable
@@ -457,30 +461,30 @@
                 <!-- Custom column content -->
                 <template #column-user="{ item }">
                   <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <span class="text-sm font-medium text-indigo-600">{{ getInitials(item.name) }}</span>
+                    <div class="flex-shrink-0 h-9 w-9">
+                      <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ getInitials(item.name) }}</span>
                       </div>
                     </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">
+                    <div class="ml-3">
+                      <div class="text-xs font-bold text-slate-900 dark:text-white">
                         {{ item.name }}
                       </div>
-                      <div class="text-sm text-gray-500">ID: #{{ item.id }}</div>
+                      <div class="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">ID: #{{ item.id }}</div>
                     </div>
                   </div>
                 </template>
 
                 <template #column-contact="{ item }">
                   <div>
-                    <div class="text-sm text-gray-900">{{ item.email || '-' }}</div>
-                    <div class="text-sm text-gray-500">{{ item.phone || '-' }}</div>
+                    <div class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ item.email || '-' }}</div>
+                    <div class="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">{{ item.phone || '-' }}</div>
                   </div>
                 </template>
 
                 <template #column-role="{ item }">
                   <div class="flex flex-wrap gap-1">
-                    <span v-for="r in item.roles" :key="r.id" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span v-for="r in item.roles" :key="r.id" class="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 capitalize">
                       {{ r.name }}
                     </span>
                   </div>
@@ -488,8 +492,8 @@
 
                 <template #column-status="{ item }">
                   <span :class="item.is_active
-                    ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
-                    : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
+                    ? 'inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 uppercase tracking-wider'
+                    : 'inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-400 uppercase tracking-wider'">
                     {{ item.is_active ? 'Active' : 'Inactive' }}
                   </span>
                 </template>
@@ -498,7 +502,7 @@
                   <div class="flex items-center justify-end space-x-2">
                     <button
                       @click="viewUser(item)"
-                      class="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50"
+                      class="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                       title="View Details"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,7 +512,7 @@
                     </button>
                     <button
                       @click="editUser(item)"
-                      class="text-yellow-600 hover:text-yellow-900 p-1 rounded-md hover:bg-yellow-50"
+                      class="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                       title="Edit User"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -518,7 +522,7 @@
                     <button
                       v-if="!isMainOwner(item)"
                       @click="deleteUser(item.id)"
-                      class="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50"
+                      class="text-rose-600 hover:text-rose-700 dark:text-rose-400 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                       title="Delete User"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -532,9 +536,9 @@
                 <template #actions>
                   <button
                     @click="handleCreateUser"
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                    class="inline-flex items-center px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all duration-200 cursor-pointer"
                   >
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Add User
@@ -549,55 +553,55 @@
                 <div
                   v-for="item in users.data"
                   :key="item.id"
-                  class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                  class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xs"
                 >
                   <div class="flex items-start justify-between">
                     <div class="flex items-center space-x-3">
-                      <div class="flex-shrink-0 h-10 w-10">
-                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <span class="text-sm font-medium text-indigo-600">{{ getInitials(item.name) }}</span>
+                      <div class="flex-shrink-0 h-9 w-9">
+                        <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ getInitials(item.name) }}</span>
                         </div>
                       </div>
                       <div>
-                        <h3 class="text-sm font-medium text-gray-900">{{ item.name }}</h3>
-                        <p class="text-sm text-gray-500">{{ item.email || 'No email' }}</p>
+                        <h3 class="text-xs font-bold text-slate-900 dark:text-white">{{ item.name }}</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{{ item.email || 'No email' }}</p>
                       </div>
                     </div>
                     <span :class="item.is_active
-                      ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
-                      : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
+                      ? 'inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 uppercase'
+                      : 'inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-400 uppercase'">
                       {{ item.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
 
-                  <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div class="mt-4 grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <span class="text-gray-500">Phone:</span>
-                      <span class="ml-1 text-gray-900">{{ item.phone || '-' }}</span>
+                      <span class="text-slate-400 dark:text-zinc-500 font-medium">Phone:</span>
+                      <span class="ml-1 text-slate-900 dark:text-slate-100 font-semibold">{{ item.phone || '-' }}</span>
                     </div>
                     <div>
-                      <span class="text-gray-500">Role:</span>
-                      <span v-for="r in item.roles" :key="r.id" class="ml-1 text-gray-900 capitalize">{{ r.name }}</span>
+                      <span class="text-slate-400 dark:text-zinc-500 font-medium">Role:</span>
+                      <span v-for="r in item.roles" :key="r.id" class="ml-1 text-slate-900 dark:text-slate-100 capitalize font-semibold">{{ r.name }}</span>
                     </div>
                   </div>
 
                   <div class="mt-4 flex justify-end space-x-2">
                     <button
                       @click="viewUser(item)"
-                      class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
+                      class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200"
                     >
                       View
                     </button>
                     <button
                       @click="editUser(item)"
-                      class="inline-flex items-center px-3 py-1 text-xs font-medium text-yellow-600 bg-yellow-50 rounded-md hover:bg-yellow-100"
+                      class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200"
                     >
                       Edit
                     </button>
                     <button
                       v-if="!isMainOwner(item)"
                       @click="deleteUser(item.id)"
-                      class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100"
+                      class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 rounded-lg hover:bg-rose-100"
                     >
                       Delete
                     </button>
@@ -607,20 +611,20 @@
             </div>
 
             <!-- Pagination (Mobile/Fallback) -->
-            <div v-if="users.last_page > 1" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 lg:hidden">
+            <div v-if="users.last_page > 1" class="bg-white dark:bg-zinc-900 px-4 py-3 border-t border-slate-200 dark:border-zinc-800 sm:px-6 lg:hidden">
               <div class="flex items-center justify-between">
                 <div class="flex-1 flex justify-between">
                   <button
                     @click="changeUserPage(users.current_page - 1)"
                     :disabled="users.current_page === 1"
-                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-white dark:bg-zinc-800 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   <button
                     @click="changeUserPage(users.current_page + 1)"
                     :disabled="users.current_page === users.last_page"
-                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-white dark:bg-zinc-800 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
@@ -631,14 +635,17 @@
         </div>
 
         <!-- Roles Tab -->
-        <div v-else-if="activeTab === 'roles'" class="p-6 bg-gray-50 min-h-screen">
+        <div v-else-if="activeTab === 'roles'" class="p-6 bg-slate-50/50 dark:bg-zinc-950/40 min-h-screen">
           <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-medium text-gray-900">Role Management</h3>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Role Management</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Create custom access control roles and assign permissions</p>
+            </div>
             <button
               @click="handleCreateRole"
-              class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+              class="inline-flex items-center px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all duration-200 cursor-pointer"
             >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Add Role
@@ -646,10 +653,10 @@
           </div>
 
           <!-- Search -->
-          <div class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-md">
+          <div class="mb-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-zinc-800 p-4 max-w-md">
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-4 w-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -657,41 +664,41 @@
                 v-model="roleSearchQuery"
                 type="text"
                 placeholder="Search roles..."
-                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white text-gray-900"
+                class="block w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
               />
             </div>
           </div>
 
           <!-- Roles List -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <ul class="divide-y divide-gray-200">
-              <li v-for="role in filteredSettingsRoles" :key="role.id" class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-zinc-800 overflow-hidden">
+            <ul class="divide-y divide-slate-100 dark:divide-zinc-800/60">
+              <li v-for="role in filteredSettingsRoles" :key="role.id" class="px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors duration-150">
                 <div class="flex items-center justify-between">
                   <div class="flex-1">
                     <div class="flex items-center">
                       <div class="flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <span class="text-indigo-600 font-bold text-lg">{{ role.name.charAt(0).toUpperCase() }}</span>
+                        <div class="h-10 w-10 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center border border-slate-200 dark:border-zinc-700">
+                          <span class="text-slate-900 dark:text-white font-bold text-sm">{{ role.name.charAt(0).toUpperCase() }}</span>
                         </div>
                       </div>
                       <div class="ml-4">
-                        <div class="text-sm font-semibold text-gray-900 capitalize">{{ role.name }}</div>
-                        <div class="text-xs text-gray-500 mt-0.5">
+                        <div class="text-xs font-bold text-slate-900 dark:text-white capitalize">{{ role.name }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                           {{ role.permissions ? role.permissions.length : 0 }} permissions assigned
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div class="flex items-center space-x-3">
+                  <div class="flex items-center space-x-2">
                     <button
                       @click="editRole(role)"
-                      class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                      class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-zinc-800 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                     >
                       Edit
                     </button>
                     <button
                       @click="deleteRole(role.id, role.name)"
-                      class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                      class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
                     >
                       Delete
                     </button>
@@ -701,7 +708,7 @@
             </ul>
             <!-- Empty State -->
             <div v-if="filteredSettingsRoles.length === 0" class="text-center py-8">
-              <p class="text-gray-500">No roles found.</p>
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">No roles found.</p>
             </div>
           </div>
         </div>
@@ -709,31 +716,31 @@
         <!-- Payment Gateways Tab -->
         <div v-else-if="activeTab === 'payments'" class="p-6">
           <div class="space-y-8">
-            <div class="border-b border-gray-200 pb-4">
-              <h3 class="text-lg font-medium text-gray-900">Payment Gateway Settings</h3>
-              <p class="text-sm text-gray-600">Configure payment gateways for your POS system</p>
+            <div class="border-b border-slate-200/80 dark:border-zinc-800 pb-4">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Payment Gateway Settings</h3>
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Configure payment gateways for your POS system</p>
             </div>
 
             <!-- Stripe Settings -->
-            <div class="bg-gray-50 rounded-lg p-6">
+            <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-6 shadow-xs">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center">
                   <img src="/images/stripe-logo.png" alt="Stripe" class="h-8 w-auto mr-3" />
                   <div>
-                    <h4 class="text-md font-medium text-gray-900">Stripe</h4>
-                    <p class="text-sm text-gray-600">Accept credit cards and digital payments</p>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Stripe</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Accept credit cards and digital payments</p>
                   </div>
                 </div>
                 <button
                   @click="paymentSettings.stripe_enabled = !paymentSettings.stripe_enabled; updatePaymentSetting('stripe_enabled', paymentSettings.stripe_enabled)"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    paymentSettings.stripe_enabled ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    paymentSettings.stripe_enabled ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       paymentSettings.stripe_enabled ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -742,22 +749,22 @@
 
               <div v-if="paymentSettings.stripe_enabled" class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Publishable Key</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Publishable Key</label>
                   <input
                     v-model="paymentSettings.stripe_public_key"
                     @blur="updatePaymentSetting('stripe_public_key', paymentSettings.stripe_public_key)"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none"
                     placeholder="pk_test_..."
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Secret Key</label>
                   <input
                     v-model="paymentSettings.stripe_secret_key"
                     @blur="updatePaymentSetting('stripe_secret_key', paymentSettings.stripe_secret_key)"
                     type="password"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none"
                     placeholder="sk_test_..."
                   />
                 </div>
@@ -765,27 +772,27 @@
             </div>
 
             <!-- Square Settings -->
-            <div class="bg-gray-50 rounded-lg p-6">
+            <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-6 shadow-xs">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center">
-                  <div class="h-8 w-8 bg-black rounded mr-3 flex items-center justify-center">
-                    <span class="text-white text-xs font-bold">SQ</span>
+                  <div class="h-8 w-8 bg-slate-900 dark:bg-white rounded-xl mr-3 flex items-center justify-center">
+                    <span class="text-white dark:text-slate-900 text-xs font-bold">SQ</span>
                   </div>
                   <div>
-                    <h4 class="text-md font-medium text-gray-900">Square</h4>
-                    <p class="text-sm text-gray-600">Accept payments with Square</p>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Square</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Accept payments with Square</p>
                   </div>
                 </div>
                 <button
                   @click="paymentSettings.square_enabled = !paymentSettings.square_enabled; updatePaymentSetting('square_enabled', paymentSettings.square_enabled)"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    paymentSettings.square_enabled ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    paymentSettings.square_enabled ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       paymentSettings.square_enabled ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -794,22 +801,22 @@
 
               <div v-if="paymentSettings.square_enabled" class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Application ID</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Application ID</label>
                   <input
                     v-model="paymentSettings.square_application_id"
                     @blur="updatePaymentSetting('square_application_id', paymentSettings.square_application_id)"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none"
                     placeholder="sandbox-sq0idb-..."
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Access Token</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Access Token</label>
                   <input
                     v-model="paymentSettings.square_access_token"
                     @blur="updatePaymentSetting('square_access_token', paymentSettings.square_access_token)"
                     type="password"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none"
                     placeholder="EAAAEOuLQOGg..."
                   />
                 </div>
@@ -817,27 +824,27 @@
             </div>
 
             <!-- Google Pay Settings -->
-            <div class="bg-gray-50 rounded-lg p-6">
+            <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-6 shadow-xs">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center">
-                  <div class="h-8 w-8 bg-blue-500 rounded mr-3 flex items-center justify-center">
-                    <span class="text-white text-xs font-bold">GP</span>
+                  <div class="h-8 w-8 bg-slate-900 dark:bg-white rounded-xl mr-3 flex items-center justify-center">
+                    <span class="text-white dark:text-slate-900 text-xs font-bold">GP</span>
                   </div>
                   <div>
-                    <h4 class="text-md font-medium text-gray-900">Google Pay</h4>
-                    <p class="text-sm text-gray-600">Accept payments with Google Pay</p>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Google Pay</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Accept payments with Google Pay</p>
                   </div>
                 </div>
                 <button
                   @click="paymentSettings.googlepay_enabled = !paymentSettings.googlepay_enabled; updatePaymentSetting('googlepay_enabled', paymentSettings.googlepay_enabled)"
                   :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    paymentSettings.googlepay_enabled ? 'bg-indigo-600' : 'bg-gray-200'
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    paymentSettings.googlepay_enabled ? 'bg-slate-900 dark:bg-white' : 'bg-slate-200 dark:bg-zinc-700'
                   ]"
                 >
                   <span
                     :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-slate-900 shadow ring-0 transition duration-200 ease-in-out',
                       paymentSettings.googlepay_enabled ? 'translate-x-5' : 'translate-x-0'
                     ]"
                   ></span>
@@ -846,12 +853,12 @@
 
               <div v-if="paymentSettings.googlepay_enabled" class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Merchant ID</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Merchant ID</label>
                   <input
                     v-model="paymentSettings.googlepay_merchant_id"
                     @blur="updatePaymentSetting('googlepay_merchant_id', paymentSettings.googlepay_merchant_id)"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none"
                     placeholder="BCR2DN4T..."
                   />
                 </div>
@@ -863,21 +870,20 @@
         <!-- Accounting Tab -->
         <div v-else-if="activeTab === 'accounting'" class="p-6">
           <div class="space-y-8">
-            <div class="border-b border-gray-200 pb-4">
-              <h3 class="text-lg font-medium text-gray-900">Accounting Settings</h3>
-              <p class="text-sm text-gray-600">Configure chart of accounts for double entry accounting</p>
-              <p class="text-xs text-blue-600 mt-2">Debug: Tab is active, loading={{ loadingAccounting }}</p>
+            <div class="border-b border-slate-200/80 dark:border-zinc-800 pb-4">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Accounting Settings</h3>
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Configure chart of accounts for double entry accounting</p>
             </div>
 
             <div v-if="loadingAccounting" class="text-center py-8">
-              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <p class="mt-2 text-gray-600">Loading accounting settings...</p>
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-white"></div>
+              <p class="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">Loading accounting settings...</p>
             </div>
 
-            <div v-else class="space-y-8">
+            <div v-else class="space-y-6">
               <!-- Sales Invoice Accounts -->
-              <div class="bg-green-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-green-900 mb-4">Sales Invoice Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Sales Invoice Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -913,8 +919,8 @@
               </div>
 
               <!-- Sales Return Accounts -->
-              <div class="bg-red-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-red-900 mb-4">Sales Return Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Sales Return Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -950,8 +956,8 @@
               </div>
 
               <!-- Purchase Invoice Accounts -->
-              <div class="bg-orange-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-orange-900 mb-4">Purchase Invoice Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Purchase Invoice Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -987,8 +993,8 @@
               </div>
 
               <!-- Purchase Return Accounts -->
-              <div class="bg-purple-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-purple-900 mb-4">Purchase Return Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Purchase Return Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -1024,8 +1030,8 @@
               </div>
 
               <!-- Expense Accounts -->
-              <div class="bg-yellow-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-yellow-900 mb-4">Expense Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Expense Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -1051,8 +1057,8 @@
               </div>
 
               <!-- Liquid Asset & Banking Accounts -->
-              <div class="bg-blue-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-blue-900 mb-4">Liquid Assets & Banking Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Liquid Assets & Banking Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -1078,8 +1084,8 @@
               </div>
 
               <!-- Inventory & Cost of Goods Sold Accounts -->
-              <div class="bg-teal-50 p-6 rounded-lg">
-                <h4 class="text-lg font-medium text-teal-900 mb-4">Inventory & Cost of Goods Sold Accounts</h4>
+              <div class="bg-slate-50/70 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-6 rounded-2xl space-y-4">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Inventory & Cost of Goods Sold Accounts</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <CustomFloatingSelect
@@ -1105,11 +1111,11 @@
               </div>
 
               <!-- Save Button -->
-              <div class="flex justify-end">
+              <div class="flex justify-end pt-4">
                 <button
                   @click="saveAccountingSettings"
                   :disabled="savingAccounting"
-                  class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-6 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
                 >
                   {{ savingAccounting ? 'Saving...' : 'Save Accounting Settings' }}
                 </button>
@@ -1121,11 +1127,11 @@
 
 
         <!-- Invoice & Purchase Settings Tab -->
-        <div v-else-if="activeTab === 'invoice-purchase'" class="p-6 bg-slate-50 dark:bg-zinc-950/50 min-h-screen space-y-8">
+        <div v-else-if="activeTab === 'invoice-purchase'" class="p-6 bg-slate-50/50 dark:bg-zinc-950/40 min-h-screen space-y-8">
           
           <!-- Loading state -->
           <div v-if="loadingInvoicePurchaseSettings" class="flex flex-col justify-center items-center h-64 space-y-3">
-            <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent"></div>
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-900 dark:border-white border-t-transparent"></div>
             <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400">Loading Invoice & Purchase Settings...</p>
           </div>
 
@@ -1133,17 +1139,17 @@
             <!-- Header -->
             <div class="border-b border-slate-200 dark:border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 class="text-xl font-extrabold text-slate-900 dark:text-zinc-100">Invoice & Purchase Settings</h3>
-                <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">Configure default preferences, prefix rules, tax behaviors, and default terms for Sales Invoices and Purchase Orders.</p>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Invoice & Purchase Settings</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure default preferences, prefix rules, tax behaviors, and default terms for Sales Invoices and Purchase Orders.</p>
               </div>
 
               <!-- Top Save Action Button -->
               <button
                 @click="saveInvoicePurchaseSettings"
                 :disabled="savingInvoicePurchaseSettings"
-                class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer self-start sm:self-auto"
+                class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer self-start sm:self-auto"
               >
-                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -1154,10 +1160,10 @@
             <!-- SECTION A: Invoice Settings (Sales) -->
             <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
               <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
-                <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-black text-xs">A</span>
+                <span class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-bold text-xs">A</span>
                 <div>
-                  <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Section A: Invoice Settings (Sales)</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-zinc-400">Default numbering, pricing mode, due periods, and terms for Sales Invoices.</p>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Section A: Invoice Settings (Sales)</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Default numbering, pricing mode, due periods, and terms for Sales Invoices.</p>
                 </div>
               </div>
 
@@ -1165,21 +1171,21 @@
                 
                 <!-- 1. Invoice Numbering Prefix -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Invoice Numbering Prefix
                   </label>
                   <input
                     v-model="invoicePurchaseSettings.invoice_prefix"
                     type="text"
                     placeholder="e.g. INV- or SLS-"
-                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500"
                   />
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Applied to automatically generated sales invoice numbers.</p>
                 </div>
 
                 <!-- 2. Default Pricing Mode -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Default Pricing Mode
                   </label>
                   <div class="flex items-center space-x-4 pt-1">
@@ -1188,9 +1194,9 @@
                         type="radio"
                         value="retail"
                         v-model="invoicePurchaseSettings.default_pricing_mode"
-                        class="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                        class="text-slate-900 dark:text-white focus:ring-0 h-4 w-4"
                       />
-                      <span class="text-xs font-extrabold text-slate-800 dark:text-zinc-200">Retail Mode</span>
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Retail Mode</span>
                     </label>
 
                     <label class="inline-flex items-center cursor-pointer space-x-2">
@@ -1198,9 +1204,9 @@
                         type="radio"
                         value="wholesale"
                         v-model="invoicePurchaseSettings.default_pricing_mode"
-                        class="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                        class="text-slate-900 dark:text-white focus:ring-0 h-4 w-4"
                       />
-                      <span class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">Wholesale Mode</span>
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Wholesale Mode</span>
                     </label>
                   </div>
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Default active mode when initializing Create Invoice screen.</p>
@@ -1208,7 +1214,7 @@
 
                 <!-- 3. Default Due Period (Days) -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Default Due Period (Days)
                   </label>
                   <input
@@ -1217,7 +1223,7 @@
                     min="0"
                     max="365"
                     placeholder="e.g. 30"
-                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500"
                   />
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Number of days added to creation date to calculate default due date.</p>
                 </div>
@@ -1225,7 +1231,7 @@
                 <!-- 5. Show/Hide Item Wholesale Toggle -->
                 <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
                   <div>
-                    <label class="text-xs font-bold text-slate-800 dark:text-zinc-200 block">Show Row-Level W.S Toggle</label>
+                    <label class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Row-Level W.S Toggle</label>
                     <p class="text-[10px] text-slate-400 dark:text-zinc-400">Enable/disable row-level Wholesale toggle switch on invoice items.</p>
                   </div>
                   <label class="relative inline-flex items-center cursor-pointer select-none">
@@ -1234,20 +1240,20 @@
                       v-model="invoicePurchaseSettings.show_item_wholesale_toggle"
                       class="sr-only peer"
                     />
-                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-slate-900 dark:peer-checked:bg-white"></div>
                   </label>
                 </div>
 
                 <!-- 4. Default Invoice Terms & Conditions -->
                 <div class="md:col-span-2">
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Default Invoice Terms & Conditions
                   </label>
                   <textarea
                     v-model="invoicePurchaseSettings.default_terms_conditions"
                     rows="3"
                     placeholder="Enter default terms and conditions text for sales invoices..."
-                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-medium focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500"
                   ></textarea>
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Appears in footer notes section on printed and digital invoices.</p>
                 </div>
@@ -1258,10 +1264,10 @@
             <!-- SECTION B: Purchase Order Settings -->
             <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
               <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
-                <span class="p-2 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 font-black text-xs">B</span>
+                <span class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-bold text-xs">B</span>
                 <div>
-                  <h4 class="text-sm font-bold text-slate-900 dark:text-zinc-100">Section B: Purchase Order Settings</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-zinc-400">Prefix rules, default receiving warehouses, and cost update behavior for Purchases.</p>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Section B: Purchase Order Settings</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Prefix rules, default receiving warehouses, and cost update behavior for Purchases.</p>
                 </div>
               </div>
 
@@ -1269,26 +1275,26 @@
                 
                 <!-- 1. PO Numbering Prefix -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     PO Numbering Prefix
                   </label>
                   <input
                     v-model="invoicePurchaseSettings.po_prefix"
                     type="text"
                     placeholder="e.g. PO- or PUR-"
-                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500"
                   />
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Applied to automatically generated Purchase Order numbers.</p>
                 </div>
 
                 <!-- 2. Default Purchase Warehouse -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Default Purchase Receiving Warehouse
                   </label>
                   <select
                     v-model="invoicePurchaseSettings.default_purchase_warehouse_id"
-                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-zinc-200"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold focus:outline-none"
                   >
                     <option :value="null">-- Select Default Warehouse --</option>
                     <option v-for="wh in warehousesList" :key="wh.id" :value="wh.id">
@@ -1301,7 +1307,7 @@
                 <!-- 3. Auto-Update Product Cost Price -->
                 <div class="md:col-span-2 flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
                   <div>
-                    <label class="text-xs font-bold text-slate-800 dark:text-zinc-200 block">Auto-Update Product Master Cost Price</label>
+                    <label class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Auto-Update Product Master Cost Price</label>
                     <p class="text-[10px] text-slate-400 dark:text-zinc-400">Automatically update product master cost price when stock is received via Purchase Order.</p>
                   </div>
                   <label class="relative inline-flex items-center cursor-pointer select-none">
@@ -1310,23 +1316,21 @@
                       v-model="invoicePurchaseSettings.auto_update_product_cost"
                       class="sr-only peer"
                     />
-                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                    <div class="w-9 h-5 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-slate-900 dark:peer-checked:bg-white"></div>
                   </label>
                 </div>
 
               </div>
             </div>
 
-
-
             <!-- Bottom Save Action Bar -->
             <div class="flex justify-end pt-4">
               <button
                 @click="saveInvoicePurchaseSettings"
                 :disabled="savingInvoicePurchaseSettings"
-                class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
+                class="px-6 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
               >
-                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

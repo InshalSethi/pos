@@ -3,22 +3,22 @@
     <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
       <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 overflow-hidden transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
           <!-- Header -->
-          <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 dark:from-indigo-700 dark:to-indigo-900 px-6 py-4">
+          <div class="bg-slate-900 dark:bg-zinc-950 px-6 py-4 border-b border-slate-800 dark:border-zinc-800">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                  <div class="w-10 h-10 bg-white/10 dark:bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
                 </div>
                 <div>
-                  <h3 class="text-xl font-bold text-white">{{ isEdit ? 'Edit Role' : 'Add New Role' }}</h3>
-                  <p class="text-indigo-100 text-xs">{{ isEdit ? 'Update role settings and permissions' : 'Create a new user access role' }}</p>
+                  <h3 class="text-lg font-bold text-white">{{ isEdit ? 'Edit Role' : 'Add New Role' }}</h3>
+                  <p class="text-slate-400 text-xs font-medium">{{ isEdit ? 'Update role settings and permissions' : 'Create a new user access role' }}</p>
                 </div>
               </div>
-              <button @click="$emit('close')" class="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 cursor-pointer">
+              <button @click="$emit('close')" class="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -37,12 +37,12 @@
                     id="name"
                     v-model="form.name"
                     type="text"
-                    class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    :class="{ 'border-red-400 focus:ring-red-500 focus:border-red-500': errors.name }"
+                    class="block w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
+                    :class="{ 'border-rose-400 focus:ring-rose-500': errors.name }"
                     required
                     placeholder="e.g. inventory-manager"
                   />
-                  <p v-if="errors.name" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.name[0] }}</p>
+                  <p v-if="errors.name" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ errors.name[0] }}</p>
                 </div>
 
                 <!-- Description -->
@@ -52,7 +52,7 @@
                     id="description"
                     v-model="form.description"
                     type="text"
-                    class="block w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800/80 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="block w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
                     placeholder="Short description of this role's purpose"
                   />
                 </div>
@@ -62,17 +62,17 @@
                   <div class="flex justify-between items-center mb-2">
                     <label class="block text-xs font-bold text-slate-800 dark:text-zinc-200">Permissions Access</label>
                     <div class="flex space-x-2 text-xs">
-                      <button type="button" @click="selectAllPermissions" class="text-indigo-600 dark:text-indigo-400 hover:underline font-bold">Select All</button>
+                      <button type="button" @click="selectAllPermissions" class="text-slate-900 dark:text-white hover:underline font-bold">Select All</button>
                       <span class="text-slate-300 dark:text-zinc-700">|</span>
                       <button type="button" @click="deselectAllPermissions" class="text-slate-500 dark:text-zinc-400 hover:underline font-bold">Clear All</button>
                     </div>
                   </div>
                   
-                  <div class="border border-slate-200 dark:border-zinc-800 rounded-xl p-4 bg-slate-50 dark:bg-zinc-800/50 max-h-[35vh] overflow-y-auto space-y-6">
-                    <div v-for="(groupPermissions, groupName) in permissions" :key="groupName" class="border-b border-slate-200 dark:border-zinc-800 pb-4 last:border-b-0 last:pb-0">
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-xl p-4 bg-slate-50/70 dark:bg-zinc-800/40 max-h-[35vh] overflow-y-auto space-y-6">
+                    <div v-for="(groupPermissions, groupName) in permissions" :key="groupName" class="border-b border-slate-200/80 dark:border-zinc-800 pb-4 last:border-b-0 last:pb-0">
                       <div class="flex justify-between items-center mb-2">
                         <h4 class="text-xs font-extrabold text-slate-900 dark:text-zinc-100 uppercase tracking-wider">{{ groupName }}</h4>
-                        <button type="button" @click="toggleGroupPermissions(groupName, groupPermissions)" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-bold">
+                        <button type="button" @click="toggleGroupPermissions(groupName, groupPermissions)" class="text-[11px] text-slate-900 dark:text-white hover:underline font-bold">
                           Toggle Group
                         </button>
                       </div>
@@ -83,7 +83,7 @@
                               type="checkbox"
                               :value="permission.name"
                               v-model="form.permissions"
-                              class="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
+                              class="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 text-slate-900 focus:ring-0"
                             />
                           </div>
                           <div class="ml-3 text-xs">
@@ -93,7 +93,7 @@
                       </div>
                     </div>
                   </div>
-                  <p v-if="errors.permissions" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ errors.permissions[0] }}</p>
+                  <p v-if="errors.permissions" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ errors.permissions[0] }}</p>
                 </div>
               </div>
 
@@ -102,16 +102,16 @@
                 <button 
                   type="button" 
                   @click="$emit('close')" 
-                  class="px-4 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
+                  class="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   :disabled="saving" 
-                  class="inline-flex items-center px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent rounded-xl shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  class="inline-flex items-center px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 rounded-xl shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
