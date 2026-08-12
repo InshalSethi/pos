@@ -2,12 +2,12 @@
   <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
     <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-gray-900">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">
           {{ isEditing ? 'Edit Position' : 'Create New Position' }}
         </h3>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -18,129 +18,118 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Title -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Title *</label>
             <input
               v-model="form.title"
               type="text"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
               placeholder="Enter position title"
             />
-            <span v-if="errors.title" class="text-red-500 text-sm">{{ errors.title[0] }}</span>
+            <span v-if="errors.title" class="text-red-500 text-xs mt-1 block">{{ errors.title[0] }}</span>
           </div>
 
           <!-- Code -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Code *</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Code *</label>
             <input
               v-model="form.code"
               type="text"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
               placeholder="Enter position code"
             />
-            <span v-if="errors.code" class="text-red-500 text-sm">{{ errors.code[0] }}</span>
+            <span v-if="errors.code" class="text-red-500 text-xs mt-1 block">{{ errors.code[0] }}</span>
           </div>
 
           <!-- Department -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <select
+            <FloatingSelect
               v-model="form.department_id"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Department</option>
-              <option v-for="department in departments" :key="department.id" :value="department.id">
-                {{ department.name }}
-              </option>
-            </select>
-            <span v-if="errors.department_id" class="text-red-500 text-sm">{{ errors.department_id[0] }}</span>
+              label="Department"
+              placeholder="Select Department"
+              :options="departmentSelectOptions"
+              :error="!!errors.department_id"
+            />
+            <span v-if="errors.department_id" class="text-red-500 text-xs mt-1 block">{{ errors.department_id[0] }}</span>
           </div>
 
           <!-- Level -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Level *</label>
-            <select
+            <FloatingSelect
               v-model="form.level"
+              label="Level"
+              placeholder="Select Level"
+              :options="levelOptions"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Level</option>
-              <option value="entry">Entry</option>
-              <option value="junior">Junior</option>
-              <option value="mid">Mid</option>
-              <option value="senior">Senior</option>
-              <option value="lead">Lead</option>
-              <option value="manager">Manager</option>
-              <option value="director">Director</option>
-              <option value="executive">Executive</option>
-            </select>
-            <span v-if="errors.level" class="text-red-500 text-sm">{{ errors.level[0] }}</span>
+              :error="!!errors.level"
+            />
+            <span v-if="errors.level" class="text-red-500 text-xs mt-1 block">{{ errors.level[0] }}</span>
           </div>
 
           <!-- Min Salary -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Salary</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Minimum Salary</label>
             <input
               v-model="form.min_salary"
               type="number"
               step="0.01"
               min="0"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
               placeholder="0.00"
             />
-            <span v-if="errors.min_salary" class="text-red-500 text-sm">{{ errors.min_salary[0] }}</span>
+            <span v-if="errors.min_salary" class="text-red-500 text-xs mt-1 block">{{ errors.min_salary[0] }}</span>
           </div>
 
           <!-- Max Salary -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Maximum Salary</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Maximum Salary</label>
             <input
               v-model="form.max_salary"
               type="number"
               step="0.01"
               min="0"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
               placeholder="0.00"
             />
-            <span v-if="errors.max_salary" class="text-red-500 text-sm">{{ errors.max_salary[0] }}</span>
+            <span v-if="errors.max_salary" class="text-red-500 text-xs mt-1 block">{{ errors.max_salary[0] }}</span>
           </div>
         </div>
 
         <!-- Description -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Description</label>
           <textarea
             v-model="form.description"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
             placeholder="Enter position description"
           ></textarea>
-          <span v-if="errors.description" class="text-red-500 text-sm">{{ errors.description[0] }}</span>
+          <span v-if="errors.description" class="text-red-500 text-xs mt-1 block">{{ errors.description[0] }}</span>
         </div>
 
         <!-- Requirements -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Requirements</label>
           <textarea
             v-model="form.requirements"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
             placeholder="Enter position requirements"
           ></textarea>
-          <span v-if="errors.requirements" class="text-red-500 text-sm">{{ errors.requirements[0] }}</span>
+          <span v-if="errors.requirements" class="text-red-500 text-xs mt-1 block">{{ errors.requirements[0] }}</span>
         </div>
 
         <!-- Responsibilities -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Responsibilities</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Responsibilities</label>
           <textarea
             v-model="form.responsibilities"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
             placeholder="Enter position responsibilities"
           ></textarea>
-          <span v-if="errors.responsibilities" class="text-red-500 text-sm">{{ errors.responsibilities[0] }}</span>
+          <span v-if="errors.responsibilities" class="text-red-500 text-xs mt-1 block">{{ errors.responsibilities[0] }}</span>
         </div>
 
         <!-- Active Status -->
@@ -148,24 +137,24 @@
           <input
             v-model="form.is_active"
             type="checkbox"
-            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            class="h-4 w-4 text-slate-900 focus:ring-0 border-slate-300 dark:border-zinc-700 rounded"
           />
-          <label class="ml-2 block text-sm text-gray-900">Active</label>
+          <label class="ml-2 block text-xs font-semibold text-slate-900 dark:text-slate-100">Active</label>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end space-x-3 pt-4 border-t">
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <button
             type="button"
             @click="$emit('close')"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
             :disabled="saving"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
           </button>
@@ -177,7 +166,20 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import FloatingSelect from '@/components/common/FloatingSelect.vue';
 import axios from 'axios';
+
+const levelOptions = [
+  { value: '', label: 'Select Level' },
+  { value: 'entry', label: 'Entry' },
+  { value: 'junior', label: 'Junior' },
+  { value: 'mid', label: 'Mid' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'lead', label: 'Lead' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'director', label: 'Director' },
+  { value: 'executive', label: 'Executive' }
+];
 
 // Props and Emits
 const props = defineProps({
@@ -209,6 +211,11 @@ const saving = ref(false);
 
 // Computed
 const isEditing = computed(() => !!props.position);
+
+const departmentSelectOptions = computed(() => [
+  { value: '', label: 'Select Department' },
+  ...departments.value.map(d => ({ value: d.id, label: d.name }))
+]);
 
 // Methods
 const fetchDepartments = async () => {

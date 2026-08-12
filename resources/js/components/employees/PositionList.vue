@@ -1,71 +1,71 @@
 <template>
   <div class="position-list">
     <!-- Position Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xs overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+          <thead class="bg-slate-50 dark:bg-zinc-800/60">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Title
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Code
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Department
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Level
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Salary Range
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Employees
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Status
               </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-right text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="position in positions" :key="position.id" class="hover:bg-gray-50">
+          <tbody class="bg-white dark:bg-zinc-900 divide-y divide-slate-100 dark:divide-zinc-800/60">
+            <tr v-for="position in positions" :key="position.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">{{ position.title }}</div>
-                <div class="text-sm text-gray-500" v-if="position.description">{{ position.description }}</div>
+                <div class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ position.title }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400" v-if="position.description">{{ position.description }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
                 {{ position.code }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
                 {{ position.department?.name || '-' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getLevelClass(position.level)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                <span :class="getLevelClass(position.level)" class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider">
                   {{ getLevelText(position.level) }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
                 {{ getSalaryRange(position) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
                 {{ position.employees?.length || 0 }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="position.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" 
-                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                <span :class="position.is_active ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-400'" 
+                      class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider">
                   {{ position.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td class="px-6 py-4 whitespace-nowrap text-right text-xs font-medium">
                 <div class="flex justify-end space-x-2">
                   <button
                     @click="$emit('edit-position', position)"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     title="Edit"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@
                   </button>
                   <button
                     @click="deletePosition(position)"
-                    class="text-red-600 hover:text-red-900"
+                    class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                     title="Delete"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,17 +90,17 @@
 
       <!-- Empty State -->
       <div v-if="!loading && positions.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No positions found</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating a new position.</p>
+        <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">No positions found</h3>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Get started by creating a new position.</p>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p class="mt-2 text-sm text-gray-500">Loading positions...</p>
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-white"></div>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Loading positions...</p>
       </div>
     </div>
   </div>

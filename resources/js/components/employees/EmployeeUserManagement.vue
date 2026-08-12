@@ -1,176 +1,160 @@
 <template>
-  <div class="employee-user-management">
+  <div class="employee-user-management space-y-6">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
       <div>
-        <h2 class="text-xl font-bold text-gray-900">User Account Management</h2>
-        <p class="text-gray-600">Manage system access for employees</p>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">User Account Management</h2>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage system access for employees</p>
       </div>
-      <div class="flex space-x-3">
+      <div class="flex items-center gap-2.5">
         <button
           @click="fetchAuditData"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all cursor-pointer shadow-xs"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
           Audit
         </button>
         <button
           @click="showBulkCreateModal = true"
-          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all cursor-pointer shadow-xs"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
           Bulk Create Accounts
         </button>
       </div>
     </div>
 
     <!-- Audit Summary Cards -->
-    <div v-if="auditData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Employees Without Accounts</dt>
-                <dd class="text-lg font-medium text-gray-900">{{ auditData.employees_without_users || 0 }}</dd>
-              </dl>
-            </div>
+    <div v-if="auditData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 rounded-2xl shadow-xs">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate">Employees Without Accounts</dt>
+              <dd class="text-lg font-bold text-slate-900 dark:text-white mt-1">{{ auditData.employees_without_users || 0 }}</dd>
+            </dl>
           </div>
         </div>
       </div>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Users Without Employees</dt>
-                <dd class="text-lg font-medium text-gray-900">{{ auditData.users_without_employees || 0 }}</dd>
-              </dl>
-            </div>
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 rounded-2xl shadow-xs">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate">Users Without Employees</dt>
+              <dd class="text-lg font-bold text-slate-900 dark:text-white mt-1">{{ auditData.users_without_employees || 0 }}</dd>
+            </dl>
           </div>
         </div>
       </div>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Inactive with Active Users</dt>
-                <dd class="text-lg font-medium text-gray-900">{{ auditData.inactive_employees_with_active_users || 0 }}</dd>
-              </dl>
-            </div>
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 rounded-2xl shadow-xs">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate">Inactive with Active Users</dt>
+              <dd class="text-lg font-bold text-slate-900 dark:text-white mt-1">{{ auditData.inactive_employees_with_active_users || 0 }}</dd>
+            </dl>
           </div>
         </div>
       </div>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Mismatched Emails</dt>
-                <dd class="text-lg font-medium text-gray-900">{{ auditData.mismatched_emails || 0 }}</dd>
-              </dl>
-            </div>
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-5 rounded-2xl shadow-xs">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate">Mismatched Emails</dt>
+              <dd class="text-lg font-bold text-slate-900 dark:text-white mt-1">{{ auditData.mismatched_emails || 0 }}</dd>
+            </dl>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Employees Without User Accounts -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-medium text-gray-900">Employees Without User Accounts</h3>
-        <p class="text-sm text-gray-500">Active employees who don't have system access</p>
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xs overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Employees Without User Accounts</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Active employees who don't have system access</p>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+          <thead class="bg-slate-50 dark:bg-zinc-800/60">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 <input
                   type="checkbox"
                   v-model="selectAll"
                   @change="toggleSelectAll"
-                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  class="h-4 w-4 text-slate-900 focus:ring-0 border-slate-300 dark:border-zinc-700 rounded"
                 />
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Employee
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Department
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Position
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Hire Date
               </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-right text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="employee in employeesWithoutAccounts" :key="employee.id" class="hover:bg-gray-50">
+          <tbody class="bg-white dark:bg-zinc-900 divide-y divide-slate-100 dark:divide-zinc-800/60">
+            <tr v-for="employee in employeesWithoutAccounts" :key="employee.id" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap">
                 <input
                   type="checkbox"
                   v-model="selectedEmployees"
                   :value="employee.id"
-                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  class="h-4 w-4 text-slate-900 focus:ring-0 border-slate-300 dark:border-zinc-700 rounded"
                 />
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">{{ employee.full_name }}</div>
-                <div class="text-sm text-gray-500">{{ employee.email }}</div>
+                <div class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.full_name }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">{{ employee.email }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
                 {{ employee.department?.name || '-' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-700 dark:text-slate-300">
                 {{ employee.position?.title || '-' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-slate-700 dark:text-slate-300">
                 {{ formatDate(employee.hire_date) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td class="px-6 py-4 whitespace-nowrap text-right text-xs font-medium">
                 <button
                   @click="createUserAccount(employee)"
-                  class="text-green-600 hover:text-green-900"
+                  class="text-slate-900 dark:text-white font-bold hover:underline cursor-pointer"
                   title="Create User Account"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                  </svg>
+                  Create Account
                 </button>
               </td>
             </tr>
@@ -180,31 +164,31 @@
 
       <!-- Empty State -->
       <div v-if="!loading && employeesWithoutAccounts.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">All employees have user accounts</h3>
-        <p class="mt-1 text-sm text-gray-500">Every active employee has been assigned a system user account.</p>
+        <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">All employees have user accounts</h3>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Every active employee has been assigned a system user account.</p>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p class="mt-2 text-sm text-gray-500">Loading employees...</p>
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-white"></div>
+        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Loading employees...</p>
       </div>
     </div>
 
     <!-- Bulk Create Modal -->
     <div v-if="showBulkCreateModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
       <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 my-auto">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Bulk Create User Accounts</h3>
-        <p class="text-sm text-gray-600 mb-4">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Bulk Create User Accounts</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
           Create user accounts for {{ selectedEmployees.length }} selected employees?
         </p>
         <div class="flex justify-end space-x-3">
           <button
             @click="showBulkCreateModal = false"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
           >
             Cancel
           </button>

@@ -9,24 +9,24 @@
               v-if="employee.profile_image" 
               :src="`/storage/${employee.profile_image}`" 
               :alt="employee.full_name"
-              class="h-16 w-16 rounded-full object-cover"
+              class="h-16 w-16 rounded-full object-cover border border-slate-200 dark:border-zinc-700"
             />
-            <div v-else class="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
-              <span class="text-lg font-medium text-gray-700">
+            <div v-else class="h-16 w-16 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center">
+              <span class="text-lg font-bold text-slate-700 dark:text-slate-200">
                 {{ getInitials(employee.first_name, employee.last_name) }}
               </span>
             </div>
           </div>
           <div>
-            <h3 class="text-lg font-medium text-gray-900">{{ employee.full_name }}</h3>
-            <p class="text-sm text-gray-500">{{ employee.employee_number }}</p>
-            <span :class="getStatusClass(employee.employment_status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ employee.full_name }}</h3>
+            <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">{{ employee.employee_number }}</p>
+            <span :class="getStatusClass(employee.employment_status)" class="px-2 py-0.5 mt-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider">
               {{ getStatusText(employee.employment_status) }}
             </span>
           </div>
         </div>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -36,155 +36,155 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- Personal Information -->
         <div class="space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b pb-2">Personal Information</h4>
-          <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Personal Information</h4>
+          <div class="space-y-2.5">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Email</label>
-              <p class="text-sm text-gray-900">{{ employee.email }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Email</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.email }}</p>
             </div>
             <div v-if="employee.phone">
-              <label class="block text-sm font-medium text-gray-700">Phone</label>
-              <p class="text-sm text-gray-900">{{ employee.phone }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Phone</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.phone }}</p>
             </div>
             <div v-if="employee.mobile">
-              <label class="block text-sm font-medium text-gray-700">Mobile</label>
-              <p class="text-sm text-gray-900">{{ employee.mobile }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Mobile</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.mobile }}</p>
             </div>
             <div v-if="employee.date_of_birth">
-              <label class="block text-sm font-medium text-gray-700">Date of Birth</label>
-              <p class="text-sm text-gray-900">{{ formatDate(employee.date_of_birth) }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Date of Birth</label>
+              <p class="text-xs font-mono text-slate-900 dark:text-slate-100 mt-0.5">{{ formatDate(employee.date_of_birth) }}</p>
             </div>
             <div v-if="employee.gender">
-              <label class="block text-sm font-medium text-gray-700">Gender</label>
-              <p class="text-sm text-gray-900">{{ capitalizeFirst(employee.gender) }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Gender</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ capitalizeFirst(employee.gender) }}</p>
             </div>
             <div v-if="employee.marital_status">
-              <label class="block text-sm font-medium text-gray-700">Marital Status</label>
-              <p class="text-sm text-gray-900">{{ capitalizeFirst(employee.marital_status) }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Marital Status</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ capitalizeFirst(employee.marital_status) }}</p>
             </div>
           </div>
         </div>
 
         <!-- Employment Information -->
         <div class="space-y-4">
-          <h4 class="text-md font-medium text-gray-900 border-b pb-2">Employment Information</h4>
-          <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Employment Information</h4>
+          <div class="space-y-2.5">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Department</label>
-              <p class="text-sm text-gray-900">{{ employee.department?.name || '-' }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Department</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.department?.name || '-' }}</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700">Position</label>
-              <p class="text-sm text-gray-900">{{ employee.position?.title || '-' }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Position</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.position?.title || '-' }}</p>
             </div>
             <div v-if="employee.manager">
-              <label class="block text-sm font-medium text-gray-700">Manager</label>
-              <p class="text-sm text-gray-900">{{ employee.manager.full_name }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Manager</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.manager.full_name }}</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700">Hire Date</label>
-              <p class="text-sm text-gray-900">{{ formatDate(employee.hire_date) }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Hire Date</label>
+              <p class="text-xs font-mono text-slate-900 dark:text-slate-100 mt-0.5">{{ formatDate(employee.hire_date) }}</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700">Employment Type</label>
-              <p class="text-sm text-gray-900">{{ getEmploymentTypeText(employee.employment_type) }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Employment Type</label>
+              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ getEmploymentTypeText(employee.employment_type) }}</p>
             </div>
             <div v-if="employee.probation_end_date">
-              <label class="block text-sm font-medium text-gray-700">Probation End Date</label>
-              <p class="text-sm text-gray-900">{{ formatDate(employee.probation_end_date) }}</p>
+              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Probation End Date</label>
+              <p class="text-xs font-mono text-slate-900 dark:text-slate-100 mt-0.5">{{ formatDate(employee.probation_end_date) }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Salary Information -->
-      <div class="bg-gray-50 p-4 rounded-lg mb-6">
-        <h4 class="text-md font-medium text-gray-900 mb-3">Salary Information</h4>
+      <div class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl mb-6">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Salary Information</h4>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700">Basic Salary</label>
-            <p class="text-sm text-gray-900">${{ parseFloat(employee.basic_salary).toFixed(2) }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Basic Salary</label>
+            <p class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100 mt-0.5">${{ parseFloat(employee.basic_salary).toFixed(2) }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700">Salary Type</label>
-            <p class="text-sm text-gray-900">{{ capitalizeFirst(employee.salary_type) }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Salary Type</label>
+            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ capitalizeFirst(employee.salary_type) }}</p>
           </div>
           <div v-if="employee.hourly_rate">
-            <label class="block text-sm font-medium text-gray-700">Hourly Rate</label>
-            <p class="text-sm text-gray-900">${{ parseFloat(employee.hourly_rate).toFixed(2) }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Hourly Rate</label>
+            <p class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100 mt-0.5">${{ parseFloat(employee.hourly_rate).toFixed(2) }}</p>
           </div>
         </div>
       </div>
 
       <!-- Emergency Contact -->
-      <div v-if="employee.emergency_contact_name" class="bg-gray-50 p-4 rounded-lg mb-6">
-        <h4 class="text-md font-medium text-gray-900 mb-3">Emergency Contact</h4>
+      <div v-if="employee.emergency_contact_name" class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl mb-6">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Emergency Contact</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700">Name</label>
-            <p class="text-sm text-gray-900">{{ employee.emergency_contact_name }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Name</label>
+            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_name }}</p>
           </div>
           <div v-if="employee.emergency_contact_relationship">
-            <label class="block text-sm font-medium text-gray-700">Relationship</label>
-            <p class="text-sm text-gray-900">{{ employee.emergency_contact_relationship }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Relationship</label>
+            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_relationship }}</p>
           </div>
           <div v-if="employee.emergency_contact_phone">
-            <label class="block text-sm font-medium text-gray-700">Phone</label>
-            <p class="text-sm text-gray-900">{{ employee.emergency_contact_phone }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Phone</label>
+            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_phone }}</p>
           </div>
           <div v-if="employee.emergency_contact_email">
-            <label class="block text-sm font-medium text-gray-700">Email</label>
-            <p class="text-sm text-gray-900">{{ employee.emergency_contact_email }}</p>
+            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Email</label>
+            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_email }}</p>
           </div>
         </div>
       </div>
 
       <!-- Notes -->
       <div v-if="employee.notes" class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-        <p class="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{{ employee.notes }}</p>
+        <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Notes</label>
+        <p class="text-xs text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-3 rounded-xl">{{ employee.notes }}</p>
       </div>
 
       <!-- User Account Section -->
-      <div v-if="canEdit" class="bg-gray-50 p-4 rounded-lg mb-6">
-        <h4 class="text-md font-medium text-gray-900 mb-3">User Account</h4>
+      <div v-if="canEdit" class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl mb-6">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">User Account</h4>
         <div v-if="employee.user" class="space-y-2">
-          <p class="text-sm text-gray-600">
-            <span class="font-medium">Status:</span>
-            <span class="text-green-600">Has User Account</span>
+          <p class="text-xs text-slate-600 dark:text-slate-300">
+            <span class="font-bold">Status:</span>
+            <span class="text-slate-900 dark:text-white font-bold ml-1">Has User Account</span>
           </p>
-          <p class="text-sm text-gray-600">
-            <span class="font-medium">Login Email:</span> {{ employee.user.email }}
+          <p class="text-xs text-slate-600 dark:text-slate-300">
+            <span class="font-bold">Login Email:</span> {{ employee.user.email }}
           </p>
           <div class="flex space-x-2 mt-3">
             <button
               @click="syncUserAccount"
-              class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+              class="px-3 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 cursor-pointer"
             >
               Sync Account
             </button>
             <button
               @click="resetPassword"
-              class="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700"
+              class="px-3 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 cursor-pointer"
             >
               Reset Password
             </button>
             <button
               @click="deactivateUserAccount"
-              class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+              class="px-3 py-1.5 bg-red-600 text-white font-semibold text-xs rounded-xl hover:bg-red-700 cursor-pointer"
             >
               Deactivate Account
             </button>
           </div>
         </div>
         <div v-else class="space-y-2">
-          <p class="text-sm text-gray-600">
-            <span class="font-medium">Status:</span>
-            <span class="text-red-600">No User Account</span>
+          <p class="text-xs text-slate-600 dark:text-slate-300">
+            <span class="font-bold">Status:</span>
+            <span class="text-red-500 font-bold ml-1">No User Account</span>
           </p>
           <button
             @click="createUserAccount"
-            class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+            class="px-3 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 cursor-pointer"
           >
             Create User Account
           </button>
@@ -192,26 +192,26 @@
       </div>
 
       <!-- Actions -->
-      <div class="flex justify-between items-center pt-6 border-t">
+      <div class="flex justify-between items-center pt-6 border-t border-slate-100 dark:border-zinc-800">
         <div class="flex space-x-3">
           <button
             v-if="canEdit"
             @click="$emit('edit')"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
           >
             Edit
           </button>
           <button
             v-if="canTerminate"
             @click="showTerminationModal = true"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            class="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl text-xs hover:bg-red-700 cursor-pointer transition-all shadow-xs"
           >
             Terminate
           </button>
           <button
             v-if="canReactivate"
             @click="reactivateEmployee"
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
           >
             Reactivate
           </button>

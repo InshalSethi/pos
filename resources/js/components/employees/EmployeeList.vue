@@ -1,58 +1,44 @@
 <template>
   <div class="employee-list">
     <!-- Filters -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl shadow-xs mb-6">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Search</label>
           <input
             v-model="filters.search"
             type="text"
             placeholder="Search employees..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
             @input="debouncedSearch"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select
+          <FloatingSelect
             v-model="filters.employment_status"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="fetchEmployees"
-          >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="terminated">Terminated</option>
-            <option value="on_leave">On Leave</option>
-          </select>
+            label="Status"
+            placeholder="All Statuses"
+            :options="statusOptions"
+            @update:modelValue="fetchEmployees"
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-          <select
+          <FloatingSelect
             v-model="filters.department_id"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="fetchEmployees"
-          >
-            <option value="">All Departments</option>
-            <option v-for="department in departments" :key="department.id" :value="department.id">
-              {{ department.name }}
-            </option>
-          </select>
+            label="Department"
+            placeholder="All Departments"
+            :options="departmentOptions"
+            @update:modelValue="fetchEmployees"
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
-          <select
+          <FloatingSelect
             v-model="filters.employment_type"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="fetchEmployees"
-          >
-            <option value="">All Types</option>
-            <option value="full_time">Full Time</option>
-            <option value="part_time">Part Time</option>
-            <option value="contract">Contract</option>
-            <option value="intern">Intern</option>
-          </select>
+            label="Employment Type"
+            placeholder="All Types"
+            :options="typeOptions"
+            @update:modelValue="fetchEmployees"
+          />
         </div>
       </div>
     </div>
@@ -165,6 +151,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { debounce } from '@/utils/debounce';
 import DataTable from '@/components/common/DataTable.vue';
+import FloatingSelect from '@/components/common/FloatingSelect.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -172,9 +159,31 @@ const authStore = useAuthStore();
 // Props and Emits
 const emit = defineEmits(['edit-employee', 'view-employee', 'refresh']);
 
+// Filter options for FloatingSelect
+const statusOptions = [
+  { value: '', label: 'All Statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'terminated', label: 'Terminated' },
+  { value: 'on_leave', label: 'On Leave' },
+];
+
+const typeOptions = [
+  { value: '', label: 'All Types' },
+  { value: 'full_time', label: 'Full Time' },
+  { value: 'part_time', label: 'Part Time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'intern', label: 'Intern' },
+];
+
 // Reactive data
 const employees = ref({ data: [], total: 0, current_page: 1, last_page: 1 });
 const departments = ref([]);
+const departmentOptions = computed(() => [
+  { value: '', label: 'All Departments' },
+  ...departments.value.map(d => ({ value: d.id, label: d.name }))
+]);
+
 const loading = ref(false);
 const filters = ref({
   search: '',

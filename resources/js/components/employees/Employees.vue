@@ -1,52 +1,43 @@
 <template>
-  <div class="employees-container">
+  <div class="employees-container max-w-full font-sans">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Employee Management</h1>
-        <p class="text-gray-600">Manage employees, departments, and positions</p>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Employee Management</h1>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage employees, departments, and positions</p>
       </div>
-      <div class="flex space-x-3">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <button
           @click="showDepartmentModal = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
           Add Department
         </button>
         <button
           @click="showPositionModal = true"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center"
+          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
           Add Position
         </button>
         <button
           @click="showEmployeeModal = true"
-          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl flex items-center transition-all duration-200 cursor-pointer shadow-xs"
+          class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs flex items-center transition-all duration-200 cursor-pointer shadow-xs"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
           Add Employee
         </button>
       </div>
     </div>
 
     <!-- Tabs -->
-    <div class="border-b border-gray-200 mb-6">
+    <div class="border-b border-slate-200 dark:border-zinc-800 mb-6">
       <nav class="-mb-px flex space-x-8">
         <button
           @click="activeTab = 'employees'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'employees'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Employees
@@ -54,10 +45,10 @@
         <button
           @click="activeTab = 'departments'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'departments'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Departments
@@ -65,10 +56,10 @@
         <button
           @click="activeTab = 'positions'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'positions'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Positions
@@ -76,10 +67,10 @@
         <button
           @click="activeTab = 'reports'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'reports'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Reports
@@ -87,10 +78,10 @@
         <button
           @click="activeTab = 'user-management'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm',
+            'py-2.5 px-1 border-b-2 font-medium text-xs transition-all cursor-pointer',
             activeTab === 'user-management'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           User Management
