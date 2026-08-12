@@ -46,6 +46,11 @@ import EditPurchaseReturn from '@/components/purchase/EditPurchaseReturn.vue';
 import PurchaseReturnView from '@/components/purchase/PurchaseReturnView.vue';
 import Expenses from '@/components/expenses/Expenses.vue';
 import Employees from '@/components/employees/Employees.vue';
+import HRAttendance from '@/components/hr/HRAttendance.vue';
+import HRLeaves from '@/components/hr/HRLeaves.vue';
+import HRPayroll from '@/components/hr/HRPayroll.vue';
+import HRAdvances from '@/components/hr/HRAdvances.vue';
+import HRExpenseClaims from '@/components/hr/HRExpenseClaims.vue';
 import Customers from '@/components/customers/Customers.vue';
 import Suppliers from '@/components/suppliers/Suppliers.vue';
 import Payments from '@/components/payments/Payments.vue';
@@ -441,15 +446,43 @@ const routes = [
       },
       {
         path: 'employees',
-        name: 'Employees',
+        redirect: '/hr/employees'
+      },
+      {
+        path: 'hr/employees',
+        name: 'HREmployees',
         component: Employees,
         meta: { permission: 'employees.view' }
       },
       {
-        path: 'employees/create',
-        name: 'CreateEmployee',
-        component: Employees,
-        meta: { permission: 'employees.create' }
+        path: 'hr/attendance',
+        name: 'HRAttendance',
+        component: HRAttendance,
+        meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'hr/leaves',
+        name: 'HRLeaves',
+        component: HRLeaves,
+        meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'hr/payroll',
+        name: 'HRPayroll',
+        component: HRPayroll,
+        meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'hr/advances',
+        name: 'HRAdvances',
+        component: HRAdvances,
+        meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'hr/expense-claims',
+        name: 'HRExpenseClaims',
+        component: HRExpenseClaims,
+        meta: { permission: 'employees.view' }
       },
       {
         path: 'customers',

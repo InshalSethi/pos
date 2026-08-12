@@ -481,6 +481,129 @@
             </div>
           </transition>
         </div>
+
+        <!-- HR & Payroll Collapsible Accordion -->
+        <div v-if="authStore.hasPermission('employees.view')" class="space-y-1 mt-1 relative">
+          <button
+            @click="showSidebarHrMenu = !showSidebarHrMenu"
+            :class="[
+              'group w-full flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative cursor-pointer',
+              $route.path.startsWith('/hr') || $route.path.startsWith('/employees')
+                ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+                : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
+            ]"
+            :title="sidebarCollapsed ? 'HR & Payroll' : ''"
+          >
+            <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+              HR & Payroll
+            </span>
+            <div class="relative group ml-auto">
+              <svg
+                v-if="!sidebarCollapsed"
+                :class="[
+                  'h-4 w-4 transition-transform duration-300 transform',
+                  showSidebarHrMenu ? 'rotate-180 text-gray-900' : 'text-slate-400 group-hover:text-slate-600'
+                ]"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+              </svg>
+            </div>
+          </button>
+
+          <transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2 max-h-0"
+            enter-to-class="opacity-100 translate-y-0 max-h-60"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 max-h-60"
+            leave-to-class="opacity-0 -translate-y-2 max-h-0"
+          >
+            <div
+              v-show="showSidebarHrMenu && !sidebarCollapsed"
+              class="pl-10 pr-2 py-1 space-y-0.5 relative overflow-hidden"
+            >
+              <!-- Timeline accent line -->
+              <div class="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200/60 dark:bg-[#2E2E2E]"></div>
+              <router-link
+                to="/hr/employees"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path.startsWith('/hr/employees') || $route.path === '/employees'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path.startsWith('/hr/employees') || $route.path === '/employees'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Employees
+              </router-link>
+              <router-link
+                to="/hr/attendance"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/hr/attendance'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/hr/attendance'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Attendance & Shifts
+              </router-link>
+              <router-link
+                to="/hr/leaves"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/hr/leaves'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/hr/leaves'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Leave Management
+              </router-link>
+              <router-link
+                to="/hr/payroll"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/hr/payroll'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/hr/payroll'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Payroll & Payslips
+              </router-link>
+              <router-link
+                to="/hr/advances"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/hr/advances'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/hr/advances'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Employee Advances & Loans
+              </router-link>
+              <router-link
+                to="/hr/expense-claims"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/hr/expense-claims'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/hr/expense-claims'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Expense Claims
+              </router-link>
+            </div>
+          </transition>
+        </div>
+
         <!-- Accounting Section -->
         <div v-if="authStore.hasPermission('accounting.view')" class="space-y-1">
           <div v-if="!sidebarCollapsed" class="px-3 pt-3 pb-1">
@@ -726,29 +849,11 @@
           </span>
         </router-link>
         <!-- People & Entities Section -->
-        <div v-if="(authStore.hasPermission('employees.view') || authStore.hasPermission('customers.view') || authStore.hasPermission('suppliers.view')) && !sidebarCollapsed" class="px-3 pt-4 pb-1">
+        <div v-if="(authStore.hasPermission('customers.view') || authStore.hasPermission('suppliers.view')) && !sidebarCollapsed" class="px-3 pt-4 pb-1">
           <h3 class="text-[10px] tracking-widest text-gray-400 dark:text-slate-550 font-bold uppercase">
             People & Entities
           </h3>
         </div>
-        <router-link v-if="authStore.hasPermission('employees.view')"
-          to="/employees"
-          :class="[
-            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
-            $route.path === '/employees'
-              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
-              : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
-          ]"
-          :title="sidebarCollapsed ? 'Employees' : ''"
-        >
-
-          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-          </svg>
-          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
-            Employees
-          </span>
-        </router-link>
         <router-link v-if="authStore.hasPermission('customers.view')"
           to="/customers"
           :class="[
@@ -1879,6 +1984,9 @@ const showSidebarBankingMenu = ref(
 const showSidebarInventoryMenu = ref(
   router.currentRoute.value.path.startsWith('/inventory') || router.currentRoute.value.path.startsWith('/products') || router.currentRoute.value.path === '/settings/tax-tags'
 );
+const showSidebarHrMenu = ref(
+  router.currentRoute.value.path.startsWith('/hr') || router.currentRoute.value.path.startsWith('/employees')
+);
 
 watch(() => router.currentRoute.value.path, (newPath) => {
   if (newPath.startsWith('/accounting') || newPath.startsWith('/banking/manual-journals')) {
@@ -1889,6 +1997,9 @@ watch(() => router.currentRoute.value.path, (newPath) => {
   }
   if (newPath.startsWith('/inventory') || newPath.startsWith('/products') || newPath === '/settings/tax-tags') {
     showSidebarInventoryMenu.value = true;
+  }
+  if (newPath.startsWith('/hr') || newPath.startsWith('/employees')) {
+    showSidebarHrMenu.value = true;
   }
   if (newPath.startsWith('/sales')) {
     showSidebarSalesMenu.value = true;
