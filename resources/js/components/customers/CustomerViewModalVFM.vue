@@ -28,7 +28,7 @@
         </div>
         <div class="flex items-center space-x-3">
           <span v-if="customerData" :class="customerData.is_active 
-            ? 'inline-flex px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800' 
+            ? 'inline-flex px-3 py-1 text-xs font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
             : 'inline-flex px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800'">
             {{ customerData.is_active ? 'Active' : 'Inactive' }}
           </span>

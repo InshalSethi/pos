@@ -215,7 +215,7 @@
               <!-- Status -->
               <td class="py-3.5 px-4 text-center align-middle bg-white dark:bg-zinc-900">
                 <span
-                  :class="item.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
+                  :class="item.is_active ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white font-bold' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
                 >
                   {{ item.is_active ? 'Active' : 'Inactive' }}

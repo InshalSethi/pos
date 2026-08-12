@@ -373,7 +373,7 @@ const formatDate = (date) => {
 
 const getStatusClass = (status) => {
   const classes = {
-    active: 'bg-green-100 text-green-800',
+    active: 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white font-bold',
     inactive: 'bg-gray-100 text-gray-800',
     terminated: 'bg-red-100 text-red-800',
     on_leave: 'bg-yellow-100 text-yellow-800'

@@ -629,7 +629,7 @@ const formatDate = (date) => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    active: 'bg-emerald-50 text-emerald-600 border border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/50',
+    active: 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white font-bold',
     inactive: 'bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-zinc-800 dark:text-slate-400 dark:border-zinc-700/50',
     terminated: 'bg-rose-50 text-rose-600 border border-rose-200/60 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/50',
     on_leave: 'bg-amber-50 text-amber-600 border border-amber-200/60 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800/50'

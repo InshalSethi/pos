@@ -23,7 +23,7 @@
                 <p class="text-muted">Supplier ID: #{{ supplierData.id }}</p>
               </div>
               <div class="col-md-4 text-right">
-                <span :class="supplierData.is_active ? 'badge badge-success' : 'badge badge-danger'">
+                <span :class="supplierData.is_active ? 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'badge badge-danger'">
                   {{ supplierData.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </div>

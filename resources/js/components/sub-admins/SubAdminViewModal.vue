@@ -19,7 +19,7 @@
               </div>
               <div class="flex items-center space-x-3">
                 <span v-if="adminData" :class="adminData.is_active 
-                  ? 'px-3 py-1 text-xs font-bold rounded-full bg-green-400 text-green-900' 
+                  ? 'px-3 py-1 text-xs font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
                   : 'px-3 py-1 text-xs font-bold rounded-full bg-red-400 text-red-900'">
                   {{ adminData.is_active ? 'ACTIVE' : 'INACTIVE' }}
                 </span>

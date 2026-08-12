@@ -165,7 +165,7 @@
 
             <template #column-status="{ item }">
               <span :class="item.is_active
-                ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
+                ? 'inline-flex px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 uppercase tracking-wider'
                 : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
                 {{ item.is_active ? 'Active' : 'Inactive' }}
               </span>
@@ -240,7 +240,7 @@
                   </div>
                 </div>
                 <span :class="subAdmin.is_active
-                  ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
+                  ? 'inline-flex px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 uppercase tracking-wider'
                   : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'">
                   {{ subAdmin.is_active ? 'Active' : 'Inactive' }}
                 </span>

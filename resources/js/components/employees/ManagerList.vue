@@ -547,7 +547,7 @@ const getAvatarUrl = (item) => {
 const getStatusBadgeClass = (status) => {
   switch (status) {
     case 'active':
-      return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/40';
+      return 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white font-bold';
     case 'inactive':
       return 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-400';
     case 'on_leave':
