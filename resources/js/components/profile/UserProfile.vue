@@ -152,43 +152,94 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Current Password -->
             <div>
               <label for="current_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
                 Current Password
               </label>
-              <input
-                id="current_password"
-                v-model="profileForm.current_password"
-                type="password"
-                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-                placeholder="••••••••"
-              />
+              <div class="relative">
+                <input
+                  id="current_password"
+                  v-model="profileForm.current_password"
+                  :type="showCurrentPassword ? 'text' : 'password'"
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  @click="showCurrentPassword = !showCurrentPassword"
+                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  title="Toggle Password Visibility"
+                >
+                  <svg v-if="showCurrentPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
+                  </svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
+            <!-- New Password -->
             <div>
               <label for="new_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
                 New Password
               </label>
-              <input
-                id="new_password"
-                v-model="profileForm.new_password"
-                type="password"
-                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-                placeholder="••••••••"
-              />
+              <div class="relative">
+                <input
+                  id="new_password"
+                  v-model="profileForm.new_password"
+                  :type="showNewPassword ? 'text' : 'password'"
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  @click="showNewPassword = !showNewPassword"
+                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  title="Toggle Password Visibility"
+                >
+                  <svg v-if="showNewPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
+                  </svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
+            <!-- Confirm Password -->
             <div>
               <label for="new_password_confirmation" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
                 Confirm Password
               </label>
-              <input
-                id="new_password_confirmation"
-                v-model="profileForm.new_password_confirmation"
-                type="password"
-                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-                placeholder="••••••••"
-              />
+              <div class="relative">
+                <input
+                  id="new_password_confirmation"
+                  v-model="profileForm.new_password_confirmation"
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  @click="showConfirmPassword = !showConfirmPassword"
+                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  title="Toggle Password Visibility"
+                >
+                  <svg v-if="showConfirmPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
+                  </svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -222,6 +273,11 @@ const submitting = ref(false);
 const formErrors = ref([]);
 const showSuccessMessage = ref(false);
 const fileInput = ref(null);
+
+// Password visibility toggles
+const showCurrentPassword = ref(false);
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 // Profile form
 const profileForm = ref({
