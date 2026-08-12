@@ -1337,7 +1337,7 @@
       'transition-all duration-300 min-h-screen',
       sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
     ]">
-      <div class="p-6 md:p-8 w-full min-w-0">
+      <div class="p-4 sm:p-5 lg:p-6 w-full min-w-0">
         <div v-if="renderError" class="bg-red-50 border-l-4 border-red-500 p-6 rounded-2xl shadow-md my-4 max-w-4xl mx-auto">
           <div class="flex items-start">
             <div class="flex-shrink-0 mt-1">

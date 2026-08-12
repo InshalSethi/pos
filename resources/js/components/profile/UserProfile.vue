@@ -1,27 +1,27 @@
 <template>
-  <div class="p-6 space-y-6 max-w-[1200px] mx-auto font-sans">
+  <div class="space-y-4 max-w-7xl mx-auto font-sans">
     <!-- Top Header Bar (Black & White System Theme) -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-xl shadow-xs">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-2 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-xl shadow-xs">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">Account Profile</h1>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">Account Profile</h1>
           <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 font-sans">Manage your personal account details, credentials, and preferences</p>
         </div>
       </div>
     </div>
 
-    <!-- Main Profile Card Container (White and Black High-Contrast Style) -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-8 font-sans">
+    <!-- Main Profile Card Container (White and Black High-Contrast Compact Style) -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs p-4 sm:p-5 space-y-5 font-sans">
       
       <!-- Profile Header / Avatar Hero Section -->
-      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-slate-100 dark:border-zinc-800">
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-4 border-b border-slate-100 dark:border-zinc-800">
         <div class="relative shrink-0">
-          <div class="h-24 w-24 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center">
+          <div class="h-20 w-20 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center">
             <img 
               v-if="profileImage" 
               :src="getProfileImageUrl(profileImage)" 
@@ -32,7 +32,7 @@
               v-else 
               class="h-full w-full bg-slate-900 dark:bg-zinc-100 flex items-center justify-center"
             >
-              <span class="text-white dark:text-zinc-900 font-bold text-2xl font-sans">
+              <span class="text-white dark:text-zinc-900 font-bold text-xl font-sans">
                 {{ authStore.user?.name?.charAt(0).toUpperCase() }}
               </span>
             </div>
@@ -42,10 +42,10 @@
           <button
             type="button"
             @click="triggerFileInput"
-            class="absolute bottom-0 right-0 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white rounded-full p-2 shadow-md hover:scale-105 transition-all cursor-pointer"
+            class="absolute bottom-0 right-0 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white rounded-full p-1.5 shadow-md hover:scale-105 transition-all cursor-pointer"
             title="Update Profile Picture"
           >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
@@ -62,30 +62,30 @@
 
         <div class="text-center sm:text-left space-y-1">
           <div class="flex items-center gap-2 justify-center sm:justify-start">
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white font-sans">{{ authStore.user?.name || 'User' }}</h2>
-            <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-sans">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white font-sans">{{ authStore.user?.name || 'User' }}</h2>
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-sans">
               Account Active
             </span>
           </div>
           <p class="text-xs font-sans font-medium text-slate-500 dark:text-slate-400">{{ authStore.user?.email }}</p>
-          <p class="text-xs font-sans font-semibold text-slate-400 dark:text-zinc-500 pt-1">
+          <p class="text-xs font-sans font-semibold text-slate-400 dark:text-zinc-500 pt-0.5">
             Member since {{ formatDate(authStore.user?.created_at) || 'N/A' }}
           </p>
         </div>
       </div>
 
       <!-- Profile Form -->
-      <form @submit.prevent="updateProfile" class="space-y-6">
+      <form @submit.prevent="updateProfile" class="space-y-4">
         
         <!-- Error Alerts -->
-        <div v-if="formErrors.length > 0" class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl p-4 transition-all">
-          <div class="flex items-start gap-3">
-            <svg class="h-5 w-5 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-if="formErrors.length > 0" class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl p-3.5 transition-all">
+          <div class="flex items-start gap-2.5">
+            <svg class="h-4 w-4 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
               <h3 class="text-xs font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider font-sans">Form Submission Issues</h3>
-              <ul class="mt-1.5 list-disc pl-4 text-xs font-medium text-rose-700 dark:text-rose-300 space-y-1 font-sans">
+              <ul class="mt-1 list-disc pl-4 text-xs font-medium text-rose-700 dark:text-rose-300 space-y-0.5 font-sans">
                 <li v-for="error in formErrors" :key="error">{{ error }}</li>
               </ul>
             </div>
@@ -93,9 +93,9 @@
         </div>
 
         <!-- Success Alert -->
-        <div v-if="showSuccessMessage" class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 transition-all">
-          <div class="flex items-center gap-3">
-            <svg class="h-5 w-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-if="showSuccessMessage" class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 transition-all">
+          <div class="flex items-center gap-2.5">
+            <svg class="h-4 w-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <p class="text-xs font-bold text-emerald-800 dark:text-emerald-300 font-sans">Profile updated successfully!</p>
@@ -103,17 +103,17 @@
         </div>
 
         <!-- Basic Information Section -->
-        <div class="space-y-4">
-          <div class="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
-            <svg class="w-4 h-4 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-1.5 mt-1">
+            <svg class="w-3.5 h-3.5 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Basic Information</h3>
+            <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Basic Information</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+              <label for="name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
                 Full Name <span class="text-rose-500">*</span>
               </label>
               <input
@@ -121,13 +121,13 @@
                 v-model="profileForm.name"
                 type="text"
                 required
-                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
                 placeholder="Enter full name"
               />
             </div>
 
             <div>
-              <label for="email" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+              <label for="email" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
                 Email Address <span class="text-rose-500">*</span>
               </label>
               <input
@@ -135,7 +135,7 @@
                 v-model="profileForm.email"
                 type="email"
                 required
-                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 px-3.5 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
                 placeholder="Enter email address"
               />
             </div>
@@ -143,18 +143,18 @@
         </div>
 
         <!-- Security & Password Change Section -->
-        <div class="space-y-4 pt-4">
-          <div class="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
-            <svg class="w-4 h-4 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-1.5">
+            <svg class="w-3.5 h-3.5 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Security & Password</h3>
+            <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Security & Password</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Current Password -->
             <div>
-              <label for="current_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+              <label for="current_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
                 Current Password
               </label>
               <div class="relative">
@@ -162,19 +162,19 @@
                   id="current_password"
                   v-model="profileForm.current_password"
                   :type="showCurrentPassword ? 'text' : 'password'"
-                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 pl-3 pr-9 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   @click="showCurrentPassword = !showCurrentPassword"
-                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   title="Toggle Password Visibility"
                 >
-                  <svg v-if="showCurrentPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="showCurrentPassword" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
                   </svg>
-                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
@@ -184,7 +184,7 @@
 
             <!-- New Password -->
             <div>
-              <label for="new_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+              <label for="new_password" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
                 New Password
               </label>
               <div class="relative">
@@ -192,19 +192,19 @@
                   id="new_password"
                   v-model="profileForm.new_password"
                   :type="showNewPassword ? 'text' : 'password'"
-                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 pl-3 pr-9 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   @click="showNewPassword = !showNewPassword"
-                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   title="Toggle Password Visibility"
                 >
-                  <svg v-if="showNewPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="showNewPassword" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
                   </svg>
-                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
@@ -214,7 +214,7 @@
 
             <!-- Confirm Password -->
             <div>
-              <label for="new_password_confirmation" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 font-sans">
+              <label for="new_password_confirmation" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
                 Confirm Password
               </label>
               <div class="relative">
@@ -222,19 +222,19 @@
                   id="new_password_confirmation"
                   v-model="profileForm.new_password_confirmation"
                   :type="showConfirmPassword ? 'text' : 'password'"
-                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 pl-3 pr-9 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   @click="showConfirmPassword = !showConfirmPassword"
-                  class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   title="Toggle Password Visibility"
                 >
-                  <svg v-if="showConfirmPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="showConfirmPassword" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
                   </svg>
-                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
@@ -245,11 +245,11 @@
         </div>
 
         <!-- Submit Button Footer -->
-        <div class="flex items-center justify-end pt-5 border-t border-slate-100 dark:border-zinc-800">
+        <div class="flex items-center justify-end pt-4 border-t border-slate-100 dark:border-zinc-800">
           <button
             type="submit"
             :disabled="submitting"
-            class="bg-slate-900 hover:bg-black active:scale-[0.98] text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white font-bold rounded-xl text-xs px-6 py-2.5 transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 font-sans"
+            class="bg-slate-900 hover:bg-black active:scale-[0.98] text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white font-bold rounded-xl text-xs px-5 py-2.5 transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 font-sans"
           >
             <div v-if="submitting" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
             <span>{{ submitting ? 'Updating...' : 'Update Profile' }}</span>
