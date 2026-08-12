@@ -55,13 +55,14 @@
               </div>
             </button>
 
-            <!-- COMPANY NAME & WORKSPACE LABEL (Dropdown Trigger) -->
+            <!-- COMPANY NAME & WORKSPACE LABEL (Dropdown Trigger for authorized users) -->
             <button
+              v-if="canSwitchCompanies"
               type="button"
               @click="showCompanySwitcher = !showCompanySwitcher"
               data-company-switcher-button
               :class="[
-                'flex-1 flex items-center min-w-0 text-left focus:outline-none transition-opacity duration-300',
+                'flex-1 flex items-center min-w-0 text-left focus:outline-none transition-opacity duration-300 cursor-pointer',
                 sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
               ]"
             >
@@ -77,11 +78,27 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
               </svg>
             </button>
+            <div
+              v-else
+              :class="[
+                'flex-1 flex items-center min-w-0 text-left select-none transition-opacity duration-300',
+                sidebarCollapsed ? 'opacity-0 hidden' : 'opacity-100'
+              ]"
+            >
+              <div class="flex flex-col min-w-0 text-left w-full">
+                <h2 class="text-sm font-bold text-gray-900 dark:text-slate-100 truncate tracking-wide leading-tight">
+                  {{ activeCompany.company_name }}
+                </h2>
+                <span class="text-[10px] text-gray-500 dark:text-slate-400 font-medium truncate">
+                  Enterprise Workspace
+                </span>
+              </div>
+            </div>
           </div>
 
           <!-- Dropdown menu -->
           <div
-            v-if="showCompanySwitcher && !sidebarCollapsed"
+            v-if="canSwitchCompanies && showCompanySwitcher && !sidebarCollapsed"
             ref="companySwitcherRef"
             class="absolute left-0 right-0 w-full mt-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl divide-y divide-gray-100 dark:divide-[#2E2E2E] focus:outline-none z-50 overflow-hidden"
           >
@@ -1397,8 +1414,9 @@
               >
                 <!-- User Header -->
                 <div class="px-4 py-4 border-b border-gray-200 dark:border-[#2E2E2E] flex items-center space-x-3">
-                  <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
-                    {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+                  <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg overflow-hidden">
+                    <img v-if="authStore.user?.avatar_url || authStore.user?.profile_image" :src="getProfileImageUrl(authStore.user?.avatar_url || authStore.user?.profile_image)" class="w-full h-full object-cover" />
+                    <span v-else>{{ authStore.user?.name?.charAt(0).toUpperCase() }}</span>
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-0.5">Operator</p>
@@ -2168,6 +2186,23 @@ const uploadingLogo = ref(false);
 const lightboxLogoInput = ref(null);
 
 // Computed
+const canSwitchCompanies = computed(() => {
+  if (!authStore.user) return false;
+  
+  const isOwnerOrAdmin = authStore.user.is_main_owner ||
+                         authStore.user.is_owner ||
+                         authStore.user.role_name === 'admin' ||
+                         authStore.user.role_name === 'owner' ||
+                         authStore.user.role_name === 'Admin' ||
+                         authStore.user.role_name === 'Company Admin';
+                         
+  const hasPermission = authStore.hasPermission('companies.switch') ||
+                        authStore.hasPermission('switch_companies') ||
+                        authStore.hasPermission('companies.manage');
+                        
+  return (isOwnerOrAdmin || hasPermission) && companies.value.length > 1;
+});
+
 const unreadNotifications = computed(() => {
   return notifications.value.filter(n => !n.read_at).length;
 });

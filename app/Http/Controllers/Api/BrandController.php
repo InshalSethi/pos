@@ -63,7 +63,7 @@ class BrandController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'parent_id' => 'nullable|exists:brands,id',
             'is_active' => 'boolean',
         ]);
@@ -130,7 +130,7 @@ class BrandController extends Controller
                     return $query->where('company_id', $companyId);
                 })
             ],
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'parent_id' => 'nullable|exists:brands,id',
             'is_active' => 'boolean',
         ]);

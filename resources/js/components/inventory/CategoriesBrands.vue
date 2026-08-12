@@ -395,7 +395,7 @@
                   >
                     Remove
                   </button>
-                  <p class="text-[9px] text-gray-400 mt-1">Supported formats: JPG, PNG, GIF, SVG. Max 2MB.</p>
+                  <p class="text-[9px] text-gray-400 mt-1">Supported formats: JPG, PNG, GIF, SVG, WEBP. Max 10MB.</p>
                 </div>
               </div>
             </div>
@@ -661,8 +661,8 @@ const handleLogoChange = (event) => {
     showToast('Please select an image file.', 'error');
     return;
   }
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('Logo must be less than 2MB.', 'error');
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('Logo must be less than 10MB.', 'error');
     return;
   }
 

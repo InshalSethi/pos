@@ -69,29 +69,39 @@
 
           <!-- Min Salary -->
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Minimum Salary</label>
-            <input
-              v-model="form.min_salary"
-              type="number"
-              step="0.01"
-              min="0"
-              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              placeholder="0.00"
-            />
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Minimum Salary ({{ currencySymbol }})</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 dark:text-zinc-500 pointer-events-none">
+                {{ currencySymbol }}
+              </span>
+              <input
+                v-model="form.min_salary"
+                type="number"
+                step="0.01"
+                min="0"
+                class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="0.00"
+              />
+            </div>
             <span v-if="errors.min_salary" class="text-red-500 text-xs mt-1 block">{{ errors.min_salary[0] }}</span>
           </div>
 
           <!-- Max Salary -->
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Maximum Salary</label>
-            <input
-              v-model="form.max_salary"
-              type="number"
-              step="0.01"
-              min="0"
-              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              placeholder="0.00"
-            />
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Maximum Salary ({{ currencySymbol }})</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 dark:text-zinc-500 pointer-events-none">
+                {{ currencySymbol }}
+              </span>
+              <input
+                v-model="form.max_salary"
+                type="number"
+                step="0.01"
+                min="0"
+                class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="0.00"
+              />
+            </div>
             <span v-if="errors.max_salary" class="text-red-500 text-xs mt-1 block">{{ errors.max_salary[0] }}</span>
           </div>
         </div>
@@ -167,7 +177,16 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
+import { useCurrencyStore } from '@/stores/currency';
+import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+
+const currencyStore = useCurrencyStore();
+const authStore = useAuthStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || 'Rs.';
+});
 
 const levelOptions = [
   { value: '', label: 'Select Level' },
@@ -264,6 +283,7 @@ const initializeForm = () => {
 
 // Lifecycle
 onMounted(() => {
+  currencyStore.fetchCurrencies();
   fetchDepartments();
   initializeForm();
 });

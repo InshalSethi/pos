@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
 
+use App\Models\Employee;
+use Illuminate\Support\Facades\Storage;
+
 class UserController extends Controller
 {
     public function __construct()
@@ -115,10 +118,13 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|exists:roles,name',
+            'company_id' => 'nullable|exists:companies,id',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
             'is_active' => 'boolean',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -128,7 +134,15 @@ class UserController extends Controller
             ], 422);
         }
 
-        $companyId = auth()->user()->current_company_id;
+        $companyId = $request->get('company_id') ?: auth()->user()->current_company_id;
+
+        // Handle profile photo upload
+        $avatarPath = null;
+        if ($request->hasFile('profile_image')) {
+            $avatarPath = Storage::disk('public')->put('avatars', $request->file('profile_image'));
+        } elseif ($request->hasFile('avatar')) {
+            $avatarPath = Storage::disk('public')->put('avatars', $request->file('avatar'));
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -137,17 +151,57 @@ class UserController extends Controller
             'phone' => $request->phone,
             'address' => $request->address,
             'notes' => $request->notes,
-            'is_active' => $request->get('is_active', true),
+            'profile_image' => $avatarPath,
+            'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
             'current_company_id' => $companyId,
+            'company_id' => $companyId,
             'onboarding_completed' => true,
         ]);
 
         if ($companyId) {
-            $user->companies()->attach($companyId, ['role' => $request->role]);
+            $user->companies()->syncWithoutDetaching([$companyId => ['role' => $request->role]]);
         }
 
         $user->assignRole($request->role);
         $user->load('roles');
+
+        // Automatically link or create Employee profile
+        $nameParts = explode(' ', trim($request->name), 2);
+        $firstName = $nameParts[0];
+        $lastName = $nameParts[1] ?? '';
+
+        $employee = Employee::where('email', $request->email)
+            ->where('company_id', $companyId)
+            ->first();
+
+        if ($employee) {
+            $employee->update([
+                'user_id' => $user->id,
+                'company_id' => $companyId,
+                'profile_image' => $avatarPath ?: $employee->profile_image,
+                'phone' => $request->phone ?: $employee->phone,
+                'address' => $request->address ?: $employee->address,
+                'is_active' => $user->is_active,
+            ]);
+        } else {
+            Employee::create([
+                'user_id' => $user->id,
+                'company_id' => $companyId,
+                'employee_number' => Employee::generateEmployeeNumber(),
+                'first_name' => $firstName,
+                'last_name' => $lastName ?: $firstName,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'profile_image' => $avatarPath,
+                'hire_date' => now()->toDateString(),
+                'employment_type' => 'full_time',
+                'employment_status' => $user->is_active ? 'active' : 'inactive',
+                'basic_salary' => 0,
+                'salary_type' => 'monthly',
+                'is_active' => $user->is_active,
+            ]);
+        }
 
         return response()->json([
             'message' => 'User created successfully',
@@ -166,7 +220,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized access to user.'], 403);
         }
 
-        $user->load('roles', 'permissions');
+        $user->load('roles', 'permissions', 'employee');
 
         return response()->json($user);
     }
@@ -191,6 +245,8 @@ class UserController extends Controller
             'address' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
             'is_active' => 'boolean',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -206,16 +262,53 @@ class UserController extends Controller
             'phone' => $request->phone,
             'address' => $request->address,
             'notes' => $request->notes,
-            'is_active' => $request->get('is_active', true),
+            'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
         ];
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
         }
 
+        // Handle profile photo upload
+        if ($request->hasFile('profile_image')) {
+            if ($user->profile_image) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            $updateData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('profile_image'));
+        } elseif ($request->hasFile('avatar')) {
+            if ($user->profile_image) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            $updateData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('avatar'));
+        }
+
         $user->update($updateData);
         $user->syncRoles([$request->role]);
         $user->load('roles');
+
+        // Automatically sync changes to linked Employee
+        $employee = Employee::where('user_id', $user->id)
+            ->orWhere(function ($q) use ($user, $companyId) {
+                $q->where('email', $user->email)->where('company_id', $companyId);
+            })->first();
+
+        if ($employee) {
+            $nameParts = explode(' ', trim($request->name), 2);
+            $firstName = $nameParts[0];
+            $lastName = $nameParts[1] ?? '';
+
+            $employee->update([
+                'user_id' => $user->id,
+                'first_name' => $firstName,
+                'last_name' => $lastName ?: $firstName,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'profile_image' => $user->profile_image,
+                'is_active' => $user->is_active,
+                'employment_status' => $user->is_active ? 'active' : 'inactive',
+            ]);
+        }
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -248,6 +341,16 @@ class UserController extends Controller
 
         if ($user->current_company_id !== $companyId && !$user->companies()->where('companies.id', $companyId)->exists()) {
             return response()->json(['message' => 'Unauthorized to delete this user.'], 403);
+        }
+
+        // Safely update linked Employee status without deleting historical HR data
+        $employee = Employee::where('user_id', $user->id)->first();
+        if ($employee) {
+            $employee->update([
+                'is_active' => false,
+                'employment_status' => 'inactive',
+                'user_id' => null,
+            ]);
         }
 
         $user->delete();

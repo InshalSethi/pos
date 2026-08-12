@@ -1,282 +1,341 @@
 <template>
-  <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center">
-          <div class="flex-shrink-0 h-16 w-16 mr-4">
-            <img 
-              v-if="employee.profile_image" 
-              :src="`/storage/${employee.profile_image}`" 
-              :alt="employee.full_name"
-              class="h-16 w-16 rounded-full object-cover border border-slate-200 dark:border-zinc-700"
-            />
-            <div v-else class="h-16 w-16 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center">
-              <span class="text-lg font-bold text-slate-700 dark:text-slate-200">
-                {{ getInitials(employee.first_name, employee.last_name) }}
-              </span>
-            </div>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ employee.full_name }}</h3>
-            <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">{{ employee.employee_number }}</p>
-            <span :class="getStatusClass(employee.employment_status)" class="px-2 py-0.5 mt-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider">
-              {{ getStatusText(employee.employment_status) }}
-            </span>
-          </div>
-        </div>
-        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Employee Information -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- Personal Information -->
-        <div class="space-y-4">
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Personal Information</h4>
-          <div class="space-y-2.5">
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Email</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.email }}</p>
-            </div>
-            <div v-if="employee.phone">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Phone</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.phone }}</p>
-            </div>
-            <div v-if="employee.mobile">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Mobile</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.mobile }}</p>
-            </div>
-            <div v-if="employee.date_of_birth">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Date of Birth</label>
-              <p class="text-xs font-mono text-slate-900 dark:text-slate-100 mt-0.5">{{ formatDate(employee.date_of_birth) }}</p>
-            </div>
-            <div v-if="employee.gender">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Gender</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ capitalizeFirst(employee.gender) }}</p>
-            </div>
-            <div v-if="employee.marital_status">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Marital Status</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ capitalizeFirst(employee.marital_status) }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Employment Information -->
-        <div class="space-y-4">
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-2">Employment Information</h4>
-          <div class="space-y-2.5">
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Department</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.department?.name || '-' }}</p>
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Position</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.position?.title || '-' }}</p>
-            </div>
-            <div v-if="employee.manager">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Manager</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.manager.full_name }}</p>
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Hire Date</label>
-              <p class="text-xs font-mono text-slate-900 dark:text-slate-100 mt-0.5">{{ formatDate(employee.hire_date) }}</p>
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Employment Type</label>
-              <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ getEmploymentTypeText(employee.employment_type) }}</p>
-            </div>
-            <div v-if="employee.probation_end_date">
-              <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Probation End Date</label>
-              <p class="text-xs font-mono text-slate-900 dark:text-slate-100 mt-0.5">{{ formatDate(employee.probation_end_date) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Salary Information -->
-      <div class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl mb-6">
-        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Salary Information</h4>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Basic Salary</label>
-            <p class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100 mt-0.5">${{ parseFloat(employee.basic_salary).toFixed(2) }}</p>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Salary Type</label>
-            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ capitalizeFirst(employee.salary_type) }}</p>
-          </div>
-          <div v-if="employee.hourly_rate">
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Hourly Rate</label>
-            <p class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100 mt-0.5">${{ parseFloat(employee.hourly_rate).toFixed(2) }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Emergency Contact -->
-      <div v-if="employee.emergency_contact_name" class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl mb-6">
-        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Emergency Contact</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Name</label>
-            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_name }}</p>
-          </div>
-          <div v-if="employee.emergency_contact_relationship">
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Relationship</label>
-            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_relationship }}</p>
-          </div>
-          <div v-if="employee.emergency_contact_phone">
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Phone</label>
-            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_phone }}</p>
-          </div>
-          <div v-if="employee.emergency_contact_email">
-            <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Email</label>
-            <p class="text-xs font-medium text-slate-900 dark:text-slate-100 mt-0.5">{{ employee.emergency_contact_email }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Notes -->
-      <div v-if="employee.notes" class="mb-6">
-        <label class="block text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Notes</label>
-        <p class="text-xs text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-3 rounded-xl">{{ employee.notes }}</p>
-      </div>
-
-      <!-- User Account Section -->
-      <div v-if="canEdit" class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl mb-6">
-        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">User Account</h4>
-        <div v-if="employee.user" class="space-y-2">
-          <p class="text-xs text-slate-600 dark:text-slate-300">
-            <span class="font-bold">Status:</span>
-            <span class="text-slate-900 dark:text-white font-bold ml-1">Has User Account</span>
-          </p>
-          <p class="text-xs text-slate-600 dark:text-slate-300">
-            <span class="font-bold">Login Email:</span> {{ employee.user.email }}
-          </p>
-          <div class="flex space-x-2 mt-3">
-            <button
-              @click="syncUserAccount"
-              class="px-3 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 cursor-pointer"
+  <Teleport to="body">
+    <div 
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/50 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200 select-none" 
+      style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" 
+      @click.self="$emit('close')"
+    >
+      <!-- Main Modal Card Container -->
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-3xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 sm:p-8 transition-all duration-300 my-auto max-h-[90vh] overflow-y-auto flex flex-col gap-6">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-zinc-800">
+          <div class="flex items-center gap-4">
+            <div 
+              @click="openImagePreview"
+              class="flex-shrink-0 h-16 w-16 relative rounded-full overflow-hidden border-2 border-indigo-500/20 dark:border-indigo-400/30 shadow-xs flex items-center justify-center bg-slate-50 dark:bg-zinc-800 cursor-pointer hover:opacity-90 hover:scale-105 hover:ring-4 hover:ring-indigo-500/20 transition-all"
+              title="Click to preview full image"
             >
-              Sync Account
+              <img 
+                v-if="employee.avatar_url || employee.profile_image" 
+                :src="employee.avatar_url || (employee.profile_image.startsWith('http') ? employee.profile_image : `/storage/${employee.profile_image}`)" 
+                :alt="employee.full_name"
+                class="h-16 w-16 rounded-full object-cover"
+              />
+              <div v-else-if="employee.gender === 'female'" class="w-full h-full bg-gradient-to-br from-pink-100 to-rose-200 dark:from-rose-950 dark:to-pink-900 flex items-center justify-center text-rose-600 dark:text-rose-300">
+                <svg class="w-10 h-10" viewBox="0 0 64 64" fill="currentColor"><path d="M32 12c-5.523 0-10 4.477-10 10 0 3.75 2.07 7.02 5.14 8.74C21.84 32.8 17.5 37.85 17.5 44h29c0-6.15-4.34-11.2-9.64-13.26A9.97 9.97 0 0042 22c0-5.523-4.477-10-10-10z"/></svg>
+              </div>
+              <div v-else class="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-indigo-950 dark:to-blue-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300">
+                <svg class="w-10 h-10" viewBox="0 0 64 64" fill="currentColor"><path d="M32 12c-5.523 0-10 4.477-10 10 0 3.75 2.07 7.02 5.14 8.74C21.84 32.8 17.5 37.85 17.5 44h29c0-6.15-4.34-11.2-9.64-13.26A9.97 9.97 0 0042 22c0-5.523-4.477-10-10-10z"/></svg>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ employee.full_name }}</h3>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">#{{ employee.employee_number }}</span>
+                <span :class="getStatusClass(employee.employment_status)" class="px-2.5 py-0.5 inline-flex text-[10px] font-extrabold rounded-full uppercase tracking-wider">
+                  {{ getStatusText(employee.employment_status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button @click="$emit('close')" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 2-Column Responsive Information Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Personal Information Card -->
+          <div class="bg-slate-50 dark:bg-zinc-800/40 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800 space-y-4">
+            <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-200/60 dark:border-zinc-700/60 pb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Personal Information
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Email</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{{ employee.email || '-' }}</p>
+              </div>
+              <div v-if="employee.phone">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Phone</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.phone }}</p>
+              </div>
+              <div v-if="employee.mobile">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Mobile</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.mobile }}</p>
+              </div>
+              <div v-if="employee.date_of_birth">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Date of Birth</label>
+                <p class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100">{{ formatDate(employee.date_of_birth) }}</p>
+              </div>
+              <div v-if="employee.gender">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Gender</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ capitalizeFirst(employee.gender) }}</p>
+              </div>
+              <div v-if="employee.marital_status">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Marital Status</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ capitalizeFirst(employee.marital_status) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Employment Information Card -->
+          <div class="bg-slate-50 dark:bg-zinc-800/40 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800 space-y-4">
+            <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider border-b border-slate-200/60 dark:border-zinc-700/60 pb-2 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              Employment Information
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Department</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.department?.name || '-' }}</p>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Position</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.position?.title || '-' }}</p>
+              </div>
+              <div v-if="employee.manager">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Manager</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.manager.full_name }}</p>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Hire Date</label>
+                <p class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100">{{ formatDate(employee.hire_date) }}</p>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Employment Type</label>
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ getEmploymentTypeText(employee.employment_type) }}</p>
+              </div>
+              <div v-if="employee.probation_end_date">
+                <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Probation End</label>
+                <p class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100">{{ formatDate(employee.probation_end_date) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Salary Information Card -->
+        <div class="bg-slate-50 dark:bg-zinc-800/40 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800">
+          <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Salary Information
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Basic Salary</label>
+              <p class="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">${{ parseFloat(employee.basic_salary).toFixed(2) }}</p>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Salary Type</label>
+              <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ capitalizeFirst(employee.salary_type) }}</p>
+            </div>
+            <div v-if="employee.hourly_rate">
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Hourly Rate</label>
+              <p class="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">${{ parseFloat(employee.hourly_rate).toFixed(2) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact Card (If present) -->
+        <div v-if="employee.emergency_contact_name" class="bg-slate-50 dark:bg-zinc-800/40 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800">
+          <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Emergency Contact
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Name</label>
+              <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.emergency_contact_name }}</p>
+            </div>
+            <div v-if="employee.emergency_contact_relationship">
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Relationship</label>
+              <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.emergency_contact_relationship }}</p>
+            </div>
+            <div v-if="employee.emergency_contact_phone">
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Phone</label>
+              <p class="text-xs font-semibold text-slate-900 dark:text-slate-100">{{ employee.emergency_contact_phone }}</p>
+            </div>
+            <div v-if="employee.emergency_contact_email">
+              <label class="block text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Email</label>
+              <p class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{{ employee.emergency_contact_email }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section (If present) -->
+        <div v-if="employee.notes" class="bg-slate-50 dark:bg-zinc-800/40 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800">
+          <label class="block text-[11px] font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-2">Notes</label>
+          <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{{ employee.notes }}</p>
+        </div>
+
+        <!-- User Account Card -->
+        <div v-if="canEdit" class="bg-slate-50 dark:bg-zinc-800/40 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800">
+          <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            User Account
+          </h4>
+          <div v-if="employee.user" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <p class="text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-bold">Status:</span>
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold ml-1">Has User Account</span>
+              </p>
+              <p class="text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-bold">Login Email:</span> {{ employee.user.email }}
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                @click="syncUserAccount"
+                class="px-3.5 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs rounded-xl hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+              >
+                Sync Account
+              </button>
+              <button
+                @click="resetPassword"
+                class="px-3.5 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs rounded-xl hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+              >
+                Reset Password
+              </button>
+              <button
+                @click="deactivateUserAccount"
+                class="px-3.5 py-2 bg-rose-600 text-white font-bold text-xs rounded-xl hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
+              >
+                Deactivate Account
+              </button>
+            </div>
+          </div>
+          <div v-else class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <p class="text-xs text-slate-600 dark:text-slate-300">
+                <span class="font-bold">Status:</span>
+                <span class="text-rose-500 font-bold ml-1">No User Account</span>
+              </p>
+              <p class="text-xs text-slate-500 dark:text-zinc-400">User account can be created for system login access.</p>
+            </div>
+            <button
+              @click="createUserAccount"
+              class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors cursor-pointer shadow-xs"
+            >
+              Create User Account
+            </button>
+          </div>
+        </div>
+
+        <!-- Footer Actions Bar -->
+        <div class="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-zinc-800">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <button
+              v-if="canEdit"
+              @click="$emit('edit')"
+              class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
+            >
+              Edit
             </button>
             <button
-              @click="resetPassword"
-              class="px-3 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 cursor-pointer"
+              v-if="canTerminate"
+              @click="showTerminationModal = true"
+              class="px-4 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs hover:bg-rose-700 cursor-pointer transition-all shadow-xs"
             >
-              Reset Password
+              Terminate
             </button>
             <button
-              @click="deactivateUserAccount"
-              class="px-3 py-1.5 bg-red-600 text-white font-semibold text-xs rounded-xl hover:bg-red-700 cursor-pointer"
+              v-if="canReactivate"
+              @click="reactivateEmployee"
+              class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
             >
-              Deactivate Account
+              Reactivate
             </button>
           </div>
-        </div>
-        <div v-else class="space-y-2">
-          <p class="text-xs text-slate-600 dark:text-slate-300">
-            <span class="font-bold">Status:</span>
-            <span class="text-red-500 font-bold ml-1">No User Account</span>
-          </p>
-          <button
-            @click="createUserAccount"
-            class="px-3 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 cursor-pointer"
-          >
-            Create User Account
-          </button>
-        </div>
-      </div>
 
-      <!-- Actions -->
-      <div class="flex justify-between items-center pt-6 border-t border-slate-100 dark:border-zinc-800">
-        <div class="flex space-x-3">
           <button
-            v-if="canEdit"
-            @click="$emit('edit')"
-            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
+            @click="$emit('close')"
+            class="px-5 py-2.5 border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700/80 transition-all cursor-pointer shadow-xs"
           >
-            Edit
-          </button>
-          <button
-            v-if="canTerminate"
-            @click="showTerminationModal = true"
-            class="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl text-xs hover:bg-red-700 cursor-pointer transition-all shadow-xs"
-          >
-            Terminate
-          </button>
-          <button
-            v-if="canReactivate"
-            @click="reactivateEmployee"
-            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
-          >
-            Reactivate
+            Close
           </button>
         </div>
-
-        <button
-          @click="$emit('close')"
-          class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-        >
-          Close
-        </button>
       </div>
     </div>
 
-    <!-- Termination Modal -->
-    <div v-if="showTerminationModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Terminate Employee</h3>
+    <!-- Termination Modal Overlay -->
+    <div v-if="showTerminationModal" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-3xl bg-white dark:bg-zinc-900 p-6 text-slate-800 dark:text-slate-100">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Terminate Employee</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date *</label>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Termination Date *</label>
             <input
               v-model="terminationData.termination_date"
               type="date"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Termination Reason *</label>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Termination Reason *</label>
             <textarea
               v-model="terminationData.termination_reason"
               rows="3"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Please provide a reason for termination..."
             ></textarea>
           </div>
         </div>
-        <div class="flex justify-end space-x-3 mt-6">
+        <div class="flex justify-end gap-3 mt-6">
           <button
             @click="showTerminationModal = false"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            class="px-4 py-2 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             @click="terminateEmployee"
             :disabled="!terminationData.termination_reason.trim() || !terminationData.termination_date"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            class="px-4 py-2 bg-rose-600 text-white font-bold text-xs rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer"
           >
             Terminate
           </button>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Image Preview Lightbox Modal -->
+    <ImagePreviewModal
+      :show="showImagePreview"
+      :image-url="getEmployeeAvatarUrl"
+      :title="employee?.full_name || 'Employee Profile'"
+      :subtitle="`${employee?.employee_number ? '#' + employee.employee_number + ' • ' : ''}${employee?.position?.title || 'Employee'}`"
+      @close="showImagePreview = false"
+    />
+  </Teleport>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
+const showImagePreview = ref(false);
+
+const openImagePreview = () => {
+  showImagePreview.value = true;
+};
+
+const getEmployeeAvatarUrl = computed(() => {
+  if (!props.employee) return '';
+  if (props.employee.avatar_url) return props.employee.avatar_url;
+  if (props.employee.profile_image) {
+    return props.employee.profile_image.startsWith('http') ? props.employee.profile_image : `/storage/${props.employee.profile_image}`;
+  }
+  return '';
+});
 
 // Props and Emits
 const props = defineProps({

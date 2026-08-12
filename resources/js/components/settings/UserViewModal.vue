@@ -6,8 +6,9 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-4">
                 <div class="flex-shrink-0">
-                  <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-12 h-12 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center border border-white/10 shadow-sm">
+                    <img v-if="userData?.avatar_url || userData?.profile_image" :src="userData.avatar_url || (userData.profile_image.startsWith('http') ? userData.profile_image : `/storage/${userData.profile_image}`)" class="w-full h-full object-cover" />
+                    <svg v-else class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>

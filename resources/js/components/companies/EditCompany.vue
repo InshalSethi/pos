@@ -47,7 +47,7 @@
               <button type="button" @click="$refs.logoInput.click()" class="w-full py-2.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 Upload Photo
               </button>
-              <p class="text-[10px] text-gray-400 mt-2 text-center uppercase tracking-wide">Step 2: Media Files (Max 2MB)</p>
+              <p class="text-[10px] text-gray-400 mt-2 text-center uppercase tracking-wide">Step 2: Media Files (Max 10MB)</p>
             </div>
         </div>
 

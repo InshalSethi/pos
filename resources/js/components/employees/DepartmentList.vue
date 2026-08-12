@@ -138,6 +138,10 @@ const deleteDepartment = async (department) => {
   }
 };
 
+defineExpose({
+  fetchDepartments
+});
+
 // Lifecycle
 onMounted(() => {
   fetchDepartments();

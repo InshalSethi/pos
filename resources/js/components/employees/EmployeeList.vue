@@ -1,7 +1,49 @@
 <template>
   <div class="employee-list">
-    <!-- Filters -->
+    <!-- Top Action & Filter Controls -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl shadow-xs mb-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white">Workforce Directory</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">View and manage all company employees</p>
+        </div>
+        
+        <!-- View Mode Switcher Buttons -->
+        <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-xl self-start md:self-auto border border-slate-200/50 dark:border-zinc-700/50">
+          <button
+            type="button"
+            @click="viewMode = 'grid'"
+            :class="[
+              'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+              viewMode === 'grid'
+                ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            ]"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            Grid View
+          </button>
+          <button
+            type="button"
+            @click="viewMode = 'table'"
+            :class="[
+              'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+              viewMode === 'table'
+                ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            ]"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            Table View
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Search</label>
@@ -43,14 +85,145 @@
       </div>
     </div>
 
+    <!-- GRID VIEW -->
+    <div v-if="viewMode === 'grid'" class="space-y-6">
+      <!-- Loading Skeleton -->
+      <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+        <div v-for="i in 10" :key="i" class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-5 animate-pulse flex flex-col items-center">
+          <div class="w-20 h-20 rounded-full bg-slate-200 dark:bg-zinc-800 mb-4"></div>
+          <div class="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-3/4 mb-2"></div>
+          <div class="h-3 bg-slate-200 dark:bg-zinc-800 rounded w-1/2 mb-3"></div>
+          <div class="h-8 bg-slate-200 dark:bg-zinc-800 rounded w-full mt-auto"></div>
+        </div>
+      </div>
 
+      <!-- Empty State -->
+      <div v-else-if="employeeList.length === 0" class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-12 text-center">
+        <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4 text-slate-400">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">No employees found</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Try adjusting your search or filters.</p>
+      </div>
 
-    <!-- Employee Table -->
+      <!-- Employee Grid Cards -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+        <div
+          v-for="item in employeeList"
+          :key="item.id"
+          class="group relative bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 rounded-2xl p-5 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
+        >
+          <!-- Card Header: Checkbox & Status -->
+          <div class="flex items-center justify-between w-full mb-2">
+            <input
+              type="checkbox"
+              :value="item.id"
+              v-model="selectedEmployees"
+              class="h-4 w-4 text-indigo-600 border-slate-300 dark:border-zinc-700 rounded focus:ring-0 cursor-pointer"
+            />
+            <span
+              :class="getStatusBadgeClass(item.employment_status)"
+              class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase tracking-wider"
+            >
+              {{ getStatusText(item.employment_status) }}
+            </span>
+          </div>
+
+          <div class="flex flex-col items-center my-3 text-center">
+            <div 
+              @click.stop="openImagePreview(item)"
+              class="relative w-20 h-20 rounded-full overflow-hidden border-2 border-slate-100 dark:border-zinc-800 shadow-xs mb-3 group-hover:scale-105 transition-all duration-200 flex items-center justify-center bg-slate-50 dark:bg-zinc-800 cursor-pointer hover:ring-4 hover:ring-indigo-500/30"
+              title="Click to preview profile image"
+            >
+              <!-- Uploaded Profile Photo -->
+              <img
+                v-if="item.avatar_url || item.profile_image"
+                :src="item.avatar_url || (item.profile_image.startsWith('http') ? item.profile_image : `/storage/${item.profile_image}`)"
+                :alt="item.full_name"
+                class="w-full h-full object-cover"
+              />
+              <!-- Female Illustration Avatar SVG -->
+              <div v-else-if="item.gender === 'female'" class="w-full h-full bg-gradient-to-br from-pink-100 to-rose-200 dark:from-rose-950/60 dark:to-pink-900/60 flex items-center justify-center">
+                <svg class="w-13 h-13 text-rose-500 dark:text-rose-300" viewBox="0 0 64 64" fill="currentColor">
+                  <path d="M32 12c-5.523 0-10 4.477-10 10 0 3.75 2.07 7.02 5.14 8.74C21.84 32.8 17.5 37.85 17.5 44h29c0-6.15-4.34-11.2-9.64-13.26A9.97 9.97 0 0042 22c0-5.523-4.477-10-10-10z"/>
+                </svg>
+              </div>
+              <!-- Male Illustration Avatar SVG -->
+              <div v-else class="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-indigo-950/60 dark:to-blue-900/60 flex items-center justify-center">
+                <svg class="w-13 h-13 text-indigo-600 dark:text-indigo-300" viewBox="0 0 64 64" fill="currentColor">
+                  <path d="M32 12c-5.523 0-10 4.477-10 10 0 3.75 2.07 7.02 5.14 8.74C21.84 32.8 17.5 37.85 17.5 44h29c0-6.15-4.34-11.2-9.64-13.26A9.97 9.97 0 0042 22c0-5.523-4.477-10-10-10z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Employee Info Centered Below Photo -->
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate w-full group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {{ item.full_name }}
+            </h3>
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate w-full mt-0.5">
+              {{ item.email }}
+            </p>
+            <p class="text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
+              {{ item.phone || item.mobile || '—' }}
+            </p>
+            <div class="mt-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-zinc-700/50">
+              ID: #{{ item.employee_number || item.id }}
+            </div>
+
+            <!-- Manager Badge in Grid View -->
+            <div class="mt-2 flex items-center justify-center gap-1.5 text-[11px]">
+              <span class="text-slate-400 dark:text-zinc-500 font-medium">Manager:</span>
+              <span v-if="item.manager" class="font-bold text-slate-800 dark:text-zinc-200 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800/50">
+                {{ item.manager.first_name }} {{ item.manager.last_name }}
+              </span>
+              <span v-else class="text-slate-400 dark:text-zinc-500 italic text-[10px]">
+                Unassigned
+              </span>
+            </div>
+          </div>
+
+          <!-- Card Action Buttons -->
+          <div class="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-center gap-2">
+            <button
+              @click="$emit('view-employee', item)"
+              class="px-3.5 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 font-semibold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              View Profile
+            </button>
+            <button
+              v-if="canEdit"
+              @click="$emit('edit-employee', item)"
+              class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Edit Employee"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button
+              v-if="canDelete"
+              @click="deleteEmployee(item)"
+              class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+              title="Delete Employee"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE VIEW -->
     <DataTable
+      v-else
       title="Employees"
       subtitle="Manage your workforce and employee information"
       :columns="tableColumns"
-      :data="employees.data || employees"
+      :data="employeeList"
       :loading="loading"
       :pagination="pagination"
       :initial-search="filters.search"
@@ -67,82 +240,110 @@
       <!-- Custom column content -->
       <template #column-employee="{ item }">
         <div class="flex items-center">
-          <div class="flex-shrink-0 h-10 w-10">
+          <div 
+            @click.stop="openImagePreview(item)"
+            class="flex-shrink-0 h-10 w-10 relative rounded-full overflow-hidden border border-slate-200 dark:border-zinc-800 cursor-pointer hover:opacity-85 transition-opacity hover:ring-2 hover:ring-indigo-500/30"
+            title="Click to preview profile image"
+          >
             <img
-              v-if="item.profile_image"
-              :src="`/storage/${item.profile_image}`"
+              v-if="item.avatar_url || item.profile_image"
+              :src="item.avatar_url || (item.profile_image.startsWith('http') ? item.profile_image : `/storage/${item.profile_image}`)"
               :alt="item.full_name"
               class="h-10 w-10 rounded-full object-cover"
             />
-            <div v-else class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <span class="text-sm font-medium text-gray-700">
-                {{ getInitials(item.first_name, item.last_name) }}
-              </span>
+            <div v-else-if="item.gender === 'female'" class="h-10 w-10 bg-gradient-to-br from-pink-100 to-rose-200 dark:from-rose-950 dark:to-pink-900 flex items-center justify-center text-rose-600 dark:text-rose-300">
+              <svg class="w-6 h-6" viewBox="0 0 64 64" fill="currentColor"><path d="M32 12c-5.523 0-10 4.477-10 10 0 3.75 2.07 7.02 5.14 8.74C21.84 32.8 17.5 37.85 17.5 44h29c0-6.15-4.34-11.2-9.64-13.26A9.97 9.97 0 0042 22c0-5.523-4.477-10-10-10z"/></svg>
+            </div>
+            <div v-else class="h-10 w-10 bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-indigo-950 dark:to-blue-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300">
+              <svg class="w-6 h-6" viewBox="0 0 64 64" fill="currentColor"><path d="M32 12c-5.523 0-10 4.477-10 10 0 3.75 2.07 7.02 5.14 8.74C21.84 32.8 17.5 37.85 17.5 44h29c0-6.15-4.34-11.2-9.64-13.26A9.97 9.97 0 0042 22c0-5.523-4.477-10-10-10z"/></svg>
             </div>
           </div>
-          <div class="ml-4">
-            <div class="text-sm font-medium text-gray-900">{{ item.full_name }}</div>
-            <div class="text-sm text-gray-500">{{ item.email }}</div>
+          <div class="ml-3 min-w-0">
+            <div class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ item.full_name }}</div>
+            <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ item.email }}</div>
           </div>
         </div>
       </template>
 
       <template #column-department="{ item }">
-        {{ item.department?.name || '-' }}
+        <span class="text-xs text-slate-700 dark:text-zinc-300 font-medium">{{ item.department?.name || '-' }}</span>
       </template>
 
       <template #column-position="{ item }">
-        {{ item.position?.title || '-' }}
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-700 dark:text-zinc-300 font-medium">{{ item.position?.title || '-' }}</span>
+          <span 
+            v-if="item.position?.level"
+            :class="getPositionLevelBadgeClass(item.position.level)"
+            class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border shadow-xs"
+          >
+            {{ item.position.level }}
+          </span>
+        </div>
+      </template>
+
+      <template #column-manager="{ item }">
+        <div v-if="item.manager" class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-bold text-[10px] flex items-center justify-center flex-shrink-0 border border-indigo-200/50 dark:border-indigo-800/50">
+            {{ item.manager.first_name?.[0] }}{{ item.manager.last_name?.[0] }}
+          </div>
+          <span class="text-xs font-semibold text-slate-800 dark:text-zinc-200">
+            {{ item.manager.first_name }} {{ item.manager.last_name }}
+          </span>
+        </div>
+        <span v-else class="text-xs text-slate-400 dark:text-zinc-500 italic">-</span>
       </template>
 
       <template #column-status="{ item }">
-        <span :class="getStatusClass(item.employment_status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+        <span :class="getStatusBadgeClass(item.employment_status)" class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
           {{ getStatusText(item.employment_status) }}
         </span>
       </template>
 
       <template #column-salary="{ item }">
         <div>
-          <div class="text-sm font-medium text-gray-900">${{ parseFloat(item.basic_salary).toFixed(2) }}</div>
-          <div class="text-sm text-gray-500">{{ item.salary_type }}</div>
+          <div class="text-xs font-bold text-slate-900 dark:text-white">${{ parseFloat(item.basic_salary).toFixed(2) }}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 capitalize">{{ item.salary_type }}</div>
         </div>
       </template>
 
       <template #column-actions="{ item }">
-        <div class="flex justify-end space-x-2">
+        <div class="flex justify-end items-center space-x-2">
           <button
             @click="$emit('view-employee', item)"
-            class="text-blue-600 hover:text-blue-900"
-            title="View"
+            class="p-1 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+            title="View Profile"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-            </svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
           </button>
           <button
             v-if="canEdit"
             @click="$emit('edit-employee', item)"
-            class="text-indigo-600 hover:text-indigo-900"
+            class="p-1 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
             title="Edit"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           </button>
           <button
             v-if="canDelete"
             @click="deleteEmployee(item)"
-            class="text-red-600 hover:text-red-900"
+            class="p-1 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
             title="Delete"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </template>
     </DataTable>
+
+    <!-- Image Preview Lightbox Modal -->
+    <ImagePreviewModal
+      :show="showImagePreview"
+      :image-url="previewImageUrl"
+      :title="previewImageTitle"
+      :subtitle="previewImageSubtitle"
+      @close="showImagePreview = false"
+    />
   </div>
 </template>
 
@@ -152,6 +353,7 @@ import { useAuthStore } from '@/stores/auth';
 import { debounce } from '@/utils/debounce';
 import DataTable from '@/components/common/DataTable.vue';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
+import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -177,12 +379,24 @@ const typeOptions = [
 ];
 
 // Reactive data
+const viewMode = ref('table');
+const selectedEmployees = ref([]);
 const employees = ref({ data: [], total: 0, current_page: 1, last_page: 1 });
 const departments = ref([]);
 const departmentOptions = computed(() => [
   { value: '', label: 'All Departments' },
   ...departments.value.map(d => ({ value: d.id, label: d.name }))
 ]);
+
+const employeeList = computed(() => {
+  if (Array.isArray(employees.value.data)) {
+    return employees.value.data;
+  }
+  if (Array.isArray(employees.value)) {
+    return employees.value;
+  }
+  return [];
+});
 
 const loading = ref(false);
 const filters = ref({
@@ -233,6 +447,12 @@ const tableColumns = ref([
     align: 'left'
   },
   {
+    key: 'manager',
+    label: 'Manager',
+    sortable: false,
+    align: 'left'
+  },
+  {
     key: 'hire_date',
     label: 'Hire Date',
     sortable: true,
@@ -276,6 +496,8 @@ const fetchEmployees = async (page = 1) => {
     const params = {
       page,
       per_page: pagination.value.per_page,
+      tab: 'employees',
+      is_manager: 0,
       ...filters.value
     };
 
@@ -391,14 +613,18 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString();
 };
 
-const getStatusClass = (status) => {
+const getStatusBadgeClass = (status) => {
   const classes = {
-    active: 'bg-green-100 text-green-800',
-    inactive: 'bg-gray-100 text-gray-800',
-    terminated: 'bg-red-100 text-red-800',
-    on_leave: 'bg-yellow-100 text-yellow-800'
+    active: 'bg-emerald-50 text-emerald-600 border border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/50',
+    inactive: 'bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-zinc-800 dark:text-slate-400 dark:border-zinc-700/50',
+    terminated: 'bg-rose-50 text-rose-600 border border-rose-200/60 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/50',
+    on_leave: 'bg-amber-50 text-amber-600 border border-amber-200/60 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800/50'
   };
-  return classes[status] || 'bg-gray-100 text-gray-800';
+  return classes[status] || 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-400';
+};
+
+const getStatusClass = (status) => {
+  return getStatusBadgeClass(status);
 };
 
 const getStatusText = (status) => {
@@ -415,7 +641,51 @@ const getInitials = (firstName, lastName) => {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 };
 
+const getPositionLevelBadgeClass = (level) => {
+  switch (level?.toLowerCase()) {
+    case 'executive':
+    case 'director':
+      return 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/60 dark:border-purple-800/50';
+    case 'manager':
+    case 'lead':
+      return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/50';
+    case 'senior':
+      return 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/60 dark:border-blue-800/50';
+    case 'mid':
+      return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/50';
+    default:
+      return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-300 border-slate-200 dark:border-zinc-700';
+  }
+};
 
+
+
+// Image Preview Modal State
+const showImagePreview = ref(false);
+const previewImageUrl = ref('');
+const previewImageTitle = ref('');
+const previewImageSubtitle = ref('');
+
+const getAvatarUrl = (item) => {
+  if (!item) return '';
+  if (item.avatar_url) return item.avatar_url;
+  if (item.profile_image) {
+    return item.profile_image.startsWith('http') ? item.profile_image : `/storage/${item.profile_image}`;
+  }
+  return '';
+};
+
+const openImagePreview = (item) => {
+  const url = getAvatarUrl(item);
+  previewImageUrl.value = url;
+  previewImageTitle.value = item.full_name || 'Employee Profile';
+  previewImageSubtitle.value = `${item.employee_number ? '#' + item.employee_number + ' • ' : ''}${item.position?.title || 'Employee'}`;
+  showImagePreview.value = true;
+};
+
+defineExpose({
+  fetchEmployees
+});
 
 // Lifecycle
 onMounted(async () => {

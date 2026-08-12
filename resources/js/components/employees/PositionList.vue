@@ -107,11 +107,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useCurrencyStore } from '@/stores/currency';
+import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
 // Props and Emits
 const emit = defineEmits(['edit-position', 'refresh']);
+
+const currencyStore = useCurrencyStore();
+const authStore = useAuthStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || 'Rs.';
+});
 
 // Reactive data
 const positions = ref([]);
@@ -138,6 +147,7 @@ const deletePosition = async (position) => {
   try {
     await axios.delete(`/api/positions/${position.id}`);
     await fetchPositions();
+    emit('refresh');
   } catch (error) {
     console.error('Error deleting position:', error);
     if (error.response?.data?.message) {
@@ -175,18 +185,24 @@ const getLevelText = (level) => {
 };
 
 const getSalaryRange = (position) => {
+  const sym = currencySymbol.value;
   if (position.min_salary && position.max_salary) {
-    return `$${parseFloat(position.min_salary).toFixed(0)} - $${parseFloat(position.max_salary).toFixed(0)}`;
+    return `${sym} ${parseFloat(position.min_salary).toFixed(0)} - ${sym} ${parseFloat(position.max_salary).toFixed(0)}`;
   } else if (position.min_salary) {
-    return `From $${parseFloat(position.min_salary).toFixed(0)}`;
+    return `From ${sym} ${parseFloat(position.min_salary).toFixed(0)}`;
   } else if (position.max_salary) {
-    return `Up to $${parseFloat(position.max_salary).toFixed(0)}`;
+    return `Up to ${sym} ${parseFloat(position.max_salary).toFixed(0)}`;
   }
   return 'Not specified';
 };
 
+defineExpose({
+  fetchPositions
+});
+
 // Lifecycle
 onMounted(() => {
+  currencyStore.fetchCurrencies();
   fetchPositions();
 });
 </script>

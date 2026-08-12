@@ -290,9 +290,9 @@ const handleImageUpload = async (event) => {
     return;
   }
 
-  // Validate file size (max 2MB)
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('Image size must be less than 2MB', 'error');
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('Image size must be less than 10MB', 'error');
     return;
   }
 

@@ -56,7 +56,7 @@ class OnboardingWizard extends Component
             'team_size' => 'required|string',
         ],
         2 => [
-            'company_logo' => 'nullable|image|max:2048',
+            'company_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'tax_number' => 'nullable|string|max:100',
             'business_address' => 'nullable|string|max:255',
         ],

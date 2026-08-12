@@ -151,7 +151,7 @@
               @change="handleFileUpload"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p class="text-sm text-gray-500 mt-1">Upload receipt images (JPEG, PNG, GIF, max 2MB each)</p>
+            <p class="text-sm text-gray-500 mt-1">Upload receipt images (JPEG, PNG, GIF, WEBP, max 10MB each)</p>
             <span v-if="errors.receipt_images" class="text-red-500 text-sm">{{ errors.receipt_images[0] }}</span>
           </div>
 

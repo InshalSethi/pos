@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use App\Services\EmployeeUserService;
 
+use Illuminate\Support\Facades\Storage;
+
 class Employee extends Model
 {
     use BelongsToCompany;
@@ -60,6 +62,9 @@ class Employee extends Model
         'emergency_contact_email',
         'notes',
         'is_active',
+        'is_manager',
+        'avatar',
+        'profile_photo_path',
     ];
 
     protected $casts = [
@@ -70,7 +75,98 @@ class Employee extends Model
         'basic_salary' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
         'is_active' => 'boolean',
+        'is_manager' => 'boolean',
     ];
+
+    protected $appends = ['full_name', 'avatar_url', 'profile_photo_path'];
+
+    /**
+     * Scope query to only include managers.
+     */
+    public function scopeManagers($query)
+    {
+        return $query->where('is_manager', true);
+    }
+
+    /**
+     * Get full_name attribute.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . $this->last_name);
+    }
+
+    /**
+     * Get avatar mapping to profile_image.
+     */
+    public function getAvatarAttribute()
+    {
+        return $this->profile_image;
+    }
+
+    /**
+     * Set avatar mapping to profile_image.
+     */
+    public function setAvatarAttribute($value)
+    {
+        $this->attributes['profile_image'] = $value;
+        $this->profile_image = $value;
+    }
+
+    /**
+     * Get profile_photo_path mapping to profile_image.
+     */
+    public function getProfilePhotoPathAttribute()
+    {
+        return $this->profile_image;
+    }
+
+    /**
+     * Set profile_photo_path mapping to profile_image.
+     */
+    public function setProfilePhotoPathAttribute($value)
+    {
+        $this->attributes['profile_image'] = $value;
+        $this->profile_image = $value;
+    }
+
+    /**
+     * Get full public URL for avatar/profile image.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->profile_image) {
+            return null;
+        }
+
+        if (str_starts_with($this->profile_image, 'http://') || str_starts_with($this->profile_image, 'https://')) {
+            return $this->profile_image;
+        }
+
+        return Storage::disk('public')->url($this->profile_image);
+    }
+
+    /**
+     * Helper to sync basic details to linked User account.
+     */
+    public function syncToUser(): void
+    {
+        if (!$this->user_id && !$this->user) {
+            return;
+        }
+
+        $user = $this->user ?: User::find($this->user_id);
+        if ($user) {
+            $user->update([
+                'name' => $this->full_name,
+                'email' => $this->email,
+                'phone' => $this->phone ?: $this->mobile,
+                'address' => $this->address,
+                'profile_image' => $this->profile_image,
+                'is_active' => $this->is_active,
+            ]);
+        }
+    }
 
     // Relationships
     public function user(): BelongsTo
@@ -113,6 +209,11 @@ class Employee extends Model
         return $this->hasMany(Employee::class, 'manager_id');
     }
 
+    public function managedDepartments(): HasMany
+    {
+        return $this->hasMany(Department::class, 'manager_id');
+    }
+
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
@@ -142,16 +243,6 @@ class Employee extends Model
     }
 
     // Accessors
-    public function getFullNameAttribute(): string
-    {
-        $name = $this->first_name;
-        if ($this->middle_name) {
-            $name .= ' ' . $this->middle_name;
-        }
-        $name .= ' ' . $this->last_name;
-        return $name;
-    }
-
     public function getFullAddressAttribute(): string
     {
         $address = collect([

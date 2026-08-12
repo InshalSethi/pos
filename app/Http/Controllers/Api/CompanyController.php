@@ -94,7 +94,8 @@ class CompanyController extends Controller
             'base_currency' => 'nullable|string|max:50',
             'timezone_offset' => 'nullable|string|max:100',
             'fiscal_year_start' => 'nullable|date',
-            'company_logo' => 'nullable|image|max:2048',
+            'company_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
         ]);
 
         if ($request->has('remove_logo') && $request->input('remove_logo') == '1') {

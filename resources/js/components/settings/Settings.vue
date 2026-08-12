@@ -462,8 +462,9 @@
                 <template #column-user="{ item }">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 h-9 w-9">
-                      <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center">
-                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ getInitials(item.name) }}</span>
+                      <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden">
+                        <img v-if="item.avatar_url || item.profile_image" :src="item.avatar_url || (item.profile_image.startsWith('http') ? item.profile_image : `/storage/${item.profile_image}`)" class="w-full h-full object-cover" />
+                        <span v-else class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ getInitials(item.name) }}</span>
                       </div>
                     </div>
                     <div class="ml-3">
@@ -558,8 +559,9 @@
                   <div class="flex items-start justify-between">
                     <div class="flex items-center space-x-3">
                       <div class="flex-shrink-0 h-9 w-9">
-                        <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
-                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ getInitials(item.name) }}</span>
+                        <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden">
+                          <img v-if="item.avatar_url || item.profile_image" :src="item.avatar_url || (item.profile_image.startsWith('http') ? item.profile_image : `/storage/${item.profile_image}`)" class="w-full h-full object-cover" />
+                          <span v-else class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ getInitials(item.name) }}</span>
                         </div>
                       </div>
                       <div>

@@ -13,6 +13,8 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use App\Notifications\ResetPasswordNotification;
 
+use Illuminate\Support\Facades\Storage;
+
 class User extends Authenticatable
 {
     use HasUtcDatabaseTimezones;
@@ -39,6 +41,7 @@ class User extends Authenticatable
         'company_id',
         'is_setup_completed',
         'avatar',
+        'profile_photo_path',
     ];
 
     /**
@@ -77,7 +80,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['role_name', 'company_id', 'is_setup_completed'];
+    protected $appends = ['role_name', 'company_id', 'is_setup_completed', 'avatar_url', 'profile_photo_path'];
 
     /**
      * Get the name of the primary role.
@@ -122,12 +125,53 @@ class User extends Authenticatable
     }
 
     /**
+     * Get avatar mapping to profile_image.
+     */
+    public function getAvatarAttribute()
+    {
+        return $this->profile_image;
+    }
+
+    /**
      * Set avatar mapping to profile_image.
      */
     public function setAvatarAttribute($value)
     {
         $this->attributes['profile_image'] = $value;
         $this->profile_image = $value;
+    }
+
+    /**
+     * Get profile_photo_path mapping to profile_image.
+     */
+    public function getProfilePhotoPathAttribute()
+    {
+        return $this->profile_image;
+    }
+
+    /**
+     * Set profile_photo_path mapping to profile_image.
+     */
+    public function setProfilePhotoPathAttribute($value)
+    {
+        $this->attributes['profile_image'] = $value;
+        $this->profile_image = $value;
+    }
+
+    /**
+     * Get full public URL for avatar/profile image.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->profile_image) {
+            return null;
+        }
+
+        if (str_starts_with($this->profile_image, 'http://') || str_starts_with($this->profile_image, 'https://')) {
+            return $this->profile_image;
+        }
+
+        return Storage::disk('public')->url($this->profile_image);
     }
 
     public function settings(): HasOne

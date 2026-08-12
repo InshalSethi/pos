@@ -65,10 +65,12 @@ class EmployeeController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Employee::nonAdmin()->with(['department', 'position', 'manager', 'user']);
+        $query = Employee::nonAdmin()
+            ->with(['department', 'position', 'manager', 'subordinates.department', 'subordinates.position', 'managedDepartments', 'user'])
+            ->withCount('subordinates');
 
         // Search functionality
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
@@ -82,28 +84,101 @@ class EmployeeController extends Controller
         }
 
         // Filter by employment status
-        if ($request->has('employment_status')) {
+        if ($request->filled('employment_status')) {
             $query->where('employment_status', $request->get('employment_status'));
         }
 
         // Filter by active status
-        if ($request->has('is_active')) {
+        if ($request->filled('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
         }
 
         // Filter by department
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $query->where('department_id', $request->get('department_id'));
         }
 
         // Filter by position
-        if ($request->has('position_id')) {
+        if ($request->filled('position_id')) {
             $query->where('position_id', $request->get('position_id'));
         }
 
         // Filter by employment type
-        if ($request->has('employment_type')) {
+        if ($request->filled('employment_type')) {
             $query->where('employment_type', $request->get('employment_type'));
+        }
+
+        // Filter by manager status or tab
+        if ($request->has('tab')) {
+            $tab = $request->get('tab');
+            if ($tab === 'managers') {
+                $query->where(function ($q) {
+                    $q->where('is_manager', true)
+                      ->orWhereHas('position', function ($pq) {
+                          $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
+                            ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
+                      })
+                      ->orWhereHas('user', function ($uq) {
+                          $uq->whereHas('roles', function ($rq) {
+                              $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
+                          });
+                      });
+                });
+            } elseif ($tab === 'employees') {
+                $query->where(function ($q) {
+                    $q->where(function ($nq) {
+                        $nq->where('is_manager', false)
+                           ->orWhereNull('is_manager');
+                    })
+                    ->where(function ($nq) {
+                        $nq->whereNull('position_id')
+                          ->orWhereDoesntHave('position', function ($pq) {
+                              $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
+                                ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
+                          });
+                    })
+                    ->whereDoesntHave('user', function ($uq) {
+                        $uq->whereHas('roles', function ($rq) {
+                            $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
+                        });
+                    });
+                });
+            }
+        } elseif ($request->has('is_manager')) {
+            $isManager = filter_var($request->get('is_manager'), FILTER_VALIDATE_BOOLEAN);
+            if ($isManager) {
+                $query->where(function ($q) {
+                    $q->where('is_manager', true)
+                      ->orWhereHas('position', function ($pq) {
+                          $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
+                            ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
+                      })
+                      ->orWhereHas('user', function ($uq) {
+                          $uq->whereHas('roles', function ($rq) {
+                              $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
+                          });
+                      });
+                });
+            } else {
+                $query->where(function ($q) {
+                    $q->where(function ($nq) {
+                        $nq->where('is_manager', false)
+                           ->orWhereNull('is_manager');
+                    })
+                    ->where(function ($nq) {
+                        $nq->whereNull('position_id')
+                          ->orWhereDoesntHave('position', function ($pq) {
+                              $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
+                                ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
+                          });
+                    })
+                    ->whereDoesntHave('user', function ($uq) {
+                        $uq->whereHas('roles', function ($rq) {
+                            $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
+                        });
+                    });
+                });
+            }
         }
 
         // Filter by hire date range
@@ -134,6 +209,18 @@ class EmployeeController extends Controller
     public function store(Request $request): JsonResponse
     {
         $companyId = auth()->user()->current_company_id;
+
+        // Cast boolean inputs before running validator
+        if ($request->has('is_manager')) {
+            $request->merge(['is_manager' => filter_var($request->get('is_manager'), FILTER_VALIDATE_BOOLEAN)]);
+        }
+        if ($request->has('create_user_account')) {
+            $request->merge(['create_user_account' => filter_var($request->get('create_user_account'), FILTER_VALIDATE_BOOLEAN)]);
+        }
+        if ($request->has('is_active')) {
+            $request->merge(['is_active' => filter_var($request->get('is_active'), FILTER_VALIDATE_BOOLEAN)]);
+        }
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -151,12 +238,14 @@ class EmployeeController extends Controller
             'postal_code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
-            'gender' => 'nullable|in:male,female,other',
+            'gender' => 'required|in:male,female,other',
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
             'national_id' => 'nullable|string|max:50',
             'passport_number' => 'nullable|string|max:50',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'department_id' => 'nullable|exists:departments,id',
+            'department_ids' => 'nullable|array',
             'position_id' => 'nullable|exists:positions,id',
             'manager_id' => 'nullable|exists:employees,id',
             'hire_date' => 'required|date',
@@ -172,7 +261,12 @@ class EmployeeController extends Controller
             'emergency_contact_relationship' => 'nullable|string|max:100',
             'emergency_contact_phone' => 'nullable|string|max:20',
             'emergency_contact_email' => 'nullable|email',
-            'notes' => 'nullable|string',
+            'is_manager' => 'nullable|boolean',
+            // User account & company options
+            'company_id' => 'nullable|exists:companies,id',
+            'create_user_account' => 'nullable|boolean',
+            'password' => 'nullable|string|min:8|confirmed',
+            'role' => 'nullable|string|exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -182,19 +276,93 @@ class EmployeeController extends Controller
             ], 422);
         }
 
+        $companyId = $request->get('company_id') ?: auth()->user()->current_company_id;
+
         try {
             DB::beginTransaction();
 
-            $employeeData = $request->except(['profile_image']);
+            $employeeData = $request->except(['profile_image', 'avatar', 'create_user_account', 'password', 'password_confirmation', 'role']);
             $employeeData['employee_number'] = Employee::generateEmployeeNumber();
+            $employeeData['company_id'] = $companyId;
 
-            // Handle profile image upload
+            // Auto-determine is_manager status from request or position level
+            $isManager = filter_var($request->get('is_manager', false), FILTER_VALIDATE_BOOLEAN);
+            if (!$isManager && $request->filled('position_id')) {
+                $position = \App\Models\Position::find($request->position_id);
+                if ($position && in_array($position->level, ['lead', 'manager', 'director', 'executive'])) {
+                    $isManager = true;
+                }
+            }
+            $employeeData['is_manager'] = $isManager;
+
+            // Handle profile photo upload
+            $avatarPath = null;
             if ($request->hasFile('profile_image')) {
-                $employeeData['profile_image'] = $request->file('profile_image')->store('employees/profiles', 'public');
+                $avatarPath = Storage::disk('public')->put('avatars', $request->file('profile_image'));
+            } elseif ($request->hasFile('avatar')) {
+                $avatarPath = Storage::disk('public')->put('avatars', $request->file('avatar'));
+            }
+
+            if ($avatarPath) {
+                $employeeData['profile_image'] = $avatarPath;
+            }
+
+            // UNIFIED CREATION LOGIC: Check if system login access requested (password provided)
+            $createUserAccount = filter_var($request->get('create_user_account', false), FILTER_VALIDATE_BOOLEAN) || $request->filled('password');
+            if ($createUserAccount) {
+                if (!$request->filled('password')) {
+                    return response()->json([
+                        'message' => 'Password is required to create a user account for this employee.',
+                        'errors' => ['password' => ['Password is required for system login access.']]
+                    ], 422);
+                }
+
+                $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+                $roleName = $request->role ?: ($isManager ? 'manager' : 'employee');
+                if ($isManager && $roleName === 'employee') {
+                    $roleName = 'manager';
+                }
+
+                $user = User::create([
+                    'name' => $fullName,
+                    'email' => $request->email,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                    'phone' => $request->phone ?: $request->mobile,
+                    'address' => $request->address,
+                    'profile_image' => $avatarPath,
+                    'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
+                    'current_company_id' => $companyId,
+                    'company_id' => $companyId,
+                    'onboarding_completed' => true,
+                ]);
+
+                if ($companyId) {
+                    $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
+                }
+                $user->assignRole($roleName);
+
+                $employeeData['user_id'] = $user->id;
+            } else {
+                $employeeData['user_id'] = null;
             }
 
             $employee = Employee::create($employeeData);
-            $employee->load(['department', 'position', 'manager']);
+
+            if ($request->has('department_ids')) {
+                $deptIds = is_array($request->input('department_ids')) 
+                    ? $request->input('department_ids') 
+                    : array_filter(explode(',', (string)$request->input('department_ids')));
+                
+                \App\Models\Department::where('manager_id', $employee->id)
+                    ->whereNotIn('id', $deptIds)
+                    ->update(['manager_id' => null]);
+
+                if (!empty($deptIds)) {
+                    \App\Models\Department::whereIn('id', $deptIds)->update(['manager_id' => $employee->id]);
+                }
+            }
+
+            $employee->load(['department', 'position', 'manager', 'managedDepartments', 'user']);
 
             DB::commit();
 
@@ -238,6 +406,18 @@ class EmployeeController extends Controller
     public function update(Request $request, Employee $employee): JsonResponse
     {
         $companyId = auth()->user()->current_company_id;
+
+        // Cast boolean inputs before running validator
+        if ($request->has('is_manager')) {
+            $request->merge(['is_manager' => filter_var($request->get('is_manager'), FILTER_VALIDATE_BOOLEAN)]);
+        }
+        if ($request->has('create_user_account')) {
+            $request->merge(['create_user_account' => filter_var($request->get('create_user_account'), FILTER_VALIDATE_BOOLEAN)]);
+        }
+        if ($request->has('is_active')) {
+            $request->merge(['is_active' => filter_var($request->get('is_active'), FILTER_VALIDATE_BOOLEAN)]);
+        }
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -255,11 +435,12 @@ class EmployeeController extends Controller
             'postal_code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
-            'gender' => 'nullable|in:male,female,other',
+            'gender' => 'required|in:male,female,other',
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
             'national_id' => 'nullable|string|max:50',
             'passport_number' => 'nullable|string|max:50',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'department_id' => 'nullable|exists:departments,id',
             'position_id' => 'nullable|exists:positions,id',
             'manager_id' => 'nullable|exists:employees,id',
@@ -281,6 +462,11 @@ class EmployeeController extends Controller
             'emergency_contact_email' => 'nullable|email',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            'is_manager' => 'nullable|boolean',
+            // User account options
+            'create_user_account' => 'nullable|boolean',
+            'password' => 'nullable|string|min:8|confirmed',
+            'role' => 'nullable|string|exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -310,19 +496,94 @@ class EmployeeController extends Controller
         try {
             DB::beginTransaction();
 
-            $employeeData = $request->except(['profile_image']);
+            $employeeData = $request->except(['profile_image', 'avatar', 'create_user_account', 'password', 'password_confirmation', 'role']);
 
-            // Handle profile image upload
+            if ($request->has('is_manager')) {
+                $employeeData['is_manager'] = filter_var($request->get('is_manager'), FILTER_VALIDATE_BOOLEAN);
+            } elseif ($request->filled('position_id')) {
+                $position = \App\Models\Position::find($request->position_id);
+                if ($position && in_array($position->level, ['lead', 'manager', 'director', 'executive'])) {
+                    $employeeData['is_manager'] = true;
+                }
+            }
+
+            // Handle profile photo upload
             if ($request->hasFile('profile_image')) {
-                // Delete old image if exists
                 if ($employee->profile_image) {
                     Storage::disk('public')->delete($employee->profile_image);
                 }
-                $employeeData['profile_image'] = $request->file('profile_image')->store('employees/profiles', 'public');
+                $employeeData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('profile_image'));
+            } elseif ($request->hasFile('avatar')) {
+                if ($employee->profile_image) {
+                    Storage::disk('public')->delete($employee->profile_image);
+                }
+                $employeeData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('avatar'));
             }
 
             $employee->update($employeeData);
-            $employee->load(['department', 'position', 'manager']);
+
+            // Handle User linkage & Sync
+            $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+            $roleName = $request->role ?: 'employee';
+
+            if (!$employee->user_id && ($request->boolean('create_user_account') || $request->filled('password'))) {
+                // Create user account if requested
+                $user = User::create([
+                    'name' => $fullName,
+                    'email' => $employee->email,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->password ?: 'password123'),
+                    'phone' => $employee->phone ?: $employee->mobile,
+                    'address' => $employee->address,
+                    'profile_image' => $employee->profile_image,
+                    'is_active' => $employee->is_active,
+                    'current_company_id' => $companyId,
+                    'onboarding_completed' => true,
+                ]);
+
+                if ($companyId) {
+                    $user->companies()->attach($companyId, ['role' => $roleName]);
+                }
+                $user->assignRole($roleName);
+
+                $employee->update(['user_id' => $user->id]);
+            } elseif ($employee->user_id || $employee->user) {
+                // AUTOMATED SYNC: Update linked User account
+                $user = $employee->user ?: User::find($employee->user_id);
+                if ($user) {
+                    $userData = [
+                        'name' => $fullName,
+                        'email' => $employee->email,
+                        'phone' => $employee->phone ?: $employee->mobile,
+                        'address' => $employee->address,
+                        'profile_image' => $employee->profile_image,
+                        'is_active' => $employee->is_active,
+                    ];
+                    if ($request->filled('password')) {
+                        $userData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+                    }
+                    $user->update($userData);
+
+                    if ($request->filled('role')) {
+                        $user->syncRoles([$request->role]);
+                    }
+                }
+            }
+
+            if ($request->has('department_ids')) {
+                $deptIds = is_array($request->input('department_ids')) 
+                    ? $request->input('department_ids') 
+                    : array_filter(explode(',', (string)$request->input('department_ids')));
+                
+                \App\Models\Department::where('manager_id', $employee->id)
+                    ->whereNotIn('id', $deptIds)
+                    ->update(['manager_id' => null]);
+
+                if (!empty($deptIds)) {
+                    \App\Models\Department::whereIn('id', $deptIds)->update(['manager_id' => $employee->id]);
+                }
+            }
+
+            $employee->load(['department', 'position', 'manager', 'managedDepartments', 'user']);
 
             DB::commit();
 
@@ -475,6 +736,12 @@ class EmployeeController extends Controller
         try {
             $employees = Employee::nonAdmin()
                 ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->where('is_manager', true)
+                      ->orWhereHas('position', function ($pq) {
+                          $pq->whereIn('level', ['lead', 'manager', 'director', 'executive']);
+                      });
+                })
                 ->with('user')
                 ->orderBy('first_name')
                 ->get()
