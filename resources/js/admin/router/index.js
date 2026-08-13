@@ -30,8 +30,8 @@ const routes = [
             { path: 'admins/:id/edit', name: 'admin.admins.edit', component: AdminsForm },
 
             { path: 'users', name: 'admin.users.index', component: UsersIndex },
-            { path: 'users/create', name: 'admin.users.create', component: UsersForm },
-            { path: 'users/:id/edit', name: 'admin.users.edit', component: UsersForm },
+            { path: 'users/create', name: 'admin.users.create', component: UsersIndex },
+            { path: 'users/:id/edit', name: 'admin.users.edit', component: UsersIndex },
 
             { path: 'roles', name: 'admin.roles.index', component: RolesIndex },
             { path: 'roles/create', name: 'admin.roles.create', component: RolesForm },

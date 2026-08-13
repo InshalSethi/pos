@@ -161,7 +161,7 @@ class AdminUserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
+            'is_active' => $request->has('is_active') ? (bool) $request->input('is_active') : true,
         ]);
 
         return response()->json(['message' => 'User created successfully.', 'data' => $user], 201);
@@ -178,7 +178,10 @@ class AdminUserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->phone = $request->phone;
-        $user->is_active = $request->has('is_active') ? $request->boolean('is_active') : $user->is_active;
+        
+        if ($request->has('is_active')) {
+            $user->is_active = (bool) $request->input('is_active');
+        }
 
         if ($request->filled('password')) {
             $request->validate(['password' => 'min:6']);

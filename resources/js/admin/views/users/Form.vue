@@ -56,9 +56,14 @@
           <div class="border-t border-zinc-100 dark:border-zinc-800 pt-6">
               <label class="flex items-center cursor-pointer">
                   <div class="relative">
-                      <input type="checkbox" v-model="form.is_active" class="sr-only">
-                      <div class="block bg-zinc-200 dark:bg-zinc-800 w-10 h-6 rounded-full transition-colors" :class="{'bg-black dark:bg-white': form.is_active}"></div>
-                      <div class="dot absolute left-1 top-1 bg-white dark:bg-zinc-900 w-4 h-4 rounded-full transition-transform" :class="{'transform translate-x-4': form.is_active}"></div>
+                      <div 
+                          class="block w-10 h-6 rounded-full transition-colors cursor-pointer" 
+                          :class="form.is_active ? 'bg-black dark:bg-white' : 'bg-zinc-300 dark:bg-zinc-700'"
+                      ></div>
+                      <div 
+                          class="dot absolute left-1 top-1 w-4 h-4 rounded-full transition-transform shadow-xs pointer-events-none" 
+                          :class="form.is_active ? 'translate-x-4 bg-white dark:bg-zinc-900' : 'translate-x-0 bg-white dark:bg-zinc-900'"
+                      ></div>
                   </div>
                   <div class="ml-3 text-xs font-extrabold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
                       User Active Status
