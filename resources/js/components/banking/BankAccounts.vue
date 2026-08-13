@@ -106,7 +106,7 @@
           <div class="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800/60 space-y-1.5 text-xs text-slate-600 dark:text-zinc-400">
             <div class="flex justify-between items-center">
               <span class="text-slate-400 dark:text-zinc-500">Account Number:</span>
-              <span class="font-mono font-semibold text-slate-700 dark:text-zinc-300">{{ formatMaskedNumber(acc.account_number) }}</span>
+              <span class="font-medium text-slate-700 dark:text-zinc-300">{{ formatMaskedNumber(acc.account_number) }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-slate-400 dark:text-zinc-500">Currency:</span>
@@ -119,7 +119,7 @@
         <div class="mt-5 pt-3 border-t border-slate-100 dark:border-zinc-800/60 flex items-end justify-between">
           <div>
             <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 tracking-wider">Current Balance</span>
-            <div class="text-lg font-extrabold text-slate-900 dark:text-zinc-100">
+            <div class="text-lg font-semibold text-slate-900 dark:text-zinc-100">
               {{ formatCurrency(acc.current_balance ?? acc.calculateBalance, acc.currency) }}
             </div>
           </div>
@@ -212,7 +212,7 @@
               </td>
 
               <!-- Account Number -->
-              <td class="py-4 px-5 font-mono font-semibold text-slate-700 dark:text-zinc-300">
+              <td class="py-4 px-5 font-medium text-slate-700 dark:text-zinc-300">
                 {{ formatMaskedNumber(acc.account_number) }}
               </td>
 
@@ -222,7 +222,7 @@
               </td>
 
               <!-- Current Balance -->
-              <td class="py-4 px-5 text-right font-extrabold text-slate-900 dark:text-zinc-100 text-sm">
+              <td class="py-4 px-5 text-right font-semibold text-slate-900 dark:text-zinc-100 text-sm">
                 {{ formatCurrency(acc.current_balance ?? acc.calculateBalance, acc.currency) }}
               </td>
 

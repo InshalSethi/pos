@@ -163,12 +163,13 @@ class BankAccount extends Model
                             ->where('transaction_type', 'credit')
                             ->sum('amount');
 
-        // For asset accounts (checking, savings): Debits increase (money in), Credits decrease (money out)
-        // For liability accounts (credit cards): Credits increase, Debits decrease
-        if (in_array($this->account_type, ['checking', 'savings'])) {
-            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
-        } else {
+        // Asset Accounts (checking, savings, cash, vault, etc.): Credits (money in) increase balance, Debits (money out) decrease balance.
+        // Liability Accounts (credit cards): Debits (charges) increase owed balance, Credits (payments) decrease balance.
+        $isLiability = in_array(strtolower($this->account_type ?? ''), ['credit_card', 'card', 'liability', 'loan']);
+        if (!$isLiability) {
             $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
+        } else {
+            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
         }
 
         return round($bal, 2);
@@ -186,10 +187,11 @@ class BankAccount extends Model
                             ->where('status', 'reconciled')
                             ->sum('amount');
 
-        if (in_array($this->account_type, ['checking', 'savings'])) {
-            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
-        } else {
+        $isLiability = in_array(strtolower($this->account_type ?? ''), ['credit_card', 'card', 'liability', 'loan']);
+        if (!$isLiability) {
             $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
+        } else {
+            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
         }
 
         return round($bal, 2);

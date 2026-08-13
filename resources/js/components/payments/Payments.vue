@@ -26,7 +26,7 @@
           </div>
           <div>
             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Payments</div>
-            <div class="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono">{{ pagination.total || 0 }}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ pagination.total || 0 }}</div>
           </div>
         </div>
 
@@ -38,7 +38,7 @@
           </div>
           <div>
             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed Paid</div>
-            <div class="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono">{{ paidCount }}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ paidCount }}</div>
           </div>
         </div>
 
@@ -50,7 +50,7 @@
           </div>
           <div>
             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending / Draft</div>
-            <div class="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">{{ pendingCount }}</div>
+            <div class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ pendingCount }}</div>
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@
         <template #column-payment_number="{ item }">
           <button
             @click="viewPayment(item)"
-            class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white hover:underline transition-colors inline-flex items-center gap-1.5 text-left cursor-pointer"
+            class="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white hover:underline transition-colors inline-flex items-center gap-1.5 text-left cursor-pointer"
           >
             <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -146,7 +146,7 @@
 
         <!-- Column: Amount -->
         <template #column-amount="{ item }">
-          <span class="text-xs font-bold font-mono text-slate-900 dark:text-slate-100 text-right block">
+          <span class="text-xs font-semibold text-slate-900 dark:text-slate-100 text-right block">
             ${{ formatAmount(item.amount) }}
           </span>
         </template>
