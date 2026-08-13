@@ -1,20 +1,20 @@
 <template>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden max-w-3xl mx-auto">
-      <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h3 class="text-lg font-bold text-gray-800">{{ isEditing ? 'Edit Role' : 'Add New Role' }}</h3>
-          <router-link :to="{ name: 'admin.roles.index' }" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors">
-              <i class="fas fa-arrow-left mr-2"></i> Back
+  <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden max-w-3xl mx-auto">
+      <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
+          <h3 class="text-lg font-black text-zinc-950 dark:text-white tracking-tight">{{ isEditing ? 'Edit Role' : 'Add New Role' }}</h3>
+          <router-link :to="{ name: 'admin.roles.index' }" class="bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center cursor-pointer">
+              <i class="fas fa-arrow-left mr-2 text-[10px]"></i> Back
           </router-link>
       </div>
       
-      <div v-if="loading" class="p-12 text-center text-indigo-500">
-          <i class="fas fa-circle-notch fa-spin text-4xl"></i>
-          <p class="mt-4 font-medium text-gray-500">Loading role data...</p>
+      <div v-if="loading" class="p-12 text-center text-zinc-900 dark:text-white">
+          <i class="fas fa-circle-notch fa-spin text-3xl"></i>
+          <p class="mt-3 font-bold text-xs uppercase tracking-wider text-zinc-400">Loading role data...</p>
       </div>
 
       <form v-else @submit.prevent="submitForm" class="p-6 space-y-6">
-          <div v-if="errorMessage" class="bg-red-50 text-red-600 p-4 rounded-lg text-sm font-medium border border-red-100 flex items-start">
-              <i class="fas fa-exclamation-circle mt-0.5 mr-3"></i>
+          <div v-if="errorMessage" class="bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-400 p-4 rounded-xl text-xs font-bold flex items-start">
+              <i class="fas fa-exclamation-circle mt-0.5 mr-3 text-sm"></i>
               <div>
                   <p>{{ errorMessage }}</p>
                   <ul v-if="validationErrors && Object.keys(validationErrors).length > 0" class="mt-2 list-disc list-inside space-y-1">
@@ -27,39 +27,39 @@
 
           <!-- Role Name -->
           <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Role Name <span class="text-red-500">*</span></label>
-              <input type="text" v-model="form.name" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm outline-none bg-white text-gray-800" placeholder="e.g. Editor">
-              <p class="text-xs text-gray-500 mt-1">Provide a unique name for this role.</p>
+              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Role Name <span class="text-rose-500">*</span></label>
+              <input type="text" v-model="form.name" required class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="e.g. Editor">
+              <p class="text-[11px] font-medium text-zinc-400 mt-1">Provide a unique name for this role.</p>
           </div>
 
           <!-- Permissions Selection -->
-          <div class="border-t border-gray-100 pt-6">
+          <div class="border-t border-zinc-100 dark:border-zinc-800 pt-6">
               <div class="flex justify-between items-center mb-4">
                   <div>
-                      <label class="block text-sm font-bold text-gray-700">Assign Permissions</label>
-                      <p class="text-xs text-gray-500 mt-0.5">Organized by module. Select modules or individual action permissions.</p>
+                      <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">Assign Permissions</label>
+                      <p class="text-[11px] font-medium text-zinc-400 mt-0.5">Organized by module. Select modules or individual action permissions.</p>
                   </div>
-                  <button type="button" @click="selectAll" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                  <button type="button" @click="selectAll" class="text-xs font-extrabold text-black dark:text-white hover:underline cursor-pointer transition-all">
                       {{ form.permissions.length === permissions.length && permissions.length > 0 ? 'Deselect All' : 'Select All' }}
                   </button>
               </div>
               
-              <div v-if="permissions.length === 0" class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded border border-gray-100">
+              <div v-if="permissions.length === 0" class="text-xs text-zinc-400 italic p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
                   No permissions are registered in the system.
               </div>
               
-              <div v-else class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-                  <!-- Custom Treeview Component (Vuetify-style) -->
+              <div v-else class="space-y-3 bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 md:p-6 shadow-xs">
+                  <!-- Custom Treeview Component -->
                   <div class="treeview select-none">
                       <!-- Root Nodes (Modules) -->
                       <div v-for="(modulePerms, moduleName) in groupedPermissions" :key="moduleName" class="treeview-node mb-3">
                           <!-- Parent Item Row -->
-                          <div class="flex items-center py-2 px-3 hover:bg-gray-200/50 rounded-lg transition-colors duration-150">
+                          <div class="flex items-center py-2 px-3 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/60 rounded-xl transition-colors duration-150">
                               <!-- Expand/Collapse Chevron -->
                               <button 
                                   type="button" 
                                   @click="toggleModuleCollapse(moduleName)" 
-                                  class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded transition-transform duration-200 focus:outline-none"
+                                  class="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded transition-transform duration-200 focus:outline-none cursor-pointer"
                                   :class="{'rotate-90': !isModuleCollapsed(moduleName)}"
                               >
                                   <i class="fas fa-chevron-right text-[10px]"></i>
@@ -72,17 +72,17 @@
                                   :checked="isModuleFullySelected(modulePerms)" 
                                   :ref="el => { if (el) el.indeterminate = isModulePartiallySelected(modulePerms); }"
                                   @change="toggleModuleSelection(modulePerms, $event)"
-                                  class="w-4 h-4 ml-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                                  class="w-4 h-4 ml-1 text-black dark:text-white border-zinc-300 dark:border-zinc-700 rounded focus:ring-black/10 cursor-pointer"
                               >
 
                               <!-- Parent Icon & Label -->
                               <div @click="toggleModuleCollapse(moduleName)" class="flex items-center ml-2.5 cursor-pointer flex-1 py-1">
                                   <i 
-                                      :class="[isModuleCollapsed(moduleName) ? 'far fa-folder text-amber-500' : 'far fa-folder-open text-amber-500']" 
+                                      :class="[isModuleCollapsed(moduleName) ? 'far fa-folder text-zinc-400 dark:text-zinc-500' : 'far fa-folder-open text-zinc-900 dark:text-white']" 
                                       class="text-base mr-2"
                                   ></i>
-                                  <span class="font-bold text-gray-800 text-sm">{{ moduleName }} Module</span>
-                                  <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700">
+                                  <span class="font-extrabold text-zinc-900 dark:text-white text-xs">{{ moduleName }} Module</span>
+                                  <span class="ml-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
                                       {{ getSelectedCountForModule(modulePerms) }} / {{ modulePerms.length }} selected
                                   </span>
                               </div>
@@ -91,12 +91,12 @@
                           <!-- Child Nodes (Permissions) -->
                           <div 
                               v-show="!isModuleCollapsed(moduleName)" 
-                              class="ml-6 pl-6 border-l border-gray-200 space-y-1.5 mt-1 transition-all duration-300"
+                              class="ml-6 pl-6 border-l border-zinc-200 dark:border-zinc-800 space-y-1 mt-1 transition-all duration-300"
                           >
                               <div 
                                   v-for="permission in modulePerms" 
                                   :key="permission.id" 
-                                  class="flex items-center py-1.5 px-3 hover:bg-indigo-50/40 rounded-md transition-colors"
+                                  class="flex items-center py-1.5 px-3 hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 rounded-lg transition-colors"
                               >
                                   <!-- Child Checkbox -->
                                   <input 
@@ -104,16 +104,16 @@
                                       :id="'permission-' + permission.id"
                                       :value="permission.name" 
                                       v-model="form.permissions" 
-                                      class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                                      class="w-4 h-4 text-black dark:text-white border-zinc-300 dark:border-zinc-700 rounded focus:ring-black/10 cursor-pointer"
                                   >
 
                                   <!-- Child Icon & Label -->
                                   <label 
                                       :for="'permission-' + permission.id" 
-                                      class="flex items-center ml-3 cursor-pointer text-sm font-semibold text-gray-600 flex-1 py-0.5 select-none"
+                                      class="flex items-center ml-3 cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-300 flex-1 py-0.5 select-none"
                                   >
-                                      <i class="fas fa-key text-indigo-400 text-xs mr-2"></i>
-                                      <span>{{ permission.actionLabel }} <span class="text-xs text-gray-400 font-normal ml-1">({{ permission.name }})</span></span>
+                                      <i class="fas fa-key text-zinc-400 dark:text-zinc-500 text-[10px] mr-2"></i>
+                                      <span>{{ permission.actionLabel }} <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal ml-1">({{ permission.name }})</span></span>
                                   </label>
                               </div>
                           </div>
@@ -123,8 +123,8 @@
           </div>
 
           <!-- Submit Button -->
-          <div class="border-t border-gray-100 pt-6 flex justify-end">
-              <button type="submit" :disabled="submitting" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors disabled:opacity-50 flex items-center">
+          <div class="border-t border-zinc-100 dark:border-zinc-800 pt-6 flex justify-end">
+              <button type="submit" :disabled="submitting" class="bg-black hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-extrabold px-6 py-2.5 rounded-xl text-xs shadow-xs transition-all disabled:opacity-50 flex items-center cursor-pointer">
                   <i v-if="submitting" class="fas fa-spinner fa-spin mr-2"></i>
                   <i v-else class="fas fa-save mr-2"></i>
                   {{ isEditing ? 'Update Role' : 'Create Role' }}
@@ -284,3 +284,4 @@ const submitForm = async () => {
     }
 };
 </script>
+
