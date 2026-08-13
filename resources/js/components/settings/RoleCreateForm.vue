@@ -57,39 +57,95 @@
                   />
                 </div>
 
-                <!-- Permissions Selection -->
+                <!-- Tree View Permissions Selection -->
                 <div>
-                  <div class="flex justify-between items-center mb-2">
-                    <label class="block text-xs font-bold text-slate-800 dark:text-zinc-200">Permissions Access</label>
-                    <div class="flex space-x-2 text-xs">
-                      <button type="button" @click="selectAllPermissions" class="text-slate-900 dark:text-white hover:underline font-bold">Select All</button>
-                      <span class="text-slate-300 dark:text-zinc-700">|</span>
-                      <button type="button" @click="deselectAllPermissions" class="text-slate-500 dark:text-zinc-400 hover:underline font-bold">Clear All</button>
+                  <div class="flex justify-between items-center mb-3">
+                    <div>
+                      <label class="block text-xs font-bold text-slate-800 dark:text-zinc-200">Assign Permissions</label>
+                      <p class="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Organized by module. Select modules or individual action permissions.</p>
                     </div>
+                    <button
+                      type="button"
+                      @click="toggleSelectAll"
+                      class="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors cursor-pointer"
+                    >
+                      {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+                    </button>
                   </div>
                   
-                  <div class="border border-slate-200 dark:border-zinc-800 rounded-xl p-4 bg-slate-50/70 dark:bg-zinc-800/40 max-h-[35vh] overflow-y-auto space-y-6">
-                    <div v-for="(groupPermissions, groupName) in permissions" :key="groupName" class="border-b border-slate-200/80 dark:border-zinc-800 pb-4 last:border-b-0 last:pb-0">
-                      <div class="flex justify-between items-center mb-2">
-                        <h4 class="text-xs font-extrabold text-slate-900 dark:text-zinc-100 uppercase tracking-wider">{{ groupName }}</h4>
-                        <button type="button" @click="toggleGroupPermissions(groupName, groupPermissions)" class="text-[11px] text-slate-900 dark:text-white hover:underline font-bold">
-                          Toggle Group
-                        </button>
-                      </div>
-                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <label v-for="permission in groupPermissions" :key="permission.id" class="relative flex items-start cursor-pointer select-none">
-                          <div class="flex h-5 items-center">
-                            <input
-                              type="checkbox"
-                              :value="permission.name"
-                              v-model="form.permissions"
-                              class="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 text-slate-900 focus:ring-0"
-                            />
+                  <div v-if="!permissions || Object.keys(groupedPermissions).length === 0" class="text-xs text-slate-500 dark:text-slate-400 italic p-4 bg-slate-50 dark:bg-zinc-800/40 rounded-xl border border-slate-200 dark:border-zinc-800">
+                    No permissions are registered in the system.
+                  </div>
+
+                  <div v-else class="border border-slate-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 bg-slate-50/70 dark:bg-zinc-800/40 max-h-[45vh] overflow-y-auto space-y-3 shadow-inner">
+                    <!-- Treeview Component -->
+                    <div class="treeview select-none">
+                      <!-- Root Nodes (Modules) -->
+                      <div v-for="(modulePerms, moduleName) in groupedPermissions" :key="moduleName" class="treeview-node mb-2.5 last:mb-0">
+                        <!-- Parent Item Row -->
+                        <div class="flex items-center py-2 px-3 hover:bg-slate-200/50 dark:hover:bg-zinc-700/50 rounded-lg transition-colors duration-150">
+                          <!-- Expand/Collapse Chevron -->
+                          <button 
+                            type="button" 
+                            @click="toggleModuleCollapse(moduleName)" 
+                            class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded transition-transform duration-200 focus:outline-none"
+                            :class="{'rotate-90': !isModuleCollapsed(moduleName)}"
+                          >
+                            <i class="fas fa-chevron-right text-[10px]"></i>
+                          </button>
+
+                          <!-- Parent Checkbox -->
+                          <input 
+                            type="checkbox" 
+                            :id="'parent-' + moduleName" 
+                            :checked="isModuleFullySelected(modulePerms)" 
+                            :ref="el => { if (el) el.indeterminate = isModulePartiallySelected(modulePerms); }"
+                            @change="toggleModuleSelection(modulePerms, $event)"
+                            class="w-4 h-4 ml-1 text-indigo-600 dark:text-indigo-500 border-slate-300 dark:border-zinc-700 rounded focus:ring-indigo-500 cursor-pointer"
+                          >
+
+                          <!-- Parent Icon & Label -->
+                          <div @click="toggleModuleCollapse(moduleName)" class="flex items-center ml-2.5 cursor-pointer flex-1 py-1">
+                            <i 
+                              :class="[isModuleCollapsed(moduleName) ? 'far fa-folder text-amber-500' : 'far fa-folder-open text-amber-500']" 
+                              class="text-base mr-2"
+                            ></i>
+                            <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">{{ moduleName }} Module</span>
+                            <span class="ml-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">
+                              {{ getSelectedCountForModule(modulePerms) }} / {{ modulePerms.length }} selected
+                            </span>
                           </div>
-                          <div class="ml-3 text-xs">
-                            <span class="font-semibold text-slate-700 dark:text-zinc-300">{{ permission.name }}</span>
+                        </div>
+
+                        <!-- Child Nodes (Permissions) -->
+                        <div 
+                          v-show="!isModuleCollapsed(moduleName)" 
+                          class="ml-6 pl-6 border-l border-slate-200 dark:border-zinc-700 space-y-1 mt-1 transition-all duration-300"
+                        >
+                          <div 
+                            v-for="permission in modulePerms" 
+                            :key="permission.id || permission.name" 
+                            class="flex items-center py-1.5 px-3 hover:bg-indigo-50/50 dark:hover:bg-zinc-800/80 rounded-md transition-colors"
+                          >
+                            <!-- Child Checkbox -->
+                            <input 
+                              type="checkbox" 
+                              :id="'permission-' + (permission.id || permission.name)"
+                              :value="permission.name" 
+                              v-model="form.permissions" 
+                              class="w-4 h-4 text-indigo-600 dark:text-indigo-500 border-slate-300 dark:border-zinc-700 rounded focus:ring-indigo-500 cursor-pointer"
+                            >
+
+                            <!-- Child Icon & Label -->
+                            <label 
+                              :for="'permission-' + (permission.id || permission.name)" 
+                              class="flex items-center ml-3 cursor-pointer text-xs font-semibold text-slate-700 dark:text-zinc-300 flex-1 py-0.5 select-none"
+                            >
+                              <i class="fas fa-key text-indigo-400 dark:text-indigo-400 text-xs mr-2"></i>
+                              <span>{{ permission.actionLabel }} <span class="text-[11px] text-slate-400 dark:text-zinc-500 font-normal ml-1">({{ permission.name }})</span></span>
+                            </label>
                           </div>
-                        </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -126,7 +182,7 @@
 </template>
 
 <script>
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useToast } from '@/composables/useToast';
 import axios from 'axios';
 
@@ -152,6 +208,7 @@ export default {
     const saving = ref(false);
     const errors = ref({});
     const permissions = ref({});
+    const collapsedModules = ref({});
 
     const form = reactive({
       name: '',
@@ -173,10 +230,151 @@ export default {
       }
     };
 
+    const formatModuleName = (rawName) => {
+      if (!rawName) return 'Other';
+      return rawName
+        .replace(/[._]/g, ' ')
+        .split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    };
+
+    const formatActionLabel = (permName, groupKey) => {
+      if (!permName) return '';
+      if (permName.includes('.')) {
+        const parts = permName.split('.');
+        const action = parts.slice(1).join(' ').replace(/_/g, ' ');
+        return action.charAt(0).toUpperCase() + action.slice(1);
+      }
+      if (permName.includes(' ')) {
+        const parts = permName.split(' ');
+        const action = parts[0];
+        return action.charAt(0).toUpperCase() + action.slice(1);
+      }
+      const action = permName.replace(/_/g, ' ');
+      return action.charAt(0).toUpperCase() + action.slice(1);
+    };
+
+    const groupedPermissions = computed(() => {
+      const groups = {};
+
+      if (!permissions.value) return groups;
+
+      if (Array.isArray(permissions.value)) {
+        permissions.value.forEach(p => {
+          const item = typeof p === 'string' ? { id: p, name: p } : p;
+          const name = item.name || '';
+          
+          let rawModule = 'Other';
+          if (name.includes('.')) {
+            rawModule = name.split('.')[0];
+          } else if (name.includes(' ')) {
+            const parts = name.split(' ');
+            rawModule = parts.slice(1).join(' ');
+          }
+          
+          const moduleName = formatModuleName(rawModule);
+          const actionLabel = formatActionLabel(name, rawModule);
+
+          if (!groups[moduleName]) {
+            groups[moduleName] = [];
+          }
+          groups[moduleName].push({
+            ...item,
+            actionLabel
+          });
+        });
+        return groups;
+      }
+
+      Object.keys(permissions.value).forEach(rawGroupKey => {
+        const permList = permissions.value[rawGroupKey] || [];
+        const moduleName = formatModuleName(rawGroupKey);
+
+        if (!groups[moduleName]) {
+          groups[moduleName] = [];
+        }
+
+        permList.forEach(p => {
+          const item = typeof p === 'string' ? { id: p, name: p } : p;
+          const actionLabel = formatActionLabel(item.name || '', rawGroupKey);
+          groups[moduleName].push({
+            ...item,
+            actionLabel
+          });
+        });
+      });
+
+      return groups;
+    });
+
+    const toggleModuleCollapse = (moduleName) => {
+      const currentlyCollapsed = isModuleCollapsed(moduleName);
+      collapsedModules.value[moduleName] = !currentlyCollapsed;
+    };
+
+    const isModuleCollapsed = (moduleName) => {
+      return collapsedModules.value[moduleName] !== false;
+    };
+
+    const isModuleFullySelected = (modulePerms) => {
+      if (!modulePerms || modulePerms.length === 0) return false;
+      return modulePerms.every(p => form.permissions.includes(p.name));
+    };
+
+    const isModulePartiallySelected = (modulePerms) => {
+      const selectedCount = getSelectedCountForModule(modulePerms);
+      return selectedCount > 0 && selectedCount < modulePerms.length;
+    };
+
+    const getSelectedCountForModule = (modulePerms) => {
+      if (!modulePerms) return 0;
+      return modulePerms.filter(p => form.permissions.includes(p.name)).length;
+    };
+
+    const toggleModuleSelection = (modulePerms, event) => {
+      const checked = event.target.checked;
+      const names = modulePerms.map(p => p.name);
+
+      if (checked) {
+        const current = new Set(form.permissions);
+        names.forEach(name => current.add(name));
+        form.permissions = Array.from(current);
+      } else {
+        form.permissions = form.permissions.filter(name => !names.includes(name));
+      }
+    };
+
+    const totalPermissionsCount = computed(() => {
+      let total = 0;
+      Object.values(groupedPermissions.value).forEach(list => {
+        total += list.length;
+      });
+      return total;
+    });
+
+    const isAllSelected = computed(() => {
+      const total = totalPermissionsCount.value;
+      return total > 0 && form.permissions.length === total;
+    });
+
+    const toggleSelectAll = () => {
+      if (isAllSelected.value) {
+        form.permissions = [];
+      } else {
+        const allNames = [];
+        Object.values(groupedPermissions.value).forEach(list => {
+          list.forEach(p => allNames.push(p.name));
+        });
+        form.permissions = allNames;
+      }
+    };
+
     const resetForm = () => {
       form.name = '';
       form.description = '';
       form.permissions = [];
+      collapsedModules.value = {};
       errors.value = {};
     };
 
@@ -189,35 +387,6 @@ export default {
         } else {
           form.permissions = [];
         }
-      }
-    };
-
-    const selectAllPermissions = () => {
-      const allList = [];
-      Object.values(permissions.value).forEach(perms => {
-        perms.forEach(p => {
-          allList.push(p.name);
-        });
-      });
-      form.permissions = allList;
-    };
-
-    const deselectAllPermissions = () => {
-      form.permissions = [];
-    };
-
-    const toggleGroupPermissions = (groupName, groupPermissions) => {
-      const groupNames = groupPermissions.map(p => p.name);
-      const allSelected = groupNames.every(name => form.permissions.includes(name));
-
-      if (allSelected) {
-        // Deselect all in group
-        form.permissions = form.permissions.filter(name => !groupNames.includes(name));
-      } else {
-        // Select all in group, avoiding duplicates
-        const current = new Set(form.permissions);
-        groupNames.forEach(name => current.add(name));
-        form.permissions = Array.from(current);
       }
     };
 
@@ -265,11 +434,18 @@ export default {
       errors,
       saving,
       permissions,
+      groupedPermissions,
+      collapsedModules,
+      isModuleCollapsed,
+      toggleModuleCollapse,
+      isModuleFullySelected,
+      isModulePartiallySelected,
+      getSelectedCountForModule,
+      toggleModuleSelection,
+      isAllSelected,
+      toggleSelectAll,
       isSystemRole,
-      saveRole,
-      selectAllPermissions,
-      deselectAllPermissions,
-      toggleGroupPermissions
+      saveRole
     };
   }
 };
