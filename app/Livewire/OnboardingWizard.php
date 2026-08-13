@@ -366,7 +366,8 @@ class OnboardingWizard extends Component
             ]);
 
             // Seed Default Cash Bank Account
-            $cashAccount = \App\Models\Account::where('company_id', $company->id)
+            $cashAccount = \App\Models\Account::withoutGlobalScopes()
+                ->where('company_id', $company->id)
                 ->where(function ($query) {
                     $query->where('account_code', '1010')
                         ->orWhere('account_name', 'Cash Account')
@@ -375,21 +376,29 @@ class OnboardingWizard extends Component
                 })
                 ->first();
 
-            \App\Models\BankAccount::firstOrCreate([
-                'company_id' => $company->id,
-                'is_default' => true,
-            ], [
-                'account_name' => 'Cash Account',
-                'bank_name' => 'Cash',
-                'account_number' => 'CASH-001',
-                'account_type' => 'checking',
-                'chart_account_id' => $cashAccount ? $cashAccount->id : null,
-                'currency' => $company->base_currency ?: 'USD',
-                'is_active' => true,
-                'is_default' => true,
-                'opening_balance' => 0.00,
-                'opening_date' => now()->format('Y-m-d'),
-            ]);
+            if (!$cashAccount) {
+                $cashAccount = \App\Models\Account::withoutGlobalScopes()
+                    ->where('company_id', $company->id)
+                    ->first();
+            }
+
+            if ($cashAccount) {
+                \App\Models\BankAccount::firstOrCreate([
+                    'company_id' => $company->id,
+                    'is_default' => true,
+                ], [
+                    'account_name' => 'Cash Account',
+                    'bank_name' => 'Cash',
+                    'account_number' => 'CASH-001',
+                    'account_type' => 'checking',
+                    'chart_account_id' => $cashAccount->id,
+                    'currency' => $company->base_currency ?: 'USD',
+                    'is_active' => true,
+                    'is_default' => true,
+                    'opening_balance' => 0.00,
+                    'opening_date' => now()->format('Y-m-d'),
+                ]);
+            }
         });
 
         // Clear the bypass session tokens now that setup is complete.

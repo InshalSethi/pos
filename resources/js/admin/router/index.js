@@ -8,6 +8,8 @@ import UsersIndex from '../views/users/Index.vue';
 import UsersForm from '../views/users/Form.vue';
 import RolesIndex from '../views/roles/Index.vue';
 import RolesForm from '../views/roles/Form.vue';
+import BusinessTypesIndex from '../views/business-types/Index.vue';
+import FormBuilderIndex from '../views/form-builder/Index.vue';
 import ProfileIndex from '../views/profile/Index.vue';
 import SettingsIndex from '../views/settings/Index.vue';
 
@@ -30,12 +32,15 @@ const routes = [
             { path: 'admins/:id/edit', name: 'admin.admins.edit', component: AdminsForm },
 
             { path: 'users', name: 'admin.users.index', component: UsersIndex },
-            { path: 'users/create', name: 'admin.users.create', component: UsersForm },
-            { path: 'users/:id/edit', name: 'admin.users.edit', component: UsersForm },
+            { path: 'users/create', name: 'admin.users.create', component: UsersIndex },
+            { path: 'users/:id/edit', name: 'admin.users.edit', component: UsersIndex },
 
             { path: 'roles', name: 'admin.roles.index', component: RolesIndex },
             { path: 'roles/create', name: 'admin.roles.create', component: RolesForm },
             { path: 'roles/:id/edit', name: 'admin.roles.edit', component: RolesForm },
+
+            { path: 'business-types', name: 'admin.business-types.index', component: BusinessTypesIndex },
+            { path: 'form-builder', name: 'admin.form-builder.index', component: FormBuilderIndex },
 
             { path: 'profile', name: 'admin.profile', component: ProfileIndex },
             { path: 'settings', name: 'admin.settings', component: SettingsIndex },

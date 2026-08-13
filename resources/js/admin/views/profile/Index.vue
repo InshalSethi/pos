@@ -1,55 +1,55 @@
 <template>
   <div class="max-w-4xl mx-auto">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-          <div class="p-6 border-b border-gray-100 bg-gray-50/50">
-              <h3 class="text-lg font-bold text-gray-800">Account Profile</h3>
-              <p class="text-sm text-gray-500">Manage your personal account details</p>
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden mb-6">
+          <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+              <h3 class="text-lg font-black text-zinc-950 dark:text-white tracking-tight">Account Profile</h3>
+              <p class="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mt-0.5">Manage your personal admin account details</p>
           </div>
           
           <div class="p-6">
-              <div v-if="successMessage" class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center">
-                  <i class="fas fa-check-circle mr-2"></i> {{ successMessage }}
+              <div v-if="successMessage" class="mb-6 bg-zinc-900 text-white dark:bg-white dark:text-black px-4 py-3 rounded-xl flex items-center text-xs font-bold shadow-xs">
+                  <i class="fas fa-check-circle mr-2 text-sm"></i> {{ successMessage }}
               </div>
-              <div v-if="errorMessage" class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center">
-                  <i class="fas fa-exclamation-circle mr-2"></i> {{ errorMessage }}
+              <div v-if="errorMessage" class="mb-6 bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-400 px-4 py-3 rounded-xl flex items-center text-xs font-bold">
+                  <i class="fas fa-exclamation-circle mr-2 text-sm"></i> {{ errorMessage }}
               </div>
 
               <form @submit.prevent="updateProfile" class="space-y-6 max-w-2xl">
                   <!-- Name -->
                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
-                      <input type="text" v-model="form.name" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm outline-none bg-white text-gray-800">
+                      <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Full Name</label>
+                      <input type="text" v-model="form.name" required class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600">
                   </div>
 
                   <!-- Email (Disabled) -->
                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-                      <input type="email" :value="form.email" disabled class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed outline-none">
-                      <p class="text-xs text-gray-400 mt-1">Email address cannot be changed. Contact super-admin for assistance.</p>
+                      <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Email Address</label>
+                      <input type="email" :value="form.email" disabled class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 text-zinc-400 dark:text-zinc-500 cursor-not-allowed text-xs font-bold outline-none">
+                      <p class="text-[11px] font-medium text-zinc-400 mt-1">Email address cannot be changed. Contact system admin for assistance.</p>
                   </div>
 
                   <!-- Password Change -->
-                  <div class="pt-6 border-t border-gray-100">
-                      <h4 class="text-md font-bold text-gray-800 mb-4">Change Password</h4>
+                  <div class="pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                      <h4 class="text-sm font-black text-zinc-950 dark:text-white uppercase tracking-wider mb-4">Change Password</h4>
                       <div class="space-y-4">
                           <div>
-                              <label class="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
-                              <input type="password" v-model="form.current_password" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm outline-none bg-white text-gray-800" placeholder="••••••••">
+                              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Current Password</label>
+                              <input type="password" v-model="form.current_password" class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="••••••••">
                           </div>
                           <div>
-                              <label class="block text-sm font-bold text-gray-700 mb-2">New Password</label>
-                              <input type="password" v-model="form.password" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm outline-none bg-white text-gray-800" placeholder="Leave blank to keep current password">
+                              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">New Password</label>
+                              <input type="password" v-model="form.password" class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="Leave blank to keep current password">
                           </div>
                           <div>
-                              <label class="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
-                              <input type="password" v-model="form.password_confirmation" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm outline-none bg-white text-gray-800" placeholder="Confirm new password">
+                              <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Confirm New Password</label>
+                              <input type="password" v-model="form.password_confirmation" class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="Confirm new password">
                           </div>
                       </div>
                   </div>
 
                   <!-- Submit -->
                   <div class="pt-4 flex justify-end">
-                      <button type="submit" :disabled="loading" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors disabled:opacity-50 flex items-center">
+                      <button type="submit" :disabled="loading" class="bg-black hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-extrabold px-6 py-2.5 rounded-xl text-xs shadow-xs transition-all disabled:opacity-50 flex items-center cursor-pointer">
                           <i v-if="loading" class="fas fa-spinner fa-spin mr-2"></i>
                           <i v-else class="fas fa-save mr-2"></i>
                           Save Changes
@@ -112,3 +112,4 @@ onMounted(() => {
     loadProfile();
 });
 </script>
+

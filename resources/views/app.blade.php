@@ -36,17 +36,8 @@
         window.systemTimezones = @json(\DateTimeZone::listIdentifiers());
         window.baseCurrency = @json(auth()->check() && auth()->user()->company ? auth()->user()->company->base_currency : 'USD');
     </script>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Scripts -->
+    <!-- Local Scripts & Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.0.91/build/spline-viewer.js"></script>
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="notranslate font-sans antialiased text-[13px] font-medium text-gray-600 tracking-wide scrollbar-none no-scrollbar">
     <div id="app"></div>

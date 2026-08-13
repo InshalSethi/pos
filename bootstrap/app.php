@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
             'api/*',
+            'admin/api/*',
         ]);
 
         $middleware->append(\App\Http\Middleware\SetSystemTimezone::class);

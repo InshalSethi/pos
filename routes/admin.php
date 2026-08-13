@@ -57,12 +57,19 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
             // These will still be used by DataTables if needed, or by Vue
             Route::get('/admins-data', [AdminManagementController::class, 'data']);
             Route::get('/users-data', [AdminUserController::class, 'data']);
+            Route::get('/users/{user}/companies-data', [AdminUserController::class, 'userCompaniesData']);
+            Route::get('/companies/{company}', [AdminUserController::class, 'companyShow']);
             Route::get('/roles-data', [AdminRoleController::class, 'data']);
+            Route::get('/business-types-data', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'data']);
+            Route::get('/custom-forms-data', [\App\Http\Controllers\Admin\AdminCustomFormController::class, 'index']);
+            Route::get('/custom-forms/meta-options', [\App\Http\Controllers\Admin\AdminCustomFormController::class, 'metaOptions']);
             
             // API Resource endpoints for CRUD forms
             Route::apiResource('admins', AdminManagementController::class);
             Route::apiResource('users', AdminUserController::class);
             Route::apiResource('roles', AdminRoleController::class);
+            Route::apiResource('business-types', \App\Http\Controllers\Admin\AdminBusinessTypeController::class);
+            Route::apiResource('custom-forms', \App\Http\Controllers\Admin\AdminCustomFormController::class);
 
     // Profile Settings
     Route::get('/profile', [AdminProfileController::class, 'show']);
@@ -79,6 +86,7 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
             Route::get('/options/permissions', function() {
                 return response()->json(\Spatie\Permission\Models\Permission::where('guard_name', 'admin')->select('id', 'name')->get());
             });
+            Route::get('/options/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
         });
     });
 

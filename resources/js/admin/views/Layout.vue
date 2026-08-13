@@ -1,98 +1,232 @@
 <template>
-    <div class="w-full h-full flex overflow-hidden">
+    <div class="w-full h-full flex overflow-hidden bg-slate-50 dark:bg-zinc-950">
         <!-- Sidebar -->
-        <aside :class="[isSidebarCollapsed ? 'w-[80px]' : 'w-[260px]']" class="bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20 h-full transition-all duration-300 ease-in-out">
-            <div class="h-16 flex items-center border-b border-gray-100 overflow-hidden" :class="[isSidebarCollapsed ? 'justify-center px-0' : 'px-6']">
-                <div class="w-8 h-8 rounded bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0" :class="[isSidebarCollapsed ? '' : 'mr-3']">A</div>
-                <h2 v-if="!isSidebarCollapsed" class="font-bold text-gray-800 text-lg tracking-tight whitespace-nowrap">Admin System</h2>
+        <aside 
+            :class="[isSidebarCollapsed ? 'w-20' : 'w-[260px]']" 
+            class="bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col flex-shrink-0 z-20 h-full transition-all duration-300 ease-in-out"
+        >
+            <!-- Sidebar Brand Header -->
+            <div class="h-16 flex items-center border-b border-zinc-200 dark:border-zinc-800 overflow-hidden" :class="[isSidebarCollapsed ? 'justify-center px-0' : 'px-6']">
+                <div class="w-9 h-9 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-black text-lg shrink-0 shadow-sm" :class="[isSidebarCollapsed ? '' : 'mr-3']">
+                    A
+                </div>
+                <div v-if="!isSidebarCollapsed" class="flex flex-col min-w-0">
+                    <h2 class="font-black text-zinc-950 dark:text-white text-base tracking-tight truncate leading-tight">Admin System</h2>
+                    <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Control Panel</span>
+                </div>
             </div>
             
-            <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1 overflow-x-hidden">
-                <p v-if="!isSidebarCollapsed" class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-4 whitespace-nowrap">Main Menu</p>
-                <div v-else class="h-6 mt-4"></div>
+            <!-- Navigation items -->
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1 overflow-x-hidden custom-scrollbar">
+                <div v-if="!isSidebarCollapsed" class="px-3 pt-2 pb-1">
+                    <h3 class="text-[10px] tracking-widest text-zinc-400 dark:text-zinc-500 font-bold uppercase">Main Menu</h3>
+                </div>
+                <div v-else class="h-4"></div>
                 
-                <router-link :to="{ name: 'admin.dashboard' }" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-500" :title="isSidebarCollapsed ? 'Dashboard' : ''" active-class="" exact-active-class="router-link-active">
-                    <i class="fas fa-home w-5 text-center text-gray-400 text-lg shrink-0" :class="[isSidebarCollapsed ? 'mx-auto' : 'mr-3']"></i>
-                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
+                <router-link 
+                    :to="{ name: 'admin.dashboard' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name === 'admin.dashboard'
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Dashboard' : ''"
+                >
+                    <i class="fas fa-chart-line w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name === 'admin.dashboard' ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Dashboard</span>
                 </router-link>
                 
-                <p v-if="!isSidebarCollapsed" class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6 whitespace-nowrap">Administration</p>
-                <div v-else class="h-6 mt-6 border-t border-gray-100 mx-2"></div>
+                <div v-if="!isSidebarCollapsed" class="px-3 pt-6 pb-1">
+                    <h3 class="text-[10px] tracking-widest text-zinc-400 dark:text-zinc-500 font-bold uppercase">Administration</h3>
+                </div>
+                <div v-else class="h-4 my-2 border-t border-zinc-100 dark:border-zinc-800/60 mx-2"></div>
                 
-                <router-link :to="{ name: 'admin.admins.index' }" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-500" :title="isSidebarCollapsed ? 'Admins' : ''">
-                    <i class="fas fa-user-shield w-5 text-center text-gray-400 text-lg shrink-0" :class="[isSidebarCollapsed ? 'mx-auto' : 'mr-3']"></i>
-                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap">Admins</span>
+                <router-link 
+                    :to="{ name: 'admin.admins.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('admins')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Admins' : ''"
+                >
+                    <i class="fas fa-user-shield w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('admins') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Admins</span>
                 </router-link>
                 
-                <router-link :to="{ name: 'admin.users.index' }" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-500" :title="isSidebarCollapsed ? 'Website Users' : ''">
-                    <i class="fas fa-users w-5 text-center text-gray-400 text-lg shrink-0" :class="[isSidebarCollapsed ? 'mx-auto' : 'mr-3']"></i>
-                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap">Website Users</span>
+                <router-link 
+                    :to="{ name: 'admin.users.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('users')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Users' : ''"
+                >
+                    <i class="fas fa-users w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('users') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Users</span>
                 </router-link>
                 
-                <router-link :to="{ name: 'admin.roles.index' }" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-500" :title="isSidebarCollapsed ? 'Roles & Permissions' : ''">
-                    <i class="fas fa-shield-alt w-5 text-center text-gray-400 text-lg shrink-0" :class="[isSidebarCollapsed ? 'mx-auto' : 'mr-3']"></i>
-                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap">Roles & Permissions</span>
+                <router-link 
+                    :to="{ name: 'admin.roles.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('roles')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Roles & Permissions' : ''"
+                >
+                    <i class="fas fa-shield-alt w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('roles') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Roles & Permissions</span>
                 </router-link>
-            </div>
+
+                <router-link 
+                    :to="{ name: 'admin.business-types.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('business-types')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Business Types' : ''"
+                >
+                    <i class="fas fa-briefcase w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('business-types') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Business Types</span>
+                </router-link>
+
+                <router-link 
+                    :to="{ name: 'admin.form-builder.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('form-builder')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Form Builder' : ''"
+                >
+                    <i class="fas fa-cubes-stacked w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('form-builder') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Form Builder</span>
+                </router-link>
+            </nav>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
+        <!-- Main Content Container -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/70 dark:bg-zinc-950">
             <!-- Header -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 flex-shrink-0 z-10 transition-all duration-300">
+            <header class="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6 flex-shrink-0 z-10 transition-colors">
                 <div class="flex items-center">
-                    <button @click="isSidebarCollapsed = !isSidebarCollapsed" class="text-gray-400 hover:text-gray-600 focus:outline-none p-1 rounded-md bg-gray-100 mr-4 transition-colors">
-                        <i class="fas fa-bars"></i>
+                    <button 
+                        @click="isSidebarCollapsed = !isSidebarCollapsed" 
+                        class="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white focus:outline-none w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center mr-4 transition-all cursor-pointer"
+                        title="Toggle Sidebar"
+                    >
+                        <i class="fas fa-bars text-sm"></i>
                     </button>
-                    <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">{{ routeName }}</h1>
+                    <h1 class="text-xl font-extrabold text-zinc-950 dark:text-white tracking-tight">{{ routeName }}</h1>
                 </div>
                 
-                <div class="flex items-center space-x-4">
-
-                    <button @click="toggleDarkMode" class="w-8 h-8 rounded-full text-gray-400 hover:text-yellow-500 hover:bg-gray-100 flex items-center justify-center transition-colors">
-                        <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
+                <div class="flex items-center space-x-3">
+                    <!-- Dark/Light Mode Switcher -->
+                    <button 
+                        @click="toggleDarkMode" 
+                        class="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                        :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                    >
+                        <i :class="isDarkMode ? 'fas fa-sun text-amber-400' : 'fas fa-moon text-zinc-600'"></i>
                     </button>
 
-                    
-                    <div class="flex items-center ml-2 pl-4 border-l border-gray-200">
+                    <!-- Profile Dropdown Container -->
+                    <div class="flex items-center ml-2 pl-3 border-l border-zinc-200 dark:border-zinc-800">
                         <div class="relative">
-                            <button @click="showDropdown = !showDropdown" class="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold shadow-sm shadow-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-transform hover:scale-105">
+                            <button 
+                                @click="showDropdown = !showDropdown" 
+                                class="w-9 h-9 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-black text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-transform hover:scale-105 cursor-pointer"
+                            >
                                 {{ userInitials }}
                             </button>
                             
                             <!-- Dropdown Menu -->
-                            <div v-if="showDropdown" class="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-right transition-all">
-                                <!-- User Info -->
-                                <div class="px-5 py-4 flex items-center border-b border-gray-100 mb-2">
-                                    <div class="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center font-extrabold text-xl mr-4 shadow-lg shadow-indigo-200 shrink-0">
-                                        {{ userInitials }}
+                            <transition
+                                enter-active-class="transition ease-out duration-100"
+                                enter-from-class="transform opacity-0 scale-95"
+                                enter-to-class="transform opacity-100 scale-100"
+                                leave-active-class="transition ease-in duration-75"
+                                leave-from-class="transform opacity-100 scale-100"
+                                leave-to-class="transform opacity-0 scale-95"
+                            >
+                                <div 
+                                    v-if="showDropdown" 
+                                    class="absolute right-0 mt-3 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 py-2 z-50 overflow-hidden"
+                                >
+                                    <!-- User Info Header -->
+                                    <div class="px-4 py-3 flex items-center border-b border-zinc-100 dark:border-zinc-800 mb-1">
+                                        <div class="w-10 h-10 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-extrabold text-base mr-3 shadow-sm shrink-0">
+                                            {{ userInitials }}
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Admin Operator</p>
+                                            <p class="text-xs font-extrabold text-zinc-950 dark:text-white leading-tight truncate">{{ userName }}</p>
+                                            <p class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ userEmail }}</p>
+                                        </div>
                                     </div>
-                                    <div class="overflow-hidden">
-                                        <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-0.5">Operator</p>
-                                        <p class="text-sm font-extrabold text-gray-800 leading-tight truncate">{{ userName }}</p>
-                                        <p class="text-[11px] font-medium text-gray-400 truncate mt-0.5">{{ userEmail }}</p>
+                                    
+                                    <div class="p-1 space-y-0.5">
+                                        <router-link 
+                                            :to="{ name: 'admin.profile' }" 
+                                            @click="showDropdown = false" 
+                                            class="px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors flex items-center rounded-xl"
+                                        >
+                                            <i class="far fa-user w-5 text-center mr-2.5 text-zinc-400 dark:text-zinc-500"></i> Account Profile
+                                        </router-link>
+                                        <router-link 
+                                            :to="{ name: 'admin.settings' }" 
+                                            @click="showDropdown = false" 
+                                            class="px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors flex items-center rounded-xl"
+                                        >
+                                            <i class="fas fa-cog w-5 text-center mr-2.5 text-zinc-400 dark:text-zinc-500"></i> System Settings
+                                        </router-link>
+                                    </div>
+                                    
+                                    <div class="h-px bg-zinc-100 dark:bg-zinc-800 my-1 mx-2"></div>
+                                    
+                                    <div class="p-1">
+                                        <button 
+                                            @click="logout" 
+                                            class="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors flex items-center rounded-xl cursor-pointer"
+                                        >
+                                            <i class="fas fa-sign-out-alt w-5 text-center mr-2.5"></i> Secure Sign Out
+                                        </button>
                                     </div>
                                 </div>
-                                
-                                <router-link :to="{ name: 'admin.profile' }" @click="showDropdown = false" class="block px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors flex items-center">
-                                    <i class="far fa-user w-5 text-center mr-3 text-gray-400 text-lg"></i> Account Profile
-                                </router-link>
-                                <router-link :to="{ name: 'admin.settings' }" @click="showDropdown = false" class="block px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors flex items-center">
-                                    <i class="fas fa-cog w-5 text-center mr-3 text-gray-400 text-lg"></i> System Settings
-                                </router-link>
-                                
-                                <div class="h-px bg-gray-100 my-2 mx-2"></div>
-                                
-                                <button @click="logout" class="w-full text-left block px-5 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors flex items-center">
-                                    <i class="fas fa-sign-out-alt w-5 text-center mr-3 text-lg"></i> Secure Sign Out
-                                </button>
-                            </div>
+                            </transition>
                         </div>
                     </div>
                 </div>
             </header>
             
-            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                 <div class="max-w-7xl mx-auto">
                     <router-view></router-view>
                 </div>
@@ -134,8 +268,8 @@ const userInitials = computed(() => {
 });
 
 const routeName = computed(() => {
-    if (route.name === 'admin.dashboard') return 'Dashboard';
-    if (route.name?.includes('admins')) return 'Admins';
+    if (route.name === 'admin.dashboard') return 'Dashboard Overview';
+    if (route.name?.includes('admins')) return 'System Admins';
     if (route.name?.includes('users')) return 'Users Management';
     if (route.name?.includes('roles')) return 'Roles & Permissions';
     if (route.name === 'admin.profile') return 'Account Profile';
@@ -150,7 +284,6 @@ const logout = async () => {
         sessionStorage.removeItem('admin_logged_in');
         router.push({ name: 'admin.login' });
     } catch (e) {
-        // Force redirect if API fails
         localStorage.removeItem('admin_token');
         sessionStorage.removeItem('admin_logged_in');
         router.push({ name: 'admin.login' });
@@ -171,3 +304,4 @@ onUnmounted(() => {
     document.removeEventListener('click', closeDropdown);
 });
 </script>
+
