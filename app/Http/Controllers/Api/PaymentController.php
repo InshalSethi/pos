@@ -416,7 +416,7 @@ class PaymentController extends Controller
      */
     public function getPaymentOptions(): JsonResponse
     {
-        $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'is_active')
+        $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active')
                                   ->get();
 
         $suppliers = Supplier::where('is_active', true)

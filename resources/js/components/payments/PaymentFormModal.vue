@@ -80,18 +80,6 @@
             <span v-if="errors.payment_date" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.payment_date[0] }}</span>
           </div>
 
-          <!-- Bank Account Floating Dropdown -->
-          <div>
-            <FloatingSelect
-              v-model="form.bank_account_id"
-              label="Bank Account"
-              placeholder="Select Bank Account"
-              :options="formattedBankAccounts"
-              :required="true"
-              :error="errors.bank_account_id ? errors.bank_account_id[0] : ''"
-            />
-          </div>
-
           <!-- Payment Method Floating Dropdown -->
           <div>
             <FloatingSelect
@@ -101,6 +89,19 @@
               :options="formattedPaymentMethods"
               :required="true"
               :error="errors.payment_method ? errors.payment_method[0] : ''"
+              @change="onPaymentMethodChange"
+            />
+          </div>
+
+          <!-- Bank Account Floating Dropdown -->
+          <div>
+            <FloatingSelect
+              v-model="form.bank_account_id"
+              label="Bank Account"
+              placeholder="Select Bank Account"
+              :options="formattedBankAccounts"
+              :required="true"
+              :error="errors.bank_account_id ? errors.bank_account_id[0] : ''"
             />
           </div>
 
@@ -299,13 +300,51 @@ const formattedPaymentTypes = computed(() => {
   }));
 });
 
+const isCashAccount = (acc) => {
+  if (!acc) return false;
+  const type = String(acc.account_type || '').toLowerCase();
+  const name = String(acc.account_name || '').toLowerCase();
+  const bank = String(acc.bank_name || '').toLowerCase();
+  const num = String(acc.account_number || '').toLowerCase();
+  return type === 'cash' || bank === 'cash' || name.includes('cash') || num.startsWith('cash');
+};
+
+const isCardAccount = (acc) => {
+  if (!acc) return false;
+  const type = String(acc.account_type || '').toLowerCase();
+  const name = String(acc.account_name || '').toLowerCase();
+  const bank = String(acc.bank_name || '').toLowerCase();
+  return type === 'credit_card' || type === 'card' || type === 'debit_card' || name.includes('card') || bank.includes('card');
+};
+
 const formattedBankAccounts = computed(() => {
-  return bankAccounts.value.map(acc => ({
+  const method = form.payment_method;
+  let filtered = bankAccounts.value;
+
+  if (method === 'cash') {
+    filtered = bankAccounts.value.filter(acc => isCashAccount(acc));
+  } else if (method === 'bank_transfer') {
+    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
+  } else if (method === 'card') {
+    filtered = bankAccounts.value.filter(acc => isCardAccount(acc));
+  } else if (method === 'check' || method === 'cheque') {
+    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
+  }
+
+  return filtered.map(acc => ({
     value: acc.id,
     label: acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name,
     sublabel: acc.account_number ? (acc.masked_account_number || ('****' + String(acc.account_number).slice(-4))) : ''
   }));
 });
+
+const onPaymentMethodChange = () => {
+  const available = formattedBankAccounts.value;
+  const exists = available.some(acc => String(acc.value) === String(form.bank_account_id));
+  if (!exists) {
+    form.bank_account_id = available.length > 0 ? available[0].value : '';
+  }
+};
 
 const formattedPaymentMethods = computed(() => {
   return paymentMethods.value.map(m => ({

@@ -468,7 +468,7 @@ class PaymentReceiptController extends Controller
      */
     public function getReceiptOptions(): JsonResponse
     {
-        $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'is_active')
+        $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active')
                                   ->get();
 
         $customers = Customer::where('is_active', true)
