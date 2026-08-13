@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\BankTransactionController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\AccountingSettingsController;
+use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
@@ -431,5 +432,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::post('/salary-adjustments/{salaryAdjustment}/implement', [SalaryAdjustmentController::class , 'implement']);
         Route::apiResource('salary-adjustments', SalaryAdjustmentController::class);
 
+        // Calendar Module routes
+        Route::get('/calendar/events', [CalendarController::class, 'getEvents']);
+        Route::get('/calendar/google/settings', [CalendarController::class, 'getSettings']);
+        Route::post('/calendar/google/toggle-sync', [CalendarController::class, 'toggleSync']);
+        Route::post('/calendar/google/sync-now', [CalendarController::class, 'syncNow']);
+        Route::post('/calendar/google/disconnect', [CalendarController::class, 'disconnect']);
 
     });

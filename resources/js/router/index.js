@@ -526,6 +526,12 @@ const routes = [
         component: PaymentReceipts,
         meta: { permission: 'payment_receipts.view' }
       },
+      {
+        path: 'calendar',
+        name: 'Calendar',
+        component: () => import('@/components/calendar/CalendarView.vue'),
+        meta: { permission: 'calendar.view' }
+      },
 
     ]
   },
