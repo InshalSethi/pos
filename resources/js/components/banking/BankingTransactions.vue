@@ -10,13 +10,13 @@
       <div class="flex items-center space-x-3">
         <button
           @click="navigateToCreateIncome"
-          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
+          class="inline-flex items-center justify-center px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           + New Income
         </button>
         <button
           @click="navigateToCreateExpense"
-          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
+          class="inline-flex items-center justify-center px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           + New Expense
         </button>
@@ -33,7 +33,7 @@
             :class="[
               'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
               activeTab === 'all'
-                ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
             ]"
           >
@@ -44,7 +44,7 @@
             :class="[
               'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
               activeTab === 'income'
-                ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
             ]"
           >
@@ -55,7 +55,7 @@
             :class="[
               'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
               activeTab === 'expense'
-                ? 'bg-white dark:bg-zinc-800 text-rose-600 dark:text-rose-400 shadow-sm'
+                ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
             ]"
           >
@@ -117,17 +117,17 @@
             >
               <td class="py-3.5 px-4 text-slate-600 dark:text-zinc-300 font-medium">{{ tx.transaction_date }}</td>
               <td class="py-3.5 px-4 text-slate-800 dark:text-zinc-100 font-semibold">{{ tx.bank_account ? tx.bank_account.account_name : 'Bank' }}</td>
-              <td class="py-3.5 px-4 text-slate-500 dark:text-zinc-400 font-mono text-[11px]">{{ tx.reference_number || '-' }}</td>
+              <td class="py-3.5 px-4 text-slate-700 dark:text-zinc-300 font-medium text-xs">{{ tx.reference_number || '-' }}</td>
               <td class="py-3.5 px-4 text-slate-700 dark:text-zinc-300 max-w-xs truncate">{{ tx.description || '-' }}</td>
               <td class="py-3.5 px-4 text-center">
                 <span
-                  :class="isIncomeType(tx.transaction_type) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'"
-                  class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                  :class="getTransactionBadge(tx).class"
+                  class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap"
                 >
-                  {{ isIncomeType(tx.transaction_type) ? 'Income' : 'Expense' }}
+                  {{ getTransactionBadge(tx).label }}
                 </span>
               </td>
-              <td class="py-3.5 px-4 text-right font-bold" :class="isIncomeType(tx.transaction_type) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              <td class="py-3.5 px-4 text-right font-semibold" :class="isIncomeType(tx.transaction_type) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                 {{ isIncomeType(tx.transaction_type) ? '+' : '-' }}{{ getCurrencySymbol(tx.bank_account?.currency) }} {{ formatNumber(tx.amount) }}
               </td>
               <td class="py-3.5 px-4 text-right font-semibold text-slate-900 dark:text-zinc-100">
@@ -185,6 +185,76 @@ export default {
 
     const isIncomeType = (type) => {
       return type === 'credit' || type === 'income';
+    };
+
+    const getTransactionBadge = (tx) => {
+      if (isIncomeType(tx.transaction_type)) {
+        return {
+          label: 'INCOME',
+          class: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/40'
+        };
+      }
+
+      let typeKey = tx.payment?.payment_type || tx.payment_type || '';
+
+      if (!typeKey && tx.description) {
+        const desc = tx.description.toLowerCase();
+        if (desc.includes('supplier')) typeKey = 'supplier_payment';
+        else if (desc.includes('salary')) typeKey = 'salary_payment';
+        else if (desc.includes('expense')) typeKey = 'expense_payment';
+        else if (desc.includes('return')) typeKey = 'sale_return_payment';
+        else if (desc.includes('purchase')) typeKey = 'purchase_invoice_payment';
+        else if (desc.includes('other')) typeKey = 'other_payment';
+      }
+
+      const normalized = String(typeKey).trim().toLowerCase();
+
+      if (normalized.includes('supplier')) {
+        return {
+          label: 'SUPPLIER PAYMENT',
+          class: 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-800/40'
+        };
+      }
+
+      if (normalized.includes('expense')) {
+        return {
+          label: 'EXPENSE',
+          class: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800/40'
+        };
+      }
+
+      if (normalized.includes('salary')) {
+        return {
+          label: 'SALARY',
+          class: 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-400 dark:border-purple-800/40'
+        };
+      }
+
+      if (normalized.includes('sale_return') || normalized.includes('sale return') || normalized.includes('return')) {
+        return {
+          label: 'SALE RETURN',
+          class: 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-950/80 dark:text-red-300 dark:border-red-800'
+        };
+      }
+
+      if (normalized.includes('purchase_invoice') || normalized.includes('purchase invoice') || normalized.includes('purchase')) {
+        return {
+          label: 'PURCHASE INVOICE',
+          class: 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800/40'
+        };
+      }
+
+      if (normalized.includes('other')) {
+        return {
+          label: 'OTHER OUTFLOW',
+          class: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+        };
+      }
+
+      return {
+        label: 'OTHER OUTFLOW',
+        class: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+      };
     };
 
     const fetchTransactions = async () => {
@@ -257,6 +327,7 @@ export default {
       search,
       filteredTransactions,
       isIncomeType,
+      getTransactionBadge,
       navigateToCreateIncome,
       navigateToCreateExpense,
       formatNumber,

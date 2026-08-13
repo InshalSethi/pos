@@ -27,7 +27,7 @@ class BankTransactionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = BankTransaction::with(['bankAccount', 'journalEntry']);
+        $query = BankTransaction::with(['bankAccount', 'journalEntry', 'payment:id,bank_transaction_id,payment_type', 'paymentReceipt:id,bank_transaction_id,receipt_type']);
 
         // Filter by bank account
         if ($request->has('bank_account_id')) {

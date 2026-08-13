@@ -130,6 +130,8 @@ class BankAccountController extends Controller
             'is_default' => 'boolean',
             'bank_phone' => 'nullable|string|max:50',
             'bank_address' => 'nullable|string',
+            'expiry_date' => 'nullable|string|max:20',
+            'cvv' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -279,6 +281,8 @@ class BankAccountController extends Controller
             'is_default' => 'boolean',
             'bank_phone' => 'nullable|string|max:50',
             'bank_address' => 'nullable|string',
+            'expiry_date' => 'nullable|string|max:20',
+            'cvv' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {

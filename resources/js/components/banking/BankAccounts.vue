@@ -27,7 +27,7 @@
           <button
             type="button"
             @click="viewMode = 'grid'"
-            :class="viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'"
+            :class="viewMode === 'grid' ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'"
             class="p-1.5 rounded-lg transition-all cursor-pointer"
             title="Grid View"
           >
@@ -38,7 +38,7 @@
           <button
             type="button"
             @click="viewMode = 'list'"
-            :class="viewMode === 'list' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'"
+            :class="viewMode === 'list' ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'"
             class="p-1.5 rounded-lg transition-all cursor-pointer"
             title="List View"
           >
@@ -50,7 +50,7 @@
 
         <button
           @click="openAddPage"
-          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
+          class="inline-flex items-center justify-center px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           + Add Account
         </button>
@@ -69,8 +69,7 @@
           <div class="flex items-start justify-between gap-3 mb-2">
             <div class="flex items-center gap-2.5">
               <div
-                :class="acc.account_type === 'credit_card' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'"
-                class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
               >
                 <!-- Credit Card Icon -->
                 <svg v-if="acc.account_type === 'credit_card'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +84,7 @@
               <div>
                 <h3 class="font-bold text-slate-900 dark:text-zinc-100 text-sm leading-snug flex items-center gap-2">
                   {{ acc.account_name }}
-                  <span v-if="acc.is_default" class="px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  <span v-if="acc.is_default" class="px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-slate-900 dark:border-zinc-100">
                     Default
                   </span>
                 </h3>
@@ -95,8 +94,7 @@
 
             <!-- Type badge -->
             <span
-              :class="acc.account_type === 'credit_card' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/40' : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40'"
-              class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize border shrink-0"
+              class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize border shrink-0 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-slate-900 dark:border-zinc-100"
             >
               {{ acc.account_type === 'credit_card' ? 'Credit Card' : 'Bank' }}
             </span>
@@ -130,7 +128,7 @@
               @click="toggleAccountStatus(acc)"
               :class="[
                 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-                acc.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                acc.is_active ? 'bg-slate-900 dark:bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
               ]"
               role="switch"
               :aria-checked="Boolean(acc.is_active)"
@@ -146,7 +144,7 @@
             <button
               @click="openEditPage(acc)"
               title="Edit Account"
-              class="p-2 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-colors cursor-pointer"
+              class="p-2 text-slate-700 hover:text-black dark:text-zinc-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -192,7 +190,7 @@
               <td class="py-4 px-5">
                 <div class="font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                   {{ acc.account_name }}
-                  <span v-if="acc.is_default" class="px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  <span v-if="acc.is_default" class="px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-slate-900 dark:border-zinc-100">
                     Default
                   </span>
                 </div>
@@ -204,8 +202,7 @@
               <!-- Type Badge -->
               <td class="py-4 px-5 text-center">
                 <span
-                  :class="acc.account_type === 'credit_card' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/40' : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40'"
-                  class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize border shrink-0"
+                  class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize border shrink-0 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-slate-900 dark:border-zinc-100"
                 >
                   {{ acc.account_type === 'credit_card' ? 'Credit Card' : 'Bank' }}
                 </span>
@@ -233,7 +230,7 @@
                   @click="toggleAccountStatus(acc)"
                   :class="[
                     'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-                    acc.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                    acc.is_active ? 'bg-slate-900 dark:bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
                   ]"
                   role="switch"
                   :aria-checked="Boolean(acc.is_active)"
@@ -250,7 +247,7 @@
 
               <!-- Default Badge -->
               <td class="py-4 px-5 text-center">
-                <span v-if="acc.is_default" class="inline-flex px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                <span v-if="acc.is_default" class="inline-flex px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-slate-900 dark:border-zinc-100">
                   Default
                 </span>
                 <span v-else class="text-slate-400 dark:text-zinc-600 text-xs">-</span>
@@ -261,7 +258,7 @@
                 <button
                   @click="openEditPage(acc)"
                   title="Edit Account"
-                  class="p-1.5 inline-flex items-center justify-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors cursor-pointer"
+                  class="p-1.5 inline-flex items-center justify-center text-slate-700 hover:text-black dark:text-zinc-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -294,7 +291,7 @@
       <p class="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mb-6">Get started by creating your first bank or credit card account to track financial transactions and balances.</p>
       <button
         @click="openAddPage"
-        class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+        class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
       >
         + Add Bank Account
       </button>

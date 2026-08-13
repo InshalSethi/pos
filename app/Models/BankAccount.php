@@ -56,6 +56,8 @@ class BankAccount extends Model
         'bank_phone',
         'bank_address',
         'account_number',
+        'expiry_date',
+        'cvv',
         'account_type',
         'chart_account_id',
         'routing_number',

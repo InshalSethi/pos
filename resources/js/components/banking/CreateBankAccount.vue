@@ -30,7 +30,7 @@
               <button
                 type="button"
                 @click="form.account_type = 'bank'"
-                :class="form.account_type === 'bank' || form.account_type === 'checking' ? 'bg-indigo-600 text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+                :class="form.account_type === 'bank' || form.account_type === 'checking' ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
                 class="px-6 py-2 text-xs rounded-lg transition-all cursor-pointer"
               >
                 Bank
@@ -38,7 +38,7 @@
               <button
                 type="button"
                 @click="form.account_type = 'credit_card'"
-                :class="form.account_type === 'credit_card' ? 'bg-indigo-600 text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+                :class="form.account_type === 'credit_card' ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
                 class="px-6 py-2 text-xs rounded-lg transition-all cursor-pointer"
               >
                 Credit Card
@@ -52,26 +52,61 @@
           <!-- GENERAL FIELDS GRID -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">ACCOUNT NAME *</label>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {{ form.account_type === 'credit_card' ? 'CARD HOLDER NAME *' : 'ACCOUNT NAME *' }}
+              </label>
               <input
                 v-model="form.account_name"
                 type="text"
                 required
-                placeholder="Enter Account Name"
+                :placeholder="form.account_type === 'credit_card' ? 'Enter Card Holder Name' : 'Enter Account Name'"
                 class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">NUMBER *</label>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {{ form.account_type === 'credit_card' ? 'CARD NUMBER *' : 'BANK ACCOUNT NUMBER *' }}
+              </label>
               <input
                 v-model="form.account_number"
                 type="text"
                 required
-                placeholder="Enter Account Number"
+                :placeholder="form.account_type === 'credit_card' ? 'Enter Card Number' : 'Enter Bank Account Number'"
                 class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
             </div>
+
+            <!-- Credit Card Specific Fields: Expiry Date & CVV -->
+            <template v-if="form.account_type === 'credit_card'">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  EXPIRY DATE (MONTH/YEAR) *
+                </label>
+                <input
+                  :value="form.expiry_date"
+                  @input="handleExpiryInput"
+                  type="text"
+                  maxlength="7"
+                  placeholder="MM/YYYY (e.g. 07/2026)"
+                  class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  CVV *
+                </label>
+                <input
+                  :value="form.cvv"
+                  @input="handleCvvInput"
+                  type="text"
+                  maxlength="4"
+                  placeholder="e.g. 123"
+                  class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
+                />
+              </div>
+            </template>
 
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">CURRENCY *</label>
@@ -132,7 +167,7 @@
                   @click="form.is_active = !form.is_active"
                   :class="[
                     'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-                    form.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+                    form.is_active ? 'bg-slate-900 dark:bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
                   ]"
                   role="switch"
                   :aria-checked="form.is_active"
@@ -154,44 +189,54 @@
 
         <hr class="border-slate-100 dark:border-zinc-800/80" />
 
-        <!-- SECTION 2: BANK METADATA -->
+        <!-- SECTION 2: BANK / CARD METADATA -->
         <div class="space-y-6">
           <div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-zinc-100">Bank</h3>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-zinc-100 uppercase tracking-wider">
+              {{ form.account_type === 'credit_card' ? 'CARD DETAILS' : 'BANK' }}
+            </h3>
             <p class="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
-              You may have multiple bank accounts in more than one bank. Recording information about your bank will make it easier to match transactions.
+              {{ form.account_type === 'credit_card' 
+                ? 'Recording information about your card issuer and bank will make it easier to match transactions.'
+                : 'You may have multiple bank accounts in more than one bank. Recording information about your bank will make it easier to match transactions.' }}
             </p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">BANK NAME *</label>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {{ form.account_type === 'credit_card' ? 'CARD TITLE / NAME *' : 'BANK NAME *' }}
+              </label>
               <input
                 v-model="form.bank_name"
                 type="text"
                 required
-                placeholder="Enter Bank Name (e.g. Meezan Bank)"
+                :placeholder="form.account_type === 'credit_card' ? 'Enter Card Title / Name' : 'Enter Bank Name (e.g. Meezan Bank)'"
                 class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">BANK PHONE</label>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {{ form.account_type === 'credit_card' ? 'CARD BANK PHONE' : 'BANK PHONE' }}
+              </label>
               <input
                 v-model="form.bank_phone"
                 type="text"
-                placeholder="Enter Bank Phone"
+                :placeholder="form.account_type === 'credit_card' ? 'Enter Card Bank Phone' : 'Enter Bank Phone'"
                 class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">BANK ADDRESS</label>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              {{ form.account_type === 'credit_card' ? 'CARD BANK ADDRESS' : 'BANK ADDRESS' }}
+            </label>
             <textarea
               v-model="form.bank_address"
               rows="3"
-              placeholder="Enter Bank Address"
+              :placeholder="form.account_type === 'credit_card' ? 'Enter Card Bank Address' : 'Enter Bank Address'"
               class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal resize-none"
             ></textarea>
           </div>
@@ -209,7 +254,7 @@
           <button
             type="submit"
             :disabled="submitting"
-            class="px-8 py-2.5 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white shadow-sm transition-all cursor-pointer"
+            class="px-8 py-2.5 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 disabled:opacity-50 shadow-sm transition-all cursor-pointer"
           >
             {{ submitting ? 'Saving...' : 'Save' }}
           </button>
@@ -253,6 +298,8 @@ export default {
     const form = ref({
       account_name: '',
       account_number: '',
+      expiry_date: '',
+      cvv: '',
       account_type: 'bank',
       currency: 'PKR',
       opening_balance: 0.00,
@@ -271,6 +318,8 @@ export default {
         form.value = {
           account_name: acc.account_name || '',
           account_number: acc.account_number || '',
+          expiry_date: acc.expiry_date || '',
+          cvv: acc.cvv || '',
           account_type: acc.account_type === 'credit_card' ? 'credit_card' : 'bank',
           currency: acc.currency || 'PKR',
           opening_balance: acc.opening_balance || 0.00,
@@ -291,10 +340,81 @@ export default {
       router.push('/banking/accounts');
     };
 
+    const handleCvvInput = (e) => {
+      let val = e.target.value.replace(/\D/g, '');
+      if (val.length > 4) {
+        val = val.slice(0, 4);
+      }
+      form.value.cvv = val;
+    };
+
+    const handleExpiryInput = (e) => {
+      const inputType = e.inputType;
+      let raw = e.target.value;
+
+      if (inputType === 'deleteContentBackward') {
+        form.value.expiry_date = raw;
+        return;
+      }
+
+      let digits = raw.replace(/\D/g, '');
+
+      if (!digits) {
+        form.value.expiry_date = '';
+        return;
+      }
+
+      if (digits.length === 1) {
+        const firstNum = parseInt(digits[0], 10);
+        if (firstNum >= 2) {
+          form.value.expiry_date = `0${firstNum}/`;
+          return;
+        }
+        form.value.expiry_date = digits;
+        return;
+      }
+
+      if (digits.length > 6) {
+        digits = digits.slice(0, 6);
+      }
+
+      let mm = digits.slice(0, 2);
+      let mmNum = parseInt(mm, 10);
+      if (mmNum > 12) mm = '12';
+      if (mm === '00') mm = '01';
+
+      let yy = digits.slice(2);
+
+      if (digits.length >= 2) {
+        if (yy.length > 0) {
+          form.value.expiry_date = `${mm}/${yy}`;
+        } else {
+          form.value.expiry_date = `${mm}/`;
+        }
+      } else {
+        form.value.expiry_date = digits;
+      }
+    };
+
     const saveBankAccount = async () => {
       if (!form.value.bank_name || !form.value.bank_name.trim()) {
-        showToast('Bank Name is required', 'error');
+        const titleLabel = form.value.account_type === 'credit_card' ? 'Card Title / Name' : 'Bank Name';
+        showToast(`${titleLabel} is required`, 'error');
         return;
+      }
+
+      if (form.value.account_type === 'credit_card') {
+        const expVal = (form.value.expiry_date || '').trim();
+        if (!expVal || expVal.length < 5) {
+          showToast('Please enter a valid Expiry Date (e.g. 07/2026)', 'error');
+          return;
+        }
+
+        const cvvVal = (form.value.cvv || '').trim();
+        if (!cvvVal || (cvvVal.length !== 3 && cvvVal.length !== 4)) {
+          showToast('CVV must be 3 or 4 digits', 'error');
+          return;
+        }
       }
 
       submitting.value = true;
@@ -358,7 +478,9 @@ export default {
       currencyOptions,
       handleCancel,
       saveBankAccount,
-      getCurrencySymbol
+      getCurrencySymbol,
+      handleCvvInput,
+      handleExpiryInput
     };
   }
 };
