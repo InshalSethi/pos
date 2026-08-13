@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm rounded-2xl border border-zinc-200 dark:border-zinc-800">
     <div class="p-6">
-      <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider mb-4">Devices Breakdown</h3>
+      <h3 class="text-sm font-semibold text-slate-800 dark:text-zinc-100 uppercase tracking-wider mb-4">Devices Breakdown</h3>
       
       <div class="h-72 flex items-center justify-center">
         <div class="relative w-56 h-56">
@@ -21,10 +21,10 @@
               class="w-3 h-3 rounded-full mr-3"
               :style="{ backgroundColor: device.monoColor }"
             ></div>
-            <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">{{ device.name }}</span>
+            <span class="text-xs font-medium text-zinc-800 dark:text-zinc-200">{{ device.name }}</span>
           </div>
           <div class="flex items-center space-x-2">
-            <span class="text-xs font-black text-zinc-950 dark:text-white">{{ device.value }}%</span>
+            <span class="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{{ device.value }}%</span>
           </div>
         </div>
       </div>

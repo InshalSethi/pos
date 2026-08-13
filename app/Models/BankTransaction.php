@@ -52,9 +52,14 @@ class BankTransaction extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 
-    public function journalEntryLine(): BelongsTo
+    public function payment(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
+        return $this->hasOne(Payment::class, 'bank_transaction_id');
+    }
+
+    public function paymentReceipt(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PaymentReceipt::class, 'bank_transaction_id');
     }
 
     public function partner()

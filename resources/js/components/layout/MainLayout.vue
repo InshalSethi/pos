@@ -1062,7 +1062,7 @@
 
             <!-- Page Title & Favorite Star Toggle -->
             <div class="hidden sm:flex items-center gap-3 pl-4">
-              <h1 class="text-base font-extrabold text-gray-800 dark:text-slate-100 tracking-wide select-none">
+              <h1 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight select-none">
                 {{ currentMenuItem?.name || 'POS System' }}
               </h1>
               

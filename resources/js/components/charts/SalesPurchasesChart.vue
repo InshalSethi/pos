@@ -2,9 +2,9 @@
   <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm rounded-2xl border border-zinc-200 dark:border-zinc-800">
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-sm font-extrabold text-zinc-950 dark:text-white uppercase tracking-wider">Sales & Purchases</h3>
+        <h3 class="text-sm font-semibold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Sales & Purchases</h3>
         <div class="flex items-center space-x-4">
-          <select class="text-xs font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 uppercase tracking-tight">
+          <select class="text-xs font-semibold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 uppercase tracking-tight">
             <option>6 Months</option>
             <option>3 Months</option>
             <option>1 Month</option>
@@ -20,15 +20,15 @@
       <div class="flex items-center justify-center space-x-6 mt-6">
         <div class="flex items-center">
           <div class="w-3 h-3 bg-zinc-300 dark:bg-zinc-700 rounded-full mr-2"></div>
-          <span class="text-xs font-bold text-zinc-600 dark:text-zinc-400">Sales Target</span>
+          <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">Sales Target</span>
         </div>
         <div class="flex items-center">
           <div class="w-3 h-3 bg-black dark:bg-white rounded-full mr-2"></div>
-          <span class="text-xs font-bold text-zinc-900 dark:text-white">Sales</span>
+          <span class="text-xs font-medium text-zinc-900 dark:text-white">Sales</span>
         </div>
         <div class="flex items-center">
           <div class="w-3 h-3 bg-zinc-500 dark:bg-zinc-400 rounded-full mr-2"></div>
-          <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">Purchases</span>
+          <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Purchases</span>
         </div>
       </div>
     </div>

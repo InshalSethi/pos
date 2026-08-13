@@ -41,7 +41,7 @@
 
         <button
           @click="openNewJournalModal"
-          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
+          class="inline-flex items-center justify-center px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           + New Entry
         </button>
@@ -75,29 +75,28 @@
               :key="entry.id"
               class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors"
             >
-              <td class="py-4 px-5 font-mono font-bold text-slate-800 dark:text-zinc-100">{{ entry.entry_number }}</td>
+              <td class="py-4 px-5 font-medium text-slate-800 dark:text-zinc-200">{{ entry.entry_number }}</td>
               <td class="py-4 px-5 text-slate-600 dark:text-zinc-300">{{ formatDate(entry.entry_date) }}</td>
               <td class="py-4 px-5 text-slate-800 dark:text-zinc-200 max-w-sm">
-                <div class="font-semibold">{{ entry.description }}</div>
+                <div class="font-medium">{{ entry.description }}</div>
                 <div v-if="entry.reference" class="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">Ref: {{ entry.reference }}</div>
               </td>
               <td class="py-4 px-5 text-center">
                 <span
-                  :class="entry.entry_type === 'automatic' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40'"
-                  class="inline-flex px-3 py-0.5 rounded-full text-[10px] font-bold capitalize"
+                  class="inline-flex px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700"
                 >
                   {{ entry.entry_type === 'automatic' ? 'Automatic' : 'Manual' }}
                 </span>
               </td>
-              <td class="py-4 px-5 text-right font-extrabold text-slate-900 dark:text-zinc-100">{{ companyCurrencySymbol }} {{ formatNumber(entry.total_debit) }}</td>
+              <td class="py-4 px-5 text-right font-medium text-slate-800 dark:text-zinc-100">{{ companyCurrencySymbol }} {{ formatNumber(entry.total_debit) }}</td>
               <td class="py-4 px-5 text-center">
                 <span
                   :class="{
-                    'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40': entry.status === 'posted',
-                    'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40': entry.status === 'draft',
-                    'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40': entry.status === 'reversed'
+                    'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900': entry.status === 'posted',
+                    'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40': entry.status === 'draft',
+                    'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40': entry.status === 'reversed'
                   }"
-                  class="inline-flex px-3 py-0.5 rounded-full text-[10px] font-bold capitalize"
+                  class="inline-flex px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
                 >
                   {{ entry.status }}
                 </span>
@@ -107,11 +106,11 @@
                   <button
                     @click="viewJournalEntry(entry)"
                     title="View Entry"
-                    class="p-1.5 inline-flex items-center justify-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors cursor-pointer"
+                    class="p-1.5 inline-flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   </button>
                   <button
@@ -121,7 +120,7 @@
                     class="p-1.5 inline-flex items-center justify-center text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                     </svg>
                   </button>
                 </div>
@@ -172,7 +171,7 @@
             :class="[
               'px-3 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer',
               page === pagination.current_page
-                ? 'bg-indigo-600 text-white shadow-sm'
+                ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
                 : 'border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800'
             ]"
           >

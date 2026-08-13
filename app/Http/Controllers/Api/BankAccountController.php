@@ -130,6 +130,8 @@ class BankAccountController extends Controller
             'is_default' => 'boolean',
             'bank_phone' => 'nullable|string|max:50',
             'bank_address' => 'nullable|string',
+            'expiry_date' => 'nullable|string|max:20',
+            'cvv' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -166,24 +168,47 @@ class BankAccountController extends Controller
                     ->first();
 
                 if (empty($data['chart_account_id'])) {
-                    $maxCode = Account::where('account_type', 'asset')
-                        ->where('company_id', $companyId)
-                        ->max('account_code');
-                    $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
+                    if ($parentAccount) {
+                        $maxChildCode = Account::where('company_id', $companyId)
+                            ->where('parent_account_id', $parentAccount->id)
+                            ->whereRaw('account_code REGEXP "^[0-9]+$"')
+                            ->max(DB::raw('CAST(account_code AS UNSIGNED)'));
+
+                        if ($maxChildCode) {
+                            $newCode = (string)($maxChildCode + 1);
+                        } else {
+                            $parentNum = is_numeric($parentAccount->account_code) ? (int)$parentAccount->account_code : 1020;
+                            $newCode = (string)($parentNum + 1);
+                        }
+                    } else {
+                        $maxCode = Account::where('company_id', $companyId)->max('account_code');
+                        $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
+                    }
 
                     $isCreditCard = ($data['account_type'] === 'credit_card');
+                    if ($isCreditCard) {
+                        $bankTitle = !empty($data['bank_name']) ? $data['bank_name'] : 'Credit Card';
+                        if (!str_contains(strtolower($bankTitle), 'credit card')) {
+                            $bankTitle .= '-Credit Card';
+                        }
+                        $accTitleName = $data['account_name'] . ' (' . $bankTitle . ')';
+                    } else {
+                        $accTitleName = (!empty($data['bank_name']) && $data['bank_name'] !== $data['account_name'])
+                            ? $data['account_name'] . ' (' . $data['bank_name'] . ')'
+                            : $data['account_name'];
+                    }
 
                     $chartAccount = Account::create([
                         'account_code' => $newCode,
-                        'account_name' => $data['account_name'] . ' (' . $data['bank_name'] . ')',
+                        'account_name' => $accTitleName,
                         'account_type' => $isCreditCard ? 'liability' : 'asset',
                         'account_subtype' => $isCreditCard ? 'current_liability' : 'current_asset',
-                        'description' => 'Bank Account for ' . $data['account_name'],
+                        'description' => ($isCreditCard ? 'Credit Card Account for ' : 'Bank Account for ') . $data['account_name'],
                         'opening_balance' => $data['opening_balance'] ?? 0,
                         'current_balance' => $data['opening_balance'] ?? 0,
                         'is_active' => true,
                         'is_system_account' => false,
-                        'parent_account_id' => $isCreditCard ? null : $parentAccount?->id,
+                        'parent_account_id' => $parentAccount?->id,
                     ]);
                     $data['chart_account_id'] = $chartAccount->id;
                 } else {
@@ -194,12 +219,9 @@ class BankAccountController extends Controller
                         ], 422);
                     }
 
-                    $isCreditCard = ($data['account_type'] === 'credit_card');
-                    if ($chartAccount && !$isCreditCard && $parentAccount && $chartAccount->id !== $parentAccount->id) {
+                    if ($chartAccount && $parentAccount && $chartAccount->id !== $parentAccount->id) {
                         $chartAccount->update([
                             'parent_account_id' => $parentAccount->id,
-                            'account_type' => 'asset',
-                            'account_subtype' => $chartAccount->account_subtype ?: 'current_asset',
                         ]);
                     }
                 }
@@ -279,6 +301,8 @@ class BankAccountController extends Controller
             'is_default' => 'boolean',
             'bank_phone' => 'nullable|string|max:50',
             'bank_address' => 'nullable|string',
+            'expiry_date' => 'nullable|string|max:20',
+            'cvv' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -325,6 +349,25 @@ class BankAccountController extends Controller
                 return response()->json([
                     'message' => 'Bank accounts must be linked to asset or liability accounts'
                 ], 422);
+            }
+
+            if ($chartAccount) {
+                $isCreditCard = ($data['account_type'] === 'credit_card');
+                if ($isCreditCard) {
+                    $bankTitle = !empty($data['bank_name']) ? $data['bank_name'] : 'Credit Card';
+                    if (!str_contains(strtolower($bankTitle), 'credit card')) {
+                        $bankTitle .= '-Credit Card';
+                    }
+                    $accTitleName = $data['account_name'] . ' (' . $bankTitle . ')';
+                } else {
+                    $accTitleName = (!empty($data['bank_name']) && $data['bank_name'] !== $data['account_name'])
+                        ? $data['account_name'] . ' (' . $data['bank_name'] . ')'
+                        : $data['account_name'];
+                }
+
+                $chartAccount->update([
+                    'account_name' => $accTitleName,
+                ]);
             }
         }
 

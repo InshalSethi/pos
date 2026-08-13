@@ -31,7 +31,7 @@
         <span v-else class="w-6 shrink-0 inline-block" />
 
         <!-- Account Code -->
-        <span class="font-mono text-xs font-bold text-slate-400 dark:text-zinc-500 shrink-0">
+        <span class="text-xs font-semibold text-slate-500 dark:text-zinc-400 shrink-0">
           {{ account.code || account.account_code }}
         </span>
 
@@ -68,7 +68,7 @@
       <!-- Right Column: Balance + Status + Right Action Container -->
       <div class="flex items-center gap-4 shrink-0">
         <div class="text-right">
-          <span class="text-xs sm:text-sm font-extrabold block text-slate-900 dark:text-zinc-100 font-mono">
+          <span class="text-xs sm:text-sm font-semibold block text-slate-800 dark:text-zinc-100">
             {{ formatBalance(account) }}
           </span>
           <span
