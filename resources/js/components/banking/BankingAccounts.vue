@@ -46,7 +46,7 @@
 
         <button
           @click="openNewAccountModal"
-          class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          class="inline-flex items-center justify-center px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
         >
           + New Account
         </button>
@@ -395,7 +395,7 @@
 
             <div class="flex justify-end space-x-3 p-6 border-t border-slate-200 dark:border-slate-800 shrink-0">
               <button type="button" @click="showAccountModal = false" class="px-4 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 rounded-lg text-xs font-semibold">Cancel</button>
-              <button type="submit" :disabled="savingAccount" class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm">
+              <button type="submit" :disabled="savingAccount" class="px-4 h-9 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-lg text-xs font-semibold shadow-sm">
                 {{ savingAccount ? 'Saving...' : (editingAccount ? 'Update Account' : 'Create Account') }}
               </button>
             </div>

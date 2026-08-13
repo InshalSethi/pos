@@ -19,7 +19,7 @@
 
     <!-- Main Full Page Form Card -->
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 shadow-sm">
-      <form @submit.prevent="saveBankAccount" class="space-y-8">
+      <form @submit.prevent="saveBankAccount" autocomplete="off" data-lpignore="true" class="space-y-8">
         
         <!-- SECTION 1: Type Selector & General Fields -->
         <div class="space-y-6">
@@ -87,6 +87,10 @@
                   :value="form.expiry_date"
                   @input="handleExpiryInput"
                   type="text"
+                  name="card_exp_date"
+                  autocomplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                   maxlength="7"
                   placeholder="MM/YYYY (e.g. 07/2026)"
                   class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
@@ -101,6 +105,10 @@
                   :value="form.cvv"
                   @input="handleCvvInput"
                   type="text"
+                  name="card_security_code"
+                  autocomplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                   maxlength="4"
                   placeholder="e.g. 123"
                   class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
