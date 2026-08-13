@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Company;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
@@ -70,7 +71,80 @@ class AdminUserController extends Controller
 
     public function show(User $user)
     {
-        return response()->json(['data' => $user]);
+        $user->load(['currentCompany', 'roles']);
+        $companies = Company::where(function($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('users', function($uq) use ($user) {
+                  $uq->where('users.id', $user->id);
+              });
+        })->get();
+
+        $data = $user->toArray();
+        $data['all_companies'] = $companies;
+
+        return response()->json(['data' => $data]);
+    }
+
+    public function userCompaniesData(Request $request, User $user)
+    {
+        $query = Company::where(function($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('users', function($uq) use ($user) {
+                  $uq->where('users.id', $user->id);
+              });
+        });
+
+        if ($request->has('search') && !empty($request->input('search.value'))) {
+            $search = $request->input('search.value');
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                  ->orWhere('company_email', 'like', "%{$search}%")
+                  ->orWhere('business_type', 'like', "%{$search}%")
+                  ->orWhere('country', 'like', "%{$search}%");
+            });
+        }
+
+        $totalRecords = Company::where(function($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('users', function($uq) use ($user) {
+                  $uq->where('users.id', $user->id);
+              });
+        })->count();
+
+        $filteredRecords = $query->count();
+
+        $limit = $request->input('length', 10);
+        $start = $request->input('start', 0);
+
+        $companies = $query->latest()->offset($start)->limit($limit)->get();
+
+        $data = [];
+        foreach ($companies as $company) {
+            $data[] = [
+                'id' => $company->id,
+                'company_name' => $company->company_name,
+                'company_email' => $company->company_email,
+                'company_phone' => $company->company_phone,
+                'business_type' => $company->business_type ?? '-',
+                'business_scale' => $company->business_scale ?? '-',
+                'country' => $company->country ?? '-',
+                'status' => $company->status ?? 'active',
+                'created_at' => $company->created_at ? $company->created_at->format('Y-m-d H:i') : '-',
+            ];
+        }
+
+        return response()->json([
+            "draw" => intval($request->input('draw')),
+            "recordsTotal" => $totalRecords,
+            "recordsFiltered" => $filteredRecords,
+            "data" => $data
+        ]);
+    }
+
+    public function companyShow(Company $company)
+    {
+        $company->load(['owner']);
+        return response()->json(['data' => $company]);
     }
 
     public function store(Request $request)
@@ -122,3 +196,4 @@ class AdminUserController extends Controller
         return response()->json(['message' => 'User deleted successfully.']);
     }
 }
+

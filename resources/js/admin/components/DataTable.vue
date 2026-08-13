@@ -26,13 +26,13 @@
         </thead>
         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
           <tr v-if="loading">
-            <td :colspan="columns.length" class="p-8 text-center text-zinc-500 dark:text-zinc-400">
+            <td :colspan="columns?.length || 1" class="p-8 text-center text-zinc-500 dark:text-zinc-400">
               <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-black dark:text-white"></i>
               <p class="text-xs font-bold uppercase tracking-wider">Loading data...</p>
             </td>
           </tr>
-          <tr v-else-if="data.length === 0">
-            <td :colspan="columns.length" class="p-8 text-center text-zinc-400 dark:text-zinc-500">
+          <tr v-else-if="!data || data.length === 0">
+            <td :colspan="columns?.length || 1" class="p-8 text-center text-zinc-400 dark:text-zinc-500">
               <i class="fas fa-inbox text-3xl mb-2"></i>
               <p class="text-xs font-bold uppercase tracking-wider">No records found matching your criteria.</p>
             </td>
@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -159,6 +159,13 @@ const goToPage = (page) => {
 };
 
 onMounted(fetchData);
+
+watch(() => props.endpoint, (newVal) => {
+  if (newVal && !newVal.includes('/null/') && !newVal.includes('/undefined/')) {
+    start.value = 0;
+    fetchData();
+  }
+});
 
 defineExpose({ fetchData });
 </script>

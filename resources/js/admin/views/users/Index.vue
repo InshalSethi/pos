@@ -28,6 +28,9 @@
       
       <template #cell(actions)="{ item }">
         <div class="flex space-x-2">
+          <button @click="openViewModal(item.id)" class="w-8 h-8 rounded-xl bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-white dark:hover:text-black flex items-center justify-center transition-all shadow-xs cursor-pointer" title="View User Information">
+            <i class="fas fa-eye text-xs"></i>
+          </button>
           <router-link :to="{ name: 'admin.users.edit', params: { id: item.id } }" class="w-8 h-8 rounded-xl bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-white dark:hover:text-black flex items-center justify-center transition-all shadow-xs" title="Edit User">
             <i class="fas fa-edit text-xs"></i>
           </router-link>
@@ -37,6 +40,13 @@
         </div>
       </template>
     </DataTable>
+
+    <!-- User Information Detail Modal -->
+    <UserDetailModal
+      :show="showModal"
+      :user-id="selectedUserId"
+      @close="showModal = false"
+    />
   </div>
 </template>
 
@@ -44,8 +54,11 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import DataTable from '../../components/DataTable.vue';
+import UserDetailModal from './UserDetailModal.vue';
 
 const dataTable = ref(null);
+const showModal = ref(false);
+const selectedUserId = ref(null);
 
 const columns = [
   { key: 'id', label: 'ID' },
@@ -55,6 +68,11 @@ const columns = [
   { key: 'is_active', label: 'Status' },
   { key: 'actions', label: 'Actions' }
 ];
+
+const openViewModal = (id) => {
+  selectedUserId.value = id;
+  showModal.value = true;
+};
 
 const deleteUser = async (id) => {
   if (confirm('Are you sure you want to permanently delete this user?')) {

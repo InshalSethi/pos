@@ -57,6 +57,8 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
             // These will still be used by DataTables if needed, or by Vue
             Route::get('/admins-data', [AdminManagementController::class, 'data']);
             Route::get('/users-data', [AdminUserController::class, 'data']);
+            Route::get('/users/{user}/companies-data', [AdminUserController::class, 'userCompaniesData']);
+            Route::get('/companies/{company}', [AdminUserController::class, 'companyShow']);
             Route::get('/roles-data', [AdminRoleController::class, 'data']);
             
             // API Resource endpoints for CRUD forms
