@@ -42,9 +42,11 @@ class DatabaseSeeder extends Seeder
         $this->call(SystemAccountsSeeder::class);
         $this->call(CurrencySeeder::class);
 
-        // 5. Seed chart of accounts
-        $this->command->info('Seeding chart of accounts...');
+        // 5. Seed chart of accounts, default bank account, and default warehouse
+        $this->command->info('Seeding chart of accounts, default cash account, and default warehouse...');
         $this->call(ChartOfAccountsSeeder::class);
+        $this->call(DefaultBankAccountSeeder::class);
+        $this->call(DefaultWarehouseSeeder::class);
 
         // 6. Seed departments and positions
         $this->command->info('Seeding departments and positions...');

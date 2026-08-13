@@ -2187,20 +2187,7 @@ const lightboxLogoInput = ref(null);
 
 // Computed
 const canSwitchCompanies = computed(() => {
-  if (!authStore.user) return false;
-  
-  const isOwnerOrAdmin = authStore.user.is_main_owner ||
-                         authStore.user.is_owner ||
-                         authStore.user.role_name === 'admin' ||
-                         authStore.user.role_name === 'owner' ||
-                         authStore.user.role_name === 'Admin' ||
-                         authStore.user.role_name === 'Company Admin';
-                         
-  const hasPermission = authStore.hasPermission('companies.switch') ||
-                        authStore.hasPermission('switch_companies') ||
-                        authStore.hasPermission('companies.manage');
-                        
-  return (isOwnerOrAdmin || hasPermission) && companies.value.length > 1;
+  return !!authStore.user;
 });
 
 const unreadNotifications = computed(() => {

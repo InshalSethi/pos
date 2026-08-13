@@ -329,10 +329,15 @@ class OnboardingWizard extends Component
                 'company_id' => $company->id,
                 'is_default' => true,
             ], [
-                'name' => 'Default Branch Warehouse',
+                'name' => 'Main Warehouse',
+                'code' => 'MWH-001',
                 'email' => $company->company_email ?: $user->email,
-                'phone' => $company->company_phone ?: '',
-                'address' => $company->business_address ?: '',
+                'phone' => $company->company_phone ?: '+1 (555) 019-2834',
+                'address' => $company->business_address ?: '100 Central Logistics Parkway, Industrial Zone',
+                'city' => 'New York',
+                'state' => 'NY',
+                'zip_code' => '10001',
+                'country' => $company->country ?: 'United States',
                 'is_active' => true,
                 'is_saleable' => true,
             ]);
@@ -360,20 +365,26 @@ class OnboardingWizard extends Component
                 'is_active' => true,
             ]);
 
-            // Seed Default Cash Vault Bank Account
+            // Seed Default Cash Bank Account
             $cashAccount = \App\Models\Account::where('company_id', $company->id)
-                ->where('account_code', '1010')
+                ->where(function ($query) {
+                    $query->where('account_code', '1010')
+                        ->orWhere('account_name', 'Cash Account')
+                        ->orWhere('account_name', 'Cash')
+                        ->orWhere('account_name', 'Cash on Hand');
+                })
                 ->first();
 
             \App\Models\BankAccount::firstOrCreate([
                 'company_id' => $company->id,
-                'account_name' => 'Default Cash Vault',
+                'is_default' => true,
             ], [
-                'bank_name' => 'Cash Account',
+                'account_name' => 'Cash Account',
+                'bank_name' => 'Cash',
                 'account_number' => 'CASH-001',
                 'account_type' => 'checking',
-                'chart_account_id' => $cashAccount->id,
-                'currency' => $company->base_currency ?? 'PKR',
+                'chart_account_id' => $cashAccount ? $cashAccount->id : null,
+                'currency' => $company->base_currency ?: 'USD',
                 'is_active' => true,
                 'is_default' => true,
                 'opening_balance' => 0.00,

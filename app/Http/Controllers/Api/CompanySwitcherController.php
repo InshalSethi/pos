@@ -15,6 +15,11 @@ class CompanySwitcherController extends Controller
     {
         $user = Auth::user();
         $companies = $user->companies()->get();
+
+        if ($companies->isEmpty() && $user->currentCompany) {
+            $companies = collect([$user->currentCompany]);
+        }
+
         return response()->json([
             'companies' => $companies,
             'active_company_id' => $user->current_company_id,

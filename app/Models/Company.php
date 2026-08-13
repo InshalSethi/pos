@@ -42,14 +42,54 @@ class Company extends Model
                 ['account_code' => '4010', 'account_name' => 'Sales Revenue',        'account_type' => 'revenue',   'account_subtype' => 'operating_income',   'is_system_account' => true],
             ];
 
+            $cashCoaAccount = null;
             foreach ($defaultAccounts as $account) {
-                \App\Models\Account::create(array_merge($account, [
+                $createdAccount = \App\Models\Account::create(array_merge($account, [
                     'company_id' => $company->id,
                     'is_active' => true,
                     'opening_balance' => 0,
                     'current_balance' => 0,
                 ]));
+
+                if ($account['account_code'] === '1010') {
+                    $cashCoaAccount = $createdAccount;
+                }
             }
+
+            if ($cashCoaAccount) {
+                \App\Models\BankAccount::create([
+                    'company_id' => $company->id,
+                    'account_name' => 'Cash Account',
+                    'bank_name' => 'Cash',
+                    'account_number' => 'CASH-001',
+                    'account_type' => 'checking',
+                    'currency' => $company->base_currency ?: 'USD',
+                    'opening_balance' => 0.00,
+                    'current_balance' => 0.00,
+                    'opening_date' => date('Y-01-01'),
+                    'description' => 'Default system Cash Account for daily transactions and POS payments.',
+                    'is_active' => true,
+                    'is_default' => true,
+                    'chart_account_id' => $cashCoaAccount->id,
+                ]);
+            }
+
+            // Seed default Warehouse for the new company
+            \App\Models\Warehouse::create([
+                'company_id' => $company->id,
+                'name' => 'Main Warehouse',
+                'code' => 'MWH-001',
+                'email' => $company->company_email ?: 'warehouse@example.com',
+                'phone' => $company->company_phone ?: '+1 (555) 019-2834',
+                'address' => $company->business_address ?: '100 Central Logistics Parkway, Industrial Zone',
+                'city' => 'New York',
+                'state' => 'NY',
+                'zip_code' => '10001',
+                'country' => $company->country ?: 'United States',
+                'is_default' => true,
+                'is_active' => true,
+                'is_saleable' => true,
+            ]);
         });
     }
 

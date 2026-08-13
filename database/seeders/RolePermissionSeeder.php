@@ -157,16 +157,16 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
         // Create roles
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $subAdminRole = Role::firstOrCreate(['name' => 'sub-admin']);
-        $managerRole = Role::firstOrCreate(['name' => 'manager']);
-        $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
-        $employeeRole = Role::firstOrCreate(['name' => 'employee']);
-        $userRole = Role::firstOrCreate(['name' => 'user']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $subAdminRole = Role::firstOrCreate(['name' => 'sub-admin', 'guard_name' => 'web']);
+        $managerRole = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'web']);
+        $cashierRole = Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
+        $employeeRole = Role::firstOrCreate(['name' => 'employee', 'guard_name' => 'web']);
+        $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
 
         // Assign permissions to roles (sync to avoid duplicates)
         $adminRole->syncPermissions(Permission::where('guard_name', 'web')->get());
