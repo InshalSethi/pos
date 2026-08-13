@@ -112,6 +112,37 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Notes</h4>
             <p class="text-xs text-slate-700 dark:text-zinc-300 font-medium">{{ receipt.notes }}</p>
           </div>
+
+          <div v-if="(receipt.attachments_urls && receipt.attachments_urls.length > 0) || receipt.attachment" class="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Attachments</h4>
+            <div v-if="receipt.attachments_urls && receipt.attachments_urls.length > 0" class="flex flex-wrap gap-2 pt-1">
+              <button
+                v-for="att in receipt.attachments_urls"
+                :key="att.index"
+                type="button"
+                @click="downloadFile(receipt.id, att.index, att.filename, att.url)"
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+                :title="`Download Attachment: ${att.filename}`"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span class="truncate max-w-[200px]">{{ att.filename }}</span>
+              </button>
+            </div>
+            <button
+              v-else
+              type="button"
+              @click="downloadFile(receipt.id, 0, 'attachment')"
+              class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+              title="Download Attachment"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download Attachment</span>
+            </button>
+          </div>
         </div>
 
         <!-- Invoice Allocations -->
@@ -198,6 +229,12 @@
 <script setup>
 import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { downloadAttachmentFile } from '@/utils/downloadAttachment';
+
+const downloadFile = (receiptId, index = 0, fileName = 'attachment', directUrl = '') => {
+  const url = directUrl || `/api/payment-receipts/${receiptId}/download-attachment?index=${index}`;
+  downloadAttachmentFile(url, fileName);
+};
 
 const authStore = useAuthStore();
 

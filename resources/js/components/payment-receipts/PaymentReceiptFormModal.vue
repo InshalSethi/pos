@@ -117,6 +117,17 @@
             />
           </div>
 
+          <!-- Status Floating Dropdown -->
+          <div>
+            <FloatingSelect
+              v-model="form.status"
+              label="Status"
+              placeholder="Select Status"
+              :options="statusOptions"
+              :error="errors.status ? errors.status[0] : ''"
+            />
+          </div>
+
           <!-- Payer Selection Floating Dropdown -->
           <div v-if="form.payer_type && form.payer_type !== 'other'">
             <FloatingSelect
@@ -174,17 +185,6 @@
             <span v-if="errors.reference_number" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.reference_number[0] }}</span>
           </div>
 
-          <!-- Status Floating Dropdown (Editing Mode) -->
-          <div v-if="isEditing">
-            <FloatingSelect
-              v-model="form.status"
-              label="Status"
-              placeholder="Select Status"
-              :options="statusOptions"
-              :error="errors.status ? errors.status[0] : ''"
-            />
-          </div>
-
           <!-- Description Textarea -->
           <div class="md:col-span-2">
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
@@ -212,6 +212,104 @@
               placeholder="Enter additional notes (optional)"
             ></textarea>
             <span v-if="errors.notes" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.notes[0] }}</span>
+          </div>
+
+          <!-- Attachment Field -->
+          <div class="md:col-span-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+                Attachments <span class="text-slate-400 font-normal lowercase">(images or PDF, max 5MB each, max 5 files)</span>
+              </label>
+              <span v-if="attachmentFiles.length > 0 || existingAttachments.length > 0" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/50">
+                {{ attachmentFiles.length + existingAttachments.length }} / 5 file(s) selected
+              </span>
+            </div>
+
+            <!-- Drag & Drop Container Box -->
+            <div
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleFileDrop"
+              @click="triggerFileInput"
+              :class="[
+                'relative border-2 border-dashed rounded-2xl p-4 transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-center gap-1.5',
+                isDragging
+                  ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30 scale-[1.01]'
+                  : 'border-slate-200 dark:border-zinc-700/80 bg-slate-50/60 hover:bg-slate-100/70 dark:bg-zinc-800/40 dark:hover:bg-zinc-800/80 hover:border-indigo-300 dark:hover:border-indigo-700'
+              ]"
+            >
+              <input
+                ref="attachmentInputRef"
+                type="file"
+                accept="image/*,.pdf"
+                multiple
+                @change="handleFileChange"
+                class="hidden"
+              />
+
+              <div class="w-9 h-9 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform text-indigo-600 dark:text-indigo-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+
+              <div class="space-y-0.5">
+                <p class="text-xs font-semibold text-slate-700 dark:text-zinc-200">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Click to upload</span> or drag and drop
+                </p>
+                <p class="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
+                  PNG, JPG, WEBP or PDF (max 5MB each, max 5 files)
+                </p>
+              </div>
+            </div>
+
+            <!-- List of Attachments -->
+            <div v-if="existingAttachments.length > 0 || attachmentFiles.length > 0" class="flex flex-wrap gap-2 pt-2.5">
+              <!-- Existing Attachments -->
+              <div
+                v-for="(item, index) in existingAttachments"
+                :key="'existing-' + index"
+                class="flex items-center gap-2 bg-indigo-50/80 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-zinc-700 text-xs shadow-2xs"
+              >
+                <button
+                  type="button"
+                  @click.stop="downloadFile(props.receipt.id, item.index, item.filename, item.url)"
+                  class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+                  title="Download File"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  <span class="truncate max-w-[150px]">{{ item.filename }}</span>
+                </button>
+                <button type="button" @click.stop="removeExistingFile(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Newly Selected Attachments -->
+              <div
+                v-for="(file, index) in attachmentFiles"
+                :key="'new-' + index"
+                class="flex items-center gap-2 bg-slate-100/90 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-700 text-xs shadow-2xs"
+              >
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="truncate font-semibold text-slate-800 dark:text-slate-200 max-w-[150px]">{{ file.name }}</span>
+                <span class="text-[10px] text-slate-400 font-medium">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                <button type="button" @click.stop="removeNewFile(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <span v-if="attachmentError || errors.attachments" class="text-rose-500 text-[11px] font-semibold mt-1 block">
+              {{ attachmentError || (errors.attachments ? errors.attachments[0] : '') }}
+            </span>
           </div>
         </div>
 
@@ -275,6 +373,12 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
+import { downloadAttachmentFile } from '@/utils/downloadAttachment';
+
+const downloadFile = (receiptId, index = 0, fileName = 'attachment', directUrl = '') => {
+  const url = directUrl || `/api/payment-receipts/${receiptId}/download-attachment?index=${index}`;
+  downloadAttachmentFile(url, fileName);
+};
 
 // Props
 const props = defineProps({
@@ -294,6 +398,11 @@ const emit = defineEmits(['close', 'saved']);
 // Reactive data
 const loading = ref(false);
 const errors = ref({});
+const isDragging = ref(false);
+const attachmentInputRef = ref(null);
+const attachmentFiles = ref([]);
+const existingAttachments = ref([]);
+const attachmentError = ref('');
 const receiptOptions = ref({
   bankAccounts: [],
   customers: [],
@@ -362,15 +471,33 @@ const formattedBankAccounts = computed(() => {
     filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
   } else if (method === 'card') {
     filtered = bankAccounts.value.filter(acc => isCardAccount(acc));
+    if (filtered.length === 0) {
+      filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
+    }
   } else if (method === 'check' || method === 'cheque') {
     filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
   }
 
-  return filtered.map(acc => ({
-    value: acc.id,
-    label: acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name,
-    sublabel: acc.account_number ? (acc.masked_account_number || ('****' + String(acc.account_number).slice(-4))) : ''
-  }));
+  return filtered.map(acc => {
+    const rawBal = acc.current_balance !== undefined && acc.current_balance !== null
+      ? Number(acc.current_balance)
+      : Number(acc.opening_balance || 0);
+    const absBal = Math.abs(rawBal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formattedBal = rawBal < 0 ? `-$${absBal}` : `$${absBal}`;
+
+    const accNum = acc.account_number ? (acc.masked_account_number || ('****' + String(acc.account_number).slice(-4))) : '';
+
+    const sublabelParts = [];
+    if (accNum) sublabelParts.push(accNum);
+    sublabelParts.push(`Balance: ${formattedBal}`);
+
+    return {
+      value: acc.id,
+      label: acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name,
+      sublabel: sublabelParts.join(' • '),
+      balance: formattedBal
+    };
+  });
 });
 
 const onPaymentMethodChange = () => {
@@ -401,11 +528,17 @@ const formattedPayerOptions = computed(() => {
   }));
 });
 
-const statusOptions = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'verified', label: 'Verified' },
-];
+const statusOptions = computed(() => {
+  return receiptOptions.value.statuses && receiptOptions.value.statuses.length > 0
+    ? receiptOptions.value.statuses
+    : [
+        { value: 'draft', label: 'Draft' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'process', label: 'Process' },
+        { value: 'rejected', label: 'Rejected' },
+        { value: 'completed', label: 'Completed' },
+      ];
+});
 
 // Methods
 const loadReceiptOptions = async () => {
@@ -418,6 +551,7 @@ const loadReceiptOptions = async () => {
       suppliers: response.data.suppliers || [],
       receiptTypes: response.data.receipt_types || [],
       paymentMethods: response.data.payment_methods || [],
+      statuses: response.data.statuses || [],
     };
   } catch (error) {
     console.error('Error loading receipt options:', error);
@@ -442,9 +576,15 @@ const loadReceiptOptions = async () => {
       paymentMethods: [
         { value: 'cash', label: 'Cash' },
         { value: 'bank_transfer', label: 'Bank Transfer' },
-        { value: 'check', label: 'Check' },
         { value: 'card', label: 'Card' },
         { value: 'online', label: 'Online Payment' },
+      ],
+      statuses: [
+        { value: 'draft', label: 'Draft' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'process', label: 'Process' },
+        { value: 'rejected', label: 'Rejected' },
+        { value: 'completed', label: 'Completed' },
       ],
     };
   }
@@ -528,6 +668,65 @@ const getTotalAllocated = () => {
   return Object.values(invoiceAllocations.value).reduce((sum, amount) => sum + parseFloat(amount || 0), 0);
 };
 
+const triggerFileInput = () => {
+  if (attachmentInputRef.value) {
+    attachmentInputRef.value.click();
+  }
+};
+
+const handleFileDrop = (e) => {
+  isDragging.value = false;
+  const droppedFiles = e.dataTransfer ? Array.from(e.dataTransfer.files) : [];
+  if (droppedFiles.length === 0) return;
+  processFiles(droppedFiles);
+};
+
+const handleFileChange = (e) => {
+  const files = e.target.files ? Array.from(e.target.files) : [];
+  if (files.length === 0) return;
+  processFiles(files);
+  if (attachmentInputRef.value) attachmentInputRef.value.value = '';
+};
+
+const processFiles = (files) => {
+  attachmentError.value = '';
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+  const maxSize = 5 * 1024 * 1024; // 5 MB
+  const maxCount = 5;
+
+  for (const file of files) {
+    const currentTotal = existingAttachments.value.length + attachmentFiles.value.length;
+    if (currentTotal >= maxCount) {
+      alert(`Maximum ${maxCount} attachments allowed! You can only attach up to 5 files in total.`);
+      break;
+    }
+
+    const extension = file.name.split('.').pop().toLowerCase();
+    const isValidType = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(extension);
+
+    if (!isValidType) {
+      alert(`Invalid file type for "${file.name}"! Only image files (JPG, PNG, GIF, WEBP) and PDF documents are allowed.`);
+      continue;
+    }
+
+    if (file.size > maxSize) {
+      alert(`File "${file.name}" exceeds the 5 MB limit! Please select a smaller file.`);
+      continue;
+    }
+
+    attachmentFiles.value.push(file);
+  }
+};
+
+const removeNewFile = (index) => {
+  attachmentFiles.value.splice(index, 1);
+};
+
+const removeExistingFile = (index) => {
+  existingAttachments.value.splice(index, 1);
+};
+
 const resetForm = () => {
   Object.assign(form, {
     receipt_type: '',
@@ -544,6 +743,10 @@ const resetForm = () => {
     payer_name: '',
     status: 'draft',
   });
+  attachmentFiles.value = [];
+  existingAttachments.value = [];
+  attachmentError.value = '';
+  if (attachmentInputRef.value) attachmentInputRef.value.value = '';
   errors.value = {};
   customerInvoices.value = [];
   invoiceAllocations.value = {};
@@ -551,10 +754,15 @@ const resetForm = () => {
 
 const populateForm = () => {
   if (props.receipt) {
+    let formattedDate = props.receipt.receipt_date || '';
+    if (formattedDate && typeof formattedDate === 'string' && formattedDate.includes('T')) {
+      formattedDate = formattedDate.split('T')[0];
+    }
+
     Object.assign(form, {
       receipt_type: props.receipt.receipt_type || '',
-      amount: props.receipt.amount || '',
-      receipt_date: props.receipt.receipt_date || '',
+      amount: props.receipt.amount !== null && props.receipt.amount !== undefined ? String(props.receipt.amount) : '',
+      receipt_date: formattedDate || new Date().toISOString().split('T')[0],
       payment_method: props.receipt.payment_method || 'bank_transfer',
       transaction_reference: props.receipt.transaction_reference || '',
       reference_number: props.receipt.reference_number || '',
@@ -566,6 +774,13 @@ const populateForm = () => {
       payer_name: props.receipt.payer_name || '',
       status: props.receipt.status || 'draft',
     });
+
+    attachmentFiles.value = [];
+    if (props.receipt.attachments_urls && Array.isArray(props.receipt.attachments_urls)) {
+      existingAttachments.value = [...props.receipt.attachments_urls];
+    } else {
+      existingAttachments.value = [];
+    }
 
     if (props.receipt.invoice_allocations) {
       invoiceAllocations.value = {};
@@ -579,29 +794,59 @@ const populateForm = () => {
 const submitForm = async () => {
   loading.value = true;
   errors.value = {};
+  attachmentError.value = '';
 
   try {
-    const formData = { ...form };
+    const formData = new FormData();
+
+    Object.keys(form).forEach(key => {
+      if (form[key] !== null && form[key] !== undefined) {
+        formData.append(key, form[key]);
+      }
+    });
 
     if (form.receipt_type === 'customer_payment' && Object.keys(invoiceAllocations.value).length > 0) {
-      formData.invoice_allocations = Object.entries(invoiceAllocations.value)
+      const allocations = Object.entries(invoiceAllocations.value)
         .filter(([invoiceId, amount]) => parseFloat(amount) > 0)
         .map(([invoiceId, amount]) => ({
           invoice_id: parseInt(invoiceId),
           amount: parseFloat(amount)
         }));
+      
+      allocations.forEach((alloc, index) => {
+        formData.append(`invoice_allocations[${index}][invoice_id]`, alloc.invoice_id);
+        formData.append(`invoice_allocations[${index}][amount]`, alloc.amount);
+      });
     }
 
-    const url = isEditing.value ? `/api/payment-receipts/${props.receipt.id}` : '/api/payment-receipts';
-    const method = isEditing.value ? 'put' : 'post';
+    if (isEditing.value) {
+      existingAttachments.value.forEach(item => {
+        formData.append('existing_attachments[]', item.path);
+      });
+      formData.append('_method', 'PUT');
+    }
 
-    const response = await axios[method](url, formData);
+    attachmentFiles.value.forEach(file => {
+      formData.append('attachments[]', file);
+    });
+
+    const url = isEditing.value ? `/api/payment-receipts/${props.receipt.id}` : '/api/payment-receipts';
+
+    const response = await axios.post(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
 
     emit('saved', response.data.receipt);
     resetForm();
   } catch (error) {
     if (error.response && error.response.status === 422) {
       errors.value = error.response.data.errors || {};
+      if (errors.value.attachments) {
+        attachmentError.value = errors.value.attachments[0];
+        alert(errors.value.attachments[0]);
+      }
     } else {
       console.error('Error saving payment receipt:', error);
       alert('Failed to save payment receipt. Please try again.');
@@ -628,20 +873,20 @@ const formatAmount = (amount) => {
 };
 
 // Watchers
-watch(() => props.show, (newValue) => {
-  if (newValue) {
-    loadReceiptOptions();
+watch([() => props.show, () => props.receipt], async ([newShow, newReceipt]) => {
+  if (newShow) {
+    await loadReceiptOptions();
 
-    if (isEditing.value) {
+    if (newReceipt) {
       populateForm();
-      if (props.receipt.receipt_type === 'customer_payment' && props.receipt.payer_id) {
+      if (newReceipt.receipt_type === 'customer_payment' && newReceipt.payer_id) {
         loadCustomerInvoices();
       }
     } else {
       resetForm();
     }
   }
-});
+}, { immediate: true });
 
 // Initialize
 onMounted(() => {

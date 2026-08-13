@@ -191,7 +191,7 @@
         <div class="w-full pt-3 mt-3 border-t border-slate-100 dark:border-zinc-800 flex flex-col gap-2">
           <button 
             type="button"
-            @click="openTeamModal(item)"
+            @click="openViewManagerModal(item)"
             class="w-full px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/60 dark:border-indigo-800/40 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,10 +202,11 @@
           <div class="flex items-center justify-between gap-1.5 w-full">
             <button 
               type="button"
-              @click="$emit('view-employee', item)"
-              class="flex-1 px-2.5 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center"
+              @click="openViewManagerModal(item)"
+              class="flex-1 px-2.5 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
             >
-              Profile
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <span>View</span>
             </button>
             <button 
               type="button"
@@ -306,7 +307,7 @@
               <td class="py-3 px-4 text-right">
                 <div class="flex items-center justify-end gap-2">
                   <button 
-                    @click="openTeamModal(item)"
+                    @click="openViewManagerModal(item)"
                     class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/60 dark:border-indigo-800/40 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
                     title="View Team & Direct Reports"
                   >
@@ -315,7 +316,7 @@
                     </svg>
                     <span>Team ({{ item.subordinates_count ?? item.subordinates?.length ?? 0 }})</span>
                   </button>
-                  <button @click="$emit('view-employee', item)" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800" title="View Profile">
+                  <button @click="openViewManagerModal(item)" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors" title="View Details & Subordinates">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                   </button>
                   <button @click="$emit('edit-employee', item)" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800" title="Edit Manager">
@@ -345,92 +346,15 @@
       </div>
     </div>
 
-    <!-- SUBORDINATES / TEAM VIEW MODAL -->
-    <Teleport to="body">
-      <div v-if="showTeamModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-          <!-- Modal Header -->
-          <div class="px-6 py-5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-800/40">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 font-bold flex items-center justify-center text-sm border border-indigo-200/60 dark:border-indigo-800/60">
-                {{ selectedTeamManager?.first_name?.[0] }}{{ selectedTeamManager?.last_name?.[0] }}
-              </div>
-              <div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>{{ selectedTeamManager?.full_name }}'s Team</span>
-                  <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-800/50">
-                    {{ activeSubordinates.length }} Direct Reports
-                  </span>
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                  {{ selectedTeamManager?.position?.title || 'Manager' }} &bull; {{ selectedTeamManager?.department?.name || 'Management' }}
-                </p>
-              </div>
-            </div>
-            <button 
-              @click="closeTeamModal"
-              class="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
 
-          <!-- Modal Content: List of Direct Reports -->
-          <div class="p-6 max-h-[60vh] overflow-y-auto">
-            <div v-if="!activeSubordinates.length" class="text-center py-8">
-              <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-              </div>
-              <p class="text-sm font-semibold text-slate-700 dark:text-zinc-300">No direct reports found</p>
-              <p class="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">No employees are currently assigned to report to this manager.</p>
-            </div>
 
-            <div v-else class="divide-y divide-slate-100 dark:divide-zinc-800">
-              <div 
-                v-for="sub in activeSubordinates" 
-                :key="sub.id" 
-                class="py-3.5 flex items-center justify-between first:pt-0 last:pb-0"
-              >
-                <div class="flex items-center gap-3">
-                  <div 
-                    @click.stop="openImagePreview(sub)"
-                    class="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 flex-shrink-0 flex items-center justify-center font-bold text-slate-600 dark:text-zinc-300 text-xs border border-slate-200/60 dark:border-zinc-700/60 cursor-pointer hover:opacity-80 transition-opacity hover:ring-2 hover:ring-indigo-500/30"
-                    title="Click to preview profile image"
-                  >
-                    <img v-if="getAvatarUrl(sub)" :src="getAvatarUrl(sub)" :alt="sub.full_name" class="w-full h-full object-cover" />
-                    <span v-else>{{ sub.first_name?.[0] }}{{ sub.last_name?.[0] }}</span>
-                  </div>
-                  <div>
-                    <div class="font-bold text-slate-900 dark:text-white text-xs">{{ sub.first_name }} {{ sub.last_name }}</div>
-                    <div class="text-[10px] text-slate-400 font-mono">#{{ sub.employee_number || sub.id }} &bull; {{ sub.email }}</div>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                  <div class="text-right">
-                    <div class="text-xs font-semibold text-slate-700 dark:text-zinc-300">{{ sub.position?.title || 'Employee' }}</div>
-                    <div class="text-[10px] text-slate-400 dark:text-zinc-500">{{ sub.department?.name || '-' }}</div>
-                  </div>
-                  <span :class="getStatusBadgeClass(sub.employment_status)" class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-                    {{ sub.employment_status || 'Active' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Modal Footer -->
-          <div class="px-6 py-4 bg-slate-50 dark:bg-zinc-800/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end">
-            <button 
-              @click="closeTeamModal" 
-              class="px-4 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-xs rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- View Manager & Subordinates Modal -->
+    <ViewManagerModal
+      :show="showViewManagerModal"
+      :manager-id="selectedManagerIdForView"
+      @close="closeViewManagerModal"
+      @preview-image="handlePreviewImageFromModal"
+    />
 
     <!-- Image Preview Lightbox Modal -->
     <ImagePreviewModal
@@ -542,6 +466,7 @@
 import { ref, onMounted, computed } from 'vue';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
+import ViewManagerModal from './ViewManagerModal.vue';
 import axios from 'axios';
 
 const emit = defineEmits(['add-manager', 'edit-employee', 'view-employee', 'refresh']);
@@ -550,6 +475,27 @@ const viewMode = ref('table');
 const loading = ref(false);
 const managers = ref([]);
 const departments = ref([]);
+
+// View Manager Subordinates Modal State
+const showViewManagerModal = ref(false);
+const selectedManagerIdForView = ref(null);
+
+const openViewManagerModal = (managerItem) => {
+  selectedManagerIdForView.value = managerItem ? managerItem.id : null;
+  showViewManagerModal.value = true;
+};
+
+const closeViewManagerModal = () => {
+  showViewManagerModal.value = false;
+  selectedManagerIdForView.value = null;
+};
+
+const handlePreviewImageFromModal = (data) => {
+  previewImageUrl.value = data.url;
+  previewImageTitle.value = data.name || 'Profile Image';
+  previewImageSubtitle.value = 'Manager / Subordinate Avatar';
+  showImagePreview.value = true;
+};
 
 // Image Preview Modal State
 const showImagePreview = ref(false);

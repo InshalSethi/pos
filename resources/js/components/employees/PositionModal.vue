@@ -259,6 +259,7 @@ const savePosition = async () => {
     }
 
     emit('saved');
+    window.dispatchEvent(new CustomEvent('position-saved', { detail: response.data.position }));
   } catch (error) {
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors;
@@ -282,9 +283,9 @@ const initializeForm = () => {
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   currencyStore.fetchCurrencies();
-  fetchDepartments();
+  await fetchDepartments();
   initializeForm();
 });
 </script>

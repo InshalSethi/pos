@@ -308,11 +308,13 @@ const handleAddManager = () => {
 const handleDepartmentSaved = () => {
   closeDepartmentModal();
   fetchDepartments();
+  window.dispatchEvent(new CustomEvent('department-saved'));
 };
 
 const handlePositionSaved = () => {
   closePositionModal();
   fetchPositions();
+  window.dispatchEvent(new CustomEvent('position-saved'));
 };
 
 const handleEmployeeTerminate = () => {

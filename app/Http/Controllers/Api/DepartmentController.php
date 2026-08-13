@@ -25,21 +25,31 @@ class DepartmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $nonManagerFilter = function ($q) {
+            $q->where(function ($sub) {
+                $sub->where('is_manager', false)->orWhereNull('is_manager');
+            })
+            ->whereDoesntHave('user', function ($uq) {
+                $uq->whereHas('roles', function ($rq) {
+                    $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager', 'managerial']);
+                });
+            })
+            ->where(function ($sub) {
+                $sub->whereNull('position_id')
+                  ->orWhereDoesntHave('position', function ($pq) {
+                      $pq->whereIn('level', ['manager', 'director', 'executive'])
+                        ->orWhereRaw("LOWER(title) REGEXP 'manager'");
+                  });
+            });
+        };
+
         $query = Department::with([
             'manager', 
             'parent', 
             'children', 
-            'employees' => function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('is_manager', false)->orWhereNull('is_manager');
-                });
-            }
+            'employees' => $nonManagerFilter
         ])->withCount([
-            'employees' => function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('is_manager', false)->orWhereNull('is_manager');
-                });
-            }
+            'employees' => $nonManagerFilter
         ]);
 
         if ($request->has('is_active')) {
@@ -101,22 +111,32 @@ class DepartmentController extends Controller
      */
     public function show(Department $department): JsonResponse
     {
+        $nonManagerFilter = function ($q) {
+            $q->where(function ($sub) {
+                $sub->where('is_manager', false)->orWhereNull('is_manager');
+            })
+            ->whereDoesntHave('user', function ($uq) {
+                $uq->whereHas('roles', function ($rq) {
+                    $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager', 'managerial']);
+                });
+            })
+            ->where(function ($sub) {
+                $sub->whereNull('position_id')
+                  ->orWhereDoesntHave('position', function ($pq) {
+                      $pq->whereIn('level', ['manager', 'director', 'executive'])
+                        ->orWhereRaw("LOWER(title) REGEXP 'manager'");
+                  });
+            });
+        };
+
         $department->load([
             'manager', 
             'parent', 
             'children', 
-            'employees' => function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('is_manager', false)->orWhereNull('is_manager');
-                });
-            }, 
+            'employees' => $nonManagerFilter, 
             'positions'
         ])->loadCount([
-            'employees' => function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('is_manager', false)->orWhereNull('is_manager');
-                });
-            }
+            'employees' => $nonManagerFilter
         ]);
 
         return response()->json($department);

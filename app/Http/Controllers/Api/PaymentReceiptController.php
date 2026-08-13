@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Storage;
+
 class PaymentReceiptController extends Controller
 {
     protected $paymentReceiptService;
@@ -25,7 +27,7 @@ class PaymentReceiptController extends Controller
         $this->paymentReceiptService = $paymentReceiptService;
         
         // Apply permission middleware
-        $this->middleware('permission:payment_receipts.view')->only(['index', 'show', 'statistics']);
+        $this->middleware('permission:payment_receipts.view')->only(['index', 'show', 'statistics', 'downloadAttachment']);
         $this->middleware('permission:payment_receipts.create')->only(['store']);
         $this->middleware('permission:payment_receipts.edit')->only(['update']);
         $this->middleware('permission:payment_receipts.verify')->only(['verify']);
@@ -43,52 +45,59 @@ class PaymentReceiptController extends Controller
             'bankAccount',
             'createdBy:id,name',
             'verifiedBy:id,name',
-            'depositedBy:id,name',
-            'journalEntry',
-            'bankTransaction'
+            'depositedBy:id,name'
         ]);
 
-        // Apply filters
-        if ($request->filled('receipt_type')) {
+        // Filter by receipt type
+        if ($request->has('receipt_type') && $request->receipt_type) {
             $query->where('receipt_type', $request->receipt_type);
         }
 
-        if ($request->filled('status')) {
+        // Filter by status
+        if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('payer_type')) {
-            $query->where('payer_type', $request->payer_type);
+        // Filter by payment method
+        if ($request->has('payment_method') && $request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
         }
 
-        if ($request->filled('bank_account_id')) {
+        // Filter by bank account
+        if ($request->has('bank_account_id') && $request->bank_account_id) {
             $query->where('bank_account_id', $request->bank_account_id);
         }
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('receipt_date', [
-                $request->start_date,
-                $request->end_date
-            ]);
+        // Filter by payer type
+        if ($request->has('payer_type') && $request->payer_type) {
+            $query->where('payer_type', $request->payer_type);
         }
 
-        // Search functionality
-        if ($request->filled('search')) {
+        // Filter by date range
+        if ($request->has('start_date') && $request->start_date) {
+            $query->whereDate('receipt_date', '>=', $request->start_date);
+        }
+        if ($request->has('end_date') && $request->end_date) {
+            $query->whereDate('receipt_date', '<=', $request->end_date);
+        }
+
+        // Search in payer name, receipt number, reference number, transaction reference, description
+        if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('receipt_number', 'like', "%{$search}%")
-                  ->orWhere('payer_name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('transaction_reference', 'like', "%{$search}%");
+                $q->where('payer_name', 'like', "%{$search}%")
+                  ->orWhere('receipt_number', 'like', "%{$search}%")
+                  ->orWhere('reference_number', 'like', "%{$search}%")
+                  ->orWhere('transaction_reference', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
-        // Sorting - handle both old format and DataTable format
-        $sortBy = $request->get('sort_by', $request->get('sort_field', 'receipt_date'));
-        $sortOrder = $request->get('sort_order', $request->get('sort_direction', 'desc'));
-        $query->orderBy($sortBy, $sortOrder);
+        // Sorting
+        $sortField = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_dir', 'desc');
+        $query->orderBy($sortField, $sortDirection);
 
-        // Pagination
         $perPage = $request->get('per_page', 15);
         $receipts = $query->paginate($perPage);
 
@@ -128,16 +137,39 @@ class PaymentReceiptController extends Controller
             'payer_type' => 'nullable|string|in:customer,supplier,other',
             'payer_id' => 'nullable|integer',
             'payer_name' => 'required|string|max:255',
-            'status' => 'sometimes|string|in:draft,pending,verified',
+            'status' => 'sometimes|string|in:draft,pending,process,rejected,completed,verified,deposited,cancelled',
             'invoice_allocations' => 'nullable|array',
             'invoice_allocations.*.invoice_id' => 'required_with:invoice_allocations|integer',
             'invoice_allocations.*.amount' => 'required_with:invoice_allocations|numeric|min:0.01',
             'additional_data' => 'nullable|array',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
         ]);
 
         // Validate payer exists if payer_type and payer_id are provided
-        if ($validated['payer_type'] && $validated['payer_id']) {
+        if (!empty($validated['payer_type']) && !empty($validated['payer_id'])) {
             $this->validatePayerExists($validated['payer_type'], $validated['payer_id']);
+        }
+
+        // Handle attachment file upload
+        $uploadedPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                if ($file && $file->isValid()) {
+                    $uploadedPaths[] = $this->storeAttachmentFile($file, 'payment-receipts/attachments');
+                }
+            }
+        } elseif ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            if ($file && $file->isValid()) {
+                $uploadedPaths[] = $this->storeAttachmentFile($file, 'payment-receipts/attachments');
+            }
+        }
+
+        if (!empty($uploadedPaths)) {
+            $validated['attachments'] = $uploadedPaths;
+            $validated['attachment'] = $uploadedPaths[0];
         }
 
         // Validate invoice allocations don't exceed receipt amount
@@ -242,12 +274,52 @@ class PaymentReceiptController extends Controller
             'invoice_allocations.*.invoice_id' => 'required_with:invoice_allocations|integer',
             'invoice_allocations.*.amount' => 'required_with:invoice_allocations|numeric|min:0.01',
             'additional_data' => 'nullable|array',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
+            'existing_attachments' => 'nullable|array',
         ]);
 
         // Validate payer exists if payer_type and payer_id are provided
         if (isset($validated['payer_type']) && isset($validated['payer_id'])) {
             $this->validatePayerExists($validated['payer_type'], $validated['payer_id']);
         }
+
+        // Keep existing attachments that user didn't remove
+        $currentAttachments = $paymentReceipt->attachments ?? ($paymentReceipt->attachment ? [$paymentReceipt->attachment] : []);
+        $keptAttachments = [];
+        if ($request->has('existing_attachments')) {
+            $existing = (array)$request->input('existing_attachments');
+            $keptAttachments = array_values(array_filter($currentAttachments, function ($path) use ($existing) {
+                return in_array($path, $existing);
+            }));
+            foreach ($currentAttachments as $path) {
+                if (!in_array($path, $existing) && Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
+            }
+        } else {
+            $keptAttachments = $currentAttachments;
+        }
+
+        // Upload new files
+        $newPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                if ($file && $file->isValid()) {
+                    $newPaths[] = $this->storeAttachmentFile($file, 'payment-receipts/attachments');
+                }
+            }
+        } elseif ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            if ($file && $file->isValid()) {
+                $newPaths[] = $this->storeAttachmentFile($file, 'payment-receipts/attachments');
+            }
+        }
+
+        $allAttachments = array_values(array_merge($keptAttachments, $newPaths));
+        $validated['attachments'] = $allAttachments;
+        $validated['attachment'] = !empty($allAttachments) ? $allAttachments[0] : null;
 
         // Validate invoice allocations don't exceed receipt amount
         if (isset($validated['invoice_allocations'])) {
@@ -284,6 +356,44 @@ class PaymentReceiptController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Helper to store attachment preserving original extension
+     */
+    private function storeAttachmentFile($file, string $directory): string
+    {
+        $originalName = $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'bin');
+        $baseName = \Illuminate\Support\Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+        if (empty($baseName)) {
+            $baseName = 'attachment';
+        }
+        $filename = $baseName . '_' . time() . '_' . \Illuminate\Support\Str::random(6) . '.' . strtolower($extension);
+        return $file->storeAs($directory, $filename, 'public');
+    }
+
+    /**
+     * Download payment receipt attachment
+     */
+    public function downloadAttachment(Request $request, PaymentReceipt $paymentReceipt)
+    {
+        $list = $paymentReceipt->attachments ?? [];
+        if (empty($list) && $paymentReceipt->attachment) {
+            $list = [$paymentReceipt->attachment];
+        }
+
+        $index = (int) $request->get('index', 0);
+        $targetPath = $list[$index] ?? ($list[0] ?? $paymentReceipt->attachment);
+
+        if (!$targetPath || !Storage::disk('public')->exists($targetPath)) {
+            return response()->json([
+                'message' => 'Attachment file not found'
+            ], 404);
+        }
+
+        $fileName = basename($targetPath);
+        return Storage::disk('public')->download($targetPath, $fileName);
     }
 
     /**
@@ -360,6 +470,78 @@ class PaymentReceiptController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to mark payment receipt as deposited',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update payment receipt status via state machine workflow
+     */
+    public function updateStatus(Request $request, PaymentReceipt $paymentReceipt): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:draft,process,processing,pending,rejected,cancelled,completed,paid,verified,deposited,void',
+        ]);
+
+        $targetStatus = strtolower($validated['status']);
+        if ($targetStatus === 'processing') {
+            $targetStatus = 'process';
+        }
+        if ($targetStatus === 'void') {
+            $targetStatus = 'cancelled';
+        }
+        if ($targetStatus === 'paid' || $targetStatus === 'verified' || $targetStatus === 'deposited') {
+            $targetStatus = 'completed';
+        }
+
+        $currentStatus = strtolower($paymentReceipt->status);
+
+        // Define strict state machine transition matrix
+        $allowedTransitions = [
+            'draft' => ['process', 'rejected', 'cancelled'],
+            'process' => ['pending'],
+            'pending' => ['rejected', 'completed', 'cancelled'],
+        ];
+
+        // Terminal / Final states cannot transition to anything
+        if (in_array($currentStatus, ['completed', 'rejected', 'cancelled', 'paid', 'void', 'deposited'])) {
+            return response()->json([
+                'message' => "This payment receipt record is locked in a final state ({$currentStatus}) and cannot undergo any further status transitions."
+            ], 422);
+        }
+
+        if (!isset($allowedTransitions[$currentStatus]) || !in_array($targetStatus, $allowedTransitions[$currentStatus])) {
+            return response()->json([
+                'message' => "Invalid status transition from {$currentStatus} to {$targetStatus}."
+            ], 422);
+        }
+
+        try {
+            $updateData = ['status' => $targetStatus];
+            if ($targetStatus === 'completed') {
+                $updateData['deposited_at'] = now();
+                $updateData['deposited_by'] = Auth::id();
+            }
+
+            $receipt = $this->paymentReceiptService->updatePaymentReceipt($paymentReceipt, $updateData);
+
+            $statusLabels = [
+                'process' => 'Processing',
+                'pending' => 'Pending',
+                'rejected' => 'Rejected',
+                'completed' => 'Paid',
+                'cancelled' => 'Cancelled',
+            ];
+            $label = $statusLabels[$targetStatus] ?? ucfirst($targetStatus);
+
+            return response()->json([
+                'message' => "Status updated to {$label} successfully!",
+                'receipt' => $receipt
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update payment receipt status',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -468,7 +650,7 @@ class PaymentReceiptController extends Controller
      */
     public function getReceiptOptions(): JsonResponse
     {
-        $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active')
+        $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active', 'current_balance', 'opening_balance')
                                   ->get();
 
         $customers = Customer::where('is_active', true)
@@ -511,9 +693,9 @@ class PaymentReceiptController extends Controller
             'statuses' => [
                 ['value' => 'draft', 'label' => 'Draft'],
                 ['value' => 'pending', 'label' => 'Pending'],
-                ['value' => 'verified', 'label' => 'Verified'],
-                ['value' => 'deposited', 'label' => 'Deposited'],
-                ['value' => 'cancelled', 'label' => 'Cancelled'],
+                ['value' => 'process', 'label' => 'Process'],
+                ['value' => 'rejected', 'label' => 'Rejected'],
+                ['value' => 'completed', 'label' => 'Completed'],
             ],
         ]);
     }

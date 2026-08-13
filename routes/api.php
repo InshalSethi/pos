@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\ManagerController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PaymentController;
@@ -267,6 +268,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         // Payment routes
         Route::get('/payment-options', [PaymentController::class , 'getPaymentOptions'])->name('payment-options');
         Route::get('/payments-statistics', [PaymentController::class , 'statistics'])->name('payments-statistics');
+        Route::get('/payments/{payment}/download-attachment', [PaymentController::class, 'downloadAttachment'])->name('payments.download-attachment');
+        Route::match(['patch', 'post'], '/payments/{payment}/status', [PaymentController::class, 'updateStatus'])->name('payments.status');
+        Route::match(['patch', 'post'], '/payments-out/{payment}/status', [PaymentController::class, 'updateStatus'])->name('payments-out.status');
         Route::apiResource('payments', PaymentController::class);
         Route::post('/payments/{payment}/approve', [PaymentController::class , 'approve'])->name('payments.approve');
         Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class , 'markAsPaid'])->name('payments.mark-as-paid');
@@ -276,6 +280,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::get('/payment-receipt-options', [PaymentReceiptController::class , 'getReceiptOptions'])->name('payment-receipt-options');
         Route::get('/payment-receipts-statistics', [PaymentReceiptController::class , 'statistics'])->name('payment-receipts-statistics');
         Route::get('/customer-invoices', [PaymentReceiptController::class , 'getCustomerInvoices'])->name('customer-invoices');
+        Route::get('/payment-receipts/{paymentReceipt}/download-attachment', [PaymentReceiptController::class, 'downloadAttachment'])->name('payment-receipts.download-attachment');
+        Route::match(['patch', 'post'], '/payment-receipts/{paymentReceipt}/status', [PaymentReceiptController::class, 'updateStatus'])->name('payment-receipts.status');
         Route::apiResource('payment-receipts', PaymentReceiptController::class);
         Route::post('/payment-receipts/{paymentReceipt}/verify', [PaymentReceiptController::class , 'verify'])->name('payment-receipts.verify');
         Route::post('/payment-receipts/{paymentReceipt}/mark-as-deposited', [PaymentReceiptController::class , 'markAsDeposited'])->name('payment-receipts.mark-as-deposited');
@@ -382,6 +388,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         // Employee specific routes (must come before resource routes)
         Route::get('/employees/statistics/summary', [EmployeeController::class , 'statistics']);
         Route::get('/employees/for-dropdown', [EmployeeController::class , 'forDropdown']);
+        Route::get('/managers/{id}/subordinates', [ManagerController::class , 'getSubordinates']);
+        Route::get('/employees/{id}/subordinates', [EmployeeController::class , 'getSubordinates']);
         Route::get('/employees/without-accounts', [EmployeeUserController::class , 'employeesWithoutAccounts']);
         Route::get('/employees/audit-user-relationships', [EmployeeUserController::class , 'auditRelationships']);
         Route::post('/employees/bulk-create-user-accounts', [EmployeeUserController::class , 'bulkCreateUserAccounts']);

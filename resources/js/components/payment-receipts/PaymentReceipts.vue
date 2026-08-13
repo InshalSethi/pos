@@ -56,94 +56,6 @@
       </div>
     </div>
 
-    <!-- Filter Bar Card (White and Black High-Contrast Style) -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs p-4 sm:p-5">
-      <div class="flex items-center justify-between mb-3.5">
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Filter Payment Receipts</h3>
-        </div>
-        <button
-          v-if="hasActiveFilters"
-          @click="resetFilters"
-          class="text-xs font-semibold text-slate-600 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 px-2.5 py-1 rounded-lg transition-all inline-flex items-center gap-1.5 cursor-pointer"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Reset Filters
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Receipt Type Filter -->
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Receipt Type</label>
-          <div class="relative">
-            <select
-              v-model="filters.receipt_type"
-              @change="fetchReceipts(1)"
-              class="w-full appearance-none bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3.5 py-2 pr-9 text-xs font-medium text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs cursor-pointer"
-            >
-              <option value="" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">All Receipt Types</option>
-              <option value="customer_payment" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Customer Payment</option>
-              <option value="customer_advance" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Customer Advance</option>
-              <option value="supplier_refund" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Supplier Refund</option>
-              <option value="supplier_rebate" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Supplier Rebate</option>
-              <option value="interest_income" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Interest Income</option>
-              <option value="rental_income" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Rental Income</option>
-              <option value="commission_income" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Commission Income</option>
-              <option value="asset_sale" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Asset Sale</option>
-              <option value="bank_transfer_in" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Bank Transfer In</option>
-              <option value="cash_deposit" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Cash Deposit</option>
-              <option value="miscellaneous_income" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Miscellaneous Income</option>
-              <option value="other_receipt" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Other Receipt</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Status Filter -->
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Status</label>
-          <div class="relative">
-            <select
-              v-model="filters.status"
-              @change="fetchReceipts(1)"
-              class="w-full appearance-none bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3.5 py-2 pr-9 text-xs font-medium text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs cursor-pointer"
-            >
-              <option value="" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">All Statuses</option>
-              <option value="draft" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Draft</option>
-              <option value="pending" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Pending</option>
-              <option value="verified" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Verified</option>
-              <option value="deposited" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Deposited</option>
-              <option value="cancelled" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Cancelled</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Floating Date Range Picker Component -->
-        <div>
-          <FloatingDateRangePicker
-            v-model:start-date="filters.start_date"
-            v-model:end-date="filters.end_date"
-            @change="fetchReceipts(1)"
-          />
-        </div>
-      </div>
-    </div>
-
     <!-- DataTable Container -->
     <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-hidden">
       <DataTable
@@ -164,9 +76,23 @@
         @page-change="handlePageChange"
         @per-page-change="handlePerPageChange"
       >
-        <!-- Primary Action Button (+ New Receipt) -->
+        <!-- Primary Action Buttons (+ New Receipt & Filter Drawer) -->
         <template #actions>
           <div class="flex items-center space-x-2">
+            <button
+              @click="showFilterDrawer = true"
+              class="px-3.5 py-2.5 border border-slate-200 dark:border-zinc-700 bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer relative"
+              title="Open Filters Drawer"
+            >
+              <svg class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span>Filter</span>
+              <span v-if="activeFilterCount > 0" class="w-5 h-5 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-full text-[10px] font-bold flex items-center justify-center">
+                {{ activeFilterCount }}
+              </span>
+            </button>
+
             <button
               v-if="authStore.hasPermission('payment_receipts.create')"
               @click="showCreateModal = true"
@@ -225,71 +151,154 @@
           </span>
         </template>
 
-        <!-- Column: Status -->
+        <!-- Column: Status (Black & White High-Contrast Status Badges) -->
         <template #column-status="{ item }">
           <span :class="getStatusBadgeClass(item.status)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full border">
             <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(item.status)"></span>
-            {{ item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Unknown' }}
+            {{ formatStatusText(item.status) }}
           </span>
         </template>
 
-        <!-- Column: Actions -->
+        <!-- Column: Actions (State Machine Action Icons) -->
         <template #column-actions="{ item }">
-          <div class="flex items-center justify-center gap-1">
-            <button
-              @click="viewReceipt(item)"
-              class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-              title="View Receipt Details"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
+          <div class="flex items-center justify-center gap-1.5">
+            <!-- 1. DRAFT STATUS -->
+            <template v-if="item.status === 'draft'">
+              <!-- Eye Icon (View Only) -->
+              <button
+                @click="viewReceipt(item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Receipt Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
 
-            <button
-              v-if="authStore.hasPermission('payment_receipts.edit') && item.can_be_edited"
-              @click="editReceipt(item)"
-              class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-              title="Edit Receipt"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
+              <!-- Edit Icon (Pencil) -->
+              <button
+                @click="editReceipt(item)"
+                class="p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="Edit Receipt"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
 
-            <button
-              v-if="authStore.hasPermission('payment_receipts.verify') && item.can_be_verified"
-              @click="verifyReceipt(item)"
-              class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-              title="Verify Receipt"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
+              <!-- Cancel Icon (Circle with Cross) -->
+              <button
+                @click="openTransitionModal(item, 'cancelled')"
+                class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
+                title="Cancel Receipt"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+                </svg>
+              </button>
 
-            <button
-              v-if="authStore.hasPermission('payment_receipts.deposit') && item.can_be_deposited"
-              @click="markAsDeposited(item)"
-              class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-              title="Mark as Deposited"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </button>
+              <!-- Processing Icon (Hourglass with circular refresh arrows) -->
+              <button
+                @click="openTransitionModal(item, 'process')"
+                class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-all cursor-pointer"
+                title="Move to Processing"
+              >
+                <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18.5 7A9 9 0 0 0 7 4.5" />
+                  <polyline points="18.5 3.5 18.5 7.5 14.5 7.5" />
+                  <path d="M5.5 17A9 9 0 0 0 17 19.5" />
+                  <polyline points="5.5 20.5 5.5 16.5 9.5 16.5" />
+                  <path d="M9 8h6" />
+                  <path d="M9 16h6" />
+                  <path d="M9.5 8v2.2l2.5 1.8-2.5 1.8V16" />
+                  <path d="M14.5 8v2.2l-2.5 1.8 2.5 1.8V16" />
+                </svg>
+              </button>
+            </template>
 
-            <button
-              v-if="authStore.hasPermission('payment_receipts.delete') && item.can_be_deleted"
-              @click="deleteReceipt(item)"
-              class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
-              title="Delete Receipt"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            <!-- 2. PROCESS / PROCESSING STATUS -->
+            <template v-else-if="item.status === 'process' || item.status === 'processing'">
+              <!-- Eye Icon (View Only) -->
+              <button
+                @click="viewReceipt(item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Receipt Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+
+              <!-- Pending Icon (Dashed Clock Timer) -->
+              <button
+                @click="openTransitionModal(item, 'pending')"
+                class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-all cursor-pointer"
+                title="Move to Pending"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5" stroke-dasharray="4 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5.5l3.5 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.5 8l-2-2.5 3-1" />
+                </svg>
+              </button>
+            </template>
+
+            <!-- 3. PENDING STATUS -->
+            <template v-else-if="item.status === 'pending'">
+              <!-- Eye Icon (View Only) -->
+              <button
+                @click="viewReceipt(item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Receipt Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+
+              <!-- Reject Icon (Prohibited Circle) -->
+              <button
+                @click="openTransitionModal(item, 'rejected')"
+                class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
+                title="Reject Receipt"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.6 5.6l12.8 12.8" />
+                </svg>
+              </button>
+
+              <!-- Complete Icon (Checkmark Circle) -->
+              <button
+                @click="openTransitionModal(item, 'completed')"
+                class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-all cursor-pointer"
+                title="Mark as Completed"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5l2.5 2.5 5-5" />
+                </svg>
+              </button>
+            </template>
+
+            <!-- 4. FINAL / LOCKED STATES (Completed, Paid, Deposited, Verified, Rejected, Cancelled) -->
+            <template v-else>
+              <!-- Eye Icon (View Only) -->
+              <button
+                @click="viewReceipt(item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Receipt Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </template>
           </div>
         </template>
       </DataTable>
@@ -321,6 +330,232 @@
       @mark-as-deposited="markAsDeposited"
       @delete="deleteReceipt"
     />
+    <!-- State Machine Transition Confirmation Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div v-if="showConfirmModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <!-- Backdrop -->
+          <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" @click="showConfirmModal = false"></div>
+
+          <!-- Dialog Box -->
+          <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden p-6 z-10 space-y-4">
+            <div class="flex items-start gap-4">
+              <div :class="['w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs', confirmModalData.iconBgClass]">
+                <!-- Process Icon (Hourglass with circular refresh arrows) -->
+                <svg v-if="confirmModalData.type === 'process'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18.5 7A9 9 0 0 0 7 4.5" />
+                  <polyline points="18.5 3.5 18.5 7.5 14.5 7.5" />
+                  <path d="M5.5 17A9 9 0 0 0 17 19.5" />
+                  <polyline points="5.5 20.5 5.5 16.5 9.5 16.5" />
+                  <path d="M9 8h6" />
+                  <path d="M9 16h6" />
+                  <path d="M9.5 8v2.2l2.5 1.8-2.5 1.8V16" />
+                  <path d="M14.5 8v2.2l-2.5 1.8 2.5 1.8V16" />
+                </svg>
+
+                <!-- Pending Icon -->
+                <svg v-else-if="confirmModalData.type === 'pending'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5" stroke-dasharray="4 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5.5l3.5 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.5 8l-2-2.5 3-1" />
+                </svg>
+
+                <!-- Rejected Icon -->
+                <svg v-else-if="confirmModalData.type === 'rejected'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.6 5.6l12.8 12.8" />
+                </svg>
+
+                <!-- Completed Icon -->
+                <svg v-else-if="confirmModalData.type === 'completed'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5l2.5 2.5 5-5" />
+                </svg>
+
+                <!-- Cancelled Icon -->
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+                </svg>
+              </div>
+
+              <div class="space-y-1">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ confirmModalData.title }}</h3>
+                <p class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{{ confirmModalData.message }}</p>
+                <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed pt-1">{{ confirmModalData.subtext }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
+              <button
+                type="button"
+                @click="showConfirmModal = false"
+                :disabled="isUpdatingStatus"
+                class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="confirmStatusTransition"
+                :disabled="isUpdatingStatus"
+                :class="['px-4 py-2 rounded-xl text-xs font-bold shadow-xs transition-all disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer', confirmModalData.confirmButtonClass]"
+              >
+                <div v-if="isUpdatingStatus" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
+                <span>{{ confirmModalData.confirmButtonText }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Top Right Corner Toast Notification -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-300 ease-out transform"
+        enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+        enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+        leave-active-class="transition duration-200 ease-in opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="toastNotification.show" class="fixed top-5 right-5 z-[110] flex items-center gap-3 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-4 py-3 rounded-xl shadow-2xl border border-slate-800 dark:border-zinc-200 text-xs font-bold">
+          <svg class="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>{{ toastNotification.message }}</span>
+        </div>
+      </Transition>
+    </Teleport>
+    <!-- Slide-over Filter Drawer -->
+    <Teleport to="body">
+      <div v-if="showFilterDrawer" class="fixed inset-0 z-50 overflow-hidden">
+        <!-- Backdrop -->
+        <div 
+          @click="showFilterDrawer = false" 
+          class="fixed inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs transition-opacity duration-300"
+        ></div>
+
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+          <div class="w-screen max-w-md bg-white dark:bg-zinc-900 shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-zinc-800 transform transition-all duration-300">
+            <!-- Drawer Header -->
+            <div class="p-5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/50">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-xl shadow-xs">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Filter Payment Receipts</h2>
+                  <p class="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Refine incoming receipt results</p>
+                </div>
+              </div>
+
+              <button
+                @click="showFilterDrawer = false"
+                class="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Drawer Content (Filters) -->
+            <div class="p-6 space-y-5 overflow-y-auto flex-1">
+              <!-- Date Range Filter -->
+              <div class="space-y-1.5">
+                <FloatingDateRangePicker
+                  v-model:start-date="filters.start_date"
+                  v-model:end-date="filters.end_date"
+                  @change="fetchReceipts(1)"
+                />
+              </div>
+
+              <!-- Receipt Type Filter -->
+              <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Receipt Type</label>
+                <div class="relative">
+                  <select
+                    v-model="filters.receipt_type"
+                    @change="fetchReceipts(1)"
+                    class="w-full appearance-none bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3.5 py-2.5 pr-9 text-xs font-medium text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs cursor-pointer"
+                  >
+                    <option value="" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">All Receipt Types</option>
+                    <option value="customer_payment">Customer Payment</option>
+                    <option value="customer_advance">Customer Advance</option>
+                    <option value="supplier_refund">Supplier Refund</option>
+                    <option value="supplier_rebate">Supplier Rebate</option>
+                    <option value="interest_income">Interest Income</option>
+                    <option value="rental_income">Rental Income</option>
+                    <option value="commission_income">Commission Income</option>
+                    <option value="asset_sale">Asset Sale</option>
+                    <option value="bank_transfer_in">Bank Transfer In</option>
+                    <option value="cash_deposit">Cash Deposit</option>
+                    <option value="miscellaneous_income">Miscellaneous Income</option>
+                    <option value="other_receipt">Other Receipt</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Filter -->
+              <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Status</label>
+                <div class="relative">
+                  <select
+                    v-model="filters.status"
+                    @change="fetchReceipts(1)"
+                    class="w-full appearance-none bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3.5 py-2.5 pr-9 text-xs font-medium text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs cursor-pointer"
+                  >
+                    <option value="" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">All Statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending</option>
+                    <option value="process">Process</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Drawer Footer -->
+            <div class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between gap-3">
+              <button
+                @click="resetFilters"
+                :disabled="!hasActiveFilters"
+                class="px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                Reset Filters
+              </button>
+              <button
+                @click="showFilterDrawer = false"
+                class="px-5 py-2.5 bg-slate-900 hover:bg-black active:scale-[0.98] text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+              >
+                Apply & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -332,6 +567,12 @@ import DataTable from '@/components/common/DataTable.vue';
 import FloatingDateRangePicker from '@/components/common/FloatingDateRangePicker.vue';
 import PaymentReceiptFormModal from './PaymentReceiptFormModal.vue';
 import PaymentReceiptViewModal from './PaymentReceiptViewModal.vue';
+import { downloadAttachmentFile } from '@/utils/downloadAttachment';
+
+const handleDownloadAttachment = (receiptId, index = 0, fileName = 'attachment', directUrl = '') => {
+  const url = directUrl || `/api/payment-receipts/${receiptId}/download-attachment?index=${index}`;
+  downloadAttachmentFile(url, fileName);
+};
 
 const authStore = useAuthStore();
 
@@ -351,7 +592,38 @@ const perPage = ref(15);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showViewModal = ref(false);
+const showFilterDrawer = ref(false);
 const selectedReceipt = ref(null);
+
+// State Machine Transition Modal & Toast state
+const showConfirmModal = ref(false);
+const isUpdatingStatus = ref(false);
+const confirmModalData = reactive({
+  receiptId: null,
+  targetStatus: '',
+  title: '',
+  message: 'ARE YOU SURE YOU WANT TO DO THIS?',
+  subtext: '',
+  confirmButtonText: 'Confirm',
+  confirmButtonClass: 'bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white',
+  iconBgClass: 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900',
+  type: 'process',
+});
+
+const toastNotification = reactive({
+  show: false,
+  message: '',
+});
+
+let toastTimer = null;
+const triggerToast = (msg) => {
+  if (toastTimer) clearTimeout(toastTimer);
+  toastNotification.message = msg;
+  toastNotification.show = true;
+  toastTimer = setTimeout(() => {
+    toastNotification.show = false;
+  }, 4000);
+};
 
 // Filters
 const filters = reactive({
@@ -364,6 +636,14 @@ const filters = reactive({
 // Computed Helper Flags
 const hasActiveFilters = computed(() => {
   return filters.receipt_type !== '' || filters.status !== '' || filters.start_date !== '' || filters.end_date !== '';
+});
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filters.receipt_type) count++;
+  if (filters.status) count++;
+  if (filters.start_date || filters.end_date) count++;
+  return count;
 });
 
 const depositedCount = computed(() => {
@@ -490,9 +770,71 @@ const viewReceipt = (receipt) => {
 };
 
 const editReceipt = (receipt) => {
+  if (receipt.status !== 'draft') {
+    viewReceipt(receipt);
+    return;
+  }
   selectedReceipt.value = receipt;
   showEditModal.value = true;
   showViewModal.value = false;
+};
+
+const openTransitionModal = (item, targetStatus) => {
+  confirmModalData.receiptId = item.id;
+  confirmModalData.targetStatus = targetStatus;
+  confirmModalData.message = 'Are you sure you want to do this?';
+  confirmModalData.confirmButtonClass = 'bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white';
+  confirmModalData.iconBgClass = 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900';
+
+  if (targetStatus === 'process') {
+    confirmModalData.title = 'Move to Processing';
+    confirmModalData.subtext = 'Once moved to Processing, this receipt can no longer be edited or cancelled.';
+    confirmModalData.confirmButtonText = 'Move to Processing';
+    confirmModalData.type = 'process';
+  } else if (targetStatus === 'pending') {
+    confirmModalData.title = 'Move to Pending Review';
+    confirmModalData.subtext = 'Moving to Pending review. This action cannot be undone.';
+    confirmModalData.confirmButtonText = 'Move to Pending';
+    confirmModalData.type = 'pending';
+  } else if (targetStatus === 'rejected') {
+    confirmModalData.title = 'Reject Payment Receipt';
+    confirmModalData.subtext = 'Rejecting this payment receipt. Once rejected, status cannot be changed.';
+    confirmModalData.confirmButtonText = 'Reject Receipt';
+    confirmModalData.type = 'rejected';
+  } else if (targetStatus === 'completed') {
+    confirmModalData.title = 'Mark as Completed';
+    confirmModalData.subtext = 'Marking payment receipt as Completed. This transaction will be finalized and locked.';
+    confirmModalData.confirmButtonText = 'Mark as Completed';
+    confirmModalData.type = 'completed';
+  } else if (targetStatus === 'cancelled') {
+    confirmModalData.title = 'Cancel Payment Receipt';
+    confirmModalData.subtext = 'Cancelling this payment receipt. Once cancelled, this action cannot be undone.';
+    confirmModalData.confirmButtonText = 'Cancel Receipt';
+    confirmModalData.type = 'cancelled';
+  }
+
+  showConfirmModal.value = true;
+};
+
+const confirmStatusTransition = async () => {
+  if (!confirmModalData.receiptId || !confirmModalData.targetStatus) return;
+  isUpdatingStatus.value = true;
+  try {
+    const response = await axios.patch(`/api/payment-receipts/${confirmModalData.receiptId}/status`, {
+      status: confirmModalData.targetStatus
+    });
+
+    const successMessage = response.data.message || `Status updated to ${confirmModalData.targetStatus} successfully!`;
+    showConfirmModal.value = false;
+    triggerToast(successMessage);
+    await fetchReceipts();
+  } catch (error) {
+    console.error('Error updating payment receipt status:', error);
+    const errMessage = error.response?.data?.message || 'Failed to update payment receipt status';
+    alert(errMessage);
+  } finally {
+    isUpdatingStatus.value = false;
+  }
 };
 
 const verifyReceipt = async (receipt) => {
@@ -594,26 +936,35 @@ const getReceiptTypeBadgeClass = (type) => {
   return classes[type] || 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-zinc-800 dark:text-slate-200 dark:border-zinc-700';
 };
 
+const formatStatusText = (status) => {
+  if (!status) return 'Unknown';
+  const s = String(status).toLowerCase();
+  if (s === 'completed' || s === 'paid' || s === 'deposited' || s === 'verified') return 'Paid';
+  if (s === 'process' || s === 'processing') return 'Process';
+  if (s === 'rejected' || s === 'void') return 'Rejected';
+  if (s === 'cancelled') return 'Cancelled';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
 const getStatusBadgeClass = (status) => {
-  const classes = {
-    deposited: 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100',
-    verified: 'bg-slate-800 text-white border-slate-800 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
-    pending: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-zinc-800 dark:text-slate-200 dark:border-zinc-700',
-    draft: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-zinc-800/60 dark:text-slate-400 dark:border-zinc-700/60',
-    cancelled: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60',
-  };
-  return classes[status] || 'bg-slate-100 text-slate-700 border-slate-200';
+  return 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100';
 };
 
 const getStatusDotClass = (status) => {
+  const s = String(status || '').toLowerCase();
   const dots = {
+    paid: 'bg-emerald-400',
+    completed: 'bg-emerald-400',
     deposited: 'bg-emerald-400',
-    verified: 'bg-blue-400',
+    verified: 'bg-emerald-400',
+    process: 'bg-indigo-400',
+    processing: 'bg-indigo-400',
     pending: 'bg-amber-400',
     draft: 'bg-slate-400',
+    rejected: 'bg-rose-500',
     cancelled: 'bg-rose-500',
   };
-  return dots[status] || 'bg-slate-400';
+  return dots[s] || 'bg-slate-400';
 };
 
 // Initialize

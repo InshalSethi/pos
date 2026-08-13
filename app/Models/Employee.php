@@ -206,7 +206,7 @@ class Employee extends Model
 
     public function subordinates(): HasMany
     {
-        return $this->hasMany(Employee::class, 'manager_id');
+        return $this->hasMany(Employee::class, 'manager_id', 'id');
     }
 
     public function managedDepartments(): HasMany

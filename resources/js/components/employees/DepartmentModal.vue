@@ -181,15 +181,7 @@ const fetchEmployees = async () => {
     employees.value = response.data;
   } catch (error) {
     console.error('Error fetching employees:', error);
-
-    // Fallback to test endpoint if auth fails
-    try {
-      const fallbackResponse = await axios.get('/api/test-dropdown');
-      employees.value = fallbackResponse.data;
-    } catch (fallbackError) {
-      console.error('Fallback also failed:', fallbackError);
-      employees.value = [];
-    }
+    employees.value = [];
   }
 };
 
@@ -206,6 +198,7 @@ const saveDepartment = async () => {
     }
 
     emit('saved');
+    window.dispatchEvent(new CustomEvent('department-saved', { detail: response.data.department }));
   } catch (error) {
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors;
@@ -229,9 +222,8 @@ const initializeForm = () => {
 };
 
 // Lifecycle
-onMounted(() => {
-  fetchDepartments();
-  fetchEmployees();
+onMounted(async () => {
+  await Promise.all([fetchDepartments(), fetchEmployees()]);
   initializeForm();
 });
 </script>

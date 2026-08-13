@@ -109,75 +109,51 @@ class EmployeeController extends Controller
         }
 
         // Filter by manager status or tab
+        $isManagerFilter = function ($q) {
+            $q->where('is_manager', true)
+              ->orWhereHas('user', function ($uq) {
+                  $uq->whereHas('roles', function ($rq) {
+                      $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager', 'managerial']);
+                  });
+              })
+              ->orWhereHas('position', function ($pq) {
+                  $pq->whereIn('level', ['manager', 'director', 'executive'])
+                    ->orWhereRaw("LOWER(title) REGEXP 'manager'");
+              });
+        };
+
+        $isNonManagerFilter = function ($q) {
+            $q->where(function ($nq) {
+                $nq->where('is_manager', false)
+                   ->orWhereNull('is_manager');
+            })
+            ->whereDoesntHave('user', function ($uq) {
+                $uq->whereHas('roles', function ($rq) {
+                    $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager', 'managerial']);
+                });
+            })
+            ->where(function ($nq) {
+                $nq->whereNull('position_id')
+                  ->orWhereDoesntHave('position', function ($pq) {
+                      $pq->whereIn('level', ['manager', 'director', 'executive'])
+                        ->orWhereRaw("LOWER(title) REGEXP 'manager'");
+                  });
+            });
+        };
+
         if ($request->has('tab')) {
             $tab = $request->get('tab');
             if ($tab === 'managers') {
-                $query->where(function ($q) {
-                    $q->where('is_manager', true)
-                      ->orWhereHas('position', function ($pq) {
-                          $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
-                            ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
-                      })
-                      ->orWhereHas('user', function ($uq) {
-                          $uq->whereHas('roles', function ($rq) {
-                              $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
-                          });
-                      });
-                });
+                $query->where($isManagerFilter);
             } elseif ($tab === 'employees') {
-                $query->where(function ($q) {
-                    $q->where(function ($nq) {
-                        $nq->where('is_manager', false)
-                           ->orWhereNull('is_manager');
-                    })
-                    ->where(function ($nq) {
-                        $nq->whereNull('position_id')
-                          ->orWhereDoesntHave('position', function ($pq) {
-                              $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
-                                ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
-                          });
-                    })
-                    ->whereDoesntHave('user', function ($uq) {
-                        $uq->whereHas('roles', function ($rq) {
-                            $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
-                        });
-                    });
-                });
+                $query->where($isNonManagerFilter);
             }
         } elseif ($request->has('is_manager')) {
             $isManager = filter_var($request->get('is_manager'), FILTER_VALIDATE_BOOLEAN);
             if ($isManager) {
-                $query->where(function ($q) {
-                    $q->where('is_manager', true)
-                      ->orWhereHas('position', function ($pq) {
-                          $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
-                            ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
-                      })
-                      ->orWhereHas('user', function ($uq) {
-                          $uq->whereHas('roles', function ($rq) {
-                              $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
-                          });
-                      });
-                });
+                $query->where($isManagerFilter);
             } else {
-                $query->where(function ($q) {
-                    $q->where(function ($nq) {
-                        $nq->where('is_manager', false)
-                           ->orWhereNull('is_manager');
-                    })
-                    ->where(function ($nq) {
-                        $nq->whereNull('position_id')
-                          ->orWhereDoesntHave('position', function ($pq) {
-                              $pq->whereIn('level', ['lead', 'manager', 'director', 'executive'])
-                                ->orWhereRaw("LOWER(title) REGEXP 'manager|supervisor|lead|head|director'");
-                          });
-                    })
-                    ->whereDoesntHave('user', function ($uq) {
-                        $uq->whereHas('roles', function ($rq) {
-                            $rq->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), ['manager']);
-                        });
-                    });
-                });
+                $query->where($isNonManagerFilter);
             }
         }
 
@@ -398,6 +374,31 @@ class EmployeeController extends Controller
         ]);
 
         return response()->json($employee);
+    }
+
+    /**
+     * Display manager profile details and eager-loaded direct report subordinates.
+     */
+    public function getSubordinates($id): JsonResponse
+    {
+        $manager = Employee::with([
+            'department',
+            'position',
+            'managedDepartments',
+            'user.roles'
+        ])->findOrFail($id);
+
+        $subordinates = Employee::where('manager_id', $manager->id)
+            ->orWhere('manager_id', $manager->user_id)
+            ->with(['department', 'position', 'user'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'manager' => $manager,
+            'subordinates' => $subordinates,
+            'count' => $subordinates->count()
+        ]);
     }
 
     /**

@@ -16,12 +16,17 @@
         disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-zinc-900' : ''
       ]"
     >
-      <span
-        class="text-xs font-semibold truncate"
-        :class="selectedOption ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-zinc-500'"
-      >
-        {{ selectedOption ? selectedOption.label : placeholder }}
-      </span>
+      <div class="flex flex-col truncate pr-2">
+        <span
+          class="text-xs font-semibold truncate"
+          :class="selectedOption ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-zinc-500'"
+        >
+          {{ selectedOption ? selectedOption.label : placeholder }}
+        </span>
+        <span v-if="selectedOption && selectedOption.sublabel" class="text-[10px] font-normal text-slate-500 dark:text-slate-400 truncate">
+          {{ selectedOption.sublabel }}
+        </span>
+      </div>
 
       <div class="flex items-center gap-1.5 shrink-0 ml-2">
         <svg

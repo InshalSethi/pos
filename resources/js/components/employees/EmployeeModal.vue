@@ -441,7 +441,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
 import { useToast } from '@/composables/useToast';
 import { useCurrencyStore } from '@/stores/currency';
@@ -544,6 +544,7 @@ const roles = ref([]);
 const companies = ref([]);
 const errors = ref({});
 const saving = ref(false);
+const isInitializing = ref(false);
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const photoPreview = ref(null);
@@ -555,16 +556,7 @@ const showConfirmPassword = ref(false);
 const isEditing = computed(() => !!props.employee);
 
 const filteredPositions = computed(() => {
-  let list = positions.value;
-  if (form.value.department_id) {
-    list = list.filter(position => position.department_id == form.value.department_id);
-  }
-  if (props.isManagerMode) {
-    const managerLevels = ['lead', 'manager', 'director', 'executive'];
-    const filtered = list.filter(position => managerLevels.includes(position.level) || /manager|supervisor|lead|head|director/i.test(position.title));
-    return filtered.length > 0 ? filtered : list;
-  }
-  return list;
+  return positions.value || [];
 });
 
 const selectedPositionDetails = computed(() => {
@@ -668,33 +660,54 @@ const managerSelectOptions = computed(() => [
   ...filteredManagerList.value.map(m => ({ value: m.id, label: m.full_name }))
 ]);
 
-const roleOptions = computed(() => [
-  { value: 'employee', label: 'Employee' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'admin', label: 'Company Admin' },
-  ...roles.value.map(r => ({ value: r.name, label: r.name }))
-]);
+const roleOptions = computed(() => {
+  const map = new Map();
+  if (Array.isArray(roles.value) && roles.value.length > 0) {
+    roles.value.forEach(r => {
+      if (r && r.name) {
+        const labelName = r.name.charAt(0).toUpperCase() + r.name.slice(1).replace(/_/g, ' ');
+        map.set(r.name, { value: r.name, label: labelName });
+      }
+    });
+  }
+  if (!map.has('employee')) map.set('employee', { value: 'employee', label: 'Employee' });
+  if (!map.has('manager')) map.set('manager', { value: 'manager', label: 'Manager' });
+  if (!map.has('admin')) map.set('admin', { value: 'Company Admin', label: 'Company Admin' });
+  return Array.from(map.values());
+});
 
-// Two-way Watcher 1: Department Selection -> Filter & Auto-Select Manager
+// Two-way Watcher 1: Department Selection -> Preserve Manager & Position if valid
 watch(() => form.value.department_id, (newDeptId) => {
-  if (!newDeptId || props.isManagerMode) return;
-  form.value.position_id = '';
+  if (isInitializing.value || !newDeptId || props.isManagerMode) return;
+
   const matchingMgrs = filteredManagerList.value;
-  if (matchingMgrs.length === 1) {
+  const currentMgrId = String(form.value.manager_id || '');
+
+  if (currentMgrId && matchingMgrs.some(m => String(m.id) === currentMgrId)) {
+    // Keep currently selected manager!
+  } else if (matchingMgrs.length === 1) {
     form.value.manager_id = String(matchingMgrs[0].id);
-  } else if (form.value.manager_id && !matchingMgrs.some(m => String(m.id) === String(form.value.manager_id))) {
-    form.value.manager_id = '';
+  } else {
+    const dept = departments.value.find(d => String(d.id) === String(newDeptId));
+    if (dept && (dept.manager_id || dept.manager?.id)) {
+      form.value.manager_id = String(dept.manager_id || dept.manager.id);
+    } else {
+      form.value.manager_id = '';
+    }
   }
 });
 
-// Two-way Watcher 2: Manager Selection -> Filter & Auto-Select Department
+// Two-way Watcher 2: Manager Selection -> Preserve Department if valid
 watch(() => form.value.manager_id, (newMgrId) => {
-  if (!newMgrId || props.isManagerMode) return;
+  if (isInitializing.value || !newMgrId || props.isManagerMode) return;
+
   const managedDepts = filteredDepartmentList.value;
-  if (managedDepts.length === 1) {
+  const currentDeptId = String(form.value.department_id || '');
+
+  if (currentDeptId && managedDepts.some(d => String(d.id) === currentDeptId)) {
+    // Keep currently selected department!
+  } else if (managedDepts.length === 1) {
     form.value.department_id = String(managedDepts[0].id);
-  } else if (form.value.department_id && !managedDepts.some(d => String(d.id) === String(form.value.department_id))) {
-    form.value.department_id = '';
   }
 });
 
@@ -786,12 +799,7 @@ const fetchEmployees = async () => {
     employees.value = response.data;
   } catch (error) {
     console.error('Error fetching employees:', error);
-    try {
-      const fallbackResponse = await axios.get('/api/test-dropdown');
-      employees.value = fallbackResponse.data;
-    } catch (fallbackError) {
-      employees.value = [];
-    }
+    employees.value = [];
   }
 };
 
@@ -946,6 +954,8 @@ const formatDateForInput = (val) => {
 
 // Initialize form if editing or set smart defaults
 const initializeForm = () => {
+  isInitializing.value = true;
+
   if (props.employee) {
     Object.keys(form.value).forEach(key => {
       if (props.employee[key] !== undefined && props.employee[key] !== null) {
@@ -1036,29 +1046,44 @@ const initializeForm = () => {
     form.value.password = '';
     form.value.password_confirmation = '';
   }
+
+  nextTick(() => {
+    isInitializing.value = false;
+  });
 };
 
-watch([() => props.employee, () => props.isManagerMode], () => {
+const refreshDropdowns = async () => {
+  try {
+    await Promise.all([
+      fetchCompanies(),
+      fetchRoles(),
+      fetchDepartments(),
+      fetchPositions(),
+      fetchEmployees()
+    ]);
+  } catch (err) {
+    console.error('Error refreshing modal dropdowns:', err);
+  }
+};
+
+watch([() => props.employee, () => props.isManagerMode], async () => {
+  await refreshDropdowns();
   initializeForm();
 }, { immediate: true, deep: true });
 
-// Automatically pre-select Department Manager when Department changes
-watch(() => form.value.department_id, (newDeptId) => {
-  if (!newDeptId || props.isManagerMode) return;
-  const dept = departments.value.find(d => String(d.id) === String(newDeptId));
-  if (dept && (dept.manager_id || dept.manager?.id)) {
-    const mgrId = dept.manager_id || dept.manager.id;
-    form.value.manager_id = String(mgrId);
-  }
-});
-
 // Lifecycle
 onMounted(async () => {
-  await fetchCompanies();
-  fetchRoles();
-  fetchDepartments();
-  fetchPositions();
-  fetchEmployees();
+  await refreshDropdowns();
   initializeForm();
+
+  window.addEventListener('department-saved', refreshDropdowns);
+  window.addEventListener('position-saved', refreshDropdowns);
+  window.addEventListener('manager-saved', refreshDropdowns);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('department-saved', refreshDropdowns);
+  window.removeEventListener('position-saved', refreshDropdowns);
+  window.removeEventListener('manager-saved', refreshDropdowns);
 });
 </script>

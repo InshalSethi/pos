@@ -30,6 +30,8 @@ class PaymentReceipt extends Model
         'transaction_reference',
         'description',
         'notes',
+        'attachment',
+        'attachments',
         'bank_account_id',
         'payer_type',
         'payer_id',
@@ -54,7 +56,40 @@ class PaymentReceipt extends Model
         'deposited_at' => 'datetime',
         'invoice_allocations' => 'array',
         'additional_data' => 'array',
+        'attachments' => 'array',
     ];
+
+    protected $appends = [
+        'attachments_urls',
+        'attachment_url',
+    ];
+
+    public function getAttachmentsUrlsAttribute(): array
+    {
+        $list = $this->attachments ?? [];
+        if (empty($list) && $this->attachment) {
+            $list = [$this->attachment];
+        }
+        if (!is_array($list)) {
+            $list = [];
+        }
+        return array_map(function ($path, $index) {
+            return [
+                'index' => $index,
+                'filename' => basename($path),
+                'path' => $path,
+                'url' => asset('storage/' . $path),
+            ];
+        }, $list, array_keys($list));
+    }
+
+    public function getAttachmentUrlAttribute(): ?string
+    {
+        if (!empty($this->attachments) && is_array($this->attachments) && count($this->attachments) > 0) {
+            return asset('storage/' . $this->attachments[0]);
+        }
+        return $this->attachment ? asset('storage/' . $this->attachment) : null;
+    }
 
     // Relationships
     public function bankAccount(): BelongsTo
