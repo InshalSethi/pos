@@ -137,7 +137,7 @@ class PaymentReceiptController extends Controller
             'payer_type' => 'nullable|string|in:customer,supplier,other',
             'payer_id' => 'nullable|integer',
             'payer_name' => 'required|string|max:255',
-            'status' => 'sometimes|string|in:draft,pending,process,rejected,completed,verified,deposited,cancelled',
+            'status' => 'required|string|in:draft,pending,process,rejected,completed,verified,deposited,cancelled',
             'invoice_allocations' => 'nullable|array',
             'invoice_allocations.*.invoice_id' => 'required_with:invoice_allocations|integer',
             'invoice_allocations.*.amount' => 'required_with:invoice_allocations|numeric|min:0.01',

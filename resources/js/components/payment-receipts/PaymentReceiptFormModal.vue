@@ -124,6 +124,7 @@
               label="Status"
               placeholder="Select Status"
               :options="statusOptions"
+              :required="true"
               :error="errors.status ? errors.status[0] : ''"
             />
           </div>
@@ -427,7 +428,7 @@ const form = reactive({
   payer_type: '',
   payer_id: '',
   payer_name: '',
-  status: 'draft',
+  status: '',
 });
 
 // Computed
@@ -775,7 +776,7 @@ const resetForm = () => {
     payer_type: '',
     payer_id: '',
     payer_name: '',
-    status: 'draft',
+    status: '',
   });
   attachmentFiles.value = [];
   existingAttachments.value = [];
@@ -806,7 +807,7 @@ const populateForm = () => {
       payer_type: props.receipt.payer_type || '',
       payer_id: props.receipt.payer_id || '',
       payer_name: props.receipt.payer_name || '',
-      status: props.receipt.status || 'draft',
+      status: props.receipt.status || '',
     });
 
     attachmentFiles.value = [];

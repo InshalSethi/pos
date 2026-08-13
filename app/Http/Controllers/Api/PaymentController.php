@@ -125,7 +125,7 @@ class PaymentController extends Controller
             'payee_type' => 'nullable|string|in:supplier,employee,customer,other',
             'payee_id' => 'nullable|integer',
             'payee_name' => 'required|string|max:255',
-            'status' => 'sometimes|string|in:draft,pending,process,rejected,completed',
+            'status' => 'required|string|in:draft,pending,process,rejected,completed',
             'additional_data' => 'nullable|array',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
             'attachments' => 'nullable|array|max:5',

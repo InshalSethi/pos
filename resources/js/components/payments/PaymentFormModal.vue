@@ -124,6 +124,7 @@
               label="Status"
               placeholder="Select Status"
               :options="statusOptions"
+              :required="true"
               :error="errors.status ? errors.status[0] : ''"
             />
           </div>
@@ -392,7 +393,7 @@ const form = reactive({
   payee_type: '',
   payee_id: '',
   payee_name: '',
-  status: 'draft',
+  status: '',
 });
 
 // Computed
@@ -705,7 +706,7 @@ const resetForm = () => {
     payee_type: '',
     payee_id: '',
     payee_name: '',
-    status: 'draft',
+    status: '',
   });
   attachmentFiles.value = [];
   existingAttachments.value = [];
@@ -733,7 +734,7 @@ const populateForm = () => {
       payee_type: props.payment.payee_type || '',
       payee_id: props.payment.payee_id || '',
       payee_name: props.payment.payee_name || '',
-      status: props.payment.status || 'draft',
+      status: props.payment.status || '',
     });
 
     attachmentFiles.value = [];
