@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
     <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
-      <h3 class="text-lg font-black text-zinc-950 dark:text-white tracking-tight">Website Users</h3>
+      <h3 class="text-lg font-black text-zinc-950 dark:text-white tracking-tight">Users</h3>
       <button @click="openCreateModal" class="bg-black hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-extrabold px-4 py-2 rounded-xl text-xs shadow-xs transition-all flex items-center cursor-pointer">
         <i class="fas fa-plus mr-2 text-[10px]"></i> Add New User
       </button>

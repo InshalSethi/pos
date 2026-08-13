@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RolePermissionSeeder::class);
         $this->call(AdminSeeder::class);
         $this->call(BusinessTypeSeeder::class);
+        $this->call(CustomFormSeeder::class);
 
         // 2. Create default admin user
         $this->command->info('Creating default admin user...');
