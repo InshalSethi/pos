@@ -260,7 +260,8 @@ export default {
       is_default: false,
       bank_name: '',
       bank_phone: '',
-      bank_address: ''
+      bank_address: '',
+      chart_account_id: null
     });
 
     const fetchAccountDetail = async (id) => {
@@ -277,7 +278,8 @@ export default {
           is_default: Boolean(acc.is_default),
           bank_name: acc.bank_name || '',
           bank_phone: acc.bank_phone || '',
-          bank_address: acc.bank_address || ''
+          bank_address: acc.bank_address || '',
+          chart_account_id: acc.chart_account_id || null
         };
       } catch (err) {
         showToast('Failed to load bank account details', 'error');

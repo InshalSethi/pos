@@ -41,8 +41,10 @@ class PaymentService
             // Create the payment record
             $payment = Payment::create($data);
 
-            // If payment is created as approved or paid, create accounting entries
-            if (in_array($payment->status, ['approved', 'paid'])) {
+            // If payment is created as paid, mark as paid. If approved, create accounting entries
+            if ($payment->status === 'paid') {
+                $this->markPaymentAsPaid($payment, $payment->created_by);
+            } elseif ($payment->status === 'approved') {
                 $this->createAccountingEntries($payment);
             }
 
@@ -59,9 +61,13 @@ class PaymentService
             $oldStatus = $payment->status;
             $payment->update($data);
 
-            // If status changed to approved or paid, create accounting entries
-            if ($oldStatus !== $payment->status && in_array($payment->status, ['approved', 'paid'])) {
-                $this->createAccountingEntries($payment);
+            // If status changed to paid, process full payment; if approved, create accounting entries
+            if ($oldStatus !== $payment->status) {
+                if ($payment->status === 'paid') {
+                    $this->markPaymentAsPaid($payment, auth()->id() ?? $payment->created_by);
+                } elseif ($payment->status === 'approved') {
+                    $this->createAccountingEntries($payment);
+                }
             }
 
             // If payment was cancelled, reverse accounting entries

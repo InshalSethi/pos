@@ -77,7 +77,7 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Payment Type Filter -->
         <div class="space-y-1">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Payment Type</label>
@@ -94,6 +94,28 @@
               <option value="sale_return_payment" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Sale Return Payment</option>
               <option value="purchase_invoice_payment" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Purchase Invoice Payment</option>
               <option value="other_payment" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">Other Payment</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Account Filter -->
+        <div class="space-y-1">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Account</label>
+          <div class="relative">
+            <select
+              v-model="filters.bank_account_id"
+              @change="fetchPayments(1)"
+              class="w-full appearance-none bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl px-3.5 py-2 pr-9 text-xs font-medium text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-sm cursor-pointer"
+            >
+              <option value="" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">All Accounts</option>
+              <option v-for="acc in bankAccountOptions" :key="acc.id" :value="acc.id" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">
+                {{ acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name }}
+              </option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,7 +251,33 @@
 
         <!-- Column: Actions -->
         <template #column-actions="{ item }">
-          <div class="flex items-center justify-center gap-1">
+          <div class="flex items-center justify-center gap-1.5">
+            <!-- Process Payment Button (For Draft Status) -->
+            <button
+              v-if="item.status === 'draft' && authStore.hasPermission('payments.pay')"
+              @click="markAsPaid(item)"
+              class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-[11px] rounded-lg transition-all shadow-xs cursor-pointer inline-flex items-center gap-1"
+              title="Process Payment"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Process</span>
+            </button>
+
+            <!-- Cancel Payment Button (For Draft Status) -->
+            <button
+              v-if="item.status === 'draft' && authStore.hasPermission('payments.edit')"
+              @click="cancelPayment(item)"
+              class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900 dark:text-rose-300 font-semibold text-[11px] rounded-lg transition-all shadow-xs cursor-pointer inline-flex items-center gap-1"
+              title="Cancel Payment"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span>Cancel</span>
+            </button>
+
             <button
               @click="viewPayment(item)"
               class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
@@ -261,7 +309,7 @@
               </svg>
             </button>
             <button
-              v-if="authStore.hasPermission('payments.pay') && item.can_be_paid"
+              v-if="item.status !== 'draft' && authStore.hasPermission('payments.pay') && item.can_be_paid"
               @click="markAsPaid(item)"
               class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
               title="Mark as Paid"
@@ -343,9 +391,12 @@ const showEditModal = ref(false);
 const showViewModal = ref(false);
 const selectedPayment = ref(null);
 
+const bankAccountOptions = ref([]);
+
 // Filters
 const filters = reactive({
   payment_type: '',
+  bank_account_id: '',
   status: '',
   start_date: '',
   end_date: '',
@@ -353,7 +404,7 @@ const filters = reactive({
 
 // Computed Helper Flags
 const hasActiveFilters = computed(() => {
-  return filters.payment_type !== '' || filters.status !== '' || filters.start_date !== '' || filters.end_date !== '';
+  return filters.payment_type !== '' || filters.bank_account_id !== '' || filters.status !== '' || filters.start_date !== '' || filters.end_date !== '';
 });
 
 const paidCount = computed(() => {
@@ -447,6 +498,7 @@ const fetchPayments = async (page = 1) => {
 
 const resetFilters = () => {
   filters.payment_type = '';
+  filters.bank_account_id = '';
   filters.status = '';
   filters.start_date = '';
   filters.end_date = '';
@@ -503,7 +555,7 @@ const approvePayment = async (payment) => {
 };
 
 const markAsPaid = async (payment) => {
-  if (!confirm('Are you sure you want to mark this payment as paid?')) {
+  if (!confirm('Are you sure you want to mark/process this payment as paid?')) {
     return;
   }
 
@@ -512,10 +564,31 @@ const markAsPaid = async (payment) => {
     const index = payments.value.findIndex(p => p.id === payment.id);
     if (index !== -1) {
       payments.value[index] = response.data.payment;
+    } else {
+      fetchPayments(pagination.value.current_page);
     }
   } catch (error) {
     console.error('Error marking payment as paid:', error);
-    alert('Failed to mark payment as paid');
+    alert(error.response?.data?.message || 'Failed to mark payment as paid');
+  }
+};
+
+const cancelPayment = async (payment) => {
+  if (!confirm(`Are you sure you want to cancel payment ${payment.payment_number || ''}?`)) {
+    return;
+  }
+
+  try {
+    const response = await axios.post(`/api/payments/${payment.id}/cancel`);
+    const index = payments.value.findIndex(p => p.id === payment.id);
+    if (index !== -1) {
+      payments.value[index] = response.data.payment;
+    } else {
+      fetchPayments(pagination.value.current_page);
+    }
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    alert(error.response?.data?.message || 'Failed to cancel payment');
   }
 };
 
@@ -612,8 +685,18 @@ const getStatusDotClass = (status) => {
   return dots[status] || 'bg-slate-400';
 };
 
+const fetchPaymentOptions = async () => {
+  try {
+    const response = await axios.get('/api/payment-options');
+    bankAccountOptions.value = response.data.bank_accounts || [];
+  } catch (error) {
+    console.error('Error loading payment options:', error);
+  }
+};
+
 // Initialize
 onMounted(() => {
+  fetchPaymentOptions();
   fetchPayments();
 
   const urlParams = new URLSearchParams(window.location.search);

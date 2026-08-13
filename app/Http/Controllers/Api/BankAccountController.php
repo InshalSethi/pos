@@ -59,9 +59,38 @@ class BankAccountController extends Controller
 
         $bankAccounts = $query->orderBy('account_name')->get();
 
-        // Add current balance to each account
+        // Add current balance to each account and ensure chart_account_id auto-link and sync
         foreach ($bankAccounts as $account) {
-            $account->current_balance = $account->calculateBalance();
+            if (!$account->chart_account_id) {
+                $matchingAccount = Account::where('company_id', $account->company_id)
+                    ->where(function ($q) use ($account) {
+                        if ($account->is_default || str_contains(strtolower($account->account_name), 'cash') || str_contains(strtolower($account->bank_name), 'cash')) {
+                            $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%');
+                        } else {
+                            $q->where('account_code', '1020')->orWhere('account_name', 'LIKE', '%Bank%');
+                        }
+                    })->first();
+
+                if ($matchingAccount) {
+                    $account->chart_account_id = $matchingAccount->id;
+                    $account->save();
+                }
+            }
+
+            $calcBal = $account->calculateBalance();
+            if ((float)$account->current_balance !== (float)$calcBal) {
+                $account->update(['current_balance' => $calcBal]);
+            }
+            $account->current_balance = $calcBal;
+
+            if ($account->chart_account_id) {
+                DB::table('chart_of_accounts')
+                    ->where('id', $account->chart_account_id)
+                    ->update([
+                        'opening_balance' => round((float)$account->opening_balance, 2),
+                        'current_balance' => round((float)$calcBal, 2)
+                    ]);
+            }
         }
 
         return response()->json($bankAccounts);
@@ -269,6 +298,27 @@ class BankAccountController extends Controller
             BankAccount::where('company_id', $companyId)->where('id', '!=', $bankAccount->id)->update(['is_default' => false]);
         }
 
+        // Preserve existing chart_account_id if not explicitly provided
+        if (empty($data['chart_account_id']) && $bankAccount->chart_account_id) {
+            $data['chart_account_id'] = $bankAccount->chart_account_id;
+        }
+
+        // Auto-link to default Chart of Account (1010 Cash / 1020 Bank) if still null
+        if (empty($data['chart_account_id'])) {
+            $matchingChartAccount = Account::where('company_id', $companyId)
+                ->where(function ($q) use ($data, $bankAccount) {
+                    if ($bankAccount->is_default || str_contains(strtolower($data['account_name'] ?? ''), 'cash') || str_contains(strtolower($data['bank_name'] ?? ''), 'cash')) {
+                        $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%');
+                    } else {
+                        $q->where('account_code', '1020')->orWhere('account_name', 'LIKE', '%Bank%');
+                    }
+                })->first();
+
+            if ($matchingChartAccount) {
+                $data['chart_account_id'] = $matchingChartAccount->id;
+            }
+        }
+
         if (!empty($data['chart_account_id'])) {
             $chartAccount = Account::find($data['chart_account_id']);
             if ($chartAccount && !in_array($chartAccount->account_type, ['asset', 'liability'])) {
@@ -276,6 +326,11 @@ class BankAccountController extends Controller
                     'message' => 'Bank accounts must be linked to asset or liability accounts'
                 ], 422);
             }
+        }
+
+        // If opening_balance is updated and no transactions exist, ensure current_balance is synced directly to opening_balance
+        if (isset($data['opening_balance']) && !$bankAccount->bankTransactions()->exists()) {
+            $data['current_balance'] = round((float)$data['opening_balance'], 2);
         }
 
         $bankAccount->update($data);
@@ -584,9 +639,29 @@ class BankAccountController extends Controller
             $bankAccount = BankAccount::find($bankAccountId);
             if (!$bankAccount) return;
 
+            // Auto-link chart_account_id if missing
+            if (!$bankAccount->chart_account_id) {
+                $matchingAccount = Account::where('company_id', $bankAccount->company_id)
+                    ->where(function ($q) use ($bankAccount) {
+                        if ($bankAccount->is_default || str_contains(strtolower($bankAccount->account_name), 'cash') || str_contains(strtolower($bankAccount->bank_name), 'cash')) {
+                            $q->where('account_code', '1010')->orWhere('account_name', 'LIKE', '%Cash%');
+                        } else {
+                            $q->where('account_code', '1020')->orWhere('account_name', 'LIKE', '%Bank%');
+                        }
+                    })->first();
+
+                if ($matchingAccount) {
+                    $bankAccount->chart_account_id = $matchingAccount->id;
+                    $bankAccount->save();
+                }
+            }
+
             if ($newBalance === null) {
                 $newBalance = $bankAccount->calculateBalance();
             }
+
+            $newBalance = round((float) $newBalance, 2);
+            $openingBalance = round((float) ($bankAccount->opening_balance ?? 0), 2);
 
             // 1. Update Bank Account table
             $bankAccount->update(['current_balance' => $newBalance]);
@@ -600,23 +675,25 @@ class BankAccountController extends Controller
                 $formattedName = $accountName ?: $bankName;
             }
 
-            Account::where('company_id', $bankAccount->company_id)
-                ->where(function ($query) use ($bankAccount) {
-                    if ($bankAccount->chart_account_id) {
-                        $query->where('id', $bankAccount->chart_account_id);
-                    } else {
-                        if ($bankAccount->bank_name) {
-                            $query->orWhere('account_name', 'LIKE', "%{$bankAccount->bank_name}%");
-                        }
-                        if ($bankAccount->account_name) {
-                            $query->orWhere('account_name', 'LIKE', "%{$bankAccount->account_name}%");
-                        }
+            $accountQuery = Account::where('company_id', $bankAccount->company_id);
+            if ($bankAccount->chart_account_id) {
+                $accountQuery->where('id', $bankAccount->chart_account_id);
+            } else {
+                $accountQuery->where(function ($query) use ($bankAccount) {
+                    if ($bankAccount->bank_name) {
+                        $query->orWhere('account_name', 'LIKE', "%{$bankAccount->bank_name}%");
                     }
-                })
-                ->update([
-                    'account_name' => $formattedName,
-                    'current_balance' => $newBalance
-                ]);
+                    if ($bankAccount->account_name) {
+                        $query->orWhere('account_name', 'LIKE', "%{$bankAccount->account_name}%");
+                    }
+                });
+            }
+
+            $accountQuery->update([
+                'account_name' => $formattedName,
+                'opening_balance' => $openingBalance,
+                'current_balance' => $newBalance
+            ]);
         });
     }
 }

@@ -27,7 +27,8 @@ class BankAccount extends Model
 
         static::saved(function ($bankAccount) {
             if ($bankAccount->chart_account_id) {
-                $balanceToSync = $bankAccount->current_balance ?? $bankAccount->opening_balance ?? 0;
+                $balanceToSync = round((float)($bankAccount->current_balance ?? $bankAccount->opening_balance ?? 0), 2);
+                $openingToSync = round((float)($bankAccount->opening_balance ?? 0), 2);
                 
                 $bankName = trim($bankAccount->bank_name ?? '');
                 $accountName = trim($bankAccount->account_name ?? '');
@@ -42,7 +43,8 @@ class BankAccount extends Model
                     ->where('id', $bankAccount->chart_account_id)
                     ->update([
                         'account_name' => $formattedName,
-                        'current_balance' => (float)$balanceToSync,
+                        'opening_balance' => $openingToSync,
+                        'current_balance' => $balanceToSync,
                     ]);
             }
         });
@@ -150,44 +152,47 @@ class BankAccount extends Model
     {
         $hasTransactions = $this->bankTransactions()->exists();
         if (!$hasTransactions) {
-            $curr = (float) ($this->attributes['current_balance'] ?? 0);
-            return $curr != 0 ? $curr : (float) ($this->opening_balance ?? 0);
+            return round((float) ($this->opening_balance ?? 0), 2);
         }
 
-        $totalDebits = $this->bankTransactions()
+        $totalDebits = (float) $this->bankTransactions()
                            ->where('transaction_type', 'debit')
                            ->sum('amount');
 
-        $totalCredits = $this->bankTransactions()
+        $totalCredits = (float) $this->bankTransactions()
                             ->where('transaction_type', 'credit')
                             ->sum('amount');
 
         // For asset accounts (checking, savings): Debits increase (money in), Credits decrease (money out)
         // For liability accounts (credit cards): Credits increase, Debits decrease
         if (in_array($this->account_type, ['checking', 'savings'])) {
-            return $this->opening_balance + $totalDebits - $totalCredits;
+            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
         } else {
-            return $this->opening_balance + $totalCredits - $totalDebits;
+            $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
         }
+
+        return round($bal, 2);
     }
 
     public function calculateReconciledBalance(): float
     {
-        $totalDebits = $this->bankTransactions()
+        $totalDebits = (float) $this->bankTransactions()
                            ->where('transaction_type', 'debit')
                            ->where('status', 'reconciled')
                            ->sum('amount');
 
-        $totalCredits = $this->bankTransactions()
+        $totalCredits = (float) $this->bankTransactions()
                             ->where('transaction_type', 'credit')
                             ->where('status', 'reconciled')
                             ->sum('amount');
 
         if (in_array($this->account_type, ['checking', 'savings'])) {
-            return $this->opening_balance + $totalDebits - $totalCredits;
+            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
         } else {
-            return $this->opening_balance + $totalCredits - $totalDebits;
+            $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
         }
+
+        return round($bal, 2);
     }
 
     public function getUnreconciledTransactionsCount(): int

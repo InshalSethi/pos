@@ -30,8 +30,8 @@ class Account extends Model
                               ->orWhere('bank_name', 'LIKE', "%{$account->account_name}%");
                     })
                     ->update([
-                        'opening_balance' => $account->opening_balance,
-                        'current_balance' => $account->current_balance,
+                        'opening_balance' => round((float)$account->opening_balance, 2),
+                        'current_balance' => round((float)$account->current_balance, 2),
                     ]);
             }
         });
@@ -153,10 +153,12 @@ class Account extends Model
 
         // Calculate balance based on account type
         if (in_array($this->account_type, ['asset', 'expense'])) {
-            return (float) $this->opening_balance + $totalDebits - $totalCredits;
+            $bal = (float) $this->opening_balance + $totalDebits - $totalCredits;
         } else {
-            return (float) $this->opening_balance + $totalCredits - $totalDebits;
+            $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
         }
+
+        return round($bal, 2);
     }
 
     public function updateCurrentBalance(): void
@@ -167,7 +169,10 @@ class Account extends Model
         // Direct COA Hard-Sync with Banking Module (Single Source of Truth)
         \Illuminate\Support\Facades\DB::table('bank_accounts')
             ->where('chart_account_id', $this->id)
-            ->update(['current_balance' => $this->current_balance]);
+            ->update([
+                'opening_balance' => round((float)$this->opening_balance, 2),
+                'current_balance' => round((float)$this->current_balance, 2)
+            ]);
     }
 
     public function getCurrentBalance(): float

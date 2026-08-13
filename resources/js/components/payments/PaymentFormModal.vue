@@ -159,8 +159,8 @@
             <span v-if="errors.reference_number" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.reference_number[0] }}</span>
           </div>
 
-          <!-- Status Floating Dropdown (Editing Mode) -->
-          <div v-if="isEditing">
+          <!-- Status Floating Dropdown -->
+          <div>
             <FloatingSelect
               v-model="form.status"
               label="Status"
@@ -208,6 +208,18 @@
             class="px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
           >
             Cancel
+          </button>
+
+          <button
+            type="button"
+            @click="saveAsDraft"
+            :disabled="loading"
+            class="px-4 py-2.5 border border-slate-300 dark:border-zinc-700 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-bold rounded-xl text-xs shadow-xs transition-all disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+            <span>Save as Draft</span>
           </button>
 
           <button
@@ -320,6 +332,7 @@ const statusOptions = [
   { value: 'draft', label: 'Draft' },
   { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
+  { value: 'paid', label: 'Paid' },
 ];
 
 // Methods
@@ -452,6 +465,11 @@ const populateForm = () => {
       status: props.payment.status || 'draft',
     });
   }
+};
+
+const saveAsDraft = () => {
+  form.status = 'draft';
+  submitForm();
 };
 
 const submitForm = async () => {

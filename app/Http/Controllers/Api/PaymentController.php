@@ -118,7 +118,7 @@ class PaymentController extends Controller
             'payee_type' => 'nullable|string|in:supplier,employee,customer,other',
             'payee_id' => 'nullable|integer',
             'payee_name' => 'required|string|max:255',
-            'status' => 'sometimes|string|in:draft,pending,approved',
+            'status' => 'sometimes|string|in:draft,pending,approved,paid',
             'additional_data' => 'nullable|array',
         ]);
 
@@ -206,7 +206,7 @@ class PaymentController extends Controller
             'payee_type' => 'nullable|string|in:supplier,employee,customer,other',
             'payee_id' => 'nullable|integer',
             'payee_name' => 'sometimes|string|max:255',
-            'status' => 'sometimes|string|in:draft,pending,approved',
+            'status' => 'sometimes|string|in:draft,pending,approved,paid,cancelled',
             'additional_data' => 'nullable|array',
         ]);
 

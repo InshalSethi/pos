@@ -86,7 +86,7 @@
                   type="text"
                   required
                   class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out bg-white"
-                  placeholder="e.g. Azlan Hassan"
+                  placeholder="e.g. John Doe"
                 />
                 <p v-if="errors.name" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ errors.name[0] }}</p>
               </div>
@@ -100,7 +100,7 @@
                   type="email"
                   required
                   class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out bg-white"
-                  placeholder="azlanhassan@gmail.com"
+                  placeholder="john@example.com"
                 />
                 <p v-if="errors.email" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ errors.email[0] }}</p>
               </div>

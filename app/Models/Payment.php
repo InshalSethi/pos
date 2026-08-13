@@ -242,6 +242,6 @@ class Payment extends Model
     // Check if payment can be paid
     public function canBePaid(): bool
     {
-        return in_array($this->status, ['approved', 'pending']);
+        return in_array($this->status, ['approved', 'pending', 'draft']);
     }
 }

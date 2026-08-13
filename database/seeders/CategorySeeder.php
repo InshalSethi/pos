@@ -71,15 +71,20 @@ class CategorySeeder extends Seeder
             ],
         ];
 
+        $company = \App\Models\Company::first();
+        $companyId = $company ? $company->id : 1;
+
         foreach ($categories as $categoryData) {
+            $categoryData['company_id'] = $companyId;
+            $categoryData['slug'] = \Illuminate\Support\Str::slug($categoryData['name']);
             Category::firstOrCreate(
-                ['name' => $categoryData['name']],
+                ['name' => $categoryData['name'], 'company_id' => $companyId],
                 $categoryData
             );
         }
 
         // Create subcategories for Electronics
-        $electronicsCategory = Category::where('name', 'Electronics')->first();
+        $electronicsCategory = Category::where('name', 'Electronics')->where('company_id', $companyId)->first();
         if ($electronicsCategory) {
             $subcategories = [
                 [
@@ -103,15 +108,17 @@ class CategorySeeder extends Seeder
             ];
 
             foreach ($subcategories as $subcategoryData) {
+                $subcategoryData['company_id'] = $companyId;
+                $subcategoryData['slug'] = \Illuminate\Support\Str::slug($subcategoryData['name']);
                 Category::firstOrCreate(
-                    ['name' => $subcategoryData['name'], 'parent_id' => $subcategoryData['parent_id']],
+                    ['name' => $subcategoryData['name'], 'parent_id' => $subcategoryData['parent_id'], 'company_id' => $companyId],
                     $subcategoryData
                 );
             }
         }
 
         // Create subcategories for Clothing
-        $clothingCategory = Category::where('name', 'Clothing')->first();
+        $clothingCategory = Category::where('name', 'Clothing')->where('company_id', $companyId)->first();
         if ($clothingCategory) {
             $subcategories = [
                 [
@@ -135,8 +142,10 @@ class CategorySeeder extends Seeder
             ];
 
             foreach ($subcategories as $subcategoryData) {
+                $subcategoryData['company_id'] = $companyId;
+                $subcategoryData['slug'] = \Illuminate\Support\Str::slug($subcategoryData['name']);
                 Category::firstOrCreate(
-                    ['name' => $subcategoryData['name'], 'parent_id' => $subcategoryData['parent_id']],
+                    ['name' => $subcategoryData['name'], 'parent_id' => $subcategoryData['parent_id'], 'company_id' => $companyId],
                     $subcategoryData
                 );
             }

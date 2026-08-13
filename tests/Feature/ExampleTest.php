@@ -14,6 +14,12 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(302);
+        $response->assertStatus(200);
+    }
+
+    public function test_database_is_pos_testing(): void
+    {
+        $dbName = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
+        $this->assertEquals('pos_testing', $dbName);
     }
 }
