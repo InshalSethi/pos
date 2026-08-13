@@ -1747,7 +1747,7 @@ const loadBankAccounts = async () => {
     const response = await api.get('/bank-accounts');
     const rawData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
     allAccounts.value = rawData;
-    const defaultActiveBank = activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+    const defaultActiveBank = activeBankAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.is_default || b.is_default === 1 || b.is_default === '1')) || activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
     if (defaultActiveBank && selectedBankIds.value.length === 0) {
       selectedBankIds.value = [defaultActiveBank.id];
       bankPaymentAmounts.value[defaultActiveBank.id] = 0;
@@ -1779,7 +1779,7 @@ const togglePaymentMethod = (methodId) => {
   } else {
     selectedPaymentMethods.value.push(methodId);
 
-    const defaultActiveBank = activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+    const defaultActiveBank = activeBankAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.is_default || b.is_default === 1 || b.is_default === '1')) || activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
     if ((methodId === 'card' || methodId === 'bank_transfer') && selectedBankIds.value.length === 0 && defaultActiveBank) {
       selectedBankIds.value = [defaultActiveBank.id];
       if (bankPaymentAmounts.value[defaultActiveBank.id] === undefined) {
@@ -1834,10 +1834,17 @@ const formatBankAccountLabel = (bank) => {
   const bankName = (bank.bank_name || '').trim();
   const accountName = (bank.account_name || '').trim();
   const maskedAcc = bank.masked_account_number || getMaskedAccountNumber(bank.account_number);
+  const isCreditCard = bank.account_type === 'credit_card';
 
   let baseLabel = '';
-  if (bankName && accountName && bankName.toLowerCase() !== accountName.toLowerCase()) {
-    baseLabel = `${bankName} (${accountName})`;
+  if (isCreditCard) {
+    let bankTitle = bankName || 'Credit Card';
+    if (!bankTitle.toLowerCase().includes('credit card')) {
+      bankTitle += '-Credit Card';
+    }
+    baseLabel = `${accountName || 'Card Holder'} (${bankTitle})`;
+  } else if (bankName && accountName && bankName.toLowerCase() !== accountName.toLowerCase()) {
+    baseLabel = `${accountName} (${bankName})`;
   } else {
     baseLabel = accountName || bankName || 'Bank';
   }

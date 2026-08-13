@@ -927,13 +927,7 @@ const getReceiptTypeDisplay = (type) => {
 };
 
 const getReceiptTypeBadgeClass = (type) => {
-  const classes = {
-    customer_payment: 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100',
-    customer_advance: 'bg-slate-800 text-white border-slate-800 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
-    supplier_refund: 'bg-slate-700 text-white border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
-    bank_transfer_in: 'bg-slate-200 text-slate-900 border-slate-300 dark:bg-zinc-700 dark:text-slate-100 dark:border-zinc-600',
-  };
-  return classes[type] || 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-zinc-800 dark:text-slate-200 dark:border-zinc-700';
+  return 'bg-white text-slate-900 border border-slate-200 dark:bg-black dark:text-white dark:border-zinc-800 shadow-2xs';
 };
 
 const formatStatusText = (status) => {
@@ -947,7 +941,7 @@ const formatStatusText = (status) => {
 };
 
 const getStatusBadgeClass = (status) => {
-  return 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100';
+  return 'bg-white text-slate-900 border border-slate-200 dark:bg-black dark:text-white dark:border-zinc-800 shadow-2xs';
 };
 
 const getStatusDotClass = (status) => {

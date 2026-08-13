@@ -415,9 +415,23 @@ const refundAccountOptions = computed(() => {
     const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
       ? parseFloat(bAcc.current_balance)
       : 0
+
+    let bLabel = '';
+    if (bAcc.account_type === 'credit_card') {
+      let bankTitle = bAcc.bank_name || 'Credit Card';
+      if (!bankTitle.toLowerCase().includes('credit card')) {
+        bankTitle += '-Credit Card';
+      }
+      bLabel = `${bAcc.account_name || 'Card Holder'} (${bankTitle})`;
+    } else {
+      bLabel = bAcc.bank_name && bAcc.bank_name !== bAcc.account_name
+        ? `${bAcc.account_name} (${bAcc.bank_name})`
+        : (bAcc.account_name || bAcc.bank_name || 'Bank');
+    }
+
     options.push({
       value: `bank_${bAcc.id}`,
-      label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name})${isInactive ? ' (Inactive)' : ''} — Avail: ${formatMoney(bal)}`,
+      label: `${bLabel}${isInactive ? ' (Inactive)' : ''} — Avail: ${formatMoney(bal)}`,
       type: 'bank',
       bank_id: bAcc.id,
       is_active: bAcc.is_active,

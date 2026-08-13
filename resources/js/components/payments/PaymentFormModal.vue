@@ -432,15 +432,10 @@ const formattedBankAccounts = computed(() => {
 
   if (method === 'cash') {
     filtered = bankAccounts.value.filter(acc => isCashAccount(acc));
-  } else if (method === 'bank_transfer') {
-    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
+  } else if (method === 'bank_transfer' || method === 'check' || method === 'cheque') {
+    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc) && !isCardAccount(acc));
   } else if (method === 'card') {
     filtered = bankAccounts.value.filter(acc => isCardAccount(acc));
-    if (filtered.length === 0) {
-      filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
-    }
-  } else if (method === 'check' || method === 'cheque') {
-    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
   }
 
   return filtered.map(acc => {
@@ -456,9 +451,22 @@ const formattedBankAccounts = computed(() => {
     if (accNum) sublabelParts.push(accNum);
     sublabelParts.push(`Balance: ${formattedBal}`);
 
+    let labelText = '';
+    if (acc.account_type === 'credit_card') {
+      let bankTitle = acc.bank_name || 'Credit Card';
+      if (!bankTitle.toLowerCase().includes('credit card')) {
+        bankTitle += '-Credit Card';
+      }
+      labelText = `${acc.account_name || 'Card Holder'} (${bankTitle})`;
+    } else {
+      labelText = (acc.bank_name && acc.bank_name !== acc.account_name)
+        ? `${acc.account_name} (${acc.bank_name})`
+        : (acc.account_name || acc.bank_name || 'Bank Account');
+    }
+
     return {
       value: acc.id,
-      label: acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name,
+      label: labelText,
       sublabel: sublabelParts.join(' • '),
       balance: formattedBal
     };
@@ -467,16 +475,31 @@ const formattedBankAccounts = computed(() => {
 
 const onPaymentMethodChange = () => {
   const available = formattedBankAccounts.value;
+  if (available.length === 0) {
+    form.bank_account_id = '';
+    return;
+  }
+
   const exists = available.some(acc => String(acc.value) === String(form.bank_account_id));
-  if (!exists) {
-    form.bank_account_id = available.length > 0 ? available[0].value : '';
+
+  if (!exists || !form.bank_account_id) {
+    const defaultAccInAvailable = available.find(a => {
+      const rawAcc = bankAccounts.value.find(b => String(b.id) === String(a.value));
+      return rawAcc && (rawAcc.is_default || rawAcc.is_default === 1 || rawAcc.is_default === '1');
+    });
+
+    if (defaultAccInAvailable) {
+      form.bank_account_id = defaultAccInAvailable.value;
+    } else {
+      form.bank_account_id = available[0].value;
+    }
   }
 };
 
 const formattedPaymentMethods = computed(() => {
   return paymentMethods.value.map(m => ({
     value: m.value,
-    label: m.label
+    label: (m.value === 'check' || m.label === 'Check') ? 'Cheque' : m.label
   }));
 });
 
@@ -520,6 +543,12 @@ const loadPaymentOptions = async () => {
       paymentMethods: response.data.payment_methods || [],
       statuses: response.data.statuses || [],
     };
+
+    const defaultAcc = (response.data.bank_accounts || []).find(acc => acc.is_default || acc.is_default === 1 || acc.is_default === '1');
+    const defaultId = defaultAcc ? defaultAcc.id : ((response.data.bank_accounts || []).length > 0 ? response.data.bank_accounts[0].id : '');
+    if (!form.bank_account_id && defaultId) {
+      form.bank_account_id = defaultId;
+    }
   } catch (error) {
     console.error('Error loading payment options:', error);
     paymentOptions.value = {
@@ -538,7 +567,7 @@ const loadPaymentOptions = async () => {
       paymentMethods: [
         { value: 'cash', label: 'Cash' },
         { value: 'bank_transfer', label: 'Bank Transfer' },
-        { value: 'check', label: 'Check' },
+        { value: 'check', label: 'Cheque' },
         { value: 'card', label: 'Card' },
       ],
       statuses: [
@@ -661,6 +690,9 @@ const removeExistingFile = (index) => {
 };
 
 const resetForm = () => {
+  const defaultAcc = bankAccounts.value.find(acc => acc.is_default || acc.is_default === 1 || acc.is_default === '1');
+  const defaultId = defaultAcc ? defaultAcc.id : (bankAccounts.value.length > 0 ? bankAccounts.value[0].id : '');
+
   Object.assign(form, {
     payment_type: '',
     amount: '',
@@ -669,7 +701,7 @@ const resetForm = () => {
     reference_number: '',
     description: '',
     notes: '',
-    bank_account_id: '',
+    bank_account_id: defaultId,
     payee_type: '',
     payee_id: '',
     payee_name: '',
@@ -769,6 +801,10 @@ const submitForm = async () => {
 };
 
 // Watchers
+watch(() => form.payment_method, () => {
+  onPaymentMethodChange();
+});
+
 watch([() => props.show, () => props.payment], async ([newShow, newPayment]) => {
   if (newShow) {
     await loadPaymentOptions();

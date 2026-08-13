@@ -1009,12 +1009,22 @@ const formatBankAccountLabel = (acc) => {
   const bankName = acc.bank_name || acc.bank || '';
   const rawNum = String(acc.account_number || acc.account_no || acc.number || acc.code || '').trim();
   const last4Digits = rawNum ? rawNum.slice(-4) : '';
+  const isCreditCard = acc.account_type === 'credit_card';
+
+  if (isCreditCard) {
+    let bankTitle = bankName || 'Credit Card';
+    if (!bankTitle.toLowerCase().includes('credit card')) {
+      bankTitle += '-Credit Card';
+    }
+    const cardTitle = `${accountName || 'Card Holder'} (${bankTitle})`;
+    return last4Digits ? `${cardTitle} (•••• ${last4Digits})` : cardTitle;
+  }
 
   if (accountName && bankName && last4Digits) {
-    return `${accountName} — ${bankName} (•••• ${last4Digits})`;
+    return `${accountName} (${bankName}) (•••• ${last4Digits})`;
   }
   if (accountName && bankName) {
-    return `${accountName} — ${bankName}`;
+    return `${accountName} (${bankName})`;
   }
   if (accountName && last4Digits) {
     return `${accountName} (•••• ${last4Digits})`;

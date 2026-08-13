@@ -686,9 +686,8 @@ class PaymentReceiptController extends Controller
             'payment_methods' => [
                 ['value' => 'cash', 'label' => 'Cash'],
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
-                ['value' => 'check', 'label' => 'Check'],
+                ['value' => 'check', 'label' => 'Cheque'],
                 ['value' => 'card', 'label' => 'Card'],
-                ['value' => 'online', 'label' => 'Online Payment'],
             ],
             'statuses' => [
                 ['value' => 'draft', 'label' => 'Draft'],

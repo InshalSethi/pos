@@ -598,6 +598,8 @@ class PaymentController extends Controller
     public function getPaymentOptions(): JsonResponse
     {
         $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active', 'current_balance', 'opening_balance')
+                                  ->orderByDesc('is_default')
+                                  ->orderBy('account_name')
                                   ->get();
 
         $suppliers = Supplier::where('is_active', true)
@@ -636,7 +638,7 @@ class PaymentController extends Controller
             'payment_methods' => [
                 ['value' => 'cash', 'label' => 'Cash'],
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
-                ['value' => 'check', 'label' => 'Check'],
+                ['value' => 'check', 'label' => 'Cheque'],
                 ['value' => 'card', 'label' => 'Card'],
             ],
             'statuses' => [

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-5xl mx-auto py-6 sm:px-6 lg:px-8 space-y-6">
+  <div class="space-y-6">
     <!-- Top Header & Breadcrumb -->
     <div>
       <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400 mb-2">
@@ -86,6 +86,7 @@
                 <input
                   :value="form.expiry_date"
                   @input="handleExpiryInput"
+                  @keypress="onlyDigits"
                   type="text"
                   name="card_exp_date"
                   autocomplete="off"
@@ -95,6 +96,7 @@
                   placeholder="MM/YYYY (e.g. 07/2026)"
                   class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
                 />
+                <p v-if="expiryError" class="text-xs text-rose-500 font-semibold mt-1">{{ expiryError }}</p>
               </div>
 
               <div>
@@ -104,15 +106,17 @@
                 <input
                   :value="form.cvv"
                   @input="handleCvvInput"
+                  @keypress="onlyDigits"
                   type="text"
                   name="card_security_code"
                   autocomplete="off"
                   data-lpignore="true"
                   data-form-type="other"
-                  maxlength="4"
+                  maxlength="3"
                   placeholder="e.g. 123"
                   class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
                 />
+                <p v-if="cvvError" class="text-xs text-rose-500 font-semibold mt-1">{{ cvvError }}</p>
               </div>
             </template>
 
@@ -344,16 +348,31 @@ export default {
       }
     };
 
+    const expiryError = ref('');
+    const cvvError = ref('');
+
     const handleCancel = () => {
       router.push('/banking/accounts');
     };
 
+    const onlyDigits = (e) => {
+      const char = String.fromCharCode(e.which || e.keyCode);
+      if (!/[0-9]/.test(char)) {
+        e.preventDefault();
+      }
+    };
+
     const handleCvvInput = (e) => {
       let val = e.target.value.replace(/\D/g, '');
-      if (val.length > 4) {
-        val = val.slice(0, 4);
+      if (val.length > 3) {
+        val = val.slice(0, 3);
       }
       form.value.cvv = val;
+      if (val.length > 0 && val.length < 3) {
+        cvvError.value = 'CVV requires 3 digits';
+      } else {
+        cvvError.value = '';
+      }
     };
 
     const handleExpiryInput = (e) => {
@@ -362,6 +381,7 @@ export default {
 
       if (inputType === 'deleteContentBackward') {
         form.value.expiry_date = raw;
+        expiryError.value = '';
         return;
       }
 
@@ -369,6 +389,7 @@ export default {
 
       if (!digits) {
         form.value.expiry_date = '';
+        expiryError.value = '';
         return;
       }
 
@@ -376,9 +397,11 @@ export default {
         const firstNum = parseInt(digits[0], 10);
         if (firstNum >= 2) {
           form.value.expiry_date = `0${firstNum}/`;
+          expiryError.value = '';
           return;
         }
         form.value.expiry_date = digits;
+        expiryError.value = '';
         return;
       }
 
@@ -393,14 +416,35 @@ export default {
 
       let yy = digits.slice(2);
 
+      let formatted = '';
       if (digits.length >= 2) {
         if (yy.length > 0) {
-          form.value.expiry_date = `${mm}/${yy}`;
+          formatted = `${mm}/${yy}`;
         } else {
-          form.value.expiry_date = `${mm}/`;
+          formatted = `${mm}/`;
         }
       } else {
-        form.value.expiry_date = digits;
+        formatted = digits;
+      }
+
+      form.value.expiry_date = formatted;
+
+      if (formatted.length === 7) {
+        const [mStr, yStr] = formatted.split('/');
+        const expM = parseInt(mStr, 10);
+        const expY = parseInt(yStr, 10);
+        const now = new Date();
+        const curY = now.getFullYear();
+        const curM = now.getMonth() + 1;
+
+        if (expY < curY || (expY === curY && expM < curM)) {
+          expiryError.value = 'This card is expired';
+          showToast('This card is expired', 'error');
+        } else {
+          expiryError.value = '';
+        }
+      } else {
+        expiryError.value = '';
       }
     };
 
@@ -413,14 +457,29 @@ export default {
 
       if (form.value.account_type === 'credit_card') {
         const expVal = (form.value.expiry_date || '').trim();
-        if (!expVal || expVal.length < 5) {
+        if (!expVal || expVal.length < 7) {
+          expiryError.value = 'Please enter a valid Expiry Date (MM/YYYY)';
           showToast('Please enter a valid Expiry Date (e.g. 07/2026)', 'error');
           return;
         }
 
+        const [mStr, yStr] = expVal.split('/');
+        const expM = parseInt(mStr, 10);
+        const expY = parseInt(yStr, 10);
+        const now = new Date();
+        const curY = now.getFullYear();
+        const curM = now.getMonth() + 1;
+
+        if (expY < curY || (expY === curY && expM < curM)) {
+          expiryError.value = 'This card is expired';
+          showToast('This card is expired', 'error');
+          return;
+        }
+
         const cvvVal = (form.value.cvv || '').trim();
-        if (!cvvVal || (cvvVal.length !== 3 && cvvVal.length !== 4)) {
-          showToast('CVV must be 3 or 4 digits', 'error');
+        if (!cvvVal || cvvVal.length !== 3) {
+          cvvError.value = 'CVV requires 3 digits';
+          showToast('CVV requires 3 digits', 'error');
           return;
         }
       }
@@ -484,6 +543,9 @@ export default {
       submitting,
       isEditMode,
       currencyOptions,
+      expiryError,
+      cvvError,
+      onlyDigits,
       handleCancel,
       saveBankAccount,
       getCurrencySymbol,
