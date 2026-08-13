@@ -455,7 +455,13 @@ class OnboardingWizard extends Component
 
     public function render()
     {
-        return view('livewire.onboarding-wizard')
-               ->layout('components.layouts.app'); // Or base layout
+        $businessTypesList = \App\Models\BusinessType::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['slug', 'name', 'icon', 'description']);
+
+        return view('livewire.onboarding-wizard', [
+            'businessTypesList' => $businessTypesList
+        ])->layout('components.layouts.app');
     }
 }
