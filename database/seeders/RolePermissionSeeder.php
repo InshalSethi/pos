@@ -18,6 +18,9 @@ class RolePermissionSeeder extends Seeder
 
         // Create permissions
         $permissions = [
+            // Calendar permissions
+            'calendar.view',
+
             // Product permissions
             'products.view',
             'products.create',

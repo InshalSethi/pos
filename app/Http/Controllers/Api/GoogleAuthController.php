@@ -20,6 +20,18 @@ class GoogleAuthController extends Controller
             return redirect()->to('/auth/google/callback?mock=true&state=' . $flow);
         }
 
+        if ($flow === 'calendar_sync') {
+            return Socialite::driver('google')
+                ->stateless()
+                ->scopes(['https://www.googleapis.com/auth/calendar.events.readonly', 'https://www.googleapis.com/auth/calendar'])
+                ->with([
+                    'access_type' => 'offline',
+                    'prompt' => 'consent select_account',
+                    'state' => $flow
+                ])
+                ->redirect();
+        }
+
         return Socialite::driver('google')
             ->stateless()
             ->with([
@@ -49,6 +61,29 @@ class GoogleAuthController extends Controller
 
             // Get flow state
             $flow = request()->query('state', session('google_auth_action', 'login'));
+
+            if ($flow === 'calendar_sync') {
+                $authUser = Auth::user() ?: User::where('email', $googleUser->getEmail())->first();
+                if ($authUser) {
+                    \App\Models\GoogleCalendarSetting::updateOrCreate(
+                        ['user_id' => $authUser->id],
+                        [
+                            'company_id' => $authUser->current_company_id,
+                            'is_synced' => true,
+                            'calendar_id' => 'primary',
+                            'google_account_email' => $googleUser->getEmail(),
+                            'access_token' => property_exists($googleUser, 'token') ? $googleUser->token : ($googleUser->token ?? null),
+                            'refresh_token' => property_exists($googleUser, 'refreshToken') ? $googleUser->refreshToken : ($googleUser->refreshToken ?? null),
+                            'token_expires_at' => property_exists($googleUser, 'expiresIn') && $googleUser->expiresIn ? now()->addSeconds($googleUser->expiresIn) : null,
+                            'last_synced_at' => now(),
+                        ]
+                    );
+                    if (!Auth::check()) {
+                        Auth::guard('web')->login($authUser, true);
+                    }
+                }
+                return redirect()->to('/calendar?google_sync=success');
+            }
 
             // 1. Check if user already exists in database
             $user = User::where('email', $googleUser->getEmail())->first();

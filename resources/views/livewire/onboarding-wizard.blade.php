@@ -828,30 +828,100 @@
                                 @endphp
                                 <div class="space-y-4 animate-fade-in w-full relative">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-                                        <!-- Business Type -->
+                                        <!-- Business Type (Searchable Autocomplete from DB) -->
                                         <div class="flex flex-col space-y-1 w-full relative"
-                                            x-data="{ open: false, selected: '{{ $business_type && isset($businessTypes[$business_type]) ? $businessTypes[$business_type] : 'Choose an option' }}' }">
+                                            @click.outside="open = false; search = ''"
+                                            x-data="{
+                                                open: false,
+                                                search: '',
+                                                businessTypes: @js($businessTypesList ?? []),
+                                                selectedSlug: @js($business_type ?? ''),
+                                                selectedName: '',
+                                                init() {
+                                                    let found = this.businessTypes.find(b => b.slug === this.selectedSlug || b.name === this.selectedSlug);
+                                                    if (found) {
+                                                        this.selectedName = found.name;
+                                                        this.selectedSlug = found.slug;
+                                                    } else if (this.selectedSlug) {
+                                                        this.selectedName = this.selectedSlug;
+                                                    } else {
+                                                        this.selectedName = 'Choose an option';
+                                                    }
+                                                },
+                                                get filteredTypes() {
+                                                    if (!this.search.trim()) return this.businessTypes;
+                                                    let q = this.search.toLowerCase();
+                                                    return this.businessTypes.filter(b => 
+                                                        b.name.toLowerCase().includes(q) || 
+                                                        (b.description && b.description.toLowerCase().includes(q))
+                                                    );
+                                                },
+                                                selectType(b) {
+                                                    this.selectedName = b.name;
+                                                    this.selectedSlug = b.slug;
+                                                    this.open = false;
+                                                    this.search = '';
+                                                    $wire.set('business_type', b.slug);
+                                                }
+                                            }">
                                             <label class="text-xs font-bold text-slate-700">What does your company do?</label>
+                                            
+                                            <!-- Dropdown Trigger Button -->
                                             <button type="button"
-                                                @click="open = !open" @click.outside="open = false"
-                                                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg bg-white text-sm flex justify-between items-center cursor-pointer text-slate-700 outline-none focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200">
-                                                <span x-text="selected" class="truncate"></span>
+                                                @click="open = !open"
+                                                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg bg-white text-sm flex justify-between items-center cursor-pointer text-slate-700 outline-none focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 shadow-sm">
+                                                <span x-text="selectedName" :class="selectedSlug ? 'text-slate-900 font-semibold' : 'text-slate-500'" class="truncate"></span>
                                                 <svg :class="open ? 'rotate-180' : ''"
-                                                    class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none"
+                                                    class="w-4 h-4 text-slate-400 transition-transform duration-200 ml-2 shrink-0" fill="none"
                                                     stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M19 9l-7 7-7-7" />
                                                 </svg>
                                             </button>
+
+                                            <!-- Dropdown Popover with Search & List -->
                                             <div x-show="open" x-transition style="display: none;"
-                                                class="absolute top-[100%] z-50 left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1.5 focus:outline-none custom-scrollbar">
-                                                @foreach($businessTypes as $key => $label)
-                                                    <div @click="selected = '{{ $label }}'; open = false; $wire.set('business_type', '{{ $key }}')"
-                                                        class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 hover:text-slate-950 font-medium cursor-pointer transition-colors flex items-center {{ $business_type == $key ? 'bg-slate-50 text-slate-950 font-bold' : 'text-slate-700' }}">
-                                                        {{ $label }}
+                                                class="absolute top-[100%] z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-64 overflow-hidden py-2 focus:outline-none flex flex-col">
+                                                <!-- Search Bar -->
+                                                <div class="px-2.5 pb-2 border-b border-slate-100" @click.stop>
+                                                    <div class="relative">
+                                                        <input type="text"
+                                                            x-model="search"
+                                                            @click.stop
+                                                            @focus.stop
+                                                            @keydown.stop
+                                                            placeholder="Search business type..."
+                                                            class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-700 outline-none focus:border-slate-400 focus:bg-white transition-all" />
+                                                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                        </svg>
                                                     </div>
-                                                @endforeach
+                                                </div>
+
+                                                <!-- Scrollable Options List -->
+                                                <div class="max-h-48 overflow-y-auto py-1 custom-scrollbar">
+                                                    <template x-for="b in filteredTypes" :key="b.slug">
+                                                        <button type="button"
+                                                            @click="selectType(b)"
+                                                            class="w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors"
+                                                            :class="selectedSlug === b.slug ? 'bg-slate-50 font-bold text-slate-950' : 'text-slate-700'">
+                                                            <div class="flex flex-col truncate pr-2">
+                                                                <span class="font-medium text-slate-800 text-xs truncate" x-text="b.name"></span>
+                                                                <span x-show="b.description" class="text-[11px] text-slate-400 font-normal truncate mt-0.5" x-text="b.description"></span>
+                                                            </div>
+                                                            <span x-show="selectedSlug === b.slug" class="text-slate-900 ml-2 shrink-0">
+                                                                <svg class="w-3.5 h-3.5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                                </svg>
+                                                            </span>
+                                                        </button>
+                                                    </template>
+                                                    <div x-show="filteredTypes.length === 0" class="px-3 py-4 text-center text-xs text-slate-400">
+                                                        No matching business type found
+                                                    </div>
+                                                </div>
                                             </div>
+
                                             @error('business_type') <span
                                             class="text-red-500 text-xs mt-1 font-medium block">{{ $message }}</span> @enderror
                                         </div>
