@@ -69,23 +69,24 @@ const print = () => {
       <html>
         <head>
           <title>Print Barcode - ${props.product.name}</title>
-          <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
+            body { font-family: ui-sans-serif, system-ui, sans-serif; background-color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+            #print-area { border: 2px solid #000; padding: 32px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 400px; box-sizing: border-box; }
             @media print {
-              body { margin: 0; padding: 20px; }
-              #print-area { width: 100%; border: none !important; box-shadow: none !important; }
+              body { padding: 0; }
+              #print-area { border: none !important; box-shadow: none !important; width: 100%; max-width: 100%; }
             }
           </style>
         </head>
-        <body class="bg-white flex items-center justify-center min-h-screen">
-          <div id="print-area" class="border-2 border-black p-8 text-center flex flex-col items-center">
+        <body>
+          <div id="print-area">
             ${label.innerHTML}
           </div>
           <script>
             setTimeout(() => {
               window.print();
               window.close();
-            }, 500);
+            }, 300);
           <\/script>
         </body>
       </html>
