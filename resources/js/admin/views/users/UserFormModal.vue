@@ -291,14 +291,9 @@
                   v-model="form.business_type" 
                   class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold cursor-pointer"
                 >
-                  <option value="Retail Store">Retail Store</option>
-                  <option value="Supermarket / Grocery">Supermarket / Grocery</option>
-                  <option value="Pharmacy / Medical">Pharmacy / Medical</option>
-                  <option value="Restaurant / Cafe">Restaurant / Cafe</option>
-                  <option value="Wholesale / Distributor">Wholesale / Distributor</option>
-                  <option value="Service / Repair Shop">Service / Repair Shop</option>
-                  <option value="Hardware & Electronics">Hardware & Electronics</option>
-                  <option value="Apparel & Fashion">Apparel & Fashion</option>
+                  <option v-for="type in businessTypes" :key="type.id || type.name" :value="type.name">
+                    {{ type.name }}
+                  </option>
                 </select>
               </div>
 
@@ -503,6 +498,28 @@ const availableTasks = [
   { id: 'accounting', name: 'Accounting & Reports', desc: 'General ledger, journal entries, and balance sheets' },
   { id: 'hr', name: 'HR & Payroll', desc: 'Employee records, attendance, and payroll processing' }
 ];
+
+const businessTypes = ref([
+  { id: 1, name: 'Retail Store' },
+  { id: 2, name: 'Supermarket / Grocery' },
+  { id: 3, name: 'Pharmacy / Medical' },
+  { id: 4, name: 'Restaurant / Cafe' },
+  { id: 5, name: 'Wholesale / Distributor' },
+  { id: 6, name: 'Service / Repair Shop' },
+  { id: 7, name: 'Hardware & Electronics' },
+  { id: 8, name: 'Apparel & Fashion' }
+]);
+
+const fetchBusinessTypes = async () => {
+  try {
+    const { data } = await axios.get('/admin/api/options/business-types');
+    if (Array.isArray(data) && data.length > 0) {
+      businessTypes.value = data;
+    }
+  } catch (e) {
+    console.error("Failed to load business types options", e);
+  }
+};
 
 const form = ref({
   // User Credentials
@@ -709,6 +726,7 @@ const submitForm = async () => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     resetForm();
+    fetchBusinessTypes();
     if (props.userId) {
       loadUser();
     }

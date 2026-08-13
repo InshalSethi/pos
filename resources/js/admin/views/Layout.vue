@@ -95,6 +95,23 @@
                     ]"></i>
                     <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Roles & Permissions</span>
                 </router-link>
+
+                <router-link 
+                    :to="{ name: 'admin.business-types.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('business-types')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Business Types' : ''"
+                >
+                    <i class="fas fa-briefcase w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('business-types') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Business Types</span>
+                </router-link>
             </nav>
         </aside>
 

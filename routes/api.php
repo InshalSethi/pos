@@ -53,6 +53,7 @@ use App\Http\Controllers\Api\CompanySwitcherController;
 use App\Http\Controllers\Api\AttributeController;
 // Public routes
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
+Route::get('/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
 Route::middleware('web')->group(function() {
     Route::post('/login', [AuthController::class , 'login'])->name('api.login');
     Route::post('/register', [AuthController::class , 'register']);
