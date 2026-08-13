@@ -34,7 +34,7 @@
           <button @click="openEditModal(item.id)" class="w-8 h-8 rounded-xl bg-zinc-100 text-zinc-800 hover:bg-black hover:text-white dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-white dark:hover:text-black flex items-center justify-center transition-all shadow-xs cursor-pointer" title="Edit User">
             <i class="fas fa-edit text-xs"></i>
           </button>
-          <button @click="deleteUser(item.id)" class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer" title="Delete User">
+          <button @click="openDeleteModal(item)" class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer" title="Delete User & Related Data">
             <i class="fas fa-trash text-xs"></i>
           </button>
         </div>
@@ -55,6 +55,14 @@
       @close="onModalClose"
       @saved="onUserSaved"
     />
+
+    <!-- User Cascade Delete Confirmation Modal -->
+    <UserDeleteModal
+      :show="showDeleteModal"
+      :user="selectedDeleteUser"
+      @close="showDeleteModal = false"
+      @deleted="onUserDeleted"
+    />
   </div>
 </template>
 
@@ -65,6 +73,7 @@ import axios from 'axios';
 import DataTable from '../../components/DataTable.vue';
 import UserDetailModal from './UserDetailModal.vue';
 import UserFormModal from './UserFormModal.vue';
+import UserDeleteModal from './UserDeleteModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -76,6 +85,9 @@ const selectedViewUserId = ref(null);
 
 const showFormModal = ref(false);
 const selectedEditUserId = ref(null);
+
+const showDeleteModal = ref(false);
+const selectedDeleteUser = ref(null);
 
 const columns = [
   { key: 'id', label: 'ID' },
@@ -119,6 +131,11 @@ const openEditModal = (id) => {
   showFormModal.value = true;
 };
 
+const openDeleteModal = (user) => {
+  selectedDeleteUser.value = user;
+  showDeleteModal.value = true;
+};
+
 const onModalClose = () => {
   showFormModal.value = false;
   if (route.name !== 'admin.users.index') {
@@ -135,16 +152,9 @@ const onUserSaved = () => {
   }
 };
 
-const deleteUser = async (id) => {
-  if (confirm('Are you sure you want to permanently delete this user?')) {
-    try {
-      await axios.delete(`/admin/api/users/${id}`);
-      if (dataTable.value) {
-        dataTable.value.fetchData();
-      }
-    } catch (e) {
-      alert(e.response?.data?.message || 'Failed to delete user');
-    }
+const onUserDeleted = () => {
+  if (dataTable.value) {
+    dataTable.value.fetchData();
   }
 };
 </script>
