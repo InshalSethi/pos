@@ -80,6 +80,89 @@ class ExpenseAccountingService
     }
 
     /**
+     * Process submission accounting for an expense:
+     * - Create Journal Entry (Debit Expense COA, Credit Bank/Cash/Card COA)
+     * - Post Journal Entry to update COA balances
+     * - Create BankTransaction record for Banking Transactions table
+     * - Update BankAccount current balance
+     */
+    public function processExpenseSubmission(Expense $expense, BankAccount $bankAccount, float $amount): JournalEntry
+    {
+        return DB::transaction(function () use ($expense, $bankAccount, $amount) {
+            $expenseAccount = $this->getExpenseAccount($expense);
+
+            // Get or create Bank Chart Account for this BankAccount
+            $bankChartAccount = $bankAccount->chartAccount;
+            if (!$bankChartAccount) {
+                $bankChartAccount = $this->getCashAccount($expense);
+            }
+
+            // 1. Deduct BankAccount balance
+            $bankAccount->current_balance = round((float)$bankAccount->current_balance - $amount, 2);
+            $bankAccount->save();
+
+            // 2. Create Journal Entry
+            $journalEntry = JournalEntry::create([
+                'entry_number' => $this->generateJournalEntryNumber(),
+                'entry_date' => now()->toDateString(),
+                'reference' => $expense->expense_number,
+                'description' => "Expense submitted: {$expense->title}",
+                'entry_type' => 'automatic',
+                'status' => 'draft',
+                'total_debit' => $amount,
+                'total_credit' => $amount,
+                'created_by' => auth()->id() ?? 1,
+            ]);
+
+            // 3. Create Journal Entry Lines
+            // Debit Line: Expense Account (COA)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $expenseAccount->id,
+                'description' => "Expense: {$expense->title}",
+                'debit_amount' => $amount,
+                'credit_amount' => 0,
+                'partner_type' => 'App\Models\Expense',
+                'partner_id' => $expense->id,
+            ]);
+
+            // Credit Line: Bank/Cash/Card Account (COA)
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $bankChartAccount->id,
+                'description' => "Payment from {$bankAccount->account_name} for {$expense->expense_number}",
+                'debit_amount' => 0,
+                'credit_amount' => $amount,
+                'partner_type' => 'App\Models\Expense',
+                'partner_id' => $expense->id,
+            ]);
+
+            // 4. Post Journal Entry (which auto-updates COA current_balance)
+            $this->postJournalEntry($journalEntry);
+
+            // 5. Create Bank Transaction entry for Banking Transactions table
+            BankTransaction::create([
+                'bank_account_id' => $bankAccount->id,
+                'journal_entry_id' => $journalEntry->id,
+                'transaction_date' => now()->toDateString(),
+                'transaction_type' => 'debit',
+                'amount' => $amount,
+                'description' => "Expense submitted: {$expense->title} ({$expense->expense_number})",
+                'reference_number' => $expense->reference_number ?: $expense->expense_number,
+                'running_balance' => $bankAccount->current_balance,
+                'status' => 'cleared',
+                'partner_type' => 'App\Models\Expense',
+                'partner_id' => $expense->id,
+            ]);
+
+            // 6. Update expense reference
+            $expense->update(['journal_entry_id' => $journalEntry->id]);
+
+            return $journalEntry;
+        });
+    }
+
+    /**
      * Create journal entry when expense is paid
      */
     public function createExpensePaymentJournalEntry(Expense $expense, $bankAccountId = null): ?JournalEntry

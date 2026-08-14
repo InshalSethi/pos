@@ -365,7 +365,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Submit expense for approval
+     * Submit expense for approval and deduct payment from relevant account(s)
      */
     public function submit(Expense $expense): JsonResponse
     {
@@ -375,13 +375,86 @@ class ExpenseController extends Controller
             ], 422);
         }
 
-        $expense->submit();
-        $expense->load(['category', 'employee', 'user', 'submittedBy']);
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'message' => 'Expense submitted for approval successfully',
-            'expense' => $expense
-        ]);
+            $expense->submit();
+
+            // Deduct payment from selected account(s) upon submission
+            $payments = $expense->payments;
+            if (!is_array($payments) || empty($payments)) {
+                $payments = [[
+                    'method' => $expense->payment_method ?: 'cash',
+                    'amount' => $expense->amount,
+                    'bank_id' => $expense->bank_account_id ?? null
+                ]];
+            }
+
+            foreach ($payments as $paymentItem) {
+                $amount = floatval($paymentItem['amount'] ?? 0);
+                if ($amount <= 0) continue;
+
+                $bankId = $paymentItem['bank_id'] ?? null;
+                $bankAccount = null;
+
+                if ($bankId) {
+                    $bankAccount = BankAccount::find($bankId);
+                }
+
+                // Search by payment method if bank_id was not explicitly passed
+                if (!$bankAccount) {
+                    $method = $paymentItem['method'] ?? 'cash';
+                    if ($method === 'cash') {
+                        $bankAccount = BankAccount::where('is_active', true)
+                            ->where(function ($q) {
+                                $q->where('account_type', 'cash')
+                                  ->orWhere('bank_name', 'like', '%cash%')
+                                  ->orWhere('account_name', 'like', '%cash%');
+                            })->first() ?: BankAccount::where('is_active', true)->where('is_default', true)->first();
+                    } elseif ($method === 'credit_card' || $method === 'card') {
+                        $bankAccount = BankAccount::where('is_active', true)
+                            ->where(function ($q) {
+                                $q->where('account_type', 'credit_card')
+                                  ->orWhere('account_type', 'card')
+                                  ->orWhere('account_name', 'like', '%card%');
+                            })->first() ?: BankAccount::where('is_active', true)->where('is_default', true)->first();
+                    } else {
+                        $bankAccount = BankAccount::where('is_active', true)
+                            ->where('is_default', true)
+                            ->first() ?: BankAccount::where('is_active', true)->first();
+                    }
+                }
+
+                if ($bankAccount) {
+                    $this->accountingService->processExpenseSubmission($expense, $bankAccount, $amount);
+                }
+            }
+
+            // Audit log
+            ExpenseAuditLog::logExpenseChange(
+                $expense,
+                'submitted',
+                ['status' => 'draft'],
+                ['status' => 'submitted'],
+                'Expense submitted and payment deducted from account(s)'
+            );
+
+            DB::commit();
+
+            $expense->load(['category', 'employee', 'user', 'submittedBy']);
+
+            return response()->json([
+                'message' => 'Expense submitted and payment deducted successfully',
+                'expense' => $expense
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to submit expense',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

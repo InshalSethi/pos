@@ -109,6 +109,23 @@
               </svg>
             </button>
 
+            <!-- Submit (Tick Icon) Button for Draft Expenses -->
+            <button
+              v-if="item.status === 'draft'"
+              @click="submitExpense(item)"
+              :disabled="submittingId === item.id"
+              class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 transition-all cursor-pointer disabled:opacity-50"
+              title="Submit Expense & Deduct Payment"
+            >
+              <svg v-if="submittingId === item.id" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+
             <button
               v-if="canDelete(item)"
               @click="deleteExpense(item)"
@@ -257,6 +274,7 @@ const tableColumns = ref([
 ]);
 
 const showDeleteConfirmation = ref(false);
+const submittingId = ref(null);
 const deleteConfirmation = ref({
   title: '',
   message: '',
@@ -264,6 +282,21 @@ const deleteConfirmation = ref({
   loading: false,
   expenseToDelete: null
 });
+
+const submitExpense = async (expense) => {
+  try {
+    submittingId.value = expense.id;
+    const response = await axios.post(`/api/expenses/${expense.id}/submit`);
+    success(response.data.message || 'Expense submitted and payment deducted successfully');
+    fetchExpenses(pagination.value.current_page);
+    emit('refresh');
+  } catch (err) {
+    console.error('Error submitting expense:', err);
+    error(err.response?.data?.message || 'Failed to submit expense');
+  } finally {
+    submittingId.value = null;
+  }
+};
 
 const canEdit = computed(() => (expense) => {
   return authStore.hasPermission('expenses.edit');
