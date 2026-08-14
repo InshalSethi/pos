@@ -532,6 +532,12 @@ const routes = [
         component: () => import('@/components/calendar/CalendarView.vue'),
         meta: { permission: 'calendar.view' }
       },
+      {
+        path: 'tasks',
+        name: 'TaskBoard',
+        component: () => import('@/components/tasks/TaskBoardView.vue'),
+        meta: { permission: 'tasks.view' }
+      },
 
     ]
   },
