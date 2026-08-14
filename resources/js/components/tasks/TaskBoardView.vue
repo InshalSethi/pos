@@ -884,17 +884,18 @@
           <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden z-10 flex flex-col max-h-[90vh]">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-zinc-800">
               <h3 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>⚡ Filters & Sort</span>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                <span>Filters & Sort</span>
               </h3>
               <button @click="showFilterModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1">✕</button>
             </div>
 
-            <div class="p-6 space-y-5 overflow-y-auto custom-scrollbar text-xs">
-              <div class="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl space-y-3 border border-slate-200/80 dark:border-zinc-700">
-                <label class="font-extrabold text-slate-800 dark:text-white flex items-center gap-1.5 text-xs">
-                  <span>⇅ Sort By</span>
+            <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar text-xs">
+              <div class="bg-slate-50/50 dark:bg-zinc-800/30 rounded-2xl p-4 space-y-4 border border-slate-100 dark:border-zinc-800">
+                <label class="font-bold text-slate-800 dark:text-white flex items-center gap-1.5 text-[13px]">
+                  <svg class="w-4 h-4 text-[#a855f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg> Sort By
                 </label>
-                <select v-model="filters.sortBy" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                <select v-model="filters.sortBy" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 dark:text-zinc-200 focus:border-purple-500 outline-none">
                   <option value="board_order">Board Order</option>
                   <option value="title">Title</option>
                   <option value="priority">Priority</option>
@@ -902,36 +903,102 @@
                   <option value="created_at">Created Date</option>
                 </select>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     @click="filters.sortDirection = 'asc'"
-                    :class="['py-2 rounded-xl border font-extrabold text-xs cursor-pointer', filters.sortDirection === 'asc' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700']"
+                    :class="['py-2.5 rounded-xl border font-semibold text-[13px] cursor-pointer transition-colors flex items-center justify-center gap-1.5', filters.sortDirection === 'asc' ? 'bg-[#a855f7] text-white border-[#a855f7] shadow-sm' : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700']"
                   >
                     ↑ Ascending
                   </button>
                   <button
                     type="button"
                     @click="filters.sortDirection = 'desc'"
-                    :class="['py-2 rounded-xl border font-extrabold text-xs cursor-pointer', filters.sortDirection === 'desc' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700']"
+                    :class="['py-2.5 rounded-xl border font-semibold text-[13px] cursor-pointer transition-colors flex items-center justify-center gap-1.5', filters.sortDirection === 'desc' ? 'bg-[#a855f7] text-white border-[#a855f7] shadow-sm' : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700']"
                   >
                     ↓ Descending
                   </button>
                 </div>
               </div>
 
-              <div class="space-y-3.5">
-                <h4 class="font-extrabold text-slate-800 dark:text-white text-xs">Filters</h4>
-                <div>
-                  <label class="block font-bold text-slate-700 dark:text-zinc-300 text-[11px] mb-1">Search</label>
-                  <input v-model="filters.search" type="text" placeholder="Search tasks..." class="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white" />
+              <div class="space-y-4">
+                <h4 class="font-bold text-slate-800 dark:text-white text-[13px] flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                  Filters
+                </h4>
+                
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px]">Search</label>
+                  <input v-model="filters.search" type="text" placeholder="Search tasks..." class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-900 dark:text-white focus:border-purple-500 outline-none" />
                 </div>
+                
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px] flex items-center gap-1.5"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Status</label>
+                  <select v-model="filters.statusId" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 dark:text-zinc-200 focus:border-purple-500 outline-none">
+                    <option :value="null">All statuses</option>
+                    <option v-for="col in taskStore.columns" :key="col.id" :value="col.id">{{ col.name }}</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px] flex items-center gap-1.5"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg> Priority</label>
+                  <select v-model="filters.priority" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 dark:text-zinc-200 focus:border-purple-500 outline-none">
+                    <option value="all">All priorities</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px] flex items-center gap-1.5"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> Assignee</label>
+                  <select v-model="filters.assigneeId" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 dark:text-zinc-200 focus:border-purple-500 outline-none">
+                    <option value="all">All assignees</option>
+                    <option v-for="user in taskStore.assignees" :key="user.id" :value="user.id">{{ user.name }}</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px] flex items-center gap-1.5"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg> Tag</label>
+                  <select v-model="filters.tag" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-slate-800 dark:text-zinc-200 focus:border-purple-500 outline-none">
+                    <option value="">All tags</option>
+                    <option v-for="tag in allAvailableTags" :key="tag" :value="tag">{{ tag }}</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px] flex items-center gap-1.5"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Due Date Range</label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <input v-model="filters.dueDateFrom" type="date" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-600 dark:text-zinc-300 focus:border-purple-500 outline-none" />
+                    <input v-model="filters.dueDateTo" type="date" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-600 dark:text-zinc-300 focus:border-purple-500 outline-none" />
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block font-semibold text-slate-700 dark:text-zinc-300 text-[13px] flex items-center gap-1.5"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Created Date Range</label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <input v-model="filters.createdDateFrom" type="date" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-600 dark:text-zinc-300 focus:border-purple-500 outline-none" />
+                    <input v-model="filters.createdDateTo" type="date" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-600 dark:text-zinc-300 focus:border-purple-500 outline-none" />
+                  </div>
+                </div>
+
               </div>
             </div>
 
-            <div class="px-6 py-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900">
-              <button type="button" @click="resetFilters" class="text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer">Clear All</button>
-              <button type="button" @click="showFilterModal = false" class="px-6 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-900 font-extrabold rounded-xl text-xs shadow-md cursor-pointer">Apply</button>
+            <div class="px-6 py-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-900">
+              <div class="flex items-center gap-3">
+                <button type="button" class="text-[13px] font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg> Saved
+                </button>
+                <button type="button" @click="resetFilters" class="text-[13px] font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer pl-2">Clear All</button>
+              </div>
+              <div class="flex items-center gap-3">
+                <button type="button" class="text-[13px] font-semibold text-[#a855f7] hover:text-purple-700 flex items-center gap-1 cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Save
+                </button>
+                <button type="button" @click="showFilterModal = false" class="px-5 py-2 bg-[#a855f7] hover:bg-purple-600 text-white font-semibold rounded-xl text-[13px] shadow-sm cursor-pointer transition-colors">Apply</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1081,19 +1148,51 @@
               </div>
 
               <!-- Assignees -->
-              <div class="space-y-1">
+              <div class="space-y-1 relative" ref="assigneeDropdownRef">
                 <label class="text-xs font-bold text-slate-600 dark:text-zinc-400 flex items-center gap-1">
                   👥 <span>Assignees</span>
                 </label>
-                <select
-                  v-model="taskForm.assigned_to_id"
-                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-slate-900"
+                
+                <!-- Dropdown Trigger -->
+                <div 
+                  @click="showAssigneeDropdown = !showAssigneeDropdown"
+                  class="w-full min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs font-medium cursor-pointer flex items-center justify-between transition-colors hover:border-slate-300 dark:hover:border-zinc-600"
                 >
-                  <option :value="null">Select assignees...</option>
-                  <option v-for="emp in employeeOptions" :key="emp.id" :value="emp.id">
-                    {{ emp.name }} ({{ emp.email }})
-                  </option>
-                </select>
+                  <div class="flex flex-wrap gap-1.5 flex-1">
+                    <span v-if="taskForm.assignee_ids && taskForm.assignee_ids.length === 0" class="text-slate-400 dark:text-zinc-500 my-0.5">Select assignees...</span>
+                    <div v-else class="flex flex-wrap gap-1.5">
+                      <span v-for="aId in taskForm.assignee_ids" :key="aId" class="flex items-center gap-1.5 bg-white dark:bg-zinc-700 px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-600 text-[11px] text-slate-700 dark:text-zinc-200 font-bold shadow-sm">
+                        <div class="w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-600 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-zinc-300 shrink-0">
+                          {{ getInitials(getAssigneeName(aId)) }}
+                        </div>
+                        {{ getAssigneeName(aId) }}
+                        <span @click.stop="toggleAssignee(aId)" class="cursor-pointer text-slate-400 hover:text-rose-500 pl-0.5">×</span>
+                      </span>
+                    </div>
+                  </div>
+                  <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div v-if="showAssigneeDropdown" class="absolute z-[110] w-full mt-1 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-lg max-h-56 overflow-y-auto custom-scrollbar p-1">
+                  <div 
+                    v-for="user in taskStore.assignees" 
+                    :key="user.id"
+                    @click="toggleAssignee(user.id)"
+                    class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-700/50 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <div class="w-4 h-4 rounded border flex items-center justify-center shrink-0" :class="taskForm.assignee_ids.includes(user.id) ? 'bg-purple-500 border-purple-500' : 'border-slate-300 dark:border-zinc-600'">
+                      <svg v-if="taskForm.assignee_ids.includes(user.id)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    
+                    <div class="w-7 h-7 rounded-full bg-slate-200 dark:bg-zinc-600 flex items-center justify-center text-[11px] font-bold text-slate-600 dark:text-zinc-300 shrink-0 shadow-sm">
+                      {{ getInitials(user.name) }}
+                    </div>
+                    
+                    <span class="text-[13px] font-semibold text-slate-700 dark:text-zinc-200">{{ user.name }}</span>
+                  </div>
+                  <div v-if="taskStore.assignees.length === 0" class="px-3 py-4 text-[13px] text-slate-400 text-center font-medium">No users available</div>
+                </div>
               </div>
 
               <!-- Tags -->
@@ -1162,7 +1261,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useTaskStore } from '@/stores/task';
 
 const taskStore = useTaskStore();
@@ -1183,7 +1282,37 @@ const taskForm = reactive({
   task_column_id: null,
   priority: 'medium',
   due_date: null,
-  assigned_to_id: null,
+  assignee_ids: [],
+});
+
+const showAssigneeDropdown = ref(false);
+
+const toggleAssignee = (userId) => {
+  const idx = taskForm.assignee_ids.indexOf(userId);
+  if (idx > -1) {
+    taskForm.assignee_ids.splice(idx, 1);
+  } else {
+    taskForm.assignee_ids.push(userId);
+  }
+};
+
+const getAssigneeName = (userId) => {
+  const user = taskStore.assignees.find(u => u.id === userId);
+  return user ? user.name : 'Unknown';
+};
+
+// Close dropdown on click outside
+const assigneeDropdownRef = ref(null);
+const handleClickOutside = (e) => {
+  if (assigneeDropdownRef.value && !assigneeDropdownRef.value.contains(e.target)) {
+    showAssigneeDropdown.value = false;
+  }
+};
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 
 const showTaskDrawer = ref(false);
@@ -1256,18 +1385,22 @@ const cancelAddColumn = () => {
 const boardForm = reactive({ name: '', description: '' });
 
 const filters = reactive({
-  sortBy: 'board_order',
-  sortDirection: 'asc',
   search: '',
   statusId: null,
   priority: 'all',
   assigneeId: 'all',
   tag: '',
+  dueDateFrom: '',
+  dueDateTo: '',
+  createdDateFrom: '',
+  createdDateTo: '',
   myTasksOnly: false,
+  sortBy: 'board_order',
+  sortDirection: 'asc',
 });
 
 const isFilterActive = computed(() => {
-  return filters.search !== '' || filters.statusId !== null || filters.priority !== 'all' || filters.assigneeId !== 'all' || filters.tag !== '' || filters.myTasksOnly;
+  return filters.search !== '' || filters.statusId !== null || filters.priority !== 'all' || filters.assigneeId !== 'all' || filters.tag !== '' || filters.myTasksOnly || filters.dueDateFrom !== '' || filters.dueDateTo !== '' || filters.createdDateFrom !== '' || filters.createdDateTo !== '';
 });
 
 const resetFilters = () => {
@@ -1276,8 +1409,20 @@ const resetFilters = () => {
   filters.priority = 'all';
   filters.assigneeId = 'all';
   filters.tag = '';
+  filters.dueDateFrom = '';
+  filters.dueDateTo = '';
+  filters.createdDateFrom = '';
+  filters.createdDateTo = '';
   filters.myTasksOnly = false;
 };
+
+const allAvailableTags = computed(() => {
+  const tags = new Set();
+  (taskStore.tasks || []).forEach(t => {
+    if (t.tags) t.tags.forEach(tg => tags.add(tg));
+  });
+  return Array.from(tags).sort();
+});
 
 // Filtered Tasks
 const allFilteredTasks = computed(() => {
@@ -1286,6 +1431,46 @@ const allFilteredTasks = computed(() => {
   if (filters.search) {
     const q = filters.search.toLowerCase();
     list = list.filter(t => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
+  }
+  
+  if (filters.statusId) {
+    list = list.filter(t => t.task_column_id === filters.statusId);
+  }
+  
+  if (filters.priority !== 'all') {
+    list = list.filter(t => t.priority === filters.priority);
+  }
+  
+  if (filters.assigneeId !== 'all') {
+    list = list.filter(t => {
+      if (t.assignees && t.assignees.some(a => a.id === filters.assigneeId)) return true;
+      if (t.assigned_to_id === filters.assigneeId) return true;
+      return false;
+    });
+  }
+  
+  if (filters.tag) {
+    list = list.filter(t => t.tags && t.tags.includes(filters.tag));
+  }
+  
+  if (filters.dueDateFrom) {
+    const fromDate = new Date(filters.dueDateFrom).getTime();
+    list = list.filter(t => t.due_date && new Date(t.due_date).getTime() >= fromDate);
+  }
+  
+  if (filters.dueDateTo) {
+    const toDate = new Date(filters.dueDateTo).getTime();
+    list = list.filter(t => t.due_date && new Date(t.due_date).getTime() <= toDate);
+  }
+  
+  if (filters.createdDateFrom) {
+    const fromDate = new Date(filters.createdDateFrom).getTime();
+    list = list.filter(t => t.created_at && new Date(t.created_at).getTime() >= fromDate);
+  }
+  
+  if (filters.createdDateTo) {
+    const toDate = new Date(filters.createdDateTo).getTime();
+    list = list.filter(t => t.created_at && new Date(t.created_at).getTime() <= toDate);
   }
 
   list.sort((a, b) => {
@@ -1482,7 +1667,7 @@ const openCreateTaskModal = (defaultColumnId = null) => {
   taskForm.task_column_id = defaultColumnId || (taskStore.columns[0] ? taskStore.columns[0].id : null);
   taskForm.priority = 'medium';
   taskForm.due_date = null;
-  taskForm.assigned_to_id = null;
+  taskForm.assignee_ids = [];
   tagsInput.value = '';
   selectedFiles.value = [];
   showCreateTaskModal.value = true;
@@ -1496,8 +1681,7 @@ const editTaskModal = (task) => {
   taskForm.task_column_id = task.task_column_id;
   taskForm.priority = task.priority || 'medium';
   taskForm.due_date = task.due_date ? task.due_date.substring(0, 10) : null;
-  taskForm.assigned_to_id = task.assigned_to_id || null;
-  taskForm.assigned_to_id = task.assigned_to_id || null;
+  taskForm.assignee_ids = task.assignees ? task.assignees.map(a => a.id) : (task.assigned_to_id ? [task.assigned_to_id] : []);
   tagsInput.value = task.tags ? task.tags.join(', ') : '';
   selectedFiles.value = [];
   showCreateTaskModal.value = true;
@@ -1514,7 +1698,7 @@ const submitTaskModal = async () => {
     task_column_id: taskForm.task_column_id,
     priority: taskForm.priority,
     due_date: taskForm.due_date,
-    assigned_to_id: taskForm.assigned_to_id,
+    assignee_ids: taskForm.assignee_ids,
     tags: tagList,
     attachments: selectedFiles.value,
   };
