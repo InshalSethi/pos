@@ -28,6 +28,8 @@ class Supplier extends Model
         'state',
         'postal_code',
         'country',
+        'date_of_birth',
+        'gender',
         'tax_number',
         'website',
         'notes',
@@ -38,6 +40,7 @@ class Supplier extends Model
     ];
 
     protected $casts = [
+        'date_of_birth' => 'date',
         'is_active' => 'boolean',
         'credit_limit' => 'decimal:2',
         'advance_balance' => 'decimal:2',

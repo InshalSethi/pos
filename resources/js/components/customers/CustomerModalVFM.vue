@@ -40,7 +40,7 @@
             <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Basic Information</h4>
             
             <div>
-              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
               <input
                 id="name"
                 v-model="form.name"

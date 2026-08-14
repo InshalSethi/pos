@@ -51,7 +51,7 @@
             <!-- Tab 1: Basic Information -->
             <div v-if="activeTab === 'basic'" class="space-y-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Full Name *</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Customer Name *</label>
                 <input
                   v-model="form.name"
                   type="text"
@@ -230,13 +230,39 @@
                 </div>
 
                 <div>
-                  <CustomFloatingSelect
-                    label="Status"
-                    v-model="form.is_active"
-                    :options="statusOptions"
-                  />
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Status</label>
+                  <div class="flex items-center gap-3 h-[38px] px-3 border border-slate-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 transition-all">
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="form.is_active"
+                      @click="form.is_active = !form.is_active"
+                      class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-emerald-500/20"
+                      :class="form.is_active ? 'bg-slate-900 dark:bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'"
+                    >
+                      <span
+                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out"
+                        :class="form.is_active ? 'translate-x-4' : 'translate-x-0'"
+                      />
+                    </button>
+                    <span class="text-xs font-semibold" :class="form.is_active ? 'text-slate-900 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'">
+                      {{ form.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
                   <p v-if="errors.is_active" class="mt-1 text-[10px] text-red-500">{{ errors.is_active[0] }}</p>
                 </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Notes</label>
+                <textarea
+                  v-model="form.notes"
+                  rows="2"
+                  placeholder="Additional notes about the customer..."
+                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                  :class="{ 'border-red-300 dark:border-red-700': errors.notes }"
+                ></textarea>
+                <p v-if="errors.notes" class="mt-1 text-[10px] text-red-500">{{ errors.notes[0] }}</p>
               </div>
             </div>
 
