@@ -1,439 +1,505 @@
 <template>
-  <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-base font-bold text-slate-900 dark:text-white">
-          {{ isManagerMode ? (isEditing ? 'Edit Manager' : 'Create New Manager') : (isEditing ? 'Edit Employee' : 'Create New Employee') }}
-        </h3>
-        <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Form -->
-      <form novalidate @submit.prevent="saveEmployee" class="space-y-6">
-        <!-- Personal Information Section -->
-        <div class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl">
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Personal Information</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">First Name *</label>
-              <input
-                v-model="form.first_name"
-                type="text"
-                required
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              />
-              <span v-if="errors.first_name" class="text-red-500 text-xs mt-1 block">{{ errors.first_name[0] }}</span>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Middle Name</label>
-              <input
-                v-model="form.middle_name"
-                type="text"
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              />
-              <span v-if="errors.middle_name" class="text-red-500 text-xs mt-1 block">{{ errors.middle_name[0] }}</span>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Last Name *</label>
-              <input
-                v-model="form.last_name"
-                type="text"
-                required
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              />
-              <span v-if="errors.last_name" class="text-red-500 text-xs mt-1 block">{{ errors.last_name[0] }}</span>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Email *</label>
-              <input
-                v-model="form.email"
-                type="email"
-                required
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              />
-              <span v-if="errors.email" class="text-red-500 text-xs mt-1 block">{{ errors.email[0] }}</span>
-            </div>
-            <div>
-              <CustomPhoneInput
-                label="Phone"
-                v-model="form.phone"
-                :error="errors.phone"
-              />
-            </div>
-            <div>
-              <CustomPhoneInput
-                label="Mobile"
-                v-model="form.mobile"
-                :error="errors.mobile"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Date of Birth</label>
-              <input
-                v-model="form.date_of_birth"
-                type="date"
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              />
-              <span v-if="errors.date_of_birth" class="text-red-500 text-xs mt-1 block">{{ errors.date_of_birth[0] }}</span>
-            </div>
-            <div>
-              <FloatingSelect
-                v-model="form.gender"
-                label="Gender *"
-                placeholder="Select Gender"
-                :options="genderOptions"
-                required
-                :error="!!errors.gender"
-              />
-              <span v-if="errors.gender" class="text-red-500 text-xs mt-1 block">{{ errors.gender[0] }}</span>
-            </div>
-            <div>
-              <FloatingSelect
-                v-model="form.marital_status"
-                label="Marital Status"
-                placeholder="Select Status"
-                :options="maritalStatusOptions"
-                :error="!!errors.marital_status"
-              />
-              <span v-if="errors.marital_status" class="text-red-500 text-xs mt-1 block">{{ errors.marital_status[0] }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Employment / Managerial Information Section -->
-        <div class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl">
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
-            {{ isManagerMode ? 'Managerial Information' : 'Employment Information' }}
-          </h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <FloatingSelect
-                v-model="form.company_id"
-                label="Assign Company *"
-                placeholder="Select Company"
-                :options="companySelectOptions"
-                required
-                :error="!!errors.company_id"
-              />
-              <span v-if="errors.company_id" class="text-red-500 text-xs mt-1 block">{{ errors.company_id[0] }}</span>
-            </div>
-            <div v-if="isManagerMode" class="col-span-full">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
-                Managed Departments (Multi-Select)
-              </label>
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white dark:bg-zinc-800 p-3 border border-slate-200 dark:border-zinc-700/80 rounded-xl max-h-44 overflow-y-auto">
-                <label 
-                  v-for="dept in departments" 
-                  :key="dept.id"
-                  class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 dark:border-zinc-700/50 hover:bg-slate-50 dark:hover:bg-zinc-700/40 cursor-pointer transition-colors text-xs font-medium text-slate-800 dark:text-zinc-200"
-                >
-                  <input 
-                    type="checkbox" 
-                    :value="String(dept.id)" 
-                    v-model="form.department_ids"
-                    class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                  />
-                  <span class="truncate">{{ dept.name }}</span>
-                </label>
-              </div>
-              <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Select all departments overseen by this manager.</p>
-            </div>
-            <div v-else>
-              <FloatingSelect
-                v-model="form.department_id"
-                label="Department"
-                placeholder="Select Department"
-                :options="departmentSelectOptions"
-                :error="!!errors.department_id"
-              />
-              <span v-if="errors.department_id" class="text-red-500 text-xs mt-1 block">{{ errors.department_id[0] }}</span>
-            </div>
-            <div>
-              <FloatingSelect
-                v-model="form.position_id"
-                :label="isManagerMode ? 'Managerial Position *' : 'Position'"
-                placeholder="Select Position"
-                :options="positionSelectOptions"
-                :error="!!errors.position_id"
-              />
-              <span v-if="errors.position_id" class="text-red-500 text-xs mt-1 block">{{ errors.position_id[0] }}</span>
-
-              <!-- Position Level Indicator -->
-              <div class="mt-2 flex items-center gap-1.5 px-0.5">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Position Level:</span>
-                <span 
-                  v-if="selectedPositionDetails" 
-                  :class="getPositionLevelBadgeClass(selectedPositionDetails.level)"
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-xs"
-                >
-                  {{ selectedPositionDetails.level || 'Standard' }}
-                </span>
-                <span v-else class="text-[11px] italic text-slate-400 dark:text-zinc-500">
-                  Select a position to view level
-                </span>
-              </div>
-            </div>
-            <div v-if="!isManagerMode">
-              <FloatingSelect
-                v-model="form.manager_id"
-                label="Manager"
-                placeholder="Select Manager"
-                :options="managerSelectOptions"
-                :error="!!errors.manager_id"
-              />
-              <div class="flex items-center justify-between mt-1">
-                <span v-if="errors.manager_id" class="text-red-500 text-xs block">{{ errors.manager_id[0] }}</span>
-                <button
-                  type="button"
-                  @click="emit('add-manager')"
-                  class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 cursor-pointer transition-colors flex items-center gap-0.5 ml-auto"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                  Add New Manager
-                </button>
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Hire Date *</label>
-              <input
-                v-model="form.hire_date"
-                type="date"
-                required
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-              />
-              <span v-if="errors.hire_date" class="text-red-500 text-xs mt-1 block">{{ errors.hire_date[0] }}</span>
-            </div>
-            <div>
-              <FloatingSelect
-                v-model="form.employment_type"
-                label="Employment Type"
-                placeholder="Select Type"
-                :options="employmentTypeOptions"
-                required
-                :error="!!errors.employment_type"
-              />
-              <span v-if="errors.employment_type" class="text-red-500 text-xs mt-1 block">{{ errors.employment_type[0] }}</span>
-            </div>
-            <div v-if="isEditing">
-              <FloatingSelect
-                v-model="form.employment_status"
-                label="Employment Status"
-                placeholder="Select Status"
-                :options="employmentStatusOptions"
-                :error="!!errors.employment_status"
-              />
-              <span v-if="errors.employment_status" class="text-red-500 text-xs mt-1 block">{{ errors.employment_status[0] }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Salary Information Section -->
-        <div class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl">
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Salary Information</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
-                Basic Salary ({{ currencySymbol }}) *
-              </label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 dark:text-zinc-500 pointer-events-none">
-                  {{ currencySymbol }}
-                </span>
-                <input
-                  v-model="form.basic_salary"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  class="w-full pl-9 pr-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-                />
-              </div>
-              <span v-if="errors.basic_salary" class="text-red-500 text-xs mt-1 block">{{ errors.basic_salary[0] }}</span>
-            </div>
-            <div>
-              <FloatingSelect
-                v-model="form.salary_type"
-                label="Salary Type"
-                placeholder="Select Type"
-                :options="salaryTypeOptions"
-                required
-                :error="!!errors.salary_type"
-              />
-              <span v-if="errors.salary_type" class="text-red-500 text-xs mt-1 block">{{ errors.salary_type[0] }}</span>
-            </div>
-            <div v-if="form.salary_type === 'hourly'">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
-                Hourly Rate ({{ currencySymbol }})
-              </label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 dark:text-zinc-500 pointer-events-none">
-                  {{ currencySymbol }}
-                </span>
-                <input
-                  v-model="form.hourly_rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full pl-9 pr-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-                />
-              </div>
-              <span v-if="errors.hourly_rate" class="text-red-500 text-xs mt-1 block">{{ errors.hourly_rate[0] }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Profile Image Drag & Drop Upload Zone -->
-        <div class="bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800 p-4 rounded-2xl">
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Profile Photo</h4>
-          <div 
-            @dragover.prevent="isDragging = true" 
-            @dragleave.prevent="isDragging = false" 
-            @drop.prevent="handleDrop"
-            :class="[
-              'relative flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed transition-all duration-200',
-              isDragging ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-800/80'
-            ]"
-          >
-            <div class="flex-shrink-0 relative">
-              <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-zinc-700 flex items-center justify-center border border-slate-200 dark:border-zinc-700 shadow-sm">
-                <img v-if="photoPreview" :src="photoPreview" alt="Profile preview" class="w-full h-full object-cover" />
-                <svg v-else class="w-8 h-8 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-bold text-slate-800 dark:text-zinc-200">Drag & drop profile picture here</p>
-              <p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">JPEG, PNG, GIF up to 10MB</p>
-              <div class="flex items-center gap-2 mt-2">
-                <label class="px-3 py-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-[10px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity">
-                  Browse Image
-                  <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
-                </label>
-                <button v-if="photoPreview || selectedFile" type="button" @click="clearPhoto" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold text-[10px] rounded-lg hover:bg-rose-100 transition-colors cursor-pointer">
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-          <span v-if="errors.profile_image || errors.avatar" class="text-red-500 text-xs mt-1 block">{{ errors.profile_image?.[0] || errors.avatar?.[0] }}</span>
-        </div>
-
-        <!-- System Access & User Account Integration Section -->
-        <div class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-4 rounded-2xl">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">System Login Access</h4>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Grant system login access to this employee with a dedicated User account</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" v-model="form.create_user_account" class="sr-only peer" />
-              <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:peer-focus:ring-indigo-800 peer-checked:bg-indigo-600"></div>
-            </label>
-          </div>
-
-          <div v-if="form.create_user_account || (isEditing && employee?.user_id)" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-indigo-100 dark:border-indigo-900/30">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
-                {{ isEditing && employee?.user_id ? 'New Password' : 'Password *' }}
-              </label>
-              <div class="relative">
-                <input
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  autocomplete="new-password"
-                  :required="!isEditing || !employee?.user_id"
-                  placeholder="Leave blank to keep existing"
-                  class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all pr-10"
-                />
-                <button 
-                  type="button" 
-                  @click="showPassword = !showPassword"
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
-                  tabindex="-1"
-                  title="Toggle password visibility"
-                >
-                  <svg v-if="showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.076m1.406-1.407A10.014 10.014 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.059 10.059 0 01-4.293 5.774M6.228 6.228L17.772 17.772M9 9l6 6" />
-                  </svg>
-                </button>
-              </div>
-              <p v-if="isEditing && employee?.user_id" class="text-[10px] font-medium text-slate-400 dark:text-zinc-500 mt-1">
-                Leave blank to keep existing password
-              </p>
-              <span v-if="errors.password" class="text-red-500 text-xs mt-1 block">{{ errors.password[0] }}</span>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Confirm Password</label>
-              <div class="relative">
-                <input
-                  v-model="form.password_confirmation"
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  autocomplete="new-password"
-                  placeholder="Confirm new password"
-                  class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all pr-10"
-                />
-                <button 
-                  type="button" 
-                  @click="showConfirmPassword = !showConfirmPassword"
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
-                  tabindex="-1"
-                  title="Toggle password visibility"
-                >
-                  <svg v-if="showConfirmPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.076m1.406-1.407A10.014 10.014 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.059 10.059 0 01-4.293 5.774M6.228 6.228L17.772 17.772M9 9l6 6" />
-                  </svg>
-                </button>
-              </div>
-              <span v-if="errors.password_confirmation" class="text-red-500 text-xs mt-1 block">{{ errors.password_confirmation[0] }}</span>
-            </div>
-            <div>
-              <FloatingSelect
-                v-model="form.role"
-                label="System Role"
-                placeholder="Select Role"
-                :options="roleOptions"
-                :error="!!errors.role"
-              />
-              <span v-if="errors.role" class="text-red-500 text-xs mt-1 block">{{ errors.role[0] }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
+  <Teleport to="body">
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-y-auto my-auto z-10" @click.stop>
+        
+        <!-- Header -->
+        <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative">
+          <!-- Sleek Close Icon Button -->
           <button
             type="button"
             @click="$emit('close')"
-            class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer"
+            class="absolute top-5 right-5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer"
           >
-            Cancel
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">
+            {{ isManagerMode ? (isEditing ? 'Edit Manager' : 'Add New Manager') : (isEditing ? 'Edit Employee' : 'Add New Employee') }}
+          </h3>
+        </div>
+
+        <!-- Tab Navigation (Clean text tabs, matching Customer & Supplier Modals) -->
+        <div class="flex border-b border-slate-200 dark:border-zinc-800 px-6 pt-3 gap-1 text-[11px] shrink-0 bg-slate-50/50 dark:bg-zinc-900/40">
+          <button
+            type="button"
+            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'basic' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
+            @click="activeTab = 'basic'"
+          >
+            Basic Info
           </button>
           <button
-            type="submit"
-            :disabled="saving"
-            class="bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs disabled:opacity-50"
+            type="button"
+            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'employment' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
+            @click="activeTab = 'employment'"
           >
-            {{ saving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+            Employment
+          </button>
+          <button
+            type="button"
+            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'salary' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
+            @click="activeTab = 'salary'"
+          >
+            Salary & System
           </button>
         </div>
-      </form>
+
+        <!-- Form Area -->
+        <form novalidate @submit.prevent="saveEmployee" class="flex flex-col flex-1 min-h-0">
+          <div class="flex-1 overflow-y-auto p-6 space-y-4 pr-4 custom-scrollbar">
+            
+            <!-- Tab 1: Basic Information -->
+            <div v-if="activeTab === 'basic'" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">First Name *</label>
+                  <input
+                    v-model="form.first_name"
+                    type="text"
+                    required
+                    placeholder="Enter first name"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.first_name }"
+                  />
+                  <p v-if="errors.first_name" class="mt-1 text-[10px] text-red-500">{{ errors.first_name[0] }}</p>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Middle Name</label>
+                  <input
+                    v-model="form.middle_name"
+                    type="text"
+                    placeholder="Enter middle name"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.middle_name }"
+                  />
+                  <p v-if="errors.middle_name" class="mt-1 text-[10px] text-red-500">{{ errors.middle_name[0] }}</p>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Last Name *</label>
+                  <input
+                    v-model="form.last_name"
+                    type="text"
+                    required
+                    placeholder="Enter last name"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.last_name }"
+                  />
+                  <p v-if="errors.last_name" class="mt-1 text-[10px] text-red-500">{{ errors.last_name[0] }}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address *</label>
+                  <input
+                    v-model="form.email"
+                    type="email"
+                    required
+                    placeholder="e.g. employee@example.com"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.email }"
+                  />
+                  <p v-if="errors.email" class="mt-1 text-[10px] text-red-500">{{ errors.email[0] }}</p>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
+                  <input
+                    v-model="form.date_of_birth"
+                    type="date"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.date_of_birth }"
+                  />
+                  <p v-if="errors.date_of_birth" class="mt-1 text-[10px] text-red-500">{{ errors.date_of_birth[0] }}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <CustomPhoneInput
+                    label="Phone"
+                    v-model="form.phone"
+                    :error="errors.phone"
+                  />
+                </div>
+                <div>
+                  <CustomPhoneInput
+                    label="Mobile"
+                    v-model="form.mobile"
+                    :error="errors.mobile"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FloatingSelect
+                    v-model="form.gender"
+                    label="Gender *"
+                    placeholder="Select Gender"
+                    :options="genderOptions"
+                    required
+                    :error="!!errors.gender"
+                  />
+                  <p v-if="errors.gender" class="mt-1 text-[10px] text-red-500">{{ errors.gender[0] }}</p>
+                </div>
+                <div>
+                  <FloatingSelect
+                    v-model="form.marital_status"
+                    label="Marital Status"
+                    placeholder="Select Status"
+                    :options="maritalStatusOptions"
+                    :error="!!errors.marital_status"
+                  />
+                  <p v-if="errors.marital_status" class="mt-1 text-[10px] text-red-500">{{ errors.marital_status[0] }}</p>
+                </div>
+              </div>
+
+              <!-- Profile Photo Drag & Drop Upload Zone -->
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Profile Photo</label>
+                <div 
+                  @dragover.prevent="isDragging = true" 
+                  @dragleave.prevent="isDragging = false" 
+                  @drop.prevent="handleDrop"
+                  :class="[
+                    'relative flex items-center gap-4 p-4 rounded-xl border-2 border-dashed transition-all duration-200',
+                    isDragging ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/40'
+                  ]"
+                >
+                  <div class="flex-shrink-0 relative">
+                    <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center border border-slate-200 dark:border-zinc-700 shadow-xs">
+                      <img v-if="photoPreview" :src="photoPreview" alt="Profile preview" class="w-full h-full object-cover" />
+                      <svg v-else class="w-7 h-7 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-800 dark:text-zinc-200">Drag & drop profile picture here</p>
+                    <p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">JPEG, PNG, GIF up to 10MB</p>
+                    <div class="flex items-center gap-2 mt-2">
+                      <label class="px-2.5 py-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-[10px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity">
+                        Browse Image
+                        <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+                      </label>
+                      <button v-if="photoPreview || selectedFile" type="button" @click="clearPhoto" class="px-2 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold text-[10px] rounded-lg hover:bg-rose-100 transition-colors cursor-pointer">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p v-if="errors.profile_image || errors.avatar" class="mt-1 text-[10px] text-red-500">{{ errors.profile_image?.[0] || errors.avatar?.[0] }}</p>
+              </div>
+            </div>
+
+            <!-- Tab 2: Employment Information -->
+            <div v-if="activeTab === 'employment'" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FloatingSelect
+                    v-model="form.company_id"
+                    label="Assign Company *"
+                    placeholder="Select Company"
+                    :options="companySelectOptions"
+                    required
+                    :error="!!errors.company_id"
+                  />
+                  <p v-if="errors.company_id" class="mt-1 text-[10px] text-red-500">{{ errors.company_id[0] }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Hire Date *</label>
+                  <input
+                    v-model="form.hire_date"
+                    type="date"
+                    required
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.hire_date }"
+                  />
+                  <p v-if="errors.hire_date" class="mt-1 text-[10px] text-red-500">{{ errors.hire_date[0] }}</p>
+                </div>
+              </div>
+
+              <!-- Managed Departments (For Manager mode) or Department Select (For Employee mode) -->
+              <div v-if="isManagerMode">
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+                  Managed Departments (Multi-Select)
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white dark:bg-zinc-950 p-3 border border-slate-200 dark:border-zinc-700 rounded-lg max-h-44 overflow-y-auto custom-scrollbar">
+                  <label 
+                    v-for="dept in departments" 
+                    :key="dept.id"
+                    class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 cursor-pointer transition-colors text-xs font-medium text-slate-800 dark:text-zinc-200"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="String(dept.id)" 
+                      v-model="form.department_ids"
+                      class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                    />
+                    <span class="truncate">{{ dept.name }}</span>
+                  </label>
+                </div>
+                <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Select all departments overseen by this manager.</p>
+              </div>
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FloatingSelect
+                    v-model="form.department_id"
+                    label="Department"
+                    placeholder="Select Department"
+                    :options="departmentSelectOptions"
+                    :error="!!errors.department_id"
+                  />
+                  <p v-if="errors.department_id" class="mt-1 text-[10px] text-red-500">{{ errors.department_id[0] }}</p>
+                </div>
+
+                <div>
+                  <FloatingSelect
+                    v-model="form.manager_id"
+                    label="Manager"
+                    placeholder="Select Manager"
+                    :options="managerSelectOptions"
+                    :error="!!errors.manager_id"
+                  />
+                  <div class="flex items-center justify-between mt-1">
+                    <p v-if="errors.manager_id" class="text-[10px] text-red-500">{{ errors.manager_id[0] }}</p>
+                    <button
+                      type="button"
+                      @click="emit('add-manager')"
+                      class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 cursor-pointer transition-colors flex items-center gap-0.5 ml-auto"
+                    >
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                      Add New Manager
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FloatingSelect
+                    v-model="form.position_id"
+                    :label="isManagerMode ? 'Managerial Position *' : 'Position'"
+                    placeholder="Select Position"
+                    :options="positionSelectOptions"
+                    :error="!!errors.position_id"
+                  />
+                  <p v-if="errors.position_id" class="mt-1 text-[10px] text-red-500">{{ errors.position_id[0] }}</p>
+
+                  <!-- Position Level Indicator -->
+                  <div class="mt-2 flex items-center gap-1.5 px-0.5">
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Position Level:</span>
+                    <span 
+                      v-if="selectedPositionDetails" 
+                      :class="getPositionLevelBadgeClass(selectedPositionDetails.level)"
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border shadow-xs"
+                    >
+                      {{ selectedPositionDetails.level || 'Standard' }}
+                    </span>
+                    <span v-else class="text-[10px] italic text-slate-400 dark:text-zinc-500">
+                      Select a position
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <FloatingSelect
+                    v-model="form.employment_type"
+                    label="Employment Type *"
+                    placeholder="Select Type"
+                    :options="employmentTypeOptions"
+                    required
+                    :error="!!errors.employment_type"
+                  />
+                  <p v-if="errors.employment_type" class="mt-1 text-[10px] text-red-500">{{ errors.employment_type[0] }}</p>
+                </div>
+              </div>
+
+              <div v-if="isEditing">
+                <FloatingSelect
+                  v-model="form.employment_status"
+                  label="Employment Status"
+                  placeholder="Select Status"
+                  :options="employmentStatusOptions"
+                  :error="!!errors.employment_status"
+                />
+                <p v-if="errors.employment_status" class="mt-1 text-[10px] text-red-500">{{ errors.employment_status[0] }}</p>
+              </div>
+            </div>
+
+            <!-- Tab 3: Salary & System Login Information -->
+            <div v-if="activeTab === 'salary'" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+                    Basic Salary ({{ currencySymbol }}) *
+                  </label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400 dark:text-zinc-500 pointer-events-none">
+                      {{ currencySymbol }}
+                    </span>
+                    <input
+                      v-model="form.basic_salary"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      placeholder="0.00"
+                      class="w-full pl-8 pr-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                      :class="{ 'border-red-300 dark:border-red-700': errors.basic_salary }"
+                    />
+                  </div>
+                  <p v-if="errors.basic_salary" class="mt-1 text-[10px] text-red-500">{{ errors.basic_salary[0] }}</p>
+                </div>
+
+                <div>
+                  <FloatingSelect
+                    v-model="form.salary_type"
+                    label="Salary Type *"
+                    placeholder="Select Type"
+                    :options="salaryTypeOptions"
+                    required
+                    :error="!!errors.salary_type"
+                  />
+                  <p v-if="errors.salary_type" class="mt-1 text-[10px] text-red-500">{{ errors.salary_type[0] }}</p>
+                </div>
+              </div>
+
+              <div v-if="form.salary_type === 'hourly'">
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+                  Hourly Rate ({{ currencySymbol }})
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400 dark:text-zinc-500 pointer-events-none">
+                    {{ currencySymbol }}
+                  </span>
+                  <input
+                    v-model="form.hourly_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    class="w-full pl-8 pr-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.hourly_rate }"
+                  />
+                </div>
+                <p v-if="errors.hourly_rate" class="mt-1 text-[10px] text-red-500">{{ errors.hourly_rate[0] }}</p>
+              </div>
+
+              <!-- System Login Access & User Account Integration Section -->
+              <div class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-4 rounded-xl space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">System Login Access</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Grant direct portal login access to this employee</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="form.create_user_account" class="sr-only peer" />
+                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:peer-focus:ring-indigo-800 peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+
+                <div v-if="form.create_user_account || (isEditing && employee?.user_id)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-indigo-100 dark:border-indigo-900/30">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
+                      {{ isEditing && employee?.user_id ? 'New Password' : 'Password *' }}
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model="form.password"
+                        :type="showPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        :required="!isEditing || !employee?.user_id"
+                        placeholder="Password"
+                        class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all pr-8"
+                      />
+                      <button 
+                        type="button" 
+                        @click="showPassword = !showPassword"
+                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
+                        tabindex="-1"
+                      >
+                        <svg v-if="showPassword" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg v-else class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.076m1.406-1.407A10.014 10.014 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.059 10.059 0 01-4.293 5.774M6.228 6.228L17.772 17.772M9 9l6 6" />
+                        </svg>
+                      </button>
+                    </div>
+                    <p v-if="errors.password" class="mt-1 text-[10px] text-red-500">{{ errors.password[0] }}</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Confirm Password</label>
+                    <div class="relative">
+                      <input
+                        v-model="form.password_confirmation"
+                        :type="showConfirmPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        placeholder="Confirm password"
+                        class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all pr-8"
+                      />
+                      <button 
+                        type="button" 
+                        @click="showConfirmPassword = !showConfirmPassword"
+                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer"
+                        tabindex="-1"
+                      >
+                        <svg v-if="showConfirmPassword" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg v-else class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.076m1.406-1.407A10.014 10.014 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.059 10.059 0 01-4.293 5.774M6.228 6.228L17.772 17.772M9 9l6 6" />
+                        </svg>
+                      </button>
+                    </div>
+                    <p v-if="errors.password_confirmation" class="mt-1 text-[10px] text-red-500">{{ errors.password_confirmation[0] }}</p>
+                  </div>
+
+                  <div>
+                    <FloatingSelect
+                      v-model="form.role"
+                      label="System Role"
+                      placeholder="Select Role"
+                      :options="roleOptions"
+                      :error="!!errors.role"
+                    />
+                    <p v-if="errors.role" class="mt-1 text-[10px] text-red-500">{{ errors.role[0] }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer Buttons -->
+          <div class="flex justify-end space-x-3 p-6 border-t border-slate-100 dark:border-zinc-800 shrink-0 bg-slate-50/50 dark:bg-zinc-900/50">
+            <button
+              type="button"
+              @click="$emit('close')"
+              class="px-4 h-9 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="saving"
+              class="px-4 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ saving ? 'Saving...' : (isEditing ? (isManagerMode ? 'Update Manager' : 'Update Employee') : (isManagerMode ? 'Create Manager' : 'Create Employee')) }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -504,6 +570,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'saved', 'add-manager']);
+
+const activeTab = ref('basic');
 
 // Reactive data
 const form = ref({
@@ -869,6 +937,16 @@ const saveEmployee = async () => {
   const validationErrors = validateForm();
   if (Object.keys(validationErrors).length > 0) {
     errors.value = validationErrors;
+    const firstKey = Object.keys(validationErrors)[0];
+    const basicFields = ['first_name', 'last_name', 'email', 'gender', 'phone', 'mobile', 'date_of_birth'];
+    const empFields = ['company_id', 'hire_date', 'employment_type', 'position_id', 'department_id'];
+    if (basicFields.includes(firstKey)) {
+      activeTab.value = 'basic';
+    } else if (empFields.includes(firstKey)) {
+      activeTab.value = 'employment';
+    } else {
+      activeTab.value = 'salary';
+    }
     const firstMsg = Object.values(validationErrors)[0]?.[0] || 'Please fill in all required fields.';
     showToast(firstMsg, 'error');
     return;
