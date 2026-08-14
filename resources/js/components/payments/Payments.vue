@@ -537,7 +537,7 @@
                   >
                     <option value="" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">All Accounts</option>
                     <option v-for="acc in bankAccountOptions" :key="acc.id" :value="acc.id">
-                      {{ acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name }}{{ formatAccountBalanceText(acc) }}
+                      {{ formatBankAccountLabel(acc) }}{{ formatAccountBalanceText(acc) }}
                     </option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
@@ -984,14 +984,7 @@ const getPaymentTypeDisplay = (type) => {
 };
 
 const getPaymentTypeBadgeClass = (type) => {
-  const classes = {
-    supplier_payment: 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
-    expense_payment: 'bg-slate-800 text-white border-slate-800 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
-    salary_payment: 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-800 dark:text-slate-100 dark:border-zinc-700',
-    sale_return_payment: 'bg-slate-200 text-slate-900 border-slate-300 dark:bg-zinc-700 dark:text-slate-100 dark:border-zinc-600',
-    purchase_invoice_payment: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-zinc-800 dark:text-slate-200 dark:border-zinc-700',
-  };
-  return classes[type] || 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-slate-300 dark:border-zinc-700';
+  return 'bg-white text-slate-900 border border-slate-200 dark:bg-black dark:text-white dark:border-zinc-800 shadow-2xs';
 };
 
 const getPaymentTypeDotClass = (type) => {
@@ -1016,7 +1009,7 @@ const formatStatusText = (status) => {
 };
 
 const getStatusBadgeClass = (status) => {
-  return 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100';
+  return 'bg-white text-slate-900 border border-slate-200 dark:bg-black dark:text-white dark:border-zinc-800 shadow-2xs';
 };
 
 const getStatusDotClass = (status) => {
@@ -1032,6 +1025,20 @@ const getStatusDotClass = (status) => {
     cancelled: 'bg-rose-500',
   };
   return dots[s] || 'bg-slate-400';
+};
+
+const formatBankAccountLabel = (acc) => {
+  if (!acc) return '';
+  if (acc.account_type === 'credit_card') {
+    let bankTitle = acc.bank_name || 'Credit Card';
+    if (!bankTitle.toLowerCase().includes('credit card')) {
+      bankTitle += '-Credit Card';
+    }
+    return `${acc.account_name || 'Card Holder'} (${bankTitle})`;
+  }
+  return acc.bank_name && acc.bank_name !== acc.account_name
+    ? `${acc.account_name} (${acc.bank_name})`
+    : (acc.account_name || acc.bank_name || 'Bank Account');
 };
 
 const formatAccountBalanceText = (acc) => {

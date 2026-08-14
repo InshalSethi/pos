@@ -125,7 +125,7 @@ class PaymentController extends Controller
             'payee_type' => 'nullable|string|in:supplier,employee,customer,other',
             'payee_id' => 'nullable|integer',
             'payee_name' => 'required|string|max:255',
-            'status' => 'sometimes|string|in:draft,pending,process,rejected,completed',
+            'status' => 'required|string|in:draft,pending,process,rejected,completed',
             'additional_data' => 'nullable|array',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
             'attachments' => 'nullable|array|max:5',
@@ -598,6 +598,8 @@ class PaymentController extends Controller
     public function getPaymentOptions(): JsonResponse
     {
         $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active', 'current_balance', 'opening_balance')
+                                  ->orderByDesc('is_default')
+                                  ->orderBy('account_name')
                                   ->get();
 
         $suppliers = Supplier::where('is_active', true)
@@ -636,7 +638,7 @@ class PaymentController extends Controller
             'payment_methods' => [
                 ['value' => 'cash', 'label' => 'Cash'],
                 ['value' => 'bank_transfer', 'label' => 'Bank Transfer'],
-                ['value' => 'check', 'label' => 'Check'],
+                ['value' => 'check', 'label' => 'Cheque'],
                 ['value' => 'card', 'label' => 'Card'],
             ],
             'statuses' => [

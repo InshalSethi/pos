@@ -124,6 +124,7 @@
               label="Status"
               placeholder="Select Status"
               :options="statusOptions"
+              :required="true"
               :error="errors.status ? errors.status[0] : ''"
             />
           </div>
@@ -427,7 +428,7 @@ const form = reactive({
   payer_type: '',
   payer_id: '',
   payer_name: '',
-  status: 'draft',
+  status: '',
 });
 
 // Computed
@@ -467,15 +468,10 @@ const formattedBankAccounts = computed(() => {
 
   if (method === 'cash') {
     filtered = bankAccounts.value.filter(acc => isCashAccount(acc));
-  } else if (method === 'bank_transfer') {
-    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
+  } else if (method === 'bank_transfer' || method === 'check' || method === 'cheque') {
+    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc) && !isCardAccount(acc));
   } else if (method === 'card') {
     filtered = bankAccounts.value.filter(acc => isCardAccount(acc));
-    if (filtered.length === 0) {
-      filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
-    }
-  } else if (method === 'check' || method === 'cheque') {
-    filtered = bankAccounts.value.filter(acc => !isCashAccount(acc));
   }
 
   return filtered.map(acc => {
@@ -491,9 +487,22 @@ const formattedBankAccounts = computed(() => {
     if (accNum) sublabelParts.push(accNum);
     sublabelParts.push(`Balance: ${formattedBal}`);
 
+    let labelText = '';
+    if (acc.account_type === 'credit_card') {
+      let bankTitle = acc.bank_name || 'Credit Card';
+      if (!bankTitle.toLowerCase().includes('credit card')) {
+        bankTitle += '-Credit Card';
+      }
+      labelText = `${acc.account_name || 'Card Holder'} (${bankTitle})`;
+    } else {
+      labelText = (acc.bank_name && acc.bank_name !== acc.account_name)
+        ? `${acc.account_name} (${acc.bank_name})`
+        : (acc.account_name || acc.bank_name || 'Bank Account');
+    }
+
     return {
       value: acc.id,
-      label: acc.bank_name ? `${acc.bank_name} (${acc.account_name})` : acc.account_name,
+      label: labelText,
       sublabel: sublabelParts.join(' • '),
       balance: formattedBal
     };
@@ -502,17 +511,34 @@ const formattedBankAccounts = computed(() => {
 
 const onPaymentMethodChange = () => {
   const available = formattedBankAccounts.value;
+  if (available.length === 0) {
+    form.bank_account_id = '';
+    return;
+  }
+
   const exists = available.some(acc => String(acc.value) === String(form.bank_account_id));
-  if (!exists) {
-    form.bank_account_id = available.length > 0 ? available[0].value : '';
+
+  if (!exists || !form.bank_account_id) {
+    const defaultAccInAvailable = available.find(a => {
+      const rawAcc = bankAccounts.value.find(b => String(b.id) === String(a.value));
+      return rawAcc && (rawAcc.is_default || rawAcc.is_default === 1 || rawAcc.is_default === '1');
+    });
+
+    if (defaultAccInAvailable) {
+      form.bank_account_id = defaultAccInAvailable.value;
+    } else {
+      form.bank_account_id = available[0].value;
+    }
   }
 };
 
 const formattedPaymentMethods = computed(() => {
-  return paymentMethods.value.map(m => ({
-    value: m.value,
-    label: m.label
-  }));
+  return paymentMethods.value
+    .filter(m => m.value !== 'online' && !String(m.label || '').toLowerCase().includes('online'))
+    .map(m => ({
+      value: m.value,
+      label: (m.value === 'check' || m.label === 'Check') ? 'Cheque' : m.label
+    }));
 });
 
 const payerTypeOptions = [
@@ -553,6 +579,12 @@ const loadReceiptOptions = async () => {
       paymentMethods: response.data.payment_methods || [],
       statuses: response.data.statuses || [],
     };
+
+    const defaultAcc = (response.data.bank_accounts || []).find(acc => acc.is_default || acc.is_default === 1 || acc.is_default === '1');
+    const defaultId = defaultAcc ? defaultAcc.id : ((response.data.bank_accounts || []).length > 0 ? response.data.bank_accounts[0].id : '');
+    if (!form.bank_account_id && defaultId) {
+      form.bank_account_id = defaultId;
+    }
   } catch (error) {
     console.error('Error loading receipt options:', error);
     receiptOptions.value = {
@@ -577,7 +609,7 @@ const loadReceiptOptions = async () => {
         { value: 'cash', label: 'Cash' },
         { value: 'bank_transfer', label: 'Bank Transfer' },
         { value: 'card', label: 'Card' },
-        { value: 'online', label: 'Online Payment' },
+        { value: 'check', label: 'Cheque' },
       ],
       statuses: [
         { value: 'draft', label: 'Draft' },
@@ -728,6 +760,9 @@ const removeExistingFile = (index) => {
 };
 
 const resetForm = () => {
+  const defaultAcc = bankAccounts.value.find(acc => acc.is_default || acc.is_default === 1 || acc.is_default === '1');
+  const defaultId = defaultAcc ? defaultAcc.id : (bankAccounts.value.length > 0 ? bankAccounts.value[0].id : '');
+
   Object.assign(form, {
     receipt_type: '',
     amount: '',
@@ -737,11 +772,11 @@ const resetForm = () => {
     reference_number: '',
     description: '',
     notes: '',
-    bank_account_id: '',
+    bank_account_id: defaultId,
     payer_type: '',
     payer_id: '',
     payer_name: '',
-    status: 'draft',
+    status: '',
   });
   attachmentFiles.value = [];
   existingAttachments.value = [];
@@ -772,7 +807,7 @@ const populateForm = () => {
       payer_type: props.receipt.payer_type || '',
       payer_id: props.receipt.payer_id || '',
       payer_name: props.receipt.payer_name || '',
-      status: props.receipt.status || 'draft',
+      status: props.receipt.status || '',
     });
 
     attachmentFiles.value = [];
@@ -873,6 +908,10 @@ const formatAmount = (amount) => {
 };
 
 // Watchers
+watch(() => form.payment_method, () => {
+  onPaymentMethodChange();
+});
+
 watch([() => props.show, () => props.receipt], async ([newShow, newReceipt]) => {
   if (newShow) {
     await loadReceiptOptions();

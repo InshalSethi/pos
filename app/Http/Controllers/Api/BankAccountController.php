@@ -57,7 +57,7 @@ class BankAccountController extends Controller
             });
         }
 
-        $bankAccounts = $query->orderBy('account_name')->get();
+        $bankAccounts = $query->orderByDesc('is_default')->orderBy('account_name')->get();
 
         // Add current balance to each account and ensure chart_account_id auto-link and sync
         foreach ($bankAccounts as $account) {
@@ -186,17 +186,12 @@ class BankAccountController extends Controller
                     }
 
                     $isCreditCard = ($data['account_type'] === 'credit_card');
-                    if ($isCreditCard) {
-                        $bankTitle = !empty($data['bank_name']) ? $data['bank_name'] : 'Credit Card';
-                        if (!str_contains(strtolower($bankTitle), 'credit card')) {
-                            $bankTitle .= '-Credit Card';
-                        }
-                        $accTitleName = $data['account_name'] . ' (' . $bankTitle . ')';
-                    } else {
-                        $accTitleName = (!empty($data['bank_name']) && $data['bank_name'] !== $data['account_name'])
-                            ? $data['account_name'] . ' (' . $data['bank_name'] . ')'
-                            : $data['account_name'];
-                    }
+                    $accTitleName = $this->generateCoaAccountName(
+                        $data['account_name'] ?? '',
+                        $data['bank_name'] ?? '',
+                        $data['account_number'] ?? '',
+                        $data['account_type'] ?? ''
+                    );
 
                     $chartAccount = Account::create([
                         'account_code' => $newCode,
@@ -352,18 +347,12 @@ class BankAccountController extends Controller
             }
 
             if ($chartAccount) {
-                $isCreditCard = ($data['account_type'] === 'credit_card');
-                if ($isCreditCard) {
-                    $bankTitle = !empty($data['bank_name']) ? $data['bank_name'] : 'Credit Card';
-                    if (!str_contains(strtolower($bankTitle), 'credit card')) {
-                        $bankTitle .= '-Credit Card';
-                    }
-                    $accTitleName = $data['account_name'] . ' (' . $bankTitle . ')';
-                } else {
-                    $accTitleName = (!empty($data['bank_name']) && $data['bank_name'] !== $data['account_name'])
-                        ? $data['account_name'] . ' (' . $data['bank_name'] . ')'
-                        : $data['account_name'];
-                }
+                $accTitleName = $this->generateCoaAccountName(
+                    $data['account_name'] ?? $bankAccount->account_name,
+                    $data['bank_name'] ?? $bankAccount->bank_name,
+                    $data['account_number'] ?? $bankAccount->account_number,
+                    $data['account_type'] ?? $bankAccount->account_type
+                );
 
                 $chartAccount->update([
                     'account_name' => $accTitleName,
@@ -738,5 +727,49 @@ class BankAccountController extends Controller
                 'current_balance' => $newBalance
             ]);
         });
+    }
+
+    /**
+     * Helper to generate standardized Chart of Account name with account type and last 4 digits.
+     */
+    protected function generateCoaAccountName(string $accountName, string $bankName, ?string $accountNumber, string $accountType): string
+    {
+        $last4 = '';
+        if (!empty($accountNumber)) {
+            $cleanNum = preg_replace('/\D/', '', $accountNumber);
+            if (strlen($cleanNum) >= 4) {
+                $last4 = ' ****' . substr($cleanNum, -4);
+            } else if (strlen($cleanNum) > 0) {
+                $last4 = ' ****' . $cleanNum;
+            }
+        }
+
+        $isCreditCard = ($accountType === 'credit_card');
+        $bName = trim($bankName ?: '');
+
+        if ($isCreditCard) {
+            if (empty($bName)) {
+                $typeLabel = 'Credit Card';
+            } else {
+                if (str_contains(strtolower($bName), 'credit card')) {
+                    $typeLabel = $bName;
+                } else {
+                    $typeLabel = $bName . '-Credit Card';
+                }
+            }
+        } else {
+            if (empty($bName)) {
+                $typeLabel = 'Bank Account';
+            } else {
+                if (str_contains(strtolower($bName), 'bank account')) {
+                    $typeLabel = $bName;
+                } else {
+                    $typeLabel = $bName . '-Bank Account';
+                }
+            }
+        }
+
+        $accName = trim($accountName ?: 'Account');
+        return "{$accName} ({$typeLabel}{$last4})";
     }
 }

@@ -474,9 +474,23 @@ const refundAccountOptions = computed(() => {
     const bal = (bAcc.current_balance !== undefined && bAcc.current_balance !== null)
       ? parseFloat(bAcc.current_balance)
       : 0
+
+    let bLabel = '';
+    if (bAcc.account_type === 'credit_card') {
+      let bankTitle = bAcc.bank_name || 'Credit Card';
+      if (!bankTitle.toLowerCase().includes('credit card')) {
+        bankTitle += '-Credit Card';
+      }
+      bLabel = `${bAcc.account_name || 'Card Holder'} (${bankTitle})`;
+    } else {
+      bLabel = bAcc.bank_name && bAcc.bank_name !== bAcc.account_name
+        ? `${bAcc.account_name} (${bAcc.bank_name})`
+        : (bAcc.account_name || bAcc.bank_name || 'Bank');
+    }
+
     options.push({
       value: `bank_${bAcc.id}`,
-      label: `${bAcc.bank_name || 'Bank'} (${bAcc.account_name})${isInactive ? ' (Inactive)' : ''} — Avail: ${formatMoney(bal)}`,
+      label: `${bLabel}${isInactive ? ' (Inactive)' : ''} — Avail: ${formatMoney(bal)}`,
       type: 'bank',
       bank_id: bAcc.id,
       is_active: bAcc.is_active,
@@ -719,7 +733,7 @@ const fetchInitialData = async () => {
     if (cashAcc) {
       cashAccountBalance.value = parseFloat(cashAcc.current_balance || cashAcc.calculated_balance || 0)
     } else {
-      const defaultBank = bankAccounts.value.find(b => (b.bank_name && b.bank_name.toLowerCase().includes('cash')) || b.is_default)
+      const defaultBank = bankAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.is_default || b.is_default === 1 || b.is_default === '1')) || bankAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.bank_name && b.bank_name.toLowerCase().includes('cash')));
       cashAccountBalance.value = defaultBank ? parseFloat(defaultBank.current_balance || 0) : 50000
     }
 

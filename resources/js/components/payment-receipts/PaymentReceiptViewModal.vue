@@ -298,7 +298,7 @@ const getPaymentMethodDisplay = (method) => {
   const methods = {
     cash: 'Cash',
     bank_transfer: 'Bank Transfer',
-    check: 'Check',
+    check: 'Cheque',
     card: 'Card',
     online: 'Online Payment',
   };
