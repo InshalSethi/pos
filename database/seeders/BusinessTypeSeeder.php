@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 use App\Models\BusinessType;
 
 class BusinessTypeSeeder extends Seeder
@@ -366,7 +367,9 @@ class BusinessTypeSeeder extends Seeder
         ];
 
         // Clear existing business types to ensure clean 50 items
+        Schema::disableForeignKeyConstraints();
         BusinessType::truncate();
+        Schema::enableForeignKeyConstraints();
 
         foreach ($types as $type) {
             BusinessType::create([
