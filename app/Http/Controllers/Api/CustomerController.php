@@ -79,7 +79,7 @@ class CustomerController extends Controller
             'type' => 'nullable|in:registered,walk_in',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'attachments' => 'nullable|array|max:5',
-            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'existing_attachments' => 'nullable',
         ]);
 
@@ -151,7 +151,7 @@ class CustomerController extends Controller
             'is_active' => 'boolean',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'attachments' => 'nullable|array|max:5',
-            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'existing_attachments' => 'nullable',
         ]);
 

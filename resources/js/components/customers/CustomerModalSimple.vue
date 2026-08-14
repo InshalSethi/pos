@@ -438,7 +438,7 @@
                   <input
                     ref="attachmentInputRef"
                     type="file"
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    accept=".png,.jpg,.jpeg,.webp,.pdf,image/png,image/jpeg,image/webp,application/pdf"
                     multiple
                     @change="handleAttachmentChange"
                     class="hidden"
@@ -455,7 +455,7 @@
                       <span class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Click to upload</span> or drag and drop
                     </p>
                     <p class="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
-                      PNG, JPG, PDF, DOCX, XLSX (max 5MB each, max 5 files)
+                      PNG, JPG, WEBP, PDF (max 5MB each, max 5 files)
                     </p>
                   </div>
                 </div>
@@ -470,15 +470,27 @@
                     <a
                       :href="item.url"
                       target="_blank"
-                      class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
+                      class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1 min-w-0"
                       title="View File"
                     >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                       </svg>
-                      <span class="truncate max-w-[150px]">{{ item.filename }}</span>
+                      <span class="truncate max-w-[140px]">{{ item.filename }}</span>
                     </a>
-                    <button type="button" @click.stop="removeExistingAttachment(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer">
+                    <a
+                      :href="item.url"
+                      :download="item.filename"
+                      target="_blank"
+                      @click.stop
+                      class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-0.5 rounded-md transition-all cursor-pointer"
+                      title="Download File"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </a>
+                    <button type="button" @click.stop="removeExistingAttachment(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer" title="Remove File">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -624,7 +636,13 @@ export default {
         showToast('Maximum 5 attachments allowed in total!', 'error');
         return;
       }
+      const allowedExts = ['png', 'jpg', 'jpeg', 'webp', 'pdf'];
       for (const file of files) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!allowedExts.includes(ext)) {
+          showToast(`File "${file.name}" is not supported. Allowed formats: PNG, JPG, WEBP, PDF.`, 'error');
+          continue;
+        }
         if (file.size > 5 * 1024 * 1024) {
           showToast(`File "${file.name}" exceeds 5MB limit.`, 'error');
           continue;
