@@ -27,6 +27,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'type',
         'name',
         'email',
         'password',
@@ -204,5 +205,53 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Check if user is an employee.
+     */
+    public function isEmployee(): bool
+    {
+        return $this->type === 'employee' || $this->hasRole('employee') || $this->employee()->exists();
+    }
+
+    /**
+     * Check if user is a system user.
+     */
+    public function isSystemUser(): bool
+    {
+        return $this->type === 'user';
+    }
+
+    /**
+     * Check if record has direct system login access.
+     */
+    public function hasLoginAccess(): bool
+    {
+        return $this->type === 'user' && !empty($this->password) && (bool) $this->is_active;
+    }
+
+    /**
+     * Scope query to only include employees.
+     */
+    public function scopeEmployees($query)
+    {
+        return $query->where('type', 'employee');
+    }
+
+    /**
+     * Scope query to only include system users.
+     */
+    public function scopeSystemUsers($query)
+    {
+        return $query->where('type', 'user');
+    }
+
+    /**
+     * Scope query to only include users with login access.
+     */
+    public function scopeWithLoginAccess($query)
+    {
+        return $query->where('type', 'user')->whereNotNull('password')->where('is_active', true);
     }
 }

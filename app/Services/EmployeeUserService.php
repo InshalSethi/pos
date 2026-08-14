@@ -18,30 +18,40 @@ class EmployeeUserService
     public function createUserAccountForEmployee(Employee $employee, array $userData = []): User
     {
         return DB::transaction(function () use ($employee, $userData) {
-            // Check if employee already has a user account
-            if ($employee->user_id) {
-                throw new \Exception('Employee already has a user account');
-            }
-
-            // Generate default password if not provided
+            $user = $employee->user ?: User::find($employee->user_id);
             $password = $userData['password'] ?? $this->generateDefaultPassword();
-            
-            // Create user account
-            $user = User::create([
-                'name' => $employee->full_name,
-                'email' => $employee->email,
-                'password' => Hash::make($password),
-                'profile_image' => $employee->profile_image,
-            ]);
 
-            // Link employee to user
-            $employee->update(['user_id' => $user->id]);
+            if ($user) {
+                $user->update([
+                    'type' => 'user',
+                    'name' => $employee->full_name,
+                    'email' => $employee->email,
+                    'password' => Hash::make($password),
+                    'profile_image' => $employee->profile_image ?: $user->profile_image,
+                    'is_active' => true,
+                ]);
+            } else {
+                $user = User::create([
+                    'type' => 'user',
+                    'name' => $employee->full_name,
+                    'email' => $employee->email,
+                    'password' => Hash::make($password),
+                    'profile_image' => $employee->profile_image,
+                    'is_active' => true,
+                    'current_company_id' => $employee->company_id,
+                    'company_id' => $employee->company_id,
+                    'onboarding_completed' => true,
+                ]);
+                $employee->update(['user_id' => $user->id]);
+            }
 
             // Assign default role based on position/department
             $this->assignDefaultRole($user, $employee);
 
-            // Create default user settings
-            $this->createDefaultUserSettings($user);
+            // Create default user settings if not exists
+            if (!$user->settings) {
+                $this->createDefaultUserSettings($user);
+            }
 
             return $user;
         });
@@ -63,10 +73,13 @@ class EmployeeUserService
             'name' => $employee->full_name,
             'email' => $employee->email,
             'profile_image' => $employee->profile_image,
+            'is_active' => $employee->is_active,
         ]);
 
         // Update role if position changed
-        $this->updateUserRole($user, $employee);
+        if ($user->type === 'user') {
+            $this->updateUserRole($user, $employee);
+        }
     }
 
     /**
@@ -83,11 +96,13 @@ class EmployeeUserService
         // Revoke all tokens (logout from all devices)
         $user->tokens()->delete();
         
-        // Remove all roles and permissions
+        // Convert to non-login employee and remove password & roles
+        $user->update([
+            'type' => 'employee',
+            'password' => null,
+            'is_active' => false,
+        ]);
         $user->syncRoles([]);
-        
-        // Optionally, you could soft delete the user or mark as inactive
-        // For now, we'll just remove access by removing roles
     }
 
     /**
@@ -100,9 +115,11 @@ class EmployeeUserService
         }
 
         $user = $employee->user;
+        $user->update(['is_active' => true]);
         
-        // Reassign appropriate role
-        $this->assignDefaultRole($user, $employee);
+        if ($user->type === 'user') {
+            $this->assignDefaultRole($user, $employee);
+        }
     }
 
     /**

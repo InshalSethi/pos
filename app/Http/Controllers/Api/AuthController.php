@@ -27,9 +27,9 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || empty($user->password) || !$user->hasLoginAccess() || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['The provided credentials are incorrect or direct system login is restricted for this account.'],
             ]);
         }
 

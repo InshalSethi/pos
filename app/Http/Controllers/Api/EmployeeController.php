@@ -283,26 +283,35 @@ class EmployeeController extends Controller
                 $employeeData['profile_image'] = $avatarPath;
             }
 
-            // UNIFIED CREATION LOGIC: Check if system login access requested (password provided)
+            // SINGLE-TABLE INHERITANCE: Save employee profile directly in users table
             $createUserAccount = filter_var($request->get('create_user_account', false), FILTER_VALIDATE_BOOLEAN) || $request->filled('password');
-            if ($createUserAccount) {
-                if (!$request->filled('password')) {
-                    return response()->json([
-                        'message' => 'Password is required to create a user account for this employee.',
-                        'errors' => ['password' => ['Password is required for system login access.']]
-                    ], 422);
-                }
+            $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+            $userType = $createUserAccount ? 'user' : 'employee';
+            $passwordHash = ($createUserAccount && $request->filled('password'))
+                ? \Illuminate\Support\Facades\Hash::make($request->password)
+                : null;
 
-                $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
-                $roleName = $request->role ?: ($isManager ? 'manager' : 'employee');
-                if ($isManager && $roleName === 'employee') {
-                    $roleName = 'manager';
+            // Check if User record already exists for this email or create a new single-table record
+            $user = User::where('email', $request->email)->first();
+            if ($user) {
+                $user->update([
+                    'type' => $userType,
+                    'name' => $fullName,
+                    'phone' => $request->phone ?: $request->mobile ?: $user->phone,
+                    'address' => $request->address ?: $user->address,
+                    'profile_image' => $avatarPath ?: $user->profile_image,
+                    'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
+                    'current_company_id' => $companyId ?: $user->current_company_id,
+                ]);
+                if ($passwordHash) {
+                    $user->update(['password' => $passwordHash]);
                 }
-
+            } else {
                 $user = User::create([
+                    'type' => $userType,
                     'name' => $fullName,
                     'email' => $request->email,
-                    'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                    'password' => $passwordHash,
                     'phone' => $request->phone ?: $request->mobile,
                     'address' => $request->address,
                     'profile_image' => $avatarPath,
@@ -311,16 +320,21 @@ class EmployeeController extends Controller
                     'company_id' => $companyId,
                     'onboarding_completed' => true,
                 ]);
+            }
+
+            if ($createUserAccount) {
+                $roleName = $request->role ?: ($isManager ? 'manager' : 'employee');
+                if ($isManager && $roleName === 'employee') {
+                    $roleName = 'manager';
+                }
 
                 if ($companyId) {
                     $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
                 }
                 $user->assignRole($roleName);
-
-                $employeeData['user_id'] = $user->id;
-            } else {
-                $employeeData['user_id'] = null;
             }
+
+            $employeeData['user_id'] = $user->id;
 
             $employee = Employee::create($employeeData);
 
@@ -523,51 +537,72 @@ class EmployeeController extends Controller
 
             $employee->update($employeeData);
 
-            // Handle User linkage & Sync
+            // SINGLE-TABLE INHERITANCE: Sync employee profile details to users table
             $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
-            $roleName = $request->role ?: 'employee';
+            $roleName = $request->role ?: ($employee->is_manager ? 'manager' : 'employee');
+            $wantsUserAccount = filter_var($request->get('create_user_account', false), FILTER_VALIDATE_BOOLEAN) || $request->filled('password');
 
-            if (!$employee->user_id && ($request->boolean('create_user_account') || $request->filled('password'))) {
-                // Create user account if requested
-                $user = User::create([
+            $user = $employee->user ?: User::find($employee->user_id);
+            if (!$user && $employee->email) {
+                $user = User::where('email', $employee->email)->first();
+            }
+
+            if ($user) {
+                $userData = [
                     'name' => $fullName,
                     'email' => $employee->email,
-                    'password' => \Illuminate\Support\Facades\Hash::make($request->password ?: 'password123'),
+                    'phone' => $employee->phone ?: $employee->mobile,
+                    'address' => $employee->address,
+                    'profile_image' => $employee->profile_image,
+                    'is_active' => $employee->is_active,
+                ];
+
+                if ($wantsUserAccount) {
+                    $userData['type'] = 'user';
+                    if ($request->filled('password')) {
+                        $userData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+                    }
+                    if ($companyId) {
+                        $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
+                    }
+                    if ($request->filled('role')) {
+                        $user->syncRoles([$request->role]);
+                    }
+                }
+
+                $user->update($userData);
+
+                if ($employee->user_id !== $user->id) {
+                    $employee->update(['user_id' => $user->id]);
+                }
+            } else {
+                $userType = $wantsUserAccount ? 'user' : 'employee';
+                $passwordHash = ($wantsUserAccount && $request->filled('password'))
+                    ? \Illuminate\Support\Facades\Hash::make($request->password)
+                    : null;
+
+                $user = User::create([
+                    'type' => $userType,
+                    'name' => $fullName,
+                    'email' => $employee->email,
+                    'password' => $passwordHash,
                     'phone' => $employee->phone ?: $employee->mobile,
                     'address' => $employee->address,
                     'profile_image' => $employee->profile_image,
                     'is_active' => $employee->is_active,
                     'current_company_id' => $companyId,
+                    'company_id' => $companyId,
                     'onboarding_completed' => true,
                 ]);
 
-                if ($companyId) {
-                    $user->companies()->attach($companyId, ['role' => $roleName]);
+                if ($wantsUserAccount) {
+                    if ($companyId) {
+                        $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
+                    }
+                    $user->assignRole($roleName);
                 }
-                $user->assignRole($roleName);
 
                 $employee->update(['user_id' => $user->id]);
-            } elseif ($employee->user_id || $employee->user) {
-                // AUTOMATED SYNC: Update linked User account
-                $user = $employee->user ?: User::find($employee->user_id);
-                if ($user) {
-                    $userData = [
-                        'name' => $fullName,
-                        'email' => $employee->email,
-                        'phone' => $employee->phone ?: $employee->mobile,
-                        'address' => $employee->address,
-                        'profile_image' => $employee->profile_image,
-                        'is_active' => $employee->is_active,
-                    ];
-                    if ($request->filled('password')) {
-                        $userData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
-                    }
-                    $user->update($userData);
-
-                    if ($request->filled('role')) {
-                        $user->syncRoles([$request->role]);
-                    }
-                }
             }
 
             if ($request->has('department_ids')) {
