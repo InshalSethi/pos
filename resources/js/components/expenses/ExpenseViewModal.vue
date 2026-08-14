@@ -1,322 +1,305 @@
 <template>
   <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
     <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
+      
       <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-100 dark:border-zinc-800">
         <div>
-          <h3 class="text-lg font-medium text-gray-900">Expense Details</h3>
-          <p class="text-sm text-gray-500">{{ expense.expense_number }}</p>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Expense Details</h3>
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
+              {{ expense.expense_number }}
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Created by {{ expense.user?.name || 'System' }}</p>
         </div>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button @click="$emit('close')" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <!-- Expense Information -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- Basic Info -->
-        <div class="space-y-4">
+      <!-- Expense Summary Card -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/80">
+        <div class="space-y-3">
           <div>
-            <label class="block text-sm font-medium text-gray-700">Title</label>
-            <p class="mt-1 text-sm text-gray-900">{{ expense.title }}</p>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Title</span>
+            <p class="text-sm font-extrabold text-slate-900 dark:text-white">{{ expense.title }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700">Category</label>
-            <p class="mt-1 text-sm text-gray-900">{{ expense.category?.name }}</p>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Category</span>
+            <p class="text-xs font-bold text-slate-800 dark:text-zinc-200">{{ expense.category?.name || 'N/A' }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700">Amount</label>
-            <p class="mt-1 text-lg font-semibold text-gray-900">${{ parseFloat(expense.amount).toFixed(2) }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Expense Date</label>
-            <p class="mt-1 text-sm text-gray-900">{{ formatDate(expense.expense_date) }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Status</label>
-            <span :class="getStatusClass(expense.status)" class="mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-              {{ getStatusText(expense.status) }}
-            </span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Expense Date</span>
+            <p class="text-xs font-semibold text-slate-700 dark:text-zinc-300">{{ formatDate(expense.expense_date) }}</p>
           </div>
         </div>
 
-        <!-- Additional Info -->
-        <div class="space-y-4">
+        <div class="space-y-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Total Amount</span>
+            <p class="text-xl font-black text-slate-900 dark:text-white">${{ parseFloat(expense.amount || 0).toFixed(2) }}</p>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Status</span>
+            <div>
+              <span
+                :class="[
+                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider mt-0.5',
+                  getStatusBadgeClass(expense.status)
+                ]"
+              >
+                {{ getStatusText(expense.status) }}
+              </span>
+            </div>
+          </div>
           <div v-if="expense.employee">
-            <label class="block text-sm font-medium text-gray-700">Employee</label>
-            <p class="mt-1 text-sm text-gray-900">{{ expense.employee.full_name }}</p>
-          </div>
-          <div v-if="expense.vendor_name">
-            <label class="block text-sm font-medium text-gray-700">Vendor</label>
-            <p class="mt-1 text-sm text-gray-900">{{ expense.vendor_name }}</p>
-          </div>
-          <div v-if="expense.reference_number">
-            <label class="block text-sm font-medium text-gray-700">Reference Number</label>
-            <p class="mt-1 text-sm text-gray-900">{{ expense.reference_number }}</p>
-          </div>
-          <div v-if="expense.payment_method">
-            <label class="block text-sm font-medium text-gray-700">Payment Method</label>
-            <p class="mt-1 text-sm text-gray-900">{{ getPaymentMethodText(expense.payment_method) }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Created By</label>
-            <p class="mt-1 text-sm text-gray-900">{{ expense.user?.name }}</p>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Employee</span>
+            <p class="text-xs font-semibold text-slate-700 dark:text-zinc-300">{{ expense.employee.full_name }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Description -->
-      <div v-if="expense.description" class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-        <p class="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{{ expense.description }}</p>
+      <!-- Vendor & Payment Method Info -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div v-if="expense.vendor_name" class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Vendor</span>
+          <p class="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{{ expense.vendor_name }}</p>
+        </div>
+
+        <div v-if="expense.reference_number" class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Reference #</span>
+          <p class="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">{{ expense.reference_number }}</p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Payment Method</span>
+          <p class="text-xs font-bold text-slate-900 dark:text-white mt-0.5 capitalize">{{ getPaymentMethodText(expense.payment_method) }}</p>
+        </div>
       </div>
 
-      <!-- Notes -->
-      <div v-if="expense.notes" class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-        <p class="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{{ expense.notes }}</p>
+      <!-- Multi Payment Methods Breakdown (If present) -->
+      <div v-if="expense.payments && Array.isArray(expense.payments) && expense.payments.length > 0" class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/80">
+        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white mb-2.5">Multi-Payment Breakdown</h4>
+        <div class="space-y-2">
+          <div v-for="(pm, idx) in expense.payments" :key="idx" class="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 text-xs">
+            <span class="font-bold text-slate-900 dark:text-white capitalize">{{ getPaymentMethodText(pm.method) }}</span>
+            <span class="font-black text-slate-900 dark:text-white">${{ parseFloat(pm.amount || 0).toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description & Notes -->
+      <div v-if="expense.description" class="mb-5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Description</label>
+        <p class="text-xs font-medium text-slate-800 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-800/60 p-3 rounded-xl border border-slate-200/60 dark:border-zinc-700/60 leading-relaxed">{{ expense.description }}</p>
+      </div>
+
+      <div v-if="expense.notes" class="mb-5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Additional Notes</label>
+        <p class="text-xs font-medium text-slate-800 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-800/60 p-3 rounded-xl border border-slate-200/60 dark:border-zinc-700/60 leading-relaxed">{{ expense.notes }}</p>
       </div>
 
       <!-- Workflow Information -->
-      <div v-if="expense.status !== 'draft'" class="mb-6">
-        <h4 class="text-md font-medium text-gray-900 mb-3">Workflow History</h4>
-        <div class="space-y-3">
-          <div v-if="expense.submitted_at" class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-            </div>
+      <div v-if="expense.status !== 'draft'" class="mb-6 border-t border-slate-100 dark:border-zinc-800 pt-4">
+        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white mb-3">Workflow History</h4>
+        <div class="space-y-3 text-xs">
+          <div v-if="expense.submitted_at" class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center font-bold">✓</div>
             <div>
-              <p class="text-sm font-medium text-gray-900">Submitted for approval</p>
-              <p class="text-sm text-gray-500">{{ formatDateTime(expense.submitted_at) }} by {{ expense.submitted_by?.name }}</p>
+              <p class="font-bold text-slate-900 dark:text-white">Submitted for approval</p>
+              <p class="text-[11px] text-slate-500 dark:text-zinc-400">{{ formatDateTime(expense.submitted_at) }} by {{ expense.submitted_by?.name || 'User' }}</p>
             </div>
           </div>
 
-          <div v-if="expense.approved_at" class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-            </div>
+          <div v-if="expense.approved_at" class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 flex items-center justify-center font-bold">✓</div>
             <div>
-              <p class="text-sm font-medium text-gray-900">Approved</p>
-              <p class="text-sm text-gray-500">{{ formatDateTime(expense.approved_at) }} by {{ expense.approved_by?.name }}</p>
-              <p v-if="expense.approval_notes" class="text-sm text-gray-600 mt-1">{{ expense.approval_notes }}</p>
+              <p class="font-bold text-slate-900 dark:text-white">Approved</p>
+              <p class="text-[11px] text-slate-500 dark:text-zinc-400">{{ formatDateTime(expense.approved_at) }} by {{ expense.approved_by?.name || 'User' }}</p>
+              <p v-if="expense.approval_notes" class="text-xs text-slate-600 dark:text-zinc-300 mt-0.5">Notes: {{ expense.approval_notes }}</p>
             </div>
           </div>
 
-          <div v-if="expense.rejected_at" class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-            </div>
+          <div v-if="expense.rejected_at" class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center font-bold">✕</div>
             <div>
-              <p class="text-sm font-medium text-gray-900">Rejected</p>
-              <p class="text-sm text-gray-500">{{ formatDateTime(expense.rejected_at) }} by {{ expense.rejected_by?.name }}</p>
-              <p v-if="expense.rejection_reason" class="text-sm text-gray-600 mt-1">{{ expense.rejection_reason }}</p>
+              <p class="font-bold text-rose-600 dark:text-rose-400">Rejected</p>
+              <p class="text-[11px] text-slate-500 dark:text-zinc-400">{{ formatDateTime(expense.rejected_at) }} by {{ expense.rejected_by?.name || 'User' }}</p>
+              <p v-if="expense.rejection_reason" class="text-xs text-rose-600 dark:text-rose-300 mt-0.5">Reason: {{ expense.rejection_reason }}</p>
             </div>
           </div>
 
-          <div v-if="expense.paid_at" class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
-                </svg>
-              </div>
-            </div>
+          <div v-if="expense.paid_at" class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-center font-bold">✓</div>
             <div>
-              <p class="text-sm font-medium text-gray-900">Paid</p>
-              <p class="text-sm text-gray-500">{{ formatDateTime(expense.paid_at) }} by {{ expense.paid_by?.name }}</p>
-              <p v-if="expense.payment_reference" class="text-sm text-gray-600 mt-1">Reference: {{ expense.payment_reference }}</p>
+              <p class="font-bold text-emerald-600 dark:text-emerald-400">Paid</p>
+              <p class="text-[11px] text-slate-500 dark:text-zinc-400">{{ formatDateTime(expense.paid_at) }} by {{ expense.paid_by?.name || 'User' }}</p>
+              <p v-if="expense.payment_reference" class="text-xs text-slate-600 dark:text-zinc-300 mt-0.5">Reference: {{ expense.payment_reference }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex justify-between items-center pt-6 border-t">
-        <div class="flex space-x-3">
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
+        <div class="flex items-center gap-2">
           <button
             v-if="canEdit"
             @click="$emit('edit')"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            class="px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold transition-all cursor-pointer"
           >
             Edit
           </button>
           <button
             v-if="canSubmit"
             @click="submitExpense"
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer"
           >
             Submit for Approval
           </button>
         </div>
 
-        <div class="flex space-x-3">
+        <div class="flex items-center gap-2">
           <button
             v-if="canApprove"
             @click="showApprovalModal = true"
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer"
           >
             Approve
           </button>
           <button
             v-if="canReject"
             @click="showRejectionModal = true"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer"
           >
             Reject
           </button>
           <button
             v-if="canPay"
             @click="showPaymentModal = true"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer"
           >
             Mark as Paid
           </button>
           <button
-            v-if="canCreatePayment"
-            @click="createPayment"
-            class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-          >
-            Create Payment
-          </button>
-          <button
             @click="$emit('close')"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
           >
             Close
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- Approval Modal -->
-    <div v-if="showApprovalModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Approve Expense</h3>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Approval Notes (Optional)</label>
-          <textarea
-            v-model="approvalNotes"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Add approval notes..."
-          ></textarea>
-        </div>
-        <div class="flex justify-end space-x-3">
-          <button
-            @click="showApprovalModal = false"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            @click="approveExpense"
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-          >
-            Approve
-          </button>
-        </div>
+    </div>
+  </div>
+
+  <!-- Approval Modal -->
+  <div v-if="showApprovalModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
+      <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-2">Approve Expense</h3>
+      <div class="mb-4">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Approval Notes (Optional)</label>
+        <textarea
+          v-model="approvalNotes"
+          rows="3"
+          class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+          placeholder="Add approval notes..."
+        ></textarea>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button
+          @click="showApprovalModal = false"
+          class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          @click="approveExpense"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer"
+        >
+          Approve
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Rejection Modal -->
-    <div v-if="showRejectionModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Expense</h3>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
-          <textarea
-            v-model="rejectionReason"
-            rows="3"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Please provide a reason for rejection..."
-          ></textarea>
-        </div>
-        <div class="flex justify-end space-x-3">
-          <button
-            @click="showRejectionModal = false"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            @click="rejectExpense"
-            :disabled="!rejectionReason.trim()"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-          >
-            Reject
-          </button>
-        </div>
+  <!-- Rejection Modal -->
+  <div v-if="showRejectionModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
+      <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-2">Reject Expense</h3>
+      <div class="mb-4">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Rejection Reason *</label>
+        <textarea
+          v-model="rejectionReason"
+          rows="3"
+          required
+          class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+          placeholder="Please provide a reason for rejection..."
+        ></textarea>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button
+          @click="showRejectionModal = false"
+          class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          @click="rejectExpense"
+          :disabled="!rejectionReason.trim()"
+          class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50"
+        >
+          Reject
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Payment Modal -->
-    <div v-if="showPaymentModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-96 shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Mark as Paid</h3>
+  <!-- Mark as Paid Modal -->
+  <div v-if="showPaymentModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md" style="backdrop-filter: blur(6px);">
+    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 p-5">
+      <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-3">Mark Expense as Paid</h3>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Bank Account *</label>
-          <select
-            v-model="selectedBankAccount"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select Bank Account</option>
-            <option
-              v-for="account in bankAccounts"
-              :key="account.id"
-              :value="account.id"
-              :disabled="(account.is_active === false || account.is_active === 0) && selectedBankAccount !== account.id"
-              :class="(account.is_active === false || account.is_active === 0) ? 'text-slate-400 opacity-50' : ''"
-            >
-              {{ account.account_name }} - {{ account.bank_name }} ({{ account.formatted_account_number }}){{ (account.is_active === false || account.is_active === 0) ? ' (Inactive)' : '' }}
-            </option>
-          </select>
-          <p v-if="!selectedBankAccount && paymentError" class="text-red-500 text-sm mt-1">
-            Please select a bank account
-          </p>
-        </div>
+      <div class="mb-4">
+        <CustomFloatingSelect
+          v-model="selectedBankAccount"
+          label="Bank Account *"
+          placeholder="Select Bank Account"
+          :options="bankAccountOptions"
+          :searchable="true"
+        />
+        <p v-if="!selectedBankAccount && paymentError" class="text-rose-500 text-[11px] font-semibold mt-1">
+          Please select a bank account
+        </p>
+      </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Payment Reference (Optional)</label>
-          <input
-            v-model="paymentReference"
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Transaction ID, check number, etc."
-          />
-        </div>
+      <div class="mb-4">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Payment Reference (Optional)</label>
+        <input
+          v-model="paymentReference"
+          type="text"
+          class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+          placeholder="Transaction ID, check number, etc."
+        />
+      </div>
 
-        <div class="flex justify-end space-x-3">
-          <button
-            @click="cancelPayment"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            @click="markAsPaid"
-            :disabled="!selectedBankAccount"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Mark as Paid
-          </button>
-        </div>
+      <div class="flex justify-end gap-2">
+        <button
+          @click="cancelPayment"
+          class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          @click="markAsPaid"
+          :disabled="!selectedBankAccount"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50"
+        >
+          Mark as Paid
+        </button>
       </div>
     </div>
   </div>
@@ -325,6 +308,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
@@ -350,7 +334,6 @@ const selectedBankAccount = ref('');
 const bankAccounts = ref([]);
 const paymentError = ref(false);
 
-// Computed
 const canEdit = computed(() => {
   return authStore.hasPermission('expenses.edit') && ['draft', 'rejected'].includes(props.expense.status);
 });
@@ -371,28 +354,33 @@ const canPay = computed(() => {
   return authStore.hasPermission('expenses.pay') && props.expense.status === 'approved';
 });
 
-const canCreatePayment = computed(() => {
-  return authStore.hasPermission('payments.create') && props.expense.status === 'approved';
+const bankAccountOptions = computed(() => {
+  return bankAccounts.value.map(account => ({
+    value: account.id,
+    label: `${account.account_name} - ${account.bank_name || 'Bank'} (${account.formatted_account_number || account.account_number || ''})`,
+    disabled: account.is_active === false || account.is_active === 0
+  }));
 });
 
-// Methods
 const formatDate = (date) => {
+  if (!date) return 'N/A';
   return new Date(date).toLocaleDateString();
 };
 
 const formatDateTime = (datetime) => {
+  if (!datetime) return 'N/A';
   return new Date(datetime).toLocaleString();
 };
 
-const getStatusClass = (status) => {
+const getStatusBadgeClass = (status) => {
   const classes = {
-    draft: 'bg-gray-100 text-gray-800',
-    submitted: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    paid: 'bg-blue-100 text-blue-800'
+    draft: 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700',
+    submitted: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/50',
+    approved: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-900/50',
+    rejected: 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/50',
+    paid: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/50'
   };
-  return classes[status] || 'bg-gray-100 text-gray-800';
+  return classes[status] || 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200';
 };
 
 const getStatusText = (status) => {
@@ -412,9 +400,10 @@ const getPaymentMethodText = (method) => {
     bank_transfer: 'Bank Transfer',
     credit_card: 'Credit Card',
     check: 'Check',
-    petty_cash: 'Petty Cash'
+    petty_cash: 'Petty Cash',
+    mixed: 'Mixed (Multi-Payment)'
   };
-  return methods[method] || method;
+  return methods[method] || method || 'Not specified';
 };
 
 const submitExpense = async () => {
@@ -487,11 +476,6 @@ const markAsPaid = async () => {
   }
 };
 
-const createPayment = () => {
-  emit('create-payment', props.expense);
-};
-
-// Watch for payment modal opening to fetch bank accounts
 watch(showPaymentModal, (newValue) => {
   if (newValue) {
     fetchBankAccounts();

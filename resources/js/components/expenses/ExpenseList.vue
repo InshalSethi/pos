@@ -1,36 +1,32 @@
 <template>
-  <div class="expense-list">
-    <!-- Filters -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="expense-list space-y-6">
+    <!-- Filters Bar -->
+    <div class="bg-white dark:bg-zinc-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm transition-all">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Status Filter (Custom Floating Select) -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select
+          <CustomFloatingSelect
             v-model="filters.status"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="handleFilterChange"
-          >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="submitted">Submitted</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="paid">Paid</option>
-          </select>
+            label="Status"
+            placeholder="All Statuses"
+            :options="statusOptions"
+            @update:modelValue="handleFilterChange"
+          />
         </div>
+
+        <!-- Category Filter (Custom Floating Select) -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <select
+          <CustomFloatingSelect
             v-model="filters.category_id"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="handleFilterChange"
-          >
-            <option value="">All Categories</option>
-            <option v-for="category in categories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
+            label="Category"
+            placeholder="All Categories"
+            :options="categoryOptions"
+            :searchable="true"
+            @update:modelValue="handleFilterChange"
+          />
         </div>
+
+        <!-- Date Range Filter -->
         <div>
           <DateRangePicker
             v-model="dateRange"
@@ -43,73 +39,90 @@
     </div>
 
     <!-- DataTable -->
-    <DataTable
-      title="Expenses"
-      subtitle="Manage and track all expense records"
-      :columns="tableColumns"
-      :data="expenses.data || []"
-      :loading="loading"
-      :pagination="pagination"
-      :initial-search="filters.search"
-      :initial-per-page="pagination.per_page"
-      :default-per-page="25"
-      storage-key="expenses-table-state"
-      empty-message="No expenses found"
-      empty-sub-message="Try adjusting your search or filter criteria."
-      @search="handleSearch"
-      @sort="handleSort"
-      @page-change="handlePageChange"
-      @per-page-change="handlePerPageChange"
-    >
-      <!-- Custom column content -->
-      <template #column-title="{ item }">
-        <div>
-          <div class="text-sm font-medium text-gray-900">{{ item.title }}</div>
-          <div class="text-sm text-gray-500" v-if="item.vendor_name">{{ item.vendor_name }}</div>
-        </div>
-      </template>
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+      <DataTable
+        title="Expenses"
+        subtitle="Manage and track all expense records"
+        :columns="tableColumns"
+        :data="expenses.data || []"
+        :loading="loading"
+        :pagination="pagination"
+        :initial-search="filters.search"
+        :initial-per-page="pagination.per_page"
+        :default-per-page="25"
+        storage-key="expenses-table-state"
+        empty-message="No expenses found"
+        empty-sub-message="Try adjusting your search or filter criteria."
+        @search="handleSearch"
+        @sort="handleSort"
+        @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
+      >
+        <!-- Custom Title Column -->
+        <template #column-title="{ item }">
+          <div class="py-0.5">
+            <div class="text-xs font-bold text-slate-900 dark:text-white">{{ item.title }}</div>
+            <div v-if="item.vendor_name" class="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span>{{ item.vendor_name }}</span>
+            </div>
+          </div>
+        </template>
 
-      <template #column-status="{ item }">
-        <span :class="getStatusClass(item.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-          {{ getStatusText(item.status) }}
-        </span>
-      </template>
+        <!-- Custom Status Column (System UI Badges) -->
+        <template #column-status="{ item }">
+          <span
+            :class="[
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider',
+              getStatusBadgeClass(item.status)
+            ]"
+          >
+            <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(item.status)"></span>
+            {{ getStatusText(item.status) }}
+          </span>
+        </template>
 
-      <template #column-actions="{ item }">
-        <div class="flex justify-end space-x-2">
-          <button
-            @click="$emit('view-expense', item)"
-            class="text-blue-600 hover:text-blue-900"
-            title="View"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-            </svg>
-          </button>
-          <button
-            v-if="canEdit(item)"
-            @click="$emit('edit-expense', item)"
-            class="text-indigo-600 hover:text-indigo-900"
-            title="Edit"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-          </button>
-          <button
-            v-if="canDelete(item)"
-            @click="deleteExpense(item)"
-            class="text-red-600 hover:text-red-900"
-            title="Delete"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-          </button>
-        </div>
-      </template>
-    </DataTable>
+        <!-- Custom Actions Column -->
+        <template #column-actions="{ item }">
+          <div class="flex items-center justify-end gap-1.5">
+            <button
+              @click="$emit('view-expense', item)"
+              class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-all cursor-pointer"
+              title="View Details"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+
+            <button
+              v-if="canEdit(item)"
+              @click="$emit('edit-expense', item)"
+              class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40 transition-all cursor-pointer"
+              title="Edit Expense"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+
+            <button
+              v-if="canDelete(item)"
+              @click="deleteExpense(item)"
+              class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+              title="Delete Expense"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </template>
+      </DataTable>
+    </div>
 
     <!-- Confirmation Modal -->
     <ConfirmationModal
@@ -134,6 +147,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import DateRangePicker from '@/components/common/DateRangePicker.vue';
 import ConfirmationModal from '@/components/common/ConfirmationModal.vue';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 import DataTable from '@/components/common/DataTable.vue';
 import axios from 'axios';
 
@@ -141,7 +155,6 @@ import axios from 'axios';
 const authStore = useAuthStore();
 const { success, error } = useToast();
 
-// Props and Emits
 const emit = defineEmits(['edit-expense', 'view-expense', 'refresh']);
 
 // Reactive data
@@ -172,6 +185,22 @@ const dateRange = ref({
   end_date: ''
 });
 
+const statusOptions = [
+  { value: '', label: 'All Statuses' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'paid', label: 'Paid' }
+];
+
+const categoryOptions = computed(() => {
+  return [
+    { value: '', label: 'All Categories' },
+    ...categories.value.map(cat => ({ value: cat.id, label: cat.name }))
+  ];
+});
+
 // Table columns configuration
 const tableColumns = ref([
   {
@@ -179,7 +208,7 @@ const tableColumns = ref([
     label: 'Expense #',
     sortable: true,
     align: 'left',
-    class: 'text-gray-500 font-mono text-xs'
+    class: 'text-slate-600 dark:text-zinc-400 font-mono text-xs font-bold'
   },
   {
     key: 'title',
@@ -227,7 +256,6 @@ const tableColumns = ref([
   }
 ]);
 
-// Confirmation modal data
 const showDeleteConfirmation = ref(false);
 const deleteConfirmation = ref({
   title: '',
@@ -237,7 +265,6 @@ const deleteConfirmation = ref({
   expenseToDelete: null
 });
 
-// Computed
 const canEdit = computed(() => (expense) => {
   return authStore.hasPermission('expenses.edit');
 });
@@ -246,7 +273,6 @@ const canDelete = computed(() => (expense) => {
   return authStore.hasPermission('expenses.delete');
 });
 
-// Methods
 const fetchExpenses = async (page = 1) => {
   loading.value = true;
   try {
@@ -256,7 +282,6 @@ const fetchExpenses = async (page = 1) => {
       ...filters.value
     };
 
-    // Remove empty parameters
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null) {
         delete params[key];
@@ -266,7 +291,6 @@ const fetchExpenses = async (page = 1) => {
     const response = await axios.get('/api/expenses', { params });
     expenses.value = response.data;
 
-    // Update pagination
     pagination.value = {
       current_page: response.data.current_page,
       last_page: response.data.last_page,
@@ -291,7 +315,6 @@ const fetchCategories = async () => {
   }
 };
 
-// DataTable event handlers
 const handleSearch = (searchQuery) => {
   filters.value.search = searchQuery;
   fetchExpenses(1);
@@ -317,7 +340,6 @@ const handleFilterChange = () => {
 };
 
 const deleteExpense = (expense) => {
-  // Set up confirmation modal data
   deleteConfirmation.value = {
     title: 'Delete Expense',
     message: `Are you sure you want to delete the expense "<strong>${expense.title}</strong>"?`,
@@ -336,9 +358,9 @@ const getDeleteDetails = (expense) => {
   details += `• Date: ${new Date(expense.expense_date).toLocaleDateString()}<br>`;
 
   if (expense.status === 'paid') {
-    details += `<br><span class="text-red-600"><strong>Warning:</strong> This expense has been paid. Deleting it will also remove all associated accounting records and bank transactions.</span>`;
+    details += `<br><span class="text-rose-600 dark:text-rose-400 font-bold">Warning: This expense has been paid. Deleting it will also remove all associated accounting records and bank transactions.</span>`;
   } else if (expense.status === 'approved') {
-    details += `<br><span class="text-yellow-600"><strong>Note:</strong> This expense has been approved. Deleting it will remove associated accounting records.</span>`;
+    details += `<br><span class="text-amber-600 dark:text-amber-400 font-bold">Note: This expense has been approved. Deleting it will remove associated accounting records.</span>`;
   }
 
   return details;
@@ -354,10 +376,9 @@ const confirmDelete = async () => {
     await axios.delete(`/api/expenses/${expense.id}`);
     showDeleteConfirmation.value = false;
     await fetchExpenses();
-
-    success(`Expense "${expense.title}" has been deleted successfully.`);
-  } catch (error) {
-    console.error('Error deleting expense:', error);
+    success(`Expense "${expense.title}" deleted successfully.`);
+  } catch (err) {
+    console.error('Error deleting expense:', err);
     error('Failed to delete expense. Please try again.');
   } finally {
     deleteConfirmation.value.loading = false;
@@ -365,13 +386,6 @@ const confirmDelete = async () => {
 };
 
 const cancelDelete = () => {
-  deleteConfirmation.value = {
-    title: '',
-    message: '',
-    details: '',
-    loading: false,
-    expenseToDelete: null
-  };
   showDeleteConfirmation.value = false;
 };
 
@@ -381,15 +395,26 @@ const handleDateRangeChange = (range) => {
   fetchExpenses(1);
 };
 
-const getStatusClass = (status) => {
+const getStatusBadgeClass = (status) => {
   const classes = {
-    draft: 'bg-gray-100 text-gray-800',
-    submitted: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    paid: 'bg-blue-100 text-blue-800'
+    draft: 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700',
+    submitted: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/50',
+    approved: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-900/50',
+    rejected: 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/50',
+    paid: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/50'
   };
-  return classes[status] || 'bg-gray-100 text-gray-800';
+  return classes[status] || 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200';
+};
+
+const getStatusDotClass = (status) => {
+  const classes = {
+    draft: 'bg-slate-500',
+    submitted: 'bg-amber-500',
+    approved: 'bg-indigo-500',
+    rejected: 'bg-rose-500',
+    paid: 'bg-emerald-500'
+  };
+  return classes[status] || 'bg-slate-500';
 };
 
 const getStatusText = (status) => {
@@ -403,8 +428,6 @@ const getStatusText = (status) => {
   return texts[status] || status;
 };
 
-// Lifecycle
-// Expose methods to parent component
 defineExpose({
   fetchExpenses
 });

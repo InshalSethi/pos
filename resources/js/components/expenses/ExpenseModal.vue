@@ -1,207 +1,421 @@
 <template>
   <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto">
+    <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[92vh] overflow-y-auto my-auto">
+      
       <!-- Header -->
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-gray-900">
-          {{ isEditing ? 'Edit Expense' : 'Create New Expense' }}
-        </h3>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-100 dark:border-zinc-800">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {{ isEditing ? 'Edit Expense' : 'Create New Expense' }}
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+            Fill in the details below to {{ isEditing ? 'update this expense record' : 'log a new expense' }}
+          </p>
+        </div>
+        <button
+          @click="$emit('close')"
+          class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="saveExpense" class="space-y-4">
+      <form @submit.prevent="saveExpense" class="space-y-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
           <!-- Title -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Title <span class="text-rose-500">*</span>
+            </label>
             <input
               v-model="form.title"
               type="text"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter expense title"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+              placeholder="e.g., Office Supplies Purchase, Internet Bill"
             />
-            <span v-if="errors.title" class="text-red-500 text-sm">{{ errors.title[0] }}</span>
+            <span v-if="errors.title" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.title[0] }}</span>
           </div>
 
-          <!-- Category -->
+          <!-- Category (Floating Dropdown) -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-            <select
+            <CustomFloatingSelect
               v-model="form.category_id"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Category</option>
-              <option v-for="category in categories" :key="category.id" :value="category.id">
-                {{ category.name }}
-              </option>
-            </select>
-            <span v-if="errors.category_id" class="text-red-500 text-sm">{{ errors.category_id[0] }}</span>
+              label="Category *"
+              placeholder="Select Category"
+              :options="categoryOptions"
+              :searchable="true"
+            />
+            <span v-if="errors.category_id" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.category_id[0] }}</span>
           </div>
 
-          <!-- Employee -->
+          <!-- Employee (Floating Dropdown) -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Employee</label>
-            <select
+            <CustomFloatingSelect
               v-model="form.employee_id"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Employee</option>
-              <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-                {{ employee.full_name }}
-              </option>
-            </select>
-            <span v-if="errors.employee_id" class="text-red-500 text-sm">{{ errors.employee_id[0] }}</span>
+              label="Employee"
+              placeholder="Select Employee (Optional)"
+              :options="employeeOptions"
+              :searchable="true"
+            />
+            <span v-if="errors.employee_id" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.employee_id[0] }}</span>
           </div>
 
           <!-- Amount -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Total Amount ($) <span class="text-rose-500">*</span>
+            </label>
             <input
-              v-model="form.amount"
+              v-model.number="form.amount"
               type="number"
               step="0.01"
               min="0.01"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
               placeholder="0.00"
             />
-            <span v-if="errors.amount" class="text-red-500 text-sm">{{ errors.amount[0] }}</span>
+            <span v-if="errors.amount" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.amount[0] }}</span>
           </div>
 
           <!-- Expense Date -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Expense Date *</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Expense Date <span class="text-rose-500">*</span>
+            </label>
             <input
               v-model="form.expense_date"
               type="date"
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
             />
-            <span v-if="errors.expense_date" class="text-red-500 text-sm">{{ errors.expense_date[0] }}</span>
+            <span v-if="errors.expense_date" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.expense_date[0] }}</span>
           </div>
 
           <!-- Vendor Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Vendor Name</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Vendor Name
+            </label>
             <input
               v-model="form.vendor_name"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter vendor name"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+              placeholder="e.g., Staples, Amazon, Utilities Co."
             />
-            <span v-if="errors.vendor_name" class="text-red-500 text-sm">{{ errors.vendor_name[0] }}</span>
+            <span v-if="errors.vendor_name" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.vendor_name[0] }}</span>
           </div>
 
           <!-- Reference Number -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Reference / Invoice #
+            </label>
             <input
               v-model="form.reference_number"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Invoice/Receipt number"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+              placeholder="Receipt / Reference number"
             />
-            <span v-if="errors.reference_number" class="text-red-500 text-sm">{{ errors.reference_number[0] }}</span>
+            <span v-if="errors.reference_number" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.reference_number[0] }}</span>
           </div>
 
-          <!-- Payment Method -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-            <select
-              v-model="form.payment_method"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Payment Method</option>
-              <option value="cash">Cash</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="credit_card">Credit Card</option>
-              <option value="check">Check</option>
-              <option value="petty_cash">Petty Cash</option>
-            </select>
-            <span v-if="errors.payment_method" class="text-red-500 text-sm">{{ errors.payment_method[0] }}</span>
+          <!-- Side-by-Side Payment Fields (Left: Payment Method, Right: Select Payment) -->
+          <div class="md:col-span-2 border-t border-b border-slate-100 dark:border-zinc-800 py-4 my-1">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <!-- Left Field: Payment Method -->
+              <div>
+                <CustomFloatingSelect
+                  v-model="singlePaymentMethod"
+                  label="PAYMENT METHOD *"
+                  placeholder="Select Payment Method"
+                  :options="paymentMethodOptions"
+                />
+                <span v-if="errors.payment_method" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.payment_method[0] }}</span>
+              </div>
+
+              <!-- Right Field: Select Payment (Dynamic based on selected payment method) -->
+              <div>
+                <!-- If Cash is selected -->
+                <div v-if="singlePaymentMethod === 'cash'">
+                  <CustomFloatingSelect
+                    v-model="bankAccountIds['cash']"
+                    label="SELECT PAYMENT *"
+                    placeholder="Select Cash Vault Account"
+                    :options="cashAccountOptions"
+                  />
+                </div>
+
+                <!-- If Bank Transfer is selected -->
+                <div v-else-if="singlePaymentMethod === 'bank_transfer'">
+                  <CustomFloatingSelect
+                    v-model="bankAccountIds['bank_transfer']"
+                    label="BANK ACCOUNT *"
+                    placeholder="Select Bank Account"
+                    :options="bankAccountOptions"
+                    :searchable="true"
+                  />
+                </div>
+
+                <!-- If Card is selected -->
+                <div v-else-if="singlePaymentMethod === 'credit_card'">
+                  <CustomFloatingSelect
+                    v-model="bankAccountIds['credit_card']"
+                    label="CARD ACCOUNT *"
+                    placeholder="Select Card Account"
+                    :options="cardAccountOptions"
+                    :searchable="true"
+                  />
+                </div>
+
+                <!-- Fallback if nothing selected -->
+                <div v-else>
+                  <CustomFloatingSelect
+                    model-value=""
+                    label="SELECT PAYMENT *"
+                    placeholder="Select Payment Account"
+                    :options="[]"
+                    :disabled="true"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Toggle for Multi-Payment Breakdown -->
+            <div class="mt-3.5 flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-zinc-800/80">
+              <button
+                type="button"
+                @click="isMultiPayMode = !isMultiPayMode"
+                class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>{{ isMultiPayMode ? '← Hide Multi-Payment Breakdown' : '+ Split across multiple payment methods' }}</span>
+              </button>
+            </div>
+
+            <!-- Multi-Payment Breakdown Block (If split mode activated) -->
+            <div v-if="isMultiPayMode" class="mt-3 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/80 space-y-3">
+              <div class="mb-2">
+                <CustomFloatingSelect
+                  v-model="selectedPaymentMethods"
+                  label="Select Payment Method(s)"
+                  placeholder="Choose Payment Method(s)"
+                  :options="paymentMethodOptions"
+                  :multiple="true"
+                />
+              </div>
+
+              <div v-if="selectedPaymentMethods.length > 0" class="space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-zinc-700 pb-2">
+                  <span class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Payment Breakdown</span>
+                  <span class="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                    Total Expense: <strong class="text-slate-900 dark:text-white">${{ (form.amount || 0).toFixed(2) }}</strong>
+                  </span>
+                </div>
+
+                <div v-for="method in selectedPaymentMethods" :key="method" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 shadow-2xs">
+                  <div class="sm:col-span-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-900 dark:bg-white"></span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white capitalize">{{ getMethodLabel(method) }}</span>
+                  </div>
+
+                  <div v-if="method === 'bank_transfer'" class="sm:col-span-5">
+                    <CustomFloatingSelect
+                      v-model="bankAccountIds[method]"
+                      placeholder="Select Bank Account *"
+                      :options="bankAccountOptions"
+                      :searchable="true"
+                    />
+                  </div>
+
+                  <div v-else-if="method === 'credit_card'" class="sm:col-span-5">
+                    <CustomFloatingSelect
+                      v-model="bankAccountIds[method]"
+                      placeholder="Select Card Account *"
+                      :options="cardAccountOptions"
+                      :searchable="true"
+                    />
+                  </div>
+
+                  <div v-else class="sm:col-span-5">
+                    <CustomFloatingSelect
+                      v-model="bankAccountIds['cash']"
+                      placeholder="Select Cash Vault Account *"
+                      :options="cashAccountOptions"
+                    />
+                  </div>
+
+                  <div class="sm:col-span-4">
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                      <input
+                        v-model.number="paymentAmounts[method]"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="w-full pl-7 pr-3 py-2 text-xs font-bold bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-zinc-800 text-xs">
+                  <span class="font-semibold text-slate-600 dark:text-zinc-400">
+                    Allocated: <span class="font-bold text-slate-900 dark:text-white">${{ totalAllocatedPayment.toFixed(2) }}</span>
+                  </span>
+                  <span
+                    :class="[
+                      'font-bold px-2.5 py-1 rounded-lg text-[11px]',
+                      remainingUnallocated === 0
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                    ]"
+                  >
+                    {{ remainingUnallocated === 0 ? '✓ Balanced' : `Remaining: $${remainingUnallocated.toFixed(2)}` }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Description -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Description
+            </label>
             <textarea
               v-model="form.description"
-              rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter expense description"
+              rows="2"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+              placeholder="Enter detailed description"
             ></textarea>
-            <span v-if="errors.description" class="text-red-500 text-sm">{{ errors.description[0] }}</span>
+            <span v-if="errors.description" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.description[0] }}</span>
           </div>
 
-          <!-- Receipt Images -->
+          <!-- Receipt Images / Attachments -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Images</label>
-            <input
-              ref="fileInput"
-              type="file"
-              multiple
-              accept="image/*"
-              @change="handleFileUpload"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p class="text-sm text-gray-500 mt-1">Upload receipt images (JPEG, PNG, GIF, WEBP, max 10MB each)</p>
-            <span v-if="errors.receipt_images" class="text-red-500 text-sm">{{ errors.receipt_images[0] }}</span>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+                Receipt Attachments <span class="text-slate-400 font-normal lowercase">(images or PDF, max 5MB each, max 5 files)</span>
+              </label>
+            </div>
+
+            <div
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleFileDrop"
+              @click="triggerFileInput"
+              :class="[
+                'relative border-2 border-dashed rounded-xl p-4 transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-center gap-1.5',
+                isDragging
+                  ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-zinc-800'
+                  : 'border-slate-200 dark:border-zinc-700/80 bg-slate-50/50 hover:bg-slate-100/70 dark:bg-zinc-950/40 dark:hover:bg-zinc-900/80'
+              ]"
+            >
+              <input
+                ref="fileInputRef"
+                type="file"
+                multiple
+                accept=".png,.jpg,.jpeg,.webp,.pdf,image/png,image/jpeg,image/webp,application/pdf"
+                @change="handleFileUpload"
+                class="hidden"
+              />
+
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform text-slate-700 dark:text-slate-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+
+              <div class="space-y-0.5">
+                <p class="text-xs font-semibold text-slate-700 dark:text-zinc-200">
+                  <span class="text-slate-900 dark:text-white font-bold hover:underline">Click to upload</span> or drag and drop
+                </p>
+                <p class="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
+                  PNG, JPG, WEBP, PDF (max 5MB each, max 5 files)
+                </p>
+              </div>
+            </div>
+
+            <!-- File Badges -->
+            <div v-if="selectedFiles.length > 0" class="flex flex-wrap gap-2 pt-2.5">
+              <div
+                v-for="(file, index) in selectedFiles"
+                :key="index"
+                class="flex items-center gap-2 bg-slate-100 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs shadow-2xs"
+              >
+                <span class="truncate font-semibold text-slate-800 dark:text-slate-200 max-w-[150px]">{{ file.name }}</span>
+                <span class="text-[10px] text-slate-400 font-medium">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                <button type="button" @click.stop="removeSelectedFile(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <span v-if="errors.receipt_images" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.receipt_images[0] }}</span>
           </div>
 
           <!-- Notes -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+              Additional Notes
+            </label>
             <textarea
               v-model="form.notes"
               rows="2"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Additional notes"
+              class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+              placeholder="Any additional notes or comments"
             ></textarea>
-            <span v-if="errors.notes" class="text-red-500 text-sm">{{ errors.notes[0] }}</span>
+            <span v-if="errors.notes" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.notes[0] }}</span>
           </div>
+
         </div>
 
-        <!-- Actions -->
-        <div class="flex justify-end space-x-3 pt-4 border-t">
+        <!-- Actions Bar -->
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <button
             type="button"
             @click="$emit('close')"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            class="w-full sm:w-auto px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
           >
             Cancel
           </button>
+          
           <button
             type="submit"
             :disabled="saving"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {{ saving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+            <span v-if="saving">Saving...</span>
+            <span v-else>{{ isEditing ? 'Update Expense' : 'Create Expense' }}</span>
           </button>
+
           <button
             v-if="!isEditing"
             type="button"
             @click="saveAndSubmit"
             :disabled="saving"
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+            class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {{ saving ? 'Saving...' : 'Create & Submit' }}
+            <span v-if="saving">Saving...</span>
+            <span v-else>Create & Submit</span>
           </button>
         </div>
       </form>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 
 // Props and Emits
 const props = defineProps({
@@ -213,12 +427,12 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'saved']);
 
-// Reactive data
+// Form Reactive Data
 const form = ref({
   title: '',
   category_id: '',
   employee_id: '',
-  amount: '',
+  amount: 0,
   expense_date: new Date().toISOString().split('T')[0],
   vendor_name: '',
   reference_number: '',
@@ -227,16 +441,245 @@ const form = ref({
   notes: ''
 });
 
+// Single payment method reactive state (left field = Payment Method, right field = Select Payment)
+const singlePaymentMethod = ref('cash');
+const isMultiPayMode = ref(false);
+
+// Multi payment method reactive state
+const selectedPaymentMethods = ref(['cash']);
+const paymentAmounts = ref({});
+const bankAccountIds = ref({});
+
 const categories = ref([]);
 const employees = ref([]);
+const bankAccounts = ref([]);
 const errors = ref({});
 const saving = ref(false);
 const selectedFiles = ref([]);
+const fileInputRef = ref(null);
+const isDragging = ref(false);
 
-// Computed
 const isEditing = computed(() => !!props.expense);
 
-// Methods
+// Payment method select options - strictly Cash, Bank Transfer, and Card
+const paymentMethodOptions = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'credit_card', label: 'Card' }
+];
+
+// Computed dropdown options
+const categoryOptions = computed(() => {
+  return categories.value.map(cat => ({
+    value: cat.id,
+    label: cat.name
+  }));
+});
+
+const employeeOptions = computed(() => {
+  return employees.value.map(emp => ({
+    value: emp.id,
+    label: emp.full_name || `${emp.first_name} ${emp.last_name}`
+  }));
+});
+
+// Helper to format Bank Account label displaying Account Name (Bank Name - Credit Card / Bank Name) — ****-Last4 • Balance: $Balance
+const formatAccountOptionLabel = (bank, isCard = false) => {
+  const accName = bank.account_name || 'Account';
+  const bName = bank.bank_name && bank.bank_name !== accName ? bank.bank_name : '';
+  
+  let typeOrBank = '';
+  if (isCard || bank.account_type === 'credit_card' || bank.account_type === 'card') {
+    typeOrBank = bName ? ` (${bName} - Credit Card)` : ' (Credit Card)';
+  } else if (bName) {
+    typeOrBank = ` (${bName})`;
+  }
+
+  const accNum = String(bank.account_number || '').trim();
+  const last4 = accNum.length >= 4 ? accNum.slice(-4) : (accNum || '001');
+  const balance = parseFloat(bank.current_balance ?? bank.opening_balance ?? 0).toFixed(2);
+
+  let label = `${accName}${typeOrBank}`;
+  if (last4) {
+    label += ` — ****-${last4}`;
+  }
+  label += ` • Balance: $${balance}`;
+  return label;
+};
+
+// Cash Account Options (strictly cash accounts)
+const cashAccountOptions = computed(() => {
+  const activeBanks = bankAccounts.value.filter(b => (b.is_active !== false && b.is_active !== 0));
+  const cashBanks = activeBanks.filter(b =>
+    b.account_type === 'cash' ||
+    (b.bank_name && b.bank_name.toLowerCase().includes('cash')) ||
+    (b.account_name && b.account_name.toLowerCase().includes('cash'))
+  );
+  const listToUse = cashBanks.length > 0 ? cashBanks : activeBanks;
+  return listToUse.map(bank => ({
+    value: bank.id,
+    label: formatAccountOptionLabel(bank, false)
+  }));
+});
+
+// Bank Account options for Bank Transfer (checking, savings, or general bank)
+const bankAccountOptions = computed(() => {
+  const activeBanks = bankAccounts.value.filter(b => (b.is_active !== false && b.is_active !== 0));
+  const bankBanks = activeBanks.filter(b => b.account_type !== 'cash' && b.account_type !== 'credit_card');
+  const listToUse = bankBanks.length > 0 ? bankBanks : activeBanks;
+  return listToUse.map(bank => ({
+    value: bank.id,
+    label: formatAccountOptionLabel(bank, false)
+  }));
+});
+
+// Card Account options for Card payment method
+const cardAccountOptions = computed(() => {
+  const activeBanks = bankAccounts.value.filter(b => (b.is_active !== false && b.is_active !== 0));
+  const cardBanks = activeBanks.filter(b =>
+    b.account_type === 'credit_card' ||
+    b.account_type === 'card' ||
+    (b.account_name && b.account_name.toLowerCase().includes('card')) ||
+    (b.bank_name && b.bank_name.toLowerCase().includes('card'))
+  );
+  const listToUse = cardBanks.length > 0 ? cardBanks : activeBanks;
+  return listToUse.map(bank => ({
+    value: bank.id,
+    label: formatAccountOptionLabel(bank, true)
+  }));
+});
+
+const getMethodLabel = (val) => {
+  const match = paymentMethodOptions.find(o => o.value === val);
+  return match ? match.label : val;
+};
+
+// Helper to select default cash account if Cash is selected (ignores non-cash default bank accounts)
+const selectDefaultCashAccount = () => {
+  if (bankAccounts.value.length === 0) return;
+  const activeBanks = bankAccounts.value.filter(b => (b.is_active !== false && b.is_active !== 0));
+  
+  // Find explicit cash account first
+  const defaultCash = activeBanks.find(b =>
+    b.account_type === 'cash' ||
+    (b.bank_name && b.bank_name.toLowerCase().includes('cash')) ||
+    (b.account_name && b.account_name.toLowerCase().includes('cash'))
+  ) || activeBanks.find(b => b.is_default) || activeBanks[0];
+
+  if (defaultCash) {
+    bankAccountIds.value['cash'] = defaultCash.id;
+  }
+};
+
+// Helper to select default bank or card accounts when method changes
+const selectDefaultBankOrCardAccount = (methodKey) => {
+  if (bankAccounts.value.length === 0) return;
+  const activeBanks = bankAccounts.value.filter(b => (b.is_active !== false && b.is_active !== 0));
+  if (activeBanks.length === 0) return;
+
+  if (methodKey === 'bank_transfer') {
+    const bankOnly = activeBanks.filter(b => b.account_type !== 'cash' && b.account_type !== 'credit_card');
+    const listToSearch = bankOnly.length > 0 ? bankOnly : activeBanks;
+    const defaultBank = listToSearch.find(b => b.is_default) || listToSearch[0];
+    if (defaultBank) {
+      bankAccountIds.value['bank_transfer'] = defaultBank.id;
+    }
+  } else if (methodKey === 'credit_card') {
+    const cardOnly = activeBanks.filter(b =>
+      b.account_type === 'credit_card' ||
+      b.account_type === 'card' ||
+      (b.account_name && b.account_name.toLowerCase().includes('card'))
+    );
+    const listToSearch = cardOnly.length > 0 ? cardOnly : activeBanks;
+    const defaultCard = listToSearch.find(b => b.is_default) || listToSearch[0];
+    if (defaultCard) {
+      bankAccountIds.value['credit_card'] = defaultCard.id;
+    }
+  }
+};
+
+// Watch singlePaymentMethod to auto-populate default account for selected method
+watch(singlePaymentMethod, (newMethod) => {
+  if (newMethod === 'cash') {
+    selectDefaultCashAccount();
+  } else if (newMethod === 'bank_transfer') {
+    selectDefaultBankOrCardAccount('bank_transfer');
+  } else if (newMethod === 'credit_card') {
+    selectDefaultBankOrCardAccount('credit_card');
+  }
+
+  // Update selected payment methods list in single mode
+  if (!isMultiPayMode.value) {
+    selectedPaymentMethods.value = [newMethod];
+    paymentAmounts.value[newMethod] = form.value.amount || 0;
+  }
+}, { immediate: true });
+
+// Calculate total allocated payment amount
+const totalAllocatedPayment = computed(() => {
+  if (!isMultiPayMode.value) {
+    return parseFloat(form.value.amount) || 0;
+  }
+  let sum = 0;
+  selectedPaymentMethods.value.forEach(method => {
+    sum += parseFloat(paymentAmounts.value[method]) || 0;
+  });
+  return sum;
+});
+
+// Calculate remaining balance
+const remainingUnallocated = computed(() => {
+  const total = parseFloat(form.value.amount) || 0;
+  const rem = total - totalAllocatedPayment.value;
+  return rem > 0 ? rem : 0;
+});
+
+// Watch total amount change to update single method allocation
+watch(() => form.value.amount, (newAmount) => {
+  if (!isMultiPayMode.value && singlePaymentMethod.value) {
+    paymentAmounts.value[singlePaymentMethod.value] = newAmount || 0;
+  }
+});
+
+// File upload handlers
+const triggerFileInput = () => {
+  if (fileInputRef.value) fileInputRef.value.click();
+};
+
+const handleFileUpload = (event) => {
+  addFiles(Array.from(event.target.files));
+};
+
+const handleFileDrop = (event) => {
+  isDragging.value = false;
+  addFiles(Array.from(event.dataTransfer.files));
+};
+
+const addFiles = (files) => {
+  if (selectedFiles.value.length + files.length > 5) {
+    alert('Maximum 5 files allowed.');
+    return;
+  }
+  const allowedExts = ['png', 'jpg', 'jpeg', 'webp', 'pdf'];
+  for (const file of files) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!allowedExts.includes(ext)) {
+      alert(`File "${file.name}" format is not allowed. Only PNG, JPG, WEBP, PDF allowed.`);
+      continue;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`File "${file.name}" exceeds 5MB size limit.`);
+      continue;
+    }
+    selectedFiles.value.push(file);
+  }
+};
+
+const removeSelectedFile = (index) => {
+  selectedFiles.value.splice(index, 1);
+};
+
+// API Fetching
 const fetchCategories = async () => {
   try {
     const response = await axios.get('/api/expense-categories');
@@ -249,16 +692,25 @@ const fetchCategories = async () => {
 const fetchEmployees = async () => {
   try {
     const response = await axios.get('/api/employees');
-    employees.value = response.data;
+    employees.value = response.data.data || response.data;
   } catch (error) {
     console.error('Error fetching employees:', error);
   }
 };
 
-const handleFileUpload = (event) => {
-  selectedFiles.value = Array.from(event.target.files);
+const fetchBankAccounts = async () => {
+  try {
+    const response = await axios.get('/api/bank-accounts');
+    bankAccounts.value = response.data.data || response.data;
+    selectDefaultCashAccount();
+    if (singlePaymentMethod.value === 'bank_transfer') selectDefaultBankOrCardAccount('bank_transfer');
+    if (singlePaymentMethod.value === 'credit_card') selectDefaultBankOrCardAccount('credit_card');
+  } catch (error) {
+    console.error('Error fetching bank accounts:', error);
+  }
 };
 
+// Save logic
 const saveExpense = async (submitAfterSave = false) => {
   saving.value = true;
   errors.value = {};
@@ -266,14 +718,35 @@ const saveExpense = async (submitAfterSave = false) => {
   try {
     const formData = new FormData();
     
-    // Append form data
+    // Primary form attributes
     Object.keys(form.value).forEach(key => {
       if (form.value[key] !== null && form.value[key] !== '') {
         formData.append(key, form.value[key]);
       }
     });
 
-    // Append files
+    // Payment method & payments payload
+    if (isMultiPayMode.value && selectedPaymentMethods.value.length > 0) {
+      const pmString = selectedPaymentMethods.value.length === 1 ? selectedPaymentMethods.value[0] : 'mixed';
+      formData.append('payment_method', pmString);
+
+      const paymentsList = selectedPaymentMethods.value.map(method => ({
+        method,
+        amount: parseFloat(paymentAmounts.value[method]) || 0,
+        bank_id: bankAccountIds.value[method] || null
+      }));
+      formData.append('payments', JSON.stringify(paymentsList));
+    } else {
+      formData.append('payment_method', singlePaymentMethod.value);
+      const paymentsList = [{
+        method: singlePaymentMethod.value,
+        amount: parseFloat(form.value.amount) || 0,
+        bank_id: bankAccountIds.value[singlePaymentMethod.value] || null
+      }];
+      formData.append('payments', JSON.stringify(paymentsList));
+    }
+
+    // Attachments
     selectedFiles.value.forEach((file, index) => {
       formData.append(`receipt_images[${index}]`, file);
     });
@@ -290,7 +763,7 @@ const saveExpense = async (submitAfterSave = false) => {
       });
     }
 
-    if (submitAfterSave && !isEditing.value) {
+    if (submitAfterSave && !isEditing.value && response.data.expense) {
       await axios.post(`/api/expenses/${response.data.expense.id}/submit`);
     }
 
@@ -310,7 +783,7 @@ const saveAndSubmit = () => {
   saveExpense(true);
 };
 
-// Initialize form if editing
+// Form Initialization
 const initializeForm = () => {
   if (props.expense) {
     Object.keys(form.value).forEach(key => {
@@ -318,13 +791,32 @@ const initializeForm = () => {
         form.value[key] = props.expense[key];
       }
     });
+
+    if (props.expense.payments && Array.isArray(props.expense.payments) && props.expense.payments.length > 1) {
+      isMultiPayMode.value = true;
+      selectedPaymentMethods.value = props.expense.payments.map(p => p.method);
+      props.expense.payments.forEach(p => {
+        paymentAmounts.value[p.method] = p.amount;
+        if (p.bank_id) bankAccountIds.value[p.method] = p.bank_id;
+      });
+    } else if (props.expense.payment_method) {
+      const mappedPm = props.expense.payment_method === 'bank' ? 'bank_transfer' : (props.expense.payment_method === 'card' ? 'credit_card' : props.expense.payment_method);
+      singlePaymentMethod.value = mappedPm;
+      paymentAmounts.value[mappedPm] = props.expense.amount;
+      if (props.expense.payments && props.expense.payments[0] && props.expense.payments[0].bank_id) {
+        bankAccountIds.value[mappedPm] = props.expense.payments[0].bank_id;
+      }
+    }
+  } else {
+    singlePaymentMethod.value = 'cash';
+    paymentAmounts.value['cash'] = form.value.amount || 0;
   }
 };
 
-// Lifecycle
 onMounted(() => {
   fetchCategories();
   fetchEmployees();
+  fetchBankAccounts();
   initializeForm();
 });
 </script>

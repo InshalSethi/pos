@@ -1,13 +1,22 @@
 <template>
   <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
     <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 my-auto">
+      
       <!-- Header -->
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-gray-900">
-          {{ isEditing ? 'Edit Category' : 'Create New Category' }}
-        </h3>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-100 dark:border-zinc-800">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {{ isEditing ? 'Edit Category' : 'Create New Category' }}
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+            {{ isEditing ? 'Update category details below' : 'Add a new expense category to categorize spending' }}
+          </p>
+        </div>
+        <button
+          @click="$emit('close')"
+          class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -17,84 +26,102 @@
       <form @submit.prevent="saveCategory" class="space-y-4">
         <!-- Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+            Category Name <span class="text-rose-500">*</span>
+          </label>
           <input
             v-model="form.name"
             type="text"
             required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
             placeholder="Enter category name"
           />
-          <span v-if="errors.name" class="text-red-500 text-sm">{{ errors.name[0] }}</span>
+          <span v-if="errors.name" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.name[0] }}</span>
         </div>
 
         <!-- Code -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Code</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+            Category Code
+          </label>
           <input
             v-model="form.code"
             type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter category code"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
+            placeholder="e.g., EXP-UTIL, EXP-OFFICE"
           />
-          <span v-if="errors.code" class="text-red-500 text-sm">{{ errors.code[0] }}</span>
+          <span v-if="errors.code" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.code[0] }}</span>
         </div>
 
-        <!-- Parent Category -->
+        <!-- Parent Category (Floating Dropdown) -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-          <select
+          <CustomFloatingSelect
             v-model="form.parent_category_id"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">No Parent (Top Level)</option>
-            <option v-for="category in availableParents" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
-          <span v-if="errors.parent_category_id" class="text-red-500 text-sm">{{ errors.parent_category_id[0] }}</span>
+            label="Parent Category"
+            placeholder="No Parent (Top Level)"
+            :options="parentCategoryOptions"
+            :searchable="true"
+          />
+          <span v-if="errors.parent_category_id" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.parent_category_id[0] }}</span>
         </div>
 
         <!-- Description -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
+            Description
+          </label>
           <textarea
             v-model="form.description"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
             placeholder="Enter category description"
           ></textarea>
-          <span v-if="errors.description" class="text-red-500 text-sm">{{ errors.description[0] }}</span>
+          <span v-if="errors.description" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.description[0] }}</span>
         </div>
 
-        <!-- Active Status -->
-        <div class="flex items-center">
-          <input
-            v-model="form.is_active"
-            type="checkbox"
-            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label class="ml-2 block text-sm text-gray-900">Active</label>
+        <!-- Active Toggle (Black/White in Light, Emerald/Zinc in Dark) -->
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/80">
+          <div>
+            <span class="text-xs font-bold text-slate-900 dark:text-white">Active Category</span>
+            <p class="text-[11px] text-slate-500 dark:text-zinc-400">Categories marked active can be assigned to new expenses.</p>
+          </div>
+          <button
+            type="button"
+            @click="form.is_active = !form.is_active"
+            :class="[
+              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+              form.is_active ? 'bg-slate-900 dark:bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-700'
+            ]"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out',
+                form.is_active ? 'translate-x-5' : 'translate-x-0'
+              ]"
+            />
+          </button>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end space-x-3 pt-4 border-t">
+        <div class="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-zinc-800">
           <button
             type="button"
             @click="$emit('close')"
-            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            class="px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
             :disabled="saving"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            class="px-5 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
-            {{ saving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+            <span v-if="saving">Saving...</span>
+            <span v-else>{{ isEditing ? 'Update Category' : 'Create Category' }}</span>
           </button>
         </div>
       </form>
+
     </div>
   </div>
 </template>
@@ -102,6 +129,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
+import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 
 // Props and Emits
 const props = defineProps({
@@ -126,23 +154,19 @@ const categories = ref([]);
 const errors = ref({});
 const saving = ref(false);
 
-// Computed
 const isEditing = computed(() => !!props.category);
 
-const availableParents = computed(() => {
-  if (!isEditing.value) {
-    return categories.value;
-  }
-  
-  // Exclude current category and its children from parent options
-  return categories.value.filter(cat => {
-    if (cat.id === props.category.id) return false;
-    // Add logic to exclude children if needed
+const parentCategoryOptions = computed(() => {
+  const list = categories.value.filter(cat => {
+    if (isEditing.value && cat.id === props.category.id) return false;
     return true;
   });
+  return [
+    { value: '', label: 'No Parent (Top Level)' },
+    ...list.map(cat => ({ value: cat.id, label: cat.name }))
+  ];
 });
 
-// Methods
 const fetchCategories = async () => {
   try {
     const response = await axios.get('/api/expense-categories');
@@ -157,11 +181,10 @@ const saveCategory = async () => {
   errors.value = {};
 
   try {
-    let response;
     if (isEditing.value) {
-      response = await axios.put(`/api/expense-categories/${props.category.id}`, form.value);
+      await axios.put(`/api/expense-categories/${props.category.id}`, form.value);
     } else {
-      response = await axios.post('/api/expense-categories', form.value);
+      await axios.post('/api/expense-categories', form.value);
     }
 
     emit('saved');
@@ -176,7 +199,6 @@ const saveCategory = async () => {
   }
 };
 
-// Initialize form if editing
 const initializeForm = () => {
   if (props.category) {
     Object.keys(form.value).forEach(key => {
@@ -187,7 +209,6 @@ const initializeForm = () => {
   }
 };
 
-// Lifecycle
 onMounted(() => {
   fetchCategories();
   initializeForm();

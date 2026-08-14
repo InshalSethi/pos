@@ -118,7 +118,8 @@ class ExpenseController extends Controller
             'description' => 'nullable|string',
             'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'receipt_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,check,petty_cash',
+            'payment_method' => 'nullable|string|max:50',
+            'payments' => 'nullable',
             'reference_number' => 'nullable|string|max:255',
             'vendor_name' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -135,6 +136,10 @@ class ExpenseController extends Controller
             DB::beginTransaction();
 
             $expenseData = $request->except(['receipt_image', 'receipt_images']);
+            if ($request->has('payments')) {
+                $rawPayments = $request->input('payments');
+                $expenseData['payments'] = is_string($rawPayments) ? (json_decode($rawPayments, true) ?? []) : (array)$rawPayments;
+            }
             $expenseData['expense_number'] = Expense::generateExpenseNumber();
             $expenseData['user_id'] = auth()->id();
 
@@ -218,7 +223,8 @@ class ExpenseController extends Controller
             'description' => 'nullable|string',
             'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'receipt_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,check,petty_cash',
+            'payment_method' => 'nullable|string|max:50',
+            'payments' => 'nullable',
             'reference_number' => 'nullable|string|max:255',
             'vendor_name' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -235,6 +241,10 @@ class ExpenseController extends Controller
             DB::beginTransaction();
 
             $expenseData = $request->except(['receipt_image', 'receipt_images']);
+            if ($request->has('payments')) {
+                $rawPayments = $request->input('payments');
+                $expenseData['payments'] = is_string($rawPayments) ? (json_decode($rawPayments, true) ?? []) : (array)$rawPayments;
+            }
 
             // Handle single receipt image
             if ($request->hasFile('receipt_image')) {

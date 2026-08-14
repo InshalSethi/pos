@@ -1,43 +1,43 @@
 <template>
-  <div class="expenses-container p-4 sm:p-6">
+  <div class="expenses-container p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Expense Management</h1>
-        <p class="text-gray-600">Manage and track company expenses</p>
+        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Expense Management</h1>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5">Track, categorize, and approve company expenses seamlessly</p>
       </div>
-      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+      <div class="flex items-center gap-2.5">
         <button
           @click="showCategoryModal = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+          class="px-4 py-2.5 border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700/80 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-slate-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
           Add Category
         </button>
         <button
           @click="showExpenseModal = true"
-          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+          class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
           Add Expense
         </button>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="border-b border-gray-200 mb-6">
-      <nav class="-mb-px flex flex-wrap space-x-4 sm:space-x-8">
+    <!-- Navigation Tabs -->
+    <div class="border-b border-slate-200 dark:border-zinc-800">
+      <nav class="-mb-px flex space-x-6">
         <button
           @click="activeTab = 'expenses'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+            'py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer',
             activeTab === 'expenses'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white'
+              : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Expenses
@@ -45,10 +45,10 @@
         <button
           @click="activeTab = 'categories'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+            'py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer',
             activeTab === 'categories'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white'
+              : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Categories
@@ -56,10 +56,10 @@
         <button
           @click="activeTab = 'reports'"
           :class="[
-            'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+            'py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer',
             activeTab === 'reports'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white'
+              : 'border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-700'
           ]"
         >
           Reports
@@ -147,7 +147,6 @@ const checkAutoOpenCreate = () => {
   }
 };
 
-// Methods
 const editExpense = (expense) => {
   selectedExpense.value = expense;
   showExpenseModal.value = true;
@@ -208,19 +207,16 @@ const handleExpensePay = () => {
 
 const handleCreatePayment = (expense) => {
   showExpenseViewModal.value = false;
-  // Navigate to payments page with pre-filled data
   window.open(`/payments?create=true&type=expense_payment&reference_id=${expense.id}&amount=${expense.amount}&payee_name=${encodeURIComponent(expense.vendor_name || 'Expense Payment')}&description=${encodeURIComponent('Payment for expense: ' + expense.title)}`, '_blank');
 };
 
 const fetchExpenses = () => {
-  // Refresh the expense list component
   if (expenseListRef.value) {
     expenseListRef.value.fetchExpenses();
   }
 };
 
 const fetchCategories = () => {
-  // This will be handled by the ExpenseCategoryList component
 };
 
 onMounted(() => {
@@ -235,9 +231,3 @@ watch(() => route.query, () => {
   checkAutoOpenCreate();
 });
 </script>
-
-<style scoped>
-.expenses-container {
-  padding: 1.5rem;
-}
-</style>
