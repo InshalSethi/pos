@@ -195,26 +195,18 @@
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Mobile</label>
-                  <input
+                  <CustomPhoneInput
+                    label="Mobile"
                     v-model="form.mobile"
-                    type="text"
-                    placeholder="e.g. +1 555 5678"
-                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
-                    :class="{ 'border-red-300 dark:border-red-700': errors.mobile }"
+                    :error="errors.mobile"
                   />
-                  <p v-if="errors.mobile" class="mt-1 text-[10px] text-red-500">{{ errors.mobile[0] }}</p>
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Phone</label>
-                  <input
+                  <CustomPhoneInput
+                    label="Phone"
                     v-model="form.phone"
-                    type="text"
-                    placeholder="e.g. +1 555 1234"
-                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
-                    :class="{ 'border-red-300 dark:border-red-700': errors.phone }"
+                    :error="errors.phone"
                   />
-                  <p v-if="errors.phone" class="mt-1 text-[10px] text-red-500">{{ errors.phone[0] }}</p>
                 </div>
               </div>
 
@@ -405,12 +397,14 @@ import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { useToast } from '@/composables/useToast';
 import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
+import CustomPhoneInput from '@/components/common/CustomPhoneInput.vue';
 import api from '@/services/api';
 
 export default {
   name: 'CustomerModalSimple',
   components: {
-    CustomFloatingSelect
+    CustomFloatingSelect,
+    CustomPhoneInput
   },
   props: {
     show: {

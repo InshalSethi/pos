@@ -229,14 +229,9 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                {{ form.account_type === 'credit_card' ? 'CARD BANK PHONE' : 'BANK PHONE' }}
-              </label>
-              <input
+              <CustomPhoneInput
+                :label="form.account_type === 'credit_card' ? 'CARD BANK PHONE' : 'BANK PHONE'"
                 v-model="form.bank_phone"
-                type="text"
-                :placeholder="form.account_type === 'credit_card' ? 'Enter Card Bank Phone' : 'Enter Bank Phone'"
-                class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-normal"
               />
             </div>
           </div>
@@ -284,11 +279,13 @@ import axios from 'axios';
 import { useToast } from '@/composables/useToast';
 import { useCurrencyStore } from '@/stores/currency';
 import CustomFloatingSelect from '../common/CustomFloatingSelect.vue';
+import CustomPhoneInput from '../common/CustomPhoneInput.vue';
 
 export default {
   name: 'CreateBankAccount',
   components: {
-    CustomFloatingSelect
+    CustomFloatingSelect,
+    CustomPhoneInput
   },
   setup() {
     const route = useRoute();

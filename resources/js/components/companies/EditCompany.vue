@@ -115,8 +115,10 @@
                   <input v-model="form.company_email" type="email" required disabled class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-500 cursor-not-allowed">
                 </div>
                 <div class="space-y-1.5">
-                  <label class="text-[11px] font-bold text-gray-600">WhatsApp</label>
-                  <input v-model="form.company_phone" type="text" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-md text-sm text-gray-900 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors" placeholder="+92 300...">
+                  <CustomPhoneInput
+                    label="Phone / WhatsApp"
+                    v-model="form.company_phone"
+                  />
                 </div>
                 <div class="space-y-1.5 sm:col-span-2">
                   <label class="text-[11px] font-bold text-gray-600">Website / Address</label>
@@ -256,6 +258,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import CustomPhoneInput from '@/components/common/CustomPhoneInput.vue';
 
 const route = useRoute();
 const router = useRouter();

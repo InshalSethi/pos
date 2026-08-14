@@ -59,22 +59,18 @@
               <span v-if="errors.email" class="text-red-500 text-xs mt-1 block">{{ errors.email[0] }}</span>
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Phone</label>
-              <input
+              <CustomPhoneInput
+                label="Phone"
                 v-model="form.phone"
-                type="tel"
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                :error="errors.phone"
               />
-              <span v-if="errors.phone" class="text-red-500 text-xs mt-1 block">{{ errors.phone[0] }}</span>
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Mobile</label>
-              <input
+              <CustomPhoneInput
+                label="Mobile"
                 v-model="form.mobile"
-                type="tel"
-                class="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                :error="errors.mobile"
               />
-              <span v-if="errors.mobile" class="text-red-500 text-xs mt-1 block">{{ errors.mobile[0] }}</span>
             </div>
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">Date of Birth</label>
@@ -443,6 +439,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
+import CustomPhoneInput from '@/components/common/CustomPhoneInput.vue';
 import { useToast } from '@/composables/useToast';
 import { useCurrencyStore } from '@/stores/currency';
 import { useAuthStore } from '@/stores/auth';

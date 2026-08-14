@@ -63,26 +63,18 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input
-                          id="phone"
+                        <CustomPhoneInput
+                          label="Phone"
                           v-model="form.phone"
-                          type="text"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.phone }"
+                          :error="errors.phone"
                         />
-                        <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone[0] }}</p>
                       </div>
                       <div>
-                        <label for="mobile" class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                        <input
-                          id="mobile"
+                        <CustomPhoneInput
+                          label="Mobile"
                           v-model="form.mobile"
-                          type="text"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                          :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.mobile }"
+                          :error="errors.mobile"
                         />
-                        <p v-if="errors.mobile" class="mt-1 text-sm text-red-600">{{ errors.mobile[0] }}</p>
                       </div>
                     </div>
 
@@ -239,9 +231,13 @@
 <script>
 import { ref, reactive, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
+import CustomPhoneInput from '@/components/common/CustomPhoneInput.vue';
 import api from '@/services/api';
 export default {
   name: 'SubAdminCreateForm',
+  components: {
+    CustomPhoneInput
+  },
   props: {
     show: {
       type: Boolean,
