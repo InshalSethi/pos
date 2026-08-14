@@ -18,6 +18,12 @@ class RolePermissionSeeder extends Seeder
 
         // Create permissions
         $permissions = [
+            // Task Board permissions
+            'tasks.view',
+            'tasks.create',
+            'tasks.edit',
+            'tasks.delete',
+
             // Calendar permissions
             'calendar.view',
 

@@ -174,9 +174,10 @@
         </router-link>
 
         <router-link
+          v-if="hasPermission('calendar.view')"
           to="/calendar"
           :class="[
-            'group flex items-center px-3 py-2.5 text-[13px] rounded-xl transition-all duration-200 relative',
+            'group flex items-center px-3 py-2 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
             $route.path === '/calendar'
               ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
               : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
@@ -188,6 +189,26 @@
           </svg>
           <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Calendar
+          </span>
+        </router-link>
+
+        <!-- Task Board -->
+        <router-link
+          v-if="hasPermission('tasks.view')"
+          to="/tasks"
+          :class="[
+            'group flex items-center px-3 py-2 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
+            $route.path === '/tasks'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
+          ]"
+          :title="sidebarCollapsed ? 'Task Board' : ''"
+        >
+          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          </svg>
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+            Task Board
           </span>
         </router-link>
 
@@ -1928,6 +1949,7 @@ import axios from 'axios';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const hasPermission = (perm) => authStore.hasPermission(perm);
 
 const renderError = ref(false);
 const renderErrorMessage = ref('');
@@ -2050,6 +2072,8 @@ const favorites = ref(JSON.parse(localStorage.getItem('pos_favorites') || '[]'))
 
 const menuItems = [
   { path: '/dashboard', name: 'Dashboard', category: 'General', icon: 'home' },
+  { path: '/tasks', name: 'Task Boards', category: 'General', icon: 'tasks' },
+  { path: '/calendar', name: 'Calendar', category: 'General', icon: 'calendar' },
   { path: '/sales/invoices', name: 'Sales Invoices', category: 'Sales', icon: 'invoice' },
   { path: '/sales/returns', name: 'Sales Returns', category: 'Sales', icon: 'return' },
   { path: '/purchase/orders', name: 'Purchase Orders', category: 'Purchases', icon: 'purchase' },
@@ -2095,7 +2119,11 @@ const currentMenuItem = computed(() => {
   const currentPath = router.currentRoute.value.path;
   let item = menuItems.find(m => m.path === currentPath);
   if (!item) {
-    if (currentPath.startsWith('/products')) {
+    if (currentPath.startsWith('/tasks')) {
+      item = menuItems.find(m => m.path === '/tasks');
+    } else if (currentPath.startsWith('/calendar')) {
+      item = menuItems.find(m => m.path === '/calendar');
+    } else if (currentPath.startsWith('/products')) {
       item = menuItems.find(m => m.path === '/products');
     } else if (currentPath.startsWith('/sales/invoices')) {
       item = menuItems.find(m => m.path === '/sales/invoices');

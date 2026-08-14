@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
+use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\InvoicePurchaseSettingsController;
 use App\Http\Controllers\Api\PurchaseReturnController;
 use App\Http\Controllers\Api\SalesReturnController;
@@ -438,5 +439,22 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::post('/calendar/google/toggle-sync', [CalendarController::class, 'toggleSync']);
         Route::post('/calendar/google/sync-now', [CalendarController::class, 'syncNow']);
         Route::post('/calendar/google/disconnect', [CalendarController::class, 'disconnect']);
+
+        // Task Board Module routes
+        Route::get('/tasks/boards', [TaskController::class, 'getBoards']);
+        Route::post('/tasks/boards', [TaskController::class, 'createBoard']);
+        Route::delete('/tasks/boards/{taskBoard}', [TaskController::class, 'deleteBoard']);
+        Route::post('/tasks/boards/{taskBoard}/columns', [TaskController::class, 'createColumn']);
+
+        Route::get('/tasks', [TaskController::class, 'getTasks']);
+        Route::post('/tasks', [TaskController::class, 'createTask']);
+        Route::put('/tasks/{task}', [TaskController::class, 'updateTask']);
+        Route::post('/tasks/{task}/move', [TaskController::class, 'moveTask']);
+        Route::delete('/tasks/{task}', [TaskController::class, 'deleteTask']);
+        Route::post('/tasks/bulk-action', [TaskController::class, 'bulkAction']);
+        Route::post('/tasks/{task}/toggle-star', [TaskController::class, 'toggleStar']);
+        Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment']);
+
+        Route::get('/tasks/assignees', [TaskController::class, 'getAssignees']);
 
     });
