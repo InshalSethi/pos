@@ -84,6 +84,10 @@ class SupplierController extends Controller
             'notes' => 'nullable|string',
             'credit_limit' => 'nullable|numeric|min:0',
             'payment_terms_days' => 'nullable|integer|min:0',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'existing_attachments' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -93,7 +97,21 @@ class SupplierController extends Controller
             ], 422);
         }
 
-        $supplier = Supplier::create($request->all());
+        $data = $request->except(['profile_image', 'attachments', 'existing_attachments']);
+
+        if ($request->hasFile('profile_image')) {
+            $data['profile_image'] = Storage::disk('public')->put('suppliers/avatars', $request->file('profile_image'));
+        }
+
+        $uploadedAttachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $uploadedAttachments[] = Storage::disk('public')->put('suppliers/attachments', $file);
+            }
+        }
+        $data['attachments'] = $uploadedAttachments;
+
+        $supplier = Supplier::create($data);
 
         return response()->json([
             'message' => 'Supplier created successfully',
@@ -140,6 +158,10 @@ class SupplierController extends Controller
             'credit_limit' => 'nullable|numeric|min:0',
             'payment_terms_days' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'existing_attachments' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -149,7 +171,45 @@ class SupplierController extends Controller
             ], 422);
         }
 
-        $supplier->update($request->all());
+        $data = $request->except(['profile_image', 'attachments', 'existing_attachments']);
+
+        if ($request->hasFile('profile_image')) {
+            if ($supplier->profile_image) {
+                Storage::disk('public')->delete($supplier->profile_image);
+            }
+            $data['profile_image'] = Storage::disk('public')->put('suppliers/avatars', $request->file('profile_image'));
+        }
+
+        $currentAttachments = $supplier->attachments ?? [];
+        if (!is_array($currentAttachments)) {
+            $currentAttachments = json_decode($currentAttachments, true) ?? [];
+        }
+
+        $retainedAttachments = [];
+        if ($request->has('existing_attachments')) {
+            $rawExisting = $request->input('existing_attachments');
+            if (is_string($rawExisting)) {
+                $rawExisting = json_decode($rawExisting, true) ?? [];
+            }
+            $existing = (array)$rawExisting;
+            foreach ($existing as $item) {
+                $path = is_array($item) ? ($item['path'] ?? '') : (string)$item;
+                if ($path && in_array($path, $currentAttachments)) {
+                    $retainedAttachments[] = $path;
+                }
+            }
+        }
+
+        $newAttachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $newAttachments[] = Storage::disk('public')->put('suppliers/attachments', $file);
+            }
+        }
+
+        $data['attachments'] = array_values(array_unique(array_merge($retainedAttachments, $newAttachments)));
+
+        $supplier->update($data);
 
         return response()->json([
             'message' => 'Supplier updated successfully',

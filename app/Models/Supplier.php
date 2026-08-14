@@ -37,6 +37,8 @@ class Supplier extends Model
         'credit_limit',
         'advance_balance',
         'payment_terms_days',
+        'profile_image',
+        'attachments',
     ];
 
     protected $casts = [
@@ -44,7 +46,31 @@ class Supplier extends Model
         'is_active' => 'boolean',
         'credit_limit' => 'decimal:2',
         'advance_balance' => 'decimal:2',
+        'attachments' => 'array',
     ];
+
+    protected $appends = ['attachments_urls'];
+
+    public function getAttachmentsUrlsAttribute(): array
+    {
+        $list = $this->attachments ?? [];
+        if (!is_array($list)) {
+            $list = json_decode($list, true) ?? [];
+        }
+
+        $urls = [];
+        foreach ($list as $idx => $path) {
+            if ($path) {
+                $urls[] = [
+                    'index' => $idx,
+                    'url' => str_starts_with($path, 'http') ? $path : asset('storage/' . $path),
+                    'path' => $path,
+                    'filename' => basename($path),
+                ];
+            }
+        }
+        return $urls;
+    }
 
     // Relationships
     public function purchaseOrders(): HasMany

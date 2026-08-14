@@ -87,7 +87,11 @@ class SubAdminController extends Controller
             'address' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
             'is_active' => 'boolean',
-            'role' => 'required|string|in:admin,sub-admin,manager,cashier,employee,user'
+            'role' => 'required|string|in:admin,sub-admin,manager,cashier,employee,user',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'existing_attachments' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -97,7 +101,7 @@ class SubAdminController extends Controller
             ], 422);
         }
 
-        $user = User::create([
+        $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -105,7 +109,21 @@ class SubAdminController extends Controller
             'address' => $request->address,
             'notes' => $request->notes,
             'is_active' => $request->get('is_active', true)
-        ]);
+        ];
+
+        if ($request->hasFile('profile_image')) {
+            $userData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('profile_image'));
+        }
+
+        $uploadedAttachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $uploadedAttachments[] = Storage::disk('public')->put('users/attachments', $file);
+            }
+        }
+        $userData['attachments'] = $uploadedAttachments;
+
+        $user = User::create($userData);
 
         $user->syncRoles($request->role);
         $user->load('roles');
@@ -143,7 +161,11 @@ class SubAdminController extends Controller
             'address' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
             'is_active' => 'boolean',
-            'role' => 'required|string|in:admin,sub-admin,manager,cashier,employee,user'
+            'role' => 'required|string|in:admin,sub-admin,manager,cashier,employee,user',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'existing_attachments' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -158,6 +180,42 @@ class SubAdminController extends Controller
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
         }
+
+        if ($request->hasFile('profile_image')) {
+            if ($subAdmin->profile_image) {
+                Storage::disk('public')->delete($subAdmin->profile_image);
+            }
+            $updateData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('profile_image'));
+        }
+
+        $currentAttachments = $subAdmin->attachments ?? [];
+        if (!is_array($currentAttachments)) {
+            $currentAttachments = json_decode($currentAttachments, true) ?? [];
+        }
+
+        $retainedAttachments = [];
+        if ($request->has('existing_attachments')) {
+            $rawExisting = $request->input('existing_attachments');
+            if (is_string($rawExisting)) {
+                $rawExisting = json_decode($rawExisting, true) ?? [];
+            }
+            $existing = (array)$rawExisting;
+            foreach ($existing as $item) {
+                $path = is_array($item) ? ($item['path'] ?? '') : (string)$item;
+                if ($path && in_array($path, $currentAttachments)) {
+                    $retainedAttachments[] = $path;
+                }
+            }
+        }
+
+        $newAttachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $newAttachments[] = Storage::disk('public')->put('users/attachments', $file);
+            }
+        }
+
+        $updateData['attachments'] = array_values(array_unique(array_merge($retainedAttachments, $newAttachments)));
 
         $subAdmin->update($updateData);
 

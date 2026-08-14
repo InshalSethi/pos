@@ -65,6 +65,7 @@ class Employee extends Model
         'is_manager',
         'avatar',
         'profile_photo_path',
+        'attachments',
     ];
 
     protected $casts = [
@@ -76,9 +77,31 @@ class Employee extends Model
         'hourly_rate' => 'decimal:2',
         'is_active' => 'boolean',
         'is_manager' => 'boolean',
+        'attachments' => 'array',
     ];
 
-    protected $appends = ['full_name', 'avatar_url', 'profile_photo_path'];
+    protected $appends = ['full_name', 'avatar_url', 'profile_photo_path', 'attachments_urls'];
+
+    public function getAttachmentsUrlsAttribute(): array
+    {
+        $list = $this->attachments ?? [];
+        if (!is_array($list)) {
+            $list = json_decode($list, true) ?? [];
+        }
+
+        $urls = [];
+        foreach ($list as $idx => $path) {
+            if ($path) {
+                $urls[] = [
+                    'index' => $idx,
+                    'url' => str_starts_with($path, 'http') ? $path : asset('storage/' . $path),
+                    'path' => $path,
+                    'filename' => basename($path),
+                ];
+            }
+        }
+        return $urls;
+    }
 
     /**
      * Scope query to only include managers.

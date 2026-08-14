@@ -43,6 +43,7 @@ class User extends Authenticatable
         'is_setup_completed',
         'avatar',
         'profile_photo_path',
+        'attachments',
     ];
 
     /**
@@ -74,6 +75,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'attachments' => 'array',
         ];
     }
 
@@ -82,7 +84,28 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['role_name', 'company_id', 'is_setup_completed', 'avatar_url', 'profile_photo_path'];
+    protected $appends = ['role_name', 'company_id', 'is_setup_completed', 'avatar_url', 'profile_photo_path', 'attachments_urls'];
+
+    public function getAttachmentsUrlsAttribute(): array
+    {
+        $list = $this->attachments ?? [];
+        if (!is_array($list)) {
+            $list = json_decode($list, true) ?? [];
+        }
+
+        $urls = [];
+        foreach ($list as $idx => $path) {
+            if ($path) {
+                $urls[] = [
+                    'index' => $idx,
+                    'url' => str_starts_with($path, 'http') ? $path : asset('storage/' . $path),
+                    'path' => $path,
+                    'filename' => basename($path),
+                ];
+            }
+        }
+        return $urls;
+    }
 
     /**
      * Get the name of the primary role.

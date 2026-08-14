@@ -37,6 +37,8 @@ class Customer extends Model
         'wallet_balance',
         'total_purchases',
         'loyalty_points',
+        'profile_image',
+        'attachments',
     ];
 
     protected $casts = [
@@ -46,7 +48,31 @@ class Customer extends Model
         'wallet_balance' => 'decimal:2',
         'total_purchases' => 'decimal:2',
         'loyalty_points' => 'decimal:2',
+        'attachments' => 'array',
     ];
+
+    protected $appends = ['attachments_urls'];
+
+    public function getAttachmentsUrlsAttribute(): array
+    {
+        $list = $this->attachments ?? [];
+        if (!is_array($list)) {
+            $list = json_decode($list, true) ?? [];
+        }
+
+        $urls = [];
+        foreach ($list as $idx => $path) {
+            if ($path) {
+                $urls[] = [
+                    'index' => $idx,
+                    'url' => str_starts_with($path, 'http') ? $path : asset('storage/' . $path),
+                    'path' => $path,
+                    'filename' => basename($path),
+                ];
+            }
+        }
+        return $urls;
+    }
 
     // Relationships
     public function sales(): HasMany

@@ -220,6 +220,9 @@ class EmployeeController extends Controller
             'passport_number' => 'nullable|string|max:50',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'existing_attachments' => 'nullable',
             'department_id' => 'nullable|exists:departments,id',
             'department_ids' => 'nullable|array',
             'position_id' => 'nullable|exists:positions,id',
@@ -283,6 +286,15 @@ class EmployeeController extends Controller
                 $employeeData['profile_image'] = $avatarPath;
             }
 
+            // Handle attachments file uploads
+            $uploadedAttachments = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $uploadedAttachments[] = Storage::disk('public')->put('employees/attachments', $file);
+                }
+            }
+            $employeeData['attachments'] = $uploadedAttachments;
+
             // SINGLE-TABLE INHERITANCE: Save employee profile directly in users table
             $createUserAccount = filter_var($request->get('create_user_account', false), FILTER_VALIDATE_BOOLEAN) || $request->filled('password');
             $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
@@ -300,6 +312,7 @@ class EmployeeController extends Controller
                     'phone' => $request->phone ?: $request->mobile ?: $user->phone,
                     'address' => $request->address ?: $user->address,
                     'profile_image' => $avatarPath ?: $user->profile_image,
+                    'attachments' => !empty($uploadedAttachments) ? $uploadedAttachments : $user->attachments,
                     'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
                     'current_company_id' => $companyId ?: $user->current_company_id,
                 ]);
@@ -315,6 +328,7 @@ class EmployeeController extends Controller
                     'phone' => $request->phone ?: $request->mobile,
                     'address' => $request->address,
                     'profile_image' => $avatarPath,
+                    'attachments' => $uploadedAttachments,
                     'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
                     'current_company_id' => $companyId,
                     'company_id' => $companyId,
@@ -456,6 +470,9 @@ class EmployeeController extends Controller
             'passport_number' => 'nullable|string|max:50',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx|max:10240',
+            'existing_attachments' => 'nullable',
             'department_id' => 'nullable|exists:departments,id',
             'position_id' => 'nullable|exists:positions,id',
             'manager_id' => 'nullable|exists:employees,id',
@@ -535,6 +552,37 @@ class EmployeeController extends Controller
                 $employeeData['profile_image'] = Storage::disk('public')->put('avatars', $request->file('avatar'));
             }
 
+            // Handle attachments file uploads & retained existing attachments
+            $currentAttachments = $employee->attachments ?? [];
+            if (!is_array($currentAttachments)) {
+                $currentAttachments = json_decode($currentAttachments, true) ?? [];
+            }
+
+            $retainedAttachments = [];
+            if ($request->has('existing_attachments')) {
+                $rawExisting = $request->input('existing_attachments');
+                if (is_string($rawExisting)) {
+                    $rawExisting = json_decode($rawExisting, true) ?? [];
+                }
+                $existing = (array)$rawExisting;
+                foreach ($existing as $item) {
+                    $path = is_array($item) ? ($item['path'] ?? '') : (string)$item;
+                    if ($path && in_array($path, $currentAttachments)) {
+                        $retainedAttachments[] = $path;
+                    }
+                }
+            }
+
+            $newAttachments = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $newAttachments[] = Storage::disk('public')->put('employees/attachments', $file);
+                }
+            }
+
+            $allAttachments = array_values(array_unique(array_merge($retainedAttachments, $newAttachments)));
+            $employeeData['attachments'] = $allAttachments;
+
             $employee->update($employeeData);
 
             // SINGLE-TABLE INHERITANCE: Sync employee profile details to users table
@@ -554,6 +602,7 @@ class EmployeeController extends Controller
                     'phone' => $employee->phone ?: $employee->mobile,
                     'address' => $employee->address,
                     'profile_image' => $employee->profile_image,
+                    'attachments' => $allAttachments,
                     'is_active' => $employee->is_active,
                 ];
 
@@ -589,6 +638,7 @@ class EmployeeController extends Controller
                     'phone' => $employee->phone ?: $employee->mobile,
                     'address' => $employee->address,
                     'profile_image' => $employee->profile_image,
+                    'attachments' => $allAttachments,
                     'is_active' => $employee->is_active,
                     'current_company_id' => $companyId,
                     'company_id' => $companyId,

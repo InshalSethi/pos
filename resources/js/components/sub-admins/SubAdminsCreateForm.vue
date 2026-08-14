@@ -44,6 +44,13 @@
           >
             Address & Notes
           </button>
+          <button
+            type="button"
+            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'media' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
+            @click="activeTab = 'media'"
+          >
+            Media
+          </button>
         </div>
 
         <!-- Form Area -->
@@ -215,6 +222,139 @@
               </div>
             </div>
 
+            <!-- Tab 4: Media Information -->
+            <div v-if="activeTab === 'media'" class="space-y-6">
+              <!-- Profile Photo Section -->
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Profile Photo</label>
+                <div 
+                  @dragover.prevent="isDraggingPhoto = true" 
+                  @dragleave.prevent="isDraggingPhoto = false" 
+                  @drop.prevent="handlePhotoDrop"
+                  :class="[
+                    'relative flex items-center gap-4 p-4 rounded-xl border-2 border-dashed transition-all duration-200',
+                    isDraggingPhoto ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/40'
+                  ]"
+                >
+                  <div class="flex-shrink-0 relative">
+                    <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center border border-slate-200 dark:border-zinc-700 shadow-xs">
+                      <img v-if="photoPreview" :src="photoPreview" alt="Profile preview" class="w-full h-full object-cover" />
+                      <svg v-else class="w-7 h-7 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-800 dark:text-zinc-200">Drag & drop profile picture here</p>
+                    <p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">JPEG, PNG, WEBP, GIF up to 10MB</p>
+                    <div class="flex items-center gap-2 mt-2">
+                      <label class="px-2.5 py-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold text-[10px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity">
+                        Browse Image
+                        <input ref="photoInputRef" type="file" accept="image/*" class="hidden" @change="handlePhotoSelect" />
+                      </label>
+                      <button v-if="photoPreview || photoFile" type="button" @click="clearPhoto" class="px-2 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold text-[10px] rounded-lg hover:bg-rose-100 transition-colors cursor-pointer">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Attachments Section (Reference: Payment Receipts / Payments) -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                    Attachments <span class="text-slate-400 font-normal lowercase">(images or documents, max 5MB each, max 5 files)</span>
+                  </label>
+                  <span v-if="existingAttachments.length > 0 || attachmentFiles.length > 0" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/50">
+                    {{ existingAttachments.length + attachmentFiles.length }} / 5 file(s) selected
+                  </span>
+                </div>
+
+                <div
+                  @dragover.prevent="isDraggingAttachment = true"
+                  @dragleave.prevent="isDraggingAttachment = false"
+                  @drop.prevent="handleAttachmentDrop"
+                  @click="triggerAttachmentInput"
+                  :class="[
+                    'relative border-2 border-dashed rounded-xl p-4 transition-all duration-200 cursor-pointer text-center group flex flex-col items-center justify-center gap-1.5',
+                    isDraggingAttachment
+                      ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30 scale-[1.01]'
+                      : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 hover:bg-slate-100/70 dark:bg-zinc-950/40 dark:hover:bg-zinc-900/80 hover:border-indigo-300 dark:hover:border-indigo-700'
+                  ]"
+                >
+                  <input
+                    ref="attachmentInputRef"
+                    type="file"
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    multiple
+                    @change="handleAttachmentChange"
+                    class="hidden"
+                  />
+
+                  <div class="w-8 h-8 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+
+                  <div class="space-y-0.5">
+                    <p class="text-xs font-semibold text-slate-700 dark:text-zinc-200">
+                      <span class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
+                      PNG, JPG, PDF, DOCX, XLSX (max 5MB each, max 5 files)
+                    </p>
+                  </div>
+                </div>
+
+                <div v-if="existingAttachments.length > 0 || attachmentFiles.length > 0" class="flex flex-wrap gap-2 pt-2.5">
+                  <!-- Existing Attachments -->
+                  <div
+                    v-for="(item, index) in existingAttachments"
+                    :key="'exist-' + index"
+                    class="flex items-center gap-2 bg-indigo-50/80 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-zinc-700 text-xs shadow-2xs"
+                  >
+                    <a
+                      :href="item.url"
+                      target="_blank"
+                      class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
+                      title="View File"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      <span class="truncate max-w-[150px]">{{ item.filename }}</span>
+                    </a>
+                    <button type="button" @click.stop="removeExistingAttachment(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- New Attachments -->
+                  <div
+                    v-for="(file, index) in attachmentFiles"
+                    :key="'new-' + index"
+                    class="flex items-center gap-2 bg-slate-100/90 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-700 text-xs shadow-2xs"
+                  >
+                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="truncate font-semibold text-slate-800 dark:text-slate-200 max-w-[150px]">{{ file.name }}</span>
+                    <span class="text-[10px] text-slate-400 font-medium">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                    <button type="button" @click.stop="removeAttachmentFile(index)" class="text-slate-400 hover:text-rose-500 p-0.5 rounded-md transition-all cursor-pointer">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <!-- Footer Buttons -->
@@ -275,6 +415,71 @@ export default {
     const errors = ref({});
     const activeTab = ref('basic');
 
+    const photoInputRef = ref(null);
+    const photoFile = ref(null);
+    const photoPreview = ref(null);
+    const isDraggingPhoto = ref(false);
+
+    const attachmentInputRef = ref(null);
+    const attachmentFiles = ref([]);
+    const existingAttachments = ref([]);
+    const isDraggingAttachment = ref(false);
+
+    const handlePhotoSelect = (e) => {
+      const file = e.target.files[0];
+      if (file) setPhotoFile(file);
+    };
+    const handlePhotoDrop = (e) => {
+      isDraggingPhoto.value = false;
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) setPhotoFile(file);
+    };
+    const setPhotoFile = (file) => {
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('Photo size must not exceed 10MB.', 'error');
+        return;
+      }
+      photoFile.value = file;
+      photoPreview.value = URL.createObjectURL(file);
+    };
+    const clearPhoto = () => {
+      photoFile.value = null;
+      photoPreview.value = null;
+      if (photoInputRef.value) photoInputRef.value.value = '';
+    };
+
+    const triggerAttachmentInput = () => {
+      if (attachmentInputRef.value) attachmentInputRef.value.click();
+    };
+    const handleAttachmentChange = (e) => {
+      const files = Array.from(e.target.files);
+      addAttachmentFiles(files);
+    };
+    const handleAttachmentDrop = (e) => {
+      isDraggingAttachment.value = false;
+      const files = Array.from(e.dataTransfer.files);
+      addAttachmentFiles(files);
+    };
+    const addAttachmentFiles = (files) => {
+      if (existingAttachments.value.length + attachmentFiles.value.length + files.length > 5) {
+        showToast('Maximum 5 attachments allowed in total!', 'error');
+        return;
+      }
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast(`File "${file.name}" exceeds 5MB limit.`, 'error');
+          continue;
+        }
+        attachmentFiles.value.push(file);
+      }
+    };
+    const removeAttachmentFile = (index) => {
+      attachmentFiles.value.splice(index, 1);
+    };
+    const removeExistingAttachment = (index) => {
+      existingAttachments.value.splice(index, 1);
+    };
+
     const form = reactive({
       name: '',
       email: '',
@@ -302,6 +507,10 @@ export default {
         }
       });
       errors.value = {};
+      photoFile.value = null;
+      photoPreview.value = null;
+      attachmentFiles.value = [];
+      existingAttachments.value = [];
     };
 
     const loadSubAdminData = () => {
@@ -318,6 +527,16 @@ export default {
         } else if (props.subAdmin.role_name) {
           form.role = props.subAdmin.role_name;
         }
+
+        if (props.subAdmin.profile_image) {
+          photoPreview.value = props.subAdmin.profile_image.startsWith('http') ? props.subAdmin.profile_image : `/storage/${props.subAdmin.profile_image}`;
+        }
+
+        if (props.subAdmin.attachments_urls && Array.isArray(props.subAdmin.attachments_urls)) {
+          existingAttachments.value = [...props.subAdmin.attachments_urls];
+        } else {
+          existingAttachments.value = [];
+        }
       }
     };
 
@@ -326,23 +545,51 @@ export default {
       errors.value = {};
 
       try {
-        const url = props.isEdit ? `/sub-admins/${props.subAdmin.id}` : '/sub-admins';
-        const method = props.isEdit ? 'put' : 'post';
+        const formData = new FormData();
+        Object.keys(form).forEach(key => {
+          if (typeof form[key] === 'boolean') {
+            formData.append(key, form[key] ? '1' : '0');
+          } else if (key === 'password' || key === 'password_confirmation') {
+            if (form[key]) formData.append(key, form[key]);
+          } else if (form[key] !== null && form[key] !== undefined && form[key] !== '') {
+            formData.append(key, form[key]);
+          }
+        });
 
-        // Filter out password if it's empty during edit
-        const payload = { ...form };
-        if (props.isEdit && !payload.password) {
-          delete payload.password;
+        if (photoFile.value) {
+          formData.append('profile_image', photoFile.value);
         }
 
-        await api[method](url, payload);
+        if (attachmentFiles.value.length > 0) {
+          attachmentFiles.value.forEach(file => {
+            formData.append('attachments[]', file);
+          });
+        }
+
+        if (existingAttachments.value.length > 0) {
+          existingAttachments.value.forEach(att => {
+            formData.append('existing_attachments[]', att.path || att.filename || att);
+          });
+        }
+
+        let response;
+        if (props.isEdit && props.subAdmin?.id) {
+          formData.append('_method', 'PUT');
+          response = await api.post(`/sub-admins/${props.subAdmin.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        } else {
+          response = await api.post('/sub-admins', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        }
 
         showToast(
           props.isEdit ? 'Admin updated successfully' : 'Admin created successfully',
           'success'
         );
 
-        emit('saved');
+        emit('saved', response.data.user || response.data);
         emit('close');
       } catch (error) {
         if (error.response?.status === 422) {
@@ -372,6 +619,22 @@ export default {
 
     return {
       activeTab,
+      photoInputRef,
+      photoFile,
+      photoPreview,
+      isDraggingPhoto,
+      handlePhotoSelect,
+      handlePhotoDrop,
+      clearPhoto,
+      attachmentInputRef,
+      attachmentFiles,
+      existingAttachments,
+      isDraggingAttachment,
+      triggerAttachmentInput,
+      handleAttachmentChange,
+      handleAttachmentDrop,
+      removeAttachmentFile,
+      removeExistingAttachment,
       form,
       errors,
       saving,
