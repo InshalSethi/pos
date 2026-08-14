@@ -260,7 +260,7 @@
               <div class="flex items-center justify-between pb-3 mb-3 px-1">
                 <div class="flex items-center gap-2">
                   <span class="text-slate-300 font-bold cursor-grab">⋮⋮</span>
-                  <span :class="['w-2.5 h-2.5 rounded-full', getColumnDotClass(col.name)]"></span>
+                  <span :class="['w-2.5 h-2.5 rounded-full', getColumnDotClass(col)]"></span>
                   <h3 class="text-[15px] font-bold text-slate-800 dark:text-slate-200">
                     {{ col.name }}
                   </h3>
@@ -400,6 +400,34 @@
             </div>
             </template>
           </div>
+          <!-- Add Column Block -->
+          <div v-if="!isAddingColumn" class="flex flex-col min-h-[540px] shrink-0 w-[320px] rounded-xl border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 hover:bg-slate-100/50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" @click="isAddingColumn = true">
+            <span class="text-sm font-medium flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add Column</span>
+          </div>
+
+          <div v-else class="flex flex-col shrink-0 w-[320px]">
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm space-y-3 mt-1">
+              <input 
+                v-model="newColumnForm.name" 
+                type="text" 
+                placeholder="Column name..." 
+                class="w-full border border-slate-200 dark:border-zinc-700 bg-transparent rounded-md px-3 py-2 text-sm focus:outline-none focus:border-purple-500 dark:focus:border-purple-500 text-slate-800 dark:text-white transition-colors" 
+                @keyup.enter="submitNewColumn" 
+                autofocus 
+              />
+              
+              <div 
+                @click="cycleColumnColor"
+                :class="['w-full h-7 rounded-sm cursor-pointer transition-colors hover:opacity-90', getBgClass(newColumnForm.color)]"
+                title="Click to change color"
+              ></div>
+
+              <div class="flex items-center gap-3 pt-1">
+                <button @click="submitNewColumn" class="bg-[#a855f7] hover:bg-purple-600 text-white text-[13px] font-bold px-4 py-1.5 rounded-md transition-colors">Add</button>
+                <button @click="cancelAddColumn" class="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[13px] font-medium transition-colors">Cancel</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -408,7 +436,7 @@
         <div v-for="col in taskStore.columns" :key="col.id" class="space-y-3">
           <div class="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-2">
             <div class="flex items-center gap-2">
-              <span :class="['w-3 h-3 rounded-full', getColumnDotClass(col.name)]"></span>
+              <span :class="['w-3 h-3 rounded-full', getColumnDotClass(col)]"></span>
               <h3 class="text-sm font-black uppercase text-slate-800 dark:text-white">{{ col.name }}</h3>
               <span class="px-2 py-0.5 text-xs font-extrabold rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
                 {{ getFilteredTasksForColumn(col.id).length }}
@@ -1172,6 +1200,46 @@ const toggleColumnCollapse = (id) => {
   }
 };
 
+const isAddingColumn = ref(false);
+const newColumnForm = reactive({ name: '', color: 'blue' });
+const availableColors = ['blue', 'purple', 'rose', 'amber', 'emerald', 'slate'];
+
+const getBgClass = (color) => {
+  const map = {
+    blue: 'bg-blue-500',
+    purple: 'bg-purple-500',
+    rose: 'bg-rose-500',
+    amber: 'bg-amber-500',
+    emerald: 'bg-emerald-500',
+    slate: 'bg-slate-500'
+  };
+  return map[color] || 'bg-blue-500';
+};
+
+const cycleColumnColor = () => {
+  const idx = availableColors.indexOf(newColumnForm.color);
+  newColumnForm.color = availableColors[(idx + 1) % availableColors.length];
+};
+
+const submitNewColumn = async () => {
+  if (!newColumnForm.name.trim()) return;
+  if (taskStore.activeBoard) {
+    await taskStore.createColumn(taskStore.activeBoard.id, { 
+      name: newColumnForm.name.trim(), 
+      color: newColumnForm.color,
+      order: taskStore.columns.length 
+    });
+    newColumnForm.name = '';
+    newColumnForm.color = 'blue';
+    isAddingColumn.value = false;
+  }
+};
+
+const cancelAddColumn = () => {
+  newColumnForm.name = '';
+  isAddingColumn.value = false;
+};
+
 const boardForm = reactive({ name: '', description: '' });
 
 const filters = reactive({
@@ -1451,8 +1519,22 @@ const handleDeleteBoard = async (boardId) => {
   }
 };
 
-const getColumnDotClass = (colName) => {
-  const name = (colName || '').toLowerCase();
+const getColumnDotClass = (col) => {
+  if (!col) return 'bg-purple-500';
+  
+  if (typeof col === 'object' && col.color) {
+    const map = {
+      blue: 'bg-blue-500',
+      purple: 'bg-purple-500',
+      rose: 'bg-rose-500',
+      amber: 'bg-amber-500',
+      emerald: 'bg-emerald-500',
+      slate: 'bg-slate-500'
+    };
+    if (map[col.color]) return map[col.color];
+  }
+
+  const name = (typeof col === 'string' ? col : (col.name || '')).toLowerCase();
   if (name.includes('new') || name.includes('backlog')) return 'bg-purple-500';
   if (name.includes('ready')) return 'bg-rose-500';
   if (name.includes('progress')) return 'bg-amber-500';
