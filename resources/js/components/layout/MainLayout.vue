@@ -123,7 +123,7 @@
               </button>
             </div>
             <div class="py-1 border-t border-gray-100 dark:border-zinc-800">
-              <a href="/company-setup?mode=create_new&start_fresh_flow=true" class="flex items-center px-4 py-2.5 text-[13px] font-semibold text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 transition-colors w-full text-left" @click="showCompanySwitcher = false">
+              <a :href="addCompanyUrl" class="flex items-center px-4 py-2.5 text-[13px] font-semibold text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 transition-colors w-full text-left" @click="showCompanySwitcher = false">
                 <svg class="mr-3 flex-shrink-0 h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -2440,12 +2440,16 @@ const formatDate = (dateString) => {
 
   if (diffInHours < 1) {
     return 'Just now';
-  } else if (diffInHours < 24) {
-    return `${Math.floor(diffInHours)}h ago`;
   } else {
     return date.toLocaleDateString();
   }
 };
+
+const addCompanyUrl = computed(() => {
+  const token = localStorage.getItem('auth_token');
+  const baseUrl = '/company-setup?mode=create_new&start_fresh_flow=true';
+  return token ? `${baseUrl}&token=${encodeURIComponent(token)}` : baseUrl;
+});
 
 // Lifecycle hooks
 onMounted(() => {

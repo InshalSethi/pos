@@ -23,9 +23,23 @@ class CompanySetupController extends Controller
      */
     public function index(Request $request): View|RedirectResponse
     {
-        abort_unless(auth()->check(), 302, redirect('/login'));
+        $user = auth()->user() ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user();
 
-        $user = auth()->user();
+        if (!$user && ($request->filled('token') || $request->filled('auth_token'))) {
+            $rawToken = $request->query('token') ?? $request->query('auth_token');
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($rawToken);
+            if ($accessToken && $accessToken->tokenable) {
+                $user = $accessToken->tokenable;
+            }
+        }
+
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if (!\Illuminate\Support\Facades\Auth::guard('web')->check()) {
+            \Illuminate\Support\Facades\Auth::guard('web')->login($user);
+        }
 
         $hasExistingActiveCompany = Company::where('user_id', $user->id)
             ->where('status', 'active')
@@ -97,6 +111,39 @@ class CompanySetupController extends Controller
             'currentStep'              => 1,
             'hasExistingActiveCompany' => $hasExistingActiveCompany,
         ]);
+    }
+
+    /**
+     * New Company Initiation Endpoint
+     * Sets session flags and redirects to company wizard with token support.
+     */
+    public function initiateNewCompany(Request $request): RedirectResponse
+    {
+        $user = auth()->user() ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user();
+
+        if (!$user && ($request->filled('token') || $request->filled('auth_token'))) {
+            $rawToken = $request->query('token') ?? $request->query('auth_token');
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($rawToken);
+            if ($accessToken && $accessToken->tokenable) {
+                $user = $accessToken->tokenable;
+            }
+        }
+
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        if (!\Illuminate\Support\Facades\Auth::guard('web')->check()) {
+            \Illuminate\Support\Facades\Auth::guard('web')->login($user);
+        }
+
+        session([
+            'creating_new_company' => true,
+            'creating_subsequent_company' => true
+        ]);
+
+        $tokenQuery = $request->query('token') ? '&token=' . urlencode($request->query('token')) : '';
+        return redirect()->to('/company-setup?mode=create_new&start_fresh_flow=true' . $tokenQuery);
     }
 
     /**

@@ -59,12 +59,16 @@ Route::get('/register', function (\Illuminate\Http\Request $request) {
 })->name('register');
 Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'register'])->middleware('guest');
 
+// Company Setup Entry Points (Handles session, sanctum & token authentication internally)
+Route::get('/company-setup', [\App\Http\Controllers\CompanySetupController::class, 'index'])
+    ->name('company.setup');
+Route::get('/company/setup', [\App\Http\Controllers\CompanySetupController::class, 'index']);
+
+Route::get('/initiate-new-company', [\App\Http\Controllers\CompanySetupController::class, 'initiateNewCompany'])
+    ->name('company.initiate-new');
+
 // Protected routes using auth and EnsureCompanySetup middleware
 Route::middleware(['auth', \App\Http\Middleware\EnsureCompanySetup::class])->group(function () {
-    // Wizard entry point — handles fresh start and draft resume via query params
-    Route::get('/company-setup', [\App\Http\Controllers\CompanySetupController::class, 'index'])
-        ->name('company.setup');
-    Route::get('/company/setup', [\App\Http\Controllers\CompanySetupController::class, 'index']);
 
     // Permanently delete a specific draft by ID
     Route::delete('/onboarding/draft/purge/{id}', [\App\Http\Controllers\CompanySetupController::class, 'purgeIndividualDraft'])
@@ -116,13 +120,6 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureCompanySetup::class])->gro
     Route::post('/onboarding/abort-registration',
         [\App\Http\Controllers\CompanySetupController::class, 'abortRegistration'])
         ->name('onboarding.abort-registration');
-
-    // New Company Initiation — stamps session flags then sends the user into the wizard.
-    Route::get('/initiate-new-company', function () {
-        Session::put('creating_new_company', true);
-        Session::put('creating_subsequent_company', true);
-        return redirect()->to('/company-setup?mode=create_new&start_fresh_flow=true');
-    })->name('company.initiate-new');
 
     Route::get('/sales-invoices/{id}/edit', [\App\Http\Controllers\SalesInvoiceController::class, 'edit'])
         ->name('sales.invoices.edit');

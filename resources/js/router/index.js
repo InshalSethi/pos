@@ -556,7 +556,13 @@ const routes = [
       if (window.location.pathname === '/company-setup' || window.location.pathname.startsWith('/company-setup')) {
         return next();
       }
-      window.location.href = to.fullPath;
+      const token = localStorage.getItem('auth_token');
+      let targetUrl = to.fullPath;
+      if (token && !to.query.token) {
+        const separator = targetUrl.includes('?') ? '&' : '?';
+        targetUrl += `${separator}token=${encodeURIComponent(token)}`;
+      }
+      window.location.href = targetUrl;
     }
   },
   {
@@ -566,7 +572,12 @@ const routes = [
       if (window.location.pathname === '/initiate-new-company') {
         return next();
       }
-      window.location.href = '/initiate-new-company';
+      const token = localStorage.getItem('auth_token');
+      let targetUrl = '/initiate-new-company';
+      if (token) {
+        targetUrl += `?token=${encodeURIComponent(token)}`;
+      }
+      window.location.href = targetUrl;
     }
   }
 ];
