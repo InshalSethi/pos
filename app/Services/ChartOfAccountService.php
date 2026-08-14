@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\AccountingSetting;
 use App\Models\Company;
+use App\Models\ExpenseCategory;
 use App\Models\Scopes\CompanyScope;
 use Illuminate\Support\Facades\Log;
 
@@ -901,6 +902,9 @@ class ChartOfAccountService
 
         // Auto-configure accounting settings mappings for this company if unconfigured
         static::ensureAccountingSettingsForCompany($companyId, $existingAccounts);
+
+        // Ensure expense categories in expense module are created for COA expense type accounts
+        static::ensureExpenseCategoriesForCompany($companyId);
     }
 
     /**
@@ -960,6 +964,80 @@ class ChartOfAccountService
 
         if (!empty($updates)) {
             $settings->update($updates);
+        }
+    }
+
+    /**
+     * Create/sync expense categories in the expense module corresponding to COA expense type accounts.
+     */
+    public static function ensureExpenseCategoriesForCompany(int $companyId): void
+    {
+        if (!$companyId) {
+            return;
+        }
+
+        // Get all expense type accounts for this company
+        $expenseAccounts = Account::withoutGlobalScope(CompanyScope::class)
+            ->where('company_id', $companyId)
+            ->where('account_type', 'expense')
+            ->get();
+
+        if ($expenseAccounts->isEmpty()) {
+            return;
+        }
+
+        // Load existing categories for this company indexed by code or name
+        $existingCategories = ExpenseCategory::withoutGlobalScope(CompanyScope::class)
+            ->where('company_id', $companyId)
+            ->get()
+            ->keyBy(function ($cat) {
+                return $cat->code ?: $cat->name;
+            });
+
+        // Pass 1: Ensure top-level expense categories (parent_account_id is null) are created first
+        foreach ($expenseAccounts as $account) {
+            if ($account->parent_account_id !== null) {
+                continue;
+            }
+
+            $key = $account->account_code ?: $account->account_name;
+            if (!$existingCategories->has($key)) {
+                $category = ExpenseCategory::create([
+                    'company_id'         => $companyId,
+                    'name'               => $account->account_name,
+                    'description'        => $account->description,
+                    'code'               => $account->account_code,
+                    'is_active'          => true,
+                    'parent_category_id' => null,
+                ]);
+
+                $existingCategories->put($key, $category);
+            }
+        }
+
+        // Pass 2: Ensure child expense categories are created and attached to their parent category
+        foreach ($expenseAccounts as $account) {
+            if ($account->parent_account_id === null) {
+                continue;
+            }
+
+            $key = $account->account_code ?: $account->account_name;
+            if (!$existingCategories->has($key)) {
+                $parentAccount = $expenseAccounts->firstWhere('id', $account->parent_account_id);
+                $parentCatKey = $parentAccount ? ($parentAccount->account_code ?: $parentAccount->account_name) : null;
+                $parentCategory = $parentCatKey ? $existingCategories->get($parentCatKey) : null;
+
+                $category = ExpenseCategory::create([
+                    'company_id'         => $companyId,
+                    'name'               => $account->account_name,
+                    'description'        => $account->description,
+                    'code'               => $account->account_code,
+                    'is_active'          => true,
+                    'parent_category_id' => $parentCategory?->id,
+                ]);
+
+                $existingCategories->put($key, $category);
+            }
         }
     }
 }
