@@ -1110,15 +1110,28 @@
               </div>
 
               <!-- Attachments Dropzone -->
-              <div class="space-y-1">
+              <div class="space-y-2">
                 <label class="text-xs font-bold text-slate-600 dark:text-zinc-400 flex items-center gap-1">
                   📎 <span>Attachments</span>
                 </label>
-                <div class="border-2 border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/40 rounded-2xl p-6 text-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer space-y-2">
+                <div 
+                  @click="$refs.fileInput.click()" 
+                  @dragover.prevent 
+                  @drop.prevent="handleFileDrop"
+                  class="border-2 border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/40 rounded-2xl p-6 text-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:border-purple-400 transition-colors cursor-pointer space-y-2 relative"
+                >
+                  <input type="file" multiple ref="fileInput" class="hidden" @change="handleFileSelect" />
                   <div class="w-10 h-10 mx-auto rounded-full bg-slate-200 dark:bg-zinc-700 text-slate-800 dark:text-white flex items-center justify-center text-lg font-bold">
                     ↑
                   </div>
                   <p class="text-xs font-semibold">Drop files here, click to browse, or paste screenshots (Ctrl+V)</p>
+                </div>
+                <!-- Selected Files Preview -->
+                <div v-if="selectedFiles.length > 0" class="flex flex-col gap-2 mt-2">
+                  <div v-for="(file, index) in selectedFiles" :key="index" class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs">
+                    <span class="truncate font-medium text-slate-700 dark:text-zinc-300">{{ file.name }}</span>
+                    <button @click.stop="removeFile(index)" class="text-rose-500 hover:text-rose-600 font-bold px-2 cursor-pointer">×</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1436,6 +1449,31 @@ const switchToGrid = () => {
   currentView.value = 'grid';
 };
 
+// File Attachment Logic
+const fileInput = ref(null);
+const selectedFiles = ref([]);
+
+const handleFileSelect = (event) => {
+  if (event.target.files) {
+    for (let i = 0; i < event.target.files.length; i++) {
+      selectedFiles.value.push(event.target.files[i]);
+    }
+  }
+  if (fileInput.value) fileInput.value.value = '';
+};
+
+const handleFileDrop = (event) => {
+  if (event.dataTransfer.files) {
+    for (let i = 0; i < event.dataTransfer.files.length; i++) {
+      selectedFiles.value.push(event.dataTransfer.files[i]);
+    }
+  }
+};
+
+const removeFile = (index) => {
+  selectedFiles.value.splice(index, 1);
+};
+
 const openCreateTaskModal = (defaultColumnId = null) => {
   isEditingTask.value = false;
   editingTaskId.value = null;
@@ -1446,6 +1484,7 @@ const openCreateTaskModal = (defaultColumnId = null) => {
   taskForm.due_date = null;
   taskForm.assigned_to_id = null;
   tagsInput.value = '';
+  selectedFiles.value = [];
   showCreateTaskModal.value = true;
 };
 
@@ -1458,7 +1497,9 @@ const editTaskModal = (task) => {
   taskForm.priority = task.priority || 'medium';
   taskForm.due_date = task.due_date ? task.due_date.substring(0, 10) : null;
   taskForm.assigned_to_id = task.assigned_to_id || null;
+  taskForm.assigned_to_id = task.assigned_to_id || null;
   tagsInput.value = task.tags ? task.tags.join(', ') : '';
+  selectedFiles.value = [];
   showCreateTaskModal.value = true;
 };
 
@@ -1475,6 +1516,7 @@ const submitTaskModal = async () => {
     due_date: taskForm.due_date,
     assigned_to_id: taskForm.assigned_to_id,
     tags: tagList,
+    attachments: selectedFiles.value,
   };
 
   if (isEditingTask.value && editingTaskId.value) {
