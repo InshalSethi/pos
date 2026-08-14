@@ -3,17 +3,8 @@
     <!-- Top Header & Metrics Bar (Black & White System Theme) -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
-        <div class="flex items-center gap-3">
-          <div class="p-2 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-xl shadow-xs">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Payment Receipts</h1>
-            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage and track all incoming customer and operational payment receipts</p>
-          </div>
-        </div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Payments In</h1>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage and track all incoming customer and operational payment receipts</p>
       </div>
 
       <!-- Quick Metrics Summary Cards -->
@@ -59,7 +50,7 @@
     <!-- DataTable Container -->
     <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs overflow-hidden">
       <DataTable
-        title="Payment Receipts Transactions"
+        title="Payments In Transactions"
         subtitle="Track and manage all incoming payment receipts with comprehensive workflow"
         :columns="tableColumns"
         :data="receipts"
@@ -454,7 +445,7 @@
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Filter Payment Receipts</h2>
+                  <h2 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Filter Payments In</h2>
                   <p class="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Refine incoming receipt results</p>
                 </div>
               </div>

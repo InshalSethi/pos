@@ -3,17 +3,8 @@
     <!-- Top Header & Metrics Bar (Black & White Theme) -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
-        <div class="flex items-center gap-3">
-          <div class="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Payments Out</h1>
-            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage all outgoing supplier and operational payment transactions</p>
-          </div>
-        </div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Payments Out</h1>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage all outgoing supplier and operational payment transactions</p>
       </div>
 
       <!-- Quick Metrics Summary Cards -->
@@ -59,7 +50,7 @@
     <!-- DataTable Container (Black and White System Theme) -->
     <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
       <DataTable
-        title="Payment Transactions"
+        title="Payments Out Transactions"
         subtitle="Manage all outgoing supplier and operational payment entries"
         :columns="tableColumns"
         :data="payments"

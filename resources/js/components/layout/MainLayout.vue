@@ -847,6 +847,24 @@
             Payments
           </h3>
         </div>
+        <router-link v-if="authStore.hasPermission('payment_receipts.view')"
+          to="/payment-receipts"
+          :class="[
+            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
+            $route.path === '/payment-receipts'
+              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
+              : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
+          ]"
+          :title="sidebarCollapsed ? 'Payments In' : ''"
+        >
+
+          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
+            Payments In
+          </span>
+        </router-link>
         <router-link v-if="authStore.hasPermission('payments.view')"
           to="/payments"
           :class="[
@@ -863,24 +881,6 @@
           </svg>
           <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
             Payments Out
-          </span>
-        </router-link>
-        <router-link v-if="authStore.hasPermission('payment_receipts.view')"
-          to="/payment-receipts"
-          :class="[
-            'group flex items-center px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-200 relative',
-            $route.path === '/payment-receipts'
-              ? 'text-indigo-700 bg-indigo-50/80 border-l-4 border-indigo-600 dark:text-indigo-400 dark:bg-indigo-600/15 dark:border-l-4 dark:border-indigo-500 font-semibold rounded-l-none'
-              : 'border-l-4 border-transparent text-slate-600 dark:text-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800/40 dark:hover:text-slate-200 transition-all duration-200 font-medium rounded-l-none'
-          ]"
-          :title="sidebarCollapsed ? 'Payment Receipts' : ''"
-        >
-
-          <svg class="flex-shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
-          <span :class="['ml-3.5 transition-opacity duration-300 tracking-wide', sidebarCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100']">
-            Payment Receipts
           </span>
         </router-link>
         <!-- People & Entities Section -->
@@ -2066,8 +2066,8 @@ const menuItems = [
   { path: '/banking/accounts', name: 'Bank Accounts', category: 'Banking', icon: 'banking' },
   { path: '/transactions', name: 'Transactions', category: 'Accounting', icon: 'transactions' },
   { path: '/expenses', name: 'Expenses', category: 'Accounting', icon: 'expenses' },
+  { path: '/payment-receipts', name: 'Payments In', category: 'Payments', icon: 'receipts' },
   { path: '/payments', name: 'Payments Out', category: 'Payments', icon: 'payments' },
-  { path: '/payment-receipts', name: 'Payment Receipts', category: 'Payments', icon: 'receipts' },
   { path: '/employees', name: 'Employees', category: 'People', icon: 'employees' },
   { path: '/customers', name: 'Customers', category: 'People', icon: 'customers' },
   { path: '/suppliers', name: 'Suppliers', category: 'People', icon: 'suppliers' },
