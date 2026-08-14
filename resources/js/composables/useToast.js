@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 
 const toasts = ref([]);
 let toastId = 0;
@@ -36,11 +36,20 @@ export function useToast() {
     toasts.value = [];
   };
 
+  const success = (message, duration = 5000) => showToast(message, 'success', duration);
+  const error = (message, duration = 5000) => showToast(message, 'error', duration);
+  const info = (message, duration = 5000) => showToast(message, 'info', duration);
+  const warning = (message, duration = 5000) => showToast(message, 'warning', duration);
+
   return {
     toasts,
     showToast,
     removeToast,
-    clearAllToasts
+    clearAllToasts,
+    success,
+    error,
+    info,
+    warning
   };
 }
 

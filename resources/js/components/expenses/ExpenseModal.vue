@@ -341,8 +341,45 @@
               </div>
             </div>
 
-            <!-- File Badges -->
-            <div v-if="selectedFiles.length > 0" class="flex flex-wrap gap-2 pt-2.5">
+            <!-- Existing Uploaded Attachments -->
+            <div v-if="existingAttachments.length > 0" class="space-y-1.5 pt-2">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Current Attachments</p>
+              <div class="flex flex-wrap gap-2">
+                <div
+                  v-for="(att, idx) in existingAttachments"
+                  :key="'exist-' + idx"
+                  class="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs shadow-2xs"
+                >
+                  <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  <span class="truncate font-semibold text-slate-800 dark:text-slate-200 max-w-[150px]">{{ getFileName(att) }}</span>
+                  
+                  <!-- Download Icon Button -->
+                  <a
+                    :href="getFileUrl(att)"
+                    target="_blank"
+                    download
+                    class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 p-0.5 rounded-md transition-all"
+                    title="Download attachment"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </a>
+
+                  <!-- Remove Existing Attachment -->
+                  <button type="button" @click="removeExistingAttachment(idx)" class="text-rose-400 hover:text-rose-600 p-0.5 rounded-md transition-all cursor-pointer" title="Remove attachment">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Newly Selected Files Badges -->
+            <div v-if="selectedFiles.length > 0" class="flex flex-wrap gap-2 pt-2">
               <div
                 v-for="(file, index) in selectedFiles"
                 :key="index"
@@ -456,8 +493,25 @@ const bankAccounts = ref([]);
 const errors = ref({});
 const saving = ref(false);
 const selectedFiles = ref([]);
+const existingAttachments = ref([]);
 const fileInputRef = ref(null);
 const isDragging = ref(false);
+
+const getFileName = (path) => {
+  if (!path) return '';
+  return path.split('/').pop();
+};
+
+const getFileUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('/storage/')) return path;
+  return '/storage/' + path;
+};
+
+const removeExistingAttachment = (index) => {
+  existingAttachments.value.splice(index, 1);
+};
 
 const isEditing = computed(() => !!props.expense);
 
@@ -747,6 +801,7 @@ const saveExpense = async (submitAfterSave = false) => {
     }
 
     // Attachments
+    formData.append('existing_attachments', JSON.stringify(existingAttachments.value));
     selectedFiles.value.forEach((file, index) => {
       formData.append(`receipt_images[${index}]`, file);
     });
@@ -787,10 +842,23 @@ const saveAndSubmit = () => {
 const initializeForm = () => {
   if (props.expense) {
     Object.keys(form.value).forEach(key => {
-      if (props.expense[key] !== undefined) {
+      if (props.expense[key] !== undefined && props.expense[key] !== null) {
         form.value[key] = props.expense[key];
       }
     });
+
+    // Format expense_date to YYYY-MM-DD for date input
+    if (props.expense.expense_date) {
+      form.value.expense_date = String(props.expense.expense_date).split('T')[0].split(' ')[0];
+    }
+
+    // Populate existing attachments
+    existingAttachments.value = [];
+    if (props.expense.receipt_images && Array.isArray(props.expense.receipt_images)) {
+      existingAttachments.value = [...props.expense.receipt_images];
+    } else if (props.expense.receipt_image) {
+      existingAttachments.value = [props.expense.receipt_image];
+    }
 
     if (props.expense.payments && Array.isArray(props.expense.payments) && props.expense.payments.length > 1) {
       isMultiPayMode.value = true;
@@ -810,6 +878,7 @@ const initializeForm = () => {
   } else {
     singlePaymentMethod.value = 'cash';
     paymentAmounts.value['cash'] = form.value.amount || 0;
+    existingAttachments.value = [];
   }
 };
 

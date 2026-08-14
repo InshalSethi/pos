@@ -44,7 +44,7 @@ class ExpenseAccountingService
                 'status' => 'draft',
                 'total_debit' => $expense->amount,
                 'total_credit' => $expense->amount,
-                'created_by' => auth()->id() ?? 1,
+                'created_by' => auth()->id() ?? $expense->user_id ?? \App\Models\User::first()?->id,
             ]);
 
             // Create debit line (expense account)
@@ -111,7 +111,7 @@ class ExpenseAccountingService
                 'status' => 'draft',
                 'total_debit' => $amount,
                 'total_credit' => $amount,
-                'created_by' => auth()->id() ?? 1,
+                'created_by' => auth()->id() ?? $expense->user_id ?? \App\Models\User::first()?->id,
             ]);
 
             // 3. Create Journal Entry Lines
@@ -189,7 +189,7 @@ class ExpenseAccountingService
                 'status' => 'draft',
                 'total_debit' => $expense->amount,
                 'total_credit' => $expense->amount,
-                'created_by' => auth()->id() ?? 1,
+                'created_by' => auth()->id() ?? $expense->user_id ?? \App\Models\User::first()?->id,
             ]);
 
             // Create debit line (accounts payable - reducing liability)
@@ -316,7 +316,7 @@ class ExpenseAccountingService
                 'status' => 'draft',
                 'total_debit' => $expense->amount,
                 'total_credit' => $expense->amount,
-                'created_by' => auth()->id() ?? 1,
+                'created_by' => auth()->id() ?? $expense->user_id ?? \App\Models\User::first()?->id,
             ]);
 
             // Create reversal lines (opposite of original)
@@ -453,7 +453,7 @@ class ExpenseAccountingService
     {
         $journalEntry->update([
             'status' => 'posted',
-            'posted_by' => auth()->id() ?? 1,
+            'posted_by' => auth()->id() ?? \App\Models\User::first()?->id,
             'posted_at' => now(),
         ]);
 

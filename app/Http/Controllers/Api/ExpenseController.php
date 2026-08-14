@@ -116,8 +116,8 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'receipt_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'receipt_image' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
+            'receipt_images.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'payment_method' => 'nullable|string|max:50',
             'payments' => 'nullable',
             'reference_number' => 'nullable|string|max:255',
@@ -142,11 +142,7 @@ class ExpenseController extends Controller
             }
             $expenseData['expense_number'] = Expense::generateExpenseNumber();
             $expenseData['user_id'] = auth()->id();
-
-            // Handle single receipt image
-            if ($request->hasFile('receipt_image')) {
-                $expenseData['receipt_image'] = $request->file('receipt_image')->store('expenses/receipts', 'public');
-            }
+            $expenseData['status'] = 'draft';
 
             // Handle multiple receipt images
             if ($request->hasFile('receipt_images')) {
@@ -155,6 +151,9 @@ class ExpenseController extends Controller
                     $receiptImages[] = $image->store('expenses/receipts', 'public');
                 }
                 $expenseData['receipt_images'] = $receiptImages;
+                if (!empty($receiptImages)) {
+                    $expenseData['receipt_image'] = $receiptImages[0];
+                }
             }
 
             $expense = Expense::create($expenseData);
@@ -164,9 +163,9 @@ class ExpenseController extends Controller
             ExpenseAuditLog::logExpenseChange(
                 $expense,
                 'created',
-                [],
-                $expenseData,
-                'Expense created'
+                null,
+                $expense->toArray(),
+                'Expense created as draft'
             );
 
             DB::commit();
@@ -191,17 +190,7 @@ class ExpenseController extends Controller
      */
     public function show(Expense $expense): JsonResponse
     {
-        $expense->load([
-            'category',
-            'employee',
-            'user',
-            'submittedBy',
-            'approvedBy',
-            'rejectedBy',
-            'paidBy',
-            'journalEntry'
-        ]);
-
+        $expense->load(['category', 'employee', 'user', 'submittedBy', 'approvedBy', 'rejectedBy', 'paidBy', 'auditLogs.user']);
         return response()->json($expense);
     }
 
@@ -221,8 +210,8 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'receipt_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'receipt_image' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
+            'receipt_images.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'payment_method' => 'nullable|string|max:50',
             'payments' => 'nullable',
             'reference_number' => 'nullable|string|max:255',
@@ -240,34 +229,33 @@ class ExpenseController extends Controller
         try {
             DB::beginTransaction();
 
-            $expenseData = $request->except(['receipt_image', 'receipt_images']);
+            $expenseData = $request->except(['receipt_image', 'receipt_images', 'existing_attachments']);
             if ($request->has('payments')) {
                 $rawPayments = $request->input('payments');
                 $expenseData['payments'] = is_string($rawPayments) ? (json_decode($rawPayments, true) ?? []) : (array)$rawPayments;
             }
 
-            // Handle single receipt image
-            if ($request->hasFile('receipt_image')) {
-                // Delete old image if exists
-                if ($expense->receipt_image) {
-                    Storage::disk('public')->delete($expense->receipt_image);
-                }
-                $expenseData['receipt_image'] = $request->file('receipt_image')->store('expenses/receipts', 'public');
+            // Existing attachments retained from edit form
+            $receiptImages = [];
+            if ($request->has('existing_attachments')) {
+                $rawExisting = $request->input('existing_attachments');
+                $receiptImages = is_string($rawExisting) ? (json_decode($rawExisting, true) ?? []) : (array)$rawExisting;
+            } else {
+                $receiptImages = $expense->receipt_images ?: [];
             }
 
-            // Handle multiple receipt images
+            // Handle newly uploaded receipt images
             if ($request->hasFile('receipt_images')) {
-                // Delete old images if exist
-                if ($expense->receipt_images) {
-                    foreach ($expense->receipt_images as $image) {
-                        Storage::disk('public')->delete($image);
-                    }
-                }
-                $receiptImages = [];
                 foreach ($request->file('receipt_images') as $image) {
                     $receiptImages[] = $image->store('expenses/receipts', 'public');
                 }
-                $expenseData['receipt_images'] = $receiptImages;
+            }
+
+            $expenseData['receipt_images'] = array_values($receiptImages);
+            if (!empty($receiptImages)) {
+                $expenseData['receipt_image'] = $receiptImages[0];
+            } else {
+                $expenseData['receipt_image'] = null;
             }
 
             // If expense was approved or paid, reverse accounting entries before updating
@@ -365,7 +353,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Submit expense for approval and deduct payment from relevant account(s)
+     * Submit expense: update status, create journal entry, deduct COA & Bank balances, and log bank transaction
      */
     public function submit(Expense $expense): JsonResponse
     {
@@ -378,9 +366,10 @@ class ExpenseController extends Controller
         try {
             DB::beginTransaction();
 
+            $oldStatus = $expense->status;
             $expense->submit();
 
-            // Deduct payment from selected account(s) upon submission
+            // Deduct payment & create Journal Entry + Bank Transaction upon submission
             $payments = $expense->payments;
             if (!is_array($payments) || empty($payments)) {
                 $payments = [[
@@ -434,9 +423,9 @@ class ExpenseController extends Controller
             ExpenseAuditLog::logExpenseChange(
                 $expense,
                 'submitted',
-                ['status' => 'draft'],
+                ['status' => $oldStatus],
                 ['status' => 'submitted'],
-                'Expense submitted and payment deducted from account(s)'
+                'Expense submitted, journal entry created, and payment deducted from account(s)'
             );
 
             DB::commit();
@@ -444,7 +433,7 @@ class ExpenseController extends Controller
             $expense->load(['category', 'employee', 'user', 'submittedBy']);
 
             return response()->json([
-                'message' => 'Expense submitted and payment deducted successfully',
+                'message' => 'Expense submitted successfully',
                 'expense' => $expense
             ]);
 

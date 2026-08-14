@@ -109,13 +109,13 @@
               </svg>
             </button>
 
-            <!-- Submit (Tick Icon) Button for Draft Expenses -->
+            <!-- Submit/Complete (Tick Icon) Button for Draft or Submitted Expenses -->
             <button
-              v-if="item.status === 'draft'"
+              v-if="canComplete(item)"
               @click="submitExpense(item)"
               :disabled="submittingId === item.id"
               class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 transition-all cursor-pointer disabled:opacity-50"
-              title="Submit Expense & Deduct Payment"
+              title="Complete Expense & Process Payment"
             >
               <svg v-if="submittingId === item.id" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -298,13 +298,17 @@ const submitExpense = async (expense) => {
   }
 };
 
-const canEdit = computed(() => (expense) => {
-  return authStore.hasPermission('expenses.edit');
-});
+const canEdit = (expense) => {
+  return authStore.hasPermission('expenses.edit') && expense.status === 'draft';
+};
 
-const canDelete = computed(() => (expense) => {
-  return authStore.hasPermission('expenses.delete');
-});
+const canDelete = (expense) => {
+  return authStore.hasPermission('expenses.delete') && expense.status === 'draft';
+};
+
+const canComplete = (expense) => {
+  return expense.status === 'draft';
+};
 
 const fetchExpenses = async (page = 1) => {
   loading.value = true;

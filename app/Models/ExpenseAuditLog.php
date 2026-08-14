@@ -82,7 +82,7 @@ class ExpenseAuditLog extends Model
 
         return self::create([
             'expense_id' => $expense->id,
-            'user_id' => auth()->id() ?? 1,
+            'user_id' => auth()->id() ?? $expense->user_id ?? \App\Models\User::first()?->id,
             'action' => $action,
             'old_status' => $oldValues['status'] ?? null,
             'new_status' => $newValues['status'] ?? $expense->status,

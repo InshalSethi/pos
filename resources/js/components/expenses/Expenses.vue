@@ -110,10 +110,6 @@
       :expense="selectedExpense"
       @close="showExpenseViewModal = false"
       @edit="editExpenseFromView"
-      @approve="handleExpenseApprove"
-      @reject="handleExpenseReject"
-      @pay="handleExpensePay"
-      @create-payment="handleCreatePayment"
     />
   </div>
 </template>
