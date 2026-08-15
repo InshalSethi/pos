@@ -165,9 +165,9 @@ class BankAccount extends Model
                             ->where('transaction_type', 'credit')
                             ->sum('amount');
 
-        // Asset Accounts (checking, savings, cash, vault, etc.): Credits (money in) increase balance, Debits (money out) decrease balance.
-        // Liability Accounts (credit cards): Debits (charges) increase owed balance, Credits (payments) decrease balance.
-        $isLiability = in_array(strtolower($this->account_type ?? ''), ['credit_card', 'card', 'liability', 'loan']);
+        // We now treat all bank accounts (including credit cards) as Assets per user expectations:
+        // Credits (money in) increase balance, Debits (money out) decrease balance.
+        $isLiability = in_array(strtolower($this->account_type ?? ''), ['liability', 'loan']);
         if (!$isLiability) {
             $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
         } else {
@@ -189,7 +189,7 @@ class BankAccount extends Model
                             ->where('status', 'reconciled')
                             ->sum('amount');
 
-        $isLiability = in_array(strtolower($this->account_type ?? ''), ['credit_card', 'card', 'liability', 'loan']);
+        $isLiability = in_array(strtolower($this->account_type ?? ''), ['liability', 'loan']);
         if (!$isLiability) {
             $bal = (float) $this->opening_balance + $totalCredits - $totalDebits;
         } else {
