@@ -484,7 +484,7 @@ class PaymentService
             } elseif ($payment->bank_account_id && $payment->status === 'paid') {
                 $bAccount = BankAccount::find($payment->bank_account_id);
                 if ($bAccount) {
-                    $bAccount->increment('current_balance', $payment->amount);
+                    $bAccount->increment('current_balance', (float) $payment->amount);
                     if ($bAccount->chartAccount) {
                         $bAccount->chartAccount->updateCurrentBalance();
                     }
@@ -624,7 +624,7 @@ class PaymentService
         $payeeType = strtolower($payment->payee_type ?? '');
         $isSupplierPayment = $payment->payment_type === 'supplier_payment'
             || $payeeType === 'supplier'
-            || $payment->payee_type === \App\Models\Supplier::class;
+            || $payment->payee_type === Supplier::class;
 
         if (!$isSupplierPayment) {
             return;
@@ -633,11 +633,11 @@ class PaymentService
         // Find supplier
         $supplier = null;
         if ($payment->payee_id) {
-            $supplier = \App\Models\Supplier::find($payment->payee_id);
+            $supplier = Supplier::find($payment->payee_id);
         }
         if (!$supplier && $payment->payee_name) {
             $companyId = $payment->company_id ?? 1;
-            $supplier = \App\Models\Supplier::where('company_id', $companyId)
+            $supplier = Supplier::where('company_id', $companyId)
                 ->where(function ($q) use ($payment) {
                     $q->where('name', $payment->payee_name)
                       ->orWhere('company_name', $payment->payee_name);
@@ -733,7 +733,7 @@ class PaymentService
         }
 
         $supplierId = $allocation['supplier_id'] ?? $payment->payee_id;
-        $supplier = $supplierId ? \App\Models\Supplier::find($supplierId) : null;
+        $supplier = $supplierId ? Supplier::find($supplierId) : null;
 
         // 1. Reverse Advance Balance
         $appliedAdvance = (float) ($allocation['applied_advance'] ?? 0);
