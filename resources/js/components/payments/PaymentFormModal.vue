@@ -129,8 +129,20 @@
             />
           </div>
 
+          <!-- Expense Category Floating Dropdown (Shown only when Payment Type is Expense Payment) -->
+          <div v-if="form.payment_type === 'expense_payment'">
+            <FloatingSelect
+              v-model="form.expense_category_id"
+              label="Expense Category"
+              placeholder="Select Expense Category"
+              :options="formattedExpenseCategoryOptions"
+              :required="true"
+              :error="errors.expense_category_id ? errors.expense_category_id[0] : ''"
+            />
+          </div>
+
           <!-- Payee Selection Floating Dropdown -->
-          <div v-if="form.payee_type && form.payee_type !== 'other'">
+          <div v-if="form.payment_type !== 'expense_payment' && form.payee_type && form.payee_type !== 'other'">
             <FloatingSelect
               v-model="form.payee_id"
               :label="getPayeeLabel()"
@@ -142,7 +154,11 @@
           </div>
 
           <!-- Payee Name Input -->
-          <div :class="form.payee_type && form.payee_type !== 'other' ? '' : 'md:col-span-2'">
+          <div :class="[
+            (form.payment_type === 'expense_payment' || (form.payee_type && form.payee_type !== 'other'))
+              ? ''
+              : 'md:col-span-2'
+          ]">
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
               Payee Name <span class="text-rose-500">*</span>
             </label>
@@ -375,6 +391,7 @@ const paymentOptions = ref({
   suppliers: [],
   employees: [],
   customers: [],
+  expenseCategories: [],
   paymentTypes: [],
   paymentMethods: [],
   statuses: [],
@@ -393,6 +410,7 @@ const form = reactive({
   payee_type: '',
   payee_id: '',
   payee_name: '',
+  expense_category_id: '',
   status: '',
 });
 
@@ -402,6 +420,13 @@ const isEditing = computed(() => !!props.payment);
 const paymentTypes = computed(() => paymentOptions.value.paymentTypes);
 const paymentMethods = computed(() => paymentOptions.value.paymentMethods);
 const bankAccounts = computed(() => paymentOptions.value.bankAccounts);
+
+const formattedExpenseCategoryOptions = computed(() => {
+  return (paymentOptions.value.expenseCategories || []).map(cat => ({
+    value: cat.id,
+    label: cat.code ? `${cat.code}-${cat.name}` : cat.name
+  }));
+});
 
 const formattedPaymentTypes = computed(() => {
   return paymentTypes.value.map(t => ({
@@ -540,6 +565,7 @@ const loadPaymentOptions = async () => {
       suppliers: response.data.suppliers || [],
       employees: response.data.employees || [],
       customers: response.data.customers || [],
+      expenseCategories: response.data.expense_categories || [],
       paymentTypes: response.data.payment_types || [],
       paymentMethods: response.data.payment_methods || [],
       statuses: response.data.statuses || [],
@@ -552,7 +578,14 @@ const loadPaymentOptions = async () => {
     }
   } catch (error) {
     console.error('Error loading payment options:', error);
+    try {
+      const catRes = await axios.get('/api/expense-categories');
+      paymentOptions.value.expenseCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data.data || []);
+    } catch (e) {
+      console.error('Error loading fallback expense categories:', e);
+    }
     paymentOptions.value = {
+      ...paymentOptions.value,
       bankAccounts: [],
       suppliers: [],
       employees: [],
@@ -586,6 +619,9 @@ const onPaymentTypeChange = () => {
   form.payee_type = '';
   form.payee_id = '';
   form.payee_name = '';
+  if (form.payment_type !== 'expense_payment') {
+    form.expense_category_id = '';
+  }
 
   if (form.payment_type === 'supplier_payment' || form.payment_type === 'purchase_invoice_payment') {
     form.payee_type = 'supplier';
@@ -706,6 +742,7 @@ const resetForm = () => {
     payee_type: '',
     payee_id: '',
     payee_name: '',
+    expense_category_id: '',
     status: '',
   });
   attachmentFiles.value = [];
@@ -734,6 +771,7 @@ const populateForm = () => {
       payee_type: props.payment.payee_type || '',
       payee_id: props.payment.payee_id || '',
       payee_name: props.payment.payee_name || '',
+      expense_category_id: props.payment.expense_category_id || '',
       status: props.payment.status || '',
     });
 

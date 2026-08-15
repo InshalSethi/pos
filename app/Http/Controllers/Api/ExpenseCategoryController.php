@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\ExpenseCategory;
+use App\Models\Scopes\CompanyScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -70,29 +72,38 @@ class ExpenseCategoryController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->current_company_id;
+        $companyId = auth()->user()->current_company_id ?: auth()->user()->company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'code' => [
-                'nullable',
+                'required',
                 'string',
                 'max:50',
                 Rule::unique('expense_categories', 'code')->where('company_id', $companyId),
             ],
             'parent_category_id' => 'nullable|exists:expense_categories,id',
             'is_active' => 'boolean',
+        ], [
+            'code.required' => 'Ledger Code is required.',
+            'code.unique' => 'This ledger/category code is already in use. Please choose a unique code.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'This ledger/category code is already in use. Please choose a unique code.',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        $category = ExpenseCategory::create($request->all());
+        $data = $request->all();
+        $data['company_id'] = $companyId;
+
+        $category = ExpenseCategory::create($data);
         $category->load(['parent', 'children']);
+
+        // Auto-sync with Chart of Accounts
+        $this->syncCategoryWithChartOfAccounts($category);
 
         return response()->json([
             'message' => 'Expense category created successfully',
@@ -115,23 +126,26 @@ class ExpenseCategoryController extends Controller
      */
     public function update(Request $request, ExpenseCategory $expenseCategory): JsonResponse
     {
-        $companyId = auth()->user()->current_company_id;
+        $companyId = auth()->user()->current_company_id ?: auth()->user()->company_id;
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'code' => [
-                'nullable',
+                'required',
                 'string',
                 'max:50',
                 Rule::unique('expense_categories', 'code')->ignore($expenseCategory->id)->where('company_id', $companyId),
             ],
             'parent_category_id' => 'nullable|exists:expense_categories,id',
             'is_active' => 'boolean',
+        ], [
+            'code.required' => 'Ledger Code is required.',
+            'code.unique' => 'This ledger/category code is already in use. Please choose a unique code.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'This ledger/category code is already in use. Please choose a unique code.',
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -146,8 +160,12 @@ class ExpenseCategoryController extends Controller
             }
         }
 
+        $oldCode = $expenseCategory->code;
         $expenseCategory->update($request->all());
         $expenseCategory->load(['parent', 'children']);
+
+        // Auto-sync with Chart of Accounts
+        $this->syncCategoryWithChartOfAccounts($expenseCategory, $oldCode);
 
         return response()->json([
             'message' => 'Expense category updated successfully',
@@ -172,6 +190,19 @@ class ExpenseCategoryController extends Controller
             return response()->json([
                 'message' => 'Cannot delete category that has subcategories'
             ], 422);
+        }
+
+        // Delete COA account if exists and has no journal entries
+        if ($expenseCategory->code) {
+            $companyId = $expenseCategory->company_id ?: auth()->user()->current_company_id;
+            $account = Account::withoutGlobalScope(CompanyScope::class)
+                ->where('company_id', $companyId)
+                ->where('account_code', $expenseCategory->code)
+                ->first();
+
+            if ($account && !$account->is_system_account && $account->journalEntries()->count() === 0) {
+                $account->delete();
+            }
         }
 
         $expenseCategory->delete();
@@ -208,5 +239,84 @@ class ExpenseCategoryController extends Controller
 
         $children = $category->getAllChildren();
         return $children->contains('id', $potentialParent->id);
+    }
+
+    /**
+     * Create or update corresponding Account in Chart of Accounts (chart_of_accounts table)
+     */
+    private function syncCategoryWithChartOfAccounts(ExpenseCategory $category, ?string $oldCode = null): void
+    {
+        $companyId = $category->company_id ?: (auth()->user()?->current_company_id ?: auth()->user()?->company_id);
+        if (!$companyId) return;
+
+        $searchCode = $oldCode ?: $category->code;
+
+        $account = Account::withoutGlobalScope(CompanyScope::class)
+            ->where('company_id', $companyId)
+            ->where(function ($q) use ($searchCode, $category) {
+                if ($searchCode) {
+                    $q->where('account_code', $searchCode);
+                }
+                $q->orWhere('account_code', $category->code)
+                  ->orWhere('account_name', $category->name);
+            })
+            ->first();
+
+        // Find parent account in COA if parent_category_id is specified
+        $parentAccountId = null;
+        if ($category->parent_category_id) {
+            $parentCategory = ExpenseCategory::find($category->parent_category_id);
+            if ($parentCategory) {
+                $parentCOA = Account::withoutGlobalScope(CompanyScope::class)
+                    ->where('company_id', $companyId)
+                    ->where(function ($q) use ($parentCategory) {
+                        if ($parentCategory->code) {
+                            $q->where('account_code', $parentCategory->code);
+                        }
+                        $q->orWhere('account_name', $parentCategory->name);
+                    })
+                    ->first();
+                if ($parentCOA) {
+                    $parentAccountId = $parentCOA->id;
+                }
+            }
+        }
+
+        // Fallback to main Operating Expenses header (6000)
+        if (!$parentAccountId) {
+            $headerAccount = Account::withoutGlobalScope(CompanyScope::class)
+                ->where('company_id', $companyId)
+                ->where('account_code', '6000')
+                ->first();
+            if ($headerAccount) {
+                $parentAccountId = $headerAccount->id;
+            }
+        }
+
+        if ($account) {
+            $account->update([
+                'account_code'      => $category->code ?: $account->account_code,
+                'account_name'      => $category->name,
+                'account_type'      => 'expense',
+                'account_subtype'   => 'operating_expense',
+                'description'       => $category->description,
+                'is_active'         => $category->is_active,
+                'parent_account_id' => $parentAccountId,
+            ]);
+        } else {
+            Account::create([
+                'company_id'        => $companyId,
+                'account_code'      => $category->code,
+                'account_name'      => $category->name,
+                'account_type'      => 'expense',
+                'account_subtype'   => 'operating_expense',
+                'description'       => $category->description,
+                'is_active'         => $category->is_active,
+                'is_system_account' => false,
+                'opening_balance'   => 0.00,
+                'current_balance'   => 0.00,
+                'parent_account_id' => $parentAccountId,
+            ]);
+        }
     }
 }

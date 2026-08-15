@@ -63,8 +63,10 @@ class ExpenseAuditLog extends Model
     }
 
     // Helper methods
-    public static function logExpenseChange(Expense $expense, string $action, array $oldValues = [], array $newValues = [], ?string $notes = null): self
+    public static function logExpenseChange(Expense $expense, string $action, ?array $oldValues = [], ?array $newValues = [], ?string $notes = null): self
     {
+        $oldValues = $oldValues ?? [];
+        $newValues = $newValues ?? [];
         $changedFields = [];
 
         // Determine which fields changed

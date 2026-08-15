@@ -145,7 +145,7 @@ const props = defineProps({
 defineEmits(['close', 'edit']);
 
 const canEdit = computed(() => {
-  return authStore.hasPermission('expenses.edit') && ['draft', 'submitted'].includes(props.expense.status);
+  return authStore.hasPermission('expenses.edit') && props.expense.status === 'draft';
 });
 
 const formatDate = (date) => {
@@ -154,27 +154,42 @@ const formatDate = (date) => {
 };
 
 const getStatusBadgeClass = (status) => {
-  const classes = {
-    draft: 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700',
-    submitted: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/50',
-    completed: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/50',
-    approved: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-900/50',
-    rejected: 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/50',
-    paid: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/50'
-  };
-  return classes[status] || 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200';
+  const s = String(status || '').toLowerCase();
+  switch (s) {
+    case 'completed':
+    case 'paid':
+      return 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50';
+    case 'process':
+    case 'processing':
+      return 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/50';
+    case 'pending':
+    case 'submitted':
+    case 'approved':
+      return 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50';
+    case 'rejected':
+      return 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50';
+    case 'cancelled':
+    case 'void':
+      return 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700';
+    case 'draft':
+    default:
+      return 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700';
+  }
 };
 
 const getStatusText = (status) => {
+  const s = String(status || '').toLowerCase();
   const texts = {
     draft: 'Draft',
-    submitted: 'Submitted',
-    completed: 'Completed',
-    approved: 'Approved',
+    pending: 'Pending',
+    process: 'Processing',
+    processing: 'Processing',
     rejected: 'Rejected',
-    paid: 'Paid'
+    completed: 'Completed',
+    paid: 'Completed',
+    cancelled: 'Cancelled'
   };
-  return texts[status] || status;
+  return texts[s] || status;
 };
 
 const getPaymentMethodText = (method) => {

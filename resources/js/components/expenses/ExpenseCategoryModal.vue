@@ -39,18 +39,35 @@
           <span v-if="errors.name" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.name[0] }}</span>
         </div>
 
-        <!-- Code -->
+        <!-- Ledger Code / COA Account Code -->
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
-            Category Code
+            Ledger Code / COA Account Code <span class="text-rose-500">*</span>
           </label>
           <input
             v-model="form.code"
             type="text"
-            class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-xs"
-            placeholder="e.g., EXP-UTIL, EXP-OFFICE"
+            required
+            :class="[
+              'w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-100 transition-all shadow-xs focus:outline-none',
+              (isDuplicateCode || errors.code)
+                ? 'border-rose-500 text-rose-900 dark:text-rose-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500'
+                : 'border-slate-200 dark:border-zinc-700/80 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900'
+            ]"
+            placeholder="e.g., 5001, 5002, EXP-001"
           />
-          <span v-if="errors.code" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.code[0] }}</span>
+          <span v-if="isDuplicateCode" class="text-rose-500 text-[11px] font-semibold mt-1 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Ledger Code already exists.
+          </span>
+          <span v-else-if="errors.code" class="text-rose-500 text-[11px] font-semibold mt-1 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ errors.code[0] }}
+          </span>
         </div>
 
         <!-- Parent Category (Floating Dropdown) -->
@@ -113,8 +130,8 @@
           </button>
           <button
             type="submit"
-            :disabled="saving"
-            class="px-5 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            :disabled="saving || isDuplicateCode || !form.name || !form.code"
+            class="px-5 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <span v-if="saving">Saving...</span>
             <span v-else>{{ isEditing ? 'Update Category' : 'Create Category' }}</span>
@@ -127,9 +144,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
+import { useToast } from '@/composables/useToast';
+
+const toast = useToast();
 
 // Props and Emits
 const props = defineProps({
@@ -156,9 +176,19 @@ const saving = ref(false);
 
 const isEditing = computed(() => !!props.category);
 
+// Real-time check if code entered already exists in current categories list
+const isDuplicateCode = computed(() => {
+  const inputCode = (form.value.code || '').trim().toLowerCase();
+  if (!inputCode) return false;
+  return categories.value.some(cat => {
+    if (isEditing.value && props.category && cat.id === props.category.id) return false;
+    return (cat.code || '').trim().toLowerCase() === inputCode;
+  });
+});
+
 const parentCategoryOptions = computed(() => {
   const list = categories.value.filter(cat => {
-    if (isEditing.value && cat.id === props.category.id) return false;
+    if (isEditing.value && props.category && cat.id === props.category.id) return false;
     return true;
   });
   return [
@@ -170,28 +200,43 @@ const parentCategoryOptions = computed(() => {
 const fetchCategories = async () => {
   try {
     const response = await axios.get('/api/expense-categories');
-    categories.value = response.data;
+    categories.value = Array.isArray(response.data) ? response.data : (response.data.data || []);
   } catch (error) {
     console.error('Error fetching categories:', error);
   }
 };
 
 const saveCategory = async () => {
+  if (isDuplicateCode.value) return;
+
   saving.value = true;
   errors.value = {};
 
   try {
+    let response;
     if (isEditing.value) {
-      await axios.put(`/api/expense-categories/${props.category.id}`, form.value);
+      response = await axios.put(`/api/expense-categories/${props.category.id}`, form.value);
     } else {
-      await axios.post('/api/expense-categories', form.value);
+      response = await axios.post('/api/expense-categories', form.value);
+    }
+
+    if (response.data?.message) {
+      toast.success(response.data.message);
+    } else {
+      toast.success(isEditing.value ? 'Category updated successfully' : 'Category created successfully');
     }
 
     emit('saved');
   } catch (error) {
     if (error.response?.status === 422) {
-      errors.value = error.response.data.errors;
+      errors.value = error.response.data?.errors || {};
+      if (error.response.data?.message) {
+        toast.error(error.response.data.message);
+      }
+    } else if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
     } else {
+      toast.error('Failed to save expense category');
       console.error('Error saving category:', error);
     }
   } finally {
@@ -202,15 +247,26 @@ const saveCategory = async () => {
 const initializeForm = () => {
   if (props.category) {
     Object.keys(form.value).forEach(key => {
-      if (props.category[key] !== undefined) {
+      if (props.category[key] !== undefined && props.category[key] !== null) {
         form.value[key] = props.category[key];
       }
     });
+  } else {
+    form.value = {
+      name: '',
+      code: '',
+      description: '',
+      parent_category_id: '',
+      is_active: true
+    };
   }
 };
 
+watch(() => props.category, () => {
+  initializeForm();
+}, { immediate: true });
+
 onMounted(() => {
   fetchCategories();
-  initializeForm();
 });
 </script>

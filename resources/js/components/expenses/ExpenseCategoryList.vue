@@ -180,4 +180,8 @@ const deleteCategory = async (category) => {
 onMounted(() => {
   fetchCategories();
 });
+
+defineExpose({
+  fetchCategories
+});
 </script>

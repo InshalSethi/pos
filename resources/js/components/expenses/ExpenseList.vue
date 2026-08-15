@@ -75,7 +75,7 @@
         <template #column-status="{ item }">
           <span
             :class="[
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider',
+              'inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full border',
               getStatusBadgeClass(item.status)
             ]"
           >
@@ -86,46 +86,147 @@
 
         <!-- Custom Actions Column -->
         <template #column-actions="{ item }">
-          <div class="flex items-center justify-end gap-1.5">
-            <button
-              @click="$emit('view-expense', item)"
-              class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-all cursor-pointer"
-              title="View Details"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-              </svg>
-            </button>
+          <div class="flex items-center justify-center gap-1.5">
+            <!-- 1. DRAFT STATUS -->
+            <template v-if="item.status === 'draft'">
+              <!-- Eye Icon (View) -->
+              <button
+                @click="$emit('view-expense', item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Expense Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
 
-            <button
-              v-if="canEdit(item)"
-              @click="$emit('edit-expense', item)"
-              class="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40 transition-all cursor-pointer"
-              title="Edit Expense"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
-            </button>
+              <!-- Edit Icon (Pencil) -->
+              <button
+                v-if="canEdit(item)"
+                @click="$emit('edit-expense', item)"
+                class="p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="Edit Expense"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
 
-            <!-- Submit/Complete (Tick Icon) Button for Draft or Submitted Expenses -->
-            <button
-              v-if="canComplete(item)"
-              @click="submitExpense(item)"
-              :disabled="submittingId === item.id"
-              class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 transition-all cursor-pointer disabled:opacity-50"
-              title="Complete Expense & Process Payment"
-            >
-              <svg v-if="submittingId === item.id" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
+              <!-- Cancel Icon (Circle with Cross) -->
+              <button
+                @click="openTransitionModal(item, 'cancelled')"
+                class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
+                title="Cancel Expense"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+                </svg>
+              </button>
 
+              <!-- Processing Icon (Hourglass with circular arrows) -->
+              <button
+                @click="openTransitionModal(item, 'process')"
+                class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-all cursor-pointer"
+                title="Move to Processing"
+              >
+                <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18.5 7A9 9 0 0 0 7 4.5" />
+                  <polyline points="18.5 3.5 18.5 7.5 14.5 7.5" />
+                  <path d="M5.5 17A9 9 0 0 0 17 19.5" />
+                  <polyline points="5.5 20.5 5.5 16.5 9.5 16.5" />
+                  <path d="M9 8h6" />
+                  <path d="M9 16h6" />
+                  <path d="M9.5 8v2.2l2.5 1.8-2.5 1.8V16" />
+                  <path d="M14.5 8v2.2l-2.5 1.8 2.5 1.8V16" />
+                </svg>
+              </button>
+            </template>
+
+            <!-- 2. PROCESS / PROCESSING STATUS -->
+            <template v-else-if="item.status === 'process' || item.status === 'processing'">
+              <!-- Eye Icon (View) -->
+              <button
+                @click="$emit('view-expense', item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Expense Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+
+              <!-- Pending Icon (Clock Timer with Arrow) -->
+              <button
+                @click="openTransitionModal(item, 'pending')"
+                class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-all cursor-pointer"
+                title="Move to Pending Review"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5" stroke-dasharray="4 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5.5l3.5 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.5 8l-2-2.5 3-1" />
+                </svg>
+              </button>
+            </template>
+
+            <!-- 3. PENDING / SUBMITTED REVIEW STATUS -->
+            <template v-else-if="item.status === 'pending' || item.status === 'submitted' || item.status === 'approved'">
+              <!-- Eye Icon (View) -->
+              <button
+                @click="$emit('view-expense', item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Expense Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+
+              <!-- Rejected Icon (Slash Circle) -->
+              <button
+                @click="openTransitionModal(item, 'rejected')"
+                class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
+                title="Reject Expense"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.6 5.6l12.8 12.8" />
+                </svg>
+              </button>
+
+              <!-- Completed Icon (Checkmark Circle) -->
+              <button
+                @click="openTransitionModal(item, 'completed')"
+                class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-all cursor-pointer"
+                title="Mark as Completed"
+              >
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5l2.5 2.5 5-5" />
+                </svg>
+              </button>
+            </template>
+
+            <!-- 4. FINAL STATES (REJECTED, COMPLETED, CANCELLED, PAID) -->
+            <template v-else>
+              <!-- Eye Icon (View) -->
+              <button
+                @click="$emit('view-expense', item)"
+                class="p-1.5 text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                title="View Expense Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </template>
+
+            <!-- Delete Icon for Draft -->
             <button
               v-if="canDelete(item)"
               @click="deleteExpense(item)"
@@ -140,6 +241,93 @@
         </template>
       </DataTable>
     </div>
+
+    <!-- State Machine Transition Confirmation Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div v-if="showConfirmModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <!-- Backdrop -->
+          <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" @click="showConfirmModal = false"></div>
+
+          <!-- Dialog Box -->
+          <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden p-6 z-10 space-y-4">
+            <div class="flex items-start gap-4">
+              <div :class="['w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs', confirmModalData.iconBgClass]">
+                <!-- Process Icon -->
+                <svg v-if="confirmModalData.type === 'process'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18.5 7A9 9 0 0 0 7 4.5" />
+                  <polyline points="18.5 3.5 18.5 7.5 14.5 7.5" />
+                  <path d="M5.5 17A9 9 0 0 0 17 19.5" />
+                  <polyline points="5.5 20.5 5.5 16.5 9.5 16.5" />
+                  <path d="M9 8h6" />
+                  <path d="M9 16h6" />
+                  <path d="M9.5 8v2.2l2.5 1.8-2.5 1.8V16" />
+                  <path d="M14.5 8v2.2l-2.5 1.8 2.5 1.8V16" />
+                </svg>
+
+                <!-- Pending Icon -->
+                <svg v-else-if="confirmModalData.type === 'pending'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5" stroke-dasharray="4 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5.5l3.5 2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.5 8l-2-2.5 3-1" />
+                </svg>
+
+                <!-- Rejected Icon -->
+                <svg v-else-if="confirmModalData.type === 'rejected'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.6 5.6l12.8 12.8" />
+                </svg>
+
+                <!-- Completed Icon -->
+                <svg v-else-if="confirmModalData.type === 'completed'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5l2.5 2.5 5-5" />
+                </svg>
+
+                <!-- Cancelled Icon -->
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+                </svg>
+              </div>
+
+              <div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white">{{ confirmModalData.title }}</h4>
+                <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400 mt-0.5">{{ confirmModalData.message }}</p>
+                <p v-if="confirmModalData.subtext" class="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 font-medium">{{ confirmModalData.subtext }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                @click="showConfirmModal = false"
+                class="px-4 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                @click="confirmStatusTransition"
+                :disabled="isUpdatingStatus"
+                :class="['px-4 py-2 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5', confirmModalData.confirmButtonClass]"
+              >
+                <span v-if="isUpdatingStatus">Updating...</span>
+                <span v-else>{{ confirmModalData.confirmButtonText }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Confirmation Modal -->
     <ConfirmationModal
@@ -159,7 +347,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import DateRangePicker from '@/components/common/DateRangePicker.vue';
@@ -205,16 +393,19 @@ const dateRange = ref({
 const statusOptions = [
   { value: '', label: 'All Statuses' },
   { value: 'draft', label: 'Draft' },
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'approved', label: 'Approved' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'process', label: 'Process' },
   { value: 'rejected', label: 'Rejected' },
-  { value: 'paid', label: 'Paid' }
+  { value: 'completed', label: 'Completed' }
 ];
 
 const categoryOptions = computed(() => {
   return [
     { value: '', label: 'All Categories' },
-    ...categories.value.map(cat => ({ value: cat.id, label: cat.name }))
+    ...categories.value.map(cat => ({
+      value: cat.id,
+      label: cat.code ? `${cat.code}-${cat.name}` : cat.name
+    }))
   ];
 });
 
@@ -432,37 +623,141 @@ const handleDateRangeChange = (range) => {
   fetchExpenses(1);
 };
 
+// Transition modal reactive state
+const showConfirmModal = ref(false);
+const isUpdatingStatus = ref(false);
+const confirmModalData = reactive({
+  expenseId: null,
+  targetStatus: '',
+  title: '',
+  message: 'Are you sure you want to do this?',
+  subtext: '',
+  confirmButtonText: 'Confirm',
+  confirmButtonClass: 'bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white',
+  iconBgClass: 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900',
+  type: 'process',
+});
+
+const openTransitionModal = (item, targetStatus) => {
+  confirmModalData.expenseId = item.id;
+  confirmModalData.targetStatus = targetStatus;
+  confirmModalData.message = 'Are you sure you want to do this?';
+  confirmModalData.confirmButtonClass = 'bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white';
+  confirmModalData.iconBgClass = 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900';
+
+  if (targetStatus === 'process') {
+    confirmModalData.title = 'Move to Processing';
+    confirmModalData.subtext = 'Once moved to Processing, this expense can no longer be edited or cancelled.';
+    confirmModalData.confirmButtonText = 'Move to Processing';
+    confirmModalData.type = 'process';
+  } else if (targetStatus === 'pending') {
+    confirmModalData.title = 'Move to Pending Review';
+    confirmModalData.subtext = 'Moving to Pending review. This action cannot be undone.';
+    confirmModalData.confirmButtonText = 'Move to Pending';
+    confirmModalData.type = 'pending';
+  } else if (targetStatus === 'rejected') {
+    confirmModalData.title = 'Reject Expense';
+    confirmModalData.subtext = 'Rejecting this expense. Once rejected, status cannot be changed.';
+    confirmModalData.confirmButtonText = 'Reject Expense';
+    confirmModalData.type = 'rejected';
+  } else if (targetStatus === 'completed') {
+    confirmModalData.title = 'Mark as Completed';
+    confirmModalData.subtext = 'Marking expense as Completed. Ledger entries will be posted and account balance deducted.';
+    confirmModalData.confirmButtonText = 'Mark as Completed';
+    confirmModalData.type = 'completed';
+  } else if (targetStatus === 'cancelled') {
+    confirmModalData.title = 'Cancel Expense Voucher';
+    confirmModalData.subtext = 'Cancelling this expense voucher. Once cancelled, this action cannot be undone.';
+    confirmModalData.confirmButtonText = 'Cancel Expense';
+    confirmModalData.type = 'cancelled';
+  }
+
+  showConfirmModal.value = true;
+};
+
+const confirmStatusTransition = async () => {
+  if (!confirmModalData.expenseId || !confirmModalData.targetStatus) return;
+  isUpdatingStatus.value = true;
+  try {
+    const response = await axios.patch(`/api/expenses/${confirmModalData.expenseId}/status`, {
+      status: confirmModalData.targetStatus
+    });
+
+    const successMessage = response.data.message || `Status updated to ${confirmModalData.targetStatus} successfully!`;
+    showConfirmModal.value = false;
+    success(successMessage);
+    await fetchExpenses(pagination.value.current_page);
+    emit('refresh');
+  } catch (err) {
+    console.error('Error updating expense status:', err);
+    const errMessage = err.response?.data?.message || 'Failed to update expense status';
+    error(errMessage);
+  } finally {
+    isUpdatingStatus.value = false;
+  }
+};
+
 const getStatusBadgeClass = (status) => {
-  const classes = {
-    draft: 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200 border border-slate-200 dark:border-zinc-700',
-    submitted: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/50',
-    approved: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-900/50',
-    rejected: 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/50',
-    paid: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/50'
-  };
-  return classes[status] || 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200';
+  const s = String(status || '').toLowerCase();
+  switch (s) {
+    case 'completed':
+    case 'paid':
+      return 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50';
+    case 'process':
+    case 'processing':
+      return 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900/50';
+    case 'pending':
+    case 'submitted':
+    case 'approved':
+      return 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-900/50';
+    case 'rejected':
+      return 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-900/50';
+    case 'cancelled':
+    case 'void':
+      return 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 border-slate-200 dark:border-zinc-700';
+    case 'draft':
+    default:
+      return 'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-slate-200 border-slate-200 dark:border-zinc-700';
+  }
 };
 
 const getStatusDotClass = (status) => {
-  const classes = {
-    draft: 'bg-slate-500',
-    submitted: 'bg-amber-500',
-    approved: 'bg-indigo-500',
-    rejected: 'bg-rose-500',
-    paid: 'bg-emerald-500'
-  };
-  return classes[status] || 'bg-slate-500';
+  const s = String(status || '').toLowerCase();
+  switch (s) {
+    case 'completed':
+    case 'paid':
+      return 'bg-emerald-500';
+    case 'process':
+    case 'processing':
+      return 'bg-indigo-500';
+    case 'pending':
+    case 'submitted':
+    case 'approved':
+      return 'bg-amber-500';
+    case 'rejected':
+      return 'bg-rose-500';
+    case 'cancelled':
+    case 'void':
+      return 'bg-slate-400';
+    case 'draft':
+    default:
+      return 'bg-slate-500';
+  }
 };
 
 const getStatusText = (status) => {
+  const s = String(status || '').toLowerCase();
   const texts = {
     draft: 'Draft',
-    submitted: 'Submitted',
-    approved: 'Approved',
+    pending: 'Pending',
+    process: 'Processing',
+    processing: 'Processing',
     rejected: 'Rejected',
-    paid: 'Paid'
+    completed: 'Paid',
+    paid: 'Paid',
+    cancelled: 'Cancelled'
   };
-  return texts[status] || status;
+  return texts[s] || status;
 };
 
 defineExpose({

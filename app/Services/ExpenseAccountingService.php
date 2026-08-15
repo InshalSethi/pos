@@ -97,8 +97,13 @@ class ExpenseAccountingService
                 $bankChartAccount = $this->getCashAccount($expense);
             }
 
-            // 1. Deduct BankAccount balance
-            $bankAccount->current_balance = round((float)$bankAccount->current_balance - $amount, 2);
+            // 1. Deduct BankAccount balance (with balance check)
+            $currentBal = (float)$bankAccount->current_balance;
+            if ($currentBal < $amount) {
+                throw new \Exception("Insufficient balance in '{$bankAccount->account_name}'. Available: $" . number_format($currentBal, 2) . ", required: $" . number_format($amount, 2));
+            }
+
+            $bankAccount->current_balance = round($currentBal - $amount, 2);
             $bankAccount->save();
 
             // 2. Create Journal Entry

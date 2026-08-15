@@ -142,7 +142,7 @@ class Expense extends Model
 
     public function canBeSubmitted(): bool
     {
-        return $this->status === 'draft';
+        return in_array($this->status, ['draft', 'pending']);
     }
 
     public function canBeApproved(): bool

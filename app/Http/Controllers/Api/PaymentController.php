@@ -8,6 +8,7 @@ use App\Models\BankAccount;
 use App\Models\Supplier;
 use App\Models\Employee;
 use App\Models\Customer;
+use App\Models\ExpenseCategory;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -39,6 +40,7 @@ class PaymentController extends Controller
     {
         $query = Payment::with([
             'bankAccount',
+            'expenseCategory',
             'createdBy:id,name',
             'approvedBy:id,name',
             'paidBy:id,name'
@@ -125,6 +127,11 @@ class PaymentController extends Controller
             'payee_type' => 'nullable|string|in:supplier,employee,customer,other',
             'payee_id' => 'nullable|integer',
             'payee_name' => 'required|string|max:255',
+            'expense_category_id' => [
+                Rule::requiredIf(fn () => $request->payment_type === 'expense_payment'),
+                'nullable',
+                'exists:expense_categories,id'
+            ],
             'status' => 'required|string|in:draft,pending,process,rejected,completed',
             'additional_data' => 'nullable|array',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
@@ -236,6 +243,11 @@ class PaymentController extends Controller
             'payee_type' => 'nullable|string|in:supplier,employee,customer,other',
             'payee_id' => 'nullable|integer',
             'payee_name' => 'sometimes|string|max:255',
+            'expense_category_id' => [
+                Rule::requiredIf(fn () => $request->payment_type === 'expense_payment'),
+                'nullable',
+                'exists:expense_categories,id'
+            ],
             'status' => 'sometimes|string|in:draft,pending,process,rejected,completed,approved,paid,cancelled',
             'additional_data' => 'nullable|array',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
@@ -622,11 +634,17 @@ class PaymentController extends Controller
                             ->select('id', 'name')
                             ->get();
 
+        $expenseCategories = ExpenseCategory::where('is_active', true)
+                            ->select('id', 'name', 'code')
+                            ->orderBy('name')
+                            ->get();
+
         return response()->json([
             'bank_accounts' => $bankAccounts,
             'suppliers' => $suppliers,
             'employees' => $employees,
             'customers' => $customers,
+            'expense_categories' => $expenseCategories,
             'payment_types' => [
                 ['value' => 'supplier_payment', 'label' => 'Supplier Payment'],
                 ['value' => 'expense_payment', 'label' => 'Expense Payment'],

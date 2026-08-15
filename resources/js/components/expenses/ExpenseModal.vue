@@ -23,7 +23,7 @@
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="saveExpense" class="space-y-5">
+      <form @submit.prevent="saveExpense('save_pending')" class="space-y-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           <!-- Title -->
@@ -51,6 +51,17 @@
               :searchable="true"
             />
             <span v-if="errors.category_id" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.category_id[0] }}</span>
+          </div>
+
+          <!-- Status (Floating Dropdown) -->
+          <div>
+            <CustomFloatingSelect
+              v-model="form.status"
+              label="STATUS *"
+              placeholder="Select Status"
+              :options="statusOptions"
+            />
+            <span v-if="errors.status" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.status[0] }}</span>
           </div>
 
           <!-- Employee (Floating Dropdown) -->
@@ -335,17 +346,6 @@
             <span v-if="saving">Saving...</span>
             <span v-else>{{ isEditing ? 'Update Expense' : 'Create Expense' }}</span>
           </button>
-
-          <button
-            v-if="!isEditing"
-            type="button"
-            @click="saveAndSubmit"
-            :disabled="saving"
-            class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <span v-if="saving">Saving...</span>
-            <span v-else>Create & Submit</span>
-          </button>
         </div>
       </form>
 
@@ -357,6 +357,9 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
+import { useToast } from '@/composables/useToast';
+
+const toast = useToast();
 
 // Props and Emits
 const props = defineProps({
@@ -379,8 +382,18 @@ const form = ref({
   reference_number: '',
   payment_method: '',
   description: '',
-  notes: ''
+  notes: '',
+  status: 'draft'
 });
+
+// Status options for expense lifecycle matching Payment Out
+const statusOptions = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'process', label: 'Process' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'completed', label: 'Completed' }
+];
 
 // Single payment method reactive state (left field = Payment Method, right field = Select Payment)
 const singlePaymentMethod = ref('cash');
@@ -430,7 +443,7 @@ const paymentMethodOptions = [
 const categoryOptions = computed(() => {
   return categories.value.map(cat => ({
     value: cat.id,
-    label: cat.name
+    label: cat.code ? `${cat.code}-${cat.name}` : cat.name
   }));
 });
 
@@ -669,13 +682,13 @@ const fetchBankAccounts = async () => {
 };
 
 // Save logic
-const saveExpense = async (submitAfterSave = false) => {
+const saveExpense = async () => {
   saving.value = true;
   errors.value = {};
 
   try {
     const formData = new FormData();
-    
+
     // Primary form attributes
     Object.keys(form.value).forEach(key => {
       if (form.value[key] !== null && form.value[key] !== '') {
@@ -722,24 +735,30 @@ const saveExpense = async (submitAfterSave = false) => {
       });
     }
 
-    if (submitAfterSave && !isEditing.value && response.data.expense) {
-      await axios.post(`/api/expenses/${response.data.expense.id}/submit`);
+    if (response.data?.message) {
+      toast.success(response.data.message);
+    } else {
+      toast.success(isEditing.value ? 'Expense updated successfully' : 'Expense saved successfully');
     }
 
     emit('saved');
   } catch (error) {
     if (error.response?.status === 422) {
-      errors.value = error.response.data.errors;
+      if (error.response.data?.errors) {
+        errors.value = error.response.data.errors;
+      }
+      if (error.response.data?.message) {
+        toast.error(error.response.data.message);
+      }
+    } else if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
     } else {
+      toast.error('Failed to save expense');
       console.error('Error saving expense:', error);
     }
   } finally {
     saving.value = false;
   }
-};
-
-const saveAndSubmit = () => {
-  saveExpense(true);
 };
 
 // Form Initialization

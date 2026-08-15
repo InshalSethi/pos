@@ -35,6 +35,7 @@ class Payment extends Model
         'payee_type',
         'payee_id',
         'payee_name',
+        'expense_category_id',
         'status',
         'created_by',
         'approved_by',
@@ -89,6 +90,11 @@ class Payment extends Model
     }
 
     // Relationships
+    public function expenseCategory(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseCategory::class, 'expense_category_id');
+    }
+
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);

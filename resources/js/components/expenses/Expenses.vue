@@ -79,6 +79,7 @@
 
     <div v-if="activeTab === 'categories'">
       <ExpenseCategoryList 
+        ref="categoryListRef"
         @edit-category="editCategory"
         @refresh="fetchCategories"
       />
@@ -135,6 +136,7 @@ const showExpenseViewModal = ref(false);
 const selectedExpense = ref(null);
 const selectedCategory = ref(null);
 const expenseListRef = ref(null);
+const categoryListRef = ref(null);
 
 const checkAutoOpenCreate = () => {
   if (route.path.endsWith('/create') || route.query.create === 'true' || route.query.action === 'create') {
@@ -213,6 +215,9 @@ const fetchExpenses = () => {
 };
 
 const fetchCategories = () => {
+  if (categoryListRef.value && typeof categoryListRef.value.fetchCategories === 'function') {
+    categoryListRef.value.fetchCategories();
+  }
 };
 
 onMounted(() => {

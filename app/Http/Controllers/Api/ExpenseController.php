@@ -10,6 +10,7 @@ use App\Models\BankTransaction;
 use App\Services\ExpenseAccountingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -116,6 +117,7 @@ class ExpenseController extends Controller
             'expense_date' => 'required|date',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'status' => 'required|string|in:draft,pending,process,rejected,completed,paid',
             'receipt_image' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'receipt_images.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'payment_method' => 'nullable|string|max:50',
@@ -132,17 +134,28 @@ class ExpenseController extends Controller
             ], 422);
         }
 
+        $selectedStatus = strtolower($request->input('status', 'draft'));
+        if ($selectedStatus === 'paid') {
+            $selectedStatus = 'completed';
+        }
+        $isCompleted = ($selectedStatus === 'completed');
+
         try {
             DB::beginTransaction();
 
-            $expenseData = $request->except(['receipt_image', 'receipt_images']);
+            $expenseData = $request->except(['receipt_image', 'receipt_images', 'action', 'submit_type']);
             if ($request->has('payments')) {
                 $rawPayments = $request->input('payments');
                 $expenseData['payments'] = is_string($rawPayments) ? (json_decode($rawPayments, true) ?? []) : (array)$rawPayments;
             }
             $expenseData['expense_number'] = Expense::generateExpenseNumber();
             $expenseData['user_id'] = auth()->id();
-            $expenseData['status'] = 'draft';
+            $expenseData['status'] = $selectedStatus;
+
+            if ($isCompleted) {
+                $expenseData['paid_by'] = auth()->id();
+                $expenseData['paid_at'] = now();
+            }
 
             // Handle multiple receipt images
             if ($request->hasFile('receipt_images')) {
@@ -157,31 +170,50 @@ class ExpenseController extends Controller
             }
 
             $expense = Expense::create($expenseData);
-            $expense->load(['category', 'employee', 'user']);
 
-            // Log the creation
-            ExpenseAuditLog::logExpenseChange(
-                $expense,
-                'created',
-                null,
-                $expense->toArray(),
-                'Expense created as draft'
-            );
+            if ($isCompleted) {
+                // Execute accounting entries and balance deduction
+                $this->executeExpenseAccounting($expense, $request);
+
+                ExpenseAuditLog::logExpenseChange(
+                    $expense,
+                    'completed',
+                    [],
+                    $expense->toArray(),
+                    'Expense created as completed with ledger entries posted'
+                );
+
+                $successMessage = 'Expense completed and ledger entries posted successfully.';
+            } else {
+                ExpenseAuditLog::logExpenseChange(
+                    $expense,
+                    'created',
+                    [],
+                    $expense->toArray(),
+                    "Expense saved with status '{$selectedStatus}'"
+                );
+
+                $successMessage = 'Expense created successfully.';
+            }
 
             DB::commit();
 
+            $expense->load(['category', 'employee', 'user', 'submittedBy']);
+
             return response()->json([
-                'message' => 'Expense created successfully',
+                'message' => $successMessage,
                 'expense' => $expense
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
+            $statusCode = str_contains($e->getMessage(), 'Insufficient balance') ? 422 : 500;
+
             return response()->json([
-                'message' => 'Failed to create expense',
+                'message' => $e->getMessage(),
                 'error' => $e->getMessage()
-            ], 500);
+            ], $statusCode);
         }
     }
 
@@ -677,6 +709,160 @@ class ExpenseController extends Controller
             // Fire approval event first, then paid event
             event(new \App\Events\ExpenseApproved($expense));
             event(new \App\Events\ExpensePaid($expense));
+        }
+    }
+
+    /**
+     * Update expense status via state machine workflow
+     */
+    public function updateStatus(Request $request, Expense $expense): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:draft,process,processing,pending,rejected,cancelled,completed,paid,void',
+        ]);
+
+        $targetStatus = strtolower($validated['status']);
+        if ($targetStatus === 'processing') {
+            $targetStatus = 'process';
+        }
+        if ($targetStatus === 'void') {
+            $targetStatus = 'cancelled';
+        }
+        if ($targetStatus === 'paid') {
+            $targetStatus = 'completed';
+        }
+
+        $currentStatus = strtolower($expense->status);
+
+        // Define strict state machine transition matrix matching Payment Out
+        $allowedTransitions = [
+            'draft' => ['process', 'pending', 'submitted', 'rejected', 'cancelled'],
+            'process' => ['pending', 'submitted'],
+            'pending' => ['rejected', 'completed', 'paid', 'cancelled'],
+            'submitted' => ['rejected', 'completed', 'paid', 'cancelled'],
+            'approved' => ['rejected', 'completed', 'paid', 'cancelled'],
+        ];
+
+        // Terminal / Final states cannot transition to anything
+        if (in_array($currentStatus, ['completed', 'rejected', 'cancelled', 'paid', 'void'])) {
+            return response()->json([
+                'message' => "This expense record is locked in a final state ({$currentStatus}) and cannot undergo any further status transitions."
+            ], 422);
+        }
+
+        if (!isset($allowedTransitions[$currentStatus]) || !in_array($targetStatus, $allowedTransitions[$currentStatus])) {
+            return response()->json([
+                'message' => "Invalid status transition from {$currentStatus} to {$targetStatus}."
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $oldStatus = $expense->status;
+            $expense->status = $targetStatus;
+
+            if ($targetStatus === 'completed' || $targetStatus === 'paid') {
+                $expense->paid_at = now();
+                $expense->paid_by = auth()->id();
+                $expense->save();
+
+                // Post accounting entries & deduct account balance
+                $this->executeExpenseAccounting($expense, $request);
+            } else {
+                $expense->save();
+            }
+
+            ExpenseAuditLog::logExpenseChange(
+                $expense,
+                $targetStatus,
+                ['status' => $oldStatus],
+                ['status' => $targetStatus],
+                "Expense status changed from {$oldStatus} to {$targetStatus}"
+            );
+
+            DB::commit();
+
+            $statusLabels = [
+                'process' => 'Processing',
+                'pending' => 'Pending',
+                'rejected' => 'Rejected',
+                'completed' => 'Completed',
+                'cancelled' => 'Cancelled',
+            ];
+            $label = $statusLabels[$targetStatus] ?? ucfirst($targetStatus);
+
+            $expense->load(['category', 'employee', 'user', 'submittedBy']);
+
+            return response()->json([
+                'message' => "Status updated to {$label} successfully!",
+                'expense' => $expense
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            $statusCode = str_contains($e->getMessage(), 'Insufficient balance') ? 422 : 500;
+            return response()->json([
+                'message' => 'Failed to update expense status: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $statusCode);
+        }
+    }
+
+    /**
+     * Post accounting entries and deduct account balance for completed expenses
+     */
+    private function executeExpenseAccounting(Expense $expense, Request $request): void
+    {
+        $payments = $expense->payments;
+        if (!is_array($payments) || empty($payments)) {
+            $payments = [[
+                'method' => $expense->payment_method ?: 'cash',
+                'amount' => $expense->amount,
+                'bank_id' => $request->input('bank_account_id') ?: ($expense->bank_account_id ?? null)
+            ]];
+        }
+
+        foreach ($payments as $paymentItem) {
+            $amount = floatval($paymentItem['amount'] ?? 0);
+            if ($amount <= 0) continue;
+
+            $bankId = $paymentItem['bank_id'] ?? null;
+            $bankAccount = null;
+
+            if ($bankId) {
+                $bankAccount = BankAccount::find($bankId);
+            }
+
+            if (!$bankAccount) {
+                $method = $paymentItem['method'] ?? ($expense->payment_method ?: 'cash');
+                if ($method === 'cash') {
+                    $bankAccount = BankAccount::where('is_active', true)
+                        ->where(function ($q) {
+                            $q->where('account_type', 'cash')
+                              ->orWhere('bank_name', 'like', '%cash%')
+                              ->orWhere('account_name', 'like', '%cash%');
+                        })->first() ?: BankAccount::where('is_active', true)->where('is_default', true)->first();
+                } elseif ($method === 'credit_card' || $method === 'card') {
+                    $bankAccount = BankAccount::where('is_active', true)
+                        ->where(function ($q) {
+                            $q->where('account_type', 'credit_card')
+                              ->orWhere('account_type', 'card')
+                              ->orWhere('account_name', 'like', '%card%');
+                        })->first() ?: BankAccount::where('is_active', true)->where('is_default', true)->first();
+                } else {
+                    $bankAccount = BankAccount::where('is_active', true)
+                        ->where('is_default', true)
+                        ->first() ?: BankAccount::where('is_active', true)->first();
+                }
+            }
+
+            if (!$bankAccount) {
+                throw new \Exception('No valid bank/cash account selected for payment processing.');
+            }
+
+            $this->accountingService->processExpenseSubmission($expense, $bankAccount, $amount);
         }
     }
 

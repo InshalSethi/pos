@@ -376,6 +376,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::apiResource('expense-categories', ExpenseCategoryController::class);
         Route::get('/expense-categories/tree/structure', [ExpenseCategoryController::class , 'tree']);
 
+        Route::match(['patch', 'post'], '/expenses/{expense}/status', [ExpenseController::class, 'updateStatus'])->name('expenses.status');
         Route::apiResource('expenses', ExpenseController::class);
         Route::post('/expenses/{expense}/submit', [ExpenseController::class , 'submit']);
         Route::post('/expenses/{expense}/approve', [ExpenseController::class , 'approve']);
