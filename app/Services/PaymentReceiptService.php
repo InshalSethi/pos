@@ -94,6 +94,9 @@ class PaymentReceiptService
             // Create bank transaction and sync bank account balance
             $bankTransaction = $this->createBankTransaction($receipt, $journalEntry->id);
             
+            // Sync Customer Wallet Balance for unallocated customer payment or advance
+            $this->syncCustomerWalletOnDeposit($receipt);
+
             // Mark receipt as deposited
             $receipt->markAsDeposited($userId, $journalEntry->id, $bankTransaction->id);
             
@@ -539,7 +542,56 @@ class PaymentReceiptService
         // Update account balances
         foreach ($reversalEntry->journalEntryLines as $line) {
             $account = Account::find($line->account_id);
-            $account->updateCurrentBalance();
+            if ($account) {
+                $account->updateCurrentBalance();
+            }
+        }
+
+        // Revert Customer Wallet Balance if credited on deposit
+        $this->syncCustomerWalletOnReversal($receipt);
+    }
+
+    /**
+     * Credit customer's wallet balance for unallocated/advance payment receipts on deposit.
+     */
+    protected function syncCustomerWalletOnDeposit(PaymentReceipt $receipt): void
+    {
+        if (in_array($receipt->receipt_type, ['customer_payment', 'customer_advance']) && $receipt->payer_id) {
+            $customer = Customer::find($receipt->payer_id);
+            if ($customer) {
+                $allocatedAmount = 0;
+                if (!empty($receipt->invoice_allocations) && is_array($receipt->invoice_allocations)) {
+                    foreach ($receipt->invoice_allocations as $alloc) {
+                        $allocatedAmount += (float) ($alloc['amount'] ?? 0);
+                    }
+                }
+                $unallocated = max(0, (float) $receipt->amount - $allocatedAmount);
+                if ($unallocated > 0) {
+                    $customer->creditWallet($unallocated);
+                }
+            }
+        }
+    }
+
+    /**
+     * Debit/revert customer's wallet balance when payment receipt is cancelled or deleted.
+     */
+    protected function syncCustomerWalletOnReversal(PaymentReceipt $receipt): void
+    {
+        if (in_array($receipt->receipt_type, ['customer_payment', 'customer_advance']) && $receipt->payer_id) {
+            $customer = Customer::find($receipt->payer_id);
+            if ($customer) {
+                $allocatedAmount = 0;
+                if (!empty($receipt->invoice_allocations) && is_array($receipt->invoice_allocations)) {
+                    foreach ($receipt->invoice_allocations as $alloc) {
+                        $allocatedAmount += (float) ($alloc['amount'] ?? 0);
+                    }
+                }
+                $unallocated = max(0, (float) $receipt->amount - $allocatedAmount);
+                if ($unallocated > 0) {
+                    $customer->debitWallet($unallocated);
+                }
+            }
         }
     }
 
