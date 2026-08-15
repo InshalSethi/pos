@@ -498,33 +498,53 @@
     <!-- Image Lightbox Modal -->
     <div
       v-if="showLightbox"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
       @click="showLightbox = false"
     >
-      <div class="relative max-w-3xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col" @click.stop>
-        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50">
-          <div class="flex items-center space-x-2">
-            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span class="font-bold text-sm text-slate-800 dark:text-zinc-100">{{ lightboxTitle || 'Profile Photo' }}</span>
+      <div
+        class="relative max-w-2xl w-full max-h-[85vh] bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 dark:border-zinc-800 flex flex-col transition-all duration-200"
+        @click.stop
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between gap-4 p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span class="truncate flex-1 font-medium text-sm text-gray-800 dark:text-gray-200">
+              {{ lightboxTitle || 'Profile Photo' }}
+            </span>
           </div>
-          <div class="flex items-center space-x-2">
+
+          <div class="flex items-center gap-2 shrink-0">
             <button
+              type="button"
               @click="downloadFile(lightboxSrc, (lightboxTitle || 'supplier_photo') + '.jpg')"
-              class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-1 cursor-pointer transition-all"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-black dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all duration-150 cursor-pointer"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
               <span>Download</span>
             </button>
             <button
+              type="button"
               @click="showLightbox = false"
-              class="w-7 h-7 rounded-full bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 dark:hover:bg-zinc-600 flex items-center justify-center text-xs font-bold cursor-pointer transition-all"
+              class="w-7 h-7 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs font-bold transition-all duration-150 cursor-pointer"
+              title="Close"
             >
               ✕
             </button>
           </div>
         </div>
-        <div class="p-4 flex items-center justify-center bg-slate-950 max-h-[75vh] overflow-auto">
-          <img :src="lightboxSrc" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg" alt="Profile Picture" />
+
+        <!-- Modal Body / Image Preview -->
+        <div class="flex items-center justify-center p-6 bg-slate-950/90 overflow-hidden flex-1 min-h-[280px]">
+          <img
+            :src="lightboxSrc"
+            class="max-h-[65vh] w-auto max-w-full object-contain rounded-lg shadow-sm"
+            alt="Profile Picture"
+          />
         </div>
       </div>
     </div>
