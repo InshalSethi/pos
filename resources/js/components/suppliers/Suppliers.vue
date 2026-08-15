@@ -144,10 +144,10 @@
       </div>
 
       <!-- TABLE VIEW -->
-      <div v-if="viewMode === 'table'" class="overflow-x-auto custom-scrollbar">
+      <div v-if="viewMode === 'table'" class="h-[400px] max-h-[400px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
         <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
+          <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-zinc-800">
+            <tr class="bg-slate-50 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">
               <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Supplier</th>
               <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Contact</th>
               <th class="py-3 px-4 bg-slate-50 dark:bg-zinc-800/50">Location</th>
