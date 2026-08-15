@@ -514,11 +514,11 @@
       @click="showLightbox = false"
     >
       <div
-        class="relative max-w-2xl w-full max-h-[85vh] bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 dark:border-zinc-800 flex flex-col transition-all duration-200"
+        class="relative max-w-2xl w-full max-h-[85vh] bg-white dark:bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 dark:border-zinc-800 flex flex-col transition-all duration-200"
         @click.stop
       >
         <!-- Modal Header -->
-        <div class="flex items-center justify-between gap-4 p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+        <div class="flex items-center justify-between gap-4 p-4 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
           <div class="flex items-center gap-2.5 min-w-0 flex-1">
             <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -551,7 +551,7 @@
         </div>
 
         <!-- Modal Body / Image Preview -->
-        <div class="flex items-center justify-center p-6 bg-slate-950/90 overflow-hidden flex-1 min-h-[280px]">
+        <div class="flex items-center justify-center p-6 bg-white dark:bg-black overflow-hidden flex-1 min-h-[280px]">
           <img
             :src="lightboxSrc"
             class="max-h-[65vh] w-auto max-w-full object-contain rounded-lg shadow-sm"
