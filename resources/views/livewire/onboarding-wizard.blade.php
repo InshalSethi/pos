@@ -245,15 +245,14 @@
                             $steps = [
                                 1 => ['Enterprise Metrics', 'Legal entity & team details'],
                                 2 => ['Branding', 'Logo, tax & location info'],
-                                3 => ['Target Objectives', 'Feature usage preferences'],
-                                4 => ['Regional Rules', 'Localization & finance config'],
+                                3 => ['Regional Rules', 'Localization & finance config'],
                             ];
                         @endphp
 
                         @foreach($steps as $num => $info)
                             <div class="flex items-start gap-4 relative">
                                 {{-- Vertical connector line --}}
-                                @if($num < 4)
+                                @if($num < 3)
                                     <div class="absolute left-[15px] top-[32px] w-[2px] h-[calc(100%-8px)] {{ $num < $step ? 'bg-slate-900' : 'bg-slate-200' }}"></div>
                                 @endif
 
@@ -305,13 +304,12 @@
                             <h2 class="text-xl font-extrabold text-slate-950 tracking-tight">
                                 @if($step == 1) Enterprise Metrics
                                 @elseif($step == 2) Brand Assets
-                                @elseif($step == 3) Target Objectives
-                                @elseif($step == 4) Framework Configuration
+                                @elseif($step == 3) Framework Configuration
                                 @endif
                             </h2>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
-                                    Step {{ $step }} of 4
+                                    Step {{ $step }} of 3
                                 </span>
                                 <button
                                     type="button"
@@ -330,13 +328,12 @@
                         {{-- Horizontal Progress Bar --}}
                         <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-slate-900 h-full rounded-full transition-all duration-500 ease-out"
-                                style="width: {{ ($step / 4) * 100 }}%;"></div>
+                                style="width: {{ ($step / 3) * 100 }}%;"></div>
                         </div>
                         <p class="text-xs text-slate-500 mt-2.5">
                             @if($step == 1) Please enter your accurate legal entity details.
                             @elseif($step == 2) Upload your official company logo and location details.
-                            @elseif($step == 3) Select all core features you plan to utilize immediately.
-                            @elseif($step == 4) Establish the baseline regional settings for your ledger.
+                            @elseif($step == 3) Establish the baseline regional settings for your ledger.
                             @endif
                         </p>
                     </div>
@@ -367,7 +364,7 @@
                                 <div class="space-y-4 animate-fade-in w-full">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Name</label>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Name <span class="text-rose-500">*</span></label>
                                             <input type="text"
                                                 wire:model="company_name"
                                                 class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm placeholder-slate-400 outline-none focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out shadow-sm bg-white"
@@ -376,7 +373,7 @@
                                             class="text-red-500 text-xs mt-1 font-medium block">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Registration Number</label>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Registration Number <span class="text-rose-500">*</span></label>
                                             <input type="text"
                                                 wire:model="registration_number"
                                                 class="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm placeholder-slate-400 outline-none focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out shadow-sm bg-white"
@@ -480,7 +477,7 @@
                                                      $wire.set('company_phone', fullPhoneNumber, false);
                                                  }
                                              }">
-                                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Phone</label>
+                                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Phone <span class="text-rose-500">*</span></label>
                                              
                                              <div class="relative flex items-center w-full border border-slate-200 rounded-md bg-white shadow-sm transition-all focus-within:ring-2 focus-within:ring-slate-200 focus-within:border-slate-300">
                                                  <!-- Region Dropdown Button -->
@@ -685,54 +682,8 @@
                                 </div>
                             @endif
 
-                            {{-- STEP 3: Target Objectives --}}
+                            {{-- STEP 3: Framework Configuration --}}
                             @if($step == 3)
-                                <div class="space-y-4 animate-fade-in w-full">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        @php
-                                            $tasks = [
-                                                'manage_inventory' => ['Manage your inventory', 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
-                                                'organize_expenses' => ['Organize your expenses', 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
-                                                'pay_employees' => ['Pay your employees', 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
-                                                'send_invoices' => ['Send and track invoices', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                                                'track_bills' => ['Track your bills', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-                                                'track_tax' => ['Track your tax', 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
-                                            ];
-                                        @endphp
-
-                                        @foreach($tasks as $key => $data)
-                                            <label
-                                                class="relative flex items-center p-3.5 cursor-pointer rounded-xl border-2 transition-all shadow-sm group @if(in_array($key, $intended_tasks)) border-slate-900 bg-slate-50 @else border-slate-200 bg-white hover:border-slate-300 hover:bg-gray-50 @endif">
-                                                <div class="flex-shrink-0 mr-3">
-                                                    <div
-                                                        class="w-8 h-8 rounded-full flex items-center justify-center transition-colors @if(in_array($key, $intended_tasks)) bg-slate-900 text-white @else bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600 @endif">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="{{ $data[1] }}" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-1 text-sm leading-5">
-                                                    <span class="font-bold text-slate-800 block">{{ $data[0] }}</span>
-                                                </div>
-                                                <div class="flex h-5 items-center ml-3">
-                                                    <input type="checkbox" wire:model="intended_tasks" value="{{ $key }}"
-                                                        class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-200 transition-colors cursor-pointer">
-                                                </div>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                    @error('intended_tasks') <span
-                                        class="text-red-500 text-sm mt-2 block font-medium p-3 bg-red-50 rounded-lg border border-red-100 flex items-center"><svg
-                                            class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>{{ $message }}</span> @enderror
-                                </div>
-                            @endif
-
-                            {{-- STEP 4: Framework Configuration --}}
-                            @if($step == 4)
                                 @php
                                     $businessTypes = [
                                         'agriculture' => 'Agriculture',
@@ -1119,7 +1070,7 @@
                                     </button>
                                 @endif
 
-                                @if($step < 4)
+                                @if($step < 3)
                                     <button type="button" wire:click="nextStep"
                                         class="bg-slate-900 hover:bg-black text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center text-sm shadow-md transition-all duration-150 hover:shadow-lg">
                                         Continue

@@ -26,7 +26,7 @@
             
             <!-- Company Name -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Name</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Company Name <span class="text-rose-500">*</span></label>
               <input
                 type="text"
                 v-model="form.company_name"
@@ -38,7 +38,7 @@
 
             <!-- Registration Number -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1.5">Registration Number</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Registration Number <span class="text-rose-500">*</span></label>
               <input
                 type="text"
                 v-model="form.registration_number"
@@ -151,6 +151,9 @@ const submitStep = () => {
   errors.value = {};
   if (!form.value.company_name || !form.value.company_name.trim()) {
     errors.value.company_name = 'Company Name is required to create or save a setup draft.';
+  }
+  if (!form.value.registration_number || !form.value.registration_number.trim()) {
+    errors.value.registration_number = 'Registration Number is required.';
   }
   if (!form.value.company_phone) {
     errors.value.company_phone = 'Company Phone is required.';

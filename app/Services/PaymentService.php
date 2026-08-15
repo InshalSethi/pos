@@ -101,7 +101,7 @@ class PaymentService
             $journalEntry = $this->createOrUpdateJournalEntry($payment);
 
             // Create bank transaction and sync bank account balance
-            $bankTransaction = $this->createBankTransaction($payment);
+            $bankTransaction = $this->createBankTransaction($payment, $journalEntry->id);
             
             // Mark payment as paid
             $payment->markAsPaid($userId, $journalEntry->id, $bankTransaction->id);
@@ -395,7 +395,7 @@ class PaymentService
     /**
      * Create bank transaction for payment
      */
-    protected function createBankTransaction(Payment $payment): BankTransaction
+    protected function createBankTransaction(Payment $payment, ?int $journalEntryId = null): BankTransaction
     {
         $bankAccount = $payment->bankAccount;
         if (!$bankAccount) {
@@ -410,12 +410,16 @@ class PaymentService
         }
 
         $newBalance = round($currentBal - $amount, 2);
+        $companyId = $payment->company_id ?? session('active_company_id') ?? auth()->user()?->company_id ?? \App\Models\Company::first()?->id ?? 1;
+        $description = $this->getBankTransactionDescription($payment);
 
         $transaction = BankTransaction::create([
+            'company_id' => $companyId,
             'bank_account_id' => $bankAccount->id,
+            'journal_entry_id' => $journalEntryId,
             'transaction_date' => $payment->payment_date,
             'reference_number' => $payment->reference_number ?: $payment->payment_number,
-            'description' => $this->getBankTransactionDescription($payment),
+            'description' => $description,
             'transaction_type' => 'debit',
             'amount' => $amount,
             'running_balance' => $newBalance,
@@ -428,6 +432,25 @@ class PaymentService
         $bankAccount->update(['current_balance' => $newBalance]);
         if ($bankAccount->chartAccount) {
             $bankAccount->chartAccount->updateCurrentBalance();
+        }
+
+        // Also create a record in `transactions` table so it shows up in Banking -> Transactions list
+        try {
+            \App\Models\Transaction::create([
+                'company_id' => $companyId,
+                'type' => 'expense',
+                'paid_at' => $payment->payment_date,
+                'payment_method' => ucfirst($payment->payment_method ?? 'cash'),
+                'account_id' => $bankAccount->id,
+                'amount' => $amount,
+                'description' => $description,
+                'vendor_id' => ($payment->payee_type === 'supplier' || strtolower((string)$payment->payee_type) === 'supplier') ? $payment->payee_id : null,
+                'customer_id' => ($payment->payee_type === 'customer' || strtolower((string)$payment->payee_type) === 'customer') ? $payment->payee_id : null,
+                'number' => $payment->payment_number,
+                'reference' => $payment->reference_number ?: $payment->payment_number,
+            ]);
+        } catch (\Throwable $e) {
+            // Ignore if Transaction model/table write is optional
         }
 
         return $transaction;
@@ -514,8 +537,16 @@ class PaymentService
      */
     protected function getJournalEntryDescription(Payment $payment): string
     {
+        $payeeName = $payment->payee_name;
+        if (empty($payeeName) && $payment->payee_id && strtolower((string)$payment->payee_type) === 'supplier') {
+            $supplier = Supplier::find($payment->payee_id);
+            if ($supplier) {
+                $payeeName = $supplier->name;
+            }
+        }
+
         $descriptions = [
-            'supplier_payment' => "Payment to supplier: {$payment->payee_name}",
+            'supplier_payment' => "Payment Out to Supplier: " . ($payeeName ?: 'Supplier'),
             'expense_payment' => "Payment for expense: {$payment->description}",
             'salary_payment' => "Salary payment to: {$payment->payee_name}",
             'sale_return_payment' => "Refund for sale return: {$payment->description}",
@@ -523,7 +554,7 @@ class PaymentService
             'other_payment' => "Other payment: {$payment->description}",
         ];
 
-        return $descriptions[$payment->payment_type] ?? "Payment: {$payment->description}";
+        return $descriptions[$payment->payment_type] ?? "Payment Out: {$payment->description}";
     }
 
     /**

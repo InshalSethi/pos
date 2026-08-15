@@ -51,7 +51,7 @@ class OnboardingWizard extends Component
             'company_name' => 'required|string|max:255',
             'company_email' => 'required|email|max:255',
             'company_phone' => 'required|string|max:50',
-            'registration_number' => 'nullable|string|max:100',
+            'registration_number' => 'required|string|max:100',
             'owner_role' => 'required|string',
             'team_size' => 'required|string',
         ],
@@ -61,9 +61,6 @@ class OnboardingWizard extends Component
             'business_address' => 'nullable|string|max:255',
         ],
         3 => [
-            'intended_tasks' => 'required|array|min:1',
-        ],
-        4 => [
             'business_type' => 'required|string',
             'business_scale' => 'required|string',
             'country' => 'required|string',
@@ -76,6 +73,8 @@ class OnboardingWizard extends Component
 
     protected $messages = [
         'company_name.required' => 'Company Name is required to create or save a setup draft.',
+        'registration_number.required' => 'Registration Number is required.',
+        'company_phone.required' => 'Company Phone is required.',
     ];
 
     public $company_id = null;
@@ -266,8 +265,8 @@ class OnboardingWizard extends Component
 
     public function submit()
     {
-        // Validate all steps
-        $this->validate(array_merge($this->rules[1], $this->rules[2], $this->rules[3], $this->rules[4]));
+        // Validate all 3 steps
+        $this->validate(array_merge($this->rules[1], $this->rules[2], $this->rules[3]));
 
         DB::transaction(function () {
             $logoPath = null;
@@ -383,21 +382,22 @@ class OnboardingWizard extends Component
             }
 
             if ($cashAccount) {
-                \App\Models\BankAccount::firstOrCreate([
-                    'company_id' => $company->id,
-                    'is_default' => true,
-                ], [
-                    'account_name' => 'Cash Account',
-                    'bank_name' => 'Cash',
-                    'account_number' => 'CASH-001',
-                    'account_type' => 'checking',
-                    'chart_account_id' => $cashAccount->id,
-                    'currency' => $company->base_currency ?: 'USD',
-                    'is_active' => true,
-                    'is_default' => true,
-                    'opening_balance' => 0.00,
-                    'opening_date' => now()->format('Y-m-d'),
-                ]);
+                \App\Models\BankAccount::withoutGlobalScopes()
+                    ->updateOrCreate([
+                        'company_id' => $company->id,
+                        'is_default' => true,
+                    ], [
+                        'account_name' => 'Cash Account',
+                        'bank_name' => 'Cash',
+                        'account_number' => 'CASH-001',
+                        'account_type' => 'checking',
+                        'chart_account_id' => $cashAccount->id,
+                        'currency' => $company->base_currency ?: 'USD',
+                        'is_active' => true,
+                        'is_default' => true,
+                        'opening_balance' => 0.00,
+                        'opening_date' => now()->format('Y-m-d'),
+                    ]);
             }
         });
 

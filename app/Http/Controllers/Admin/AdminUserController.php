@@ -281,21 +281,22 @@ class AdminUserController extends Controller
             }
 
             if ($cashAccount) {
-                \App\Models\BankAccount::firstOrCreate([
-                    'company_id' => $company->id,
-                    'is_default' => true,
-                ], [
-                    'account_name' => 'Cash Account',
-                    'bank_name' => 'Cash',
-                    'account_number' => 'CASH-001',
-                    'account_type' => 'checking',
-                    'chart_account_id' => $cashAccount->id,
-                    'currency' => $company->base_currency ?: 'USD',
-                    'is_active' => true,
-                    'is_default' => true,
-                    'opening_balance' => 0.00,
-                    'opening_date' => now()->format('Y-m-d'),
-                ]);
+                \App\Models\BankAccount::withoutGlobalScopes()
+                    ->updateOrCreate([
+                        'company_id' => $company->id,
+                        'is_default' => true,
+                    ], [
+                        'account_name' => 'Cash Account',
+                        'bank_name' => 'Cash',
+                        'account_number' => 'CASH-001',
+                        'account_type' => 'checking',
+                        'chart_account_id' => $cashAccount->id,
+                        'currency' => $company->base_currency ?: 'USD',
+                        'is_active' => true,
+                        'is_default' => true,
+                        'opening_balance' => 0.00,
+                        'opening_date' => now()->format('Y-m-d'),
+                    ]);
             }
 
             return $user;

@@ -92,7 +92,7 @@ class PaymentReceiptService
             $journalEntry = $this->createOrUpdateJournalEntry($receipt);
 
             // Create bank transaction and sync bank account balance
-            $bankTransaction = $this->createBankTransaction($receipt);
+            $bankTransaction = $this->createBankTransaction($receipt, $journalEntry->id);
             
             // Mark receipt as deposited
             $receipt->markAsDeposited($userId, $journalEntry->id, $bankTransaction->id);
@@ -442,7 +442,7 @@ class PaymentReceiptService
     /**
      * Create bank transaction for payment receipt
      */
-    protected function createBankTransaction(PaymentReceipt $receipt): BankTransaction
+    protected function createBankTransaction(PaymentReceipt $receipt, ?int $journalEntryId = null): BankTransaction
     {
         $bankAccount = $receipt->bankAccount;
         if (!$bankAccount) {
@@ -452,12 +452,16 @@ class PaymentReceiptService
         $currentBal = (float)$bankAccount->current_balance;
         $amount = (float)$receipt->amount;
         $newBalance = round($currentBal + $amount, 2);
+        $companyId = $receipt->company_id ?? session('active_company_id') ?? auth()->user()?->company_id ?? \App\Models\Company::first()?->id ?? 1;
+        $description = "Payment In from Customer: " . ($receipt->payer_name ?: 'Customer');
 
         $transaction = BankTransaction::create([
+            'company_id' => $companyId,
             'bank_account_id' => $bankAccount->id,
+            'journal_entry_id' => $journalEntryId,
             'transaction_date' => $receipt->receipt_date,
             'reference_number' => $receipt->transaction_reference ?: $receipt->receipt_number,
-            'description' => $this->getBankTransactionDescription($receipt),
+            'description' => $description,
             'transaction_type' => 'credit',
             'amount' => $amount,
             'running_balance' => $newBalance,
@@ -470,6 +474,24 @@ class PaymentReceiptService
         $bankAccount->update(['current_balance' => $newBalance]);
         if ($bankAccount->chartAccount) {
             $bankAccount->chartAccount->updateCurrentBalance();
+        }
+
+        // Also create a record in `transactions` table so it shows up in Banking -> Transactions list
+        try {
+            \App\Models\Transaction::create([
+                'company_id' => $companyId,
+                'type' => 'income',
+                'paid_at' => $receipt->receipt_date,
+                'payment_method' => ucfirst($receipt->payment_method ?? 'cash'),
+                'account_id' => $bankAccount->id,
+                'amount' => $amount,
+                'description' => $description,
+                'customer_id' => (strtolower((string)$receipt->payer_type) === 'customer') ? $receipt->payer_id : null,
+                'number' => $receipt->receipt_number,
+                'reference' => $receipt->transaction_reference ?: $receipt->receipt_number,
+            ]);
+        } catch (\Throwable $e) {
+            // Ignore if Transaction model write is optional
         }
 
         return $transaction;

@@ -194,7 +194,7 @@ class CompanySetupController extends Controller
 
         $validated = $request->validate([
             'company_id'   => ['required', 'integer', 'exists:companies,id'],
-            'current_step' => ['required', 'integer', 'between:1,4'],
+            'current_step' => ['required', 'integer', 'between:1,3'],
             'company_name' => ['required', 'string', 'max:255'],
         ], [
             'company_name.required' => 'Company Name is required to create or save a setup draft.',

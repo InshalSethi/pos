@@ -159,7 +159,8 @@ class BankAccountController extends Controller
                 }
 
                 // Auto-create or update Chart of Account to link to 1020 Bank Account
-                $parentAccount = Account::where('company_id', $companyId)
+                $parentAccount = Account::withoutGlobalScopes()
+                    ->where('company_id', $companyId)
                     ->where(function ($q) {
                         $q->where('account_code', '1020')
                           ->orWhere('account_name', 'like', '%Bank Account%');
@@ -168,24 +169,6 @@ class BankAccountController extends Controller
                     ->first();
 
                 if (empty($data['chart_account_id'])) {
-                    if ($parentAccount) {
-                        $maxChildCode = Account::where('company_id', $companyId)
-                            ->where('parent_account_id', $parentAccount->id)
-                            ->whereRaw('account_code REGEXP "^[0-9]+$"')
-                            ->max(DB::raw('CAST(account_code AS UNSIGNED)'));
-
-                        if ($maxChildCode) {
-                            $newCode = (string)($maxChildCode + 1);
-                        } else {
-                            $parentNum = is_numeric($parentAccount->account_code) ? (int)$parentAccount->account_code : 1020;
-                            $newCode = (string)($parentNum + 1);
-                        }
-                    } else {
-                        $maxCode = Account::where('company_id', $companyId)->max('account_code');
-                        $newCode = $maxCode && is_numeric($maxCode) ? (string)((int)$maxCode + 10) : '1050';
-                    }
-
-                    $isCreditCard = ($data['account_type'] === 'credit_card');
                     $accTitleName = $this->generateCoaAccountName(
                         $data['account_name'] ?? '',
                         $data['bank_name'] ?? '',
@@ -193,18 +176,48 @@ class BankAccountController extends Controller
                         $data['account_type'] ?? ''
                     );
 
-                    $chartAccount = Account::create([
-                        'account_code' => $newCode,
-                        'account_name' => $accTitleName,
-                        'account_type' => $isCreditCard ? 'liability' : 'asset',
-                        'account_subtype' => $isCreditCard ? 'current_liability' : 'current_asset',
-                        'description' => ($isCreditCard ? 'Credit Card Account for ' : 'Bank Account for ') . $data['account_name'],
-                        'opening_balance' => $data['opening_balance'] ?? 0,
-                        'current_balance' => $data['opening_balance'] ?? 0,
-                        'is_active' => true,
-                        'is_system_account' => false,
-                        'parent_account_id' => $parentAccount?->id,
-                    ]);
+                    // Check if a placeholder or existing COA account already exists for this bank
+                    $existingCoa = Account::withoutGlobalScopes()
+                        ->where('company_id', $companyId)
+                        ->where(function ($q) use ($accTitleName, $data) {
+                            $q->where('account_name', $accTitleName)
+                              ->orWhere('account_name', $data['account_name']);
+                        })
+                        ->first();
+
+                    if ($existingCoa) {
+                        $chartAccount = $existingCoa;
+                    } else {
+                        // Find the maximum numeric account_code currently existing for the company under 102%
+                        $lastCode = Account::withoutGlobalScopes()
+                            ->where('company_id', $companyId)
+                            ->where('account_code', 'LIKE', '102%')
+                            ->whereRaw('account_code REGEXP "^[0-9]+$"')
+                            ->max('account_code');
+
+                        $nextCode = $lastCode ? ((int) $lastCode + 1) : 1021;
+
+                        // Safety loop to ensure zero 1062 unique constraint error
+                        while (Account::withoutGlobalScopes()->where('company_id', $companyId)->where('account_code', (string) $nextCode)->exists()) {
+                            $nextCode++;
+                        }
+
+                        $isCreditCard = ($data['account_type'] === 'credit_card');
+
+                        $chartAccount = Account::create([
+                            'company_id' => $companyId,
+                            'account_code' => (string) $nextCode,
+                            'account_name' => $accTitleName,
+                            'account_type' => $isCreditCard ? 'liability' : 'asset',
+                            'account_subtype' => $isCreditCard ? 'current_liability' : 'current_asset',
+                            'description' => ($isCreditCard ? 'Credit Card Account for ' : 'Bank Account for ') . $data['account_name'],
+                            'opening_balance' => $data['opening_balance'] ?? 0,
+                            'current_balance' => $data['opening_balance'] ?? 0,
+                            'is_active' => true,
+                            'is_system_account' => false,
+                            'parent_account_id' => $parentAccount?->id,
+                        ]);
+                    }
                     $data['chart_account_id'] = $chartAccount->id;
                 } else {
                     $chartAccount = Account::find($request->chart_account_id);
