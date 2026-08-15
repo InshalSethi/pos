@@ -787,7 +787,8 @@ class ExpenseController extends Controller
                 'process' => 'Processing',
                 'pending' => 'Pending',
                 'rejected' => 'Rejected',
-                'completed' => 'Completed',
+                'completed' => 'Paid',
+                'paid' => 'Paid',
                 'cancelled' => 'Cancelled',
             ];
             $label = $statusLabels[$targetStatus] ?? ucfirst($targetStatus);

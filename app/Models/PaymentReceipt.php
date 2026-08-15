@@ -222,12 +222,14 @@ class PaymentReceipt extends Model
 
     public function markAsDeposited($userId, $journalEntryId = null, $bankTransactionId = null): bool
     {
-        if (!in_array($this->status, ['verified', 'pending'])) {
+        if (!in_array($this->status, ['verified', 'pending', 'paid', 'completed', 'draft', 'process', 'received', 'deposited'])) {
             return false;
         }
 
+        $targetStatus = in_array($this->status, ['paid', 'completed', 'verified', 'deposited']) ? $this->status : 'paid';
+
         $this->update([
-            'status' => 'deposited',
+            'status' => $targetStatus,
             'deposited_by' => $userId,
             'deposited_at' => now(),
             'journal_entry_id' => $journalEntryId,

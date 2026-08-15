@@ -392,7 +392,7 @@ const statusOptions = [
   { value: 'pending', label: 'Pending' },
   { value: 'process', label: 'Process' },
   { value: 'rejected', label: 'Rejected' },
-  { value: 'completed', label: 'Completed' }
+  { value: 'paid', label: 'Paid' }
 ];
 
 // Single payment method reactive state (left field = Payment Method, right field = Select Payment)

@@ -16,11 +16,21 @@
         <div v-else-if="!loading && supplierData">
           <!-- Supplier Summary -->
           <div class="supplier-summary">
-            <div class="row">
-              <div class="col-md-8">
-                <h3>{{ supplierData.name }}</h3>
-                <p class="text-muted">{{ supplierData.company_name || 'No company name' }}</p>
-                <p class="text-muted">Supplier ID: #{{ supplierData.id }}</p>
+            <div class="row align-items-center">
+              <div class="col-md-8 flex items-center space-x-4">
+                <img
+                  v-if="supplierData.profile_image"
+                  :src="getStorageUrl(supplierData.profile_image)"
+                  class="w-16 h-16 rounded-full object-cover ring-2 ring-blue-500/30 shadow-md cursor-pointer"
+                  @click="downloadFile(getStorageUrl(supplierData.profile_image), supplierData.name + '_photo.jpg')"
+                  title="Click to download photo"
+                  alt="Profile Photo"
+                />
+                <div>
+                  <h3 class="mb-0">{{ supplierData.name }}</h3>
+                  <p class="text-muted mb-0">{{ supplierData.company_name || 'No company name' }}</p>
+                  <p class="text-muted mb-0">Supplier ID: #{{ supplierData.id }}</p>
+                </div>
               </div>
               <div class="col-md-4 text-right">
                 <span :class="supplierData.is_active ? 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'badge badge-danger'">
@@ -178,6 +188,30 @@
                   <p>{{ supplierData.notes || 'No notes available.' }}</p>
                 </div>
               </div>
+
+              <!-- Attachments -->
+              <div v-if="activeTab === 'attachments'" class="tab-pane">
+                <div v-if="getAttachmentItems(supplierData).length > 0" class="row">
+                  <div v-for="att in getAttachmentItems(supplierData)" :key="att.url" class="col-md-6 mb-3">
+                    <div class="p-3 border rounded flex items-center justify-between bg-slate-50 dark:bg-zinc-800">
+                      <div class="flex items-center space-x-2 truncate">
+                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <span class="text-xs font-semibold truncate">{{ att.filename }}</span>
+                      </div>
+                      <button
+                        @click="downloadFile(att.url, att.filename)"
+                        class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center space-x-1"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="text-center py-4">
+                  <p class="text-muted">No attachments uploaded for this supplier.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -204,6 +238,7 @@
 import { ref, watch, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
+import { downloadAttachmentFile } from '@/utils/downloadAttachment';
 import api from '@/services/api';
 
 export default {
@@ -235,8 +270,33 @@ export default {
       { id: 'contact', label: 'Contact Info' },
       { id: 'address', label: 'Address' },
       { id: 'orders', label: 'Purchase Orders' },
-      { id: 'notes', label: 'Notes' }
+      { id: 'notes', label: 'Notes' },
+      { id: 'attachments', label: 'Attachments' }
     ];
+
+    const getStorageUrl = (path) => {
+      if (!path) return '';
+      if (path.startsWith('http') || path.startsWith('/storage/')) return path;
+      return '/storage/' + path;
+    };
+
+    const getAttachmentItems = (supplier) => {
+      if (!supplier) return [];
+      if (supplier.attachments_urls && supplier.attachments_urls.length > 0) {
+        return supplier.attachments_urls;
+      }
+      if (!supplier.attachments || !Array.isArray(supplier.attachments)) return [];
+      return supplier.attachments.map((path, idx) => ({
+        index: idx,
+        url: path.startsWith('http') || path.startsWith('/storage/') ? path : '/storage/' + path,
+        path: path,
+        filename: path.split('/').pop() || `Attachment ${idx + 1}`
+      }));
+    };
+
+    const downloadFile = (url, filename) => {
+      downloadAttachmentFile(url, filename || 'attachment');
+    };
 
     const loadSupplierDetails = async () => {
       if (!props.supplier) {
@@ -319,7 +379,10 @@ export default {
       formatDate,
       calculateTotalValue,
       getStatusBadgeClass,
-      closeModal
+      closeModal,
+      getStorageUrl,
+      getAttachmentItems,
+      downloadFile
     };
   }
 };

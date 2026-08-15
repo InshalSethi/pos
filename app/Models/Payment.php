@@ -219,12 +219,14 @@ class Payment extends Model
 
     public function markAsPaid($userId, $journalEntryId = null, $bankTransactionId = null): bool
     {
-        if (!in_array($this->status, ['approved', 'pending', 'paid', 'draft'])) {
+        if (!in_array($this->status, ['approved', 'pending', 'paid', 'draft', 'process', 'completed'])) {
             return false;
         }
 
+        $targetStatus = in_array($this->status, ['completed', 'paid']) ? $this->status : 'completed';
+
         $this->update([
-            'status' => 'paid',
+            'status' => $targetStatus,
             'paid_by' => $userId,
             'paid_at' => now(),
             'journal_entry_id' => $journalEntryId,

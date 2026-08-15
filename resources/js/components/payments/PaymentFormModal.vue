@@ -327,18 +327,6 @@
           </button>
 
           <button
-            type="button"
-            @click="saveAsDraft"
-            :disabled="loading"
-            class="px-4 py-2.5 border border-slate-300 dark:border-zinc-700 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-bold rounded-xl text-xs shadow-xs transition-all disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-            </svg>
-            <span>Save as Draft</span>
-          </button>
-
-          <button
             type="submit"
             :disabled="loading"
             class="px-5 py-2.5 bg-slate-900 hover:bg-black active:scale-[0.98] text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white font-bold rounded-xl text-xs shadow-sm transition-all disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
@@ -537,10 +525,20 @@ const payeeTypeOptions = [
 ];
 
 const formattedPayeeOptions = computed(() => {
-  return getPayeeOptions().map(p => ({
-    value: p.id,
-    label: p.name
-  }));
+  return getPayeeOptions().map(p => {
+    let label = p.name;
+    if (form.payee_type === 'supplier' && p.company_name && p.name) {
+      const name = (p.name || '').trim();
+      const company = (p.company_name || '').trim();
+      if (name && company && !name.toLowerCase().includes(company.toLowerCase())) {
+        label = `${name} (${company})`;
+      }
+    }
+    return {
+      value: p.id,
+      label: label
+    };
+  });
 });
 
 const statusOptions = computed(() => {
@@ -551,7 +549,7 @@ const statusOptions = computed(() => {
         { value: 'pending', label: 'Pending' },
         { value: 'process', label: 'Process' },
         { value: 'rejected', label: 'Rejected' },
-        { value: 'completed', label: 'Completed' },
+        { value: 'paid', label: 'Paid' },
       ];
 });
 
@@ -609,7 +607,7 @@ const loadPaymentOptions = async () => {
         { value: 'pending', label: 'Pending' },
         { value: 'process', label: 'Process' },
         { value: 'rejected', label: 'Rejected' },
-        { value: 'completed', label: 'Completed' },
+        { value: 'completed', label: 'Paid' },
       ],
     };
   }

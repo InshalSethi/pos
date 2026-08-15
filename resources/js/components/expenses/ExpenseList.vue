@@ -202,7 +202,7 @@
               <button
                 @click="openTransitionModal(item, 'completed')"
                 class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-all cursor-pointer"
-                title="Mark as Completed"
+                title="Mark as Paid"
               >
                 <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                   <circle cx="12" cy="12" r="9" />
@@ -396,7 +396,7 @@ const statusOptions = [
   { value: 'pending', label: 'Pending' },
   { value: 'process', label: 'Process' },
   { value: 'rejected', label: 'Rejected' },
-  { value: 'completed', label: 'Completed' }
+  { value: 'completed', label: 'Paid' }
 ];
 
 const categoryOptions = computed(() => {
@@ -661,9 +661,9 @@ const openTransitionModal = (item, targetStatus) => {
     confirmModalData.confirmButtonText = 'Reject Expense';
     confirmModalData.type = 'rejected';
   } else if (targetStatus === 'completed') {
-    confirmModalData.title = 'Mark as Completed';
-    confirmModalData.subtext = 'Marking expense as Completed. Ledger entries will be posted and account balance deducted.';
-    confirmModalData.confirmButtonText = 'Mark as Completed';
+    confirmModalData.title = 'Mark as Paid';
+    confirmModalData.subtext = 'Marking expense as Paid. Ledger entries will be posted and account balance deducted.';
+    confirmModalData.confirmButtonText = 'Mark as Paid';
     confirmModalData.type = 'completed';
   } else if (targetStatus === 'cancelled') {
     confirmModalData.title = 'Cancel Expense Voucher';

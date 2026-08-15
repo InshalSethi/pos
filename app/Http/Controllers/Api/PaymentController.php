@@ -25,7 +25,7 @@ class PaymentController extends Controller
     public function __construct(PaymentService $paymentService)
     {
         $this->paymentService = $paymentService;
-        
+
         // Apply permission middleware
         $this->middleware('permission:payments.view')->only(['index', 'show', 'statistics', 'downloadAttachment']);
         $this->middleware('permission:payments.create')->only(['store']);
@@ -43,7 +43,9 @@ class PaymentController extends Controller
             'expenseCategory',
             'createdBy:id,name',
             'approvedBy:id,name',
-            'paidBy:id,name'
+            'paidBy:id,name',
+            'journalEntry.journalEntryLines.account',
+            'bankTransaction'
         ]);
 
         // Filter by payment type
@@ -84,9 +86,9 @@ class PaymentController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('payee_name', 'like', "%{$search}%")
-                  ->orWhere('payment_number', 'like', "%{$search}%")
-                  ->orWhere('reference_number', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('payment_number', 'like', "%{$search}%")
+                    ->orWhere('reference_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -107,14 +109,17 @@ class PaymentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'payment_type' => ['required', Rule::in([
-                'supplier_payment',
-                'expense_payment',
-                'salary_payment',
-                'sale_return_payment',
-                'purchase_invoice_payment',
-                'other_payment'
-            ])],
+            'payment_type' => [
+                'required',
+                Rule::in([
+                    'supplier_payment',
+                    'expense_payment',
+                    'salary_payment',
+                    'sale_return_payment',
+                    'purchase_invoice_payment',
+                    'other_payment'
+                ])
+            ],
             'reference_type' => 'nullable|string',
             'reference_id' => 'nullable|integer',
             'amount' => 'required|numeric|min:0.01',
@@ -128,11 +133,11 @@ class PaymentController extends Controller
             'payee_id' => 'nullable|integer',
             'payee_name' => 'required|string|max:255',
             'expense_category_id' => [
-                Rule::requiredIf(fn () => $request->payment_type === 'expense_payment'),
+                Rule::requiredIf(fn() => $request->payment_type === 'expense_payment'),
                 'nullable',
                 'exists:expense_categories,id'
             ],
-            'status' => 'required|string|in:draft,pending,process,rejected,completed',
+            'status' => 'required|string|in:draft,pending,process,rejected,completed,paid',
             'additional_data' => 'nullable|array',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:5120',
             'attachments' => 'nullable|array|max:5',
@@ -184,10 +189,11 @@ class PaymentController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            $statusCode = str_contains($e->getMessage(), 'Insufficient balance') ? 422 : 500;
             return response()->json([
-                'message' => 'Failed to create payment',
+                'message' => $e->getMessage(),
                 'error' => $e->getMessage()
-            ], 500);
+            ], $statusCode);
         }
     }
 
@@ -223,14 +229,17 @@ class PaymentController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_type' => ['sometimes', Rule::in([
-                'supplier_payment',
-                'expense_payment',
-                'salary_payment',
-                'sale_return_payment',
-                'purchase_invoice_payment',
-                'other_payment'
-            ])],
+            'payment_type' => [
+                'sometimes',
+                Rule::in([
+                    'supplier_payment',
+                    'expense_payment',
+                    'salary_payment',
+                    'sale_return_payment',
+                    'purchase_invoice_payment',
+                    'other_payment'
+                ])
+            ],
             'reference_type' => 'nullable|string',
             'reference_id' => 'nullable|integer',
             'amount' => 'sometimes|numeric|min:0.01',
@@ -244,7 +253,7 @@ class PaymentController extends Controller
             'payee_id' => 'nullable|integer',
             'payee_name' => 'sometimes|string|max:255',
             'expense_category_id' => [
-                Rule::requiredIf(fn () => $request->payment_type === 'expense_payment'),
+                Rule::requiredIf(fn() => $request->payment_type === 'expense_payment'),
                 'nullable',
                 'exists:expense_categories,id'
             ],
@@ -265,7 +274,7 @@ class PaymentController extends Controller
         $currentAttachments = $payment->attachments ?? ($payment->attachment ? [$payment->attachment] : []);
         $keptAttachments = [];
         if ($request->has('existing_attachments')) {
-            $existing = (array)$request->input('existing_attachments');
+            $existing = (array) $request->input('existing_attachments');
             $keptAttachments = array_values(array_filter($currentAttachments, function ($path) use ($existing) {
                 return in_array($path, $existing);
             }));
@@ -585,22 +594,22 @@ class PaymentController extends Controller
         $stats = [
             'total_payments' => Payment::whereBetween('payment_date', [$startDate, $endDate])->count(),
             'total_amount' => Payment::whereBetween('payment_date', [$startDate, $endDate])
-                                   ->where('status', 'paid')
-                                   ->sum('amount'),
+                ->where('status', 'paid')
+                ->sum('amount'),
             'pending_payments' => Payment::whereBetween('payment_date', [$startDate, $endDate])
-                                        ->where('status', 'pending')
-                                        ->count(),
+                ->where('status', 'pending')
+                ->count(),
             'pending_amount' => Payment::whereBetween('payment_date', [$startDate, $endDate])
-                                      ->where('status', 'pending')
-                                      ->sum('amount'),
+                ->where('status', 'pending')
+                ->sum('amount'),
             'by_type' => Payment::whereBetween('payment_date', [$startDate, $endDate])
-                               ->selectRaw('payment_type, COUNT(*) as count, SUM(amount) as total_amount')
-                               ->groupBy('payment_type')
-                               ->get(),
+                ->selectRaw('payment_type, COUNT(*) as count, SUM(amount) as total_amount')
+                ->groupBy('payment_type')
+                ->get(),
             'by_status' => Payment::whereBetween('payment_date', [$startDate, $endDate])
-                                 ->selectRaw('status, COUNT(*) as count, SUM(amount) as total_amount')
-                                 ->groupBy('status')
-                                 ->get(),
+                ->selectRaw('status, COUNT(*) as count, SUM(amount) as total_amount')
+                ->groupBy('status')
+                ->get(),
         ];
 
         return response()->json($stats);
@@ -612,34 +621,40 @@ class PaymentController extends Controller
     public function getPaymentOptions(): JsonResponse
     {
         $bankAccounts = BankAccount::select('id', 'account_name', 'bank_name', 'account_number', 'account_type', 'is_default', 'is_active', 'current_balance', 'opening_balance')
-                                  ->orderByDesc('is_default')
-                                  ->orderBy('account_name')
-                                  ->get();
+            ->orderByDesc('is_default')
+            ->orderBy('account_name')
+            ->get();
 
         $suppliers = Supplier::where('is_active', true)
-                            ->select('id', 'name', 'company_name')
-                            ->get()
-                            ->map(function ($supplier) {
-                                $supplier->name = $supplier->company_name ?: $supplier->name;
-                                return $supplier;
-                            });
+            ->select('id', 'name', 'company_name')
+            ->get()
+            ->map(function ($supplier) {
+                $name = trim($supplier->name ?? '');
+                $company = trim($supplier->company_name ?? '');
+                if ($name && $company && strtolower($name) !== strtolower($company)) {
+                    $supplier->name = "{$name} ({$company})";
+                } else {
+                    $supplier->name = $company ?: $name;
+                }
+                return $supplier;
+            });
 
         $employees = Employee::active()
-                            ->select('id', 'first_name', 'last_name')
-                            ->get()
-                            ->map(function ($employee) {
-                                $employee->name = $employee->first_name . ' ' . $employee->last_name;
-                                return $employee;
-                            });
+            ->select('id', 'first_name', 'last_name')
+            ->get()
+            ->map(function ($employee) {
+                $employee->name = $employee->first_name . ' ' . $employee->last_name;
+                return $employee;
+            });
 
         $customers = Customer::where('is_active', true)
-                            ->select('id', 'name')
-                            ->get();
+            ->select('id', 'name')
+            ->get();
 
         $expenseCategories = ExpenseCategory::where('is_active', true)
-                            ->select('id', 'name', 'code')
-                            ->orderBy('name')
-                            ->get();
+            ->select('id', 'name', 'code')
+            ->orderBy('name')
+            ->get();
 
         return response()->json([
             'bank_accounts' => $bankAccounts,
@@ -666,7 +681,7 @@ class PaymentController extends Controller
                 ['value' => 'pending', 'label' => 'Pending'],
                 ['value' => 'process', 'label' => 'Process'],
                 ['value' => 'rejected', 'label' => 'Rejected'],
-                ['value' => 'completed', 'label' => 'Completed'],
+                ['value' => 'paid', 'label' => 'Paid'],
             ],
         ]);
     }

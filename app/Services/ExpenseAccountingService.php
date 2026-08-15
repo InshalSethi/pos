@@ -103,8 +103,7 @@ class ExpenseAccountingService
                 throw new \Exception("Insufficient balance in '{$bankAccount->account_name}'. Available: $" . number_format($currentBal, 2) . ", required: $" . number_format($amount, 2));
             }
 
-            $bankAccount->current_balance = round($currentBal - $amount, 2);
-            $bankAccount->save();
+            $newBalance = round($currentBal - $amount, 2);
 
             // 2. Create Journal Entry
             $journalEntry = JournalEntry::create([
@@ -145,7 +144,10 @@ class ExpenseAccountingService
             // 4. Post Journal Entry (which auto-updates COA current_balance)
             $this->postJournalEntry($journalEntry);
 
-            // 5. Create Bank Transaction entry for Banking Transactions table
+            // 5. Set BankAccount current balance
+            $bankAccount->update(['current_balance' => $newBalance]);
+
+            // 6. Create Bank Transaction entry for Banking Transactions table
             BankTransaction::create([
                 'bank_account_id' => $bankAccount->id,
                 'journal_entry_id' => $journalEntry->id,
@@ -154,7 +156,7 @@ class ExpenseAccountingService
                 'amount' => $amount,
                 'description' => "Expense submitted: {$expense->title} ({$expense->expense_number})",
                 'reference_number' => $expense->reference_number ?: $expense->expense_number,
-                'running_balance' => $bankAccount->current_balance,
+                'running_balance' => $newBalance,
                 'status' => 'cleared',
                 'partner_type' => 'App\Models\Expense',
                 'partner_id' => $expense->id,

@@ -267,7 +267,7 @@
               <button
                 @click="openTransitionModal(item, 'completed')"
                 class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-all cursor-pointer"
-                title="Mark as Completed"
+                title="Mark as Paid"
               >
                 <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                   <circle cx="12" cy="12" r="9" />
@@ -516,7 +516,7 @@
                     <option value="pending">Pending</option>
                     <option value="process">Process</option>
                     <option value="rejected">Rejected</option>
-                    <option value="completed">Completed</option>
+                    <option value="completed">Paid</option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -793,9 +793,9 @@ const openTransitionModal = (item, targetStatus) => {
     confirmModalData.confirmButtonText = 'Reject Receipt';
     confirmModalData.type = 'rejected';
   } else if (targetStatus === 'completed') {
-    confirmModalData.title = 'Mark as Completed';
-    confirmModalData.subtext = 'Marking payment receipt as Completed. This transaction will be finalized and locked.';
-    confirmModalData.confirmButtonText = 'Mark as Completed';
+    confirmModalData.title = 'Mark as Paid';
+    confirmModalData.subtext = 'Marking payment receipt as Paid. This transaction will be finalized and locked.';
+    confirmModalData.confirmButtonText = 'Mark as Paid';
     confirmModalData.type = 'completed';
   } else if (targetStatus === 'cancelled') {
     confirmModalData.title = 'Cancel Payment Receipt';

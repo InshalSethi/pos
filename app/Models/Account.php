@@ -23,12 +23,7 @@ class Account extends Model
         static::saved(function ($account) {
             if ($account->wasChanged(['opening_balance', 'current_balance'])) {
                 \Illuminate\Support\Facades\DB::table('bank_accounts')
-                    ->where('company_id', $account->company_id)
-                    ->where(function ($query) use ($account) {
-                        $query->where('chart_account_id', $account->id)
-                              ->orWhere('account_number', $account->account_code)
-                              ->orWhere('bank_name', 'LIKE', "%{$account->account_name}%");
-                    })
+                    ->where('chart_account_id', $account->id)
                     ->update([
                         'opening_balance' => round((float)$account->opening_balance, 2),
                         'current_balance' => round((float)$account->current_balance, 2),

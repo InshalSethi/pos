@@ -41,8 +41,8 @@ class PaymentService
             // Create the payment record
             $payment = Payment::create($data);
 
-            // If payment is created as paid, mark as paid. If approved, create accounting entries
-            if ($payment->status === 'paid') {
+            // If payment is created as paid or completed, mark as paid. If approved, create accounting entries
+            if (in_array($payment->status, ['paid', 'completed'])) {
                 $this->markPaymentAsPaid($payment, $payment->created_by);
             } elseif ($payment->status === 'approved') {
                 $this->createAccountingEntries($payment);
@@ -61,9 +61,9 @@ class PaymentService
             $oldStatus = $payment->status;
             $payment->update($data);
 
-            // If status changed to paid, process full payment; if approved, create accounting entries
+            // If status changed to paid/completed, process full payment; if approved, create accounting entries
             if ($oldStatus !== $payment->status) {
-                if ($payment->status === 'paid') {
+                if (in_array($payment->status, ['paid', 'completed'])) {
                     $this->markPaymentAsPaid($payment, auth()->id() ?? $payment->created_by);
                 } elseif ($payment->status === 'approved') {
                     $this->createAccountingEntries($payment);
@@ -97,11 +97,11 @@ class PaymentService
     public function markPaymentAsPaid(Payment $payment, int $userId): Payment
     {
         return DB::transaction(function () use ($payment, $userId) {
-            // Create bank transaction
-            $bankTransaction = $this->createBankTransaction($payment);
-            
             // Create or update journal entry
             $journalEntry = $this->createOrUpdateJournalEntry($payment);
+
+            // Create bank transaction and sync bank account balance
+            $bankTransaction = $this->createBankTransaction($payment);
             
             // Mark payment as paid
             $payment->markAsPaid($userId, $journalEntry->id, $bankTransaction->id);
@@ -398,15 +398,18 @@ class PaymentService
     protected function createBankTransaction(Payment $payment): BankTransaction
     {
         $bankAccount = $payment->bankAccount;
+        if (!$bankAccount) {
+            throw new \Exception('No valid bank account associated with this payment.');
+        }
 
-        // Get last transaction for running balance
-        $lastTransaction = BankTransaction::where('bank_account_id', $bankAccount->id)
-            ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->first();
+        $currentBal = (float)$bankAccount->current_balance;
+        $amount = (float)$payment->amount;
 
-        $currentBalance = $lastTransaction ? $lastTransaction->running_balance : $bankAccount->opening_balance;
-        $newBalance = $currentBalance - $payment->amount; // Debit reduces balance
+        if ($currentBal < $amount) {
+            throw new \Exception("Insufficient balance in account '{$bankAccount->account_name}'. Available balance: $" . number_format($currentBal, 2) . ", required: $" . number_format($amount, 2));
+        }
+
+        $newBalance = round($currentBal - $amount, 2);
 
         $transaction = BankTransaction::create([
             'bank_account_id' => $bankAccount->id,
@@ -414,7 +417,7 @@ class PaymentService
             'reference_number' => $payment->reference_number ?: $payment->payment_number,
             'description' => $this->getBankTransactionDescription($payment),
             'transaction_type' => 'debit',
-            'amount' => $payment->amount,
+            'amount' => $amount,
             'running_balance' => $newBalance,
             'status' => 'cleared',
             'partner_type' => $payment->payee_type ? $this->getPartnerTypeClass($payment->payee_type) : null,

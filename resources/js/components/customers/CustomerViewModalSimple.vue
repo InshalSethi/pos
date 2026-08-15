@@ -17,18 +17,30 @@
         <div v-if="customer" class="flex flex-col flex-1 min-h-0">
           <!-- Header Area -->
           <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative pr-12">
-            <div class="flex items-center space-x-2">
-              <h3 class="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">{{ customer.name }}</h3>
-              <span
-                :class="customer.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
-                class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
-              >
-                {{ customer.is_active ? 'Active' : 'Inactive' }}
-              </span>
+            <div class="flex items-center space-x-4">
+              <img
+                v-if="customer.profile_image"
+                :src="getStorageUrl(customer.profile_image)"
+                class="w-14 h-14 rounded-full object-cover ring-2 ring-blue-500/30 shadow-md cursor-pointer shrink-0"
+                @click="downloadFile(getStorageUrl(customer.profile_image), customer.name + '_photo.jpg')"
+                title="Click to download photo"
+                alt="Profile Photo"
+              />
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">{{ customer.name }}</h3>
+                  <span
+                    :class="customer.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
+                  >
+                    {{ customer.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+                <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1.5">
+                  Customer ID: #{{ customer.id }} &middot; Member since {{ formatDate(customer.created_at) }}
+                </p>
+              </div>
             </div>
-            <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1.5">
-              Customer ID: #{{ customer.id }} &middot; Member since {{ formatDate(customer.created_at) }}
-            </p>
           </div>
 
           <!-- Content Body -->
@@ -114,13 +126,29 @@
               </div>
             </div>
 
-            <!-- Notes (Optional) -->
-            <div v-if="customer.notes">
+            <!-- Attachments -->
+            <div v-if="getAttachmentItems(customer).length > 0">
               <div class="border-t border-slate-100 dark:border-zinc-800/80 my-4"></div>
-              <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Notes</span>
-              <p class="text-xs text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800/40 leading-relaxed italic">
-                {{ customer.notes }}
-              </p>
+              <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Attachments ({{ getAttachmentItems(customer).length }})</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div
+                  v-for="att in getAttachmentItems(customer)"
+                  :key="att.url"
+                  class="p-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center justify-between"
+                >
+                  <div class="flex items-center space-x-2 truncate">
+                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300 truncate">{{ att.filename }}</span>
+                  </div>
+                  <button
+                    @click="downloadFile(att.url, att.filename)"
+                    class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-medium cursor-pointer transition-colors shrink-0 flex items-center space-x-1"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Download</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -140,6 +168,7 @@
 import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
+import { downloadAttachmentFile } from '@/utils/downloadAttachment';
 
 export default {
   name: 'CustomerViewModalSimple',
@@ -176,10 +205,37 @@ export default {
       });
     };
 
+    const getStorageUrl = (path) => {
+      if (!path) return '';
+      if (path.startsWith('http') || path.startsWith('/storage/')) return path;
+      return '/storage/' + path;
+    };
+
+    const getAttachmentItems = (customer) => {
+      if (!customer) return [];
+      if (customer.attachments_urls && customer.attachments_urls.length > 0) {
+        return customer.attachments_urls;
+      }
+      if (!customer.attachments || !Array.isArray(customer.attachments)) return [];
+      return customer.attachments.map((path, idx) => ({
+        index: idx,
+        url: path.startsWith('http') || path.startsWith('/storage/') ? path : '/storage/' + path,
+        path: path,
+        filename: path.split('/').pop() || `Attachment ${idx + 1}`
+      }));
+    };
+
+    const downloadFile = (url, filename) => {
+      downloadAttachmentFile(url, filename || 'attachment');
+    };
+
     return {
       currencySymbol,
       formatNumber,
-      formatDate
+      formatDate,
+      getStorageUrl,
+      getAttachmentItems,
+      downloadFile
     };
   }
 };

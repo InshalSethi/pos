@@ -38,9 +38,9 @@ class PaymentReceiptService
             // Create the payment receipt record
             $receipt = PaymentReceipt::create($data);
 
-            // If receipt is created as verified or deposited, create accounting entries
-            if (in_array($receipt->status, ['verified', 'deposited'])) {
-                $this->createAccountingEntries($receipt);
+            // If receipt is created as paid, completed, verified, deposited, or received, mark as deposited
+            if (in_array($receipt->status, ['paid', 'completed', 'verified', 'deposited', 'received'])) {
+                $this->markReceiptAsDeposited($receipt, $receipt->created_by);
             }
 
             return $receipt;
@@ -56,9 +56,9 @@ class PaymentReceiptService
             $oldStatus = $receipt->status;
             $receipt->update($data);
 
-            // If status changed to verified or deposited, create accounting entries
-            if ($oldStatus !== $receipt->status && in_array($receipt->status, ['verified', 'deposited'])) {
-                $this->createAccountingEntries($receipt);
+            // If status changed to paid, completed, verified, deposited, or received, mark as deposited
+            if ($oldStatus !== $receipt->status && in_array($receipt->status, ['paid', 'completed', 'verified', 'deposited', 'received'])) {
+                $this->markReceiptAsDeposited($receipt, auth()->id() ?? $receipt->created_by);
             }
 
             // If receipt was cancelled, reverse accounting entries
@@ -88,11 +88,11 @@ class PaymentReceiptService
     public function markReceiptAsDeposited(PaymentReceipt $receipt, int $userId): PaymentReceipt
     {
         return DB::transaction(function () use ($receipt, $userId) {
-            // Create bank transaction
-            $bankTransaction = $this->createBankTransaction($receipt);
-            
             // Create or update journal entry
             $journalEntry = $this->createOrUpdateJournalEntry($receipt);
+
+            // Create bank transaction and sync bank account balance
+            $bankTransaction = $this->createBankTransaction($receipt);
             
             // Mark receipt as deposited
             $receipt->markAsDeposited($userId, $journalEntry->id, $bankTransaction->id);
@@ -445,28 +445,34 @@ class PaymentReceiptService
     protected function createBankTransaction(PaymentReceipt $receipt): BankTransaction
     {
         $bankAccount = $receipt->bankAccount;
+        if (!$bankAccount) {
+            throw new \Exception('No valid bank account associated with this payment receipt.');
+        }
 
-        // Get last transaction for running balance
-        $lastTransaction = BankTransaction::where('bank_account_id', $bankAccount->id)
-            ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->first();
+        $currentBal = (float)$bankAccount->current_balance;
+        $amount = (float)$receipt->amount;
+        $newBalance = round($currentBal + $amount, 2);
 
-        $currentBalance = $lastTransaction ? $lastTransaction->running_balance : $bankAccount->opening_balance;
-        $newBalance = $currentBalance + $receipt->amount; // Credit increases balance
-
-        return BankTransaction::create([
+        $transaction = BankTransaction::create([
             'bank_account_id' => $bankAccount->id,
             'transaction_date' => $receipt->receipt_date,
             'reference_number' => $receipt->transaction_reference ?: $receipt->receipt_number,
             'description' => $this->getBankTransactionDescription($receipt),
             'transaction_type' => 'credit',
-            'amount' => $receipt->amount,
+            'amount' => $amount,
             'running_balance' => $newBalance,
             'status' => 'cleared',
             'partner_type' => $receipt->payer_type ? $this->getPartnerTypeClass($receipt->payer_type) : null,
             'partner_id' => $receipt->payer_id,
         ]);
+
+        // Sync bank account current_balance and COA balance
+        $bankAccount->update(['current_balance' => $newBalance]);
+        if ($bankAccount->chartAccount) {
+            $bankAccount->chartAccount->updateCurrentBalance();
+        }
+
+        return $transaction;
     }
 
     /**
@@ -549,8 +555,9 @@ class PaymentReceiptService
     /**
      * Get partner type class name
      */
-    protected function getPartnerTypeClass(string $payerType): string
+    protected function getPartnerTypeClass(?string $payerType): ?string
     {
+        if (!$payerType) return null;
         $classes = [
             'customer' => 'App\\Models\\Customer',
             'supplier' => 'App\\Models\\Supplier',
@@ -602,8 +609,8 @@ class PaymentReceiptService
             ['account_code' => '4100'],
             [
                 'account_name' => 'Interest Income',
-                'account_type' => 'income',
-                'account_subtype' => 'other_income',
+                'account_type' => 'revenue',
+                'account_subtype' => 'other_revenue',
                 'description' => 'Interest earned on bank deposits and investments',
                 'is_active' => true,
                 'is_system_account' => true,
@@ -619,8 +626,8 @@ class PaymentReceiptService
             ['account_code' => '4200'],
             [
                 'account_name' => 'Rental Income',
-                'account_type' => 'income',
-                'account_subtype' => 'other_income',
+                'account_type' => 'revenue',
+                'account_subtype' => 'other_revenue',
                 'description' => 'Income from property rentals',
                 'is_active' => true,
                 'is_system_account' => true,
@@ -636,8 +643,8 @@ class PaymentReceiptService
             ['account_code' => '4300'],
             [
                 'account_name' => 'Commission Income',
-                'account_type' => 'income',
-                'account_subtype' => 'other_income',
+                'account_type' => 'revenue',
+                'account_subtype' => 'other_revenue',
                 'description' => 'Commission income from sales and services',
                 'is_active' => true,
                 'is_system_account' => true,
@@ -653,8 +660,8 @@ class PaymentReceiptService
             ['account_code' => '4400'],
             [
                 'account_name' => 'Gain on Asset Sale',
-                'account_type' => 'income',
-                'account_subtype' => 'other_income',
+                'account_type' => 'revenue',
+                'account_subtype' => 'other_revenue',
                 'description' => 'Gains from sale of fixed assets',
                 'is_active' => true,
                 'is_system_account' => true,
@@ -704,8 +711,8 @@ class PaymentReceiptService
             ['account_code' => '4999'],
             [
                 'account_name' => 'Miscellaneous Income',
-                'account_type' => 'income',
-                'account_subtype' => 'other_income',
+                'account_type' => 'revenue',
+                'account_subtype' => 'other_revenue',
                 'description' => 'Other miscellaneous income',
                 'is_active' => true,
                 'is_system_account' => true,

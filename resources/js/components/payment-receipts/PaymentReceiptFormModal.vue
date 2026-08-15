@@ -562,7 +562,7 @@ const statusOptions = computed(() => {
         { value: 'pending', label: 'Pending' },
         { value: 'process', label: 'Process' },
         { value: 'rejected', label: 'Rejected' },
-        { value: 'completed', label: 'Completed' },
+        { value: 'paid', label: 'Paid' },
       ];
 });
 
@@ -616,7 +616,7 @@ const loadReceiptOptions = async () => {
         { value: 'pending', label: 'Pending' },
         { value: 'process', label: 'Process' },
         { value: 'rejected', label: 'Rejected' },
-        { value: 'completed', label: 'Completed' },
+        { value: 'completed', label: 'Paid' },
       ],
     };
   }
