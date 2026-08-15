@@ -702,6 +702,15 @@ class PaymentService
             ->orderBy('id', 'asc')
             ->get();
 
+        // If payment is explicitly linked to a Purchase Order, prioritize it
+        if (in_array($payment->reference_type, [\App\Models\PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder']) && $payment->reference_id) {
+            $targetedPoIndex = $openOrders->search(fn($po) => $po->id == $payment->reference_id);
+            if ($targetedPoIndex !== false) {
+                $targetedPo = $openOrders->pull($targetedPoIndex);
+                $openOrders->prepend($targetedPo);
+            }
+        }
+
         $totalDue = (float) $openOrders->sum('due_amount');
         $allocatedOrders = [];
         $appliedDue = 0;

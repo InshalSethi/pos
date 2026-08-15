@@ -334,23 +334,21 @@ class PurchaseOrderController extends Controller
                 $poNumber = 'BIll-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
             }
 
-            $amountPaid = $request->get('amount_paid', 0);
+            $requestedPaid = (float) $request->get('amount_paid', 0);
             $grandTotal = $totalAmount;
-            $remainingDueBeforeAdvance = max(0, $grandTotal - $amountPaid);
 
             // --- ADVANCE BALANCE APPLICATION ---
             $advanceApplied = 0;
             $supplier = Supplier::findOrFail($request->supplier_id);
-            if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0 && $remainingDueBeforeAdvance > 0) {
+            if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0 && $grandTotal > 0) {
                 $requestedAdvance = (float) ($request->advance_applied ?? $supplier->advance_balance);
-                $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $remainingDueBeforeAdvance);
+                $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $grandTotal);
             }
 
-            $effectivePaid = $amountPaid + $advanceApplied;
-            $dueAmount = max(0, $grandTotal - $effectivePaid);
-
-            // Check for overpayment → store as advance
-            $overpayment = max(0, $effectivePaid - $grandTotal);
+            // Initially, only advance is considered paid on the PO record.
+            // The actual payments will be processed and added by PaymentService.
+            $initialAmountPaid = $advanceApplied;
+            $initialDueAmount = max(0, $grandTotal - $initialAmountPaid);
 
             // Create purchase order with status received
             $purchaseOrder = PurchaseOrder::create([
@@ -370,8 +368,8 @@ class PurchaseOrderController extends Controller
                 'shipping_cost' => $shippingCost,
                 'total_amount' => $totalAmount,
                 'grand_total' => $grandTotal,
-                'amount_paid' => $effectivePaid - $overpayment,
-                'due_amount' => $dueAmount,
+                'amount_paid' => $initialAmountPaid,
+                'due_amount' => $initialDueAmount,
                 'notes' => $request->notes,
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
@@ -470,11 +468,6 @@ class PurchaseOrderController extends Controller
             if ($advanceApplied > 0 && $supplier) {
                 $supplier->debitAdvance($advanceApplied);
                 $accountingService->createVendorAdvanceApplicationEntry($purchaseOrder, $advanceApplied);
-            }
-
-            // --- CAPTURE OVERPAYMENT into advance balance ---
-            if ($overpayment > 0 && $supplier) {
-                $supplier->creditAdvance($overpayment);
             }
 
             DB::commit();
@@ -632,9 +625,9 @@ class PurchaseOrderController extends Controller
 
             $totalAmount = $subtotal + $taxAmount + $shippingCost;
 
-            $reqPaid = (float) $request->get('amount_paid', 0);
-            $amountPaid = max($alreadyPaid, $reqPaid);
             $grandTotal = $totalAmount;
+            // Leave amount_paid as alreadyPaid, the PaymentService will increment it when it creates new payments
+            $amountPaid = $alreadyPaid; 
             $dueAmount = max(0, $grandTotal - $amountPaid);
 
             $supplier = Supplier::findOrFail($request->supplier_id);
