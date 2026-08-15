@@ -1,241 +1,186 @@
 <template>
-  <div v-if="show" class="modal-overlay" @click="closeModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h4>Supplier Details</h4>
-        <button @click="closeModal" class="btn-close">&times;</button>
-      </div>
+  <Teleport to="body">
+    <div
+      v-if="show"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200"
+      style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
+      @click.self="$emit('close')"
+    >
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-hidden z-10">
+        
+        <!-- Sleek Close Icon Button -->
+        <button
+          type="button"
+          @click="$emit('close')"
+          class="absolute top-5 right-5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all cursor-pointer z-50"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
 
-      <div class="modal-body">
-        <div v-if="loading" class="text-center py-4">
-          <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+        <div v-if="supplierData" class="flex flex-col flex-1 min-h-0">
+          <!-- Header Area -->
+          <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative pr-12">
+            <div class="flex items-center space-x-4">
+              <img
+                v-if="supplierData.profile_image"
+                :src="getStorageUrl(supplierData.profile_image)"
+                class="w-14 h-14 rounded-full object-cover ring-2 ring-blue-500/30 shadow-md cursor-pointer shrink-0"
+                @click="downloadFile(getStorageUrl(supplierData.profile_image), supplierData.name + '_photo.jpg')"
+                title="Click to download photo"
+                alt="Profile Photo"
+              />
+              <div v-else class="w-14 h-14 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 font-bold text-lg ring-2 ring-slate-200 dark:ring-zinc-700 shrink-0">
+                {{ supplierData.name ? supplierData.name.charAt(0).toUpperCase() : 'S' }}
+              </div>
+
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="text-lg font-extrabold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">{{ supplierData.name }}</h3>
+                  <span
+                    :class="supplierData.is_active ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold"
+                  >
+                    {{ supplierData.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+                <p v-if="supplierData.company_name" class="text-xs font-semibold text-slate-500 dark:text-zinc-400 mt-1">
+                  {{ supplierData.company_name }}
+                </p>
+                <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1">
+                  Supplier ID: #{{ supplierData.id }} &middot; Member since {{ formatDate(supplierData.created_at) }}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div v-else-if="!loading && supplierData">
-          <!-- Supplier Summary -->
-          <div class="supplier-summary">
-            <div class="row align-items-center">
-              <div class="col-md-8 flex items-center space-x-4">
-                <img
-                  v-if="supplierData.profile_image"
-                  :src="getStorageUrl(supplierData.profile_image)"
-                  class="w-16 h-16 rounded-full object-cover ring-2 ring-blue-500/30 shadow-md cursor-pointer"
-                  @click="downloadFile(getStorageUrl(supplierData.profile_image), supplierData.name + '_photo.jpg')"
-                  title="Click to download photo"
-                  alt="Profile Photo"
-                />
+          <!-- Content Body -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-5 pr-4 custom-scrollbar">
+            <!-- Company & Contact Details -->
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Company & Contact Info</h4>
+              <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 class="mb-0">{{ supplierData.name }}</h3>
-                  <p class="text-muted mb-0">{{ supplierData.company_name || 'No company name' }}</p>
-                  <p class="text-muted mb-0">Supplier ID: #{{ supplierData.id }}</p>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Email</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold break-all">{{ supplierData.email || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Phone</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.phone || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Mobile</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.mobile || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Tax Number</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.tax_number || '-' }}</span>
+                </div>
+                <div class="col-span-2" v-if="supplierData.website">
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Website</span>
+                  <a :href="supplierData.website" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline break-all">{{ supplierData.website }}</a>
                 </div>
               </div>
-              <div class="col-md-4 text-right">
-                <span :class="supplierData.is_active ? 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'badge badge-danger'">
-                  {{ supplierData.is_active ? 'Active' : 'Inactive' }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Supplier Stats -->
-          <div class="row mb-4">
-            <div class="col-md-3">
-              <div class="stat-card">
-                <div class="stat-value">{{ currencySymbol }}{{ formatNumber(supplierData.credit_limit) }}</div>
-                <div class="stat-label">Credit Limit</div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-card">
-                <div class="stat-value">{{ supplierData.payment_terms_days || 0 }} days</div>
-                <div class="stat-label">Payment Terms</div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-card">
-                <div class="stat-value">{{ supplierData.purchase_orders ? supplierData.purchase_orders.length : 0 }}</div>
-                <div class="stat-label">Total Orders</div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-card">
-                <div class="stat-value">{{ currencySymbol }}{{ calculateTotalValue() }}</div>
-                <div class="stat-label">Total Value</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Supplier Information Tabs -->
-          <div class="tabs">
-            <div class="tab-headers">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                :class="['tab-header', { active: activeTab === tab.id }]"
-                @click="activeTab = tab.id"
-              >
-                {{ tab.label }}
-              </button>
             </div>
 
-            <div class="tab-content">
-              <!-- Contact Information -->
-              <div v-if="activeTab === 'contact'" class="tab-pane">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="info-group">
-                      <label>Email</label>
-                      <p>{{ supplierData.email || '-' }}</p>
-                    </div>
-                    <div class="info-group">
-                      <label>Phone</label>
-                      <p>{{ supplierData.phone || '-' }}</p>
-                    </div>
-                    <div class="info-group">
-                      <label>Mobile</label>
-                      <p>{{ supplierData.mobile || '-' }}</p>
-                    </div>
+            <div class="border-t border-slate-100 dark:border-zinc-800/80"></div>
+
+            <!-- Address / Location Details -->
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Address & Location</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Address</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.address || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">City</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.city || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">State</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.state || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Postal Code</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.postal_code || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Country</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ supplierData.country || '-' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-zinc-800/80"></div>
+
+            <!-- Financial Details -->
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Financial Overview</h4>
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Credit Limit</span>
+                  <span class="text-xs text-slate-700 dark:text-zinc-300 font-semibold">{{ currencySymbol }}{{ formatNumber(supplierData.credit_limit) }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Advance Balance</span>
+                  <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold">{{ currencySymbol }}{{ formatNumber(supplierData.advance_balance) }}</span>
+                </div>
+                <div>
+                  <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Payment Terms</span>
+                  <span class="text-xs text-indigo-600 dark:text-indigo-400 font-bold">{{ supplierData.payment_terms_days || 30 }} Days</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div v-if="supplierData.notes">
+              <div class="border-t border-slate-100 dark:border-zinc-800/80 my-4"></div>
+              <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Notes</span>
+              <p class="text-xs text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-900/60 p-3 rounded-lg border border-slate-100 dark:border-zinc-800/60 leading-relaxed">{{ supplierData.notes }}</p>
+            </div>
+
+            <!-- Attachments -->
+            <div v-if="getAttachmentItems(supplierData).length > 0">
+              <div class="border-t border-slate-100 dark:border-zinc-800/80 my-4"></div>
+              <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Attachments ({{ getAttachmentItems(supplierData).length }})</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div
+                  v-for="att in getAttachmentItems(supplierData)"
+                  :key="att.url"
+                  class="p-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center justify-between"
+                >
+                  <div class="flex items-center space-x-2 truncate">
+                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300 truncate">{{ att.filename }}</span>
                   </div>
-                  <div class="col-md-6">
-                    <div class="info-group">
-                      <label>Website</label>
-                      <p>
-                        <a v-if="supplierData.website" :href="supplierData.website" target="_blank">
-                          {{ supplierData.website }}
-                        </a>
-                        <span v-else>-</span>
-                      </p>
-                    </div>
-                    <div class="info-group">
-                      <label>Tax Number</label>
-                      <p>{{ supplierData.tax_number || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Address Information -->
-              <div v-if="activeTab === 'address'" class="tab-pane">
-                <div class="info-group">
-                  <label>Address</label>
-                  <p>{{ supplierData.address || '-' }}</p>
-                </div>
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="info-group">
-                      <label>City</label>
-                      <p>{{ supplierData.city || '-' }}</p>
-                    </div>
-                    <div class="info-group">
-                      <label>State</label>
-                      <p>{{ supplierData.state || '-' }}</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="info-group">
-                      <label>Postal Code</label>
-                      <p>{{ supplierData.postal_code || '-' }}</p>
-                    </div>
-                    <div class="info-group">
-                      <label>Country</label>
-                      <p>{{ supplierData.country || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Purchase Orders -->
-              <div v-if="activeTab === 'orders'" class="tab-pane">
-                <div v-if="supplierData.purchase_orders && supplierData.purchase_orders.length > 0">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>PO #</th>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="order in supplierData.purchase_orders.slice(0, 10)" :key="order.id">
-                        <td>{{ order.po_number }}</td>
-                        <td>{{ formatDate(order.order_date) }}</td>
-                        <td>{{ currencySymbol }}{{ formatNumber(order.total_amount) }}</td>
-                        <td>
-                          <span :class="getStatusBadgeClass(order.status)">
-                            {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <p v-if="supplierData.purchase_orders.length > 10" class="text-muted">
-                    Showing latest 10 orders. Total: {{ supplierData.purchase_orders.length }}
-                  </p>
-                </div>
-                <div v-else class="text-center py-4">
-                  <p class="text-muted">No purchase orders found.</p>
-                </div>
-              </div>
-
-              <!-- Notes -->
-              <div v-if="activeTab === 'notes'" class="tab-pane">
-                <div class="info-group">
-                  <label>Notes</label>
-                  <p>{{ supplierData.notes || 'No notes available.' }}</p>
-                </div>
-              </div>
-
-              <!-- Attachments -->
-              <div v-if="activeTab === 'attachments'" class="tab-pane">
-                <div v-if="getAttachmentItems(supplierData).length > 0" class="row">
-                  <div v-for="att in getAttachmentItems(supplierData)" :key="att.url" class="col-md-6 mb-3">
-                    <div class="p-3 border rounded flex items-center justify-between bg-slate-50 dark:bg-zinc-800">
-                      <div class="flex items-center space-x-2 truncate">
-                        <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        <span class="text-xs font-semibold truncate">{{ att.filename }}</span>
-                      </div>
-                      <button
-                        @click="downloadFile(att.url, att.filename)"
-                        class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center space-x-1"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        <span>Download</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div v-else class="text-center py-4">
-                  <p class="text-muted">No attachments uploaded for this supplier.</p>
+                  <button
+                    @click="downloadFile(att.url, att.filename)"
+                    class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-medium cursor-pointer transition-colors shrink-0 flex items-center space-x-1"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Download</span>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-else-if="!loading && !supplierData" class="text-center py-8">
-          <div class="text-gray-500">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-lg font-medium">Unable to load supplier details</p>
-            <p class="text-sm">Please try again or contact support if the problem persists.</p>
-          </div>
+        <!-- Fallback loading state -->
+        <div v-else class="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-zinc-500">
+          <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600 mb-2"></div>
+          <span class="text-xs">Loading supplier details...</span>
         </div>
-      </div>
 
-      <div class="modal-footer">
-        <button @click="closeModal" class="btn btn-secondary">Close</button>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { downloadAttachmentFile } from '@/utils/downloadAttachment';
@@ -263,16 +208,7 @@ export default {
     });
 
     const loading = ref(false);
-    const supplierData = ref(null);
-    const activeTab = ref('contact');
-
-    const tabs = [
-      { id: 'contact', label: 'Contact Info' },
-      { id: 'address', label: 'Address' },
-      { id: 'orders', label: 'Purchase Orders' },
-      { id: 'notes', label: 'Notes' },
-      { id: 'attachments', label: 'Attachments' }
-    ];
+    const supplierData = ref(props.supplier || null);
 
     const getStorageUrl = (path) => {
       if (!path) return '';
@@ -328,58 +264,45 @@ export default {
       return new Intl.NumberFormat().format(value || 0);
     };
 
-    const formatDate = (date) => {
-      if (!date) return null;
-      return new Date(date).toLocaleDateString();
-    };
-
-    const calculateTotalValue = () => {
-      if (!supplierData.value?.purchase_orders) return '0';
-      const total = supplierData.value.purchase_orders.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
-      return formatNumber(total);
-    };
-
-    const getStatusBadgeClass = (status) => {
-      const classes = {
-        draft: 'badge badge-secondary',
-        sent: 'badge badge-info',
-        confirmed: 'badge badge-warning',
-        partially_received: 'badge badge-warning',
-        received: 'badge badge-success',
-        cancelled: 'badge badge-danger'
-      };
-      return classes[status] || 'badge badge-secondary';
-    };
-
-    const closeModal = () => {
-      emit('close');
+    const formatDate = (dateString) => {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     };
 
     watch(() => props.show, (newVal) => {
       if (newVal) {
-        activeTab.value = 'contact';
         loadSupplierDetails();
       }
-    });
+    }, { immediate: true });
 
     // Watch for supplier prop changes to reload data
     watch(() => props.supplier, (newSupplier) => {
-      if (props.show && newSupplier) {
+      if (newSupplier) {
+        supplierData.value = newSupplier;
+        if (props.show) {
+          loadSupplierDetails();
+        }
+      }
+    }, { immediate: true, deep: true });
+
+    onMounted(() => {
+      if (props.supplier) {
+        supplierData.value = props.supplier;
         loadSupplierDetails();
       }
-    }, { deep: true });
+    });
 
     return {
       currencySymbol,
       loading,
       supplierData,
-      activeTab,
-      tabs,
       formatNumber,
       formatDate,
-      calculateTotalValue,
-      getStatusBadgeClass,
-      closeModal,
       getStorageUrl,
       getAttachmentItems,
       downloadFile
@@ -387,192 +310,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h4 {
-  margin: 0;
-  color: #333;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #999;
-}
-
-.btn-close:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.modal-footer {
-  padding: 20px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.supplier-summary {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
-.supplier-summary h3 {
-  margin: 0;
-  color: #333;
-}
-
-.stat-card {
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 15px;
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-}
-
-.tabs {
-  margin-top: 20px;
-}
-
-.tab-headers {
-  display: flex;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 20px;
-}
-
-.tab-header {
-  background: none;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  color: #666;
-  border-bottom: 2px solid transparent;
-}
-
-.tab-header.active {
-  color: #007bff;
-  border-bottom-color: #007bff;
-}
-
-.tab-header:hover {
-  color: #007bff;
-}
-
-.info-group {
-  margin-bottom: 15px;
-}
-
-.info-group label {
-  display: block;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.info-group p {
-  margin: 0;
-  color: #666;
-}
-
-.table {
-  margin: 0;
-}
-
-.badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.badge-success {
-  background-color: #28a745;
-  color: white;
-}
-
-.badge-warning {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.badge-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.badge-info {
-  background-color: #17a2b8;
-  color: white;
-}
-
-.badge-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #545b62;
-}
-</style>
