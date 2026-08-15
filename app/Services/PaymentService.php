@@ -106,6 +106,9 @@ class PaymentService
             // Mark payment as paid
             $payment->markAsPaid($userId, $journalEntry->id, $bankTransaction->id);
             
+            // Process supplier dues & advance allocation
+            $this->processSupplierPaymentAllocation($payment);
+
             return $payment;
         });
     }
@@ -437,6 +440,9 @@ class PaymentService
                 return;
             }
 
+            // 0. Reverse supplier payment allocation (PO dues & advance balance)
+            $this->reverseSupplierPaymentAllocation($payment);
+
             // 1. Reverse accounting journal entry for payment first
             if ($payment->journal_entry_id) {
                 $oldEntries = JournalEntry::where('id', $payment->journal_entry_id)->get();
@@ -607,5 +613,152 @@ class PaymentService
                 'current_balance' => 0,
             ]
         );
+    }
+
+    /**
+     * Process supplier payment allocation across open PO dues and advance balance
+     */
+    public function processSupplierPaymentAllocation(Payment $payment): void
+    {
+        // Only process for supplier payments
+        $payeeType = strtolower($payment->payee_type ?? '');
+        $isSupplierPayment = $payment->payment_type === 'supplier_payment'
+            || $payeeType === 'supplier'
+            || $payment->payee_type === \App\Models\Supplier::class;
+
+        if (!$isSupplierPayment) {
+            return;
+        }
+
+        // Find supplier
+        $supplier = null;
+        if ($payment->payee_id) {
+            $supplier = \App\Models\Supplier::find($payment->payee_id);
+        }
+        if (!$supplier && $payment->payee_name) {
+            $companyId = $payment->company_id ?? 1;
+            $supplier = \App\Models\Supplier::where('company_id', $companyId)
+                ->where(function ($q) use ($payment) {
+                    $q->where('name', $payment->payee_name)
+                      ->orWhere('company_name', $payment->payee_name);
+                })->first();
+        }
+
+        if (!$supplier) {
+            return;
+        }
+
+        // Check if allocation already processed
+        $additionalData = $payment->additional_data ?? [];
+        if (!empty($additionalData['supplier_allocation'])) {
+            return; // Already allocated
+        }
+
+        $paidAmount = (float) $payment->amount;
+        if ($paidAmount <= 0) {
+            return;
+        }
+
+        // Query open POs for this supplier with due_amount > 0, ordered by order_date asc
+        $openOrders = \App\Models\PurchaseOrder::where('supplier_id', $supplier->id)
+            ->where('status', '!=', 'cancelled')
+            ->where('due_amount', '>', 0)
+            ->orderBy('order_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $totalDue = (float) $openOrders->sum('due_amount');
+        $allocatedOrders = [];
+        $appliedDue = 0;
+        $appliedAdvance = 0;
+
+        if ($totalDue > 0) {
+            // Case A: Supplier has open bills / due amount
+            $remainingToAllocate = $paidAmount;
+
+            foreach ($openOrders as $po) {
+                if ($remainingToAllocate <= 0) break;
+
+                $poDue = (float) $po->due_amount;
+                $deduct = min($remainingToAllocate, $poDue);
+
+                $po->due_amount = max(0, $poDue - $deduct);
+                $po->amount_paid = (float) $po->amount_paid + $deduct;
+                $po->save();
+
+                $allocatedOrders[] = [
+                    'po_id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'allocated_amount' => $deduct,
+                ];
+
+                $appliedDue += $deduct;
+                $remainingToAllocate -= $deduct;
+            }
+
+            // Overpayment excess goes to advance balance
+            if ($remainingToAllocate > 0) {
+                $appliedAdvance = $remainingToAllocate;
+                $supplier->creditAdvance($appliedAdvance);
+            }
+        } else {
+            // Case B: Supplier has zero due / no pending bills -> Full amount to advance
+            $appliedAdvance = $paidAmount;
+            $supplier->creditAdvance($appliedAdvance);
+        }
+
+        // Store allocation metadata in additional_data
+        $additionalData['supplier_allocation'] = [
+            'supplier_id' => $supplier->id,
+            'paid_amount' => $paidAmount,
+            'applied_due' => $appliedDue,
+            'applied_advance' => $appliedAdvance,
+            'allocated_orders' => $allocatedOrders,
+            'allocated_at' => now()->toIso8601String(),
+        ];
+
+        $payment->update(['additional_data' => $additionalData]);
+    }
+
+    /**
+     * Reverse supplier payment allocation (restore PO dues and subtract advance)
+     */
+    public function reverseSupplierPaymentAllocation(Payment $payment): void
+    {
+        $additionalData = $payment->additional_data ?? [];
+        $allocation = $additionalData['supplier_allocation'] ?? null;
+
+        if (!$allocation) {
+            return;
+        }
+
+        $supplierId = $allocation['supplier_id'] ?? $payment->payee_id;
+        $supplier = $supplierId ? \App\Models\Supplier::find($supplierId) : null;
+
+        // 1. Reverse Advance Balance
+        $appliedAdvance = (float) ($allocation['applied_advance'] ?? 0);
+        if ($appliedAdvance > 0 && $supplier) {
+            $supplier->debitAdvance($appliedAdvance);
+        }
+
+        // 2. Reverse Allocated PO Dues
+        $allocatedOrders = $allocation['allocated_orders'] ?? [];
+        foreach ($allocatedOrders as $alloc) {
+            $poId = $alloc['po_id'] ?? null;
+            $allocAmount = (float) ($alloc['allocated_amount'] ?? 0);
+
+            if ($poId && $allocAmount > 0) {
+                $po = \App\Models\PurchaseOrder::find($poId);
+                if ($po) {
+                    $po->due_amount = (float) $po->due_amount + $allocAmount;
+                    $po->amount_paid = max(0, (float) $po->amount_paid - $allocAmount);
+                    $po->save();
+                }
+            }
+        }
+
+        // Clear supplier allocation record from additional_data
+        unset($additionalData['supplier_allocation']);
+        $payment->update(['additional_data' => $additionalData]);
     }
 }

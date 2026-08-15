@@ -552,7 +552,9 @@ class PaymentController extends Controller
 
         try {
             DB::transaction(function () use ($payment) {
-                // If payment has accounting entries, reverse them first
+                // Reverse supplier allocation & accounting entries first
+                $this->paymentService->reverseSupplierPaymentAllocation($payment);
+
                 if ($payment->journal_entry_id) {
                     $this->paymentService->updatePayment($payment, ['status' => 'cancelled']);
                 }
