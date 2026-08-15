@@ -36,7 +36,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700">Amount</label>
-              <p class="mt-1 text-lg font-semibold text-gray-900">${{ formatAmount(payment.amount) }}</p>
+              <p class="mt-1 text-lg font-semibold text-gray-900">{{ currencySymbol }}{{ formatAmount(payment.amount) }}</p>
             </div>
 
             <div>
@@ -198,10 +198,10 @@
                     </td>
                     <td class="px-4 py-2 text-sm text-gray-900">{{ line.description }}</td>
                     <td class="px-4 py-2 text-sm text-gray-900 text-right">
-                      {{ line.debit_amount > 0 ? '$' + formatAmount(line.debit_amount) : '-' }}
+                      {{ line.debit_amount > 0 ? currencySymbol + formatAmount(line.debit_amount) : '-' }}
                     </td>
                     <td class="px-4 py-2 text-sm text-gray-900 text-right">
-                      {{ line.credit_amount > 0 ? '$' + formatAmount(line.credit_amount) : '-' }}
+                      {{ line.credit_amount > 0 ? currencySymbol + formatAmount(line.credit_amount) : '-' }}
                     </td>
                   </tr>
                 </tbody>
@@ -274,7 +274,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import { downloadAttachmentFile } from '@/utils/downloadAttachment';
 
 const downloadFile = (paymentId, index = 0, fileName = 'attachment', directUrl = '') => {
@@ -283,6 +285,11 @@ const downloadFile = (paymentId, index = 0, fileName = 'attachment', directUrl =
 };
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
 
 // Props
 const props = defineProps({

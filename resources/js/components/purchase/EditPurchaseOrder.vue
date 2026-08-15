@@ -607,13 +607,17 @@
                           @click="selectSupplier(supplier)"
                           class="cursor-pointer py-2 px-3 hover:bg-emerald-50/60 dark:hover:bg-zinc-800/80 flex justify-between items-center transition-colors border-b border-slate-50 dark:border-zinc-850 last:border-0"
                         >
-                          <div class="flex items-center space-x-2.5 min-w-0">
-                            <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0">
-                              {{ supplier.name.charAt(0).toUpperCase() }}
+                          <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+                            <div class="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">
+                              {{ supplier.name ? supplier.name.charAt(0).toUpperCase() : 'S' }}
                             </div>
-                            <div class="min-w-0">
-                              <span class="font-bold text-slate-800 dark:text-zinc-200 truncate block">{{ supplier.name }}</span>
-                              <p class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ supplier.phone || supplier.email }}</p>
+                            <div class="min-w-0 flex-1">
+                              <span class="font-bold text-slate-800 dark:text-zinc-200 text-xs truncate block">
+                                {{ [supplier.name, supplier.phone, supplier.city].filter(Boolean).join(' • ') }}
+                              </span>
+                              <p v-if="supplier.company_name || supplier.email" class="text-[10px] text-slate-400 dark:text-zinc-500 truncate mt-0.5">
+                                {{ [supplier.company_name, supplier.email].filter(Boolean).join(' | ') }}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -622,18 +626,32 @@
 
                     <!-- Selected Supplier Details Card -->
                     <div v-if="selectedSupplier" class="p-3 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs space-y-1 relative w-full text-left transition-all">
-                      <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer">
+                      <button @click="clearSupplier" class="absolute top-2.5 right-2.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-[10px] flex items-center gap-0.5 transition-colors border-0 bg-transparent cursor-pointer z-10">
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                         Remove
                       </button>
-                      <div class="flex items-center space-x-2">
-                        <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                          {{ selectedSupplier.name.charAt(0).toUpperCase() }}
+                      <div class="flex items-start space-x-2.5 pr-14">
+                        <div class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                          {{ selectedSupplier.name ? selectedSupplier.name.charAt(0).toUpperCase() : 'S' }}
                         </div>
-                        <div class="min-w-0">
-                          <p class="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{{ selectedSupplier.name }}</p>
+                        <div class="min-w-0 flex-1">
+                          <p class="font-bold text-slate-800 dark:text-zinc-100 text-xs truncate">
+                            {{ selectedSupplier.name }}
+                          </p>
+                          <p v-if="selectedSupplier.phone || selectedSupplier.city" class="text-[11px] text-slate-500 dark:text-zinc-400 font-medium truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                            <span v-if="selectedSupplier.phone" class="inline-flex items-center gap-0.5">
+                              📞 {{ selectedSupplier.phone }}
+                            </span>
+                            <span v-if="selectedSupplier.phone && selectedSupplier.city" class="text-slate-300 dark:text-zinc-600">•</span>
+                            <span v-if="selectedSupplier.city" class="inline-flex items-center gap-0.5">
+                              📍 {{ selectedSupplier.city }}
+                            </span>
+                          </p>
+                          <p v-else-if="selectedSupplier.email" class="text-[11px] text-slate-400 dark:text-zinc-500 font-medium truncate mt-0.5">
+                            {{ selectedSupplier.email }}
+                          </p>
                         </div>
                       </div>
                     </div>

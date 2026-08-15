@@ -44,7 +44,7 @@
 
             <div class="flex justify-between items-center text-xs">
               <span class="text-slate-500 dark:text-zinc-400 font-semibold">Amount</span>
-              <span class="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">${{ formatAmount(receipt.amount) }}</span>
+              <span class="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">{{ currencySymbol }}{{ formatAmount(receipt.amount) }}</span>
             </div>
 
             <div class="flex justify-between items-center text-xs">
@@ -163,7 +163,7 @@
                     Invoice #{{ allocation.invoice_id }}
                   </td>
                   <td class="px-4 py-2.5 font-bold font-mono text-slate-900 dark:text-slate-100 text-right">
-                    ${{ formatAmount(allocation.amount) }}
+                    {{ currencySymbol }}{{ formatAmount(allocation.amount) }}
                   </td>
                 </tr>
               </tbody>
@@ -171,7 +171,7 @@
                 <tr>
                   <td class="px-4 py-2 text-slate-900 dark:text-white">Total Allocated</td>
                   <td class="px-4 py-2 font-mono text-slate-900 dark:text-white text-right">
-                    ${{ formatAmount(getTotalAllocated) }}
+                    {{ currencySymbol }}{{ formatAmount(getTotalAllocated) }}
                   </td>
                 </tr>
               </tfoot>
@@ -229,6 +229,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import { downloadAttachmentFile } from '@/utils/downloadAttachment';
 
 const downloadFile = (receiptId, index = 0, fileName = 'attachment', directUrl = '') => {
@@ -237,6 +238,11 @@ const downloadFile = (receiptId, index = 0, fileName = 'attachment', directUrl =
 };
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
 
 // Props
 const props = defineProps({

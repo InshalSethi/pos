@@ -52,7 +52,7 @@
               Amount <span class="text-rose-500">*</span>
             </label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 pointer-events-none">$</span>
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 pointer-events-none">{{ currencySymbol }}</span>
               <input
                 v-model="form.amount"
                 type="number"
@@ -323,7 +323,7 @@
                 <div class="flex-1">
                   <div class="text-xs font-bold text-slate-900 dark:text-white">{{ invoice.sale_number }}</div>
                   <div class="text-[11px] text-slate-500 dark:text-zinc-400">{{ formatDate(invoice.sale_date) }}</div>
-                  <div class="text-[11px] font-semibold text-slate-700 dark:text-zinc-300">Outstanding: ${{ formatAmount(invoice.outstanding_amount) }}</div>
+                  <div class="text-[11px] font-semibold text-slate-700 dark:text-zinc-300">Outstanding: {{ currencySymbol }}{{ formatAmount(invoice.outstanding_amount) }}</div>
                 </div>
                 <div class="w-36">
                   <input
@@ -338,7 +338,7 @@
                 </div>
               </div>
               <div class="text-xs font-semibold text-slate-600 dark:text-zinc-400 pt-1">
-                Total Allocated: ${{ formatAmount(getTotalAllocated()) }} / ${{ formatAmount(form.amount || 0) }}
+                Total Allocated: {{ currencySymbol }}{{ formatAmount(getTotalAllocated()) }} / {{ currencySymbol }}{{ formatAmount(form.amount || 0) }}
               </div>
             </div>
             <div v-else class="text-xs text-slate-500 dark:text-zinc-400">
@@ -373,6 +373,8 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import FloatingSelect from '@/components/common/FloatingSelect.vue';
 import { downloadAttachmentFile } from '@/utils/downloadAttachment';
 
@@ -380,6 +382,13 @@ const downloadFile = (receiptId, index = 0, fileName = 'attachment', directUrl =
   const url = directUrl || `/api/payment-receipts/${receiptId}/download-attachment?index=${index}`;
   downloadAttachmentFile(url, fileName);
 };
+
+const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
 
 // Props
 const props = defineProps({
@@ -479,7 +488,7 @@ const formattedBankAccounts = computed(() => {
       ? Number(acc.current_balance)
       : Number(acc.opening_balance || 0);
     const absBal = Math.abs(rawBal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const formattedBal = rawBal < 0 ? `-$${absBal}` : `$${absBal}`;
+    const formattedBal = rawBal < 0 ? `-${currencySymbol.value}${absBal}` : `${currencySymbol.value}${absBal}`;
 
     const accNum = acc.account_number ? (acc.masked_account_number || ('****' + String(acc.account_number).slice(-4))) : '';
 

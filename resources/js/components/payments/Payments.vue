@@ -138,7 +138,7 @@
         <!-- Column: Amount -->
         <template #column-amount="{ item }">
           <span class="text-xs font-semibold text-slate-900 dark:text-slate-100 text-right block">
-            ${{ formatAmount(item.amount) }}
+            {{ currencySymbol }}{{ formatAmount(item.amount) }}
           </span>
         </template>
 
@@ -590,6 +590,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
 import DataTable from '@/components/common/DataTable.vue';
 import FloatingDateRangePicker from '@/components/common/FloatingDateRangePicker.vue';
@@ -603,6 +604,11 @@ const handleDownloadAttachment = (paymentId, index = 0, fileName = 'attachment',
 };
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => {
+  return currencyStore.symbol || authStore.user?.company?.currency_symbol || authStore.user?.company?.currency || '$';
+});
 
 // Reactive data
 const loading = ref(false);
@@ -687,7 +693,7 @@ const pendingCount = computed(() => {
 });
 
 // Table columns configuration
-const tableColumns = ref([
+const tableColumns = computed(() => [
   {
     key: 'payment_number',
     label: 'Payment Number',
@@ -714,7 +720,7 @@ const tableColumns = ref([
   },
   {
     key: 'amount',
-    label: 'Amount ($)',
+    label: `Amount (${currencySymbol.value})`,
     sortable: true,
     align: 'right'
   },
@@ -1046,7 +1052,7 @@ const formatAccountBalanceText = (acc) => {
     ? Number(acc.current_balance)
     : Number(acc.opening_balance || 0);
   const absBal = Math.abs(rawBal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const formattedBal = rawBal < 0 ? `-$${absBal}` : `$${absBal}`;
+  const formattedBal = rawBal < 0 ? `-${currencySymbol.value}${absBal}` : `${currencySymbol.value}${absBal}`;
   return ` (${formattedBal})`;
 };
 
