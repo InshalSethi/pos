@@ -88,10 +88,17 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'reference_id')
+            ->whereIn('reference_type', [self::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder']);
+    }
+
     public function returns(): HasMany
     {
         return $this->hasMany(PurchaseReturn::class, 'purchase_order_id');
     }
+
 
 
     // Scopes

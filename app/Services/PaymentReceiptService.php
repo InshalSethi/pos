@@ -474,9 +474,10 @@ class PaymentReceiptService
         ]);
 
         // Sync bank account current_balance and COA balance
-        $bankAccount->update(['current_balance' => $newBalance]);
         if ($bankAccount->chartAccount) {
             $bankAccount->chartAccount->updateCurrentBalance();
+        } else {
+            $bankAccount->update(['current_balance' => $newBalance]);
         }
 
         // Also create a record in `transactions` table so it shows up in Banking -> Transactions list

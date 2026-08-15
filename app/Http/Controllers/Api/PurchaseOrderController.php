@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Payment;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
+use App\Models\Warehouse;
 use App\Services\DoubleEntryAccountingService;
 use App\Services\WarehouseInventoryService;
 use App\Services\PaymentService;
@@ -335,13 +336,14 @@ class PurchaseOrderController extends Controller
 
             $amountPaid = $request->get('amount_paid', 0);
             $grandTotal = $totalAmount;
+            $remainingDueBeforeAdvance = max(0, $grandTotal - $amountPaid);
 
             // --- ADVANCE BALANCE APPLICATION ---
             $advanceApplied = 0;
             $supplier = Supplier::findOrFail($request->supplier_id);
-            if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0) {
+            if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0 && $remainingDueBeforeAdvance > 0) {
                 $requestedAdvance = (float) ($request->advance_applied ?? $supplier->advance_balance);
-                $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $grandTotal);
+                $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $remainingDueBeforeAdvance);
             }
 
             $effectivePaid = $amountPaid + $advanceApplied;
@@ -375,13 +377,11 @@ class PurchaseOrderController extends Controller
             ]);
 
             $companyId = auth()->user()->current_company_id ?? 1;
-            $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
-                ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
-            $warehouseId = $request->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
-            $rawWhIds = $request->warehouse_ids ?? [$warehouseId];
-            if (is_string($rawWhIds)) {
-                $rawWhIds = array_filter(explode(',', $rawWhIds));
-            }
+            $warehouse = Warehouse::where('company_id', $companyId)->where('id', $request->warehouse_id)->first()
+                ?? Warehouse::where('company_id', $companyId)->first();
+            $warehouseId = $warehouse?->id;
+
+            $rawWhIds = $request->warehouse_ids ?: ($warehouseId ? [$warehouseId] : []);
             $warehouseIds = array_map('intval', (array) $rawWhIds);
 
             $purchaseOrder->update([
@@ -396,8 +396,18 @@ class PurchaseOrderController extends Controller
                 $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
                 $qtyOrdered = (int) $item['quantity_ordered'];
 
-                $allocations = $item['allocations'] ?? $item['warehouse_allocations'] ?? null;
-                if (!is_array($allocations) || empty($allocations)) {
+                $rawAllocations = $item['allocations'] ?? $item['warehouse_allocations'] ?? null;
+                $allocations = [];
+                if (is_array($rawAllocations) && !empty($rawAllocations)) {
+                    foreach ($rawAllocations as $alloc) {
+                        $allocWhId = isset($alloc['warehouse_id']) ? (int) $alloc['warehouse_id'] : $warehouseId;
+                        $validWh = Warehouse::where('company_id', $companyId)->where('id', $allocWhId)->first();
+                        $allocations[] = [
+                            'warehouse_id' => $validWh ? $validWh->id : $warehouseId,
+                            'quantity' => (int) ($alloc['quantity'] ?? $qtyOrdered)
+                        ];
+                    }
+                } else {
                     $allocations = [
                         ['warehouse_id' => $warehouseId, 'quantity' => $qtyOrdered]
                     ];
@@ -492,7 +502,7 @@ class PurchaseOrderController extends Controller
      */
     public function show(PurchaseOrder $purchaseOrder): JsonResponse
     {
-        $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
+        $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product', 'payments.bankAccount']);
         return response()->json($purchaseOrder);
     }
 

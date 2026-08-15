@@ -451,8 +451,74 @@
                             </div>
                           </div>
 
-                          <!-- Row 2: Sub-dropdown for Bank Accounts Selection -->
-                          <div v-if="selectedPaymentMethods.includes('card') || selectedPaymentMethods.includes('bank_transfer')" class="relative w-full" id="bank-dropdown-container">
+                          <!-- Row 2: Sub-dropdown for Card Accounts Selection (ONLY for Card) -->
+                          <div v-if="selectedPaymentMethods.includes('card')" class="relative w-full" id="card-dropdown-container">
+                            <button
+                              type="button"
+                              @click.stop="isCardDropdownOpen = !isCardDropdownOpen"
+                              class="w-full px-3 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10 min-w-0"
+                              :title="getSelectedCardsLabel()"
+                            >
+                              <span class="truncate min-w-0 pr-1 flex-1">{{ getSelectedCardsLabel() }}</span>
+                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200 ml-1" :class="{ 'rotate-180': isCardDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+
+                            <!-- Card Accounts Dropup List -->
+                            <div
+                              v-if="isCardDropdownOpen"
+                              class="absolute bottom-full mb-2 left-0 w-full bg-white dark:bg-zinc-900 shadow-2xl rounded-xl border border-slate-200 dark:border-zinc-700/80 py-1 text-xs overflow-hidden z-[9999]"
+                            >
+                              <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex justify-between items-center select-none">
+                                <span>Select Card Account(s)</span>
+                                <span class="text-indigo-600 dark:text-indigo-400 font-black">
+                                  {{ selectedCardIds.length }} Selected
+                                </span>
+                              </div>
+                              <div v-if="activeCardAccounts.length === 0" class="px-3 py-3 text-slate-400 text-center text-xs">
+                                No card accounts available
+                              </div>
+                              <div
+                                v-for="card in activeCardAccounts"
+                                :key="card.id"
+                                @click.stop="isBankAccountInactive(card) ? null : toggleCardSelection(card.id)"
+                                class="px-3 py-2.5 flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
+                                :class="[
+                                  isBankAccountInactive(card)
+                                    ? 'opacity-50 cursor-not-allowed bg-slate-100/60 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500'
+                                    : (selectedCardIds.includes(card.id)
+                                        ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold cursor-pointer'
+                                        : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 cursor-pointer')
+                                ]"
+                              >
+                                <div class="flex items-center gap-2.5 truncate min-w-0">
+                                  <input
+                                    type="checkbox"
+                                    :checked="selectedCardIds.includes(card.id)"
+                                    :disabled="isBankAccountInactive(card)"
+                                    class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none shrink-0"
+                                  />
+                                  <div class="truncate min-w-0">
+                                    <span class="truncate font-semibold block">
+                                      {{ formatBankAccountLabel(card) }}
+                                      <span v-if="isBankAccountInactive(card)" class="text-rose-500 font-bold ml-1 text-[11px]">(Inactive)</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 block font-normal truncate">{{ card.bank_name || card.account_name }}{{ (card.masked_account_number || getMaskedAccountNumber(card.account_number)) ? ' ' + (card.masked_account_number || getMaskedAccountNumber(card.account_number)) : '' }}</span>
+                                  </div>
+                                </div>
+                                <span v-if="isBankAccountInactive(card)" class="text-[9px] font-black uppercase tracking-wider text-slate-500 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-slate-300 dark:border-zinc-700 shrink-0 ml-2">
+                                  Inactive
+                                </span>
+                                <span v-else-if="selectedCardIds.includes(card.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
+                                  Selected
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Row 3: Sub-dropdown for Bank Accounts Selection (ONLY for Bank Transfer) -->
+                          <div v-if="selectedPaymentMethods.includes('bank_transfer')" class="relative w-full" id="bank-dropdown-container">
                             <button
                               type="button"
                               @click.stop="isBankDropdownOpen = !isBankDropdownOpen"
@@ -557,8 +623,55 @@
                               </div>
                             </div>
 
+                            <!-- Card Amount Inputs -->
+                            <template v-if="selectedPaymentMethods.includes('card')">
+                              <div
+                                v-for="cardId in selectedCardIds"
+                                :key="cardId"
+                                class="space-y-1"
+                              >
+                                <div
+                                  class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border shadow-2xs shrink-0 transition-colors"
+                                  :class="isBankBalanceExceeded(cardId) ? 'border-rose-500 ring-1 ring-rose-500/30 dark:border-rose-500' : 'border-slate-200 dark:border-zinc-750'"
+                                >
+                                  <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left flex items-center gap-1.5" :title="formatBankAccountLabel(allAccounts.find(b => b.id == cardId))">
+                                    <span>{{ formatBankAccountLabel(allAccounts.find(b => b.id == cardId)) }}</span>
+                                    <span v-if="isBankAccountInactive(cardId)" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                      (Inactive)
+                                    </span>
+                                  </label>
+                                  <div class="relative w-24 shrink-0">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                    <input
+                                      v-model.number="cardPaymentAmounts[cardId]"
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      :disabled="isBankAccountInactive(cardId)"
+                                      :readonly="isBankAccountInactive(cardId)"
+                                      :tabindex="isBankAccountInactive(cardId) ? -1 : 0"
+                                      class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7 disabled:opacity-60 disabled:bg-slate-200/50 dark:disabled:bg-zinc-800/50 disabled:cursor-not-allowed disabled:text-slate-400 select-none"
+                                      :class="{ 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500': isBankBalanceExceeded(cardId) }"
+                                    />
+                                  </div>
+                                </div>
+                                <!-- Available Balance & Insufficient Error Message -->
+                                <div class="text-[11px] font-semibold text-left px-1">
+                                  <span :class="isBankBalanceExceeded(cardId) ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                                    Available Balance: {{ currencySymbol }}{{ getBankAccountBalance(cardId).toFixed(2) }}
+                                  </span>
+                                  <div v-if="isBankBalanceExceeded(cardId)" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span>Insufficient balance! Available: {{ currencySymbol }}{{ getBankAccountBalance(cardId).toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (cardPaymentAmounts[cardId] || 0).toFixed(2) }}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+
                             <!-- Bank Amount Inputs -->
-                            <template v-if="selectedPaymentMethods.includes('card') || selectedPaymentMethods.includes('bank_transfer')">
+                            <template v-if="selectedPaymentMethods.includes('bank_transfer')">
                               <div
                                 v-for="bankId in selectedBankIds"
                                 :key="bankId"
@@ -1681,8 +1794,7 @@ const isPaymentDropdownOpen = ref(false);
 const availablePaymentMethods = [
   { id: 'cash', label: 'Cash' },
   { id: 'card', label: 'Card' },
-  { id: 'bank_transfer', label: 'Bank Transfer' },
-  { id: 'other', label: 'Other' }
+  { id: 'bank_transfer', label: 'Bank Transfer' }
 ];
 
 const selectedPaymentMethods = ref(['cash']);
@@ -1692,12 +1804,37 @@ const paymentAmounts = ref({
 
 const allAccounts = ref([]);
 const activeBankAccounts = computed(() => {
+  const banks = (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return type !== 'credit_card' && type !== 'card';
+  });
+  if (banks.length > 0) return banks;
   return (allAccounts.value || []).filter(account => {
     const type = (account.type || account.account_type || '').toLowerCase();
     const name = (account.account_name || account.bank_name || '').toLowerCase();
-    if (type === 'cash' || name.includes('cash') || name.includes('vault')) {
-      return false;
-    }
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return true;
+  });
+});
+
+const activeCardAccounts = computed(() => {
+  const cards = (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return type === 'credit_card' || type === 'card' || name.includes('card') || name.includes('credit');
+  });
+  if (cards.length > 0) return cards;
+  return (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
     return true;
   });
 });
@@ -1705,6 +1842,10 @@ const activeBankAccounts = computed(() => {
 const selectedBankIds = ref([]);
 const bankPaymentAmounts = ref({});
 const isBankDropdownOpen = ref(false);
+
+const selectedCardIds = ref([]);
+const cardPaymentAmounts = ref({});
+const isCardDropdownOpen = ref(false);
 
 const cashAccount = computed(() => {
   return (allAccounts.value || []).find(acc => {
@@ -1737,14 +1878,17 @@ const getBankAccountBalance = (bankId) => {
 const isBankBalanceExceeded = (bankId) => {
   if (!selectedPaymentMethods.value.includes('card') && !selectedPaymentMethods.value.includes('bank_transfer')) return false;
   const bal = getBankAccountBalance(bankId);
-  const payAmt = parseFloat(bankPaymentAmounts.value[bankId]) || 0;
+  const payAmt = parseFloat(bankPaymentAmounts.value[bankId] !== undefined ? bankPaymentAmounts.value[bankId] : cardPaymentAmounts.value[bankId]) || 0;
   return payAmt > bal;
 };
 
 const hasInsufficientPaymentBalance = computed(() => {
   if (isCashBalanceExceeded.value) return true;
-  if (selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer')) {
-    return selectedBankIds.value.some(bankId => isBankBalanceExceeded(bankId));
+  if (selectedPaymentMethods.value.includes('card')) {
+    if (selectedCardIds.value.some(cardId => isBankBalanceExceeded(cardId))) return true;
+  }
+  if (selectedPaymentMethods.value.includes('bank_transfer')) {
+    if (selectedBankIds.value.some(bankId => isBankBalanceExceeded(bankId))) return true;
   }
   return false;
 });
@@ -1767,6 +1911,11 @@ const loadBankAccounts = async () => {
     if (defaultActiveBank && selectedBankIds.value.length === 0) {
       selectedBankIds.value = [defaultActiveBank.id];
       bankPaymentAmounts.value[defaultActiveBank.id] = 0;
+    }
+    const defaultActiveCard = activeCardAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.is_default || b.is_default === 1 || b.is_default === '1')) || activeCardAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+    if (defaultActiveCard && selectedCardIds.value.length === 0) {
+      selectedCardIds.value = [defaultActiveCard.id];
+      cardPaymentAmounts.value[defaultActiveCard.id] = 0;
     }
   } catch (error) {
     console.error('Error loading bank accounts:', error);
@@ -1791,15 +1940,29 @@ const togglePaymentMethod = (methodId) => {
     selectedPaymentMethods.value.splice(idx, 1);
     if (methodId === 'cash') {
       paymentAmounts.value.cash = 0;
+    } else if (methodId === 'card') {
+      selectedCardIds.value = [];
+      cardPaymentAmounts.value = {};
+    } else if (methodId === 'bank_transfer') {
+      selectedBankIds.value = [];
+      bankPaymentAmounts.value = {};
     }
   } else {
     selectedPaymentMethods.value.push(methodId);
 
     const defaultActiveBank = activeBankAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.is_default || b.is_default === 1 || b.is_default === '1')) || activeBankAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
-    if ((methodId === 'card' || methodId === 'bank_transfer') && selectedBankIds.value.length === 0 && defaultActiveBank) {
+    if (methodId === 'bank_transfer' && selectedBankIds.value.length === 0 && defaultActiveBank) {
       selectedBankIds.value = [defaultActiveBank.id];
       if (bankPaymentAmounts.value[defaultActiveBank.id] === undefined) {
         bankPaymentAmounts.value[defaultActiveBank.id] = 0;
+      }
+    } else if (methodId === 'card') {
+      const defaultActiveCard = activeCardAccounts.value.find(b => (b.is_active !== false && b.is_active !== 0) && (b.is_default || b.is_default === 1 || b.is_default === '1')) || activeCardAccounts.value.find(b => b.is_active !== false && b.is_active !== 0);
+      if (selectedCardIds.value.length === 0 && defaultActiveCard) {
+        selectedCardIds.value = [defaultActiveCard.id];
+        if (cardPaymentAmounts.value[defaultActiveCard.id] === undefined) {
+          cardPaymentAmounts.value[defaultActiveCard.id] = 0;
+        }
       }
     }
     
@@ -1809,10 +1972,34 @@ const togglePaymentMethod = (methodId) => {
 
     if (methodId === 'cash') {
       paymentAmounts.value.cash = parseFloat(remaining.toFixed(2));
-    } else if (selectedBankIds.value.length > 0) {
+    } else if (methodId === 'card' && selectedCardIds.value.length > 0) {
+      const firstCardId = selectedCardIds.value[0];
+      cardPaymentAmounts.value[firstCardId] = parseFloat(((cardPaymentAmounts.value[firstCardId] || 0) + remaining).toFixed(2));
+    } else if (methodId === 'bank_transfer' && selectedBankIds.value.length > 0) {
       const firstBankId = selectedBankIds.value[0];
       bankPaymentAmounts.value[firstBankId] = parseFloat(((bankPaymentAmounts.value[firstBankId] || 0) + remaining).toFixed(2));
     }
+  }
+};
+
+const toggleCardSelection = (cardId) => {
+  if (isBankAccountInactive(cardId)) {
+    return;
+  }
+  const idx = selectedCardIds.value.indexOf(cardId);
+  if (idx > -1) {
+    if (selectedCardIds.value.length === 1 && selectedPaymentMethods.value.includes('card') && !selectedPaymentMethods.value.includes('cash') && !selectedPaymentMethods.value.includes('bank_transfer')) {
+      return;
+    }
+    selectedCardIds.value.splice(idx, 1);
+    delete cardPaymentAmounts.value[cardId];
+  } else {
+    selectedCardIds.value.push(cardId);
+    
+    const existingSum = totalPaidAmount.value;
+    const targetTotal = grandTotal.value || 0;
+    const remaining = Math.max(0, targetTotal - existingSum);
+    cardPaymentAmounts.value[cardId] = parseFloat(remaining.toFixed(2));
   }
 };
 
@@ -1822,7 +2009,7 @@ const toggleBankSelection = (bankId) => {
   }
   const idx = selectedBankIds.value.indexOf(bankId);
   if (idx > -1) {
-    if (selectedBankIds.value.length === 1 && (selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer')) && !selectedPaymentMethods.value.includes('cash')) {
+    if (selectedBankIds.value.length === 1 && selectedPaymentMethods.value.includes('bank_transfer') && !selectedPaymentMethods.value.includes('cash') && !selectedPaymentMethods.value.includes('card')) {
       return;
     }
     selectedBankIds.value.splice(idx, 1);
@@ -1846,7 +2033,7 @@ const getMaskedAccountNumber = (accNumber) => {
 };
 
 const formatBankAccountLabel = (bank) => {
-  if (!bank) return 'Bank';
+  if (!bank) return 'Account';
   const bankName = (bank.bank_name || '').trim();
   const accountName = (bank.account_name || '').trim();
   const maskedAcc = bank.masked_account_number || getMaskedAccountNumber(bank.account_number);
@@ -1862,13 +2049,23 @@ const formatBankAccountLabel = (bank) => {
   } else if (bankName && accountName && bankName.toLowerCase() !== accountName.toLowerCase()) {
     baseLabel = `${accountName} (${bankName})`;
   } else {
-    baseLabel = accountName || bankName || 'Bank';
+    baseLabel = accountName || bankName || 'Account';
   }
 
   if (maskedAcc) {
     return `${baseLabel} ${maskedAcc}`;
   }
   return baseLabel;
+};
+
+const getSelectedCardsLabel = () => {
+  if (selectedCardIds.value.length === 0) return 'Select Card Account(s)';
+  const selected = activeCardAccounts.value.filter(b => selectedCardIds.value.includes(b.id));
+  if (selected.length === 0) return 'Select Card Account(s)';
+  if (selected.length === 1) {
+    return formatBankAccountLabel(selected[0]);
+  }
+  return `${selected.length} Card Accounts Selected`;
 };
 
 const getSelectedBanksLabel = () => {
@@ -1881,20 +2078,26 @@ const getSelectedBanksLabel = () => {
   return `${selected.length} Bank Accounts Selected`;
 };
 
-const totalPaidAmount = computed(() => {
+const directPaymentsSum = computed(() => {
   let sum = 0;
   if (selectedPaymentMethods.value.includes('cash')) {
     sum += parseFloat(paymentAmounts.value.cash) || 0;
   }
-  if (selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer')) {
+  if (selectedPaymentMethods.value.includes('card')) {
+    selectedCardIds.value.forEach(cardId => {
+      sum += parseFloat(cardPaymentAmounts.value[cardId]) || 0;
+    });
+  }
+  if (selectedPaymentMethods.value.includes('bank_transfer')) {
     selectedBankIds.value.forEach(bankId => {
       sum += parseFloat(bankPaymentAmounts.value[bankId]) || 0;
     });
   }
-  if (useAdvanceBalance.value) {
-    sum += parseFloat(advanceToApply.value) || 0;
-  }
   return sum;
+});
+
+const totalPaidAmount = computed(() => {
+  return directPaymentsSum.value;
 });
 
 
@@ -2446,23 +2649,22 @@ const orderTotal = computed(() => {
   return grandTotal.value;
 });
 
-const dueAmount = computed(() => {
-  const total = grandTotal.value || 0;
-  const paid = totalPaidAmount.value || 0;
-  return Math.max(0, total - paid);
+const remainingBillDue = computed(() => {
+  return Math.max(0, grandTotal.value - directPaymentsSum.value);
 });
 
 const advanceToApply = computed(() => {
   if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
   const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
-  return Math.min(advanceBal, Math.max(0, grandTotal.value));
+  return Math.min(advanceBal, remainingBillDue.value);
 });
 
 const effectiveDueAmount = computed(() => {
-  if (useAdvanceBalance.value) {
-    return Math.max(0, grandTotal.value - advanceToApply.value);
-  }
-  return grandTotal.value;
+  return Math.max(0, remainingBillDue.value - advanceToApply.value);
+});
+
+const dueAmount = computed(() => {
+  return effectiveDueAmount.value;
 });
 
 watch(grandTotal, (newGrandTotal) => {
@@ -2973,8 +3175,8 @@ const saveOrder = async () => {
     const orderData = {
       supplier_id: orderForm.value.supplier_id,
       po_number: orderForm.value.po_number || null,
-      warehouse_id: selectedGlobalWarehouseIds.value[0] || 1,
-      warehouse_ids: selectedGlobalWarehouseIds.value,
+      warehouse_id: selectedGlobalWarehouseIds.value[0] || (warehouses.value[0]?.id || null),
+      warehouse_ids: selectedGlobalWarehouseIds.value.length > 0 ? selectedGlobalWarehouseIds.value : (warehouses.value[0] ? [warehouses.value[0].id] : []),
       order_date: orderForm.value.order_date,
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
       tax_amount: orderForm.value.tax_amount || 0,
@@ -2996,7 +3198,16 @@ const saveOrder = async () => {
           account_name: cashAccount.value?.account_name || 'Cash Vault',
           amount: parseFloat(paymentAmounts.value.cash) || 0
         }] : []),
-        ...(selectedPaymentMethods.value.includes('card') || selectedPaymentMethods.value.includes('bank_transfer') ? selectedBankIds.value.map(bankId => {
+        ...(selectedPaymentMethods.value.includes('card') ? selectedCardIds.value.map(cardId => {
+          const card = (allAccounts.value || []).find(b => b.id == cardId);
+          return {
+            payment_method: 'card',
+            bank_account_id: cardId,
+            account_name: card ? (card.account_name || card.bank_name) : `Card #${cardId}`,
+            amount: parseFloat(cardPaymentAmounts.value[cardId]) || 0
+          };
+        }).filter(p => p.amount > 0) : []),
+        ...(selectedPaymentMethods.value.includes('bank_transfer') ? selectedBankIds.value.map(bankId => {
           const bank = (allAccounts.value || []).find(b => b.id == bankId);
           return {
             payment_method: 'bank_transfer',

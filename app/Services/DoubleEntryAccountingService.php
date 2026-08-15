@@ -1988,7 +1988,13 @@ class DoubleEntryAccountingService
 
         $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
 
-        $apAcc = Account::where('company_id', $companyId)->where('account_code', '20100')->first();
+        $apAcc = Account::where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '20100')
+                  ->orWhere('account_code', '2010')
+                  ->orWhere('account_name', 'LIKE', '%Accounts Payable%')
+                  ->orWhere('account_name', 'LIKE', '%Payable%');
+            })->first();
         $payableAccountId = $apAcc?->id;
 
         $vendorAdvanceAcc = Account::where('company_id', $companyId)
@@ -2026,8 +2032,8 @@ class DoubleEntryAccountingService
                 'status' => 'posted',
                 'total_debit' => $advanceApplied,
                 'total_credit' => $advanceApplied,
-                'created_by' => auth()->id() ?? 1,
-                'posted_by' => auth()->id() ?? 1,
+                'created_by' => auth()->id() ?? $purchaseOrder->user_id ?? \App\Models\User::first()?->id ?? 1,
+                'posted_by' => auth()->id() ?? $purchaseOrder->user_id ?? \App\Models\User::first()?->id ?? 1,
                 'posted_at' => now(),
                 'source_type' => 'purchase_order',
                 'source_id' => $purchaseOrder->id,

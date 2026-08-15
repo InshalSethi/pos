@@ -411,77 +411,346 @@
                     <td class="w-[40px]"></td>
                   </tr>
 
-                  <!-- 6. Payment Method & Payment Amount -->
+                  <!-- 6. Payment Details & Split Multi-Payment Methods -->
                   <tr class="bg-slate-50/90 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
-                    <td colspan="5" class="p-3">
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                        <!-- Payment Method Custom Dropup -->
-                        <div class="relative w-full" id="payment-method-dropdown-container">
-                          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Method</label>
+                    <td colspan="5" class="p-4">
+                      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-left">
+                        <!-- Left Col: Multi-Select Payment Method Dropdowns -->
+                        <div class="md:col-span-4 space-y-3">
+                          <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs">Payment Method(s):</label>
                           
-                          <button
-                            type="button"
-                            @click.stop="isPaymentDropdownOpen = !isPaymentDropdownOpen"
-                            class="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer flex justify-between items-center shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none"
-                          >
-                            <span class="capitalize">{{ getSelectedPaymentMethodLabel(orderForm.payment_method) }}</span>
-                            <svg class="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isPaymentDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
+                          <!-- Row 1: Payment Method Selector -->
+                          <div class="relative w-full" id="payment-method-dropdown-container">
+                            <button
+                              type="button"
+                              @click.stop="isPaymentDropdownOpen = !isPaymentDropdownOpen"
+                              class="w-full px-3 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10"
+                            >
+                              <span class="truncate">{{ getSelectedPaymentMethodsLabel() }}</span>
+                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isPaymentDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
 
-                          <!-- Floating Custom Dropup Menu (Opens UPWARD) -->
-                          <transition
-                            enter-active-class="transition duration-150 ease-out"
-                            enter-from-class="transform opacity-0 scale-95 translate-y-2"
-                            enter-to-class="transform opacity-100 scale-100 translate-y-0"
-                            leave-active-class="transition duration-100 ease-in"
-                            leave-from-class="transform opacity-100 scale-100 translate-y-0"
-                            leave-to-class="transform opacity-0 scale-95 translate-y-2"
-                          >
+                            <!-- Payment Methods Dropup List -->
                             <div
                               v-if="isPaymentDropdownOpen"
-                              class="absolute bottom-full mb-1.5 left-0 w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700/80 rounded-xl shadow-2xl overflow-hidden py-1 z-50 max-h-52 overflow-y-auto custom-scrollbar backdrop-blur-md"
+                              class="absolute bottom-full mb-2 left-0 w-full bg-white dark:bg-zinc-900 shadow-2xl rounded-xl border border-slate-200 dark:border-zinc-700/80 py-1 text-xs overflow-hidden z-[9999]"
                             >
+                              <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex justify-between items-center select-none">
+                                <span>Select Payment Method(s)</span>
+                                <span class="text-indigo-600 dark:text-indigo-400 font-black">
+                                  {{ selectedPaymentMethods.length }} Selected
+                                </span>
+                              </div>
                               <div
-                                v-for="pm in paymentMethodsList"
-                                :key="pm.value"
-                                @click.stop="selectPaymentMethod(pm.value)"
-                                class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between text-xs transition-colors border-b border-slate-50 dark:border-zinc-800/40 last:border-0"
-                                :class="orderForm.payment_method === pm.value ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-extrabold' : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 font-medium'"
+                                v-for="pm in availablePaymentMethods"
+                                :key="pm.id"
+                                @click.stop="togglePaymentMethod(pm.id)"
+                                class="px-3 py-2.5 cursor-pointer flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
+                                :class="selectedPaymentMethods.includes(pm.id) ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold' : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60'"
                               >
-                                <span>{{ pm.label }}</span>
-                                <svg v-if="orderForm.payment_method === pm.value" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <div class="flex items-center gap-2.5 truncate">
+                                  <input
+                                    type="checkbox"
+                                    :checked="selectedPaymentMethods.includes(pm.id)"
+                                    class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                                  />
+                                  <span class="truncate font-semibold">{{ pm.label }}</span>
+                                </div>
+                                <span v-if="selectedPaymentMethods.includes(pm.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
+                                  Active
+                                </span>
                               </div>
                             </div>
-                          </transition>
-                        </div>
-                        <div>
-                          <label class="block text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Payment Amount</label>
-                          <div class="relative">
-                            <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs font-bold">{{ currencySymbol }}</span>
-                            <input
-                              v-model.number="orderForm.amount_paid"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              class="w-full pl-7 pr-3 py-1.5 border rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
-                              :class="isEditPaymentBalanceExceeded ? 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500 ring-1 ring-rose-500/30' : 'border-slate-300 dark:border-zinc-700'"
-                              :placeholder="grandTotal.toFixed(2)"
-                            />
                           </div>
-                          <!-- Available Balance & Insufficient Balance Error Message -->
-                          <div class="text-[11px] font-semibold text-left px-1 mt-1">
-                            <span v-if="selectedAccountAvailableBalance !== null" :class="isEditPaymentBalanceExceeded ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
-                              Available Balance: {{ currencySymbol }}{{ selectedAccountAvailableBalance.toFixed(2) }}
-                            </span>
-                            <div v-if="isEditPaymentBalanceExceeded" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
-                              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+
+                          <!-- Row 2: Sub-dropdown for Card Accounts Selection (ONLY for Card) -->
+                          <div v-if="selectedPaymentMethods.includes('card')" class="relative w-full" id="card-dropdown-container">
+                            <button
+                              type="button"
+                              @click.stop="isCardDropdownOpen = !isCardDropdownOpen"
+                              class="w-full px-3 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10 min-w-0"
+                              :title="getSelectedCardsLabel()"
+                            >
+                              <span class="truncate min-w-0 pr-1 flex-1">{{ getSelectedCardsLabel() }}</span>
+                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200 ml-1" :class="{ 'rotate-180': isCardDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                               </svg>
-                              <span>Insufficient balance! Available: {{ currencySymbol }}{{ selectedAccountAvailableBalance.toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (orderForm.amount_paid || 0).toFixed(2) }}</span>
+                            </button>
+
+                            <!-- Card Accounts Dropup List -->
+                            <div
+                              v-if="isCardDropdownOpen"
+                              class="absolute bottom-full mb-2 left-0 w-full bg-white dark:bg-zinc-900 shadow-2xl rounded-xl border border-slate-200 dark:border-zinc-700/80 py-1 text-xs overflow-hidden z-[9999]"
+                            >
+                              <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex justify-between items-center select-none">
+                                <span>Select Card Account(s)</span>
+                                <span class="text-indigo-600 dark:text-indigo-400 font-black">
+                                  {{ selectedCardIds.length }} Selected
+                                </span>
+                              </div>
+                              <div v-if="activeCardAccounts.length === 0" class="px-3 py-3 text-slate-400 text-center text-xs">
+                                No card accounts available
+                              </div>
+                              <div
+                                v-for="card in activeCardAccounts"
+                                :key="card.id"
+                                @click.stop="isBankAccountInactive(card) ? null : toggleCardSelection(card.id)"
+                                class="px-3 py-2.5 flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
+                                :class="[
+                                  isBankAccountInactive(card)
+                                    ? 'opacity-50 cursor-not-allowed bg-slate-100/60 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500'
+                                    : (selectedCardIds.includes(card.id)
+                                        ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold cursor-pointer'
+                                        : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 cursor-pointer')
+                                ]"
+                              >
+                                <div class="flex items-center gap-2.5 truncate min-w-0">
+                                  <input
+                                    type="checkbox"
+                                    :checked="selectedCardIds.includes(card.id)"
+                                    :disabled="isBankAccountInactive(card)"
+                                    class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none shrink-0"
+                                  />
+                                  <div class="truncate min-w-0">
+                                    <span class="truncate font-semibold block">
+                                      {{ formatBankAccountLabel(card) }}
+                                      <span v-if="isBankAccountInactive(card)" class="text-rose-500 font-bold ml-1 text-[11px]">(Inactive)</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 block font-normal truncate">{{ card.bank_name || card.account_name }}{{ (card.masked_account_number || getMaskedAccountNumber(card.account_number)) ? ' ' + (card.masked_account_number || getMaskedAccountNumber(card.account_number)) : '' }}</span>
+                                  </div>
+                                </div>
+                                <span v-if="isBankAccountInactive(card)" class="text-[9px] font-black uppercase tracking-wider text-slate-500 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-slate-300 dark:border-zinc-700 shrink-0 ml-2">
+                                  Inactive
+                                </span>
+                                <span v-else-if="selectedCardIds.includes(card.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
+                                  Selected
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Row 3: Sub-dropdown for Bank Accounts Selection (ONLY for Bank Transfer) -->
+                          <div v-if="selectedPaymentMethods.includes('bank_transfer')" class="relative w-full" id="bank-dropdown-container">
+                            <button
+                              type="button"
+                              @click.stop="isBankDropdownOpen = !isBankDropdownOpen"
+                              class="w-full px-3 border border-slate-300 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer text-left flex justify-between items-center text-xs font-bold shadow-xs hover:border-slate-400 dark:hover:border-zinc-600 transition-all select-none h-10 min-w-0"
+                              :title="getSelectedBanksLabel()"
+                            >
+                              <span class="truncate min-w-0 pr-1 flex-1">{{ getSelectedBanksLabel() }}</span>
+                              <svg class="h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200 ml-1" :class="{ 'rotate-180': isBankDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+
+                            <!-- Bank Accounts Dropup List -->
+                            <div
+                              v-if="isBankDropdownOpen"
+                              class="absolute bottom-full mb-2 left-0 w-full bg-white dark:bg-zinc-900 shadow-2xl rounded-xl border border-slate-200 dark:border-zinc-700/80 py-1 text-xs overflow-hidden z-[9999]"
+                            >
+                              <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex justify-between items-center select-none">
+                                <span>Select Bank Account(s)</span>
+                                <span class="text-indigo-600 dark:text-indigo-400 font-black">
+                                  {{ selectedBankIds.length }} Selected
+                                </span>
+                              </div>
+                              <div v-if="activeBankAccounts.length === 0" class="px-3 py-3 text-slate-400 text-center text-xs">
+                                No bank accounts available
+                              </div>
+                              <div
+                                v-for="bank in activeBankAccounts"
+                                :key="bank.id"
+                                @click.stop="isBankAccountInactive(bank) ? null : toggleBankSelection(bank.id)"
+                                class="px-3 py-2.5 flex items-center justify-between transition-colors border-b border-slate-100 dark:border-zinc-800/60 last:border-0 select-none"
+                                :class="[
+                                  isBankAccountInactive(bank)
+                                    ? 'opacity-50 cursor-not-allowed bg-slate-100/60 dark:bg-zinc-800/40 text-slate-400 dark:text-zinc-500'
+                                    : (selectedBankIds.includes(bank.id)
+                                        ? 'bg-indigo-50/80 dark:bg-zinc-800 text-indigo-700 dark:text-indigo-400 font-extrabold cursor-pointer'
+                                        : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 cursor-pointer')
+                                ]"
+                              >
+                                <div class="flex items-center gap-2.5 truncate min-w-0">
+                                  <input
+                                    type="checkbox"
+                                    :checked="selectedBankIds.includes(bank.id)"
+                                    :disabled="isBankAccountInactive(bank)"
+                                    class="w-4 h-4 rounded border-slate-300 dark:border-zinc-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none shrink-0"
+                                  />
+                                  <div class="truncate min-w-0">
+                                    <span class="truncate font-semibold block">
+                                      {{ formatBankAccountLabel(bank) }}
+                                      <span v-if="isBankAccountInactive(bank)" class="text-rose-500 font-bold ml-1 text-[11px]">(Inactive)</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 block font-normal truncate">{{ bank.bank_name || bank.account_name }}{{ (bank.masked_account_number || getMaskedAccountNumber(bank.account_number)) ? ' ' + (bank.masked_account_number || getMaskedAccountNumber(bank.account_number)) : '' }}</span>
+                                  </div>
+                                </div>
+                                <span v-if="isBankAccountInactive(bank)" class="text-[9px] font-black uppercase tracking-wider text-slate-500 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-slate-300 dark:border-zinc-700 shrink-0 ml-2">
+                                  Inactive
+                                </span>
+                                <span v-else-if="selectedBankIds.includes(bank.id)" class="text-[9px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-zinc-950 px-2 py-0.5 rounded-md border border-indigo-300 dark:border-indigo-500/40 shadow-2xs shrink-0 ml-2">
+                                  Selected
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Middle Col: Dynamic Pay Amount Input Fields -->
+                        <div class="md:col-span-5 space-y-3">
+                          <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs">Pay Amount(s):</label>
+                          <div class="space-y-3">
+                            <!-- Cash Amount Input -->
+                            <div v-if="selectedPaymentMethods.includes('cash')" class="space-y-1">
+                              <div
+                                class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border shadow-2xs shrink-0 transition-colors"
+                                :class="isCashBalanceExceeded ? 'border-rose-500 ring-1 ring-rose-500/30 dark:border-rose-500' : 'border-slate-200 dark:border-zinc-750'"
+                              >
+                                <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left">
+                                  Cash
+                                </label>
+                                <div class="relative w-24 shrink-0">
+                                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                  <input
+                                    v-model.number="paymentAmounts.cash"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7"
+                                    :class="{ 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500': isCashBalanceExceeded }"
+                                  />
+                                </div>
+                              </div>
+                              <!-- Available Balance & Insufficient Error Message -->
+                              <div class="text-[11px] font-semibold text-left px-1">
+                                <span v-if="cashAvailableBalance !== null" :class="isCashBalanceExceeded ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                                  Available Balance: {{ currencySymbol }}{{ cashAvailableBalance.toFixed(2) }}
+                                </span>
+                                <div v-if="isCashBalanceExceeded" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                  <span>Insufficient balance! Available: {{ currencySymbol }}{{ cashAvailableBalance.toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (paymentAmounts.cash || 0).toFixed(2) }}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Card Amount Inputs -->
+                            <template v-if="selectedPaymentMethods.includes('card')">
+                              <div
+                                v-for="cardId in selectedCardIds"
+                                :key="cardId"
+                                class="space-y-1"
+                              >
+                                <div
+                                  class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border shadow-2xs shrink-0 transition-colors"
+                                  :class="isBankBalanceExceeded(cardId) ? 'border-rose-500 ring-1 ring-rose-500/30 dark:border-rose-500' : 'border-slate-200 dark:border-zinc-750'"
+                                >
+                                  <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left flex items-center gap-1.5" :title="formatBankAccountLabel(allAccounts.find(b => b.id == cardId))">
+                                    <span>{{ formatBankAccountLabel(allAccounts.find(b => b.id == cardId)) }}</span>
+                                    <span v-if="isBankAccountInactive(cardId)" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                      (Inactive)
+                                    </span>
+                                  </label>
+                                  <div class="relative w-24 shrink-0">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                    <input
+                                      v-model.number="cardPaymentAmounts[cardId]"
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      :disabled="isBankAccountInactive(cardId)"
+                                      :readonly="isBankAccountInactive(cardId)"
+                                      :tabindex="isBankAccountInactive(cardId) ? -1 : 0"
+                                      class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7 disabled:opacity-60 disabled:bg-slate-200/50 dark:disabled:bg-zinc-800/50 disabled:cursor-not-allowed disabled:text-slate-400 select-none"
+                                      :class="{ 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500': isBankBalanceExceeded(cardId) }"
+                                    />
+                                  </div>
+                                </div>
+                                <!-- Available Balance & Insufficient Error Message -->
+                                <div class="text-[11px] font-semibold text-left px-1">
+                                  <span :class="isBankBalanceExceeded(cardId) ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                                    Available Balance: {{ currencySymbol }}{{ getBankAccountBalance(cardId).toFixed(2) }}
+                                  </span>
+                                  <div v-if="isBankBalanceExceeded(cardId)" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span>Insufficient balance! Available: {{ currencySymbol }}{{ getBankAccountBalance(cardId).toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (cardPaymentAmounts[cardId] || 0).toFixed(2) }}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+
+                            <!-- Bank Amount Inputs -->
+                            <template v-if="selectedPaymentMethods.includes('bank_transfer')">
+                              <div
+                                v-for="bankId in selectedBankIds"
+                                :key="bankId"
+                                class="space-y-1"
+                              >
+                                <div
+                                  class="flex items-center justify-between gap-3 h-10 bg-white dark:bg-zinc-900 px-3.5 rounded-xl border shadow-2xs shrink-0 transition-colors"
+                                  :class="isBankBalanceExceeded(bankId) ? 'border-rose-500 ring-1 ring-rose-500/30 dark:border-rose-500' : 'border-slate-200 dark:border-zinc-750'"
+                                >
+                                  <label class="text-xs font-bold text-slate-700 dark:text-zinc-300 truncate min-w-0 flex-1 text-left flex items-center gap-1.5" :title="formatBankAccountLabel(allAccounts.find(b => b.id == bankId))">
+                                    <span>{{ formatBankAccountLabel(allAccounts.find(b => b.id == bankId)) }}</span>
+                                    <span v-if="isBankAccountInactive(bankId)" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                      (Inactive)
+                                    </span>
+                                  </label>
+                                  <div class="relative w-24 shrink-0">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ currencySymbol }}</span>
+                                    <input
+                                      v-model.number="bankPaymentAmounts[bankId]"
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      :disabled="isBankAccountInactive(bankId)"
+                                      :readonly="isBankAccountInactive(bankId)"
+                                      :tabindex="isBankAccountInactive(bankId) ? -1 : 0"
+                                      class="w-full pl-6 pr-2 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-black text-emerald-600 dark:text-emerald-400 bg-slate-50/50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-7 disabled:opacity-60 disabled:bg-slate-200/50 dark:disabled:bg-zinc-800/50 disabled:cursor-not-allowed disabled:text-slate-400 select-none"
+                                      :class="{ 'border-rose-500 text-rose-600 dark:text-rose-400 focus:ring-rose-500': isBankBalanceExceeded(bankId) }"
+                                    />
+                                  </div>
+                                </div>
+                                <!-- Available Balance & Insufficient Error Message -->
+                                <div class="text-[11px] font-semibold text-left px-1">
+                                  <span :class="isBankBalanceExceeded(bankId) ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'">
+                                    Available Balance: {{ currencySymbol }}{{ getBankAccountBalance(bankId).toFixed(2) }}
+                                  </span>
+                                  <div v-if="isBankBalanceExceeded(bankId)" class="text-rose-600 dark:text-rose-400 font-extrabold text-[11px] mt-0.5 animate-pulse flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span>Insufficient balance! Available: {{ currencySymbol }}{{ getBankAccountBalance(bankId).toFixed(2) }}, Attempted: {{ currencySymbol }}{{ (bankPaymentAmounts[bankId] || 0).toFixed(2) }}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+
+                        <!-- Right Col: Total Paid Summary Cards -->
+                        <div class="md:col-span-3 space-y-3">
+                          <label class="block text-slate-500 dark:text-zinc-400 font-bold text-xs">Payment Summary:</label>
+                          <div class="space-y-3">
+                            <!-- Row 1 Card: Total Paid -->
+                            <div class="flex items-center justify-between h-10 px-3.5 rounded-xl bg-slate-100/90 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-300 shadow-2xs">
+                              <span>Total Paid:</span>
+                              <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{{ currencySymbol }}{{ totalPaidAmount.toFixed(2) }}</span>
+                            </div>
+
+                            <!-- Row 2 Card: Change / Excess or Remaining Due -->
+                            <div v-if="totalPaidAmount >= grandTotal" class="flex items-center justify-between h-10 px-3.5 rounded-xl bg-emerald-50/80 dark:bg-zinc-900 border border-emerald-200/80 dark:border-zinc-800 text-xs font-semibold text-emerald-600 dark:text-emerald-400 shadow-2xs">
+                              <span>Change / Excess:</span>
+                              <span class="font-extrabold">{{ currencySymbol }}{{ (totalPaidAmount - grandTotal).toFixed(2) }}</span>
+                            </div>
+                            <div v-else class="flex items-center justify-between h-10 px-3.5 rounded-xl bg-amber-50/80 dark:bg-zinc-900 border border-amber-200/80 dark:border-zinc-800 text-xs font-semibold text-amber-600 dark:text-amber-400 shadow-2xs">
+                              <span>Remaining Due:</span>
+                              <span class="font-extrabold">{{ currencySymbol }}{{ (grandTotal - totalPaidAmount).toFixed(2) }}</span>
                             </div>
                           </div>
                         </div>
@@ -2096,24 +2365,239 @@ const orderTotal = computed(() => {
   return grandTotal.value;
 });
 
+// Multi-Payment Split State
+const selectedPaymentMethods = ref(['cash']);
+const isBankDropdownOpen = ref(false);
+const selectedBankIds = ref([]);
+const paymentAmounts = ref({ cash: 0 });
+const bankPaymentAmounts = ref({});
+
+const availablePaymentMethods = [
+  { id: 'cash', label: 'Cash' },
+  { id: 'card', label: 'Card' },
+  { id: 'bank_transfer', label: 'Bank Transfer' }
+];
+
+const togglePaymentMethod = (methodId) => {
+  if (selectedPaymentMethods.value.includes(methodId)) {
+    if (selectedPaymentMethods.value.length === 1) return;
+    selectedPaymentMethods.value = selectedPaymentMethods.value.filter(m => m !== methodId);
+    if (methodId === 'cash') {
+      paymentAmounts.value.cash = 0;
+    } else if (methodId === 'card') {
+      paymentAmounts.value.card = 0;
+    } else if (methodId === 'bank_transfer') {
+      selectedBankIds.value = [];
+      bankPaymentAmounts.value = {};
+    }
+  } else {
+    selectedPaymentMethods.value.push(methodId);
+    if (methodId === 'bank_transfer') {
+      if (selectedBankIds.value.length === 0 && activeBankAccounts.value.length > 0) {
+        const defaultBank = activeBankAccounts.value.find(b => b.is_default) || activeBankAccounts.value[0];
+        if (defaultBank && !isBankAccountInactive(defaultBank)) {
+          selectedBankIds.value.push(defaultBank.id);
+        }
+      }
+    } else if (methodId === 'card') {
+      if (paymentAmounts.value.card === undefined) {
+        paymentAmounts.value.card = 0;
+      }
+    }
+  }
+};
+
+const toggleBankSelection = (bankId) => {
+  const bank = (allAccounts.value || []).find(b => b.id == bankId);
+  if (bank && isBankAccountInactive(bank)) return;
+
+  if (selectedBankIds.value.includes(bankId)) {
+    selectedBankIds.value = selectedBankIds.value.filter(id => id !== bankId);
+    delete bankPaymentAmounts.value[bankId];
+  } else {
+    selectedBankIds.value.push(bankId);
+  }
+};
+
+const getSelectedPaymentMethodsLabel = () => {
+  if (selectedPaymentMethods.value.length === 0) return 'Select Payment Method(s)';
+  const labels = selectedPaymentMethods.value.map(m => {
+    const found = availablePaymentMethods.find(p => p.id === m);
+    return found ? found.label : m;
+  });
+  return labels.join(', ');
+};
+
+const getSelectedBanksLabel = () => {
+  const selected = (allAccounts.value || []).filter(b => selectedBankIds.value.includes(b.id));
+  if (selected.length === 0) return 'Select Bank Account(s)';
+  if (selected.length === 1) {
+    const acc = selected[0];
+    return formatBankAccountLabel(acc);
+  }
+  return `${selected.length} Bank Accounts Selected`;
+};
+
+const formatBankAccountLabel = (acc) => {
+  if (!acc) return 'Bank Account';
+  const namePart = acc.account_name || acc.bank_name || 'Bank';
+  const numPart = acc.masked_account_number || getMaskedAccountNumber(acc.account_number);
+  return numPart ? `${namePart} ${numPart}` : namePart;
+};
+
+const getMaskedAccountNumber = (accNum) => {
+  if (!accNum) return '';
+  const str = String(accNum);
+  if (str.length <= 4) return `****${str}`;
+  return `****${str.slice(-4)}`;
+};
+
+const activeBankAccounts = computed(() => {
+  const banks = (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return type !== 'credit_card' && type !== 'card';
+  });
+  if (banks.length > 0) return banks;
+  return (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return true;
+  });
+});
+
+const activeCardAccounts = computed(() => {
+  const cards = (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return type === 'credit_card' || type === 'card' || name.includes('card') || name.includes('credit');
+  });
+  if (cards.length > 0) return cards;
+  return (allAccounts.value || []).filter(account => {
+    const type = (account.type || account.account_type || '').toLowerCase();
+    const name = (account.account_name || account.bank_name || '').toLowerCase();
+    if (type === 'cash' || name.includes('cash') || name.includes('vault')) return false;
+    if (isBankAccountInactive(account)) return false;
+    return true;
+  });
+});
+
+const selectedCardIds = ref([]);
+const cardPaymentAmounts = ref({});
+const isCardDropdownOpen = ref(false);
+
+const isBankAccountInactive = (bank) => {
+  if (!bank) return false;
+  if (typeof bank === 'object') {
+    return bank.is_active === false || bank.is_active === 0 || bank.status === 'inactive' || bank.status === 0;
+  }
+  const found = (allAccounts.value || []).find(b => b.id == bank);
+  if (found) {
+    return found.is_active === false || found.is_active === 0 || found.status === 'inactive' || found.status === 0;
+  }
+  return false;
+};
+
+const toggleCardSelection = (cardId) => {
+  const bank = (allAccounts.value || []).find(b => b.id == cardId);
+  if (bank && isBankAccountInactive(bank)) return;
+
+  if (selectedCardIds.value.includes(cardId)) {
+    selectedCardIds.value = selectedCardIds.value.filter(id => id !== cardId);
+    delete cardPaymentAmounts.value[cardId];
+  } else {
+    selectedCardIds.value.push(cardId);
+  }
+};
+
+const getSelectedCardsLabel = () => {
+  const selected = (allAccounts.value || []).filter(b => selectedCardIds.value.includes(b.id));
+  if (selected.length === 0) return 'Select Card Account(s)';
+  if (selected.length === 1) {
+    const acc = selected[0];
+    return formatBankAccountLabel(acc);
+  }
+  return `${selected.length} Card Accounts Selected`;
+};
+
+const getBankAccountBalance = (bankId) => {
+  const bank = (allAccounts.value || []).find(b => b.id == bankId);
+  if (!bank) return 0;
+  return parseFloat(bank.current_balance !== undefined && bank.current_balance !== null ? bank.current_balance : (bank.opening_balance || 0));
+};
+
+const cashAccount = computed(() => {
+  return (allAccounts.value || []).find(acc => {
+    const type = (acc.type || acc.account_type || '').toLowerCase();
+    const name = (acc.account_name || acc.bank_name || '').toLowerCase();
+    return type === 'cash' || name.includes('cash') || name.includes('vault');
+  });
+});
+
+const cashAvailableBalance = computed(() => {
+  if (!cashAccount.value) return 0;
+  return parseFloat(cashAccount.value.current_balance !== undefined && cashAccount.value.current_balance !== null ? cashAccount.value.current_balance : (cashAccount.value.opening_balance || 0));
+});
+
+const isCashBalanceExceeded = computed(() => {
+  if (!selectedPaymentMethods.value.includes('cash')) return false;
+  const cashAmt = parseFloat(paymentAmounts.value.cash) || 0;
+  if (cashAmt <= 0) return false;
+  return cashAmt > cashAvailableBalance.value;
+});
+
+const isBankBalanceExceeded = (bankId) => {
+  if (!selectedPaymentMethods.value.includes('card') && !selectedPaymentMethods.value.includes('bank_transfer')) return false;
+  const bankAmt = parseFloat(bankPaymentAmounts.value[bankId] !== undefined ? bankPaymentAmounts.value[bankId] : cardPaymentAmounts.value[bankId]) || 0;
+  if (bankAmt <= 0) return false;
+  const avail = getBankAccountBalance(bankId);
+  return bankAmt > avail;
+};
+
+const directPaymentsSum = computed(() => {
+  let sum = 0;
+  if (selectedPaymentMethods.value.includes('cash')) {
+    sum += parseFloat(paymentAmounts.value.cash) || 0;
+  }
+  if (selectedPaymentMethods.value.includes('card')) {
+    selectedCardIds.value.forEach(cardId => {
+      sum += parseFloat(cardPaymentAmounts.value[cardId]) || 0;
+    });
+  }
+  if (selectedPaymentMethods.value.includes('bank_transfer')) {
+    selectedBankIds.value.forEach(bankId => {
+      sum += parseFloat(bankPaymentAmounts.value[bankId]) || 0;
+    });
+  }
+  return sum;
+});
+
+const totalPaidAmount = computed(() => {
+  return directPaymentsSum.value;
+});
+
+const remainingBillDue = computed(() => {
+  return Math.max(0, grandTotal.value - directPaymentsSum.value);
+});
+
 const dueAmount = computed(() => {
-  const total = grandTotal.value || 0;
-  const paid = parseFloat(orderForm.value.amount_paid) || 0;
-  return Math.max(0, total - paid);
+  return remainingBillDue.value;
 });
 
 const advanceToApply = computed(() => {
   if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
   const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
-  return Math.min(advanceBal, Math.max(0, grandTotal.value));
+  return Math.min(advanceBal, remainingBillDue.value);
 });
 
 const effectiveDueAmount = computed(() => {
-  const baseDue = dueAmount.value;
-  if (useAdvanceBalance.value) {
-    return Math.max(0, baseDue - advanceToApply.value);
-  }
-  return baseDue;
+  return Math.max(0, remainingBillDue.value - advanceToApply.value);
 });
 
 watch(grandTotal, (newGrandTotal) => {
@@ -2371,6 +2855,59 @@ const fetchPurchaseOrder = async () => {
         syncItemAllocations(mappedItem);
         return mappedItem;
       });
+    }
+
+    // Hydrate payments & split payment methods
+    const paymentsList = po.payments || [];
+    if (Array.isArray(paymentsList) && paymentsList.length > 0) {
+      const methods = new Set();
+      const bankIds = new Set();
+      const cardIds = new Set();
+
+      paymentsList.forEach(p => {
+        const method = (p.payment_method || 'cash').toLowerCase();
+        const amt = parseFloat(p.amount) || 0;
+
+        if (method === 'cash') {
+          methods.add('cash');
+          paymentAmounts.value.cash = amt;
+        } else if (method === 'card') {
+          methods.add('card');
+          if (p.bank_account_id) {
+            cardIds.add(p.bank_account_id);
+            cardPaymentAmounts.value[p.bank_account_id] = amt;
+          }
+        } else if (method === 'bank_transfer') {
+          methods.add('bank_transfer');
+          if (p.bank_account_id) {
+            bankIds.add(p.bank_account_id);
+            bankPaymentAmounts.value[p.bank_account_id] = amt;
+          }
+        }
+      });
+
+      if (methods.size > 0) {
+        selectedPaymentMethods.value = Array.from(methods);
+      }
+      if (bankIds.size > 0) {
+        selectedBankIds.value = Array.from(bankIds);
+      }
+      if (cardIds.size > 0) {
+        selectedCardIds.value = Array.from(cardIds);
+      }
+    } else {
+      const amtPaid = parseFloat(po.amount_paid) || 0;
+      if (amtPaid > 0) {
+        selectedPaymentMethods.value = ['cash'];
+        paymentAmounts.value.cash = amtPaid;
+      }
+    }
+
+    // Hydrate useAdvanceBalance
+    if (po.use_advance_balance || (parseFloat(po.advance_applied) || 0) > 0) {
+      useAdvanceBalance.value = true;
+    } else {
+      useAdvanceBalance.value = false;
     }
 
   } catch (err) {
@@ -2641,6 +3178,59 @@ const closeSupplierModal = () => {
 };
 
 const updateOrder = async () => {
+    // Hydrate payments & split payment methods
+    const paymentsList = purchaseOrder.value?.payments || [];
+    if (Array.isArray(paymentsList) && paymentsList.length > 0) {
+      const methods = new Set();
+      const bankIds = new Set();
+      const cardIds = new Set();
+
+      paymentsList.forEach(p => {
+        const method = (p.payment_method || 'cash').toLowerCase();
+        const amt = parseFloat(p.amount) || 0;
+
+        if (method === 'cash') {
+          methods.add('cash');
+          paymentAmounts.value.cash = amt;
+        } else if (method === 'card') {
+          methods.add('card');
+          if (p.bank_account_id) {
+            cardIds.add(p.bank_account_id);
+            cardPaymentAmounts.value[p.bank_account_id] = amt;
+          }
+        } else if (method === 'bank_transfer') {
+          methods.add('bank_transfer');
+          if (p.bank_account_id) {
+            bankIds.add(p.bank_account_id);
+            bankPaymentAmounts.value[p.bank_account_id] = amt;
+          }
+        }
+      });
+
+      if (methods.size > 0) {
+        selectedPaymentMethods.value = Array.from(methods);
+      }
+      if (bankIds.size > 0) {
+        selectedBankIds.value = Array.from(bankIds);
+      }
+      if (cardIds.size > 0) {
+        selectedCardIds.value = Array.from(cardIds);
+      }
+    } else {
+      const amtPaid = parseFloat(purchaseOrder.value?.amount_paid) || 0;
+      if (amtPaid > 0) {
+        selectedPaymentMethods.value = ['cash'];
+        paymentAmounts.value.cash = amtPaid;
+      }
+    }
+
+    // Hydrate useAdvanceBalance
+    if (purchaseOrder.value?.use_advance_balance || (parseFloat(purchaseOrder.value?.advance_applied) || 0) > 0) {
+      useAdvanceBalance.value = true;
+    } else {
+      useAdvanceBalance.value = false;
+    }
+
   if (!selectedSupplier.value) {
     showNotification('Please select a supplier', 'error');
     return;
@@ -2651,7 +3241,7 @@ const updateOrder = async () => {
     return;
   }
 
-  if (isEditPaymentBalanceExceeded.value) {
+  if (hasInsufficientPaymentBalance.value) {
     showNotification('Cannot update purchase order: Insufficient balance in selected payment account', 'error');
     return;
   }
@@ -2666,11 +3256,42 @@ const updateOrder = async () => {
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
-      amount_paid: orderForm.value.amount_paid || 0,
+      amount_paid: totalPaidAmount.value || 0,
       use_advance_balance: useAdvanceBalance.value,
       advance_applied: advanceToApply.value,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
+      payment_details: [
+        ...(useAdvanceBalance.value && advanceToApply.value > 0 ? [{
+          payment_method: 'vendor_advance',
+          account_id: 'COA_10500',
+          amount: parseFloat(advanceToApply.value) || 0
+        }] : []),
+        ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{
+          payment_method: 'cash',
+          bank_account_id: cashAccount.value?.id || null,
+          account_name: cashAccount.value?.account_name || 'Cash Vault',
+          amount: parseFloat(paymentAmounts.value.cash) || 0
+        }] : []),
+        ...(selectedPaymentMethods.value.includes('card') ? selectedCardIds.value.map(cardId => {
+          const card = (allAccounts.value || []).find(b => b.id == cardId);
+          return {
+            payment_method: 'card',
+            bank_account_id: cardId,
+            account_name: card ? (card.account_name || card.bank_name) : `Card #${cardId}`,
+            amount: parseFloat(cardPaymentAmounts.value[cardId]) || 0
+          };
+        }).filter(p => p.amount > 0) : []),
+        ...(selectedPaymentMethods.value.includes('bank_transfer') ? selectedBankIds.value.map(bankId => {
+          const bank = (allAccounts.value || []).find(b => b.id == bankId);
+          return {
+            payment_method: 'bank_transfer',
+            bank_account_id: bankId,
+            account_name: bank ? (bank.account_name || bank.bank_name) : `Bank #${bankId}`,
+            amount: parseFloat(bankPaymentAmounts.value[bankId]) || 0
+          };
+        }).filter(p => p.amount > 0) : [])
+      ],
       items: orderItems.value.map(item => ({
         product_id: item.product_id,
         quantity_ordered: item.quantity_ordered,
