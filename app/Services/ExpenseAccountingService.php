@@ -481,6 +481,7 @@ class ExpenseAccountingService
         $month = Carbon::now()->format('m');
         
         $lastEntry = JournalEntry::whereYear('created_at', $year)
+            ->where('entry_number', 'like', $prefix . '%')
                                 ->whereMonth('created_at', $month)
                                 ->orderBy('id', 'desc')
                                 ->first();

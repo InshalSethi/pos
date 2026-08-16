@@ -203,6 +203,7 @@ class PaymentReceiptController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('PaymentReceiptController store error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             $statusCode = str_contains($e->getMessage(), 'Insufficient balance') ? 422 : 500;
             return response()->json([
                 'message' => $e->getMessage(),

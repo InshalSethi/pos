@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Events\ExpenseApproved;
 use App\Events\ExpensePaid;
 use App\Events\ExpenseRejected;
@@ -37,6 +38,18 @@ class AppServiceProvider extends ServiceProvider
             }
             return null;
         });
+
+        // Enforce morph map for polymorphic relationships
+        Relation::enforceMorphMap([
+            'customer' => \App\Models\Customer::class,
+            'supplier' => \App\Models\Supplier::class,
+            'user' => \App\Models\User::class,
+            'sale' => \App\Models\Sale::class,
+            'purchase' => \App\Models\PurchaseOrder::class,
+            'expense' => \App\Models\Expense::class,
+            'payment' => \App\Models\Payment::class,
+            'payment_receipt' => \App\Models\PaymentReceipt::class,
+        ]);
 
         // Register event listeners for expense accounting
         Event::listen(ExpenseApproved::class, CreateExpenseJournalEntry::class);

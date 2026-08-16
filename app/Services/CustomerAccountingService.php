@@ -342,6 +342,7 @@ class CustomerAccountingService
         $year = Carbon::now()->year;
 
         $lastEntry = JournalEntry::whereYear('created_at', $year)
+            ->where('entry_number', 'like', $prefix . '%')
             ->orderBy('id', 'desc')
             ->first();
 

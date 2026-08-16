@@ -553,7 +553,7 @@ class PaymentReceiptService
     }
 
     /**
-     * Credit customer's wallet balance for unallocated/advance payment receipts on deposit.
+     * Credit customer's wallet balance and allocate to pending sales for customer payment receipts on deposit.
      */
     protected function syncCustomerWalletOnDeposit(PaymentReceipt $receipt): void
     {
@@ -561,14 +561,80 @@ class PaymentReceiptService
             $customer = Customer::find($receipt->payer_id);
             if ($customer) {
                 $allocatedAmount = 0;
+                $finalAllocations = [];
+                
+                // If user provided specific invoice allocations from the frontend
                 if (!empty($receipt->invoice_allocations) && is_array($receipt->invoice_allocations)) {
                     foreach ($receipt->invoice_allocations as $alloc) {
-                        $allocatedAmount += (float) ($alloc['amount'] ?? 0);
+                        $amt = (float) ($alloc['amount'] ?? 0);
+                        $saleId = $alloc['invoice_id'] ?? $alloc['sale_id'] ?? null;
+                        
+                        if ($saleId && $amt > 0) {
+                            $sale = Sale::find($saleId);
+                            if ($sale) {
+                                $due = max(0, (float)$sale->total_amount - (float)$sale->paid_amount);
+                                $deduct = min($amt, $due);
+                                if ($deduct > 0) {
+                                    $sale->paid_amount = (float)$sale->paid_amount + $deduct;
+                                    if ($sale->paid_amount >= $sale->total_amount) {
+                                        $sale->status = 'completed';
+                                    }
+                                    $sale->save();
+                                    $allocatedAmount += $deduct;
+                                    
+                                    $finalAllocations[] = [
+                                        'sale_id' => $sale->id,
+                                        'amount' => $deduct
+                                    ];
+                                }
+                            }
+                        }
                     }
                 }
-                $unallocated = max(0, (float) $receipt->amount - $allocatedAmount);
-                if ($unallocated > 0) {
-                    $customer->creditWallet($unallocated);
+                
+                $remainingToAllocate = max(0, (float) $receipt->amount - $allocatedAmount);
+                
+                // If there's still money remaining, auto-allocate to oldest open sales
+                if ($remainingToAllocate > 0) {
+                    $openSales = Sale::where('customer_id', $customer->id)
+                        ->where('status', 'pending')
+                        ->orderBy('sale_date', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->get();
+                        
+                    foreach ($openSales as $sale) {
+                        if ($remainingToAllocate <= 0) break;
+                        
+                        $due = max(0, (float)$sale->total_amount - (float)$sale->paid_amount);
+                        if ($due <= 0) continue;
+                        
+                        $deduct = min($remainingToAllocate, $due);
+                        
+                        $sale->paid_amount = (float)$sale->paid_amount + $deduct;
+                        if ($sale->paid_amount >= $sale->total_amount) {
+                            $sale->status = 'completed';
+                        }
+                        $sale->save();
+                        
+                        $remainingToAllocate -= $deduct;
+                        $allocatedAmount += $deduct;
+                        
+                        $finalAllocations[] = [
+                            'sale_id' => $sale->id,
+                            'amount' => $deduct
+                        ];
+                    }
+                }
+                
+                // Update receipt with actual applied allocations so we can reverse them later
+                if (!empty($finalAllocations)) {
+                    $receipt->invoice_allocations = $finalAllocations;
+                    $receipt->saveQuietly();
+                }
+
+                // Any remaining excess payment goes to wallet balance (advance)
+                if ($remainingToAllocate > 0) {
+                    $customer->creditWallet($remainingToAllocate);
                 }
             }
         }
@@ -583,11 +649,27 @@ class PaymentReceiptService
             $customer = Customer::find($receipt->payer_id);
             if ($customer) {
                 $allocatedAmount = 0;
+                
+                // Revert actual allocations applied to sales
                 if (!empty($receipt->invoice_allocations) && is_array($receipt->invoice_allocations)) {
                     foreach ($receipt->invoice_allocations as $alloc) {
-                        $allocatedAmount += (float) ($alloc['amount'] ?? 0);
+                        $amt = (float) ($alloc['amount'] ?? 0);
+                        $saleId = $alloc['sale_id'] ?? $alloc['invoice_id'] ?? null;
+                        
+                        if ($saleId && $amt > 0) {
+                            $sale = Sale::find($saleId);
+                            if ($sale) {
+                                $sale->paid_amount = max(0, (float)$sale->paid_amount - $amt);
+                                if ($sale->paid_amount < $sale->total_amount && $sale->status === 'completed') {
+                                    $sale->status = 'pending';
+                                }
+                                $sale->save();
+                                $allocatedAmount += $amt;
+                            }
+                        }
                     }
                 }
+                
                 $unallocated = max(0, (float) $receipt->amount - $allocatedAmount);
                 if ($unallocated > 0) {
                     $customer->debitWallet($unallocated);
@@ -651,6 +733,7 @@ class PaymentReceiptService
         $month = now()->format('m');
 
         $lastEntry = JournalEntry::whereYear('created_at', $year)
+            ->where('entry_number', 'like', $prefix . '%')
                                ->whereMonth('created_at', $month)
                                ->orderBy('id', 'desc')
                                ->first();
