@@ -12,7 +12,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
 
         <!-- Left Column: Hero Text Copy -->
-        <div class="lg:col-span-6 space-y-5 text-left">
+        <div class="hidden sm:block lg:col-span-6 space-y-5 text-left">
           <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-xs font-semibold text-slate-700">
             <span>✦ Welcome Back to POS</span>
           </div>
