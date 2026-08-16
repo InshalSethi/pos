@@ -22,12 +22,12 @@
       </div>
 
       <!-- Header Controls: Google Sync status, Prev/Today/Next & View Switcher -->
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 justify-between w-full lg:w-auto">
         <!-- Google Calendar Sync Status Pill Button -->
         <button
           @click="showGoogleSettingsModal = true"
           :class="[
-            'px-3.5 py-2 rounded-xl border text-xs font-semibold flex items-center gap-2.5 transition-all shadow-xs cursor-pointer',
+            'px-3.5 py-2 rounded-xl border text-xs font-semibold flex items-center gap-2.5 transition-all shadow-xs cursor-pointer w-full sm:w-auto justify-center',
             googleSettings.is_synced 
               ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60 hover:bg-purple-100' 
               : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-slate-300 dark:border-zinc-700 hover:bg-slate-100'
@@ -47,7 +47,7 @@
         </button>
 
         <!-- Month Navigation Controls -->
-        <div class="flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-1 shadow-xs">
+        <div class="flex items-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-1 shadow-xs order-last sm:order-none mx-auto sm:mx-0">
           <button
             @click="navigateMonth(-1)"
             class="p-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
@@ -75,7 +75,7 @@
         </div>
 
         <!-- View Mode Switcher -->
-        <div class="flex items-center bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-zinc-700/80">
+        <div class="flex items-center bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-zinc-700/80 mx-auto sm:mx-0">
           <button
             v-for="vMode in ['month', 'week', 'list']"
             :key="vMode"
@@ -132,9 +132,10 @@
       <!-- 1. MONTH VIEW -->
       <div v-else-if="currentViewMode === 'month'" class="flex-1 flex flex-col">
         <!-- Weekday Headers -->
-        <div class="grid grid-cols-7 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70 text-center py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+        <div class="grid grid-cols-7 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70 text-center py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
           <div v-for="dayName in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="dayName" class="py-1">
-            {{ dayName }}
+            <span class="hidden sm:inline">{{ dayName }}</span>
+            <span class="sm:hidden">{{ dayName.substring(0, 2) }}</span>
           </div>
         </div>
 
@@ -175,8 +176,8 @@
               </span>
             </div>
 
-            <!-- Event Chips List -->
-            <div class="mt-1 space-y-1 overflow-hidden flex-1">
+            <!-- Event Chips List (Desktop) -->
+            <div class="hidden md:flex mt-1 space-y-1 overflow-hidden flex-col flex-1">
               <div
                 v-for="evt in getFilteredEventsForDate(dayObj.dateString).slice(0, 3)"
                 :key="evt.id"
@@ -193,7 +194,6 @@
                 <span v-if="evt.amount > 0" class="text-[10px] font-bold shrink-0 opacity-90">{{ evt.formatted_amount }}</span>
                 <span v-else-if="evt.status" class="text-[9px] font-bold uppercase tracking-wider px-1 py-0.2 rounded bg-black/10 dark:bg-white/10 shrink-0">{{ evt.status }}</span>
               </div>
-
               <!-- +N More Badge -->
               <div 
                 v-if="getFilteredEventsForDate(dayObj.dateString).length > 3" 
@@ -203,55 +203,72 @@
                 +{{ getFilteredEventsForDate(dayObj.dateString).length - 3 }} more...
               </div>
             </div>
+
+            <!-- Event Dots List (Mobile) -->
+            <div class="flex md:hidden mt-1 flex-wrap gap-1 content-start max-h-[40px] overflow-hidden">
+              <span
+                v-for="evt in getFilteredEventsForDate(dayObj.dateString).slice(0, 4)"
+                :key="evt.id"
+                :class="['w-2 h-2 rounded-full', getEventDotClass(evt)]"
+              ></span>
+              <span 
+                v-if="getFilteredEventsForDate(dayObj.dateString).length > 4"
+                class="text-[9px] font-bold text-slate-500 leading-none"
+              >
+                +{{ getFilteredEventsForDate(dayObj.dateString).length - 4 }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 2. WEEK VIEW -->
-      <div v-else-if="currentViewMode === 'week'" class="p-4 flex-1 flex flex-col">
-        <div class="grid grid-cols-7 gap-3 flex-1">
-          <div
-            v-for="dayObj in currentWeekDays"
-            :key="dayObj.dateString"
-            @click="handleDateCellClick(dayObj)"
-            :class="[
-              'bg-slate-50/60 dark:bg-zinc-800/40 rounded-xl border border-slate-200 dark:border-zinc-800 p-3 flex flex-col justify-between cursor-pointer hover:border-slate-400 transition-all',
-              dayObj.isToday ? 'ring-2 ring-indigo-500/40 bg-indigo-50/10' : ''
-            ]"
-          >
-            <div>
-              <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-zinc-700/60 mb-2">
-                <span class="text-xs font-bold text-slate-500 uppercase">{{ dayObj.dayName }}</span>
-                <span :class="['text-xs font-extrabold px-2 py-0.5 rounded-full', dayObj.isToday ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-slate-700 dark:text-slate-200']">
-                  {{ dayObj.dayNumber }}
-                </span>
-              </div>
+      <div v-else-if="currentViewMode === 'week'" class="p-4 flex-1 flex flex-col w-full overflow-hidden">
+        <div class="w-full overflow-x-auto custom-scrollbar">
+          <div class="min-w-[800px] grid grid-cols-7 gap-3 pb-4">
+            <div
+              v-for="dayObj in currentWeekDays"
+              :key="dayObj.dateString"
+              @click="handleDateCellClick(dayObj)"
+              :class="[
+                'bg-slate-50/60 dark:bg-zinc-800/40 rounded-xl border border-slate-200 dark:border-zinc-800 p-3 flex flex-col justify-between cursor-pointer hover:border-slate-400 transition-all',
+                dayObj.isToday ? 'ring-2 ring-indigo-500/40 bg-indigo-50/10' : ''
+              ]"
+            >
+              <div>
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-zinc-700/60 mb-2">
+                  <span class="text-xs font-bold text-slate-500 uppercase">{{ dayObj.dayName }}</span>
+                  <span :class="['text-xs font-extrabold px-2 py-0.5 rounded-full', dayObj.isToday ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-slate-700 dark:text-slate-200']">
+                    {{ dayObj.dayNumber }}
+                  </span>
+                </div>
 
-              <div class="space-y-1.5">
-                <div
-                  v-for="evt in getFilteredEventsForDate(dayObj.dateString)"
-                  :key="evt.id"
-                  @click.stop="openEventDetails(evt)"
-                  :class="['p-2 rounded-lg text-xs border transition-all cursor-pointer hover:shadow-sm', getEventBadgeClass(evt)]"
-                >
-                  <div class="font-bold truncate">{{ evt.title }}</div>
-                  <div class="flex items-center justify-between text-[10px] mt-1 opacity-80 font-medium">
-                    <span>{{ evt.subtitle }}</span>
-                    <span>{{ evt.formatted_amount }}</span>
+                <div class="space-y-1.5">
+                  <div
+                    v-for="evt in getFilteredEventsForDate(dayObj.dateString)"
+                    :key="evt.id"
+                    @click.stop="openEventDetails(evt)"
+                    :class="['p-2 rounded-lg text-xs border transition-all cursor-pointer hover:shadow-sm', getEventBadgeClass(evt)]"
+                  >
+                    <div class="font-bold truncate">{{ evt.title }}</div>
+                    <div class="flex items-center justify-between text-[10px] mt-1 opacity-80 font-medium">
+                      <span>{{ evt.subtitle }}</span>
+                      <span>{{ evt.formatted_amount }}</span>
+                    </div>
+                  </div>
+
+                  <div v-if="getFilteredEventsForDate(dayObj.dateString).length === 0" class="text-[11px] text-slate-400 dark:text-zinc-500 italic py-4 text-center">
+                    No events scheduled
                   </div>
                 </div>
-
-                <div v-if="getFilteredEventsForDate(dayObj.dateString).length === 0" class="text-[11px] text-slate-400 dark:text-zinc-500 italic py-4 text-center">
-                  No events scheduled
-                </div>
               </div>
-            </div>
 
-            <button 
-              class="w-full mt-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 font-semibold rounded-lg text-[11px] transition-all"
-            >
-              + Add Transaction
-            </button>
+              <button 
+                class="w-full mt-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 font-semibold rounded-lg text-[11px] transition-all"
+              >
+                + Add Transaction
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -451,6 +468,78 @@
       </Transition>
     </Teleport>
 
+    <!-- MODAL 2.5: DAY EVENTS MODAL (FOR MOBILE TAP ON DATE) -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div v-if="showDayEventsModal" class="fixed inset-0 z-[95] flex items-end md:items-center justify-center md:p-4">
+          <!-- Backdrop -->
+          <div class="fixed inset-0 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs" @click="showDayEventsModal = false"></div>
+          
+          <!-- Bottom Sheet / Modal Drawer -->
+          <div class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden z-10 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">
+                Events for <span class="text-indigo-600 dark:text-indigo-400">{{ selectedDateFormatted }}</span>
+              </h3>
+              <button @click="showDayEventsModal = false" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <!-- List of events -->
+            <div class="p-5 overflow-y-auto custom-scrollbar space-y-3 flex-1 bg-slate-50/30 dark:bg-zinc-900/50">
+              <div v-if="getFilteredEventsForDate(selectedDateObj?.dateString).length === 0" class="py-8 text-center text-slate-400">
+                <p class="text-sm font-bold text-slate-500 dark:text-zinc-500">No events found for this day.</p>
+              </div>
+              
+              <div
+                v-for="evt in getFilteredEventsForDate(selectedDateObj?.dateString)"
+                :key="evt.id"
+                @click="openEventDetails(evt)"
+                class="bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 rounded-xl p-3 flex items-center justify-between gap-3 transition-all hover:border-slate-300 dark:hover:border-zinc-600 shadow-2xs cursor-pointer"
+              >
+                <div class="flex items-center gap-3 min-w-0">
+                  <div :class="['w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-xs', getEventBgColor(evt)]">
+                    {{ getEventIconInitial(evt) }}
+                  </div>
+                  <div class="min-w-0">
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ evt.title }}</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5 truncate">{{ evt.subtitle }}</p>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-xs font-extrabold text-slate-900 dark:text-white">{{ evt.formatted_amount }}</div>
+                  <span :class="['px-1.5 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wider', getEventBadgeClass(evt)]">
+                    {{ evt.type_label }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add new action -->
+            <div class="p-4 border-t border-slate-100 dark:border-zinc-800 shrink-0 bg-white dark:bg-zinc-900">
+              <button
+                @click="showDayEventsModal = false; showDateAddModal = true"
+                class="w-full py-3 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-black dark:hover:bg-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                <span>Add Transaction</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- MODAL 3: GOOGLE CALENDAR SYNC SETTINGS MODAL -->
     <Teleport to="body">
       <Transition
@@ -593,7 +682,7 @@ const route = useRoute();
 
 // State Variables
 const loading = ref(false);
-const currentViewMode = ref('month'); // 'month', 'week', 'list'
+const currentViewMode = ref(window.innerWidth < 640 ? 'list' : 'month'); // 'month', 'week', 'list'
 const currentDate = ref(new Date());
 const eventsList = ref([]);
 const activeFilters = ref(['sales', 'purchases', 'payments_out', 'payment_receipts', 'expenses', 'google']);
@@ -610,6 +699,7 @@ const googleSettings = reactive({
 
 // Modals State
 const showDateAddModal = ref(false);
+const showDayEventsModal = ref(false);
 const selectedDateObj = ref(null);
 const showEventDetailModal = ref(false);
 const activeEvent = ref(null);
@@ -848,10 +938,16 @@ const goToToday = () => {
   fetchEvents();
 };
 
-// Date Cell Click -> Opens Add Transaction Popup (REQUIREMENT 4)
+// Date Cell Click -> Opens Add Transaction Popup OR Day Events on Mobile
 const handleDateCellClick = (dayObj) => {
   selectedDateObj.value = dayObj;
-  showDateAddModal.value = true;
+  
+  if (window.innerWidth < 768) {
+    showDayEventsModal.value = true;
+  } else {
+    // Desktop behavior: just open the add transaction modal directly (or you can show day events modal if preferred)
+    showDateAddModal.value = true;
+  }
 };
 
 // Option Selection inside Add Popup Modal -> Opens Add Component / Route

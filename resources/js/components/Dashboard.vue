@@ -2,14 +2,14 @@
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
       <!-- Header Bar -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 w-full">
+        <div class="w-full sm:w-auto">
           <h1 class="text-3xl font-bold text-zinc-950 dark:text-white tracking-tight">Dashboard</h1>
           <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">Real-time overview of performance and key metrics</p>
         </div>
 
         <!-- Date Range Filter Container -->
-        <div class="flex flex-col gap-1 w-full md:w-auto">
+        <div class="flex flex-col gap-1 w-full sm:w-auto">
           <!-- Top Row with Label and Top Presets -->
           <div class="flex items-center justify-between px-0.5">
             <span class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Date Range</span>
@@ -32,10 +32,10 @@
           </div>
 
           <!-- Date Input Button -->
-          <div ref="pickerRef" class="relative">
+          <div ref="pickerRef" class="relative w-full">
             <button 
               @click="showPicker = !showPicker" 
-              class="w-full md:w-80 flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer focus:outline-none"
+              class="w-full sm:w-80 flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-white shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer focus:outline-none"
             >
               <span class="truncate pr-2" :class="{ 'text-zinc-400 dark:text-zinc-500': !formattedDateRangeLabel }">
                 {{ formattedDateRangeLabel || 'Select Date Range' }}
@@ -324,9 +324,9 @@
       </div>
 
       <!-- Dashboard Stats -->
-      <div v-else>
+      <div v-else class="w-full overflow-hidden">
         <!-- Primary Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 w-full">
           <!-- Total Sales Card -->
           <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white">
             <div class="p-6">
@@ -437,7 +437,7 @@
         </div>
 
         <!-- Inventory Valuation Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 w-full">
           <!-- Total Cost Value -->
           <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white p-6">
             <div class="flex items-center justify-between">
@@ -548,12 +548,16 @@
         </div>
 
         <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 w-full">
           <!-- Sales & Purchases Chart -->
-          <SalesPurchasesChart :data="dashboardData.sales_purchases_chart || []" />
+          <div class="w-full overflow-hidden rounded-2xl">
+            <SalesPurchasesChart :data="dashboardData.sales_purchases_chart || []" />
+          </div>
 
           <!-- Devices Breakdown Chart -->
-          <DevicesPieChart :data="dashboardData.devices_breakdown || []" />
+          <div class="w-full overflow-hidden rounded-2xl">
+            <DevicesPieChart :data="dashboardData.devices_breakdown || []" />
+          </div>
         </div>
 
         <!-- Recent Invoices and Stock History -->

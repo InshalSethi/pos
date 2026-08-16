@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-slate-900 selection:text-white relative">
+  <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-slate-900 selection:text-white relative overflow-x-hidden">
     
     <!-- Ambient Background Radial Glows -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-tr from-slate-200/60 via-gray-100/40 to-transparent blur-[120px] rounded-full pointer-events-none"></div>
@@ -21,6 +21,25 @@
         </p>
       </div>
 
+      <!-- Billing Toggle Switch -->
+      <div class="flex justify-center items-center gap-3 mb-10 text-sm font-semibold max-w-sm mx-auto">
+        <span :class="billingCycle === 'monthly' ? 'text-slate-950 font-bold' : 'text-slate-500'">Monthly</span>
+        <button 
+          @click="billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly'"
+          class="relative w-14 h-7 rounded-full bg-slate-300 transition-colors duration-300 outline-none focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+          :class="{'bg-slate-950': billingCycle === 'yearly'}"
+        >
+          <span 
+            class="absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform duration-300 shadow-sm"
+            :class="{'translate-x-7': billingCycle === 'yearly'}"
+          ></span>
+        </button>
+        <span class="flex items-center gap-1.5" :class="billingCycle === 'yearly' ? 'text-slate-950 font-bold' : 'text-slate-500'">
+          Yearly
+          <span class="text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider">Save 20%</span>
+        </span>
+      </div>
+
       <!-- Plans Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-stretch max-w-4xl mx-auto">
         
@@ -37,8 +56,8 @@
 
             <!-- Price -->
             <div class="mb-6">
-              <span class="text-4xl font-black text-slate-950">$29</span>
-              <span class="text-slate-500 text-sm font-medium"> / month</span>
+              <span class="text-4xl font-black text-slate-950">{{ billingCycle === 'monthly' ? '$29' : '$279' }}</span>
+              <span class="text-slate-500 text-sm font-medium"> / {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
             </div>
 
             <!-- Description -->
@@ -96,8 +115,8 @@
 
             <!-- Price -->
             <div class="mb-6">
-              <span class="text-4xl font-black text-white">$79</span>
-              <span class="text-slate-400 text-sm font-medium"> / month</span>
+              <span class="text-4xl font-black text-white">{{ billingCycle === 'monthly' ? '$79' : '$759' }}</span>
+              <span class="text-slate-400 text-sm font-medium"> / {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
             </div>
 
             <!-- Description -->
@@ -153,8 +172,10 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import Navbar from '@/components/shared/Navbar.vue';
 
 const authStore = useAuthStore();
+const billingCycle = ref('monthly');
 </script>

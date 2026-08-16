@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-slate-900 selection:text-white relative">
+  <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-slate-900 selection:text-white relative overflow-x-hidden">
     
     <!-- Soft Ambient Monochrome Background Radial Glows -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-tr from-slate-200/60 via-gray-100/40 to-transparent blur-[120px] rounded-full pointer-events-none"></div>
@@ -23,7 +23,7 @@
           </div>
 
           <!-- Main Title -->
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-950 leading-[1.1]">
+          <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-950 leading-[1.1]">
             Our Advanced POS <br class="hidden sm:inline" />
             <span class="bg-gradient-to-r from-slate-950 via-slate-800 to-slate-600 bg-clip-text text-transparent">Software Solutions</span>
           </h1>
@@ -34,10 +34,10 @@
           </p>
 
           <!-- CTAs Side-by-Side (Solid Black Pill + Translucent Play Video Button) -->
-          <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
             <router-link
               to="/plans"
-              class="bg-slate-950 hover:bg-slate-800 text-white font-semibold px-6 py-3 rounded-full shadow-lg shadow-slate-950/20 transition-all flex items-center gap-2.5 text-sm group"
+              class="bg-slate-950 hover:bg-slate-800 text-white font-semibold px-6 py-3 rounded-full shadow-lg shadow-slate-950/20 transition-all flex items-center justify-center gap-2.5 text-sm group w-full sm:w-auto"
             >
               <span>Get Started Now</span>
               <svg class="w-4 h-4 text-white fill-none stroke-current transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" stroke-width="2.5" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
             <button
               type="button"
               @click="showDemoVideo = true"
-              class="bg-white hover:bg-slate-100 text-slate-950 font-semibold px-6 py-3 rounded-full border border-slate-300 shadow-sm transition-all flex items-center gap-2.5 text-sm group"
+              class="bg-white hover:bg-slate-100 text-slate-950 font-semibold px-6 py-3 rounded-full border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2.5 text-sm group w-full sm:w-auto"
             >
               <svg class="w-4 h-4 fill-slate-950 text-slate-950 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -82,7 +82,7 @@
           <div class="absolute inset-0 bg-gradient-to-b from-slate-200/50 to-slate-100/30 rounded-t-full border border-slate-300/60 transform scale-95 pointer-events-none"></div>
 
           <!-- Main Terminal & Hand Card Swipe Illustration Container -->
-          <div class="relative z-10 py-6 px-4">
+          <div class="relative z-10 py-6 px-4 transform scale-[0.8] sm:scale-100 origin-center max-w-full">
             
             <!-- Floating Widget 1: Paid Earnings (Top Left) -->
             <div class="absolute -top-4 -left-4 sm:left-0 z-30 bg-white/95 backdrop-blur-xl border border-slate-200 p-4 rounded-2xl shadow-xl shadow-slate-300/40 w-44 sm:w-48 transform -rotate-2 hover:rotate-0 transition-transform">

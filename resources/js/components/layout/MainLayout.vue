@@ -5,7 +5,7 @@
       :class="[
         'fixed inset-y-0 left-0 z-50 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transform transition-all duration-300 ease-in-out flex flex-col',
         sidebarCollapsed ? 'w-20' : 'w-[260px]',
-        showMobileSidebar ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
+        showMobileSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       ]"
     >
       <!-- Sidebar Header -->
@@ -1016,7 +1016,7 @@
         </button>
 
         <!-- Mobile User Profile Section (visible only on mobile when sidebar is open) -->
-        <div class="sm:hidden mt-8 pt-4 border-t border-gray-200 dark:border-[#2E2E2E]">
+        <div class="lg:hidden mt-8 pt-4 border-t border-gray-200 dark:border-[#2E2E2E]">
           <div class="flex items-center px-3 py-2">
             <div class="flex-shrink-0">
               <div class="h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -1077,14 +1077,14 @@
     <!-- Mobile sidebar overlay -->
     <div
       v-if="showMobileSidebar"
-      class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 sm:hidden"
+      class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
       @click="showMobileSidebar = false"
     ></div>
 
     <!-- Navigation -->
     <nav :class="[
       'bg-white dark:bg-[#1E1E1E] shadow-sm border-b border-gray-200 dark:border-[#2E2E2E] transition-all duration-300 sticky top-0 z-40 h-16 flex flex-col justify-center',
-      sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
+      sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[260px]'
     ]">
       <div class="w-full">
         <div class="flex items-center justify-between px-6 w-full">
@@ -1093,7 +1093,7 @@
             <!-- Mobile menu button -->
             <button
               @click="showMobileSidebar = !showMobileSidebar"
-              class="sm:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <span class="sr-only">Open sidebar</span>
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1102,7 +1102,7 @@
             </button>
 
             <!-- Page Title & Favorite Star Toggle -->
-            <div class="hidden sm:flex items-center gap-3 pl-4">
+            <div class="hidden lg:flex items-center gap-3 pl-4">
               <h1 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight select-none">
                 {{ currentMenuItem?.name || 'POS System' }}
               </h1>
@@ -1499,7 +1499,7 @@
     <!-- Main content -->
     <main :class="[
       'transition-all duration-300 min-h-screen',
-      sidebarCollapsed ? 'sm:ml-16' : 'sm:ml-64'
+      sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[260px]'
     ]">
       <div class="p-4 sm:p-5 lg:p-6 w-full min-w-0">
         <div v-if="renderError" class="bg-red-50 border-l-4 border-red-500 p-6 rounded-2xl shadow-md my-4 max-w-4xl mx-auto">
