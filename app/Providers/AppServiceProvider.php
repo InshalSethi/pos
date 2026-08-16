@@ -44,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
             'customer' => \App\Models\Customer::class,
             'supplier' => \App\Models\Supplier::class,
             'user' => \App\Models\User::class,
+            'admin' => \App\Models\Admin::class,
             'sale' => \App\Models\Sale::class,
             'purchase' => \App\Models\PurchaseOrder::class,
             'expense' => \App\Models\Expense::class,
