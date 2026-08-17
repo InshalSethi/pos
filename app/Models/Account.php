@@ -122,6 +122,13 @@ class Account extends Model
     // Methods
     public function calculateBalance($asOfDate = null): float
     {
+        // If this account is a parent with child accounts, sum the children's balances
+        if ($this->children()->exists()) {
+            return (float) $this->children->sum(function ($child) use ($asOfDate) {
+                return $child->calculateBalance($asOfDate);
+            });
+        }
+
         $query = $this->journalEntries()
                      ->whereHas('journalEntry', function ($q) use ($asOfDate) {
                          $q->where(function ($sub) {
@@ -160,6 +167,11 @@ class Account extends Model
     {
         $this->current_balance = $this->calculateBalance();
         $this->save();
+
+        // If this account has a parent account, trigger parent balance update as well
+        if ($this->parent_account_id && $this->parent) {
+            $this->parent->updateCurrentBalance();
+        }
 
         // Direct COA Hard-Sync with Banking Module (Single Source of Truth)
         \Illuminate\Support\Facades\DB::table('bank_accounts')

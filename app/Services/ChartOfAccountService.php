@@ -879,9 +879,9 @@ class ChartOfAccountService
                 continue;
             }
 
-            if (!$existingAccounts->has($def['account_code'])) {
-                $parentAccount = $existingAccounts->get($def['parent_code']);
+            $parentAccount = $existingAccounts->get($def['parent_code']);
 
+            if (!$existingAccounts->has($def['account_code'])) {
                 $account = Account::create([
                     'company_id'        => $companyId,
                     'account_code'      => $def['account_code'],
@@ -897,6 +897,10 @@ class ChartOfAccountService
                 ]);
 
                 $existingAccounts->put($def['account_code'], $account);
+            } else if ($parentAccount && empty($existingAccounts->get($def['account_code'])->parent_account_id)) {
+                $existingAccount = $existingAccounts->get($def['account_code']);
+                $existingAccount->parent_account_id = $parentAccount->id;
+                $existingAccount->save();
             }
         }
 

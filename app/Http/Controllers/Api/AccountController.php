@@ -372,6 +372,8 @@ class AccountController extends Controller
             'is_active' => $account->is_active,
             'is_system' => $account->is_system_account,
             'balance' => $balance,
+            'current_balance' => $balance,
+            'calculated_balance' => $balance,
             'formatted_balance' => $balance < 0 ? '- Rs ' . number_format(abs($balance), 2) : 'Rs ' . number_format($balance, 2),
             'children' => []
         ];
