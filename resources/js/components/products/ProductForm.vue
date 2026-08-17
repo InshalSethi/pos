@@ -686,20 +686,31 @@
             <!-- Balanced Grid Structure for Inventory parameters -->
             <div v-show="form.track_inventory" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  SKU <span class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
-                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
-                      Enter a unique Stock Keeping Unit code for tracking inventory.
-                      <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    SKU <span class="text-rose-500">*</span>
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                        Enter a unique Stock Keeping Unit code for tracking inventory.
+                        <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                      </span>
                     </span>
-                  </span>
-                </label>
+                  </label>
+
+                  <!-- Auto Generate SKU Toggle -->
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                    <span class="text-[9px] font-bold uppercase tracking-wider" :class="autoGenerateSku ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'">Auto</span>
+                    <div class="relative inline-block w-7 h-4 transition duration-200 ease-in-out rounded-full" :class="autoGenerateSku ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'">
+                      <input type="checkbox" v-model="autoGenerateSku" @change="handleAutoSkuToggle" class="hidden" />
+                      <span class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out shadow-xs" :class="autoGenerateSku ? 'transform translate-x-3' : ''"></span>
+                    </div>
+                  </label>
+                </div>
                 <input 
                   v-model="form.sku" 
                   type="text" 
@@ -725,20 +736,31 @@
                 <SystemSelect v-model="form.unit_id" :options="unitOptions" placeholder="Select Unit" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  Barcode
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
-                    <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
-                      Enter the scanner barcode or UPC/EAN code for the item.
-                      <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Barcode
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                        Enter the scanner barcode or UPC/EAN code for the item.
+                        <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                      </span>
                     </span>
-                  </span>
-                </label>
+                  </label>
+
+                  <!-- Auto Generate Barcode Toggle -->
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                    <span class="text-[9px] font-bold uppercase tracking-wider" :class="autoGenerateBarcode ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'">Auto</span>
+                    <div class="relative inline-block w-7 h-4 transition duration-200 ease-in-out rounded-full" :class="autoGenerateBarcode ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'">
+                      <input type="checkbox" v-model="autoGenerateBarcode" @change="handleAutoBarcodeToggle" class="hidden" />
+                      <span class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out shadow-xs" :class="autoGenerateBarcode ? 'transform translate-x-3' : ''"></span>
+                    </div>
+                  </label>
+                </div>
                 <input 
                   v-model="form.barcode" 
                   type="text" 
@@ -1056,7 +1078,18 @@
                     <thead class="bg-slate-50 dark:bg-[#1E1E1E]/50 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-455">
                       <tr>
                         <th class="px-2.5 py-2 text-left bg-slate-50 dark:bg-[#1E1E1E]/60 z-10 w-40 shadow-[1px_0_0_0_#cbd5e1] dark:shadow-[1px_0_0_0_#334155]">Variant Profile</th>
-                        <th class="px-2.5 py-2 text-left min-w-[120px]">SKU *</th>
+                        <th class="px-2.5 py-2 text-left min-w-[140px]">
+                          <div class="flex items-center justify-between gap-1">
+                            <span>SKU *</span>
+                            <label class="inline-flex items-center gap-1 cursor-pointer select-none" title="Auto generate variation SKUs">
+                              <span class="text-[8px] font-bold uppercase tracking-wider" :class="autoGenerateVarSku ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'">Auto</span>
+                              <div class="relative inline-block w-6 h-3.5 transition duration-200 ease-in-out rounded-full" :class="autoGenerateVarSku ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'">
+                                <input type="checkbox" v-model="autoGenerateVarSku" @change="handleAutoVarSkuToggle" class="hidden" />
+                                <span class="absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform duration-200 ease-in-out shadow-xs" :class="autoGenerateVarSku ? 'transform translate-x-2.5' : ''"></span>
+                              </div>
+                            </label>
+                          </div>
+                        </th>
                         <th class="px-2.5 py-2 text-left min-w-[150px]">Warehouse(s) *</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Purchase Cost ($)</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Retail Price ($) *</th>
@@ -1073,14 +1106,23 @@
                       </tr>
                       <tr v-for="(row, index) in form.variations" :key="index" class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                         <td class="px-2.5 py-1.5 font-bold text-slate-900 dark:text-slate-350 bg-white dark:bg-[#1E1E1E] shadow-[1px_0_0_0_#cbd5e1] dark:shadow-[1px_0_0_0_#334155] z-10">{{ row.name_string }}</td>
-                        <td class="px-2.5 py-1.5">
-                          <input 
-                            type="text" 
-                            v-model="row.sku" 
-                            required
-                            placeholder="SKU" 
-                            class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs w-full font-semibold focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 text-slate-800 dark:text-slate-300 transition-all"
-                          />
+                        <td class="px-2.5 py-1.5 min-w-[160px]">
+                          <div class="flex items-center gap-1.5">
+                            <input 
+                              type="text" 
+                              v-model="row.sku" 
+                              required
+                              placeholder="SKU" 
+                              class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs flex-1 min-w-[90px] font-semibold focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 text-slate-800 dark:text-slate-300 transition-all"
+                            />
+                            <label class="inline-flex items-center gap-1 cursor-pointer select-none shrink-0" title="Auto generate SKU for this row">
+                              <span class="text-[8px] font-bold uppercase tracking-wider" :class="row.auto_sku ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'">Auto</span>
+                              <div class="relative inline-block w-5 h-3 transition duration-200 ease-in-out rounded-full" :class="row.auto_sku ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'">
+                                <input type="checkbox" v-model="row.auto_sku" @change="handleRowAutoSkuToggle(row)" class="hidden" />
+                                <span class="absolute top-0.5 left-0.5 w-2 h-2 bg-white rounded-full transition-transform duration-200 ease-in-out shadow-xs" :class="row.auto_sku ? 'transform translate-x-2' : ''"></span>
+                              </div>
+                            </label>
+                          </div>
                         </td>
                         <td class="px-2.5 py-1.5 relative wh-dropdown-cell">
                           <button
@@ -2160,6 +2202,95 @@ const imageInputRef = ref(null);
 const newTag = ref('');
 const showOptionsModal = ref(false);
 
+// Auto-Generate Toggles State (By default OFF)
+const autoGenerateSku = ref(false);
+const autoGenerateBarcode = ref(false);
+const autoGenerateVarSku = ref(false);
+
+const generateRandomCode = (prefix = 'SKU', length = 6) => {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${prefix}-${result}`;
+};
+
+const generateRandomBarcode = () => {
+  let digits = '890';
+  for (let i = 0; i < 9; i++) {
+    digits += Math.floor(Math.random() * 10);
+  }
+  return digits;
+};
+
+const handleAutoSkuToggle = () => {
+  if (autoGenerateSku.value) {
+    form.value.sku = generateRandomCode('SKU', 6);
+  } else {
+    form.value.sku = '';
+  }
+  if (autoGenerateVarSku.value) {
+    updateVariationSkusAuto();
+  }
+};
+
+const handleAutoBarcodeToggle = () => {
+  if (autoGenerateBarcode.value) {
+    form.value.barcode = generateRandomBarcode();
+  } else {
+    form.value.barcode = '';
+  }
+};
+
+const generateSkuForSingleRow = (row) => {
+  const parentSku = form.value.sku ? form.value.sku.trim() : 'SKU';
+  const slug = (row.name_string || row.name || 'V')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  row.sku = `${parentSku}-${slug}`;
+};
+
+const handleRowAutoSkuToggle = (row) => {
+  if (row.auto_sku) {
+    generateSkuForSingleRow(row);
+  } else {
+    row.sku = '';
+  }
+};
+
+const updateVariationSkusAuto = () => {
+  if (!form.value.variations) return;
+  form.value.variations.forEach((row) => {
+    if (autoGenerateVarSku.value || row.auto_sku) {
+      if (autoGenerateVarSku.value) row.auto_sku = true;
+      generateSkuForSingleRow(row);
+    }
+  });
+};
+
+const handleAutoVarSkuToggle = () => {
+  if (!form.value.variations) return;
+  form.value.variations.forEach((row) => {
+    row.auto_sku = autoGenerateVarSku.value;
+    if (autoGenerateVarSku.value) {
+      generateSkuForSingleRow(row);
+    } else {
+      row.sku = '';
+    }
+  });
+};
+
+watch(() => form.value.sku, () => {
+  if (!form.value.variations) return;
+  form.value.variations.forEach((row) => {
+    if (autoGenerateVarSku.value || row.auto_sku) {
+      generateSkuForSingleRow(row);
+    }
+  });
+});
+
 // Row warehouse dropdown state
 const activeRowWhDropdown = ref(null);
 const dropdownStyles = ref({});
@@ -2539,10 +2670,20 @@ const addSingleVariantRow = (nameString) => {
       whMinStocks[id] = 0;
     });
 
-    const baseSku = form.value.sku ? `${form.value.sku}-` : 'SKU-';
-    const variantSuffix = nameString ? nameString.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase() : '';
-    const randPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const generatedSku = `${baseSku}${variantSuffix ? variantSuffix + '-' : ''}${randPart}`;
+    let generatedSku = '';
+    if (autoGenerateVarSku.value) {
+      const parentSku = form.value.sku ? form.value.sku.trim() : 'SKU';
+      const slug = (nameString || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      generatedSku = `${parentSku}-${slug}`;
+    } else {
+      const baseSku = form.value.sku ? `${form.value.sku}-` : 'SKU-';
+      const variantSuffix = nameString ? nameString.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase() : '';
+      const randPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      generatedSku = `${baseSku}${variantSuffix ? variantSuffix + '-' : ''}${randPart}`;
+    }
 
     form.value.variations.push({
         name_string: nameString,
