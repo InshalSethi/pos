@@ -3,7 +3,7 @@
     <!-- Sidebar -->
     <div
       :class="[
-        'fixed inset-y-0 left-0 z-50 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transform transition-all duration-300 ease-in-out flex flex-col',
+        'fixed inset-y-0 left-0 z-[60] bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transform transition-all duration-300 ease-in-out flex flex-col',
         sidebarCollapsed ? 'w-20' : 'w-[260px]',
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       ]"
@@ -143,7 +143,8 @@
         <!-- Collapse Trigger -->
         <button
           @click="toggleSidebar"
-          class="absolute -right-3.5 top-6 w-7 h-7 bg-white dark:bg-[#1E1E1E] text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-[#2E2E2E] rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-50 group shadow-sm cursor-pointer"
+          class="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white dark:bg-[#1E1E1E] text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-[#2E2E2E] rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-[70] group shadow-md hover:shadow-lg cursor-pointer focus:outline-none"
+          title="Toggle Sidebar"
         >
           <svg :class="['w-3.5 h-3.5 transition-transform duration-300', sidebarCollapsed ? 'rotate-180 group-hover:translate-x-0.5' : 'group-hover:-translate-x-0.5']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -1083,7 +1084,7 @@
 
     <!-- Navigation -->
     <nav :class="[
-      'bg-white dark:bg-[#1E1E1E] shadow-sm border-b border-gray-200 dark:border-[#2E2E2E] transition-all duration-300 sticky top-0 z-40 h-16 flex flex-col justify-center',
+      'bg-white dark:bg-[#1E1E1E] shadow-sm border-b border-gray-200 dark:border-[#2E2E2E] transition-all duration-300 sticky top-0 z-50 h-16 flex flex-col justify-center',
       sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[260px]'
     ]">
       <div class="w-full">

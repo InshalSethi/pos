@@ -76,13 +76,13 @@
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                     Name *
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Enter the full descriptive name of the product or item.
                         <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
@@ -97,18 +97,18 @@
                 </div>
 
                 <!-- Service Configuration Row (Shown only when type is Service) -->
-                <div v-if="form.type === 'service'" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/40 dark:bg-indigo-950/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 relative z-[110]">
+                <div v-if="form.type === 'service'" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/40 dark:bg-indigo-950/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 relative z-20">
                   <!-- Service Type Selection -->
                   <div>
                     <label class="block text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-1">
                       Service Type *
-                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                         <svg class="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-600 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                           Select the billing structure or frequency for this service (e.g., Hourly, Monthly, Task Based).
                           <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                         </span>
@@ -125,13 +125,13 @@
                   <div v-if="activeServiceConfig">
                     <label class="block text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-1">
                       {{ activeServiceConfig.label }} *
-                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                         <svg class="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-600 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                           {{ activeServiceConfig.tooltip }}
                           <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                         </span>
@@ -147,7 +147,7 @@
                 </div>
 
                 <!-- Category Row -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-[100]">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-20">
                   <!-- Main Category -->
                   <div>
                     <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
@@ -174,18 +174,18 @@
                 </div>
 
                 <!-- Brands and Tags Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-40">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                   <!-- Brand Select Dropdown -->
-                  <div class="relative z-50">
+                  <div class="relative z-20">
                     <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-1">
                       Brand
-                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                         <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                           Select the brand associated with this product.
                           <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                         </span>
@@ -195,16 +195,16 @@
                   </div>
  
                   <!-- Multi-select Tags Badge / Tag Input -->
-                  <div class="relative z-40">
+                  <div class="relative z-10">
                     <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                       Tags
-                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                         <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                           Add tags to help search, filter, and organize products easily.
                           <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                         </span>
@@ -241,7 +241,7 @@
                       </div>
 
                       <!-- Dropdown Menu -->
-                      <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                      <div v-if="showTagDropdown" class="absolute z-30 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
                         <!-- Scrollable List of Filtered Options -->
                         <div class="overflow-y-auto max-h-44 custom-scrollbar">
                           <template v-if="filteredTagOptions.length > 0">
@@ -324,13 +324,13 @@
                 <div class="flex items-center justify-between mb-1">
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Item Pictures
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Upload up to 8 images (up to 10MB each). Crop, rotate, zoom, and select the primary image.
                         <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
@@ -477,13 +477,69 @@
                 ></textarea>
               </div>
 
-              <!-- Rich Text Description -->
+              <!-- Rich Text Description with Single Unified Toolbar & SVG Emoji Picker -->
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Description
                 </label>
+
                 <div class="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-md overflow-hidden min-h-[150px]">
-                  <QuillEditor theme="snow" v-model:content="form.description" contentType="html" class="min-h-[150px] text-slate-800 dark:text-slate-300" />
+                  <QuillEditor 
+                    ref="quillEditorRef"
+                    theme="snow" 
+                    v-model:content="form.description" 
+                    contentType="html" 
+                    toolbar="#custom-quill-toolbar"
+                    class="min-h-[150px] text-slate-800 dark:text-slate-300" 
+                  >
+                    <template #toolbar>
+                      <div id="custom-quill-toolbar" class="flex items-center flex-wrap gap-1 border-b border-gray-200 dark:border-[#2E2E2E] bg-slate-50/50 dark:bg-[#1E1E1E]/50 px-2 py-1">
+                        <select class="ql-header">
+                          <option selected></option>
+                          <option value="1">Heading 1</option>
+                          <option value="2">Heading 2</option>
+                          <option value="3">Heading 3</option>
+                        </select>
+                        <button class="ql-bold" title="Bold"></button>
+                        <button class="ql-italic" title="Italic"></button>
+                        <button class="ql-underline" title="Underline"></button>
+                        <button class="ql-link" title="Link"></button>
+                        <button class="ql-list" value="ordered" title="Ordered List"></button>
+                        <button class="ql-list" value="bullet" title="Bullet List"></button>
+                        <button class="ql-clean" title="Clear Formatting"></button>
+
+                        <!-- Integrated SVG Emoji Button inside toolbar -->
+                        <div class="relative inline-block z-30 ml-1 border-l border-slate-200 dark:border-[#2E2E2E] pl-1.5">
+                          <button 
+                            type="button" 
+                            id="emoji-trigger-btn"
+                            @click.stop="toggleEmojiPicker"
+                            class="flex items-center justify-center w-7 h-7 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-200/60 dark:hover:bg-[#2D2D2D] rounded transition-all cursor-pointer focus:outline-none"
+                            title="Insert Apple Emoji"
+                          >
+                            <svg class="w-4 h-4 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
+                              <line x1="9" y1="9" x2="9.01" y2="9" stroke-linecap="round" stroke-width="2.5" />
+                              <line x1="15" y1="9" x2="15.01" y2="9" stroke-linecap="round" stroke-width="2.5" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </QuillEditor>
+
+                  <!-- Teleported Floating Native Apple Emoji Mart Picker -->
+                  <Teleport to="body">
+                    <div 
+                      v-if="showEmojiPicker" 
+                      @click.stop 
+                      :style="emojiPickerStyle" 
+                      class="fixed z-[99999] shadow-2xl rounded-2xl overflow-hidden border border-slate-200 dark:border-[#2E2E2E] bg-white dark:bg-[#1E1E1E]"
+                    >
+                      <div ref="emojiPickerContainerRef" style="--height: 320px; --font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"></div>
+                    </div>
+                  </Teleport>
                 </div>
               </div>
             </div>
@@ -522,13 +578,13 @@
               <div v-show="form.enabled_for_purchase">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Purchase Price <span v-if="form.enabled_for_purchase && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                       The cost price paid to acquire or manufacture the item.
                       <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
@@ -547,13 +603,13 @@
               <div v-show="form.enabled_for_sale">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Sale Price <span v-if="form.enabled_for_sale && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                       The standard retail selling price offered to consumers.
                       <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
@@ -572,13 +628,13 @@
               <div v-show="form.enabled_for_wholesale">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Wholesale Price <span v-if="form.enabled_for_wholesale && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                       The bulk purchase price offered to business-to-business clients.
                       <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
@@ -597,13 +653,13 @@
               <div v-show="form.enabled_for_tax">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Tax <span v-if="form.enabled_for_tax && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                       Select applicable tax rates to apply during transaction billing.
                       <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
@@ -632,7 +688,7 @@
                   </div>
 
                   <!-- Dropdown Menu -->
-                  <div v-if="showTaxDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                  <div v-if="showTaxDropdown && !form.has_variations" class="absolute z-30 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
                     <div class="p-1 sticky top-0 bg-white dark:bg-[#1E1E1E] z-10 border-b border-slate-100 dark:border-[#2E2E2E] mb-1">
                       <input 
                         type="text" 
@@ -689,13 +745,13 @@
                 <div class="flex items-center justify-between mb-1">
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     SKU <span class="text-rose-500">*</span>
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Enter a unique Stock Keeping Unit code for tracking inventory.
                         <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
@@ -721,13 +777,13 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Unit <span v-if="form.track_inventory" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                       Select the standard unit of measurement (e.g. Pcs, Kgs).
                       <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
@@ -739,13 +795,13 @@
                 <div class="flex items-center justify-between mb-1">
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Barcode
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Enter the scanner barcode or UPC/EAN code for the item.
                         <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
@@ -777,13 +833,13 @@
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
                     Assign Warehouse(s) <span v-if="form.track_inventory && !form.has_variations" class="text-rose-500">*</span>
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-30">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-30 pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Select one or more warehouses where this item is physically stored.
                         <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
@@ -1885,6 +1941,8 @@ import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import data from '@emoji-mart/data';
+import { Picker } from 'emoji-mart';
 
 const currencyStore = useCurrencyStore();
 
@@ -2289,6 +2347,116 @@ watch(() => form.value.sku, () => {
       generateSkuForSingleRow(row);
     }
   });
+});
+
+// Apple / Native System Emoji Mart Picker State & Logic
+const quillEditorRef = ref(null);
+const showEmojiPicker = ref(false);
+const emojiPickerContainerRef = ref(null);
+const emojiPickerStyle = ref({});
+let emojiPickerInstance = null;
+
+const updateEmojiPickerPosition = () => {
+  if (!showEmojiPicker.value) return;
+  const btn = document.getElementById('emoji-trigger-btn');
+  if (btn) {
+    const rect = btn.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      showEmojiPicker.value = false;
+      return;
+    }
+    const pickerWidth = 320;
+    let left = rect.left;
+    if (left + pickerWidth > window.innerWidth - 16) {
+      left = window.innerWidth - pickerWidth - 16;
+    }
+    if (left < 16) left = 16;
+
+    let top = rect.bottom + 4;
+    if (top + 320 > window.innerHeight - 16) {
+      top = rect.top - 320 - 4;
+    }
+
+    emojiPickerStyle.value = {
+      position: 'fixed',
+      left: `${left}px`,
+      top: `${top}px`,
+      zIndex: 99999
+    };
+  }
+};
+
+const toggleEmojiPicker = async () => {
+  showEmojiPicker.value = !showEmojiPicker.value;
+  if (showEmojiPicker.value) {
+    await nextTick();
+    updateEmojiPickerPosition();
+
+    if (emojiPickerContainerRef.value && !emojiPickerContainerRef.value.hasChildNodes()) {
+      emojiPickerInstance = new Picker({
+        data,
+        set: 'native',
+        perLine: 8,
+        maxFrequentRows: 1,
+        previewPosition: 'none',
+        navPosition: 'bottom',
+        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        onEmojiSelect: (emoji) => {
+          if (emoji && emoji.native) {
+            insertEmoji(emoji.native);
+          }
+          showEmojiPicker.value = false;
+        }
+      });
+      emojiPickerContainerRef.value.appendChild(emojiPickerInstance);
+    }
+  }
+};
+
+const insertEmoji = (emojiSymbol) => {
+  if (quillEditorRef.value) {
+    try {
+      const quill = quillEditorRef.value.getQuill ? quillEditorRef.value.getQuill() : quillEditorRef.value.quill;
+      if (quill) {
+        const range = quill.getSelection(true);
+        const index = range ? range.index : (quill.getLength() - 1);
+        quill.insertText(index, emojiSymbol);
+        quill.setSelection(index + emojiSymbol.length);
+        return;
+      }
+    } catch (e) {
+      console.warn('Quill reference fallback:', e);
+    }
+  }
+  form.value.description = (form.value.description || '') + emojiSymbol;
+};
+
+const handleDocumentClickForEmoji = (e) => {
+  const btn = document.getElementById('emoji-trigger-btn');
+  const container = emojiPickerContainerRef.value;
+  if (showEmojiPicker.value) {
+    if (btn && btn.contains(e.target)) return;
+    if (container && container.contains(e.target)) return;
+    showEmojiPicker.value = false;
+  }
+};
+
+const handleWindowScrollForEmoji = () => {
+  if (showEmojiPicker.value) {
+    updateEmojiPickerPosition();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClickForEmoji);
+  window.addEventListener('scroll', handleWindowScrollForEmoji, { capture: true, passive: true });
+  window.addEventListener('resize', handleWindowScrollForEmoji);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClickForEmoji);
+  window.removeEventListener('scroll', handleWindowScrollForEmoji, { capture: true });
+  window.removeEventListener('resize', handleWindowScrollForEmoji);
 });
 
 // Row warehouse dropdown state
