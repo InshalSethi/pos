@@ -82,6 +82,28 @@
           >
             Invoice & Purchase Settings
           </button>
+
+          <button
+            @click="activeTab = 'integrations'"
+            :class="[
+              'py-2.5 px-4 font-semibold text-xs rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center space-x-1.5',
+              activeTab === 'integrations'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
+            ]"
+          >
+            <span>Third Party Integrations</span>
+            <span
+              :class="[
+                'px-1.5 py-0.5 text-[9px] rounded font-extrabold uppercase transition-colors',
+                activeTab === 'integrations'
+                  ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/40 dark:bg-indigo-100 dark:text-indigo-800 dark:border-indigo-200'
+                  : 'bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
+              ]"
+            >
+              Tax & Fiscal
+            </span>
+          </button>
         </nav>
       </div>
 
@@ -1342,6 +1364,11 @@
 
           </template>
         </div>
+
+        <!-- Third Party Integrations Tab -->
+        <div v-if="activeTab === 'integrations'" class="p-6">
+          <ThirdPartyIntegrationsTab />
+        </div>
       </div>
     </div>
   </div>
@@ -1389,6 +1416,7 @@ import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue';
 import UserCreateForm from './UserCreateForm.vue';
 import UserViewModal from './UserViewModal.vue';
 import RoleCreateForm from './RoleCreateForm.vue';
+import ThirdPartyIntegrationsTab from './ThirdPartyIntegrationsTab.vue';
 
 const authStore = useAuthStore();
 

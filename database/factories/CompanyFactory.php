@@ -27,6 +27,7 @@ class CompanyFactory extends Factory
             'team_size' => fake()->randomElement(['1-5', '5-20', '20-50']),
             'business_type' => fake()->randomElement(['Retail', 'Wholesale', 'Services']),
             'business_scale' => fake()->randomElement(['Single Outlet', 'Multiple Outlets']),
+            'intended_tasks' => ['POS'],
             'country' => fake()->country(),
             'system_language' => 'en',
             'base_currency' => 'USD',

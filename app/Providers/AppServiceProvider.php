@@ -60,5 +60,11 @@ class AppServiceProvider extends ServiceProvider
         // Register ProductObserver and ProductVariationObserver for automatic Opening Stock journal entries
         \App\Models\Product::observe(\App\Observers\ProductObserver::class);
         \App\Models\ProductVariation::observe(\App\Observers\ProductVariationObserver::class);
+
+        // Register FBR Observers for automated FBR fiscalization
+        \App\Models\Sale::observe(\App\Observers\SaleObserver::class);
+        \App\Models\PurchaseOrder::observe(\App\Observers\PurchaseOrderObserver::class);
+        \App\Models\Transaction::observe(\App\Observers\TransactionObserver::class);
+        \App\Models\PaymentReceipt::observe(\App\Observers\PaymentReceiptObserver::class);
     }
 }

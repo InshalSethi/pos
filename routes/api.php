@@ -55,6 +55,7 @@ use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\TimezoneController;
 use App\Http\Controllers\Api\CompanySwitcherController;
 use App\Http\Controllers\Api\AttributeController;
+use App\Http\Controllers\Api\FbrSettingsController;
 // Public routes
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
 Route::get('/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
@@ -345,6 +346,14 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         // Invoice & Purchase Settings routes
         Route::get('/invoice-purchase-settings', [InvoicePurchaseSettingsController::class, 'index']);
         Route::put('/invoice-purchase-settings', [InvoicePurchaseSettingsController::class, 'update']);
+
+        // FBR Pakistan Settings & Entry Log routes
+        Route::get('/fbr-settings', [FbrSettingsController::class, 'getSettings']);
+        Route::put('/fbr-settings', [FbrSettingsController::class, 'updateSettings']);
+        Route::post('/fbr-settings/test-connection', [FbrSettingsController::class, 'testConnection']);
+        Route::get('/fbr-entries', [FbrSettingsController::class, 'getEntries']);
+        Route::post('/fbr-entries/{fbrEntry}/sync', [FbrSettingsController::class, 'syncEntry']);
+        Route::post('/fbr-entries/sync-all', [FbrSettingsController::class, 'syncAllPending']);
 
         // Currency management routes
         Route::get('/currencies', [CurrencyController::class, 'index']);
