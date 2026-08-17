@@ -20,11 +20,80 @@ class WarehouseController extends Controller
     }
 
     /**
+     * Resolve company ID for the authenticated user safely.
+     */
+    private function resolveCompanyId(): ?int
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return null;
+        }
+
+        $companyId = $user->current_company_id ?: $user->company_id;
+
+        if (!$companyId) {
+            $company = \App\Models\Company::where('user_id', $user->id)->first()
+                ?? \App\Models\Company::first();
+
+            if ($company) {
+                $companyId = $company->id;
+                $user->update([
+                    'current_company_id' => $companyId,
+                    'company_id' => $user->company_id ?: $companyId
+                ]);
+            }
+        }
+
+        if ($companyId) {
+            static::ensureDefaultWarehouseForCompany($companyId);
+        }
+
+        return $companyId;
+    }
+
+    /**
+     * Ensure at least one default warehouse exists for the company.
+     */
+    public static function ensureDefaultWarehouseForCompany(int $companyId): Warehouse
+    {
+        $warehouse = Warehouse::where('company_id', $companyId)->first();
+
+        if (!$warehouse) {
+            $company = \App\Models\Company::find($companyId);
+            $warehouse = Warehouse::create([
+                'company_id' => $companyId,
+                'name' => 'Main Warehouse',
+                'code' => 'MWH-001',
+                'email' => $company?->company_email ?: 'warehouse@example.com',
+                'phone' => $company?->company_phone ?: '+1 (555) 019-2834',
+                'address' => $company?->business_address ?: '100 Central Logistics Parkway',
+                'city' => 'Main City',
+                'state' => 'Main State',
+                'zip_code' => '10001',
+                'country' => $company?->country ?: 'United States',
+                'is_default' => true,
+                'is_active' => true,
+                'is_saleable' => true,
+            ]);
+
+            Counter::create([
+                'company_id' => $companyId,
+                'warehouse_id' => $warehouse->id,
+                'name' => 'First Sales Counter',
+                'counter_number' => 'C-01',
+                'status' => 'active',
+            ]);
+        }
+
+        return $warehouse;
+    }
+
+    /**
      * Get counters list for dropdowns.
      */
     public function counters(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->current_company_id;
+        $companyId = $this->resolveCompanyId();
         $query = Counter::where('company_id', $companyId);
 
         if ($request->has('warehouse_id') || $request->has('warehouse_ids')) {
@@ -62,7 +131,7 @@ class WarehouseController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->current_company_id;
+        $companyId = $this->resolveCompanyId();
         $query = Warehouse::where('company_id', $companyId);
 
         if ($request->has('search') && $request->search) {

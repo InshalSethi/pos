@@ -360,8 +360,8 @@ class AdminUserController extends Controller
                     DB::table('company_user')->whereIn('company_id', $ownedCompanyIds)->delete();
                 }
 
-                // Force delete the companies
-                Company::withTrashed()->whereIn('id', $ownedCompanyIds)->forceDelete();
+                // Soft-delete the companies
+                Company::whereIn('id', $ownedCompanyIds)->delete();
             }
 
             // Detach user from any pivot companies

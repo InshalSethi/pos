@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+
 use App\Traits\HasUtcDatabaseTimezones;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -17,6 +20,8 @@ use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
+    use SoftDeletes;
+
     use HasUtcDatabaseTimezones;
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens, HasRoles;

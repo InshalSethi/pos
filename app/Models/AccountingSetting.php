@@ -8,10 +8,14 @@ use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AccountingSetting extends Model
 {
+    use SoftDeletes;
+
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;

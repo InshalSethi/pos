@@ -7,12 +7,16 @@ use App\Traits\BelongsToCompany;
 use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Customer extends Model
 {
+    use SoftDeletes;
+
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;

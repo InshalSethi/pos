@@ -8,6 +8,8 @@ use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
@@ -17,6 +19,8 @@ use Illuminate\Support\Facades\Storage;
 
 class Employee extends Model
 {
+    use SoftDeletes;
+
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;

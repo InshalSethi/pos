@@ -171,8 +171,8 @@ class GoogleAuthController extends Controller
             $request->session()->regenerateToken();
 
             if ($shouldDelete) {
-                // PURGE RECORD: Completely delete/destroy this uncompleted User record
-                $user->forceDelete();
+                // Soft-delete this uncompleted User record
+                $user->delete();
             }
         }
 
