@@ -237,7 +237,7 @@ class InventoryAdjustmentController extends Controller
                         $je = JournalEntry::create([
                             'company_id' => $companyId,
                             'entry_number' => 'JE-ADJ-' . date('YmdHis') . '-' . rand(100, 999),
-                            'entry_date' => now(),
+                            'entry_date' => now()->toDateString(),
                             'reference' => $adjustment->adjustment_number,
                             'description' => "Inventory Adjustment Ledger Post ({$request->reason})",
                             'entry_type' => 'adjustment',
@@ -1293,7 +1293,7 @@ class InventoryAdjustmentController extends Controller
                 $journalEntry = JournalEntry::create([
                     'company_id' => $companyId,
                     'entry_number' => $entryNumber,
-                    'entry_date' => now(),
+                    'entry_date' => now()->toDateString(),
                     'reference' => $createdAdjustments[0]->adjustment_number ?? 'ADJ-MATRIX',
                     'description' => "Inventory Adjustment Ledger Post ({$reason})",
                     'entry_type' => 'adjustment',

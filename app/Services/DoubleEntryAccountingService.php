@@ -689,12 +689,15 @@ class DoubleEntryAccountingService
         }
 
         return DB::transaction(function () use ($item, $companyId, $quantity, $purchasePrice, $totalOpeningValue) {
-            // 1. Resolve '1040 Inventory' Asset Account
+            // 1. Resolve Active Leaf / Child '1040 Inventory' Asset Account
             $inventoryAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'asset')
                 ->where(function ($q) {
                     $q->where('account_code', '1040')
                       ->orWhere('account_name', 'LIKE', '%Inventory%');
-                })->first();
+                })
+                ->whereDoesntHave('children')
+                ->first();
 
             if (!$inventoryAccount) {
                 $inventoryAccount = Account::create([
@@ -710,20 +713,23 @@ class DoubleEntryAccountingService
                 ]);
             }
 
-            // 2. Resolve '3010 Owner's Equity' Account
+            // 2. Resolve Active Leaf / Child '3010 Owner's Equity' Account
             $equityAccount = Account::where('company_id', $companyId)
+                ->where('account_type', 'equity')
                 ->where(function ($q) {
                     $q->where('account_code', '3010')
+                      ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%')
                       ->orWhere('account_name', 'LIKE', '%Owner%Equity%')
-                      ->orWhere('account_name', 'LIKE', '%Owner%Capital%')
-                      ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%');
-                })->first();
+                      ->orWhere('account_name', 'LIKE', '%Owner%Capital%');
+                })
+                ->whereDoesntHave('children')
+                ->first();
 
             if (!$equityAccount) {
                 $equityAccount = Account::create([
                     'company_id' => $companyId,
                     'account_code' => '3010',
-                    'account_name' => "Owner's Equity",
+                    'account_name' => "Opening Balance Equity",
                     'account_type' => 'equity',
                     'account_subtype' => 'owner_equity',
                     'opening_balance' => 0,
@@ -772,12 +778,9 @@ class DoubleEntryAccountingService
                 'credit_amount' => $totalOpeningValue,
             ]);
 
-            // 4. Update current_balance of both ledgers in chart_of_accounts
-            $inventoryAccount->current_balance = (float) $inventoryAccount->current_balance + $totalOpeningValue;
-            $inventoryAccount->save();
-
-            $equityAccount->current_balance = (float) $equityAccount->current_balance + $totalOpeningValue;
-            $equityAccount->save();
+            // 4. Recalculate current_balance & propagate parent rollup for both ledgers
+            $inventoryAccount->updateCurrentBalance();
+            $equityAccount->updateCurrentBalance();
 
             return $journalEntry;
         });

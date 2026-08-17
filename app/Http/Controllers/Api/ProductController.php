@@ -547,67 +547,8 @@ class ProductController extends Controller
                 }
             }
 
-            // Perform Double-Entry Posting for initial item creation stock valuation
-            $freshProduct = $product->fresh();
-            $initialStock = (float) ($freshProduct->stock_quantity ?? 0);
-            if ($initialStock > 0) {
-                $unitPurchasePrice = floatval(
-                    $request->input('purchase_price')
-                    ?? $request->input('cost_price')
-                    ?? $freshProduct->cost_price
-                    ?? $freshProduct->purchase_price
-                    ?? 0
-                );
-                $valuationImpact = round($initialStock * $unitPurchasePrice, 2);
-
-                if ($valuationImpact > 0) {
-                    $companyId = auth()->user()->current_company_id ?? $freshProduct->company_id;
-                    $assetAccount = Account::where('company_id', $companyId)->where('account_code', '1040')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_code', '1500')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Asset%')->first();
-
-                    $gainAccount = Account::where('company_id', $companyId)->where('account_code', '5010')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Adjustment Gain%')->first();
-
-                    if ($assetAccount) {
-                        $absAmt = abs($valuationImpact);
-                        $je = JournalEntry::create([
-                            'company_id' => $companyId,
-                            'entry_number' => 'JE-ITEM-' . date('YmdHis') . '-' . rand(100, 999),
-                            'entry_date' => now(),
-                            'reference' => 'ITEM-CREATE-' . $freshProduct->id,
-                            'description' => "Item Creation Initial Stock Posting ({$freshProduct->name})",
-                            'entry_type' => 'adjustment',
-                            'status' => 'posted',
-                            'total_debit' => $absAmt,
-                            'total_credit' => $absAmt,
-                            'created_by' => auth()->id() ?? 1,
-                        ]);
-
-                        JournalEntryLine::create([
-                            'journal_entry_id' => $je->id,
-                            'account_id' => $assetAccount->id,
-                            'debit_amount' => $absAmt,
-                            'credit_amount' => 0,
-                            'description' => 'Item Initial Stock Asset Posting',
-                        ]);
-
-                        if ($gainAccount) {
-                            JournalEntryLine::create([
-                                'journal_entry_id' => $je->id,
-                                'account_id' => $gainAccount->id,
-                                'debit_amount' => 0,
-                                'credit_amount' => $absAmt,
-                                'description' => 'Item Initial Stock Gain Posting',
-                            ]);
-                            $gainAccount->increment('current_balance', $absAmt);
-                        }
-
-                        $assetAccount->increment('current_balance', $absAmt);
-                        $assetAccount->updateCurrentBalance();
-                    }
-                }
-            }
+            // Perform Double-Entry Posting for initial item creation stock valuation via central service (deduplicated)
+            (new \App\Services\DoubleEntryAccountingService())->createOpeningStockEntry($product->fresh());
 
             \Illuminate\Support\Facades\DB::commit();
 
@@ -967,6 +908,7 @@ class ProductController extends Controller
             }
 
             $oldStock = (float) ($product->stock_quantity ?? 0);
+            $oldCostPrice = floatval($product->cost_price ?? $product->purchase_price ?? 0);
             $product->update($data);
             $product->load('category');
 
@@ -1149,36 +1091,63 @@ class ProductController extends Controller
                 }
             }
 
-            // Perform Double-Entry Posting for Item Edit stock delta valuation (COA 1040 Sync)
+            // Perform Double-Entry Posting for Item Edit valuation delta (COA 1040 Sync)
             $freshProduct = $product->fresh();
             $newStock = (float) ($freshProduct->stock_quantity ?? 0);
-            $stockDelta = $newStock - $oldStock;
+            $newCostPrice = floatval(
+                $request->input('purchase_price')
+                ?? $request->input('cost_price')
+                ?? $freshProduct->cost_price
+                ?? $freshProduct->purchase_price
+                ?? 0
+            );
 
-            if ($stockDelta != 0) {
-                $unitPurchasePrice = floatval(
-                    $request->input('purchase_price')
-                    ?? $request->input('cost_price')
-                    ?? $freshProduct->cost_price
-                    ?? $freshProduct->purchase_price
-                    ?? 0
-                );
-                $valuationImpact = round($stockDelta * $unitPurchasePrice, 2);
+            $oldValuation = round($oldStock * $oldCostPrice, 2);
+            $newValuation = round($newStock * $newCostPrice, 2);
+            $valuationImpact = round($newValuation - $oldValuation, 2);
 
-                if ($valuationImpact != 0) {
+            if ($valuationImpact != 0) {
                     $companyId = auth()->user()->current_company_id ?? $freshProduct->company_id;
-                    $assetAccount = Account::where('company_id', $companyId)->where('account_code', '1040')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_code', '1500')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Asset%')->first();
+                    $assetAccount = Account::where('company_id', $companyId)
+                        ->where('account_type', 'asset')
+                        ->where(function ($q) {
+                            $q->where('account_code', '1040')
+                              ->orWhere('account_name', 'LIKE', '%Inventory%');
+                        })
+                        ->whereDoesntHave('children')
+                        ->first();
 
-                    $gainAccount = Account::where('company_id', $companyId)->where('account_code', '5010')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Adjustment Gain%')->first();
+                    $hasBeenSold = $freshProduct->saleItems()->exists();
+
+                    if (!$hasBeenSold) {
+                        // Unsold setup item: adjust Opening Balance Equity (COA 3010 / Equity)
+                        $offsetAccount = Account::where('company_id', $companyId)
+                            ->where('account_type', 'equity')
+                            ->where(function ($q) {
+                                $q->where('account_code', '3010')
+                                  ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%')
+                                  ->orWhere('account_name', 'LIKE', '%Owner%Equity%')
+                                  ->orWhere('account_name', 'LIKE', '%Owner%Capital%');
+                            })
+                            ->whereDoesntHave('children')
+                            ->first();
+                    } else {
+                        // Active selling item: adjust Inventory Adjustment Gain/Loss (COA 5010)
+                        $offsetAccount = Account::where('company_id', $companyId)
+                            ->where(function ($q) {
+                                $q->where('account_code', '5010')
+                                  ->orWhere('account_name', 'LIKE', '%Inventory Adjustment%');
+                            })
+                            ->whereDoesntHave('children')
+                            ->first();
+                    }
 
                     if ($assetAccount) {
                         $absAmt = abs($valuationImpact);
                         $je = JournalEntry::create([
                             'company_id' => $companyId,
                             'entry_number' => 'JE-ITEM-' . date('YmdHis') . '-' . rand(100, 999),
-                            'entry_date' => now(),
+                            'entry_date' => now()->toDateString(),
                             'reference' => 'ITEM-UPDATE-' . $freshProduct->id,
                             'description' => "Item Direct Stock Update Posting ({$freshProduct->name})",
                             'entry_type' => 'adjustment',
@@ -1189,7 +1158,7 @@ class ProductController extends Controller
                         ]);
 
                         if ($valuationImpact > 0) {
-                            // DEBIT 1040 Asset, CREDIT 5010 Gain
+                            // DEBIT 1040 Asset, CREDIT Offset Account (3010 Equity or 5010 Gain)
                             JournalEntryLine::create([
                                 'journal_entry_id' => $je->id,
                                 'account_id' => $assetAccount->id,
@@ -1197,28 +1166,28 @@ class ProductController extends Controller
                                 'credit_amount' => 0,
                                 'description' => 'Item Direct Stock Increase Asset Posting',
                             ]);
-                            if ($gainAccount) {
+                            if ($offsetAccount) {
                                 JournalEntryLine::create([
                                     'journal_entry_id' => $je->id,
-                                    'account_id' => $gainAccount->id,
+                                    'account_id' => $offsetAccount->id,
                                     'debit_amount' => 0,
                                     'credit_amount' => $absAmt,
-                                    'description' => 'Item Direct Stock Increase Gain Posting',
+                                    'description' => $hasBeenSold ? 'Item Direct Stock Increase Gain Posting' : 'Item Initial Opening Stock Equity Adjustment',
                                 ]);
-                                $gainAccount->increment('current_balance', $absAmt);
+                                $offsetAccount->increment('current_balance', $absAmt);
                             }
                             $assetAccount->increment('current_balance', $absAmt);
                         } else {
-                            // DEBIT 5010 Gain/Loss, CREDIT 1040 Asset
-                            if ($gainAccount) {
+                            // DEBIT Offset Account (3010 Equity or 5010 Loss), CREDIT 1040 Asset
+                            if ($offsetAccount) {
                                 JournalEntryLine::create([
                                     'journal_entry_id' => $je->id,
-                                    'account_id' => $gainAccount->id,
+                                    'account_id' => $offsetAccount->id,
                                     'debit_amount' => $absAmt,
                                     'credit_amount' => 0,
-                                    'description' => 'Item Direct Stock Reduction Gain/Loss Posting',
+                                    'description' => $hasBeenSold ? 'Item Direct Stock Reduction Gain/Loss Posting' : 'Item Initial Opening Stock Equity Reduction',
                                 ]);
-                                $gainAccount->decrement('current_balance', $absAmt);
+                                $offsetAccount->decrement('current_balance', $absAmt);
                             }
                             JournalEntryLine::create([
                                 'journal_entry_id' => $je->id,
@@ -1231,9 +1200,11 @@ class ProductController extends Controller
                         }
 
                         $assetAccount->updateCurrentBalance();
+                        if ($offsetAccount) {
+                            $offsetAccount->updateCurrentBalance();
+                        }
                     }
                 }
-            }
 
             \Illuminate\Support\Facades\DB::commit();
 
@@ -1267,11 +1238,18 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product->delete();
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $product->delete();
+            \Illuminate\Support\Facades\DB::commit();
 
-        return response()->json([
-            'message' => 'Product deleted successfully'
-        ]);
+            return response()->json([
+                'message' => 'Product deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Failed deleting product: ' . $e->getMessage()], 500);
+        }
     }
 
     /**

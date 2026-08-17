@@ -98,7 +98,7 @@ class SupplierAccountingService
             // Create journal entry
             $journalEntry = JournalEntry::create([
                 'entry_number' => $this->generateJournalEntryNumber(),
-                'entry_date' => now(),
+                'entry_date' => now()->toDateString(),
                 'reference' => $reference,
                 'description' => "Payment to {$supplier->display_name}",
                 'entry_type' => 'automatic',
