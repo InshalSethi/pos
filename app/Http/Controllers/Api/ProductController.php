@@ -2127,6 +2127,17 @@ class ProductController extends Controller
                     }
                 }
 
+                // Automatically save imported tags into the tag module (tags database table)
+                foreach ($tags as $tagName) {
+                    $cleanTag = trim((string)$tagName);
+                    if ($cleanTag !== '') {
+                        \App\Models\Tag::firstOrCreate([
+                            'company_id' => $companyId,
+                            'name' => $cleanTag,
+                        ]);
+                    }
+                }
+
                 $existingProduct = Product::where('company_id', $companyId)->where('sku', $sku)->first();
                 if ($existingProduct) {
                     $updatedCount++;

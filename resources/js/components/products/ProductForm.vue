@@ -275,7 +275,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                             </svg>
-                            <span>+ Add Tag</span>
+                            <span>Add Tag</span>
                             <span v-if="tagSearchQuery" class="text-xs text-slate-400">"{{ tagSearchQuery }}"</span>
                           </button>
                           <div v-else class="flex items-center gap-1.5" @click.stop>
@@ -3949,8 +3949,20 @@ const focusTagInput = () => {
 
 const tagOptions = computed(() => {
   const list = Array.isArray(allTags.value) ? allTags.value : [];
-  const options = list.map(t => ({ label: t.name, value: t.name }));
-  return options;
+  const namesSet = new Set();
+  
+  list.forEach(t => {
+    const name = typeof t === 'object' ? t.name : t;
+    if (name && typeof name === 'string') namesSet.add(name.trim());
+  });
+
+  if (Array.isArray(form.value?.tags)) {
+    form.value.tags.forEach(t => {
+      if (t && typeof t === 'string') namesSet.add(t.trim());
+    });
+  }
+
+  return Array.from(namesSet).map(name => ({ label: name, value: name }));
 });
 
 const filteredTagOptions = computed(() => {
