@@ -119,9 +119,14 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['category.parent.parent', 'brand', 'unit', 'variations' => function($query) {
-            $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate', 'sku');
-        }])->withCount('variations')->where('status', '!=', 'draft');
+        $query = Product::with([
+            'category.parent.parent',
+            'brand',
+            'unit',
+            'variations' => function ($query) {
+                $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate', 'sku');
+            }
+        ])->withCount('variations')->where('status', '!=', 'draft');
 
         // Search functionality
         if ($request->filled('search')) {
@@ -202,15 +207,24 @@ class ProductController extends Controller
         if ($request->has('variations') && is_array($request->variations)) {
             $variations = $request->variations;
             foreach ($variations as &$v) {
-                if (isset($v['barcode']) && $v['barcode'] === '') $v['barcode'] = null;
-                if (isset($v['cost_price']) && $v['cost_price'] === '') $v['cost_price'] = 0;
-                if (isset($v['retail_price']) && $v['retail_price'] === '') $v['retail_price'] = 0;
-                if (isset($v['wholesale_price']) && $v['wholesale_price'] === '') $v['wholesale_price'] = 0;
-                if (isset($v['discount_type']) && $v['discount_type'] === '') $v['discount_type'] = null;
-                if (isset($v['discount_value']) && $v['discount_value'] === '') $v['discount_value'] = null;
-                if (isset($v['tax_rate']) && $v['tax_rate'] === '') $v['tax_rate'] = null;
-                if (isset($v['unit_of_measure']) && $v['unit_of_measure'] === '') $v['unit_of_measure'] = null;
-                if (isset($v['expiry_date']) && $v['expiry_date'] === '') $v['expiry_date'] = null;
+                if (isset($v['barcode']) && $v['barcode'] === '')
+                    $v['barcode'] = null;
+                if (isset($v['cost_price']) && $v['cost_price'] === '')
+                    $v['cost_price'] = 0;
+                if (isset($v['retail_price']) && $v['retail_price'] === '')
+                    $v['retail_price'] = 0;
+                if (isset($v['wholesale_price']) && $v['wholesale_price'] === '')
+                    $v['wholesale_price'] = 0;
+                if (isset($v['discount_type']) && $v['discount_type'] === '')
+                    $v['discount_type'] = null;
+                if (isset($v['discount_value']) && $v['discount_value'] === '')
+                    $v['discount_value'] = null;
+                if (isset($v['tax_rate']) && $v['tax_rate'] === '')
+                    $v['tax_rate'] = null;
+                if (isset($v['unit_of_measure']) && $v['unit_of_measure'] === '')
+                    $v['unit_of_measure'] = null;
+                if (isset($v['expiry_date']) && $v['expiry_date'] === '')
+                    $v['expiry_date'] = null;
             }
             unset($v);
             $request->merge(['variations' => $variations]);
@@ -274,8 +288,10 @@ class ProductController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,id',
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'image' => 'nullable',
+            'images' => 'nullable',
+            'images.*' => 'nullable',
+            'category_ids' => 'nullable|array',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'has_variations' => 'boolean',
@@ -317,7 +333,7 @@ class ProductController extends Controller
                     $data['unit_of_measure'] = $unit->short_name;
                 }
             }
-            
+
             $hasVariantsActive = $request->boolean('has_variations') && !empty($request->variations) && count($request->variations) > 0;
 
             if ($hasVariantsActive) {
@@ -342,10 +358,14 @@ class ProductController extends Controller
                 if ($request->has('taxes') && is_array($request->taxes)) {
                     $data['tax_rate'] = \App\Models\Tax::whereIn('id', $request->taxes)->where('is_active', true)->sum('value');
                 } else {
-                    if (empty($data['selling_price'])) $data['selling_price'] = 0;
-                    if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
-                    if (empty($data['cost_price'])) $data['cost_price'] = 0;
-                    if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                    if (empty($data['selling_price']))
+                        $data['selling_price'] = 0;
+                    if (empty($data['wholesale_price']))
+                        $data['wholesale_price'] = 0;
+                    if (empty($data['cost_price']))
+                        $data['cost_price'] = 0;
+                    if (empty($data['tax_rate']))
+                        $data['tax_rate'] = 0;
                 }
                 $data['has_variations'] = false;
             }
@@ -438,8 +458,8 @@ class ProductController extends Controller
                         : [$defaultWarehouse->id];
 
                     foreach ($targetWarehouseIds as $whId) {
-                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int)$row['warehouse_stocks'][$whId] : 0;
-                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int)$row['warehouse_min_stocks'][$whId] : 0;
+                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int) $row['warehouse_stocks'][$whId] : 0;
+                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int) $row['warehouse_min_stocks'][$whId] : 0;
 
                         $whService->setStock(
                             $whId,
@@ -480,28 +500,28 @@ class ProductController extends Controller
                                 $warehouse->id,
                                 $product->id,
                                 null,
-                                (int)($whAllocation['opening_stock'] ?? 0),
+                                (int) ($whAllocation['opening_stock'] ?? 0),
                                 $companyId
                             );
 
                             \App\Models\Inventory::where('warehouse_id', $warehouse->id)
                                 ->where('product_id', $product->id)
                                 ->whereNull('product_variation_id')
-                                ->update(['min_stock_level' => (int)($whAllocation['reorder_level'] ?? 0)]);
+                                ->update(['min_stock_level' => (int) ($whAllocation['reorder_level'] ?? 0)]);
                         }
                     } elseif ($targetWarehouseId = $request->get('warehouse_id')) {
                         $whService->setStock(
                             $targetWarehouseId,
                             $product->id,
                             null,
-                            (int)($request->stock_quantity ?? 0),
+                            (int) ($request->stock_quantity ?? 0),
                             $companyId
                         );
 
                         \App\Models\Inventory::where('warehouse_id', $targetWarehouseId)
                             ->where('product_id', $product->id)
                             ->whereNull('product_variation_id')
-                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                            ->update(['min_stock_level' => (int) ($request->min_stock_level ?? 0)]);
                     } else {
                         $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
                             'company_id' => $companyId,
@@ -515,21 +535,21 @@ class ProductController extends Controller
                             $defaultWarehouse->id,
                             $product->id,
                             null,
-                            (int)($request->stock_quantity ?? 0),
+                            (int) ($request->stock_quantity ?? 0),
                             $companyId
                         );
 
                         \App\Models\Inventory::where('warehouse_id', $defaultWarehouse->id)
                             ->where('product_id', $product->id)
                             ->whereNull('product_variation_id')
-                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                            ->update(['min_stock_level' => (int) ($request->min_stock_level ?? 0)]);
                     }
                 }
             }
 
             // Perform Double-Entry Posting for initial item creation stock valuation
             $freshProduct = $product->fresh();
-            $initialStock = (float)($freshProduct->stock_quantity ?? 0);
+            $initialStock = (float) ($freshProduct->stock_quantity ?? 0);
             if ($initialStock > 0) {
                 $unitPurchasePrice = floatval(
                     $request->input('purchase_price')
@@ -617,7 +637,7 @@ class ProductController extends Controller
         $product->load('category.parent.parent', 'brand', 'unit', 'saleItems.sale', 'variations', 'attributes');
         $product->loadCount('variations');
 
-        $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function($wh) use ($product) {
+        $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function ($wh) use ($product) {
             $inventory = \App\Models\Inventory::where('warehouse_id', $wh->id)
                 ->where('product_id', $product->id)
                 ->whereNull('product_variation_id')
@@ -633,7 +653,7 @@ class ProductController extends Controller
 
         $productArray = $product->toArray();
         $productArray['warehouses'] = $warehouses;
-        
+
         $inventoryWarehouseIds = \App\Models\Inventory::where('product_id', $product->id)
             ->whereNull('product_variation_id')
             ->pluck('warehouse_id')
@@ -647,9 +667,9 @@ class ProductController extends Controller
             $inventories = \App\Models\Inventory::where('product_id', $product->id)
                 ->where('product_variation_id', $variation['id'])
                 ->get();
-            
+
             $variation['warehouse_ids'] = $inventories->pluck('warehouse_id')->toArray();
-            
+
             $warehouseStocks = [];
             $warehouseMinStocks = [];
             foreach ($inventories as $inv) {
@@ -658,13 +678,13 @@ class ProductController extends Controller
             }
             $variation['warehouse_stocks'] = $warehouseStocks;
             $variation['warehouse_min_stocks'] = $warehouseMinStocks;
-            
+
             return $variation;
         }, $productArray['variations']);
 
         return response()->json($productArray);
     }
-    
+
     /**
      * Edit route mapping helper: ensures front-end views read variation attributes count state reactively.
      */
@@ -673,7 +693,7 @@ class ProductController extends Controller
         // Include variations count structure explicitly
         $product = Product::with(['variations', 'attributes'])->withCount('variations')->findOrFail($id);
 
-        $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function($wh) use ($product) {
+        $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function ($wh) use ($product) {
             $inventory = \App\Models\Inventory::where('warehouse_id', $wh->id)
                 ->where('product_id', $product->id)
                 ->whereNull('product_variation_id')
@@ -689,7 +709,7 @@ class ProductController extends Controller
 
         $productArray = $product->toArray();
         $productArray['warehouses'] = $warehouses;
-        
+
         $inventoryWarehouseIds = \App\Models\Inventory::where('product_id', $product->id)
             ->whereNull('product_variation_id')
             ->pluck('warehouse_id')
@@ -703,9 +723,9 @@ class ProductController extends Controller
             $inventories = \App\Models\Inventory::where('product_id', $product->id)
                 ->where('product_variation_id', $variation['id'])
                 ->get();
-            
+
             $variation['warehouse_ids'] = $inventories->pluck('warehouse_id')->toArray();
-            
+
             $warehouseStocks = [];
             $warehouseMinStocks = [];
             foreach ($inventories as $inv) {
@@ -714,7 +734,7 @@ class ProductController extends Controller
             }
             $variation['warehouse_stocks'] = $warehouseStocks;
             $variation['warehouse_min_stocks'] = $warehouseMinStocks;
-            
+
             return $variation;
         }, $productArray['variations']);
 
@@ -738,15 +758,24 @@ class ProductController extends Controller
         if ($request->has('variations') && is_array($request->variations)) {
             $variations = $request->variations;
             foreach ($variations as &$v) {
-                if (isset($v['barcode']) && $v['barcode'] === '') $v['barcode'] = null;
-                if (isset($v['cost_price']) && $v['cost_price'] === '') $v['cost_price'] = 0;
-                if (isset($v['retail_price']) && $v['retail_price'] === '') $v['retail_price'] = 0;
-                if (isset($v['wholesale_price']) && $v['wholesale_price'] === '') $v['wholesale_price'] = 0;
-                if (isset($v['discount_type']) && $v['discount_type'] === '') $v['discount_type'] = null;
-                if (isset($v['discount_value']) && $v['discount_value'] === '') $v['discount_value'] = null;
-                if (isset($v['tax_rate']) && $v['tax_rate'] === '') $v['tax_rate'] = null;
-                if (isset($v['unit_of_measure']) && $v['unit_of_measure'] === '') $v['unit_of_measure'] = null;
-                if (isset($v['expiry_date']) && $v['expiry_date'] === '') $v['expiry_date'] = null;
+                if (isset($v['barcode']) && $v['barcode'] === '')
+                    $v['barcode'] = null;
+                if (isset($v['cost_price']) && $v['cost_price'] === '')
+                    $v['cost_price'] = 0;
+                if (isset($v['retail_price']) && $v['retail_price'] === '')
+                    $v['retail_price'] = 0;
+                if (isset($v['wholesale_price']) && $v['wholesale_price'] === '')
+                    $v['wholesale_price'] = 0;
+                if (isset($v['discount_type']) && $v['discount_type'] === '')
+                    $v['discount_type'] = null;
+                if (isset($v['discount_value']) && $v['discount_value'] === '')
+                    $v['discount_value'] = null;
+                if (isset($v['tax_rate']) && $v['tax_rate'] === '')
+                    $v['tax_rate'] = null;
+                if (isset($v['unit_of_measure']) && $v['unit_of_measure'] === '')
+                    $v['unit_of_measure'] = null;
+                if (isset($v['expiry_date']) && $v['expiry_date'] === '')
+                    $v['expiry_date'] = null;
             }
             unset($v);
             $request->merge(['variations' => $variations]);
@@ -810,8 +839,10 @@ class ProductController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,id',
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'image' => 'nullable',
+            'images' => 'nullable',
+            'images.*' => 'nullable',
+            'category_ids' => 'nullable|array',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'has_variations' => 'boolean',
@@ -874,10 +905,14 @@ class ProductController extends Controller
                 if ($request->has('taxes') && is_array($request->taxes)) {
                     $data['tax_rate'] = \App\Models\Tax::whereIn('id', $request->taxes)->where('is_active', true)->sum('value');
                 } else {
-                    if (empty($data['selling_price'])) $data['selling_price'] = 0;
-                    if (empty($data['wholesale_price'])) $data['wholesale_price'] = 0;
-                    if (empty($data['cost_price'])) $data['cost_price'] = 0;
-                    if (empty($data['tax_rate'])) $data['tax_rate'] = 0;
+                    if (empty($data['selling_price']))
+                        $data['selling_price'] = 0;
+                    if (empty($data['wholesale_price']))
+                        $data['wholesale_price'] = 0;
+                    if (empty($data['cost_price']))
+                        $data['cost_price'] = 0;
+                    if (empty($data['tax_rate']))
+                        $data['tax_rate'] = 0;
                 }
                 $data['has_variations'] = false;
             }
@@ -931,7 +966,7 @@ class ProductController extends Controller
                 unset($data['images']);
             }
 
-            $oldStock = (float)($product->stock_quantity ?? 0);
+            $oldStock = (float) ($product->stock_quantity ?? 0);
             $product->update($data);
             $product->load('category');
 
@@ -1010,8 +1045,8 @@ class ProductController extends Controller
                         : [$defaultWarehouse->id];
 
                     foreach ($targetWarehouseIds as $whId) {
-                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int)$row['warehouse_stocks'][$whId] : 0;
-                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int)$row['warehouse_min_stocks'][$whId] : 0;
+                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int) $row['warehouse_stocks'][$whId] : 0;
+                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int) $row['warehouse_min_stocks'][$whId] : 0;
 
                         $whService->setStock(
                             $whId,
@@ -1062,14 +1097,14 @@ class ProductController extends Controller
                                 $warehouse->id,
                                 $product->id,
                                 null,
-                                (int)($whAllocation['opening_stock'] ?? $whAllocation['stock_qty'] ?? 0),
+                                (int) ($whAllocation['opening_stock'] ?? $whAllocation['stock_qty'] ?? 0),
                                 $companyId
                             );
 
                             \App\Models\Inventory::where('warehouse_id', $warehouse->id)
                                 ->where('product_id', $product->id)
                                 ->whereNull('product_variation_id')
-                                ->update(['min_stock_level' => (int)($whAllocation['reorder_level'] ?? $whAllocation['min_stock_level'] ?? 0)]);
+                                ->update(['min_stock_level' => (int) ($whAllocation['reorder_level'] ?? $whAllocation['min_stock_level'] ?? 0)]);
                         }
                     } elseif ($targetWarehouseId = $request->get('warehouse_id')) {
                         \App\Models\Inventory::where('product_id', $product->id)
@@ -1081,14 +1116,14 @@ class ProductController extends Controller
                             $targetWarehouseId,
                             $product->id,
                             null,
-                            (int)($request->stock_quantity ?? 0),
+                            (int) ($request->stock_quantity ?? 0),
                             $companyId
                         );
 
                         \App\Models\Inventory::where('warehouse_id', $targetWarehouseId)
                             ->where('product_id', $product->id)
                             ->whereNull('product_variation_id')
-                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                            ->update(['min_stock_level' => (int) ($request->min_stock_level ?? 0)]);
                     } else {
                         $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
                             'company_id' => $companyId,
@@ -1102,21 +1137,21 @@ class ProductController extends Controller
                             $defaultWarehouse->id,
                             $product->id,
                             null,
-                            (int)($request->stock_quantity ?? 0),
+                            (int) ($request->stock_quantity ?? 0),
                             $companyId
                         );
 
                         \App\Models\Inventory::where('warehouse_id', $defaultWarehouse->id)
                             ->where('product_id', $product->id)
                             ->whereNull('product_variation_id')
-                            ->update(['min_stock_level' => (int)($request->min_stock_level ?? 0)]);
+                            ->update(['min_stock_level' => (int) ($request->min_stock_level ?? 0)]);
                     }
                 }
             }
 
             // Perform Double-Entry Posting for Item Edit stock delta valuation (COA 1040 Sync)
             $freshProduct = $product->fresh();
-            $newStock = (float)($freshProduct->stock_quantity ?? 0);
+            $newStock = (float) ($freshProduct->stock_quantity ?? 0);
             $stockDelta = $newStock - $oldStock;
 
             if ($stockDelta != 0) {
@@ -1243,11 +1278,13 @@ class ProductController extends Controller
      * Calculates the Cartesian Product of multi-dimensional attribute values arrays 
      * to auto-generate unique product variations grid entries on the fly.
      */
-    public function generateCombinationsMatrix(array $attributeGroups) {
+    public function generateCombinationsMatrix(array $attributeGroups)
+    {
         // Input format example: [ [1, 2], [3, 4] ] -> (IDs of chosen values)
         $result = [[]];
         foreach ($attributeGroups as $property => $values) {
-            if (empty($values)) continue;
+            if (empty($values))
+                continue;
             $append = [];
             foreach ($result as $productCombo) {
                 foreach ($values as $item) {
@@ -1256,13 +1293,13 @@ class ProductController extends Controller
             }
             $result = $append;
         }
-        
+
         // Returns array matrices containing sorted ID combinations keys
-        return array_map(function($combo) {
+        return array_map(function ($combo) {
             sort($combo); // Ensure chronological sequence consistency, e.g., always "1-5", never "5-1"
             return [
                 'combination_key' => implode('-', $combo),
-                'suggested_sku'   => 'SKU-' . strtoupper(uniqid())
+                'suggested_sku' => 'SKU-' . strtoupper(uniqid())
             ];
         }, $result);
     }
@@ -1286,9 +1323,9 @@ class ProductController extends Controller
             $term = trim($searchTerm);
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
-                  ->orWhere('description', 'like', "%{$term}%")
-                  ->orWhere('sku', 'like', "%{$term}%")
-                  ->orWhere('barcode', 'like', "%{$term}%");
+                    ->orWhere('description', 'like', "%{$term}%")
+                    ->orWhere('sku', 'like', "%{$term}%")
+                    ->orWhere('barcode', 'like', "%{$term}%");
             });
         }
 
@@ -1297,9 +1334,9 @@ class ProductController extends Controller
             $sku = trim($request->input('sku'));
             $query->where(function ($q) use ($sku) {
                 $q->where('sku', 'like', "%{$sku}%")
-                  ->orWhereHas('variations', function ($vq) use ($sku) {
-                      $vq->where('sku', 'like', "%{$sku}%");
-                  });
+                    ->orWhereHas('variations', function ($vq) use ($sku) {
+                        $vq->where('sku', 'like', "%{$sku}%");
+                    });
             });
         }
 
@@ -1352,12 +1389,12 @@ class ProductController extends Controller
 
         // Min price
         if ($request->filled('min_price') && is_numeric($request->input('min_price'))) {
-            $query->where('selling_price', '>=', (float)$request->input('min_price'));
+            $query->where('selling_price', '>=', (float) $request->input('min_price'));
         }
 
         // Max price
         if ($request->filled('max_price') && is_numeric($request->input('max_price'))) {
-            $query->where('selling_price', '<=', (float)$request->input('max_price'));
+            $query->where('selling_price', '<=', (float) $request->input('max_price'));
         }
 
         $products = $query->distinct()->groupBy('products.id')->take(100)->get();
@@ -1412,14 +1449,14 @@ class ProductController extends Controller
                         'description' => $product->description ?? '',
                         'tags' => $product->tags ?? [],
                         'image' => $product->image ?? '/images/product-placeholder.png',
-                        'price' => (float)($variation->retail_price ?? $variation->selling_price ?? $product->selling_price ?? 0),
-                        'wholesale_price' => (float)($variation->wholesale_price ?? $product->wholesale_price ?? 0),
-                        'cost_price' => (float)($variation->cost_price ?? $product->cost_price ?? 0),
-                        'tax_rate' => (float)($variation->tax_rate ?? $product->tax_rate ?? 0),
+                        'price' => (float) ($variation->retail_price ?? $variation->selling_price ?? $product->selling_price ?? 0),
+                        'wholesale_price' => (float) ($variation->wholesale_price ?? $product->wholesale_price ?? 0),
+                        'cost_price' => (float) ($variation->cost_price ?? $product->cost_price ?? 0),
+                        'tax_rate' => (float) ($variation->tax_rate ?? $product->tax_rate ?? 0),
                         'tax_ids' => $variation->taxes ?? $product->taxes ?? [],
                         'warehouse_stocks' => $warehouseStocks,
                         'total_stock' => $totalStock,
-                        'track_inventory' => (bool)$product->track_inventory,
+                        'track_inventory' => (bool) $product->track_inventory,
                         'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                         'category' => $product->category?->name ?? 'Uncategorized',
                         'category_id' => $product->category_id,
@@ -1450,14 +1487,14 @@ class ProductController extends Controller
                     'description' => $product->description ?? '',
                     'tags' => $product->tags ?? [],
                     'image' => $product->image ?? '/images/product-placeholder.png',
-                    'price' => (float)($product->selling_price ?? 0),
-                    'wholesale_price' => (float)($product->wholesale_price ?? 0),
-                    'cost_price' => (float)($product->cost_price ?? 0),
-                    'tax_rate' => (float)($product->tax_rate ?? 0),
+                    'price' => (float) ($product->selling_price ?? 0),
+                    'wholesale_price' => (float) ($product->wholesale_price ?? 0),
+                    'cost_price' => (float) ($product->cost_price ?? 0),
+                    'tax_rate' => (float) ($product->tax_rate ?? 0),
                     'tax_ids' => $product->taxes ?? [],
                     'warehouse_stocks' => $warehouseStocks,
                     'total_stock' => $totalStock,
-                    'track_inventory' => (bool)$product->track_inventory,
+                    'track_inventory' => (bool) $product->track_inventory,
                     'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                     'category' => $product->category?->name ?? 'Uncategorized',
                     'category_id' => $product->category_id,
@@ -1638,7 +1675,7 @@ class ProductController extends Controller
 
         $callback = function () use ($columns, $sample1, $sample2, $sample3) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
             fputcsv($file, $columns);
             fputcsv($file, $sample1);
             fputcsv($file, $sample2);
@@ -1707,7 +1744,7 @@ class ProductController extends Controller
 
         $callback = function () use ($products, $columns) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
             fputcsv($file, $columns);
 
             foreach ($products as $product) {
@@ -1847,8 +1884,8 @@ class ProductController extends Controller
 
                             $t = (string) $c['t'];
                             $v = (string) $c->v;
-                            if ($t === 's' && isset($sharedStrings[(int)$v])) {
-                                $val = $sharedStrings[(int)$v];
+                            if ($t === 's' && isset($sharedStrings[(int) $v])) {
+                                $val = $sharedStrings[(int) $v];
                             } else {
                                 $val = $v;
                             }
@@ -1857,7 +1894,8 @@ class ProductController extends Controller
                         if (!empty($row)) {
                             $maxCol = max(array_keys($row));
                             for ($i = 0; $i <= $maxCol; $i++) {
-                                if (!isset($row[$i])) $row[$i] = '';
+                                if (!isset($row[$i]))
+                                    $row[$i] = '';
                             }
                             ksort($row);
                             $rows[] = array_values($row);
@@ -1937,7 +1975,7 @@ class ProductController extends Controller
         // Normalize header keys
         $headerMap = [];
         foreach ($header as $index => $colName) {
-            $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', (string)$colName))));
+            $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', (string) $colName))));
             $headerMap[$normalized] = $index;
         }
 
@@ -1945,8 +1983,9 @@ class ProductController extends Controller
             return function ($row) use ($aliases, $headerMap) {
                 foreach ($aliases as $alias) {
                     if (isset($headerMap[$alias]) && isset($row[$headerMap[$alias]])) {
-                        $val = trim((string)$row[$headerMap[$alias]]);
-                        if ($val !== '') return $val;
+                        $val = trim((string) $row[$headerMap[$alias]]);
+                        if ($val !== '')
+                            return $val;
                     }
                 }
                 return null;
@@ -2003,7 +2042,7 @@ class ProductController extends Controller
                 $rowNum++;
 
                 // Skip completely blank rows
-                if (empty($row) || (count($row) === 1 && trim((string)$row[0]) === '')) {
+                if (empty($row) || (count($row) === 1 && trim((string) $row[0]) === '')) {
                     continue;
                 }
 
@@ -2078,8 +2117,8 @@ class ProductController extends Controller
                     $supplier = Supplier::where('company_id', $companyId)
                         ->where(function ($q) use ($supplierName) {
                             $q->where('name', $supplierName)
-                              ->orWhere('company_name', $supplierName)
-                              ->orWhere('id', $supplierName);
+                                ->orWhere('company_name', $supplierName)
+                                ->orWhere('id', $supplierName);
                         })->first();
                     if ($supplier) {
                         $supplierId = $supplier->id;
@@ -2107,7 +2146,7 @@ class ProductController extends Controller
                 $taxRaw = $getTax($row);
                 $taxRate = 0;
                 if ($taxRaw !== null && $taxRaw !== '') {
-                    if (preg_match('/[0-9]+(\.[0-9]+)?/', (string)$taxRaw, $matches)) {
+                    if (preg_match('/[0-9]+(\.[0-9]+)?/', (string) $taxRaw, $matches)) {
                         $taxRate = floatval($matches[0]);
                     } else {
                         $taxRate = floatval($taxRaw);
@@ -2118,8 +2157,8 @@ class ProductController extends Controller
                     $taxRecord = \App\Models\Tax::where('company_id', $companyId)
                         ->where(function ($q) use ($taxRate, $taxRaw) {
                             $q->where('value', $taxRate)
-                              ->orWhere('name', 'LIKE', "%{$taxRate}%")
-                              ->orWhere('name', 'LIKE', "%{$taxRaw}%");
+                                ->orWhere('name', 'LIKE', "%{$taxRate}%")
+                                ->orWhere('name', 'LIKE', "%{$taxRaw}%");
                         })->first();
 
                     if (!$taxRecord) {
@@ -2139,10 +2178,10 @@ class ProductController extends Controller
                 }
 
                 $trackInventoryVal = $getTrackInv($row);
-                $trackInventory = $trackInventoryVal !== null ? in_array(strtolower((string)$trackInventoryVal), ['1', 'true', 'yes']) : true;
+                $trackInventory = $trackInventoryVal !== null ? in_array(strtolower((string) $trackInventoryVal), ['1', 'true', 'yes']) : true;
 
                 $isActiveVal = $getIsActive($row);
-                $isActive = $isActiveVal !== null ? in_array(strtolower((string)$isActiveVal), ['1', 'true', 'yes', 'active']) : true;
+                $isActive = $isActiveVal !== null ? in_array(strtolower((string) $isActiveVal), ['1', 'true', 'yes', 'active']) : true;
 
                 $batchNumber = $getBatch($row);
                 $expiryDate = $getExpiry($row) ? $getExpiry($row) : null;
@@ -2161,7 +2200,7 @@ class ProductController extends Controller
 
                 // Automatically save imported tags into the tag module (tags database table)
                 foreach ($tags as $tagName) {
-                    $cleanTag = trim((string)$tagName);
+                    $cleanTag = trim((string) $tagName);
                     if ($cleanTag !== '') {
                         \App\Models\Tag::firstOrCreate([
                             'company_id' => $companyId,
@@ -2229,7 +2268,7 @@ class ProductController extends Controller
 
                 // Process variations if provided
                 $hasVariationsVal = $getHasVariations($row);
-                $hasVariations = $hasVariationsVal !== null ? in_array(strtolower((string)$hasVariationsVal), ['1', 'true', 'yes']) : false;
+                $hasVariations = $hasVariationsVal !== null ? in_array(strtolower((string) $hasVariationsVal), ['1', 'true', 'yes']) : false;
                 $varName = $getVarName($row);
                 $varSku = $getVarSku($row);
 
