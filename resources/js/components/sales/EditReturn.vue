@@ -72,39 +72,7 @@
             </span>
           </div>
 
-          <!-- Product Picker / Search Dropdown -->
-          <div class="relative">
-            <input
-              v-model="productSearch"
-              type="text"
-              placeholder="Search product by name, SKU or scan barcode..."
-              @focus="showProductDropdown = true"
-              class="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-zinc-200"
-            />
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-
-            <!-- Search Results Dropdown -->
-            <div
-              v-if="showProductDropdown && filteredProducts.length > 0"
-              class="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 divide-y divide-slate-100 dark:divide-zinc-800"
-            >
-              <button
-                v-for="prod in filteredProducts"
-                :key="prod.id"
-                @click="addProductToReturn(prod)"
-                class="w-full p-2.5 text-left hover:bg-blue-50 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors cursor-pointer"
-              >
-                <div>
-                  <div class="font-semibold text-xs text-slate-800 dark:text-zinc-200">{{ prod.name }}</div>
-                  <div class="text-[10px] text-slate-400">SKU: {{ prod.sku || 'N/A' }} | Price: {{ formatMoney(prod.price) }}</div>
-                </div>
-                <div class="text-xs font-bold text-blue-600 dark:text-blue-400">+ Add</div>
-              </button>
-            </div>
-          </div>
-
+          <ProductSearch :products="availableProducts" :currencySymbol="currencySymbol" :targetWarehouseId="form.warehouse_id" @product-selected="onProductSelected" @products-fetched="onProductsFetched" />
           <!-- Items Table -->
           <div class="overflow-x-auto border border-slate-100 dark:border-zinc-800 rounded-lg">
             <table class="w-full text-left text-xs border-collapse">
@@ -126,8 +94,23 @@
                 </tr>
                 <tr v-for="(item, idx) in form.items" :key="idx" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
                   <td class="py-3 px-3">
-                    <div class="font-semibold text-slate-800 dark:text-zinc-200">{{ item.name }}</div>
-                    <div class="text-[10px] text-slate-400" v-if="item.original_qty">Original Sold Qty: {{ item.original_qty }}</div>
+                    <div class="font-semibold text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                      <span>{{ item.name }}</span>
+                      <span
+                        v-if="item.brand_name || (item.product && item.product.brand_name) || (item.product && typeof item.product.brand === 'string') || (item.product && item.product.brand && item.product.brand.name)"
+                        class="inline-block px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase border border-slate-300 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 rounded bg-slate-50 dark:bg-zinc-800/80 shrink-0 leading-none"
+                      >
+                        {{ item.brand_name || item.product.brand_name || (typeof item.product.brand === 'string' ? item.product.brand : item.product.brand.name) }}
+                      </span>
+                    </div>
+                    <div v-if="item.sku || (item.product && item.product.sku)" class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ item.sku || item.product.sku }}</div>
+                    <div
+                      v-if="item.category_path || (item.product && item.product.category_path) || (item.product && typeof item.product.category === 'string') || (item.product && item.product.category && item.product.category.name)"
+                      class="text-[9.5px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate mt-0.5"
+                    >
+                      {{ item.category_path || item.product.category_path || (typeof item.product.category === 'string' ? item.product.category : item.product.category.name) }}
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5" v-if="item.original_qty">Original Sold Qty: {{ item.original_qty }}</div>
                   </td>
                   <td class="py-3 px-3 text-center">
                     <input
@@ -370,6 +353,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrencyStore } from '@/stores/currency'
 import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue'
+import ProductSearch from '@/components/shared/ProductSearch.vue'
 import axios from 'axios'
 
 const router = useRouter()
@@ -518,8 +502,25 @@ const remainingUnpaidLedger = computed(() => {
   return Math.max(0, totals.value.total_amount - totalPaidOutSplits.value)
 })
 
-const productSearch = ref('')
-const showProductDropdown = ref(false)
+
+const onProductSelected = ({ product, error, query }) => {
+  if (error) {
+    errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+  } else if (product) {
+    addProductToReturn(product);
+  }
+};
+
+const onProductsFetched = (newItems) => {
+  const existingKeys = new Set(availableProducts.value.map(p => p.id));
+  newItems.forEach(item => {
+    if (!existingKeys.has(item.id)) {
+      availableProducts.value.push(item);
+      existingKeys.add(item.id);
+    }
+  });
+};
+
 
 const form = reactive({
   id: null,
@@ -578,15 +579,6 @@ const warehouseOptions = computed(() =>
   }))
 )
 
-const filteredProducts = computed(() => {
-  if (!productSearch.value) return []
-  const query = productSearch.value.toLowerCase()
-  return availableProducts.value.filter(p =>
-    p.name.toLowerCase().includes(query) ||
-    (p.sku && p.sku.toLowerCase().includes(query)) ||
-    (p.barcode && p.barcode.toLowerCase().includes(query))
-  ).slice(0, 8)
-})
 
 const totals = computed(() => {
   let subtotal = 0
@@ -620,15 +612,20 @@ const calculateRowTotal = (item) => {
 }
 
 const addProductToReturn = (product) => {
-  const existing = form.items.find(i => i.product_id === product.id)
+  const prodId = product.product_id || product.id
+  const varId = product.product_variation_id || product.variation_id || null
+  const existing = form.items.find(i => (i.product_id === prodId && i.product_variation_id === varId) || i.product_id === prodId)
   if (existing) {
     existing.quantity += 1
     calculateRowTotal(existing)
   } else {
     const item = {
-      product_id: product.id,
-      product_variation_id: product.variation_id || null,
+      product_id: prodId,
+      product_variation_id: varId,
       name: product.name,
+      sku: product.sku,
+      brand_name: product.brand_name || (typeof product.brand === 'string' ? product.brand : product.brand?.name),
+      category_path: product.category_path || (typeof product.category === 'string' ? product.category : product.category?.name),
       original_qty: null,
       quantity: 1,
       unit_price: product.price || 0,
@@ -637,8 +634,6 @@ const addProductToReturn = (product) => {
     }
     form.items.push(item)
   }
-  productSearch.value = ''
-  showProductDropdown.value = false
 }
 
 const removeItem = (index) => {
@@ -712,6 +707,9 @@ const loadReturnData = async () => {
         product_id: item.product_id,
         product_variation_id: item.product_variation_id || null,
         name: item.product?.name || item.name || 'Product',
+        sku: item.product?.sku || item.sku,
+        brand_name: item.product?.brand_name || (typeof item.product?.brand === 'string' ? item.product?.brand : item.product?.brand?.name),
+        category_path: item.product?.category_path || (typeof item.product?.category === 'string' ? item.product?.category : item.product?.category?.name),
         original_qty: item.original_sold_qty || qty,
         quantity: qty,
         unit_price: unitPrice,

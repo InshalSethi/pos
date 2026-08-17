@@ -1269,7 +1269,7 @@ class ProductController extends Controller
 
     /**
      * Advanced Item Search Endpoint
-     * Accepts: search_term, search, query, sku, category_id, tag_id, tag, tags, min_price, max_price
+     * Accepts: search_term, search, query, sku, brand_id, category_id, subcategory_id, child_category_id, tag_id, tag, tags, min_price, max_price
      */
     public function advancedSearch(Request $request): JsonResponse
     {
@@ -1278,7 +1278,7 @@ class ProductController extends Controller
         $query = Product::where('company_id', $companyId)
             ->where('status', '!=', 'draft')
             ->where('is_active', true)
-            ->with(['category', 'unit', 'variations']);
+            ->with(['category.parent.parent', 'brand', 'unit', 'variations']);
 
         // Search term (Name, Description, SKU, Barcode)
         $searchTerm = $request->input('search_term') ?? $request->input('search') ?? $request->input('query');
@@ -1303,14 +1303,37 @@ class ProductController extends Controller
             });
         }
 
-        // Category filter
-        if ($request->filled('category_id') || $request->filled('categories')) {
-            $cats = $request->input('category_id') ?? $request->input('categories');
-            $catIds = is_array($cats) ? $cats : explode(',', $cats);
-            $catIds = array_values(array_filter(array_map('trim', $catIds)));
-            if (!empty($catIds)) {
-                $query->whereIn('category_id', $catIds);
+        // Brand filter
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->input('brand_id'));
+        }
+
+        // Category hierarchy filter
+        $targetCatIds = [];
+        if ($request->filled('child_category_id')) {
+            $targetCatIds[] = $request->input('child_category_id');
+        } elseif ($request->filled('subcategory_id')) {
+            $subId = $request->input('subcategory_id');
+            $targetCatIds[] = $subId;
+            $childIds = \App\Models\Category::where('company_id', $companyId)->where('parent_id', $subId)->pluck('id')->toArray();
+            $targetCatIds = array_merge($targetCatIds, $childIds);
+        } elseif ($request->filled('category_id')) {
+            $mainId = $request->input('category_id');
+            $targetCatIds[] = $mainId;
+            $subIds = \App\Models\Category::where('company_id', $companyId)->where('parent_id', $mainId)->pluck('id')->toArray();
+            $targetCatIds = array_merge($targetCatIds, $subIds);
+            if (!empty($subIds)) {
+                $childIds = \App\Models\Category::where('company_id', $companyId)->whereIn('parent_id', $subIds)->pluck('id')->toArray();
+                $targetCatIds = array_merge($targetCatIds, $childIds);
             }
+        } elseif ($request->filled('categories')) {
+            $cats = $request->input('categories');
+            $targetCatIds = is_array($cats) ? $cats : explode(',', $cats);
+        }
+
+        if (!empty($targetCatIds)) {
+            $targetCatIds = array_values(array_unique(array_filter(array_map('trim', $targetCatIds))));
+            $query->whereIn('category_id', $targetCatIds);
         }
 
         // Tag filter
@@ -1353,6 +1376,20 @@ class ProductController extends Controller
         $flatItems = [];
 
         foreach ($products as $product) {
+            $catPath = null;
+            if ($product->category) {
+                $parts = [];
+                if ($product->category->parent && $product->category->parent->parent) {
+                    $parts[] = $product->category->parent->parent->name;
+                }
+                if ($product->category->parent) {
+                    $parts[] = $product->category->parent->name;
+                }
+                $parts[] = $product->category->name;
+                $catPath = implode(' - ', $parts);
+            }
+            $brandName = $product->brand ? $product->brand->name : null;
+
             if ($product->has_variations && count($product->variations) > 0) {
                 foreach ($product->variations as $variation) {
                     $varKey = $product->id . '-' . $variation->id;
@@ -1386,6 +1423,10 @@ class ProductController extends Controller
                         'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                         'category' => $product->category?->name ?? 'Uncategorized',
                         'category_id' => $product->category_id,
+                        'category_path' => $catPath,
+                        'brand_id' => $product->brand_id,
+                        'brand_name' => $brandName,
+                        'brand' => $brandName,
                     ];
                 }
             } else {
@@ -1420,6 +1461,10 @@ class ProductController extends Controller
                     'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                     'category' => $product->category?->name ?? 'Uncategorized',
                     'category_id' => $product->category_id,
+                    'category_path' => $catPath,
+                    'brand_id' => $product->brand_id,
+                    'brand_name' => $brandName,
+                    'brand' => $brandName,
                 ];
             }
         }

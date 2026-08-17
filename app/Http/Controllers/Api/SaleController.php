@@ -2378,11 +2378,11 @@ class SaleController extends Controller
         // Fetch active taxes
         $taxes = \App\Models\Tax::where('company_id', $companyId)->where('is_active', true)->get();
 
-        // Fetch products
+        // Fetch products with category hierarchy, brand, unit and variations
         $products = Product::where('company_id', $companyId)
             ->where('status', '!=', 'draft')
             ->where('is_active', true)
-            ->with(['category', 'unit', 'variations'])
+            ->with(['category.parent.parent', 'brand', 'unit', 'variations'])
             ->get();
 
         // Fetch all inventory records for this company
@@ -2402,6 +2402,16 @@ class SaleController extends Controller
 
         foreach ($products as $product) {
             $productTaxes = $product->taxes ?? [];
+
+            // Calculate category path (Parent - Sub Category - Child Category)
+            $catChain = [];
+            $currCat = $product->category;
+            while ($currCat) {
+                array_unshift($catChain, $currCat->name);
+                $currCat = $currCat->parent;
+            }
+            $categoryPath = !empty($catChain) ? implode(' - ', $catChain) : ($product->category?->name ?? null);
+            $brandName = $product->brand?->name ?? null;
 
             // Calculate combined tax rate from product taxes array, fallback to tax_rate
             $productTaxPercentage = 0;
@@ -2456,6 +2466,8 @@ class SaleController extends Controller
                         'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                         'category' => $product->category?->name ?? 'Uncategorized',
                         'category_id' => $product->category_id,
+                        'category_path' => $categoryPath,
+                        'brand_name' => $brandName,
                     ];
                 }
             } else {
@@ -2493,6 +2505,8 @@ class SaleController extends Controller
                     'unit' => $product->unit?->short_name ?? $product->unit_of_measure ?? 'pcs',
                     'category' => $product->category?->name ?? 'Uncategorized',
                     'category_id' => $product->category_id,
+                    'category_path' => $categoryPath,
+                    'brand_name' => $brandName,
                 ];
             }
         }

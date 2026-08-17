@@ -31,95 +31,7 @@
       <div class="w-full md:w-3/4 p-8 flex flex-col relative">
 
           <!-- Catalog Search & Selection Section -->
-          <div class="pb-6 mb-4 space-y-3">
-            <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider text-left">Catalog Search & Selection</h3>
-            
-            <div class="flex items-center gap-3 relative w-full">
-              <!-- Search items input (takes full width minus gold category icon button) -->
-              <div class="relative flex-1" id="product-search-container">
-                <input
-                  v-model="productSearch"
-                  type="text"
-                  placeholder="Search products by title, code or barcode..."
-                  class="w-full pl-5 pr-11 py-2.5 bg-white dark:bg-[#12161b]/90 border border-slate-300 dark:border-sky-500/40 focus:border-sky-400 rounded-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium shadow-[0_0_15px_rgba(56,189,248,0.15)] focus:shadow-[0_0_20px_rgba(56,189,248,0.3)] focus:outline-none transition-all duration-300"
-                  @focus="isProductDropdownOpen = true"
-                  @keydown="handleProductSearchKeydown"
-                />
-                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 dark:text-sky-300">
-                  <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                
-                <!-- Search Results Dropdown List -->
-                <div
-                  v-show="isProductDropdownOpen && filteredProducts.length > 0"
-                  class="absolute left-0 right-0 mt-2 bg-white dark:bg-[#181e24] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto py-2 custom-scrollbar backdrop-blur-md"
-                >
-                  <div
-                    v-for="(product, idx) in displayedProducts"
-                    :key="product.id"
-                    :ref="el => setProductItemRef(el, idx)"
-                    @click="selectProductFromDropdown(product)"
-                    @mouseenter="highlightedProductIndex = idx"
-                    class="px-4 py-2.5 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
-                    :class="{
-                      'bg-indigo-50/90 dark:bg-zinc-800/90 text-indigo-900 dark:text-indigo-200 border-l-4 border-l-indigo-600 dark:border-l-indigo-400 font-bold': highlightedProductIndex === idx,
-                      'hover:bg-slate-50 dark:hover:bg-zinc-800/80': highlightedProductIndex !== idx
-                    }"
-                  >
-                    <div class="min-w-0 pr-4">
-                      <div class="font-bold text-slate-800 dark:text-zinc-200 truncate">{{ product.name }}</div>
-                      <div class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">SKU: {{ product.sku }}</div>
-                    </div>
-                    <div class="text-right flex-shrink-0">
-                      <span class="font-black text-indigo-600 dark:text-indigo-400 text-sm block">{{ currencySymbol }}{{ product.cost_price || product.selling_price }}</span>
-                      <span class="text-[10px] text-slate-500 dark:text-zinc-400">{{ getProductStock(product) }} in stock</span>
-                    </div>
-                  </div>
-
-                  <!-- Footer note when more than 50 items match -->
-                  <div
-                    v-if="filteredProducts.length > 50"
-                    class="px-4 py-2 text-center text-[10px] font-semibold text-slate-400 dark:text-zinc-500 bg-slate-50/80 dark:bg-zinc-900/80 border-t border-slate-100 dark:border-zinc-800/60 sticky bottom-0 backdrop-blur-sm select-none"
-                  >
-                    Showing top 50 of {{ filteredProducts.length }} items — Type to search more...
-                  </div>
-                </div>
-              </div>
-
-              <!-- Gold Metallic Advance Search Button with Tooltip -->
-              <div class="relative shrink-0 group">
-                <button
-                  type="button"
-                  @click="openAdvanceSearchModal"
-                  class="relative flex items-center justify-center w-10 h-10 rounded-full shrink-0 shadow-lg shadow-amber-950/30 hover:shadow-amber-500/20 active:scale-95 transition-all duration-200 cursor-pointer border border-amber-300/40 bg-gradient-to-b from-[#fbe396] via-[#dcae42] to-[#b38728] hover:from-[#fff0ad] hover:via-[#e2b74b] hover:to-[#be9130]"
-                >
-                  <!-- Filter Icon -->
-                  <svg class="w-4.5 h-4.5 text-[#1e1708]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M6 10h12M8 14h8M10 18h4" />
-                  </svg>
-                  
-                  <!-- Active Filter Indicator Badge -->
-                  <span
-                    v-if="hasActiveAdvanceFilters"
-                    class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-white dark:border-zinc-900 shadow-sm"
-                  >
-                    !
-                  </span>
-                </button>
-
-                <!-- Tooltip: Advance Searching -->
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
-                  <div class="bg-slate-900/95 dark:bg-[#1e252d] text-slate-100 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/80 tracking-wide">
-                    Advance Searching
-                  </div>
-                  <div class="w-2 h-2 bg-slate-900 dark:bg-[#1e252d] rotate-45 -mt-1 border-r border-b border-slate-700/80"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <ProductSearch priceType="purchase" :products="products" :categories="categories" :taxes="taxes" :currencySymbol="currencySymbol" :targetWarehouseId="selectedGlobalWarehouseIds.length > 0 ? selectedGlobalWarehouseIds[0] : null" @product-selected="onProductSelected" @products-fetched="onProductsFetched" />
           <!-- Line Items Section Card -->
           <div class="border border-slate-200 dark:border-zinc-800 rounded-xl mt-2 overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
             <!-- 1. Scrollable Line Items Table (Header & Body ONLY) -->
@@ -149,9 +61,23 @@
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 group align-top border-t border-slate-100 dark:border-zinc-800/60 first:border-0">
                       <!-- Name and SKU -->
                       <td class="pt-3 pb-1 px-3">
-                        <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm mb-0.5">{{ item.product.name }}</div>
+                        <div class="font-bold text-slate-800 dark:text-zinc-100 text-sm mb-0.5 flex items-center gap-2">
+                          <span>{{ item.product.name }}</span>
+                          <span
+                            v-if="item.product.brand_name || (item.product.brand && typeof item.product.brand === 'string') || (item.product.brand && item.product.brand.name)"
+                            class="inline-block px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase border border-slate-300 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 rounded bg-slate-50 dark:bg-zinc-800/80 shrink-0 leading-none"
+                          >
+                            {{ item.product.brand_name || (typeof item.product.brand === 'string' ? item.product.brand : item.product.brand.name) }}
+                          </span>
+                        </div>
                         <div class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
                           <span class="whitespace-nowrap">SKU: {{ item.product.sku }}</span>
+                        </div>
+                        <div
+                          v-if="item.product.category_path || (item.product.category && typeof item.product.category === 'string') || (item.product.category && item.product.category.name)"
+                          class="text-[9.5px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate mt-0.5"
+                        >
+                          {{ item.product.category_path || (typeof item.product.category === 'string' ? item.product.category : item.product.category.name) }}
                         </div>
                       </td>
 
@@ -1379,368 +1305,7 @@
       </div>
     </div>
 
-    <!-- Advance Searching Modal -->
-    <transition
-      enter-active-class="transition ease-out duration-200"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition ease-in duration-150"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div v-if="isAdvanceSearchModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-5xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 overflow-hidden flex flex-col max-h-[90vh] my-auto">
-          
-          <!-- Modal Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2E2E2E] bg-slate-50 dark:bg-[#252525]">
-            <h3 class="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
-              <span>Advanced Item Search</span>
-            </h3>
-            <button
-              type="button"
-              @click="closeAdvanceSearchModal"
-              class="p-1.5 rounded-lg text-slate-400 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-zinc-800 transition-all cursor-pointer border-0 bg-transparent"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Modal Body -->
-          <div class="p-6 overflow-y-auto space-y-5 custom-scrollbar flex-1 text-left">
-            
-            <!-- 1. Main Search Bar (Top) -->
-            <div class="relative w-full">
-              <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 dark:text-zinc-400">
-                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                v-model="advanceFilters.query"
-                type="text"
-                placeholder="Search by Name or Description"
-                class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 transition-all"
-              />
-            </div>
-
-            <!-- 2. Additional Search Criteria Section -->
-            <div class="space-y-3 pt-1">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-700 dark:text-zinc-200">Additional Search Criteria</span>
-                <button
-                  type="button"
-                  v-if="hasActiveAdvanceFilters"
-                  @click="clearAdvanceFilters"
-                  class="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 underline cursor-pointer bg-transparent border-0"
-                >
-                  Reset Filters
-                </button>
-              </div>
-
-              <!-- Multi-Criteria Grid -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                
-                <!-- Search by SKU -->
-                <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by SKU</label>
-                  <input
-                    v-model="advanceFilters.sku"
-                    type="text"
-                    placeholder="Search by SKU"
-                    class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500"
-                  />
-                </div>
-
-                <!-- Search by Tags -->
-                <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Tags</label>
-                  <div class="flex-1 relative">
-                    <div
-                      @click="focusTagInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
-                    >
-                      <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
-                        <span
-                          v-for="t in advanceFilters.tags"
-                          :key="t"
-                          class="bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-[#2E2E2E] flex items-center gap-1 shrink-0"
-                        >
-                          {{ t }}
-                          <span @click.stop="removeAdvanceTag(t)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
-                        </span>
-
-                        <input
-                          ref="tagInputRef"
-                          v-model="tagSearchQuery"
-                          type="text"
-                          placeholder="Search by Tags"
-                          @focus="openTagDropdown"
-                          @keydown.down.prevent="navigateTagOptions(1)"
-                          @keydown.up.prevent="navigateTagOptions(-1)"
-                          @keydown.enter.prevent="selectHighlightedTag"
-                          @keydown.esc.prevent="isTagDropdownOpen = false"
-                          @keydown.delete="handleTagDeleteKey"
-                          class="flex-1 min-w-[80px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 py-0.5"
-                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
-                        />
-                      </div>
-                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>
-                    <!-- Tag Options Menu -->
-                    <div v-show="isTagDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
-                      <div v-if="filteredAvailableTags.length === 0" class="px-3 py-2 text-slate-400 dark:text-zinc-500 text-xs italic text-center">
-                        No tags found
-                      </div>
-                      <div
-                        v-for="(t, idx) in filteredAvailableTags"
-                        :key="t"
-                        @click="toggleAdvanceTag(t)"
-                        @mouseenter="tagHighlightedIndex = idx"
-                        class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
-                        :class="[
-                          advanceFilters.tags.includes(t) ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-zinc-200',
-                          tagHighlightedIndex === idx ? 'bg-slate-100 dark:bg-zinc-800' : 'hover:bg-slate-100 dark:hover:bg-zinc-800/60'
-                        ]"
-                      >
-                        <span>{{ t }}</span>
-                        <span v-if="advanceFilters.tags.includes(t)" class="text-indigo-600 dark:text-indigo-400 font-bold">✓</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Search by Categories -->
-                <div class="flex items-center gap-3">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Categories</label>
-                  <div class="flex-1 relative">
-                    <div
-                      @click="focusCategoryInput"
-                      class="min-h-[38px] px-2.5 py-1 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl flex items-center justify-between cursor-text flex-wrap gap-1 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-0 focus-within:outline-none transition-all"
-                    >
-                      <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
-                        <span
-                          v-for="cId in advanceFilters.categories"
-                          :key="cId"
-                          class="bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-300 dark:border-[#2E2E2E] flex items-center gap-1 shrink-0"
-                        >
-                          {{ getCategoryNameById(cId) }}
-                          <span @click.stop="removeAdvanceCategory(cId)" class="hover:text-rose-500 dark:hover:text-rose-400 cursor-pointer font-bold">×</span>
-                        </span>
-
-                        <input
-                          ref="categoryInputRef"
-                          v-model="categorySearchQuery"
-                          type="text"
-                          placeholder="Search by Categories"
-                          @focus="openCategoryDropdown"
-                          @keydown.down.prevent="navigateCategoryOptions(1)"
-                          @keydown.up.prevent="navigateCategoryOptions(-1)"
-                          @keydown.enter.prevent="selectHighlightedCategory"
-                          @keydown.esc.prevent="isCategorySelectModalOpen = false"
-                          @keydown.delete="handleCategoryDeleteKey"
-                          class="flex-1 min-w-[100px] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent ring-0 shadow-none text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 py-0.5"
-                          style="background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important;"
-                        />
-                      </div>
-                      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>
-                    <!-- Category Options Menu -->
-                    <div v-show="isCategorySelectModalOpen" class="absolute left-0 right-0 mt-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto p-1 text-xs custom-scrollbar">
-                      <div v-if="filteredAvailableCategories.length === 0" class="px-3 py-2 text-slate-400 dark:text-zinc-500 text-xs italic text-center">
-                        No categories found
-                      </div>
-                      <div
-                        v-for="(cat, idx) in filteredAvailableCategories"
-                        :key="cat.id"
-                        @click="toggleAdvanceCategory(cat.id)"
-                        @mouseenter="categoryHighlightedIndex = idx"
-                        class="px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
-                        :class="[
-                          advanceFilters.categories.includes(cat.id) ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-zinc-200',
-                          categoryHighlightedIndex === idx ? 'bg-slate-100 dark:bg-zinc-800' : 'hover:bg-slate-100 dark:hover:bg-zinc-800/60'
-                        ]"
-                      >
-                        <span>{{ cat.name }}</span>
-                        <span v-if="advanceFilters.categories.includes(cat.id)" class="text-indigo-600 dark:text-indigo-400 font-bold">✓</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Search by Price -->
-                <div class="flex items-center gap-3 md:col-span-2">
-                  <label class="w-32 shrink-0 text-slate-500 dark:text-zinc-400 font-medium">Search by Price</label>
-                  <div class="flex-1 flex items-center gap-3">
-                    <span class="text-slate-500 dark:text-zinc-400 font-medium">min</span>
-                    <div class="relative w-32">
-                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs">{{ currencySymbol }}</span>
-                      <input
-                        v-model="advanceFilters.minPrice"
-                        type="number"
-                        placeholder="0"
-                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
-                      />
-                    </div>
-                    <span class="text-slate-500 dark:text-zinc-400 font-medium">- max</span>
-                    <div class="relative w-32">
-                      <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 dark:text-zinc-500 text-xs">{{ currencySymbol }}</span>
-                      <input
-                        v-model="advanceFilters.maxPrice"
-                        type="number"
-                        placeholder="9999"
-                        class="w-full pl-6 pr-2 py-1.5 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 shadow-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- 3. Search Results Table -->
-            <div class="border border-slate-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden bg-white dark:bg-[#12161b]">
-              <div class="max-h-64 overflow-y-auto custom-scrollbar">
-                <table class="w-full text-xs text-left">
-                  <thead class="bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-zinc-400 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200 dark:border-[#2E2E2E]">
-                    <tr>
-                      <th class="py-2.5 px-3">SKU</th>
-                      <th class="py-2.5 px-3">Item Details / Description</th>
-                      <th class="py-2.5 px-3">Category</th>
-                      <th class="py-2.5 px-3">Tags</th>
-                      <th class="py-2.5 px-3 text-right">Cost / Price</th>
-                      <th class="py-2.5 px-3 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200 dark:divide-[#2E2E2E] text-slate-800 dark:text-slate-200">
-                    <tr v-if="!hasActiveAdvanceFilters">
-                      <td colspan="6" class="py-12 text-center text-slate-400 dark:text-zinc-500 italic">
-                        <svg class="mx-auto h-7 w-7 text-slate-400 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <span>Start typing in search box or select a filter criteria above to search items...</span>
-                      </td>
-                    </tr>
-                    <tr v-else-if="advanceFilteredProducts.length === 0">
-                      <td colspan="6" class="py-10 text-center text-slate-400 dark:text-zinc-500 italic">
-                        No products match the selected advance search criteria.
-                      </td>
-                    </tr>
-                    <tr
-                      v-for="product in advanceFilteredProducts.slice(0, 100)"
-                      :key="product.id"
-                      class="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
-                    >
-                      <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 dark:text-zinc-400">{{ product.sku }}</td>
-                      <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">{{ product.name }}</td>
-                      <td class="py-2.5 px-3 text-slate-600 dark:text-zinc-300">{{ getCategoryNameById(product.category_id) }}</td>
-                      <td class="py-2.5 px-3 text-slate-500 dark:text-zinc-400">
-                        <span v-if="product.tags && product.tags.length">{{ Array.isArray(product.tags) ? product.tags.join(', ') : product.tags }}</span>
-                        <span v-else class="text-slate-400 dark:text-zinc-600">—</span>
-                      </td>
-                      <td class="py-2.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">{{ currencySymbol }}{{ product.cost_price || product.selling_price || product.price }}</td>
-                      <td class="py-2.5 px-3 text-center">
-                        <button
-                          type="button"
-                          @click="addAdvanceProductToOrder(product)"
-                          class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-lg text-[11px] shadow-sm transition-all cursor-pointer border-0"
-                        >
-                          + Add
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-if="hasActiveAdvanceFilters" class="px-4 py-2 bg-slate-50 dark:bg-[#252525] border-t border-slate-200 dark:border-[#2E2E2E] text-[10px] text-slate-500 dark:text-zinc-400 font-semibold flex items-center justify-between">
-                <span>Showing {{ Math.min(advanceFilteredProducts.length, 100) }} of {{ advanceFilteredProducts.length }} items</span>
-                <span class="text-slate-400 dark:text-zinc-500">Click "+ Add" to append items directly to purchase order</span>
-              </div>
-              <div v-else class="px-4 py-2 bg-slate-50 dark:bg-[#252525] border-t border-slate-200 dark:border-[#2E2E2E] text-[10px] text-slate-400 dark:text-zinc-500 font-semibold text-center">
-                Enter search query or select any filter above to view items
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </transition>
-
-    <!-- Success/Error Notifications -->
-    <div v-if="notifications.length > 0" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm w-full">
-      <div
-        v-for="notification in notifications"
-        :key="notification.id"
-        class="bg-[#0f172a] text-slate-50 border border-white/5 px-5 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3 text-xs font-semibold"
-      >
-        <div class="flex items-center gap-3 flex-1 min-w-0">
-          <div class="flex-shrink-0">
-            <svg v-if="notification.type === 'success'" class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <svg v-else class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <span class="break-words leading-relaxed select-none text-white dark:text-white" style="color: #ffffff !important;">{{ notification.message }}</span>
-        </div>
-        <button @click="removeNotification(notification.id)" class="flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all focus:outline-none cursor-pointer bg-transparent border-0">
-          <span class="sr-only">Close</span>
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-    <!-- Teleported Floating Line Item Warehouse Allocation Popover (High Z-Index, Floating Above Side Panel) -->
-    <teleport to="body">
-      <div
-        id="teleport-wh-popover"
-        v-if="openWarehouseItemIndex !== null && orderItems[openWarehouseItemIndex]"
-        @click.stop
-        :style="{ top: warehousePopPos.top, left: warehousePopPos.left }"
-        class="fixed z-[99999] w-72 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-3 animate-fade-in text-left backdrop-blur-md"
-      >
-        <div class="flex justify-between items-center pb-2 mb-2 border-b border-slate-100 dark:border-zinc-800">
-          <div>
-            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-100">Warehouse Allocation</h4>
-            <p class="text-[10px] text-slate-400">Total Item Qty: {{ orderItems[openWarehouseItemIndex].quantity_ordered }}</p>
-          </div>
-          <button type="button" @click="openWarehouseItemIndex = null" class="text-slate-400 hover:text-slate-600 text-xs font-bold border-0 bg-transparent cursor-pointer">✕</button>
-        </div>
-
-        <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-          <div
-            v-for="alloc in orderItems[openWarehouseItemIndex].allocations"
-            :key="alloc.warehouse_id"
-            class="flex items-center justify-between gap-2"
-          >
-            <span class="text-xs font-medium text-slate-700 dark:text-zinc-300 truncate min-w-0">
-              {{ warehouses.find(w => w.id == alloc.warehouse_id)?.name || 'Warehouse' }}
-            </span>
-            <input
-              v-model.number="alloc.quantity"
-              type="number"
-              min="0"
-              :max="orderItems[openWarehouseItemIndex].quantity_ordered"
-              class="w-20 px-2 py-1 text-right text-xs font-bold border border-slate-300 dark:border-zinc-700 rounded-md bg-slate-50 dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        <!-- Allocation Validation Status -->
-        <div class="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-[11px] font-bold">
-          <span>Total Allocated:</span>
-          <span :class="isItemAllocationValid(orderItems[openWarehouseItemIndex]) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-            {{ getItemAllocatedSum(orderItems[openWarehouseItemIndex]) }} / {{ orderItems[openWarehouseItemIndex].quantity_ordered }} Qty
-          </span>
-        </div>
-        <p v-if="!isItemAllocationValid(orderItems[openWarehouseItemIndex])" class="text-[10px] text-rose-500 font-semibold mt-1">
-          ⚠️ Allocated quantity must equal {{ orderItems[openWarehouseItemIndex].quantity_ordered }}.
-        </p>
-      </div>
-    </teleport>
+    
   </div>
 
   <!-- Floating Grand Total Badge -->
@@ -1758,6 +1323,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
+import ProductSearch from '@/components/shared/ProductSearch.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -2875,8 +2441,8 @@ const onItemWarehouseChange = (index) => {
 const loadProducts = async () => {
   try {
     loadingProducts.value = true;
-    const response = await api.get('/products');
-    products.value = response.data.data || response.data;
+    const response = await api.get('/sales/products-with-stock');
+    products.value = response.data.items || response.data.products || [];
   } catch (error) {
     showNotification('Error loading products', 'error');
     console.error('Error:', error);
@@ -2987,7 +2553,13 @@ const selectProductFromDropdown = (product) => {
 };
 
 const addToOrder = (product) => {
-  const existingItem = orderItems.value.find(item => item.product.id === product.id);
+  const matchId = product.product_id || product.id;
+  const matchVarId = product.product_variation_id || null;
+
+  const existingItem = orderItems.value.find(item => 
+    item.product_id === matchId && 
+    (item.product_variation_id || null) === matchVarId
+  );
 
   if (existingItem) {
     existingItem.quantity_ordered += 1;
@@ -2996,10 +2568,11 @@ const addToOrder = (product) => {
   } else {
     const newItem = {
       product: product,
-      product_id: product.id,
+      product_id: matchId,
+      product_variation_id: matchVarId,
       quantity_ordered: 1,
-      unit_cost: parseFloat(product.cost_price || product.selling_price || 0),
-      total_cost: parseFloat(product.cost_price || product.selling_price || 0),
+      unit_cost: parseFloat(product.cost_price || product.selling_price || product.price || 0),
+      total_cost: parseFloat(product.cost_price || product.selling_price || product.price || 0),
       notes: '',
       allocations: []
     };
@@ -3219,6 +2792,7 @@ const saveOrder = async () => {
       ],
       items: orderItems.value.map(item => ({
         product_id: item.product_id,
+        product_variation_id: item.product_variation_id,
         quantity_ordered: item.quantity_ordered,
         unit_cost: item.unit_cost,
         notes: item.notes || null,
@@ -3379,6 +2953,42 @@ const loadTaxes = async () => {
 };
 
 // Lifecycle
+
+const onProductSelected = ({ product, error, query }) => {
+  if (error) {
+    // some modules use showNotification, some use errorMessage.value
+    if (typeof showNotification === 'function') {
+      showNotification(error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
+    } else if (typeof errorMessage !== 'undefined') {
+      errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+    }
+  } else if (product) {
+    addToOrder(product);
+  }
+};
+
+const onProductsFetched = (newItems) => {
+  // If products is ref
+  if (typeof products !== 'undefined' && products.value) {
+    const existingKeys = new Set(products.value.map(p => p.id));
+    newItems.forEach(item => {
+      if (!existingKeys.has(item.id)) {
+        products.value.push(item);
+        existingKeys.add(item.id);
+      }
+    });
+  } else if (typeof availableProducts !== 'undefined' && availableProducts.value) {
+    const existingKeys = new Set(availableProducts.value.map(p => p.id));
+    newItems.forEach(item => {
+      if (!existingKeys.has(item.id)) {
+        availableProducts.value.push(item);
+        existingKeys.add(item.id);
+      }
+    });
+  }
+};
+
+
 onMounted(() => {
   updateDateTime();
   setInterval(updateDateTime, 1000);

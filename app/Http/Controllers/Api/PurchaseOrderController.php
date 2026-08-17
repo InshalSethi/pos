@@ -416,6 +416,7 @@ class PurchaseOrderController extends Controller
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'product_id' => $item['product_id'],
+                    'product_variation_id' => $item['product_variation_id'] ?? null,
                     'warehouse_id' => $itemWarehouseId,
                     'warehouse_allocations' => $allocations,
                     'quantity_ordered' => $qtyOrdered,
@@ -670,6 +671,7 @@ class PurchaseOrderController extends Controller
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $purchaseOrder->id,
                     'product_id' => $item['product_id'],
+                    'product_variation_id' => $item['product_variation_id'] ?? null,
                     'warehouse_id' => $itemWarehouseId,
                     'warehouse_allocations' => $allocations,
                     'quantity_ordered' => $qtyOrdered,
