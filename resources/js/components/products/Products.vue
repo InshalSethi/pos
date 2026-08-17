@@ -175,30 +175,105 @@
 
         <!-- Custom Products Data Table -->
         <div class="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden shadow-sm mb-8 min-h-[400px] flex flex-col justify-between">
-          <!-- Card Header Bar (Search on Left, Count on Right - matching SalesInvoices Table layout) -->
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-gray-100 dark:border-[#2E2E2E]">
-            <!-- Compact Search Bar -->
-            <div class="relative w-full sm:w-80">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-              </span>
-              <input
-                type="text"
-                v-model="tableFilters.search"
-                @input="handleSearchInput"
-                placeholder="Search by product name, SKU, barcode..."
-                class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-[#252525] border border-gray-200 dark:border-[#2E2E2E] rounded-lg text-gray-900 dark:text-slate-200 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-slate-700 transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500"
-              />
+          <!-- Card Header Bar (Search & View Mode Toggle on Left, Row Selector & Count on Right) -->
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border-b border-gray-100 dark:border-[#2E2E2E]">
+            <!-- Left Side: Search Bar & View Mode Toggle -->
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <!-- Compact Search Bar -->
+              <div class="relative w-full sm:w-72">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  v-model="tableFilters.search"
+                  @input="handleSearchInput"
+                  placeholder="Search by product name, SKU, barcode..."
+                  class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-[#252525] border border-gray-200 dark:border-[#2E2E2E] rounded-lg text-gray-900 dark:text-slate-200 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-slate-700 transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500"
+                />
+              </div>
+
+              <!-- View Mode Toggle (Table / Grid) -->
+              <div class="flex items-center gap-1 bg-slate-100 dark:bg-[#252525] p-1 rounded-xl border border-gray-200 dark:border-[#2E2E2E]">
+                <button 
+                  @click="viewMode = 'table'"
+                  :class="viewMode === 'table' ? 'bg-white dark:bg-[#1E1E1E] text-indigo-600 dark:text-indigo-400 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium'"
+                  class="px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Table View"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <span class="text-[11px]">Table</span>
+                </button>
+                
+                <button 
+                  @click="viewMode = 'grid'"
+                  :class="viewMode === 'grid' ? 'bg-white dark:bg-[#1E1E1E] text-indigo-600 dark:text-indigo-400 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium'"
+                  class="px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Grid View (Max 5 per row)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  <span class="text-[11px]">Grid</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Page / Total Items Summary -->
-            <div v-if="tablePagination && tablePagination.total !== undefined" class="text-xs text-gray-500 dark:text-slate-400 font-medium">
-              Showing <span class="font-bold text-gray-900 dark:text-slate-200">{{ products.length }}</span> of <span class="font-bold text-gray-900 dark:text-slate-200">{{ tablePagination.total }}</span> items
+            <!-- Right Side: Row Selector (15, 30, 50) & Count -->
+            <div class="flex items-center gap-4 justify-between md:justify-end w-full md:w-auto">
+              <!-- Floating Row Selector Custom Dropdown -->
+              <div class="relative inline-block text-left" @click.stop>
+                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                  <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Rows:</span>
+                  
+                  <!-- Trigger Button displaying current selected value -->
+                  <button
+                    type="button"
+                    @click="showRowsDropdown = !showRowsDropdown"
+                    class="inline-flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-50 dark:bg-[#252525] hover:bg-slate-100 dark:hover:bg-[#2D2D2D] border border-gray-200 dark:border-[#2E2E2E] rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs transition-all cursor-pointer focus:outline-none focus:border-indigo-500"
+                  >
+                    <span>{{ tablePagination.per_page || 15 }} per page</span>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200" :class="{ 'rotate-180': showRowsDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <!-- Floating Dropdown Menu -->
+                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+                    <div 
+                      v-if="showRowsDropdown"
+                      class="absolute right-0 top-full mt-1.5 w-36 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl py-1 z-50 overflow-hidden"
+                    >
+                      <button
+                        v-for="option in [15, 30, 50]"
+                        :key="option"
+                        type="button"
+                        @click="handlePerPageChange(option); showRowsDropdown = false"
+                        class="w-full px-3 py-2 text-left text-xs font-semibold flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        :class="tablePagination.per_page === option ? 'bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'"
+                      >
+                        <span>{{ option }} per page</span>
+                        <svg v-if="tablePagination.per_page === option" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </transition>
+                </div>
+              </div>
+
+              <!-- Page / Total Items Summary -->
+              <div v-if="tablePagination && tablePagination.total !== undefined" class="text-xs text-gray-500 dark:text-slate-400 font-medium whitespace-nowrap">
+                Showing <span class="font-bold text-gray-900 dark:text-slate-200">{{ products.length }}</span> of <span class="font-bold text-gray-900 dark:text-slate-200">{{ tablePagination.total }}</span> items
+              </div>
             </div>
           </div>
-          <div class="w-full overflow-x-auto min-h-[400px]">
+          <!-- Table View Container -->
+          <div v-if="viewMode === 'table'" class="w-full overflow-x-auto min-h-[400px]">
             <table class="w-full min-w-max table-auto align-middle">
               <thead>
                 <tr class="border-b border-gray-100 dark:border-[#2E2E2E] bg-slate-50/50 dark:bg-[#252525] text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">
@@ -494,10 +569,295 @@
             </table>
           </div>
 
+          <!-- Grid View Layout (Max 5 items per row) -->
+          <div v-else-if="viewMode === 'grid'" class="p-4 min-h-[400px]">
+            <!-- Loading State -->
+            <div v-if="loading" class="py-16 text-center text-gray-400">
+              <div class="flex justify-center items-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-emerald-600" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-sm font-semibold text-gray-500 dark:text-slate-400">Fetching products...</span>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else-if="products.length === 0" class="py-20 text-center text-gray-500">
+              <div class="flex flex-col items-center max-w-sm mx-auto">
+                <div class="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#252525] flex items-center justify-center mb-4 text-gray-400 dark:text-slate-500">
+                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+                <p class="text-base font-bold text-gray-900 dark:text-slate-200 mb-1">No products found</p>
+                <p class="text-xs text-gray-400 dark:text-slate-500 font-medium mb-3">Get started by adding your first product, or adjusting your filters.</p>
+                <button 
+                  v-if="hasActiveFilters" 
+                  @click="clearFilters" 
+                  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer"
+                >
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+
+            <!-- Grid Items (Max 5 per row) -->
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div 
+                v-for="item in products" 
+                :key="item.id"
+                class="group bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col justify-between relative"
+              >
+                <!-- Top Image Area -->
+                <div class="relative w-full h-44 bg-slate-50 dark:bg-[#252525] overflow-hidden group/img">
+                  <!-- Sale Banner Ribbon -->
+                  <div v-if="Number(item.discount_value) > 0" class="absolute top-2 right-2 z-10">
+                    <span class="px-2 py-0.5 bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-xs">
+                      Sale
+                    </span>
+                  </div>
+
+                  <!-- Checkbox Selection -->
+                  <div class="absolute top-2 left-2 z-10">
+                    <input
+                      type="checkbox"
+                      :value="item.id"
+                      v-model="selectedProducts"
+                      class="w-4 h-4 text-emerald-600 border border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] focus:ring-0 rounded-md cursor-pointer shadow-xs"
+                    />
+                  </div>
+
+                  <!-- Product Image -->
+                  <img
+                    v-if="getProductDisplayImage(item)"
+                    :src="getProductDisplayImage(item)"
+                    :alt="item.name"
+                    class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 cursor-pointer"
+                    @click.stop="openLightbox(item)"
+                  />
+                  <!-- Image Fallback Placeholder -->
+                  <div 
+                    v-else 
+                    @click.stop="openLightbox(item)"
+                    class="w-full h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 cursor-pointer"
+                  >
+                    <span class="text-3xl font-black uppercase tracking-wider">
+                      {{ item.name ? item.name.substring(0, 1) : 'P' }}
+                    </span>
+                    <span class="text-[9px] font-bold text-slate-400 mt-1 uppercase">No Image</span>
+                  </div>
+                </div>
+
+                <!-- Card Content Area -->
+                <div class="p-3.5 flex-1 flex flex-col justify-between space-y-3">
+                  <div>
+                    <!-- Title & Variants Count Badge -->
+                    <div class="flex items-start justify-between gap-1 mb-1">
+                      <h3 class="font-extrabold text-sm text-gray-900 dark:text-slate-100 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" :title="item.name">
+                        {{ item.name }}
+                      </h3>
+                      <span 
+                        v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400 shrink-0 uppercase"
+                      >
+                        Variants
+                      </span>
+                    </div>
+
+                    <!-- Category Hierarchy Path (Main > Sub > Child) -->
+                    <div class="mb-2">
+                      <div v-if="getCategoryHierarchy(item.category).length > 0" class="flex flex-wrap gap-1 items-center">
+                        <span 
+                          v-for="(catName, index) in getCategoryHierarchy(item.category)" 
+                          :key="index"
+                          :class="[
+                            'px-2 py-0.5 rounded-full text-[10px] font-semibold',
+                            index === 0 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30' :
+                            index === 1 ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30' :
+                            'bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#2E2E2E]'
+                          ]"
+                        >
+                          {{ catName }}
+                        </span>
+                      </div>
+                      <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
+                        General
+                      </span>
+                    </div>
+
+                    <!-- Brand & Tags -->
+                    <div class="flex items-center gap-1.5 flex-wrap mb-2">
+                      <!-- Brand Badge -->
+                      <span 
+                        v-if="item.brand" 
+                        class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#2E2E2E] uppercase"
+                      >
+                        🏷️ {{ item.brand.name }}
+                      </span>
+
+                      <!-- Tag Badges -->
+                      <span 
+                        v-for="(tag, tIdx) in parseItemTags(item)" 
+                        :key="tIdx"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/30"
+                      >
+                        #{{ tag }}
+                      </span>
+                    </div>
+
+                    <!-- SKU & Barcode Row -->
+                    <div class="grid grid-cols-2 gap-1.5 text-[10px] bg-slate-50 dark:bg-[#252525] p-2 rounded-xl border border-slate-100 dark:border-[#2E2E2E] mb-3">
+                      <div>
+                        <span class="block text-slate-400 dark:text-slate-500 font-bold uppercase text-[9px]">SKU</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                          {{ item.sku || (item.variations && item.variations[0] ? item.variations[0].sku : '-') }}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="block text-slate-400 dark:text-slate-500 font-bold uppercase text-[9px]">Barcode</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                          {{ item.barcode || '-' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Selling Price & Wholesale Price Row -->
+                    <div class="flex items-baseline justify-between border-t border-slate-100 dark:border-[#2E2E2E] pt-2 mb-2">
+                      <div>
+                        <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block">Selling Price</span>
+                        <span class="text-base font-black text-emerald-600 dark:text-emerald-400">
+                          {{ currencyStore.formatPrice(getItemSellingPrice(item)) }}
+                        </span>
+                      </div>
+
+                      <div v-if="getItemWholesalePrice(item) !== null" class="text-right">
+                        <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block">Wholesale</span>
+                        <span class="text-xs font-extrabold text-slate-600 dark:text-slate-300">
+                          {{ currencyStore.formatPrice(getItemWholesalePrice(item)) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Card Footer Actions & Status Toggle -->
+                  <div class="border-t border-slate-100 dark:border-[#2E2E2E] pt-2.5 flex items-center justify-between gap-2">
+                    <!-- Active/Inactive Status Toggle Switch -->
+                    <div v-if="item.status === 'draft'" class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                      <span class="w-2 h-2 rounded-full bg-amber-500"></span> Draft
+                    </div>
+                    <div v-else class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        @click.stop="toggleProductStatus(item)"
+                        :disabled="togglingStatusId === item.id"
+                        :class="[
+                          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50',
+                          item.is_active ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
+                        ]"
+                        role="switch"
+                        :aria-checked="item.is_active"
+                        :title="item.is_active ? 'Deactivate product' : 'Activate product'"
+                      >
+                        <span
+                          :class="[
+                            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center',
+                            item.is_active ? 'translate-x-4' : 'translate-x-0'
+                          ]"
+                        >
+                          <svg v-if="togglingStatusId === item.id" class="animate-spin h-2.5 w-2.5 text-emerald-600" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </span>
+                      </button>
+                      <span class="text-[10px] font-bold" :class="item.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'">
+                        {{ item.is_active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </div>
+
+                    <!-- Action Buttons (View, Edit, Delete) -->
+                    <div class="flex items-center gap-1">
+                      <button
+                        @click.stop="viewProduct(item)"
+                        class="p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors cursor-pointer"
+                        title="View Product Details"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button
+                        @click.stop="editProduct(item)"
+                        class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer"
+                        title="Edit Product"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        @click.stop="deleteProduct(item)"
+                        class="p-1.5 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Product"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Pagination Footer -->
           <div v-if="tablePagination && !loading" class="px-6 py-4 bg-white dark:bg-[#1E1E1E] border-t border-gray-100 dark:border-[#2E2E2E] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div class="text-xs text-gray-500 dark:text-slate-400 font-semibold">
-              Showing {{ tablePagination.from || 0 }} to {{ tablePagination.to || 0 }} of {{ tablePagination.total || 0 }} results
+            <div class="flex items-center gap-3">
+              <div class="text-xs text-gray-500 dark:text-slate-400 font-semibold">
+                Showing {{ tablePagination.from || 0 }} to {{ tablePagination.to || 0 }} of {{ tablePagination.total || 0 }} results
+              </div>
+
+              <!-- Floating Row Selector Dropdown (Bottom) -->
+              <div class="relative inline-block text-left border-l border-slate-200 dark:border-[#2E2E2E] pl-3" @click.stop>
+                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                  <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Rows:</span>
+                  
+                  <button
+                    type="button"
+                    @click="showBottomRowsDropdown = !showBottomRowsDropdown"
+                    class="inline-flex items-center justify-between gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-[#252525] hover:bg-slate-100 dark:hover:bg-[#2D2D2D] border border-gray-200 dark:border-[#2E2E2E] rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs transition-all cursor-pointer focus:outline-none"
+                  >
+                    <span>{{ tablePagination.per_page || 15 }}</span>
+                    <svg class="w-3 h-3 text-slate-400 dark:text-slate-500 transition-transform duration-200" :class="{ 'rotate-180': showBottomRowsDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+                    <div 
+                      v-if="showBottomRowsDropdown"
+                      class="absolute left-0 bottom-full mb-1.5 w-32 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl shadow-2xl py-1 z-50 overflow-hidden"
+                    >
+                      <button
+                        v-for="option in [15, 30, 50]"
+                        :key="option"
+                        type="button"
+                        @click="handlePerPageChange(option); showBottomRowsDropdown = false"
+                        class="w-full px-3 py-1.5 text-left text-xs font-semibold flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        :class="tablePagination.per_page === option ? 'bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'"
+                      >
+                        <span>{{ option }} rows</span>
+                        <svg v-if="tablePagination.per_page === option" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </transition>
+                </div>
+              </div>
             </div>
 
             <!-- Page Selection Controls -->
@@ -1398,6 +1758,10 @@ import { useConfirm } from '@/composables/useConfirm';
 const router = useRouter();
 
 const authStore = useAuthStore();
+const viewMode = ref(localStorage.getItem('pos_products_view_mode') || 'table');
+watch(viewMode, (newVal) => {
+  localStorage.setItem('pos_products_view_mode', newVal);
+});
 const currencyStore = useCurrencyStore();
 const { showToast: triggerToast } = useToast();
 const { confirm } = useConfirm();
@@ -1415,6 +1779,8 @@ const isFavorite = ref(false);
 const showSalesPurchaseDropdown = ref(false);
 const showOptionsDropdown = ref(false);
 const showFilterDrawer = ref(false);
+const showRowsDropdown = ref(false);
+const showBottomRowsDropdown = ref(false);
 const activeFilterPopover = ref(null);
 const categorySearchQuery = ref('');
 const brandSearchQuery = ref('');
@@ -1686,7 +2052,7 @@ const categoryForm = ref({
 const tablePagination = ref({
   current_page: 1,
   last_page: 1,
-  per_page: 25,
+  per_page: 15,
   total: 0,
   from: 0,
   to: 0
@@ -1778,6 +2144,8 @@ const closeDropdowns = () => {
   dropdownOpen.value.price = false;
   showSalesPurchaseDropdown.value = false;
   showOptionsDropdown.value = false;
+  showRowsDropdown.value = false;
+  showBottomRowsDropdown.value = false;
   activeFilterPopover.value = null;
 };
 
