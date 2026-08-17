@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentReceiptController;
 use App\Http\Controllers\Api\EmployeeUserController;
 use App\Http\Controllers\Api\EmployeeSalaryController;
+use App\Http\Controllers\Api\EmployeeLedgerController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\SalaryAdjustmentController;
 use App\Http\Controllers\Api\CustomerLedgerController;
@@ -411,6 +412,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::post('/employees/{employee}/reset-password', [EmployeeUserController::class , 'resetPassword']);
         Route::post('/employees/{employee}/deactivate-user-account', [EmployeeUserController::class , 'deactivateUserAccount']);
         Route::post('/employees/{employee}/reactivate-user-account', [EmployeeUserController::class , 'reactivateUserAccount']);
+
+        // Employee General Ledger routes
+        Route::get('/employees/{employee}/ledger', [EmployeeLedgerController::class, 'getLedger']);
+        Route::get('/employees/{employee}/ledger/pdf', [EmployeeLedgerController::class, 'exportPdf']);
+        Route::get('/employees/{employee}/transactions', [EmployeeLedgerController::class, 'getTransactions']);
 
         Route::apiResource('employees', EmployeeController::class);
 
