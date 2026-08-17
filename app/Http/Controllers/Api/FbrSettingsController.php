@@ -26,7 +26,16 @@ class FbrSettingsController extends Controller
     public function getSettings(Request $request): JsonResponse
     {
         $companyId = $request->input('company_id') ?: auth()->user()->current_company_id;
-        $setting = FbrSetting::getSettings($companyId);
+        $authorityType = $request->input('authority_type', 'fbr');
+
+        $setting = FbrSetting::getSettings($companyId, $authorityType);
+
+        // Fetch settings for all Pakistan tax authorities for current company
+        $authorities = ['fbr', 'pra', 'srb', 'kpra', 'bra'];
+        $allSettings = [];
+        foreach ($authorities as $authKey) {
+            $allSettings[$authKey] = FbrSetting::getSettings($companyId, $authKey);
+        }
 
         $companies = Company::where(function ($q) {
             $user = auth()->user();
@@ -40,18 +49,21 @@ class FbrSettingsController extends Controller
         return response()->json([
             'success' => true,
             'setting' => $setting,
+            'settings' => $allSettings,
+            'authority_type' => $authorityType,
             'company_id' => $companyId,
             'companies' => $companies,
         ]);
     }
 
     /**
-     * Update FBR settings for the specified company.
+     * Update settings for the specified company and authority type.
      */
     public function updateSettings(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'company_id' => 'nullable|exists:companies,id',
+            'authority_type' => 'nullable|string|in:fbr,pra,srb,kpra,bra',
             'is_enabled' => 'required|boolean',
             'environment' => 'required|in:sandbox,production',
             'pos_id' => 'nullable|string|max:100',
@@ -77,12 +89,16 @@ class FbrSettingsController extends Controller
         }
 
         $companyId = $request->input('company_id') ?: auth()->user()->current_company_id;
+        $authorityType = $request->input('authority_type', 'fbr');
 
-        $setting = FbrSetting::where('company_id', $companyId)->first();
+        $setting = FbrSetting::where('company_id', $companyId)
+            ->where('authority_type', $authorityType)
+            ->first();
 
         if (!$setting) {
             $setting = new FbrSetting();
             $setting->company_id = $companyId;
+            $setting->authority_type = $authorityType;
         }
 
         $setting->fill([
@@ -106,18 +122,19 @@ class FbrSettingsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'FBR configuration saved successfully for company!',
+            'message' => strtoupper($authorityType) . ' configuration saved successfully for company!',
             'setting' => $setting,
         ]);
     }
 
     /**
-     * Test connection to FBR API.
+     * Test connection to Tax Authority API.
      */
     public function testConnection(Request $request): JsonResponse
     {
         $companyId = $request->input('company_id') ?: auth()->user()->current_company_id;
-        $setting = FbrSetting::getSettings($companyId);
+        $authorityType = $request->input('authority_type', 'fbr');
+        $setting = FbrSetting::getSettings($companyId, $authorityType);
 
         if ($request->has('pos_id')) {
             $setting->pos_id = $request->input('pos_id');
@@ -132,13 +149,21 @@ class FbrSettingsController extends Controller
     }
 
     /**
-     * Get list of FBR entries (logs) for company.
+     * Get list of entries (logs) for company and authority.
      */
     public function getEntries(Request $request): JsonResponse
     {
         $companyId = $request->input('company_id') ?: auth()->user()->current_company_id;
+        $authorityType = $request->input('authority_type', 'fbr');
 
         $query = FbrEntry::where('company_id', $companyId);
+
+        if ($authorityType) {
+            $query->where(function ($q) use ($authorityType) {
+                $q->where('authority_type', $authorityType)
+                  ->orWhereNull('authority_type');
+            });
+        }
 
         if ($request->filled('type')) {
             $query->where('type', $request->input('type'));
@@ -191,7 +216,7 @@ class FbrSettingsController extends Controller
 
         return response()->json([
             'success' => $success,
-            'message' => $success ? 'FBR entry synced successfully!' : 'Failed to sync FBR entry: ' . $fbrEntry->error_message,
+            'message' => $success ? 'Entry synced successfully!' : 'Failed to sync entry: ' . $fbrEntry->error_message,
             'entry' => $fbrEntry->fresh(),
         ]);
     }
@@ -202,15 +227,24 @@ class FbrSettingsController extends Controller
     public function syncAllPending(Request $request): JsonResponse
     {
         $companyId = $request->input('company_id') ?: auth()->user()->current_company_id;
+        $authorityType = $request->input('authority_type', 'fbr');
 
         $pendingEntries = FbrEntry::where('company_id', $companyId)
-            ->whereIn('status', ['pending', 'failed'])
-            ->get();
+            ->whereIn('status', ['pending', 'failed']);
+
+        if ($authorityType) {
+            $pendingEntries->where(function ($q) use ($authorityType) {
+                $q->where('authority_type', $authorityType)
+                  ->orWhereNull('authority_type');
+            });
+        }
+
+        $entriesList = $pendingEntries->get();
 
         $syncedCount = 0;
         $failedCount = 0;
 
-        foreach ($pendingEntries as $entry) {
+        foreach ($entriesList as $entry) {
             if ($this->fbrService->syncEntry($entry)) {
                 $syncedCount++;
             } else {

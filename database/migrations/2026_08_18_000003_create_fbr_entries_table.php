@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('fbr_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->string('authority_type')->default('fbr');
             $table->string('type'); // 'sale', 'purchase', 'transaction', 'payment'
             $table->string('reference_type')->nullable(); // Polymorphic / Model class name
             $table->unsignedBigInteger('reference_id')->nullable();

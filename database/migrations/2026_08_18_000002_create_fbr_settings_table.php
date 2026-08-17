@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('fbr_settings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->string('authority_type')->default('fbr');
             $table->boolean('is_enabled')->default(false);
             $table->enum('environment', ['sandbox', 'production'])->default('sandbox');
             $table->string('pos_id')->nullable();
@@ -30,7 +31,7 @@ return new class extends Migration
             $table->boolean('sync_payments')->default(true);
             $table->timestamps();
 
-            $table->unique('company_id');
+            $table->unique(['company_id', 'authority_type']);
         });
     }
 

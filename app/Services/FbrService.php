@@ -16,9 +16,9 @@ class FbrService
     /**
      * Check if FBR integration is enabled for a given company and data type.
      */
-    public function isFbrEnabled(?int $companyId = null, ?string $dataType = null): bool
+    public function isFbrEnabled(?int $companyId = null, ?string $dataType = null, string $authorityType = 'fbr'): bool
     {
-        $setting = FbrSetting::getSettings($companyId);
+        $setting = FbrSetting::getSettings($companyId, $authorityType);
 
         if (!$setting->is_enabled) {
             return false;
@@ -40,13 +40,13 @@ class FbrService
     /**
      * Record a Sale into FBR entries table if FBR is enabled.
      */
-    public function recordSale(Sale $sale): ?FbrEntry
+    public function recordSale(Sale $sale, string $authorityType = 'fbr'): ?FbrEntry
     {
-        if (!$this->isFbrEnabled($sale->company_id, 'sale')) {
+        if (!$this->isFbrEnabled($sale->company_id, 'sale', $authorityType)) {
             return null;
         }
 
-        $setting = FbrSetting::getSettings($sale->company_id);
+        $setting = FbrSetting::getSettings($sale->company_id, $authorityType);
 
         $sale->loadMissing(['customer', 'saleItems.product']);
 
@@ -104,6 +104,7 @@ class FbrService
 
         $fbrEntry = FbrEntry::create([
             'company_id' => $sale->company_id,
+            'authority_type' => $authorityType,
             'type' => 'sale',
             'reference_type' => Sale::class,
             'reference_id' => $sale->id,

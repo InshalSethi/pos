@@ -16,6 +16,7 @@ class FbrSetting extends Model
 
     protected $fillable = [
         'company_id',
+        'authority_type',
         'is_enabled',
         'environment',
         'pos_id',
@@ -47,9 +48,9 @@ class FbrSetting extends Model
     }
 
     /**
-     * Get or create the FBR settings instance for the given company or current active company.
+     * Get or create the settings instance for the given company and authority type.
      */
-    public static function getSettings(?int $companyId = null): self
+    public static function getSettings(?int $companyId = null, string $authorityType = 'fbr'): self
     {
         $companyId = $companyId ?? (auth()->check() ? auth()->user()->current_company_id : null);
 
@@ -61,12 +62,25 @@ class FbrSetting extends Model
             return new self();
         }
 
-        $settings = static::withoutGlobalScopes()->where('company_id', $companyId)->first();
+        $settings = static::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where('authority_type', $authorityType)
+            ->first();
 
         if (!$settings) {
             $company = Company::find($companyId);
+            
+            $defaultBaseUrls = [
+                'fbr' => 'https://sandbox.fbr.gov.pk/api/v1',
+                'pra' => 'https://e.pra.punjab.gov.pk/api/v1',
+                'srb' => 'https://e.srb.gos.pk/api/v1',
+                'kpra' => 'https://kpra.kp.gov.pk/api/v1',
+                'bra' => 'https://bra.gob.pk/api/v1',
+            ];
+
             $settings = static::withoutGlobalScopes()->create([
                 'company_id' => $companyId,
+                'authority_type' => $authorityType,
                 'is_enabled' => false,
                 'environment' => 'sandbox',
                 'pos_id' => '100001',
@@ -74,7 +88,7 @@ class FbrSetting extends Model
                 'strn' => '3277876543210',
                 'business_name' => $company ? ($company->company_name ?? 'POS Enterprise') : 'POS Enterprise',
                 'branch_name' => 'Main Branch',
-                'base_url' => 'https://sandbox.fbr.gov.pk/api/v1',
+                'base_url' => $defaultBaseUrls[$authorityType] ?? 'https://sandbox.fbr.gov.pk/api/v1',
                 'auto_sync' => true,
                 'sync_sales' => true,
                 'sync_purchases' => true,

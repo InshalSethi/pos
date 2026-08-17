@@ -17,6 +17,7 @@ class FbrEntry extends Model
 
     protected $fillable = [
         'company_id',
+        'authority_type',
         'type',
         'reference_type',
         'reference_id',
