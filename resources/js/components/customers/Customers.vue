@@ -736,6 +736,11 @@ export default {
     };
 
     const viewLedger = (customer) => {
+      if (customer?.type === 'walk_in' || customer?.name?.toLowerCase().includes('walk-in')) {
+        showToast('General Ledger is not available for Walk-in Customer', 'warning');
+        openActionDropdown.value = null;
+        return;
+      }
       selectedCustomer.value = customer;
       showLedgerModal.value = true;
       openActionDropdown.value = null;

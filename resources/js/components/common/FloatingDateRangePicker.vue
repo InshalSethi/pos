@@ -302,6 +302,7 @@ const weekDayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 // Quick Presets Split into 2 Rows
 const presetsRow1 = [
+  { id: 'all_time', label: 'All Time' },
   { id: 'today', label: 'Today' },
   { id: 'yesterday', label: 'Yesterday' },
   { id: 'this_week', label: 'This Week' },
@@ -467,7 +468,9 @@ const getPresetDates = (presetId) => {
   let start = null;
   let end = null;
 
-  if (presetId === 'today') {
+  if (presetId === 'all_time') {
+    return { start: '', end: '' };
+  } else if (presetId === 'today') {
     start = new Date(today);
     end = new Date(today);
   } else if (presetId === 'yesterday') {
