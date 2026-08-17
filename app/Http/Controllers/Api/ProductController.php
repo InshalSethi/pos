@@ -8,6 +8,10 @@ use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\Product;
 use App\Services\StockThresholdService;
+use App\Models\Category;
+use App\Models\Brand;
+use App\Models\Supplier;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -1236,251 +1240,6 @@ class ProductController extends Controller
     }
 
     /**
-     * Import products from CSV/XLSX file
-     */
-    public function import(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:csv,xlsx,xls|max:10240', // 10MB max
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $file = $request->file('file');
-            $extension = $file->getClientOriginalExtension();
-
-            if ($extension === 'csv') {
-                $products = $this->importFromCsv($file);
-            } else {
-                $products = $this->importFromExcel($file);
-            }
-
-            $imported = 0;
-            $errors = [];
-
-            foreach ($products as $index => $productData) {
-                try {
-                    $companyId = auth()->user()->current_company_id;
-                    $productValidator = Validator::make($productData, [
-                        'name' => 'required|string|max:255',
-                        'sku' => [
-                            'required',
-                            'string',
-                            'max:100',
-                            Rule::unique('products', 'sku')->where('company_id', $companyId)
-                        ],
-                        'selling_price' => 'required|numeric|min:0',
-                        'cost_price' => 'nullable|numeric|min:0',
-                        'stock_quantity' => 'nullable|integer|min:0',
-                        'category_id' => 'nullable|exists:categories,id',
-                    ]);
-
-                    if ($productValidator->fails()) {
-                        $errors[] = [
-                            'row' => $index + 2, // +2 because index starts at 0 and we skip header
-                            'errors' => $productValidator->errors()->all()
-                        ];
-                        continue;
-                    }
-
-                    Product::create($productData);
-                    $imported++;
-                } catch (\Exception $e) {
-                    $errors[] = [
-                        'row' => $index + 2,
-                        'errors' => [$e->getMessage()]
-                    ];
-                }
-            }
-
-            return response()->json([
-                'message' => "Import completed. {$imported} products imported successfully.",
-                'imported' => $imported,
-                'errors' => $errors
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Import failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Export products to CSV
-     */
-    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
-    {
-        $query = Product::with(['category']);
-
-        // Apply filters if provided
-        if ($request->has('category_id') && $request->category_id) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $products = $query->get();
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="products_export_' . date('Y-m-d_H-i-s') . '.csv"',
-        ];
-
-        return response()->stream(function () use ($products) {
-            $handle = fopen('php://output', 'w');
-
-            // Add CSV headers
-            fputcsv($handle, [
-                'Name',
-                'SKU',
-                'Description',
-                'Category',
-                'Selling Price',
-                'Cost Price',
-                'Stock Quantity',
-                'Min Stock Level',
-                'Unit',
-                'Barcode',
-                'Status'
-            ]);
-
-            // Add product data
-            foreach ($products as $product) {
-                fputcsv($handle, [
-                    $product->name,
-                    $product->sku,
-                    $product->description,
-                    $product->category ? $product->category->name : '',
-                    $product->selling_price,
-                    $product->cost_price,
-                    $product->stock_quantity,
-                    $product->min_stock_level,
-                    $product->unit,
-                    $product->barcode,
-                    $product->is_active ? 'Active' : 'Inactive'
-                ]);
-            }
-
-            fclose($handle);
-        }, 200, $headers);
-    }
-
-    /**
-     * Download sample import template
-     */
-    public function downloadTemplate(): \Symfony\Component\HttpFoundation\StreamedResponse
-    {
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="product_import_template.csv"',
-        ];
-
-        return response()->stream(function () {
-            $handle = fopen('php://output', 'w');
-
-            // Add CSV headers
-            fputcsv($handle, [
-                'name',
-                'sku',
-                'description',
-                'category_id',
-                'selling_price',
-                'cost_price',
-                'stock_quantity',
-                'min_stock_level',
-                'unit',
-                'barcode'
-            ]);
-
-            // Add sample data
-            fputcsv($handle, [
-                'Sample Product 1',
-                'SKU001',
-                'This is a sample product description',
-                '1',
-                '19.99',
-                '10.00',
-                '100',
-                '10',
-                'pcs',
-                '1234567890123'
-            ]);
-
-            fputcsv($handle, [
-                'Sample Product 2',
-                'SKU002',
-                'Another sample product',
-                '2',
-                '29.99',
-                '15.00',
-                '50',
-                '5',
-                'kg',
-                '9876543210987'
-            ]);
-
-            fclose($handle);
-        }, 200, $headers);
-    }
-
-    /**
-     * Import products from CSV file
-     */
-    private function importFromCsv($file): array
-    {
-        $products = [];
-        $handle = fopen($file->getPathname(), 'r');
-
-        // Skip header row
-        fgetcsv($handle);
-
-        while (($data = fgetcsv($handle)) !== false) {
-            if (count($data) >= 6) { // Minimum required fields
-                $products[] = [
-                    'name' => $data[0] ?? '',
-                    'sku' => $data[1] ?? '',
-                    'description' => $data[2] ?? '',
-                    'category_id' => !empty($data[3]) ? (int) $data[3] : null,
-                    'selling_price' => !empty($data[4]) ? (float) $data[4] : 0,
-                    'cost_price' => !empty($data[5]) ? (float) $data[5] : 0,
-                    'stock_quantity' => !empty($data[6]) ? (int) $data[6] : 0,
-                    'min_stock_level' => !empty($data[7]) ? (int) $data[7] : 0,
-                    'unit' => $data[8] ?? 'pcs',
-                    'barcode' => $data[9] ?? '',
-                    'is_active' => true,
-                ];
-            }
-        }
-
-        fclose($handle);
-        return $products;
-    }
-
-    /**
-     * Import products from Excel file (simplified - would need PhpSpreadsheet for full implementation)
-     */
-    private function importFromExcel($file): array
-    {
-        // For now, treat Excel files as CSV
-        // In a real implementation, you would use PhpSpreadsheet library
-        return $this->importFromCsv($file);
-    }
-
-    /**
      * Calculates the Cartesian Product of multi-dimensional attribute values arrays 
      * to auto-generate unique product variations grid entries on the fly.
      */
@@ -1715,5 +1474,535 @@ class ProductController extends Controller
             'items' => $flatItems,
             'data' => $flatItems,
         ]);
+    }
+
+    /**
+     * Download CSV template for importing products.
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ];
+
+        $columns = [
+            'name',
+            'sku',
+            'barcode',
+            'short_description',
+            'description',
+            'cost_price',
+            'selling_price',
+            'wholesale_price',
+            'stock_quantity',
+            'min_stock_level',
+            'max_stock_level',
+            'unit_of_measure',
+            'category_name',
+            'brand_name',
+            'supplier_name',
+            'tax_rate',
+            'track_inventory',
+            'is_active',
+            'batch_number',
+            'expiry_date',
+            'discount_type',
+            'discount_value',
+            'tags'
+        ];
+
+        $sample1 = [
+            'Sample Product 1',
+            'SKU-1001',
+            '123456789012',
+            'Sample short desc',
+            'Sample full description for item',
+            '50.00',
+            '100.00',
+            '80.00',
+            '100',
+            '10',
+            '500',
+            'pcs',
+            'General',
+            'Generic',
+            'Sample Supplier',
+            '0.00',
+            '1',
+            '1',
+            'BATCH-001',
+            '2026-12-31',
+            'percentage',
+            '0.00',
+            'sample,electronics'
+        ];
+
+        $sample2 = [
+            'Sample Product 2',
+            'SKU-1002',
+            '987654321098',
+            'Another sample desc',
+            'Detailed item description',
+            '20.00',
+            '40.00',
+            '35.00',
+            '50',
+            '5',
+            '200',
+            'kg',
+            'General',
+            'Generic',
+            'Sample Supplier',
+            '5.00',
+            '1',
+            '1',
+            '',
+            '',
+            'fixed',
+            '0.00',
+            'grocery'
+        ];
+
+        $callback = function () use ($columns, $sample1, $sample2) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, $columns);
+            fputcsv($file, $sample1);
+            fputcsv($file, $sample2);
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, 'product_import_template.csv', $headers);
+    }
+
+    /**
+     * Export products to CSV format.
+     */
+    public function export(Request $request)
+    {
+        $filename = 'products_export_' . date('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $products = Product::with(['category', 'brand', 'supplier'])
+            ->where('status', '!=', 'draft')
+            ->latest()
+            ->get();
+
+        $columns = [
+            'name',
+            'sku',
+            'barcode',
+            'short_description',
+            'description',
+            'cost_price',
+            'selling_price',
+            'wholesale_price',
+            'stock_quantity',
+            'min_stock_level',
+            'max_stock_level',
+            'unit_of_measure',
+            'category_name',
+            'brand_name',
+            'supplier_name',
+            'tax_rate',
+            'track_inventory',
+            'is_active',
+            'batch_number',
+            'expiry_date',
+            'discount_type',
+            'discount_value',
+            'tags'
+        ];
+
+        $callback = function () use ($products, $columns) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, $columns);
+
+            foreach ($products as $product) {
+                $tags = is_array($product->tags) ? implode(',', $product->tags) : ($product->tags ?? '');
+
+                fputcsv($file, [
+                    $product->name,
+                    $product->sku,
+                    $product->barcode,
+                    $product->short_description,
+                    $product->description,
+                    $product->cost_price,
+                    $product->selling_price,
+                    $product->wholesale_price,
+                    $product->stock_quantity,
+                    $product->min_stock_level,
+                    $product->max_stock_level,
+                    $product->unit_of_measure,
+                    $product->category ? $product->category->name : '',
+                    $product->brand ? $product->brand->name : '',
+                    $product->supplier ? ($product->supplier->name ?? $product->supplier->company_name ?? '') : '',
+                    $product->tax_rate,
+                    $product->track_inventory ? '1' : '0',
+                    $product->is_active ? '1' : '0',
+                    $product->batch_number,
+                    $product->expiry_date ? (is_string($product->expiry_date) ? $product->expiry_date : $product->expiry_date->format('Y-m-d')) : '',
+                    $product->discount_type,
+                    $product->discount_value,
+                    $tags
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Parse XLSX file into array of rows without external dependencies.
+     */
+    private function parseXlsxToRows(string $filePath): array
+    {
+        $rows = [];
+        if (!class_exists('ZipArchive')) {
+            return [];
+        }
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) === true) {
+            $sharedStrings = [];
+            if (($ssIndex = $zip->locateName('xl/sharedStrings.xml')) !== false) {
+                $ssXml = $zip->getFromIndex($ssIndex);
+                $xml = @simplexml_load_string($ssXml);
+                if ($xml && isset($xml->si)) {
+                    foreach ($xml->si as $val) {
+                        if (isset($val->t)) {
+                            $sharedStrings[] = (string) $val->t;
+                        } elseif (isset($val->r)) {
+                            $t = '';
+                            foreach ($val->r as $r) {
+                                $t .= (string) $r->t;
+                            }
+                            $sharedStrings[] = $t;
+                        } else {
+                            $sharedStrings[] = '';
+                        }
+                    }
+                }
+            }
+
+            if (($sheetIndex = $zip->locateName('xl/worksheets/sheet1.xml')) !== false) {
+                $sheetXml = $zip->getFromIndex($sheetIndex);
+                $xml = @simplexml_load_string($sheetXml);
+                if ($xml && isset($xml->sheetData->row)) {
+                    foreach ($xml->sheetData->row as $r) {
+                        $row = [];
+                        foreach ($r->c as $c) {
+                            $cellRef = (string) $c['r'];
+                            $colLetters = preg_replace('/[0-9]/', '', $cellRef);
+                            $colIndex = 0;
+                            for ($i = 0; $i < strlen($colLetters); $i++) {
+                                $colIndex = $colIndex * 26 + (ord($colLetters[$i]) - 64);
+                            }
+                            $colIndex--; // 0-indexed
+
+                            $t = (string) $c['t'];
+                            $v = (string) $c->v;
+                            if ($t === 's' && isset($sharedStrings[(int)$v])) {
+                                $val = $sharedStrings[(int)$v];
+                            } else {
+                                $val = $v;
+                            }
+                            $row[$colIndex] = $val;
+                        }
+                        if (!empty($row)) {
+                            $maxCol = max(array_keys($row));
+                            for ($i = 0; $i <= $maxCol; $i++) {
+                                if (!isset($row[$i])) $row[$i] = '';
+                            }
+                            ksort($row);
+                            $rows[] = array_values($row);
+                        }
+                    }
+                }
+            }
+            $zip->close();
+        }
+        return $rows;
+    }
+
+    /**
+     * Import products from CSV or XLSX file.
+     */
+    public function import(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid file uploaded.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $file = $request->file('file');
+        $filePath = $file->getRealPath();
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        $allRows = [];
+        if (in_array($extension, ['xlsx', 'xls'])) {
+            $allRows = $this->parseXlsxToRows($filePath);
+        }
+
+        // Fallback or CSV processing
+        if (empty($allRows)) {
+            $handle = fopen($filePath, 'r');
+            if (!$handle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to read the uploaded file.'
+                ], 400);
+            }
+
+            // Read UTF-8 BOM if present
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $allRows[] = $row;
+            }
+            fclose($handle);
+        }
+
+        if (empty($allRows)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The file appears to be empty.'
+            ], 400);
+        }
+
+        // Header row
+        $header = array_shift($allRows);
+        if (empty($header)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Header row is missing in the file.'
+            ], 400);
+        }
+
+        // Normalize header keys
+        $headerMap = [];
+        foreach ($header as $index => $colName) {
+            $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', (string)$colName))));
+            $headerMap[$normalized] = $index;
+        }
+
+        $getValueByAliases = function (array $aliases) use ($headerMap) {
+            return function ($row) use ($aliases, $headerMap) {
+                foreach ($aliases as $alias) {
+                    if (isset($headerMap[$alias]) && isset($row[$headerMap[$alias]])) {
+                        $val = trim((string)$row[$headerMap[$alias]]);
+                        if ($val !== '') return $val;
+                    }
+                }
+                return null;
+            };
+        };
+
+        $getName = $getValueByAliases(['name', 'product_name', 'item_name', 'product', 'item', 'title', 'productname', 'itemname', 'item_name_description']);
+        $getSku = $getValueByAliases(['sku', 'product_sku', 'item_sku', 'code', 'product_code', 'item_code']);
+        $getBarcode = $getValueByAliases(['barcode', 'upc', 'ean', 'barcode_number']);
+        $getShortDesc = $getValueByAliases(['short_description', 'short_desc', 'summary']);
+        $getDesc = $getValueByAliases(['description', 'desc', 'details', 'full_description']);
+        $getCost = $getValueByAliases(['cost_price', 'cost', 'buy_price', 'purchase_price']);
+        $getSelling = $getValueByAliases(['selling_price', 'price', 'unit_price', 'retail_price', 'sale_price', 'sellingprice']);
+        $getWholesale = $getValueByAliases(['wholesale_price', 'wholesale', 'wholesale_rate']);
+        $getStock = $getValueByAliases(['stock_quantity', 'stock', 'quantity', 'qty', 'opening_stock']);
+        $getMinStock = $getValueByAliases(['min_stock_level', 'min_stock', 'minimum_stock']);
+        $getMaxStock = $getValueByAliases(['max_stock_level', 'max_stock', 'maximum_stock']);
+        $getUnit = $getValueByAliases(['unit_of_measure', 'unit', 'uom', 'unit_name']);
+        $getCategory = $getValueByAliases(['category_name', 'category', 'cat', 'category_id']);
+        $getBrand = $getValueByAliases(['brand_name', 'brand', 'make', 'brand_id']);
+        $getSupplier = $getValueByAliases(['supplier_name', 'supplier', 'vendor', 'supplier_id']);
+        $getTax = $getValueByAliases(['tax_rate', 'tax', 'vat', 'tax_percentage']);
+        $getTrackInv = $getValueByAliases(['track_inventory', 'track_stock']);
+        $getIsActive = $getValueByAliases(['is_active', 'active', 'status']);
+        $getBatch = $getValueByAliases(['batch_number', 'batch', 'batch_no']);
+        $getExpiry = $getValueByAliases(['expiry_date', 'expiry', 'exp_date']);
+        $getDiscountType = $getValueByAliases(['discount_type']);
+        $getDiscountVal = $getValueByAliases(['discount_value', 'discount']);
+        $getTags = $getValueByAliases(['tags', 'tag']);
+
+        $companyId = auth()->user()->current_company_id;
+        $imported = 0;
+        $errors = [];
+        $rowNum = 1;
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            foreach ($allRows as $row) {
+                $rowNum++;
+
+                // Skip completely blank rows
+                if (empty($row) || (count($row) === 1 && trim((string)$row[0]) === '')) {
+                    continue;
+                }
+
+                $name = $getName($row);
+                if (!$name) {
+                    $errors[] = [
+                        'row' => $rowNum,
+                        'errors' => ['Product name is required.']
+                    ];
+                    continue;
+                }
+
+                $categoryName = $getCategory($row);
+                $categoryId = null;
+                if ($categoryName) {
+                    $category = Category::where('company_id', $companyId)
+                        ->where(function ($q) use ($categoryName) {
+                            $q->where('name', $categoryName)->orWhere('id', $categoryName);
+                        })->first();
+                    if (!$category && !is_numeric($categoryName)) {
+                        $category = Category::create([
+                            'company_id' => $companyId,
+                            'name' => $categoryName,
+                            'slug' => Str::slug($categoryName),
+                            'is_active' => true,
+                        ]);
+                    }
+                    if ($category) {
+                        $categoryId = $category->id;
+                    }
+                }
+
+                $brandName = $getBrand($row);
+                $brandId = null;
+                if ($brandName) {
+                    $brand = Brand::where('company_id', $companyId)
+                        ->where(function ($q) use ($brandName) {
+                            $q->where('name', $brandName)->orWhere('id', $brandName);
+                        })->first();
+                    if (!$brand && !is_numeric($brandName)) {
+                        $brand = Brand::create([
+                            'company_id' => $companyId,
+                            'name' => $brandName,
+                            'slug' => Str::slug($brandName),
+                            'is_active' => true,
+                        ]);
+                    }
+                    if ($brand) {
+                        $brandId = $brand->id;
+                    }
+                }
+
+                $supplierName = $getSupplier($row);
+                $supplierId = null;
+                if ($supplierName) {
+                    $supplier = Supplier::where('company_id', $companyId)
+                        ->where(function ($q) use ($supplierName) {
+                            $q->where('name', $supplierName)
+                              ->orWhere('company_name', $supplierName)
+                              ->orWhere('id', $supplierName);
+                        })->first();
+                    if ($supplier) {
+                        $supplierId = $supplier->id;
+                    }
+                }
+
+                $sku = $getSku($row);
+                if (!$sku) {
+                    $sku = 'SKU-' . strtoupper(Str::random(8));
+                }
+
+                $barcode = $getBarcode($row);
+                $shortDescription = $getShortDesc($row);
+                $description = $getDesc($row);
+                $costPrice = floatval($getCost($row) ?? 0);
+                $sellingPrice = floatval($getSelling($row) ?? 0);
+                $wholesalePrice = floatval($getWholesale($row) ?? 0);
+                $stockQuantity = intval($getStock($row) ?? 0);
+                $minStockLevel = intval($getMinStock($row) ?? 0);
+                $maxStockLevel = intval($getMaxStock($row) ?? 0);
+                $unitOfMeasure = $getUnit($row) ?? 'pcs';
+                $taxRate = floatval($getTax($row) ?? 0);
+
+                $trackInventoryVal = $getTrackInv($row);
+                $trackInventory = $trackInventoryVal !== null ? in_array(strtolower($trackInventoryVal), ['1', 'true', 'yes']) : true;
+
+                $isActiveVal = $getIsActive($row);
+                $isActive = $isActiveVal !== null ? in_array(strtolower($isActiveVal), ['1', 'true', 'yes', 'active']) : true;
+
+                $batchNumber = $getBatch($row);
+                $expiryDate = $getExpiry($row) ? $getExpiry($row) : null;
+                $discountType = $getDiscountType($row) ?? 'percentage';
+                $discountValue = floatval($getDiscountVal($row) ?? 0);
+
+                $tagsRaw = $getTags($row);
+                $tags = [];
+                if ($tagsRaw) {
+                    $tags = array_map('trim', explode(',', $tagsRaw));
+                }
+
+                Product::updateOrCreate(
+                    [
+                        'company_id' => $companyId,
+                        'sku' => $sku,
+                    ],
+                    [
+                        'name' => $name,
+                        'barcode' => $barcode,
+                        'short_description' => $shortDescription,
+                        'description' => $description,
+                        'cost_price' => $costPrice,
+                        'selling_price' => $sellingPrice,
+                        'wholesale_price' => $wholesalePrice,
+                        'stock_quantity' => $stockQuantity,
+                        'min_stock_level' => $minStockLevel,
+                        'max_stock_level' => $maxStockLevel,
+                        'unit_of_measure' => $unitOfMeasure,
+                        'category_id' => $categoryId,
+                        'brand_id' => $brandId,
+                        'supplier_id' => $supplierId,
+                        'tax_rate' => $taxRate,
+                        'track_inventory' => $trackInventory,
+                        'is_active' => $isActive,
+                        'status' => $isActive ? 'active' : 'inactive',
+                        'batch_number' => $batchNumber,
+                        'expiry_date' => $expiryDate,
+                        'discount_type' => $discountType,
+                        'discount_value' => $discountValue,
+                        'tags' => $tags,
+                    ]
+                );
+
+                $imported++;
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'imported' => $imported,
+                'errors' => $errors,
+                'message' => "Successfully processed import. {$imported} products imported/updated."
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing import file: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

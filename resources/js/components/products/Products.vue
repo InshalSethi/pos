@@ -5,11 +5,6 @@
         <div class="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="flex items-center gap-3 flex-wrap">
             <h1 class="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Items</h1>
-            <button @click="isFavorite = !isFavorite" class="transition-colors duration-200 focus:outline-none cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" :fill="isFavorite ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" :class="isFavorite ? 'text-amber-400 w-6 h-6' : 'text-gray-300 dark:text-slate-600 w-6 h-6 hover:text-amber-400'">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499c.172-.468.83-.468 1.002 0l2.378 6.441a1 1 0 00.95.69h6.467c.502 0 .709.65.312.962l-5.23 4.125a1 1 0 00-.363 1.118l2.378 6.441c.172.468-.37.86-.787.562l-5.23-4.125a1 1 0 00-1.18 0l-5.23 4.125c-.417.298-.959-.094-.788-.562l2.378-6.441a1 1 0 00-.363-1.118L2.25 11.592c-.398-.312-.19-.962.312-.962h6.467a1 1 0 00.95-.69L11.48 3.5z" />
-              </svg>
-            </button>
 
             <!-- Total Inventory Items Message -->
             <div
@@ -106,129 +101,69 @@
           </div>
         </div>
 
-        <!-- Search block -->
-        <div class="mb-3">
-          <div class="relative w-full">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              v-model="tableFilters.search"
-              @input="handleSearchInput"
-              placeholder="Search or filter results.."
-              class="w-full pl-11 pr-4 py-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-300 dark:focus:ring-slate-700 dark:focus:border-slate-700 transition-all placeholder-gray-400 dark:placeholder-slate-400 text-gray-900 dark:text-slate-300 shadow-sm"
-            />
-          </div>
-        </div>
-
-        <!-- Filter Chips Row -->
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-6 px-1">
-          <!-- Left side filters -->
+        <!-- Action & Filter Bar (Above Table) -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4 px-1">
+          <!-- Left side: Active Filter summary pills if active -->
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Category dropdown chip -->
-            <div class="relative">
-              <button
-                @click.stop="toggleDropdown('category')"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-              >
-                <span>Category: {{ getCategoryName(tableFilters.category_id) || 'All' }}</span>
-                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                <div v-show="dropdownOpen.category" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
-                  <div @click="selectCategory('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">All Categories</div>
-                  <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">
-                    {{ category.name }}
-                  </div>
-                </div>
-              </transition>
-            </div>
+            <span v-if="tableFilters.category_id" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 rounded-full text-xs font-medium">
+              Cat: {{ getCategoryName(tableFilters.category_id) }}
+              <button @click="selectCategory('')" class="hover:text-emerald-900 dark:hover:text-emerald-200 ml-0.5 cursor-pointer">&times;</button>
+            </span>
 
-            <!-- Brand dropdown chip -->
-            <div class="relative">
-              <button
-                @click.stop="toggleDropdown('brand')"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-              >
-                <span>Brand: {{ getBrandName(tableFilters.brand_id) || 'All' }}</span>
-                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                <div v-show="dropdownOpen.brand" class="absolute left-0 mt-1.5 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50 max-h-60 overflow-y-auto">
-                  <div @click="selectBrand('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">All Brands</div>
-                  <div v-for="brand in brands" :key="brand.id" @click="selectBrand(brand.id)" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">
-                    {{ brand.name }}
-                  </div>
-                </div>
-              </transition>
-            </div>
+            <span v-if="tableFilters.brand_id" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 rounded-full text-xs font-medium">
+              Brand: {{ getBrandName(tableFilters.brand_id) }}
+              <button @click="selectBrand('')" class="hover:text-emerald-900 dark:hover:text-emerald-200 ml-0.5 cursor-pointer">&times;</button>
+            </span>
 
-            <!-- Price sort chip -->
-            <div class="relative">
-              <button
-                @click.stop="toggleDropdown('price')"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-              >
-                <span>Sort: {{ getPriceSortName(tableFilters.price_sort) }}</span>
-                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-75" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
-                <div v-show="dropdownOpen.price" class="absolute left-0 mt-1.5 w-44 bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2E2E2E] rounded-2xl shadow-xl py-1 z-50">
-                  <div @click="selectPriceSort('')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-medium">Default Sort</div>
-                  <div @click="selectPriceSort('asc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: Low to High</div>
-                  <div @click="selectPriceSort('desc')" class="px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 cursor-pointer font-semibold">Price: High to Low</div>
-                </div>
-              </transition>
-            </div>
+            <span v-if="tableFilters.price_sort" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 rounded-full text-xs font-medium">
+              Sort: {{ getPriceSortName(tableFilters.price_sort) }}
+              <button @click="selectPriceSort('')" class="hover:text-emerald-900 dark:hover:text-emerald-200 ml-0.5 cursor-pointer">&times;</button>
+            </span>
 
-            <!-- On sale toggle chip -->
-            <button
-              @click="toggleOnSaleFilter"
-              :class="tableFilters.on_sale ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-            >
-              <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.on_sale ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
-              <span>On Sale Only</span>
-            </button>
+            <span v-if="tableFilters.on_sale" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 rounded-full text-xs font-medium">
+              On Sale
+              <button @click="toggleOnSaleFilter" class="hover:text-emerald-900 dark:hover:text-emerald-200 ml-0.5 cursor-pointer">&times;</button>
+            </span>
 
-            <!-- Inactive Items Toggle chip -->
-            <button
-              @click="toggleInactiveFilter"
-              :class="tableFilters.show_inactive ? 'bg-amber-50 dark:bg-amber-955/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/40 hover:bg-amber-100/50 dark:hover:bg-amber-955/35' : 'bg-white dark:bg-[#1E1E1E] border-gray-200 dark:border-[#2E2E2E] text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80'"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-            >
-              <span class="w-1.5 h-1.5 rounded-full" :class="tableFilters.show_inactive ? 'bg-amber-500' : 'bg-gray-300 dark:bg-slate-700'"></span>
-              <span>Inactive Items</span>
-            </button>
+            <span v-if="tableFilters.show_inactive" class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-955/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 rounded-full text-xs font-medium">
+              Inactive
+              <button @click="toggleInactiveFilter" class="hover:text-amber-900 dark:hover:text-amber-200 ml-0.5 cursor-pointer">&times;</button>
+            </span>
+          </div>
 
+          <!-- Right side: Clear All, Filter & Draft Items buttons -->
+          <div class="flex items-center gap-2 ml-auto">
             <!-- Clear Filters button -->
             <button
               v-show="hasActiveFilters"
               @click="clearFilters"
-              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-50 dark:bg-rose-955/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100/50 dark:hover:bg-rose-955/35 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-955/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100/50 dark:hover:bg-rose-955/35 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-xs"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
-              <span>Clear</span>
+              <span>Clear All</span>
             </button>
-          </div>
 
-          <!-- Right side actions/filters -->
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Draft Items chip -->
+            <!-- Filter Drawer Trigger Button -->
+            <button
+              @click="showFilterDrawer = true"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-xs transition-all focus:outline-none cursor-pointer"
+              :class="{ 'border-slate-900 text-slate-900 bg-slate-100/50 dark:bg-zinc-800 dark:border-zinc-100 dark:text-zinc-100 font-bold': totalActiveFilterCount > 0 }"
+            >
+              <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" :class="{ 'text-slate-900 dark:text-zinc-100': totalActiveFilterCount > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z"/>
+              </svg>
+              <span>Filter</span>
+              <span v-if="totalActiveFilterCount > 0" class="ml-1 text-[10px] font-extrabold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-1.5 py-0.2 rounded-full">
+                {{ totalActiveFilterCount }}
+              </span>
+            </button>
+
+            <!-- Draft Items Chip -->
             <button
               @click="openDraftsModal"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-full text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-xs"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-amber-500">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
@@ -240,6 +175,29 @@
 
         <!-- Custom Products Data Table -->
         <div class="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden shadow-sm mb-8 min-h-[400px] flex flex-col justify-between">
+          <!-- Card Header Bar (Search on Left, Count on Right - matching SalesInvoices Table layout) -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-gray-100 dark:border-[#2E2E2E]">
+            <!-- Compact Search Bar -->
+            <div class="relative w-full sm:w-80">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </span>
+              <input
+                type="text"
+                v-model="tableFilters.search"
+                @input="handleSearchInput"
+                placeholder="Search by product name, SKU, barcode..."
+                class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-[#252525] border border-gray-200 dark:border-[#2E2E2E] rounded-lg text-gray-900 dark:text-slate-200 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-slate-700 transition-all placeholder:text-gray-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+
+            <!-- Page / Total Items Summary -->
+            <div v-if="tablePagination && tablePagination.total !== undefined" class="text-xs text-gray-500 dark:text-slate-400 font-medium">
+              Showing <span class="font-bold text-gray-900 dark:text-slate-200">{{ products.length }}</span> of <span class="font-bold text-gray-900 dark:text-slate-200">{{ tablePagination.total }}</span> items
+            </div>
+          </div>
           <div class="w-full overflow-x-auto min-h-[400px]">
             <table class="w-full min-w-max table-auto align-middle">
               <thead>
@@ -1093,6 +1051,324 @@
         </div>
       </div>
     </div>
+
+    <!-- Slide-over Filter Drawer Panel -->
+    <teleport to="body">
+      <!-- Backdrop Overlay -->
+      <transition
+        enter-active-class="transition-opacity ease-out duration-300"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showFilterDrawer"
+          class="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs z-[9990]"
+          @click="showFilterDrawer = false"
+        ></div>
+      </transition>
+
+      <!-- Slide-over Panel -->
+      <transition
+        enter-active-class="transform transition ease-out duration-300"
+        enter-from-class="translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-active-class="transform transition ease-in duration-200"
+        leave-from-class="translate-x-0"
+        leave-to-class="translate-x-full"
+      >
+        <div
+          v-if="showFilterDrawer"
+          class="fixed inset-y-0 right-0 z-[9995] w-full max-w-md bg-white dark:bg-zinc-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-zinc-800"
+          @click.stop
+        >
+          <!-- Drawer Header -->
+          <div class="p-5 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100">Filter Products</h2>
+              <span v-if="totalActiveFilterCount > 0" class="text-xs font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                {{ totalActiveFilterCount }}
+              </span>
+            </div>
+            <button
+              @click="showFilterDrawer = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Active Filter Counter Banner -->
+          <div v-if="totalActiveFilterCount > 0" class="px-5 py-2.5 bg-slate-50 dark:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+            <span class="text-slate-600 dark:text-zinc-300 font-medium">
+              <strong class="text-slate-900 dark:text-zinc-100 font-bold">{{ totalActiveFilterCount }}</strong> active filter{{ totalActiveFilterCount > 1 ? 's' : '' }} applied
+            </span>
+            <button
+              @click="clearFilters"
+              class="text-rose-600 dark:text-rose-400 hover:underline font-semibold cursor-pointer"
+            >
+              Clear All
+            </button>
+          </div>
+
+          <!-- Drawer Body -->
+          <div class="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+
+            <!-- 1. Category (Floating Searchable Dropdown) -->
+            <div class="space-y-1.5 relative" @click.stop>
+              <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+                Category
+              </label>
+              <div class="relative">
+                <button
+                  type="button"
+                  @click="activeFilterPopover = activeFilterPopover === 'category' ? null : 'category'"
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer"
+                  :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20 bg-white dark:bg-zinc-800': activeFilterPopover === 'category' }"
+                >
+                  <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': !tableFilters.category_id }">
+                    {{ getCategoryName(tableFilters.category_id) || 'All Categories' }}
+                  </span>
+                  <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <!-- Floating Popover Menu -->
+                <div
+                  v-if="activeFilterPopover === 'category'"
+                  class="absolute left-0 right-0 top-full mt-1 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl py-1 flex flex-col animate-fade-in"
+                >
+                  <!-- Search Header -->
+                  <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                    <div class="relative">
+                      <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      </span>
+                      <input
+                        v-model="categorySearchQuery"
+                        type="text"
+                        placeholder="Search categories..."
+                        class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                        @click.stop
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Options List -->
+                  <div class="overflow-y-auto max-h-48 custom-scrollbar">
+                    <button
+                      type="button"
+                      @click="selectCategory(''); activeFilterPopover = null"
+                      class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                      :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.category_id === '' }"
+                    >
+                      <span>All Categories</span>
+                    </button>
+
+                    <div v-if="filteredCategories.length === 0" class="py-3 text-center text-slate-400 text-xs italic">
+                      No matching categories found.
+                    </div>
+
+                    <button
+                      v-for="cat in filteredCategories"
+                      :key="cat.id"
+                      type="button"
+                      @click="selectCategory(cat.id); activeFilterPopover = null"
+                      class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                      :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.category_id === cat.id }"
+                    >
+                      <span class="truncate text-slate-800 dark:text-zinc-200">{{ cat.name }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Brand (Floating Searchable Dropdown) -->
+            <div class="space-y-1.5 relative" @click.stop>
+              <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+                Brand
+              </label>
+              <div class="relative">
+                <button
+                  type="button"
+                  @click="activeFilterPopover = activeFilterPopover === 'brand' ? null : 'brand'"
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer"
+                  :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20 bg-white dark:bg-zinc-800': activeFilterPopover === 'brand' }"
+                >
+                  <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': !tableFilters.brand_id }">
+                    {{ getBrandName(tableFilters.brand_id) || 'All Brands' }}
+                  </span>
+                  <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <!-- Floating Popover Menu -->
+                <div
+                  v-if="activeFilterPopover === 'brand'"
+                  class="absolute left-0 right-0 top-full mt-1 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl py-1 flex flex-col animate-fade-in"
+                >
+                  <!-- Search Header -->
+                  <div class="p-2 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                    <div class="relative">
+                      <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      </span>
+                      <input
+                        v-model="brandSearchQuery"
+                        type="text"
+                        placeholder="Search brands..."
+                        class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                        @click.stop
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Options List -->
+                  <div class="overflow-y-auto max-h-48 custom-scrollbar">
+                    <button
+                      type="button"
+                      @click="selectBrand(''); activeFilterPopover = null"
+                      class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                      :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.brand_id === '' }"
+                    >
+                      <span>All Brands</span>
+                    </button>
+
+                    <div v-if="filteredBrands.length === 0" class="py-3 text-center text-slate-400 text-xs italic">
+                      No matching brands found.
+                    </div>
+
+                    <button
+                      v-for="b in filteredBrands"
+                      :key="b.id"
+                      type="button"
+                      @click="selectBrand(b.id); activeFilterPopover = null"
+                      class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                      :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.brand_id === b.id }"
+                    >
+                      <span class="truncate text-slate-800 dark:text-zinc-200">{{ b.name }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Sort by Price (Floating Dropdown) -->
+            <div class="space-y-1.5 relative" @click.stop>
+              <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+                Price Sorting
+              </label>
+              <div class="relative">
+                <button
+                  type="button"
+                  @click="activeFilterPopover = activeFilterPopover === 'price' ? null : 'price'"
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer"
+                  :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20 bg-white dark:bg-zinc-800': activeFilterPopover === 'price' }"
+                >
+                  <span class="truncate pr-2">
+                    {{ getPriceSortName(tableFilters.price_sort) }}
+                  </span>
+                  <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <!-- Floating Popover Menu -->
+                <div
+                  v-if="activeFilterPopover === 'price'"
+                  class="absolute left-0 right-0 top-full mt-1 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl py-1 flex flex-col animate-fade-in"
+                >
+                  <button
+                    type="button"
+                    @click="selectPriceSort(''); activeFilterPopover = null"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                    :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.price_sort === '' }"
+                  >
+                    <span>Sort by Price (Default)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="selectPriceSort('asc'); activeFilterPopover = null"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer"
+                    :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.price_sort === 'asc' }"
+                  >
+                    <span>Price: Low to High</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="selectPriceSort('desc'); activeFilterPopover = null"
+                    class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs cursor-pointer"
+                    :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': tableFilters.price_sort === 'desc' }"
+                  >
+                    <span>Price: High to Low</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. On Sale Only -->
+            <div class="pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between cursor-pointer" @click="toggleOnSaleFilter">
+              <div>
+                <label class="block text-xs font-bold text-slate-800 dark:text-zinc-200 cursor-pointer">
+                  On Sale Only
+                </label>
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500">Show only items with discount values</p>
+              </div>
+              <button
+                type="button"
+                :class="tableFilters.on_sale ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-zinc-700'"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+              >
+                <span
+                  :class="tableFilters.on_sale ? 'translate-x-4' : 'translate-x-0'"
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out"
+                />
+              </button>
+            </div>
+
+            <!-- 5. Inactive Items -->
+            <div class="pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between cursor-pointer" @click="toggleInactiveFilter">
+              <div>
+                <label class="block text-xs font-bold text-slate-800 dark:text-zinc-200 cursor-pointer">
+                  Inactive Items
+                </label>
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500">Include disabled / inactive products in list</p>
+              </div>
+              <button
+                type="button"
+                :class="tableFilters.show_inactive ? 'bg-amber-500' : 'bg-slate-200 dark:bg-zinc-700'"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+              >
+                <span
+                  :class="tableFilters.show_inactive ? 'translate-x-4' : 'translate-x-0'"
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out"
+                />
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Drawer Footer -->
+          <div class="p-5 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-zinc-900">
+            <button
+              @click="clearFilters"
+              class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 border border-slate-200 dark:border-zinc-700 rounded-xl transition-all cursor-pointer"
+            >
+              Reset
+            </button>
+            <button
+              @click="showFilterDrawer = false"
+              class="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </div>
 </template>
@@ -1125,16 +1401,42 @@ const showToast = (typeOrMsg, msgOrType) => {
   }
 };
 
-// New Reactive states for Dropdowns and Favoriting
+// New Reactive states for Dropdowns, Favoriting and Filter Drawer
 const isFavorite = ref(false);
 const showSalesPurchaseDropdown = ref(false);
 const showOptionsDropdown = ref(false);
+const showFilterDrawer = ref(false);
+const activeFilterPopover = ref(null);
+const categorySearchQuery = ref('');
+const brandSearchQuery = ref('');
+
+const totalActiveFilterCount = computed(() => {
+  let count = 0;
+  if (tableFilters.value.category_id) count++;
+  if (tableFilters.value.brand_id) count++;
+  if (tableFilters.value.price_sort) count++;
+  if (tableFilters.value.on_sale) count++;
+  if (tableFilters.value.show_inactive) count++;
+  return count;
+});
 
 // Reactive data
 const loading = ref(false);
 const products = ref([]);
 const categories = ref([]);
 const brands = ref([]);
+
+const filteredCategories = computed(() => {
+  if (!categorySearchQuery.value) return categories.value;
+  const q = categorySearchQuery.value.toLowerCase();
+  return categories.value.filter(c => c.name && c.name.toLowerCase().includes(q));
+});
+
+const filteredBrands = computed(() => {
+  if (!brandSearchQuery.value) return brands.value;
+  const q = brandSearchQuery.value.toLowerCase();
+  return brands.value.filter(b => b.name && b.name.toLowerCase().includes(q));
+});
 // Lightbox State
 const showLightbox = ref(false);
 const lightboxImages = ref([]);
@@ -1467,6 +1769,7 @@ const closeDropdowns = () => {
   dropdownOpen.value.price = false;
   showSalesPurchaseDropdown.value = false;
   showOptionsDropdown.value = false;
+  activeFilterPopover.value = null;
 };
 
 const selectCategory = (id) => {
