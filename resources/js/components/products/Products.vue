@@ -87,7 +87,7 @@
                     Export Products
                   </button>
                   <button
-                    @click="openCategoryModal(); showOptionsDropdown = false"
+                    @click="router.push('/inventory/categories-brands'); showOptionsDropdown = false"
                     class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/80 transition-colors flex items-center gap-2 cursor-pointer font-medium"
                   >
                     <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
