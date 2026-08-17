@@ -20,18 +20,46 @@ class ProductController extends Controller
     {
         $this->middleware('permission:products.view')->only(['index', 'show', 'fetchDraftsSummary']);
         $this->middleware('permission:products.create')->only(['store']);
-        $this->middleware('permission:products.edit')->only(['update']);
+        $this->middleware('permission:products.edit')->only(['update', 'toggleStatus']);
         $this->middleware('permission:products.delete')->only(['destroy', 'bulkDestroyDrafts']);
         $this->middleware('permission:products.import')->only(['import']);
         $this->middleware('permission:products.export')->only(['export']);
     }
 
     /**
+     * Toggle the active status of a product.
+     */
+    public function toggleStatus(Product $product): JsonResponse
+    {
+        if ($product->status === 'draft') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Draft products cannot be toggled from listing. Please edit the product to change its status.'
+            ], 422);
+        }
+
+        $newActiveState = !$product->is_active;
+        $product->update([
+            'is_active' => $newActiveState,
+            'status' => $newActiveState ? 'active' : 'inactive'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product status updated successfully.',
+            'is_active' => $product->is_active,
+            'status' => $product->status
+        ]);
+    }
+
+
+
+    /**
      * Fetches all inventory products isolated under draft state criteria.
      */
     public function fetchDraftsSummary(Request $request): JsonResponse
     {
-        $drafts = Product::with(['category', 'variations'])
+        $drafts = Product::with(['category.parent.parent', 'variations'])
             ->withCount('variations')
             ->where('status', 'draft')
             ->latest()
@@ -87,7 +115,7 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['category', 'brand', 'unit', 'variations' => function($query) {
+        $query = Product::with(['category.parent.parent', 'brand', 'unit', 'variations' => function($query) {
             $query->select('id', 'product_id', 'combination_key', 'variation_name_string', 'cost_price', 'retail_price', 'wholesale_price', 'tax_rate', 'sku');
         }])->withCount('variations')->where('status', '!=', 'draft');
 
@@ -582,7 +610,7 @@ class ProductController extends Controller
      */
     public function show(Product $product): JsonResponse
     {
-        $product->load('category', 'brand', 'unit', 'saleItems.sale', 'variations', 'attributes');
+        $product->load('category.parent.parent', 'brand', 'unit', 'saleItems.sale', 'variations', 'attributes');
         $product->loadCount('variations');
 
         $warehouses = \App\Models\Warehouse::where('company_id', $product->company_id)->get()->map(function($wh) use ($product) {

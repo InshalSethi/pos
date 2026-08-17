@@ -239,8 +239,8 @@
         </div>
 
         <!-- Custom Products Data Table -->
-        <div class="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden shadow-sm mb-8">
-          <div class="w-full overflow-x-auto">
+        <div class="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden shadow-sm mb-8 min-h-[400px] flex flex-col justify-between">
+          <div class="w-full overflow-x-auto min-h-[400px]">
             <table class="w-full min-w-max table-auto align-middle">
               <thead>
                 <tr class="border-b border-gray-100 dark:border-[#2E2E2E] bg-slate-50/50 dark:bg-[#252525] text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">
@@ -254,15 +254,17 @@
                   </th>
                   <th class="px-6 py-3.5 text-left font-bold">Item Name &amp; Description</th>
                   <th class="px-6 py-3.5 text-center font-bold">SKU</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Category / Brand</th>
+                  <th class="px-6 py-3.5 text-center font-bold">Category</th>
+                  <th class="px-6 py-3.5 text-center font-bold">Status</th>
                   <th class="px-6 py-3.5 text-center font-bold">Stock Status</th>
                   <th class="px-6 py-3.5 text-center font-bold">Price Matrix</th>
+                  <th class="px-6 py-3.5 text-center font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-[#2E2E2E]">
                 <!-- Loading State -->
                 <tr v-if="loading" class="dark:bg-[#1E1E1E]">
-                  <td colspan="6" class="px-6 py-16 text-center text-gray-400">
+                  <td colspan="8" class="px-6 py-16 text-center text-gray-400">
                     <div class="flex justify-center items-center gap-2">
                       <svg class="animate-spin h-5 w-5 text-emerald-600" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
@@ -275,7 +277,7 @@
 
                 <!-- Empty State -->
                 <tr v-else-if="products.length === 0" class="dark:bg-[#1E1E1E]">
-                  <td colspan="6" class="px-6 py-20 text-center text-gray-500">
+                  <td colspan="8" class="px-6 py-20 text-center text-gray-500">
                     <div class="flex flex-col items-center max-w-sm mx-auto">
                       <div class="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#252525] flex items-center justify-center mb-4 text-gray-400 dark:text-slate-500">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,16 +338,22 @@
                       </div>
 
                       <div class="flex flex-col min-w-0">
-                        <div class="flex items-center gap-2">
-                          <span class="font-extrabold text-gray-950 dark:text-slate-200 text-sm truncate max-w-sm sm:max-w-md">{{ item.name }}</span>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="font-extrabold text-gray-950 dark:text-slate-200 text-sm truncate max-w-xs sm:max-w-sm">{{ item.name }}</span>
                           <span 
                             v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wide bg-red-50 text-red-700 border border-red-100 dark:bg-red-500 dark-text-black dark:border-transparent uppercase shrink-0"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wide bg-red-50 text-red-700 border border-red-100 dark:bg-red-500 dark:text-black dark:border-transparent uppercase shrink-0"
                           >
                             Variants
                           </span>
+                          <span 
+                            v-if="item.brand" 
+                            class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase shrink-0"
+                          >
+                            {{ item.brand.name }}
+                          </span>
                         </div>
-                        <span class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-medium truncate max-w-xs sm:max-w-sm">{{ item.description || item.sku || 'No description' }}</span>
+                        <span class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-medium truncate max-w-xs sm:max-w-sm">{{ stripHtmlTags(item.description) || item.sku || 'No description' }}</span>
                       </div>
                     </div>
                   </td>
@@ -368,15 +376,75 @@
                     </span>
                   </td>
 
-                  <!-- Category & Brand Badge -->
+                  <!-- Category (Category, Sub Category, Child Category in same column) -->
                   <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
-                    <div class="flex flex-col items-center gap-1.5 justify-center">
-                      <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-900/30">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 shrink-0"></span>
-                        <span>{{ item.category ? item.category.name : 'General' }}</span>
+                    <div class="flex flex-col items-center gap-1 justify-center">
+                      <template v-if="getCategoryHierarchy(item.category).length > 0">
+                        <span 
+                          v-for="(catName, index) in getCategoryHierarchy(item.category)" 
+                          :key="index"
+                          :class="[
+                            'inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                            index === 0 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-900/30' :
+                            index === 1 ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100/50 dark:border-indigo-900/30 text-[11px]' :
+                            'bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-[#2E2E2E] text-[10px]'
+                          ]"
+                        >
+                          <span class="w-1.5 h-1.5 rounded-full mr-1.5 shrink-0" :class="index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-indigo-500' : 'bg-slate-400'"></span>
+                          <span>{{ catName }}</span>
+                        </span>
+                      </template>
+                      <span v-else class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
+                        General
                       </span>
-                      <span v-if="item.brand" class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-650 dark:text-slate-350 border border-slate-200/60 dark:border-[#2E2E2E] uppercase">
-                        {{ item.brand.name }}
+                    </div>
+                  </td>
+
+                  <!-- Status Toggle Switch Column -->
+                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
+                    <!-- Draft Badge (if status is draft) -->
+                    <div v-if="item.status === 'draft'" class="inline-flex items-center gap-1.5 justify-center">
+                      <span
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 shadow-xs cursor-default"
+                        title="Draft items must be edited from the edit page to publish or change status"
+                      >
+                        <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                        <span>Draft</span>
+                      </span>
+                    </div>
+
+                    <!-- Active / Inactive Toggle Switch -->
+                    <div v-else class="inline-flex items-center gap-2 justify-center">
+                      <button
+                        type="button"
+                        @click.stop="toggleProductStatus(item)"
+                        :disabled="togglingStatusId === item.id"
+                        :class="[
+                          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed',
+                          item.is_active ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
+                        ]"
+                        role="switch"
+                        :aria-checked="item.is_active"
+                        :title="item.is_active ? 'Click to deactivate product' : 'Click to activate product'"
+                      >
+                        <span class="sr-only">Toggle product status</span>
+                        <span
+                          :class="[
+                            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out flex items-center justify-center',
+                            item.is_active ? 'translate-x-5' : 'translate-x-0'
+                          ]"
+                        >
+                          <svg v-if="togglingStatusId === item.id" class="animate-spin h-3 w-3 text-emerald-600" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </span>
+                      </button>
+                      <span
+                        class="text-xs font-bold shrink-0"
+                        :class="item.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-slate-500'"
+                      >
+                        {{ item.is_active ? 'Active' : 'Inactive' }}
                       </span>
                     </div>
                   </td>
@@ -401,31 +469,55 @@
                         {{ currencyStore.formatPrice(getItemWholesalePrice(item)) }}
                       </span>
                     </div>
+                  </td>
 
-                    <!-- Floating Actions (Revealed on Row Hover) -->
-                    <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/95 dark:bg-[#1E1E1E]/95 shadow-md dark:shadow-slate-950/50 border border-gray-100 dark:border-[#2E2E2E] rounded-lg p-1.5 z-30"
-                         style="right: 18%; top: 50%; transform: translateY(-55%);">
-                      <div class="flex items-center space-x-1.5">
+                  <!-- Actions Dropdown Column -->
+                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center relative">
+                    <div class="relative inline-block text-left">
+                      <button
+                        @click.stop="toggleActionDropdown(item.id)"
+                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#2A2A2A] border border-transparent hover:border-slate-200 dark:hover:border-[#333] transition-all focus:outline-none cursor-pointer"
+                        title="Actions"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+
+                      <!-- Dropdown Menu -->
+                      <div
+                        v-if="activeActionDropdownId === item.id"
+                        class="origin-top-right absolute right-0 mt-1 w-36 rounded-xl bg-white dark:bg-[#1E1E1E] shadow-xl ring-1 ring-black/5 dark:ring-white/10 divide-y divide-gray-100 dark:divide-[#2E2E2E] z-50 focus:outline-none py-1 border border-gray-100 dark:border-[#2E2E2E]"
+                      >
                         <button
-                          @click="viewProduct(item)"
-                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
-                          title="View"
+                          @click.stop="viewProduct(item); activeActionDropdownId = null"
+                          class="w-full group flex items-center px-3 py-2 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                         >
-                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          <svg class="mr-2 h-4 w-4 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          View
                         </button>
+
                         <button
-                          @click="editProduct(item)"
-                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
-                          title="Update"
+                          @click.stop="editProduct(item); activeActionDropdownId = null"
+                          class="w-full group flex items-center px-3 py-2 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                         >
-                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          <svg class="mr-2 h-4 w-4 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Update
                         </button>
+
                         <button
-                          @click="deleteProduct(item)"
-                          class="h-7 w-7 flex items-center justify-center rounded-lg bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 hover:shadow-xs transition-all cursor-pointer focus:outline-none"
-                          title="Delete"
+                          @click.stop="deleteProduct(item); activeActionDropdownId = null"
+                          class="w-full group flex items-center px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                         >
-                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          <svg class="mr-2 h-4 w-4 text-rose-500 group-hover:text-rose-600 dark:group-hover:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -492,6 +584,294 @@
     </div>
   </div>
 
+
+    <!-- Product Details View Modal -->
+    <div
+      v-if="showViewModal"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/50 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200"
+      style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
+      @click.self="showViewModal = false"
+    >
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-[#18181B] text-slate-800 dark:text-slate-100 overflow-hidden transition-all duration-300 z-10 max-h-[90vh] flex flex-col my-auto">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 px-6 py-4 bg-slate-50/50 dark:bg-zinc-900/50">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  {{ viewingProduct?.type ? viewingProduct.type.toUpperCase() : 'PRODUCT' }} DETAILS
+                </span>
+                <span v-if="viewingProduct?.status === 'active'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/30">Active</span>
+                <span v-else-if="viewingProduct?.status === 'inactive'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Inactive</span>
+                <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/30">Draft</span>
+              </div>
+              <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-snug">
+                {{ viewingProduct?.name || 'Loading details...' }}
+              </h3>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              v-if="viewingProduct"
+              @click="showViewModal = false; editProduct(viewingProduct);"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-900/40 transition-all cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Edit Item</span>
+            </button>
+            <button
+              type="button"
+              @click="showViewModal = false"
+              class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors focus:outline-none cursor-pointer"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar max-h-[calc(90vh-130px)]">
+          <div v-if="isLoadingViewProduct" class="py-12 text-center text-slate-400 dark:text-slate-500 font-semibold text-sm italic">
+            Loading item details...
+          </div>
+
+          <template v-else-if="viewingProduct">
+            <!-- 1. Top Section: Images & Key Metadata Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              <!-- Product Image / Gallery Preview -->
+              <div class="md:col-span-1 flex flex-col items-center">
+                <div class="w-full aspect-square rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-slate-50 dark:bg-zinc-900 flex items-center justify-center shadow-inner relative group">
+                  <img
+                    v-if="getItemImages(viewingProduct).length > 0"
+                    :src="getItemImages(viewingProduct)[0]"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="flex flex-col items-center justify-center p-4 text-slate-300 dark:text-zinc-700">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-xs font-bold mt-1 uppercase tracking-wider text-slate-400 dark:text-zinc-600">No Image</span>
+                  </div>
+                </div>
+
+                <!-- Gallery Thumbnails (if multiple images) -->
+                <div v-if="getItemImages(viewingProduct).length > 1" class="flex items-center gap-2 mt-3 overflow-x-auto max-w-full py-1">
+                  <div
+                    v-for="(img, idx) in getItemImages(viewingProduct)"
+                    :key="idx"
+                    class="w-12 h-12 rounded-lg border border-slate-200 dark:border-zinc-800 overflow-hidden shrink-0 shadow-xs"
+                  >
+                    <img :src="img" class="w-full h-full object-cover" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- General Info Cards -->
+              <div class="md:col-span-2 space-y-4">
+                <!-- Badges Row -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <span v-if="viewingProduct.sku" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
+                    SKU: {{ viewingProduct.sku }}
+                  </span>
+                  <span v-if="viewingProduct.barcode" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
+                    Barcode: {{ viewingProduct.barcode }}
+                  </span>
+                  <span v-if="viewingProduct.brand?.name || viewingProduct.brand_name" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/30">
+                    Brand: {{ viewingProduct.brand?.name || viewingProduct.brand_name }}
+                  </span>
+                  <span v-if="viewingProduct.unit?.name || viewingProduct.unit_of_measure" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-900/30">
+                    Unit: {{ viewingProduct.unit?.name || viewingProduct.unit_of_measure }}
+                  </span>
+                </div>
+
+                <!-- Category Hierarchy -->
+                <div class="p-3.5 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-100 dark:border-zinc-800/80">
+                  <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Category Hierarchy</span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <template v-if="getCategoryHierarchy(viewingProduct.category).length > 0">
+                      <span
+                        v-for="(catName, idx) in getCategoryHierarchy(viewingProduct.category)"
+                        :key="idx"
+                        class="inline-flex items-center text-xs font-semibold"
+                      >
+                        <span class="px-2 py-0.5 rounded-md bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-slate-200">
+                          {{ catName }}
+                        </span>
+                        <svg v-if="idx < getCategoryHierarchy(viewingProduct.category).length - 1" class="w-3.5 h-3.5 text-slate-400 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                      </span>
+                    </template>
+                    <span v-else class="text-xs text-slate-400 italic">No category assigned</span>
+                  </div>
+                </div>
+
+                <!-- Tags -->
+                <div v-if="getParsedTags(viewingProduct).length > 0">
+                  <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Tags</span>
+                  <div class="flex flex-wrap gap-1.5">
+                    <span
+                      v-for="(tag, tidx) in getParsedTags(viewingProduct)"
+                      :key="tidx"
+                      class="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/30"
+                    >
+                      #{{ tag }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Service Details (if service) -->
+                <div v-if="viewingProduct.type === 'service' && (viewingProduct.service_type || viewingProduct.service_detail)" class="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                  <span class="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-0.5">Service Details</span>
+                  <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    <strong v-if="viewingProduct.service_type">{{ viewingProduct.service_type }}: </strong>
+                    <span>{{ viewingProduct.service_detail || 'N/A' }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Descriptions Section -->
+            <div v-if="viewingProduct.short_description || viewingProduct.description" class="p-4 bg-slate-50 dark:bg-zinc-900/50 rounded-2xl border border-slate-100 dark:border-zinc-800/80 space-y-3">
+              <div v-if="viewingProduct.short_description">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Short Description</span>
+                <p class="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                  {{ viewingProduct.short_description }}
+                </p>
+              </div>
+              <div v-if="viewingProduct.description">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Full Description</span>
+                <div class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed prose dark:prose-invert max-w-none" v-html="viewingProduct.description"></div>
+              </div>
+            </div>
+
+            <!-- 3. Financials & Pricing Summary -->
+            <div class="space-y-2">
+              <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Pricing & Financials</h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
+                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Cost / Purchase</span>
+                  <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 mt-1 block">
+                    {{ currencyStore.formatPrice(viewingProduct.cost_price || 0) }}
+                  </span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
+                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Retail / Selling</span>
+                  <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">
+                    {{ currencyStore.formatPrice(viewingProduct.selling_price || viewingProduct.retail_price || 0) }}
+                  </span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
+                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Wholesale</span>
+                  <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400 mt-1 block">
+                    {{ currencyStore.formatPrice(viewingProduct.wholesale_price || 0) }}
+                  </span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
+                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Tax Rate</span>
+                  <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 mt-1 block">
+                    {{ viewingProduct.tax_rate ? viewingProduct.tax_rate + '%' : '0%' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Inventory & Stock Status -->
+            <div class="space-y-2">
+              <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Inventory & Stock</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Stock</span>
+                  <span class="text-sm font-black text-slate-900 dark:text-white">
+                    {{ viewingProduct.stock_quantity ?? 'N/A' }}
+                  </span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Track Inventory</span>
+                  <span :class="viewingProduct.track_inventory ? 'text-emerald-600 dark:text-emerald-400 font-bold text-xs' : 'text-slate-400 text-xs'">
+                    {{ viewingProduct.track_inventory ? 'Yes' : 'No' }}
+                  </span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Returnable</span>
+                  <span :class="viewingProduct.is_returnable ? 'text-emerald-600 dark:text-emerald-400 font-bold text-xs' : 'text-slate-400 text-xs'">
+                    {{ viewingProduct.is_returnable ? 'Yes' : 'No' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Product Variations (If Variant Product) -->
+            <div v-if="viewingProduct.variations && viewingProduct.variations.length > 0" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Product Variations ({{ viewingProduct.variations.length }})
+                </h4>
+              </div>
+              <div class="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-inner">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-100 dark:bg-zinc-900 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th class="px-3 py-2">Variant</th>
+                      <th class="px-3 py-2">SKU</th>
+                      <th class="px-3 py-2 text-right">Cost</th>
+                      <th class="px-3 py-2 text-right">Retail</th>
+                      <th class="px-3 py-2 text-right">Wholesale</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
+                    <tr v-for="variant in viewingProduct.variations" :key="variant.id" class="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
+                      <td class="px-3 py-2 font-extrabold text-slate-800 dark:text-slate-200">
+                        {{ variant.variation_name_string || variant.combination_key || 'Default Variant' }}
+                      </td>
+                      <td class="px-3 py-2 font-mono text-slate-500">{{ variant.sku || '-' }}</td>
+                      <td class="px-3 py-2 text-right font-medium text-slate-700 dark:text-slate-300">
+                        {{ currencyStore.formatPrice(variant.cost_price || 0) }}
+                      </td>
+                      <td class="px-3 py-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                        {{ currencyStore.formatPrice(variant.retail_price || variant.selling_price || 0) }}
+                      </td>
+                      <td class="px-3 py-2 text-right font-medium text-indigo-600 dark:text-indigo-400">
+                        {{ currencyStore.formatPrice(variant.wholesale_price || 0) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            @click="showViewModal = false"
+            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+          <button
+            v-if="viewingProduct"
+            type="button"
+            @click="showViewModal = false; editProduct(viewingProduct);"
+            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
+          >
+            Edit Item Details
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Drafts Workbench Modal -->
     <div v-if="isDraftsModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="isDraftsModalOpen = false">
@@ -1740,6 +2120,75 @@ const fetchBrands = async () => {
   }
 };
 
+const togglingStatusId = ref(null);
+const activeActionDropdownId = ref(null);
+
+const toggleActionDropdown = (productId) => {
+  if (activeActionDropdownId.value === productId) {
+    activeActionDropdownId.value = null;
+  } else {
+    activeActionDropdownId.value = productId;
+  }
+};
+
+const handleWindowClick = () => {
+  activeActionDropdownId.value = null;
+};
+
+onMounted(() => {
+  window.addEventListener('click', handleWindowClick);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', handleWindowClick);
+});
+
+const stripHtmlTags = (str) => {
+  if (!str) return '';
+  return str.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
+};
+
+const getCategoryHierarchy = (category) => {
+  if (!category) return [];
+  const chain = [];
+  let current = category;
+  while (current) {
+    chain.unshift(current.name);
+    current = current.parent;
+  }
+  return chain;
+};
+
+const toggleProductStatus = async (item) => {
+  if (!item || !item.id) return;
+  if (item.status === 'draft') {
+    showToast('warning', `"${item.name}" is a draft item. Please edit it to publish or change its status.`);
+    return;
+  }
+  togglingStatusId.value = item.id;
+  const originalActive = item.is_active;
+  const originalStatus = item.status;
+
+  // Optimistic UI update
+  item.is_active = !originalActive;
+  item.status = item.is_active ? 'active' : 'inactive';
+
+  try {
+    const response = await axios.patch(`/api/products/${item.id}/toggle-status`);
+    if (response.data && response.data.success) {
+      item.is_active = response.data.is_active;
+      item.status = response.data.status;
+      showToast('success', `"${item.name}" status updated to ${item.is_active ? 'Active' : 'Inactive'}`);
+    }
+  } catch (error) {
+    item.is_active = originalActive;
+    item.status = originalStatus;
+    showToast('error', error.response?.data?.message || 'Failed to toggle product status');
+  } finally {
+    togglingStatusId.value = null;
+  }
+};
+
 const getParsedTags = (item) => {
   if (!item || !item.tags) return [];
   
@@ -1771,9 +2220,46 @@ const editProduct = (product) => {
   router.push({ name: 'EditProduct', params: { id: product.id } });
 };
 
-const viewProduct = (product) => {
+const isLoadingViewProduct = ref(false);
+
+const getItemImages = (product) => {
+  if (!product) return [];
+  let imgs = [];
+  if (product.images) {
+    if (Array.isArray(product.images)) {
+      imgs = product.images;
+    } else if (typeof product.images === 'string') {
+      try {
+        const parsed = JSON.parse(product.images);
+        if (Array.isArray(parsed)) imgs = parsed;
+      } catch (e) {
+        imgs = [product.images];
+      }
+    }
+  }
+  if (imgs.length === 0) {
+    const single = product.image_path || product.image || product.thumbnail;
+    if (single) imgs.push(single);
+  }
+  return imgs;
+};
+
+const viewProduct = async (product) => {
+  if (!product || !product.id) return;
   viewingProduct.value = product;
   showViewModal.value = true;
+  isLoadingViewProduct.value = true;
+
+  try {
+    const response = await axios.get(`/api/products/${product.id}`);
+    if (response.data) {
+      viewingProduct.value = response.data.product || response.data.data || response.data;
+    }
+  } catch (error) {
+    console.error('Error fetching product details:', error);
+  } finally {
+    isLoadingViewProduct.value = false;
+  }
 };
 
 const openPricesModal = (item) => {
