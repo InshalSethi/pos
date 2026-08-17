@@ -2196,18 +2196,24 @@ class ProductController extends Controller
                     $vWholesale = floatval($getVarWholesale($row) ?? $wholesalePrice);
                     $vStock = intval($getVarStock($row) ?? $stockQuantity);
 
+                    $comboKey = Str::slug($varName ?: 'variation');
+                    if (empty($comboKey)) {
+                        $comboKey = 'var-' . strtolower(Str::random(6));
+                    }
+
                     $variation = \App\Models\ProductVariation::updateOrCreate(
                         [
                             'product_id' => $product->id,
                             'sku' => $vSku,
                         ],
                         [
+                            'company_id' => $companyId,
+                            'combination_key' => $comboKey,
                             'variation_name_string' => $varName ?: 'Standard Variation',
                             'cost_price' => $vCost,
                             'retail_price' => $vSelling,
-                            'selling_price' => $vSelling,
                             'wholesale_price' => $vWholesale,
-                            'stock_quantity' => $vStock,
+                            'stock_qty' => $vStock,
                         ]
                     );
 
@@ -2224,7 +2230,7 @@ class ProductController extends Controller
                         ]
                     );
 
-                    $totalVarStock = \App\Models\ProductVariation::where('product_id', $product->id)->sum('stock_quantity');
+                    $totalVarStock = \App\Models\ProductVariation::where('product_id', $product->id)->sum('stock_qty');
                     $product->update([
                         'has_variations' => true,
                         'stock_quantity' => $totalVarStock,
