@@ -259,46 +259,8 @@
           </div>
         </div>
 
-        <!-- Catalog Search & Product Selection -->
-        <div class="mb-6">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-xs font-extrabold uppercase text-slate-400 dark:text-zinc-500 tracking-wider">Product Search & Catalog</h3>
-            <span v-if="selectedPoNumber" class="text-xs text-blue-600 dark:text-blue-400 font-semibold">
-              Items preloaded from {{ selectedPoNumber }}
-            </span>
-          </div>
-
-          <div class="relative w-full">
-            <input
-              v-model="productSearch"
-              type="text"
-              placeholder="Search products by title, SKU or code to add items..."
-              class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm"
-              @focus="isProductDropdownOpen = true"
-            />
-            <div
-              v-show="isProductDropdownOpen && filteredProducts.length > 0"
-              class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto py-2"
-            >
-              <div
-                v-for="product in filteredProducts"
-                :key="product.id"
-                @click="addProductToReturn(product)"
-                class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0"
-              >
-                <div>
-                  <div class="font-bold text-slate-800 dark:text-zinc-200">{{ product.name }}</div>
-                  <div class="text-[10px] text-slate-400">SKU: {{ product.sku }}</div>
-                </div>
-                <div class="text-right">
-                  <div class="font-black text-blue-600 dark:text-blue-400">{{ currencySymbol }}{{ formatCurrency(product.cost_price || product.selling_price) }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dynamic Items Table -->
+        <ProductSearch priceType="purchase" :products="products" :currencySymbol="currencySymbol" :targetWarehouseId="form.warehouse_ids && form.warehouse_ids.length > 0 ? form.warehouse_ids[0] : null" @product-selected="onProductSelected" @products-fetched="onProductsFetched" />
+          <!-- Dynamic Items Table -->
         <div class="grow bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col mb-6">
           <div class="p-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 flex justify-between items-center">
             <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200">Returned Items Breakdown</h3>
@@ -329,8 +291,22 @@
                 <tr v-for="(item, idx) in form.items" :key="idx" class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
                   <td class="py-3 px-4 text-center text-slate-400 font-bold">{{ idx + 1 }}</td>
                   <td class="py-3 px-4">
-                    <div class="font-bold text-slate-800 dark:text-zinc-200">{{ item.product_name }}</div>
-                    <div class="text-[10px] text-slate-400 font-mono" v-if="item.product_sku">SKU: {{ item.product_sku }}</div>
+                    <div class="font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                      <span>{{ item.product_name }}</span>
+                      <span
+                        v-if="item.brand_name || (item.product && item.product.brand_name) || (item.product && typeof item.product.brand === 'string') || (item.product && item.product.brand && item.product.brand.name)"
+                        class="inline-block px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase border border-slate-300 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 rounded bg-slate-50 dark:bg-zinc-800/80 shrink-0 leading-none"
+                      >
+                        {{ item.brand_name || (item.product && item.product.brand_name) || (typeof item.product?.brand === 'string' ? item.product?.brand : item.product?.brand?.name) }}
+                      </span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-mono" v-if="item.product_sku || (item.product && item.product.sku)">SKU: {{ item.product_sku || item.product.sku }}</div>
+                    <div
+                      v-if="item.category_path || (item.product && item.product.category_path) || (item.product && typeof item.product.category === 'string') || (item.product && item.product.category && item.product.category.name)"
+                      class="text-[9.5px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider truncate mt-0.5"
+                    >
+                      {{ item.category_path || (item.product && item.product.category_path) || (typeof item.product?.category === 'string' ? item.product?.category : item.product?.category?.name) }}
+                    </div>
                     <div v-if="item.max_returnable !== undefined" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
                       Max Returnable from PO: {{ item.max_returnable }}
                     </div>
@@ -815,6 +791,7 @@ import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+import ProductSearch from '@/components/shared/ProductSearch.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -1369,8 +1346,8 @@ const fetchWarehouses = async () => {
 
 const fetchProducts = async () => {
   try {
-    const res = await axios.get('/api/products?per_page=500');
-    products.value = res.data.data || res.data || [];
+    const res = await axios.get('/api/sales/products-with-stock');
+    products.value = res.data.items || res.data.products || [];
   } catch (err) {
     console.error('Error fetching products:', err);
   }
@@ -1452,6 +1429,7 @@ const onPoChange = async (poIdOverride = null) => {
         const itemWhObj = warehouses.value.find(w => w.id == itemWhId);
         return {
           product_id: i.product_id,
+          product_variation_id: i.product_variation_id || null,
           product_name: i.product?.name || i.product_name || 'Unknown Product',
           product_sku: i.product?.sku || i.product_sku || '',
           warehouse_id: itemWhId,
@@ -1483,17 +1461,23 @@ watch(
 const addProductToReturn = (product) => {
   const targetWhId = (form.warehouse_ids && form.warehouse_ids.length > 0) ? form.warehouse_ids[0] : (form.warehouse_id || 1);
   const targetWhObj = warehouses.value.find(w => w.id == targetWhId);
-  const existing = form.items.find(i => i.product_id === product.id && i.warehouse_id == targetWhId);
+  const matchId = product.product_id || product.id;
+  const matchVarId = product.product_variation_id || null;
+  const existing = form.items.find(i => i.product_id === matchId && (i.product_variation_id || null) === matchVarId && i.warehouse_id == targetWhId);
   if (existing) {
     existing.quantity += 1;
   } else {
     form.items.push({
-      product_id: product.id,
+      product_id: matchId,
+      product_variation_id: matchVarId,
       product_name: product.name,
       product_sku: product.sku,
+      brand_name: product.brand_name || (typeof product.brand === 'string' ? product.brand : product.brand?.name),
+      category_path: product.category_path || (typeof product.category === 'string' ? product.category : product.category?.name),
+      product: product,
       warehouse_id: targetWhId,
       warehouse_name: targetWhObj?.name || getWarehouseNameById(targetWhId),
-      unit_cost: parseFloat(product.cost_price || product.selling_price || 0),
+      unit_cost: parseFloat(product.cost_price || product.selling_price || product.price || 0),
       quantity: 1,
       tax_amount: 0,
       discount_amount: 0,
@@ -1596,6 +1580,42 @@ const fetchBankAccounts = async () => {
     console.error('Error fetching bank accounts:', err);
   }
 };
+
+
+const onProductSelected = ({ product, error, query }) => {
+  if (error) {
+    // some modules use showNotification, some use errorMessage.value
+    if (typeof showNotification === 'function') {
+      showNotification(error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
+    } else if (typeof errorMessage !== 'undefined') {
+      errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+    }
+  } else if (product) {
+    addProductToReturn(product);
+  }
+};
+
+const onProductsFetched = (newItems) => {
+  // If products is ref
+  if (typeof products !== 'undefined' && products.value) {
+    const existingKeys = new Set(products.value.map(p => p.id));
+    newItems.forEach(item => {
+      if (!existingKeys.has(item.id)) {
+        products.value.push(item);
+        existingKeys.add(item.id);
+      }
+    });
+  } else if (typeof availableProducts !== 'undefined' && availableProducts.value) {
+    const existingKeys = new Set(availableProducts.value.map(p => p.id));
+    newItems.forEach(item => {
+      if (!existingKeys.has(item.id)) {
+        availableProducts.value.push(item);
+        existingKeys.add(item.id);
+      }
+    });
+  }
+};
+
 
 onMounted(() => {
   fetchNextNumber();

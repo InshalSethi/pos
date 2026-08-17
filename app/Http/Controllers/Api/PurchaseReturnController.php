@@ -423,6 +423,7 @@ class PurchaseReturnController extends Controller
 
                 $purchaseReturn->items()->create([
                     'product_id'      => $item['product_id'],
+                    'product_variation_id' => $item['product_variation_id'] ?? null,
                     'warehouse_id'    => $item['warehouse_id'] ?? $request->warehouse_id,
                     'quantity'        => $qty,
                     'unit_cost'       => $unitCost,
@@ -538,7 +539,7 @@ class PurchaseReturnController extends Controller
                         $inventoryService->adjustStock(
                             $oldItem->warehouse_id ?? $warehouseId,
                             $product->id,
-                            null,
+                            $oldItem->product_variation_id ?? null,
                             $oldItem->quantity, // Reverse previous deduction by adding stock back
                             $companyId,
                             'Purchase Return Reversal',
@@ -601,6 +602,7 @@ class PurchaseReturnController extends Controller
 
                     $purchaseReturn->items()->create([
                         'product_id'      => $item['product_id'],
+                        'product_variation_id' => $item['product_variation_id'] ?? null,
                         'warehouse_id'    => $item['warehouse_id'] ?? $request->warehouse_id ?? $purchaseReturn->warehouse_id,
                         'quantity'        => $qty,
 
@@ -794,7 +796,7 @@ class PurchaseReturnController extends Controller
                         $inventoryService->adjustStock(
                             $item->warehouse_id ?? $warehouseId,
                             $product->id,
-                            null,
+                            $item->product_variation_id ?? null,
                             $item->quantity, // Add back stock
                             $companyId,
                             'Purchase Return Cancelled',
@@ -852,7 +854,7 @@ class PurchaseReturnController extends Controller
                 $inventoryService->adjustStock(
                     $item->warehouse_id ?? $warehouseId,
                     $product->id,
-                    null,
+                    $item->product_variation_id ?? null,
                     -$item->quantity,
                     $companyId,
                     'Purchase Return',
