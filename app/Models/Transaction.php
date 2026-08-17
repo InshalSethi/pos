@@ -25,6 +25,7 @@ class Transaction extends Model
         'category_id',
         'customer_id',
         'vendor_id',
+        'employee_id',
         'tax_id',
         'number',
         'reference',
@@ -60,6 +61,11 @@ class Transaction extends Model
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'vendor_id');
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
     }
 
     public function tax(): BelongsTo

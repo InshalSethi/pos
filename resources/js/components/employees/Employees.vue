@@ -85,6 +85,7 @@
         @add-employee="openAddEmployeeModal"
         @edit-employee="editEmployee"
         @view-employee="viewEmployee"
+        @open-ledger="openLedgerModal"
         @refresh="fetchEmployees"
       />
     </div>
@@ -95,6 +96,7 @@
         @add-manager="openAddManagerModal"
         @edit-employee="editManager"
         @view-employee="viewEmployee"
+        @open-ledger="openLedgerModal"
         @refresh="fetchEmployees"
       />
     </div>
@@ -160,6 +162,13 @@
       @terminate="handleEmployeeTerminate"
       @reactivate="handleEmployeeReactivate"
     />
+
+    <!-- Employee Ledger Modal -->
+    <EmployeeLedger
+      :show="showLedgerModal"
+      :employee="selectedLedgerEmployee"
+      @close="showLedgerModal = false"
+    />
   </div>
 </template>
 
@@ -176,6 +185,7 @@ import EmployeeModal from './EmployeeModal.vue';
 import DepartmentModal from './DepartmentModal.vue';
 import PositionModal from './PositionModal.vue';
 import EmployeeViewModal from './EmployeeViewModal.vue';
+import EmployeeLedger from './EmployeeLedger.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -183,6 +193,8 @@ const router = useRouter();
 // Reactive data
 const activeTab = ref('employees');
 const showEmployeeModal = ref(false);
+const showLedgerModal = ref(false);
+const selectedLedgerEmployee = ref(null);
 const isManagerModalMode = ref(false);
 const pendingEmployeeCreation = ref(false);
 const showDepartmentModal = ref(false);
@@ -238,6 +250,11 @@ const editManager = (employee) => {
 const viewEmployee = (employee) => {
   selectedEmployee.value = employee;
   showEmployeeViewModal.value = true;
+};
+
+const openLedgerModal = (employee) => {
+  selectedLedgerEmployee.value = employee;
+  showLedgerModal.value = true;
 };
 
 const editDepartment = (department) => {
