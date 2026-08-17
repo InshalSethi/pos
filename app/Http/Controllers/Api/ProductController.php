@@ -2104,7 +2104,39 @@ class ProductController extends Controller
                 $minStockLevel = intval($getMinStock($row) ?? 0);
                 $maxStockLevel = intval($getMaxStock($row) ?? 0);
                 $unitOfMeasure = $getUnit($row) ?? 'pcs';
-                $taxRate = floatval($getTax($row) ?? 0);
+                $taxRaw = $getTax($row);
+                $taxRate = 0;
+                if ($taxRaw !== null && $taxRaw !== '') {
+                    if (preg_match('/[0-9]+(\.[0-9]+)?/', (string)$taxRaw, $matches)) {
+                        $taxRate = floatval($matches[0]);
+                    } else {
+                        $taxRate = floatval($taxRaw);
+                    }
+                }
+                $productTaxes = [];
+                if ($taxRate > 0) {
+                    $taxRecord = \App\Models\Tax::where('company_id', $companyId)
+                        ->where(function ($q) use ($taxRate, $taxRaw) {
+                            $q->where('value', $taxRate)
+                              ->orWhere('name', 'LIKE', "%{$taxRate}%")
+                              ->orWhere('name', 'LIKE', "%{$taxRaw}%");
+                        })->first();
+
+                    if (!$taxRecord) {
+                        $taxName = is_string($taxRaw) && trim($taxRaw) !== '' && !is_numeric(trim($taxRaw))
+                            ? trim($taxRaw)
+                            : "Tax {$taxRate}%";
+
+                        $taxRecord = \App\Models\Tax::create([
+                            'company_id' => $companyId,
+                            'name' => $taxName,
+                            'value' => $taxRate,
+                            'type' => 'percentage',
+                            'is_active' => true,
+                        ]);
+                    }
+                    $productTaxes = [$taxRecord->id];
+                }
 
                 $trackInventoryVal = $getTrackInv($row);
                 $trackInventory = $trackInventoryVal !== null ? in_array(strtolower((string)$trackInventoryVal), ['1', 'true', 'yes']) : true;
@@ -2169,6 +2201,7 @@ class ProductController extends Controller
                         'brand_id' => $brandId,
                         'supplier_id' => $supplierId,
                         'tax_rate' => $taxRate,
+                        'taxes' => $productTaxes,
                         'track_inventory' => $trackInventory,
                         'is_active' => $isActive,
                         'status' => $isActive ? 'active' : 'inactive',
@@ -2225,6 +2258,8 @@ class ProductController extends Controller
                             'retail_price' => $vSelling,
                             'wholesale_price' => $vWholesale,
                             'stock_qty' => $vStock,
+                            'tax_rate' => $taxRate,
+                            'taxes' => $productTaxes,
                         ]
                     );
 
