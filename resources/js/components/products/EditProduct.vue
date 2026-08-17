@@ -7,7 +7,7 @@
   </div>
   <ProductForm 
     v-else
-    title="Edit Product" 
+    title="Edit Item" 
     subtitle="Update and refine your product specifications"
     :initialData="product"
     :loading="loading"

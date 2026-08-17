@@ -200,6 +200,8 @@ class ProductController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'short_description' => 'nullable|string|max:500',
+            'description' => 'nullable|string',
             'sku' => $skuRule,
             'selling_price' => 'nullable|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',
@@ -734,6 +736,8 @@ class ProductController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'short_description' => 'nullable|string|max:500',
+            'description' => 'nullable|string',
             'sku' => $skuRule,
             'selling_price' => 'nullable|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',

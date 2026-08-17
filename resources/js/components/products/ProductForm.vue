@@ -30,11 +30,27 @@
       <div class="w-full max-w-7xl mx-auto">
         <form id="product-form" @submit.prevent="submit" class="space-y-4">
           
-          <!-- 1. GENERAL SECTION -->
+          <!-- 1. GENERAL SECTION HEADER -->
           <div class="space-y-3">
             <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-2 mb-3 flex items-center justify-between">
-              <h2 class="text-base font-semibold text-slate-800 dark:text-slate-200">General</h2>
-              <!-- Elegant Inline Toggle Switcher -->
+              <!-- Left Side: Product / Service Radio Toggle -->
+              <div class="flex items-center gap-2 select-none">
+                <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
+                  <button
+                    v-for="opt in typeOptions"
+                    :key="opt.value"
+                    type="button"
+                    @click="form.type = opt.value"
+                    class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
+                    :class="form.type === opt.value
+                      ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
+                      : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+              <!-- Right Side: Status Toggle (Draft, Inactive, Active) -->
               <div class="flex items-center gap-2 select-none">
                 <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
                   <button
@@ -60,15 +76,15 @@
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                     Name *
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Enter the full descriptive name of the product or item.
-                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                        <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
                     </span>
                   </label>
@@ -80,47 +96,143 @@
                   />
                 </div>
 
-                <!-- Category, Brand & Tags Row -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <!-- Multi-select Category Badge / Tag Input -->
+                <!-- Service Configuration Row (Shown only when type is Service) -->
+                <div v-if="form.type === 'service'" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/40 dark:bg-indigo-950/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 relative z-[110]">
+                  <!-- Service Type Selection -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-1">
+                      Service Type *
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                        <svg class="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-600 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                          Select the billing structure or frequency for this service (e.g., Hourly, Monthly, Task Based).
+                          <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                        </span>
+                      </span>
+                    </label>
+                    <SystemSelect 
+                      v-model="form.service_type" 
+                      :options="serviceTypeOptions" 
+                      placeholder="Select Service Type" 
+                    />
+                  </div>
+
+                  <!-- Dynamic Field based on selected Service Type -->
+                  <div v-if="activeServiceConfig">
+                    <label class="block text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-1">
+                      {{ activeServiceConfig.label }} *
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                        <svg class="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-600 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                          {{ activeServiceConfig.tooltip }}
+                          <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                        </span>
+                      </span>
+                    </label>
+                    <input 
+                      v-model="form.service_detail" 
+                      type="text" 
+                      class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-indigo-200/80 dark:border-indigo-900/50 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none" 
+                      :placeholder="activeServiceConfig.placeholder"
+                    />
+                  </div>
+                </div>
+
+                <!-- Category Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-[100]">
+                  <!-- Main Category -->
                   <div>
                     <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                      Category *
-                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                      Main Category *
+                    </label>
+                    <SystemSelect v-model="selectedMainCategory" :options="mainCategoryOptions" placeholder="Select Main Category" />
+                  </div>
+                  
+                  <!-- Sub Category -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
+                      <span>Sub Category <span v-if="subCategoryOptions.length > 1" class="text-rose-500">*</span></span>
+                    </label>
+                    <SystemSelect v-model="selectedSubCategory" :options="subCategoryOptions" placeholder="Select Sub Category" :disabled="!selectedMainCategory" />
+                  </div>
+
+                  <!-- Child Category -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
+                      <span>Child Category <span v-if="childCategoryOptions.length > 1" class="text-rose-500">*</span></span>
+                    </label>
+                    <SystemSelect v-model="selectedChildCategory" :options="childCategoryOptions" placeholder="Select Child Category" :disabled="!selectedSubCategory" />
+                  </div>
+                </div>
+
+                <!-- Brands and Tags Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-40">
+                  <!-- Brand Select Dropdown -->
+                  <div class="relative z-50">
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-1">
+                      Brand
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                         <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
-                          Select one or more categories to classify this product.
-                          <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                          Select the brand associated with this product.
+                          <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                         </span>
                       </span>
                     </label>
-                    <div class="relative" id="category-multiselect-container">
+                    <SystemSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select Brand" />
+                  </div>
+ 
+                  <!-- Multi-select Tags Badge / Tag Input -->
+                  <div class="relative z-40">
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                      Tags
+                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
+                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
+                          Add tags to help search, filter, and organize products easily.
+                          <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
+                        </span>
+                      </span>
+                    </label>
+                    <div class="relative" id="tag-multiselect-container">
                       <div 
-                        @click="focusCategoryInput"
+                        @click="focusTagInput"
                         class="w-full min-h-[38px] p-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-xl text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-text flex flex-wrap items-center gap-1.5 pr-8"
                       >
                         <div 
-                          v-for="catId in form.category_ids" 
-                          :key="catId" 
-                          class="bg-slate-800 dark:bg-[#1E1E1E] text-slate-100 dark:text-slate-300 border border-slate-700 dark:border-[#2E2E2E] rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold shadow-xs"
+                          v-for="tagName in (form.tags || [])" 
+                          :key="tagName" 
+                          class="bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/40 rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold"
                         >
-                          <span>{{ getCategoryLabel(catId) }}</span>
-                          <button type="button" @click.stop="removeCategory(catId)" class="hover:text-red-350 font-bold focus:outline-none">&times;</button>
+                          <span>{{ tagName }}</span>
+                          <button type="button" @click.stop="removeTag(tagName)" class="hover:text-indigo-800 dark:hover:text-indigo-100 font-bold focus:outline-none">&times;</button>
                         </div>
-
+                        
                         <!-- Real-Time Search Input -->
                         <input
-                          ref="categoryInputRef"
+                          ref="tagInputRef"
                           type="text"
-                          v-model="categorySearchQuery"
-                          @focus="showCategoryDropdown = true"
-                          @click.stop="showCategoryDropdown = true"
-                          :placeholder="form.category_ids.length === 0 ? 'Add category' : ''"
-                          class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-550"
+                          v-model="tagSearchQuery"
+                          @focus="showTagDropdown = true"
+                          @click.stop="showTagDropdown = true"
+                          :placeholder="(!form.tags || form.tags.length === 0) ? 'Select or search tags...' : ''"
+                          class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
                         />
 
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
@@ -129,202 +241,98 @@
                       </div>
 
                       <!-- Dropdown Menu -->
-                      <div v-if="showCategoryDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                      <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
                         <!-- Scrollable List of Filtered Options -->
                         <div class="overflow-y-auto max-h-44 custom-scrollbar">
-                          <template v-if="filteredCategoryOptions.length > 0">
+                          <template v-if="filteredTagOptions.length > 0">
                             <div 
-                              v-for="opt in filteredCategoryOptions" 
+                              v-for="opt in filteredTagOptions" 
                               :key="opt.value"
-                              @click="toggleCategorySelection(opt.value)"
+                              @click="toggleTagSelection(opt.value)"
                               class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
                             >
-                              <span :class="form.category_ids.includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ opt.label }}</span>
-                              <span v-if="form.category_ids.includes(opt.value)" class="text-indigo-600 dark:text-indigo-400">
+                              <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-350'">{{ opt.label }}</span>
+                              <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-400">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                               </span>
                             </div>
                           </template>
 
-                          <!-- Empty State ("No Categories Found") -->
+                          <!-- Empty State ("No Tags Found") -->
                           <div v-else class="px-3 py-3 text-center">
-                            <p class="text-slate-400 dark:text-slate-500 text-xs font-semibold italic">No categories found</p>
+                            <p class="text-slate-400 dark:text-slate-500 text-xs font-semibold italic">No tags found</p>
                           </div>
                         </div>
 
-                        <!-- Add Category Footer -->
+                        <!-- Inline Creation Footer -->
                         <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1 p-1 bg-white dark:bg-[#1E1E1E]">
                           <button 
+                            v-if="!showInlineCreateTag" 
                             type="button"
-                            @click.stop="toggleCategorySelection('add_new_category')" 
+                            @click.stop="startInlineTagCreate" 
                             class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-[#2D2D2D]/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
                           >
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                             </svg>
-                            <span>+ Add Category</span>
-                            <span v-if="categorySearchQuery" class="text-xs text-slate-400">"{{ categorySearchQuery }}"</span>
+                            <span>+ Add Tag</span>
+                            <span v-if="tagSearchQuery" class="text-xs text-slate-400">"{{ tagSearchQuery }}"</span>
                           </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Brand Select Dropdown -->
-                  <div>
-                    <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-1">
-                      Brand
-                      <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
-                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10" />
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                          <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
-                          Select the brand associated with this product.
-                          <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
-                        </span>
-                      </span>
-                    </label>
-                    <SystemSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select Brand" />
-                  </div>
- 
-                  <!-- Multi-select Tags Badge / Tag Input -->
-                  <div>
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                    Tags
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
-                      <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
-                        Add tags to help search, filter, and organize products easily.
-                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
-                      </span>
-                    </span>
-                  </label>
-                  <div class="relative" id="tag-multiselect-container">
-                    <div 
-                      @click="focusTagInput"
-                      class="w-full min-h-[38px] p-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/20 rounded-xl text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none cursor-text flex flex-wrap items-center gap-1.5 pr-8"
-                    >
-                      <div 
-                        v-for="tagName in (form.tags || [])" 
-                        :key="tagName" 
-                        class="bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/40 rounded-lg px-2.5 py-1 text-xs flex items-center gap-1.5 font-semibold"
-                      >
-                        <span>{{ tagName }}</span>
-                        <button type="button" @click.stop="removeTag(tagName)" class="hover:text-indigo-800 dark:hover:text-indigo-100 font-bold focus:outline-none">&times;</button>
-                      </div>
-                      
-                      <!-- Real-Time Search Input -->
-                      <input
-                        ref="tagInputRef"
-                        type="text"
-                        v-model="tagSearchQuery"
-                        @focus="showTagDropdown = true"
-                        @click.stop="showTagDropdown = true"
-                        :placeholder="(!form.tags || form.tags.length === 0) ? 'Select or search tags...' : ''"
-                        class="flex-1 min-w-[120px] bg-transparent text-xs sm:text-sm border-none outline-none focus:ring-0 p-1 text-slate-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
-                      />
-
-                      <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                      </span>
-                    </div>
-
-                    <!-- Dropdown Menu -->
-                    <div v-if="showTagDropdown" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-xl rounded-xl max-h-60 p-1 animate-in fade-in zoom-in-95 duration-100 flex flex-col">
-                      <!-- Scrollable List of Filtered Options -->
-                      <div class="overflow-y-auto max-h-44 custom-scrollbar">
-                        <template v-if="filteredTagOptions.length > 0">
-                          <div 
-                            v-for="opt in filteredTagOptions" 
-                            :key="opt.value"
-                            @click="toggleTagSelection(opt.value)"
-                            class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
-                          >
-                            <span :class="(form.tags || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-350'">{{ opt.label }}</span>
-                            <span v-if="(form.tags || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-400">
-                              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                            </span>
+                          <div v-else class="flex items-center gap-1.5" @click.stop>
+                            <input 
+                              v-model="newInlineTagName"
+                              ref="inlineTagInputRef"
+                              @keydown.enter.prevent="submitInlineTag"
+                              @keydown.esc="cancelInlineTagCreate"
+                              type="text" 
+                              placeholder="Enter tag name..."
+                              class="flex-1 px-2 py-1 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] focus:border-slate-350 focus:bg-white dark:focus:bg-slate-900 rounded-lg text-xs font-semibold outline-none transition-all text-slate-800 dark:text-slate-300"
+                            />
+                            <button 
+                              @click="submitInlineTag"
+                              type="button"
+                              class="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-all focus:outline-none"
+                              title="Save Tag"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
+                            <button 
+                              @click="cancelInlineTagCreate"
+                              type="button"
+                              class="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 rounded transition-all focus:outline-none"
+                              title="Cancel"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
                           </div>
-                        </template>
-
-                        <!-- Empty State ("No Tags Found") -->
-                        <div v-else class="px-3 py-3 text-center">
-                          <p class="text-slate-400 dark:text-slate-500 text-xs font-semibold italic">No tags found</p>
-                        </div>
-                      </div>
-
-                      <!-- Inline Creation Footer -->
-                      <div class="border-t border-slate-100 dark:border-[#2E2E2E] mt-1 p-1 bg-white dark:bg-[#1E1E1E]">
-                        <button 
-                          v-if="!showInlineCreateTag" 
-                          type="button"
-                          @click.stop="startInlineTagCreate" 
-                          class="w-full py-1.5 px-3 text-left text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-[#2D2D2D]/50 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
-                        >
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                          </svg>
-                          <span>+ Add Tag</span>
-                          <span v-if="tagSearchQuery" class="text-xs text-slate-400">"{{ tagSearchQuery }}"</span>
-                        </button>
-                        <div v-else class="flex items-center gap-1.5" @click.stop>
-                          <input 
-                            v-model="newInlineTagName"
-                            ref="inlineTagInputRef"
-                            @keydown.enter.prevent="submitInlineTag"
-                            @keydown.esc="cancelInlineTagCreate"
-                            type="text" 
-                            placeholder="Enter tag name..."
-                            class="flex-1 px-2 py-1 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] focus:border-slate-350 focus:bg-white dark:focus:bg-slate-900 rounded-lg text-xs font-semibold outline-none transition-all text-slate-800 dark:text-slate-300"
-                          />
-                          <button 
-                            @click="submitInlineTag"
-                            type="button"
-                            class="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-all focus:outline-none"
-                            title="Save Tag"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                            </svg>
-                          </button>
-                          <button 
-                            @click="cancelInlineTagCreate"
-                            type="button"
-                            class="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-[#2D2D2D]/80 rounded transition-all focus:outline-none"
-                            title="Cancel"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
                   </div>
                 </div>
+
+
+
               </div>
  
               <!-- Right Column: Item Pictures -->
-              <div class="md:col-span-1 flex flex-col justify-end">
+              <div class="md:col-span-1 flex flex-col justify-start">
                 <div class="flex items-center justify-between mb-1">
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Item Pictures
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Upload up to 8 images (up to 10MB each). Crop, rotate, zoom, and select the primary image.
-                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                        <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
                     </span>
                   </label>
@@ -453,25 +461,34 @@
                 </div>
               </div>
             </div>
- 
-            <!-- Description -->
-            <div class="mt-3">
-              <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                Description
-                <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
-                  <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                  <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
-                    Provide a detailed overview of the product specifications and benefits.
-                    <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
-                  </span>
-                </span>
-              </label>
-              <textarea v-model="form.description" rows="3" class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-550 outline-none resize-none h-20" placeholder="Enter description..."></textarea>
+
+            <!-- Full Width Descriptions Section -->
+            <div class="space-y-3 mt-3">
+              <!-- Short Description -->
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Short Description
+                </label>
+                <textarea 
+                  v-model="form.short_description" 
+                  rows="2"
+                  placeholder="Enter a brief summary of the product..."
+                  class="w-full px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] focus:border-slate-300 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-300/25 rounded-md text-sm font-medium transition-all text-slate-800 dark:text-slate-300 outline-none resize-none"
+                ></textarea>
+              </div>
+
+              <!-- Rich Text Description -->
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                  Description
+                </label>
+                <div class="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-md overflow-hidden min-h-[150px]">
+                  <QuillEditor theme="snow" v-model:content="form.description" contentType="html" class="min-h-[150px] text-slate-800 dark:text-slate-300" />
+                </div>
+              </div>
             </div>
+ 
+
           </div>
  
           <!-- 2. BILLING SECTION -->
@@ -505,15 +522,15 @@
               <div v-show="form.enabled_for_purchase">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Purchase Price <span v-if="form.enabled_for_purchase && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       The cost price paid to acquire or manufacture the item.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -530,15 +547,15 @@
               <div v-show="form.enabled_for_sale">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Sale Price <span v-if="form.enabled_for_sale && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       The standard retail selling price offered to consumers.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -555,15 +572,15 @@
               <div v-show="form.enabled_for_wholesale">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Wholesale Price <span v-if="form.enabled_for_wholesale && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       The bulk purchase price offered to business-to-business clients.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -580,15 +597,15 @@
               <div v-show="form.enabled_for_tax">
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Tax <span v-if="form.enabled_for_tax && !form.has_variations" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       Select applicable tax rates to apply during transaction billing.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -616,16 +633,27 @@
 
                   <!-- Dropdown Menu -->
                   <div v-if="showTaxDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                    <div class="p-1 sticky top-0 bg-white dark:bg-[#1E1E1E] z-10 border-b border-slate-100 dark:border-[#2E2E2E] mb-1">
+                      <input 
+                        type="text" 
+                        v-model="taxSearchQuery" 
+                        placeholder="Search tax..." 
+                        class="w-full px-2.5 py-1 bg-slate-50 dark:bg-[#252525] text-xs rounded-lg border border-slate-200 dark:border-[#2E2E2E] focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200" 
+                      />
+                    </div>
                     <div 
-                      v-for="opt in taxOptions" 
+                      v-for="opt in filteredTaxOptions" 
                       :key="opt.value"
                       @click="toggleTaxSelection(opt.value)"
                       class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
                     >
-                      <span :class="(form.taxes || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300'">{{ opt.label }}</span>
+                      <span :class="(form.taxes || []).includes(opt.value) ? 'text-indigo-600 dark:text-indigo-400 font-bold' : (opt.value === 'add_new_tax' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-700 dark:text-slate-300')">{{ opt.label }}</span>
                       <span v-if="(form.taxes || []).includes(opt.value)" class="text-indigo-600 dark:text-indigo-455">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                       </span>
+                    </div>
+                    <div v-if="filteredTaxOptions.length === 0" class="px-3 py-2 text-xs text-slate-400 dark:text-slate-550 italic text-center">
+                      No tax rate found
                     </div>
                   </div>
                 </div>
@@ -660,15 +688,15 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   SKU <span class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       Enter a unique Stock Keeping Unit code for tracking inventory.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -682,15 +710,15 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Unit <span v-if="form.track_inventory" class="text-rose-500">*</span>
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       Select the standard unit of measurement (e.g. Pcs, Kgs).
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -699,15 +727,15 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                   Barcode
-                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                  <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                     <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                       <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                    <span class="absolute top-full right-0 left-auto mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                       Enter the scanner barcode or UPC/EAN code for the item.
-                      <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                      <span class="absolute bottom-full right-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                     </span>
                   </span>
                 </label>
@@ -727,15 +755,15 @@
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
                     Assign Warehouse(s) <span v-if="form.track_inventory && !form.has_variations" class="text-rose-500">*</span>
-                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none">
+                    <span class="group relative inline-block ml-1.5 cursor-pointer align-middle select-none z-[99999]">
                       <svg class="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors duration-200" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
-                      <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block w-52 bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-[#2E2E2E] text-center z-50 normal-case tracking-normal transition-all duration-200">
+                      <span class="absolute top-full left-0 mt-1.5 hidden group-hover:block w-56 bg-slate-900/95 dark:bg-[#1E1E1E]/95 backdrop-blur-md text-slate-100 text-[10px] font-semibold leading-relaxed p-2.5 rounded-xl shadow-2xl border border-slate-700 dark:border-[#2E2E2E] text-center z-[99999] pointer-events-none normal-case tracking-normal transition-all duration-200">
                         Select one or more warehouses where this item is physically stored.
-                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95"></span>
+                        <span class="absolute bottom-full left-3.5 border-4 border-transparent border-b-slate-900/95"></span>
                       </span>
                     </span>
                   </label>
@@ -764,8 +792,16 @@
 
                     <!-- Dropdown Menu -->
                     <div v-if="showWhDropdown && !form.has_variations" class="absolute z-50 left-0 mt-1 w-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] shadow-lg dark:shadow-slate-950/80 rounded-xl max-h-60 overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                      <div class="p-1 sticky top-0 bg-white dark:bg-[#1E1E1E] z-10 border-b border-slate-100 dark:border-[#2E2E2E] mb-1">
+                        <input 
+                          type="text" 
+                          v-model="whSearchQuery" 
+                          placeholder="Search warehouse..." 
+                          class="w-full px-2.5 py-1 bg-slate-50 dark:bg-[#252525] text-xs rounded-lg border border-slate-200 dark:border-[#2E2E2E] focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200" 
+                        />
+                      </div>
                       <div 
-                        v-for="opt in warehouseOptions" 
+                        v-for="opt in filteredWarehouseOptions" 
                         :key="opt.value"
                         @click="toggleTopWarehouseSelection(opt.value)"
                         class="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2D2D2D]/60 rounded-lg flex items-center justify-between"
@@ -775,9 +811,9 @@
                           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                         </span>
                       </div>
-                      <div v-if="warehouseOptions.length === 0" class="px-3 py-3 text-xs text-slate-400 dark:text-slate-550 italic text-center">
+                      <div v-if="filteredWarehouseOptions.length === 0" class="px-3 py-3 text-xs text-slate-400 dark:text-slate-550 italic text-center">
                         <svg class="w-5 h-5 mx-auto mb-1 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                        No warehouse created
+                        No warehouse found
                       </div>
                     </div>
                   </div>
@@ -1481,6 +1517,46 @@
       </div>
     </div>
 
+    <!-- Add New Brand Modal -->
+    <div v-if="showBrandModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeBrandModal">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Add New Brand</h4>
+          <button @click="closeBrandModal" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-bold text-lg">&times;</button>
+        </div>
+        <div v-if="brandModalError" class="p-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-xs rounded-xl border border-red-200 dark:border-red-900/50 font-medium">
+          {{ brandModalError }}
+        </div>
+        <div class="space-y-3">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Brand Name *</label>
+            <input type="text" v-model="newBrandForm.name" placeholder="e.g., Nike, Samsung, Apple" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">Description</label>
+            <textarea v-model="newBrandForm.description" rows="2" placeholder="Brand details..." class="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-xl text-xs focus:outline-none focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-300 font-medium resize-none"></textarea>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500">Is Active</label>
+              <p class="text-[9px] text-slate-400 dark:text-slate-500">Visible and active across system.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer select-none">
+              <input type="checkbox" v-model="newBrandForm.is_active" class="sr-only peer">
+              <div class="w-8 h-4.5 bg-slate-200 dark:bg-[#252525] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 text-xs">
+          <button type="button" @click="closeBrandModal" class="px-3 py-1 text-slate-455 dark:text-slate-500 font-medium hover:text-slate-600 dark:hover:text-slate-400">Cancel</button>
+          <button type="button" @click="submitNewBrand" :disabled="submittingBrand" class="px-4 py-1.5 bg-emerald-600 text-white font-bold rounded-xl shadow hover:bg-emerald-700 transition-colors flex items-center gap-1.5 disabled:opacity-50">
+            <svg v-if="submittingBrand" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            Create Brand
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Add New Tax Modal -->
     <div v-if="showTaxModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeTaxModal">
       <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-lg shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-8 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-6">
@@ -1765,6 +1841,8 @@ import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 const currencyStore = useCurrencyStore();
 
@@ -1780,6 +1858,70 @@ const emit = defineEmits(['submit']);
 
 // Hollow favorite star state
 const isStarred = ref(false);
+
+// Item type options (Product, Service)
+const typeOptions = [
+  { label: 'Product', value: 'product' },
+  { label: 'Service', value: 'service' }
+];
+
+// Service type options (Hourly, Daily, Weekly, Monthly, Yearly, Task Based, One Time)
+const serviceTypeOptions = [
+  { label: 'Hourly', value: 'hourly' },
+  { label: 'Daily', value: 'daily' },
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Yearly', value: 'yearly' },
+  { label: 'Task Based', value: 'task_based' },
+  { label: 'One Time', value: 'one_time' }
+];
+
+const serviceTypeConfigs = {
+  hourly: {
+    label: 'Hourly Duration / Rate Unit',
+    placeholder: 'e.g. 1 Hour, Min 2 Hours, $50/hr',
+    tooltip: 'Specify hourly billing terms, minimum hours, or rate unit.'
+  },
+  daily: {
+    label: 'Daily Duration / Service Period',
+    placeholder: 'e.g. Full Working Day (8 hrs), Per Calendar Day',
+    tooltip: 'Specify daily service scope or working hours per day.'
+  },
+  weekly: {
+    label: 'Weekly Schedule / Terms',
+    placeholder: 'e.g. 5 Days/Week, Billed every Monday',
+    tooltip: 'Specify weekly service days or recurring billing schedule.'
+  },
+  monthly: {
+    label: 'Monthly Billing / Contract Term',
+    placeholder: 'e.g. 1 Month, Billed on 1st, 30 Days Contract',
+    tooltip: 'Specify monthly retainer terms or billing cycle date.'
+  },
+  yearly: {
+    label: 'Annual Contract / Renewal Details',
+    placeholder: 'e.g. 1 Year Subscription, Auto-renews Annually',
+    tooltip: 'Specify annual contract term, renewal conditions or discount.'
+  },
+  task_based: {
+    label: 'Task Scope / Deliverables',
+    placeholder: 'e.g. Per Audit Report, Per Milestone, Per Feature',
+    tooltip: 'Specify task milestone, deliverable count, or project scope.'
+  },
+  one_time: {
+    label: 'Service Scope / Execution Details',
+    placeholder: 'e.g. One-time Setup Fee, Initial Consultation',
+    tooltip: 'Specify scope of work for one-off non-recurring service.'
+  }
+};
+
+const activeServiceConfig = computed(() => {
+  if (!form.value || !form.value.service_type) return null;
+  return serviceTypeConfigs[form.value.service_type] || {
+    label: 'Service Details',
+    placeholder: 'Enter details for selected service type...',
+    tooltip: 'Provide additional parameters for this service.'
+  };
+});
 
 // 0-Quantity Confirmation Modal state
 const showZeroQtyModal = ref(false);
@@ -1849,6 +1991,7 @@ const warehouses = ref(getInitialWarehouses());
 const sanitizeInitialData = (data) => {
   const defaults = {
     name: '',
+    short_description: '',
     description: '',
     sku: '',
     barcode: '',
@@ -1881,6 +2024,8 @@ const sanitizeInitialData = (data) => {
     image: null,
     image_url: null,
     type: 'product',
+    service_type: 'hourly',
+    service_detail: '',
     enabled_for_sale: true,
     enabled_for_purchase: true,
     enabled_for_wholesale: false,
@@ -2447,58 +2592,74 @@ const setStatus = (val) => {
   localStorage.setItem('pos_item_form_status', val);
 };
 
-// Multi-select Category Badge & Tag logic
-const showCategoryDropdown = ref(false);
-const categorySearchQuery = ref('');
-const categoryInputRef = ref(null);
+// Hierarchical Categories State
+const selectedMainCategory = ref('');
+const selectedSubCategory = ref('');
+const selectedChildCategory = ref('');
+let isInitCategories = false;
 
-const focusCategoryInput = () => {
-  showCategoryDropdown.value = true;
-  if (categoryInputRef.value) {
-    categoryInputRef.value.focus();
-  }
+const updateFinalCategoryId = () => {
+  form.value.category_id = selectedChildCategory.value || selectedSubCategory.value || selectedMainCategory.value || '';
+  form.value.category_ids = form.value.category_id ? [form.value.category_id] : [];
 };
 
-const getCategoryLabel = (id) => {
+const initHierarchicalCategories = () => {
+  if (!form.value.category_id) return;
   const list = Array.isArray(categories.value)
     ? categories.value
     : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
-  const cat = list.find(c => c.id === id || String(c.id) === String(id));
-  return cat ? cat.name : id;
+  const cat = list.find(c => c.id === form.value.category_id);
+  if (!cat) return;
+
+  isInitCategories = true;
+  if (!cat.parent_id) {
+    selectedMainCategory.value = cat.id;
+  } else {
+    const parent = list.find(c => c.id === cat.parent_id);
+    if (parent && !parent.parent_id) {
+      selectedMainCategory.value = parent.id;
+      selectedSubCategory.value = cat.id;
+    } else if (parent && parent.parent_id) {
+      selectedMainCategory.value = parent.parent_id;
+      selectedSubCategory.value = parent.id;
+      selectedChildCategory.value = cat.id;
+    }
+  }
+  setTimeout(() => { isInitCategories = false; }, 50);
 };
 
-const toggleCategorySelection = (val) => {
-  if (val === 'add_new_category') {
-    openCategoryModal();
-    showCategoryDropdown.value = false;
-    categorySearchQuery.value = '';
+watch(selectedMainCategory, (newVal) => {
+  if (newVal === 'add_new_category') {
+    selectedMainCategory.value = '';
+    openCategoryModal('');
     return;
   }
-  const idx = form.value.category_ids.indexOf(val);
-  if (idx > -1) {
-    form.value.category_ids.splice(idx, 1);
-  } else {
-    form.value.category_ids.push(val);
-  }
-  // Sync fallback category_id
-  form.value.category_id = form.value.category_ids[0] || '';
-};
+  if (isInitCategories) return;
+  selectedSubCategory.value = '';
+  selectedChildCategory.value = '';
+  updateFinalCategoryId();
+});
 
-const removeCategory = (val) => {
-  const idx = form.value.category_ids.indexOf(val);
-  if (idx > -1) {
-    form.value.category_ids.splice(idx, 1);
-    form.value.category_id = form.value.category_ids[0] || '';
+watch(selectedSubCategory, (newVal) => {
+  if (newVal === 'add_new_category') {
+    selectedSubCategory.value = '';
+    openCategoryModal(selectedMainCategory.value);
+    return;
   }
-};
+  if (isInitCategories) return;
+  selectedChildCategory.value = '';
+  updateFinalCategoryId();
+});
 
-const closeCategoryDropdownOnOutsideClick = (e) => {
-  const el = document.getElementById('category-multiselect-container');
-  if (el && !el.contains(e.target)) {
-    showCategoryDropdown.value = false;
-    categorySearchQuery.value = '';
+watch(selectedChildCategory, (newVal) => {
+  if (newVal === 'add_new_category') {
+    selectedChildCategory.value = '';
+    openCategoryModal(selectedSubCategory.value);
+    return;
   }
-};
+  if (isInitCategories) return;
+  updateFinalCategoryId();
+});
 
 const taxes = ref([]);
 const taxOptions = computed(() => {
@@ -2511,6 +2672,14 @@ const taxOptions = computed(() => {
 
 // Multi-select Tax Rates logic
 const showTaxDropdown = ref(false);
+const taxSearchQuery = ref('');
+
+const filteredTaxOptions = computed(() => {
+  const options = taxOptions.value;
+  if (!taxSearchQuery.value.trim()) return options;
+  const q = taxSearchQuery.value.toLowerCase().trim();
+  return options.filter(opt => opt.value === 'add_new_tax' || (opt.label && opt.label.toLowerCase().includes(q)));
+});
 
 const initializeTaxRates = (taxRateVal) => {
   if (!taxRateVal || parseFloat(taxRateVal) === 0) {
@@ -2604,6 +2773,14 @@ watch([taxes, () => form.value.tax_rate], () => {
 }, { immediate: true });
 
 const showWhDropdown = ref(false);
+const whSearchQuery = ref('');
+
+const filteredWarehouseOptions = computed(() => {
+  const options = warehouseOptions.value;
+  if (!whSearchQuery.value.trim()) return options;
+  const q = whSearchQuery.value.toLowerCase().trim();
+  return options.filter(opt => opt.label && opt.label.toLowerCase().includes(q));
+});
 
 const toggleTopWarehouseSelection = (val) => {
   if (!form.value.warehouse_ids) {
@@ -2627,7 +2804,6 @@ const closeWarehouseDropdownOnOutsideClick = (e) => {
 };
 
 onMounted(() => {
-  window.addEventListener('click', closeCategoryDropdownOnOutsideClick);
   window.addEventListener('click', closeMasterAttrDropdownOnOutsideClick);
   window.addEventListener('click', closeRowWhDropdownOnOutsideClick);
   window.addEventListener('click', closeWarehouseDropdownOnOutsideClick);
@@ -2645,7 +2821,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('click', closeCategoryDropdownOnOutsideClick);
   window.removeEventListener('click', closeMasterAttrDropdownOnOutsideClick);
   window.removeEventListener('click', closeRowWhDropdownOnOutsideClick);
   window.removeEventListener('click', closeWarehouseDropdownOnOutsideClick);
@@ -2657,18 +2832,33 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScrollClose, true);
 });
 
-const categoryOptions = computed(() => {
+const mainCategoryOptions = computed(() => {
   const list = Array.isArray(categories.value)
     ? categories.value
     : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
-  return list.map(c => ({ label: c?.name || '', value: c?.id || '' }));
+  const options = list.filter(c => !c.parent_id).map(c => ({ label: c?.name || '', value: c?.id || '' }));
+  options.push({ label: '+ ADD Main Category', value: 'add_new_category' });
+  return options;
 });
 
-const filteredCategoryOptions = computed(() => {
-  const options = categoryOptions.value;
-  if (!categorySearchQuery.value.trim()) return options;
-  const q = categorySearchQuery.value.toLowerCase().trim();
-  return options.filter(opt => opt.label.toLowerCase().includes(q));
+const subCategoryOptions = computed(() => {
+  if (!selectedMainCategory.value || selectedMainCategory.value === 'add_new_category') return [];
+  const list = Array.isArray(categories.value)
+    ? categories.value
+    : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
+  const options = list.filter(c => c.parent_id === selectedMainCategory.value).map(c => ({ label: c?.name || '', value: c?.id || '' }));
+  options.push({ label: '+ ADD Sub Category', value: 'add_new_category' });
+  return options;
+});
+
+const childCategoryOptions = computed(() => {
+  if (!selectedSubCategory.value || selectedSubCategory.value === 'add_new_category') return [];
+  const list = Array.isArray(categories.value)
+    ? categories.value
+    : (categories.value && Array.isArray(categories.value.data) ? categories.value.data : []);
+  const options = list.filter(c => c.parent_id === selectedSubCategory.value).map(c => ({ label: c?.name || '', value: c?.id || '' }));
+  options.push({ label: '+ ADD Child Category', value: 'add_new_category' });
+  return options;
 });
 
 const parentCategoryOptions = computed(() => {
@@ -2694,10 +2884,12 @@ const brands = ref([]);
 
 const brandOptions = computed(() => {
   const list = Array.isArray(brands.value) ? brands.value : [];
-  return [
+  const options = [
     { label: 'None (No Brand)', value: '' },
     ...list.map(b => ({ label: b?.name || '', value: b?.id || '' }))
   ];
+  options.push({ label: '+ ADD New Brand', value: 'add_new_brand' });
+  return options;
 });
 
 const warehouseOptions = computed(() => {
@@ -2729,10 +2921,15 @@ onMounted(async () => {
         form.value.category_ids = [generalCat.id];
         form.value.category_id = generalCat.id;
       } else if (catList.length > 0) {
-        form.value.category_ids = [catList[0].id];
-        form.value.category_id = catList[0].id;
+        const topLevelCat = catList.find(c => !c.parent_id);
+        if (topLevelCat) {
+            form.value.category_ids = [topLevelCat.id];
+            form.value.category_id = topLevelCat.id;
+        }
       }
     }
+    
+    initHierarchicalCategories();
     suppliers.value = supResponse?.data || [];
     units.value = unitResponse?.data || [];
     taxes.value = taxResponse?.data || [];
@@ -3226,6 +3423,14 @@ watch(() => form.value.has_variations, (newVal) => {
   }
 });
 
+watch(() => form.value.type, (newType) => {
+  if (newType === 'service') {
+    form.value.enabled_for_purchase = false;
+    form.value.is_returnable = false;
+    form.value.track_inventory = false;
+  }
+}, { immediate: true });
+
 watch(
   [() => form.value.has_variations, () => form.value.variations],
   ([isVar, vars]) => {
@@ -3262,10 +3467,10 @@ const newCategoryForm = ref({
   is_active: true
 });
 
-const openCategoryModal = () => {
+const openCategoryModal = (parentId = '') => {
   newCategoryForm.value = {
     name: '',
-    parent_id: '',
+    parent_id: parentId,
     description: '',
     is_active: true
   };
@@ -3289,8 +3494,21 @@ const submitNewCategory = async () => {
     if (response.data && response.data.category) {
       const newCat = response.data.category;
       categories.value.push(newCat);
-      form.value.category_ids.push(newCat.id);
-      form.value.category_id = newCat.id;
+      
+      isInitCategories = true;
+      if (!newCat.parent_id) {
+         selectedMainCategory.value = newCat.id;
+         selectedSubCategory.value = '';
+         selectedChildCategory.value = '';
+      } else if (newCat.parent_id === selectedMainCategory.value) {
+         selectedSubCategory.value = newCat.id;
+         selectedChildCategory.value = '';
+      } else if (newCat.parent_id === selectedSubCategory.value) {
+         selectedChildCategory.value = newCat.id;
+      }
+      updateFinalCategoryId();
+      setTimeout(() => { isInitCategories = false; }, 50);
+
       closeCategoryModal();
     }
   } catch (error) {
@@ -3370,6 +3588,68 @@ watch(() => form.value.unit_id, (newVal, oldVal) => {
   if (newVal === 'add_new_unit') {
     openUnitModal();
     form.value.unit_id = oldVal || '';
+  }
+});
+
+// Brand Modal Logic
+const showBrandModal = ref(false);
+const submittingBrand = ref(false);
+const brandModalError = ref('');
+const newBrandForm = ref({
+  name: '',
+  description: '',
+  is_active: true
+});
+
+const openBrandModal = () => {
+  newBrandForm.value = {
+    name: '',
+    description: '',
+    is_active: true
+  };
+  brandModalError.value = '';
+  showBrandModal.value = true;
+};
+
+const closeBrandModal = () => {
+  showBrandModal.value = false;
+};
+
+const submitNewBrand = async () => {
+  if (!newBrandForm.value.name.trim()) {
+    brandModalError.value = 'Brand Name is required.';
+    return;
+  }
+  submittingBrand.value = true;
+  brandModalError.value = '';
+  try {
+    const response = await axios.post('/api/brands', {
+      name: newBrandForm.value.name,
+      description: newBrandForm.value.description,
+      is_active: newBrandForm.value.is_active
+    });
+
+    if (response.data && (response.data.brand || response.data.data || response.data.id)) {
+      const newBrand = response.data.brand || response.data.data || response.data;
+      brands.value.push(newBrand);
+      form.value.brand_id = newBrand.id;
+      closeBrandModal();
+    }
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      brandModalError.value = Object.values(error.response.data.errors).flat().join(' ');
+    } else {
+      brandModalError.value = error.response?.data?.message || 'An error occurred while creating the brand.';
+    }
+  } finally {
+    submittingBrand.value = false;
+  }
+};
+
+watch(() => form.value.brand_id, (newVal, oldVal) => {
+  if (newVal === 'add_new_brand') {
+    openBrandModal();
+    form.value.brand_id = oldVal || '';
   }
 });
 
@@ -3532,6 +3812,19 @@ watch(() => form.value.category_ids, (newCategoryIds) => {
 }, { deep: true });
 
 const submit = () => {
+  if (!selectedMainCategory.value) {
+    showLocalError('Please select a Main Category.');
+    return;
+  }
+  if (subCategoryOptions.value.length > 1 && !selectedSubCategory.value) {
+    showLocalError('Please select a Sub Category.');
+    return;
+  }
+  if (childCategoryOptions.value.length > 1 && !selectedChildCategory.value) {
+    showLocalError('Please select a Child Category.');
+    return;
+  }
+
   if (form.value.track_inventory && !form.value.unit_id) {
     showLocalError('Please select a Unit.');
     return;

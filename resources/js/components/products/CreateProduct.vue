@@ -1,6 +1,6 @@
 <template>
   <ProductForm 
-    title="New Product" 
+    title="New Item" 
     subtitle="Create a stunning new addition to your inventory"
     :loading="loading"
     :errors="errors"
