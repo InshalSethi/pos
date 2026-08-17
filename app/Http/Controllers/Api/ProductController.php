@@ -1447,8 +1447,15 @@ class ProductController extends Controller
             'name',
             'sku',
             'barcode',
+            'type',
+            'service_type',
+            'service_detail',
             'short_description',
             'description',
+            'category_name',
+            'brand_name',
+            'supplier_name',
+            'warehouse_name',
             'cost_price',
             'selling_price',
             'wholesale_price',
@@ -1456,9 +1463,6 @@ class ProductController extends Controller
             'min_stock_level',
             'max_stock_level',
             'unit_of_measure',
-            'category_name',
-            'brand_name',
-            'supplier_name',
             'tax_rate',
             'track_inventory',
             'is_active',
@@ -1466,15 +1470,29 @@ class ProductController extends Controller
             'expiry_date',
             'discount_type',
             'discount_value',
-            'tags'
+            'tags',
+            'has_variations',
+            'variation_name',
+            'variation_sku',
+            'variation_cost_price',
+            'variation_selling_price',
+            'variation_wholesale_price',
+            'variation_stock_quantity'
         ];
 
         $sample1 = [
             'Sample Product 1',
             'SKU-1001',
             '123456789012',
+            'product',
+            '',
+            '',
             'Sample short desc',
             'Sample full description for item',
+            'General',
+            'Generic',
+            'Sample Supplier',
+            'Main Warehouse',
             '50.00',
             '100.00',
             '80.00',
@@ -1482,9 +1500,6 @@ class ProductController extends Controller
             '10',
             '500',
             'pcs',
-            'General',
-            'Generic',
-            'Sample Supplier',
             '0.00',
             '1',
             '1',
@@ -1492,15 +1507,29 @@ class ProductController extends Controller
             '2026-12-31',
             'percentage',
             '0.00',
-            'sample,electronics'
+            'sample,electronics',
+            '0',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
         ];
 
         $sample2 = [
             'Sample Product 2',
             'SKU-1002',
             '987654321098',
+            'product',
+            '',
+            '',
             'Another sample desc',
             'Detailed item description',
+            'General',
+            'Generic',
+            'Sample Supplier',
+            'Main Warehouse',
             '20.00',
             '40.00',
             '35.00',
@@ -1508,9 +1537,6 @@ class ProductController extends Controller
             '5',
             '200',
             'kg',
-            'General',
-            'Generic',
-            'Sample Supplier',
             '5.00',
             '1',
             '1',
@@ -1518,15 +1544,60 @@ class ProductController extends Controller
             '',
             'fixed',
             '0.00',
-            'grocery'
+            'grocery',
+            '0',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
         ];
 
-        $callback = function () use ($columns, $sample1, $sample2) {
+        $sample3 = [
+            'T-Shirt Collection',
+            'SKU-1003',
+            '555444333221',
+            'product',
+            '',
+            '',
+            'Cotton T-Shirt with Variations',
+            'High quality apparel item with size/color options',
+            'Apparel',
+            'Generic',
+            'Sample Supplier',
+            'Main Warehouse',
+            '15.00',
+            '30.00',
+            '25.00',
+            '80',
+            '10',
+            '300',
+            'pcs',
+            '0.00',
+            '1',
+            '1',
+            '',
+            '',
+            'percentage',
+            '0.00',
+            'apparel,summer',
+            '1',
+            'Red / Medium',
+            'SKU-1003-RED-M',
+            '15.00',
+            '30.00',
+            '25.00',
+            '40'
+        ];
+
+        $callback = function () use ($columns, $sample1, $sample2, $sample3) {
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, $columns);
             fputcsv($file, $sample1);
             fputcsv($file, $sample2);
+            fputcsv($file, $sample3);
             fclose($file);
         };
 
@@ -1545,7 +1616,9 @@ class ProductController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $products = Product::with(['category', 'brand', 'supplier'])
+        $companyId = auth()->user()->current_company_id;
+        $products = Product::with(['category', 'brand', 'supplier', 'variations'])
+            ->where('company_id', $companyId)
             ->where('status', '!=', 'draft')
             ->latest()
             ->get();
@@ -1554,8 +1627,15 @@ class ProductController extends Controller
             'name',
             'sku',
             'barcode',
+            'type',
+            'service_type',
+            'service_detail',
             'short_description',
             'description',
+            'category_name',
+            'brand_name',
+            'supplier_name',
+            'warehouse_name',
             'cost_price',
             'selling_price',
             'wholesale_price',
@@ -1563,9 +1643,6 @@ class ProductController extends Controller
             'min_stock_level',
             'max_stock_level',
             'unit_of_measure',
-            'category_name',
-            'brand_name',
-            'supplier_name',
             'tax_rate',
             'track_inventory',
             'is_active',
@@ -1573,7 +1650,14 @@ class ProductController extends Controller
             'expiry_date',
             'discount_type',
             'discount_value',
-            'tags'
+            'tags',
+            'has_variations',
+            'variation_name',
+            'variation_sku',
+            'variation_cost_price',
+            'variation_selling_price',
+            'variation_wholesale_price',
+            'variation_stock_quantity'
         ];
 
         $callback = function () use ($products, $columns) {
@@ -1584,37 +1668,89 @@ class ProductController extends Controller
             foreach ($products as $product) {
                 $tags = is_array($product->tags) ? implode(',', $product->tags) : ($product->tags ?? '');
 
-                fputcsv($file, [
-                    $product->name,
-                    $product->sku,
-                    $product->barcode,
-                    $product->short_description,
-                    $product->description,
-                    $product->cost_price,
-                    $product->selling_price,
-                    $product->wholesale_price,
-                    $product->stock_quantity,
-                    $product->min_stock_level,
-                    $product->max_stock_level,
-                    $product->unit_of_measure,
-                    $product->category ? $product->category->name : '',
-                    $product->brand ? $product->brand->name : '',
-                    $product->supplier ? ($product->supplier->name ?? $product->supplier->company_name ?? '') : '',
-                    $product->tax_rate,
-                    $product->track_inventory ? '1' : '0',
-                    $product->is_active ? '1' : '0',
-                    $product->batch_number,
-                    $product->expiry_date ? (is_string($product->expiry_date) ? $product->expiry_date : $product->expiry_date->format('Y-m-d')) : '',
-                    $product->discount_type,
-                    $product->discount_value,
-                    $tags
-                ]);
+                if ($product->has_variations && $product->variations && $product->variations->count() > 0) {
+                    foreach ($product->variations as $var) {
+                        fputcsv($file, [
+                            $product->name,
+                            $product->sku,
+                            $product->barcode,
+                            $product->type ?? 'product',
+                            $product->service_type ?? '',
+                            $product->service_detail ?? '',
+                            $product->short_description,
+                            $product->description,
+                            $product->category ? $product->category->name : '',
+                            $product->brand ? $product->brand->name : '',
+                            $product->supplier ? ($product->supplier->name ?? $product->supplier->company_name ?? '') : '',
+                            'Main Warehouse',
+                            $product->cost_price,
+                            $product->selling_price,
+                            $product->wholesale_price,
+                            $product->stock_quantity,
+                            $product->min_stock_level,
+                            $product->max_stock_level,
+                            $product->unit_of_measure,
+                            $product->tax_rate,
+                            $product->track_inventory ? '1' : '0',
+                            $product->is_active ? '1' : '0',
+                            $product->batch_number,
+                            $product->expiry_date ? (is_string($product->expiry_date) ? $product->expiry_date : $product->expiry_date->format('Y-m-d')) : '',
+                            $product->discount_type,
+                            $product->discount_value,
+                            $tags,
+                            '1',
+                            $var->variation_name_string ?? '',
+                            $var->sku ?? '',
+                            $var->cost_price ?? '',
+                            $var->selling_price ?? $var->retail_price ?? '',
+                            $var->wholesale_price ?? '',
+                            $var->stock_quantity ?? ''
+                        ]);
+                    }
+                } else {
+                    fputcsv($file, [
+                        $product->name,
+                        $product->sku,
+                        $product->barcode,
+                        $product->type ?? 'product',
+                        $product->service_type ?? '',
+                        $product->service_detail ?? '',
+                        $product->short_description,
+                        $product->description,
+                        $product->category ? $product->category->name : '',
+                        $product->brand ? $product->brand->name : '',
+                        $product->supplier ? ($product->supplier->name ?? $product->supplier->company_name ?? '') : '',
+                        'Main Warehouse',
+                        $product->cost_price,
+                        $product->selling_price,
+                        $product->wholesale_price,
+                        $product->stock_quantity,
+                        $product->min_stock_level,
+                        $product->max_stock_level,
+                        $product->unit_of_measure,
+                        $product->tax_rate,
+                        $product->track_inventory ? '1' : '0',
+                        $product->is_active ? '1' : '0',
+                        $product->batch_number,
+                        $product->expiry_date ? (is_string($product->expiry_date) ? $product->expiry_date : $product->expiry_date->format('Y-m-d')) : '',
+                        $product->discount_type,
+                        $product->discount_value,
+                        $tags,
+                        '0',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        ''
+                    ]);
+                }
             }
 
             fclose($file);
         };
 
-        return response()->stream($callback, 200, $headers);
+        return response()->streamDownload($callback, $filename, $headers);
     }
 
     /**
@@ -1775,6 +1911,9 @@ class ProductController extends Controller
         $getName = $getValueByAliases(['name', 'product_name', 'item_name', 'product', 'item', 'title', 'productname', 'itemname', 'item_name_description']);
         $getSku = $getValueByAliases(['sku', 'product_sku', 'item_sku', 'code', 'product_code', 'item_code']);
         $getBarcode = $getValueByAliases(['barcode', 'upc', 'ean', 'barcode_number']);
+        $getType = $getValueByAliases(['type', 'item_type']);
+        $getServiceType = $getValueByAliases(['service_type']);
+        $getServiceDetail = $getValueByAliases(['service_detail']);
         $getShortDesc = $getValueByAliases(['short_description', 'short_desc', 'summary']);
         $getDesc = $getValueByAliases(['description', 'desc', 'details', 'full_description']);
         $getCost = $getValueByAliases(['cost_price', 'cost', 'buy_price', 'purchase_price']);
@@ -1787,6 +1926,7 @@ class ProductController extends Controller
         $getCategory = $getValueByAliases(['category_name', 'category', 'cat', 'category_id']);
         $getBrand = $getValueByAliases(['brand_name', 'brand', 'make', 'brand_id']);
         $getSupplier = $getValueByAliases(['supplier_name', 'supplier', 'vendor', 'supplier_id']);
+        $getWarehouse = $getValueByAliases(['warehouse_name', 'warehouse', 'warehouse_id', 'warehouse_title']);
         $getTax = $getValueByAliases(['tax_rate', 'tax', 'vat', 'tax_percentage']);
         $getTrackInv = $getValueByAliases(['track_inventory', 'track_stock']);
         $getIsActive = $getValueByAliases(['is_active', 'active', 'status']);
@@ -1796,8 +1936,19 @@ class ProductController extends Controller
         $getDiscountVal = $getValueByAliases(['discount_value', 'discount']);
         $getTags = $getValueByAliases(['tags', 'tag']);
 
+        // Variation Aliases
+        $getHasVariations = $getValueByAliases(['has_variations', 'has_variants', 'is_variant']);
+        $getVarName = $getValueByAliases(['variation_name', 'variant_name', 'variation', 'variant']);
+        $getVarSku = $getValueByAliases(['variation_sku', 'variant_sku']);
+        $getVarCost = $getValueByAliases(['variation_cost_price', 'variant_cost_price', 'variation_cost']);
+        $getVarSelling = $getValueByAliases(['variation_selling_price', 'variant_selling_price', 'variation_retail_price', 'variation_price']);
+        $getVarWholesale = $getValueByAliases(['variation_wholesale_price', 'variant_wholesale_price', 'variation_wholesale']);
+        $getVarStock = $getValueByAliases(['variation_stock_quantity', 'variant_stock_quantity', 'variation_stock', 'variant_stock']);
+
         $companyId = auth()->user()->current_company_id;
         $imported = 0;
+        $createdCount = 0;
+        $updatedCount = 0;
         $errors = [];
         $rowNum = 1;
 
@@ -1818,6 +1969,22 @@ class ProductController extends Controller
                         'errors' => ['Product name is required.']
                     ];
                     continue;
+                }
+
+                // Warehouse resolving
+                $warehouseName = $getWarehouse($row) ?? 'Main Warehouse';
+                $warehouse = \App\Models\Warehouse::where('company_id', $companyId)
+                    ->where(function ($q) use ($warehouseName) {
+                        $q->where('name', $warehouseName)->orWhere('id', $warehouseName);
+                    })->first();
+
+                if (!$warehouse) {
+                    $warehouse = \App\Models\Warehouse::create([
+                        'company_id' => $companyId,
+                        'name' => is_numeric($warehouseName) ? 'Main Warehouse' : $warehouseName,
+                        'is_default' => true,
+                        'is_active' => true,
+                    ]);
                 }
 
                 $categoryName = $getCategory($row);
@@ -1880,6 +2047,9 @@ class ProductController extends Controller
                 }
 
                 $barcode = $getBarcode($row);
+                $type = $getType($row) ?? 'product';
+                $serviceType = $getServiceType($row);
+                $serviceDetail = $getServiceDetail($row);
                 $shortDescription = $getShortDesc($row);
                 $description = $getDesc($row);
                 $costPrice = floatval($getCost($row) ?? 0);
@@ -1892,10 +2062,10 @@ class ProductController extends Controller
                 $taxRate = floatval($getTax($row) ?? 0);
 
                 $trackInventoryVal = $getTrackInv($row);
-                $trackInventory = $trackInventoryVal !== null ? in_array(strtolower($trackInventoryVal), ['1', 'true', 'yes']) : true;
+                $trackInventory = $trackInventoryVal !== null ? in_array(strtolower((string)$trackInventoryVal), ['1', 'true', 'yes']) : true;
 
                 $isActiveVal = $getIsActive($row);
-                $isActive = $isActiveVal !== null ? in_array(strtolower($isActiveVal), ['1', 'true', 'yes', 'active']) : true;
+                $isActive = $isActiveVal !== null ? in_array(strtolower((string)$isActiveVal), ['1', 'true', 'yes', 'active']) : true;
 
                 $batchNumber = $getBatch($row);
                 $expiryDate = $getExpiry($row) ? $getExpiry($row) : null;
@@ -1905,10 +2075,21 @@ class ProductController extends Controller
                 $tagsRaw = $getTags($row);
                 $tags = [];
                 if ($tagsRaw) {
-                    $tags = array_map('trim', explode(',', $tagsRaw));
+                    if (is_string($tagsRaw)) {
+                        $tags = array_map('trim', explode(',', $tagsRaw));
+                    } elseif (is_array($tagsRaw)) {
+                        $tags = $tagsRaw;
+                    }
                 }
 
-                Product::updateOrCreate(
+                $existingProduct = Product::where('company_id', $companyId)->where('sku', $sku)->first();
+                if ($existingProduct) {
+                    $updatedCount++;
+                } else {
+                    $createdCount++;
+                }
+
+                $product = Product::updateOrCreate(
                     [
                         'company_id' => $companyId,
                         'sku' => $sku,
@@ -1916,6 +2097,9 @@ class ProductController extends Controller
                     [
                         'name' => $name,
                         'barcode' => $barcode,
+                        'type' => $type,
+                        'service_type' => $serviceType,
+                        'service_detail' => $serviceDetail,
                         'short_description' => $shortDescription,
                         'description' => $description,
                         'cost_price' => $costPrice,
@@ -1940,16 +2124,86 @@ class ProductController extends Controller
                     ]
                 );
 
+                // Create / update inventory record in specified warehouse
+                \App\Models\Inventory::updateOrCreate(
+                    [
+                        'company_id' => $companyId,
+                        'warehouse_id' => $warehouse->id,
+                        'product_id' => $product->id,
+                        'product_variation_id' => null,
+                    ],
+                    [
+                        'stock_qty' => $stockQuantity,
+                        'min_stock_level' => $minStockLevel,
+                    ]
+                );
+
+                // Process variations if provided
+                $hasVariationsVal = $getHasVariations($row);
+                $hasVariations = $hasVariationsVal !== null ? in_array(strtolower((string)$hasVariationsVal), ['1', 'true', 'yes']) : false;
+                $varName = $getVarName($row);
+                $varSku = $getVarSku($row);
+
+                if ($hasVariations || $varName || $varSku) {
+                    $vSku = $varSku ?: ($sku . '-' . Str::slug($varName ?: 'V1'));
+                    $vCost = floatval($getVarCost($row) ?? $costPrice);
+                    $vSelling = floatval($getVarSelling($row) ?? $sellingPrice);
+                    $vWholesale = floatval($getVarWholesale($row) ?? $wholesalePrice);
+                    $vStock = intval($getVarStock($row) ?? $stockQuantity);
+
+                    $variation = \App\Models\ProductVariation::updateOrCreate(
+                        [
+                            'product_id' => $product->id,
+                            'sku' => $vSku,
+                        ],
+                        [
+                            'variation_name_string' => $varName ?: 'Standard Variation',
+                            'cost_price' => $vCost,
+                            'retail_price' => $vSelling,
+                            'selling_price' => $vSelling,
+                            'wholesale_price' => $vWholesale,
+                            'stock_quantity' => $vStock,
+                        ]
+                    );
+
+                    \App\Models\Inventory::updateOrCreate(
+                        [
+                            'company_id' => $companyId,
+                            'warehouse_id' => $warehouse->id,
+                            'product_id' => $product->id,
+                            'product_variation_id' => $variation->id,
+                        ],
+                        [
+                            'stock_qty' => $vStock,
+                            'min_stock_level' => $minStockLevel,
+                        ]
+                    );
+
+                    $totalVarStock = \App\Models\ProductVariation::where('product_id', $product->id)->sum('stock_quantity');
+                    $product->update([
+                        'has_variations' => true,
+                        'stock_quantity' => $totalVarStock,
+                    ]);
+                }
+
                 $imported++;
             }
 
             \Illuminate\Support\Facades\DB::commit();
 
+            $msg = "Import completed: {$createdCount} new product(s) created";
+            if ($updatedCount > 0) {
+                $msg .= ", {$updatedCount} existing product(s) updated";
+            }
+            $msg .= '.';
+
             return response()->json([
                 'success' => true,
                 'imported' => $imported,
+                'created' => $createdCount,
+                'updated' => $updatedCount,
                 'errors' => $errors,
-                'message' => "Successfully processed import. {$imported} products imported/updated."
+                'message' => $msg
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();

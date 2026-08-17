@@ -311,6 +311,15 @@
                             {{ item.brand.name }}
                           </span>
                         </div>
+                        <div v-if="parseItemTags(item).length > 0" class="flex items-center gap-1 mt-0.5 flex-wrap">
+                          <span 
+                            v-for="(tag, tIdx) in parseItemTags(item)" 
+                            :key="tIdx"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/30"
+                          >
+                            #{{ tag }}
+                          </span>
+                        </div>
                         <span class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-medium truncate max-w-xs sm:max-w-sm">{{ stripHtmlTags(item.description) || item.sku || 'No description' }}</span>
                       </div>
                     </div>
@@ -2288,6 +2297,20 @@ const deleteCategory = async (category) => {
     console.error('Error deleting category:', error);
     showToast('error', 'Failed to delete category');
   }
+};
+
+const parseItemTags = (item) => {
+  if (!item || !item.tags) return [];
+  if (Array.isArray(item.tags)) return item.tags;
+  if (typeof item.tags === 'string') {
+    try {
+      const parsed = JSON.parse(item.tags);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      return item.tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
+  }
+  return [];
 };
 
 // Import/Export methods
