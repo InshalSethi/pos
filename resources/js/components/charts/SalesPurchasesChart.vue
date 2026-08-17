@@ -1,13 +1,22 @@
 <template>
-  <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-sm rounded-2xl border border-zinc-200 dark:border-zinc-800">
+  <div class="bg-white dark:bg-zinc-900 overflow-hidden shadow-xs rounded-2xl border border-zinc-200 dark:border-zinc-800">
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-sm font-semibold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Sales & Purchases</h3>
-        <div class="flex items-center space-x-4">
-          <select class="text-xs font-semibold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:border-slate-300 focus:ring-2 focus:ring-slate-100 outline-none dark:focus:border-zinc-600 uppercase tracking-tight">
-            <option>6 Months</option>
-            <option>3 Months</option>
-            <option>1 Month</option>
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Sales & Purchases</h3>
+          <p class="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">Real revenue vs procurement trend</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <select 
+            v-model="selectedPeriod" 
+            @change="emitPeriodChange"
+            class="text-xs font-bold border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-zinc-700 uppercase tracking-tight cursor-pointer shadow-xs"
+          >
+            <option value="7_days">7 Days</option>
+            <option value="1_month">1 Month</option>
+            <option value="3_months">3 Months</option>
+            <option value="6_months">6 Months</option>
+            <option value="1_year">1 Year</option>
           </select>
         </div>
       </div>
@@ -16,19 +25,15 @@
         <canvas ref="chartCanvas"></canvas>
       </div>
       
-      <!-- Legend -->
-      <div class="flex items-center justify-center space-x-6 mt-6">
-        <div class="flex items-center">
-          <div class="w-3 h-3 bg-zinc-300 dark:bg-zinc-700 rounded-full mr-2"></div>
-          <span class="text-xs font-medium text-zinc-600 dark:text-zinc-400">Sales Target</span>
-        </div>
+      <!-- Clean Legend (Only Sales & Purchases) -->
+      <div class="flex items-center justify-center space-x-8 mt-6">
         <div class="flex items-center">
           <div class="w-3 h-3 bg-black dark:bg-white rounded-full mr-2"></div>
-          <span class="text-xs font-medium text-zinc-900 dark:text-white">Sales</span>
+          <span class="text-xs font-bold text-zinc-900 dark:text-white">Real Sales</span>
         </div>
         <div class="flex items-center">
-          <div class="w-3 h-3 bg-zinc-500 dark:bg-zinc-400 rounded-full mr-2"></div>
-          <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Purchases</span>
+          <div class="w-3 h-3 bg-zinc-600 dark:bg-zinc-400 rounded-full mr-2"></div>
+          <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">Purchases</span>
         </div>
       </div>
     </div>
@@ -37,6 +42,7 @@
 
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue';
+import { useCurrencyStore } from '@/stores/currency';
 import {
   Chart,
   CategoryScale,
@@ -48,37 +54,47 @@ import {
   BarController
 } from 'chart.js';
 
-// Register Chart.js components
 Chart.register(CategoryScale, LinearScale, BarElement, BarController, Title, Tooltip, Legend);
 
-// Props
+const currencyStore = useCurrencyStore();
+
 const props = defineProps({
   data: {
     type: Array,
     default: () => []
+  },
+  period: {
+    type: String,
+    default: '6_months'
   }
 });
 
-// Refs
+const emit = defineEmits(['period-change']);
+
+const selectedPeriod = ref(props.period || '6_months');
 const chartCanvas = ref(null);
 let chartInstance = null;
 
-// Methods
+const emitPeriodChange = () => {
+  emit('period-change', selectedPeriod.value);
+};
+
 const createChart = () => {
-  if (!chartCanvas.value || !props.data.length) return;
+  if (!chartCanvas.value) return;
 
   const ctx = chartCanvas.value.getContext('2d');
   const isDark = document.documentElement.classList.contains('dark');
   
-  // Destroy existing chart if it exists
   if (chartInstance) {
     chartInstance.destroy();
   }
 
   const labels = props.data.map(item => item.date);
-  const salesTargetData = props.data.map(item => item.sales_target);
   const salesData = props.data.map(item => item.sales);
   const purchasesData = props.data.map(item => item.purchases);
+
+  const salesColor = isDark ? '#ffffff' : '#000000';
+  const purchasesColor = isDark ? '#a1a1aa' : '#52525b';
 
   chartInstance = new Chart(ctx, {
     type: 'bar',
@@ -86,31 +102,26 @@ const createChart = () => {
       labels: labels,
       datasets: [
         {
-          label: 'Sales Target',
-          data: salesTargetData,
-          backgroundColor: isDark ? '#27272a' : '#e4e4e7',
-          borderColor: isDark ? '#3f3f46' : '#d4d4d8',
-          borderWidth: 1,
-          borderRadius: 6,
-          borderSkipped: false,
-        },
-        {
-          label: 'Sales',
+          label: 'Real Sales',
           data: salesData,
-          backgroundColor: isDark ? '#ffffff' : '#000000',
-          borderColor: isDark ? '#ffffff' : '#000000',
+          backgroundColor: salesColor,
+          borderColor: salesColor,
           borderWidth: 1,
           borderRadius: 6,
           borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.6
         },
         {
           label: 'Purchases',
           data: purchasesData,
-          backgroundColor: isDark ? '#71717a' : '#52525b',
-          borderColor: isDark ? '#a1a1aa' : '#3f3f46',
+          backgroundColor: purchasesColor,
+          borderColor: purchasesColor,
           borderWidth: 1,
           borderRadius: 6,
           borderSkipped: false,
+          barPercentage: 0.6,
+          categoryPercentage: 0.6
         }
       ]
     },
@@ -127,13 +138,13 @@ const createChart = () => {
           backgroundColor: isDark ? '#18181b' : '#000000',
           titleColor: '#ffffff',
           bodyColor: '#ffffff',
-          borderColor: '#27272a',
+          borderColor: isDark ? '#27272a' : '#27272a',
           borderWidth: 1,
           cornerRadius: 10,
           padding: 12,
           callbacks: {
             label: function(context) {
-              return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
+              return `${context.dataset.label}: ${currencyStore.formatPrice(context.parsed.y)}`;
             }
           }
         }
@@ -163,7 +174,7 @@ const createChart = () => {
               size: 11
             },
             callback: function(value) {
-              return '$' + value.toLocaleString();
+              return (currencyStore.activeCurrency?.symbol || '$') + value.toLocaleString();
             }
           }
         }
@@ -176,14 +187,16 @@ const createChart = () => {
   });
 };
 
-// Watchers
 watch(() => props.data, () => {
   nextTick(() => {
     createChart();
   });
 }, { deep: true });
 
-// Lifecycle
+watch(() => props.period, (newVal) => {
+  if (newVal) selectedPeriod.value = newVal;
+});
+
 onMounted(() => {
   nextTick(() => {
     createChart();
