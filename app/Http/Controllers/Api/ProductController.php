@@ -1112,8 +1112,25 @@ class ProductController extends Controller
                         ?? Account::where('company_id', $companyId)->where('account_code', '1500')->first()
                         ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Asset%')->first();
 
-                    $gainAccount = Account::where('company_id', $companyId)->where('account_code', '5010')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Adjustment Gain%')->first();
+                    $hasBeenSold = $freshProduct->saleItems()->exists();
+
+                    if (!$hasBeenSold) {
+                        // Unsold setup item: adjust Opening Balance Equity (COA 3010 / Equity)
+                        $offsetAccount = Account::where('company_id', $companyId)
+                            ->where(function ($q) {
+                                $q->where('account_code', '3010')
+                                  ->orWhere('account_subtype', 'owner_equity')
+                                  ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%')
+                                  ->orWhere('account_name', 'LIKE', '%Owner%Equity%');
+                            })->first();
+                    } else {
+                        // Active selling item: adjust Inventory Adjustment Gain/Loss (COA 5010)
+                        $offsetAccount = Account::where('company_id', $companyId)
+                            ->where(function ($q) {
+                                $q->where('account_code', '5010')
+                                  ->orWhere('account_name', 'LIKE', '%Inventory Adjustment%');
+                            })->first();
+                    }
 
                     if ($assetAccount) {
                         $absAmt = abs($valuationImpact);
@@ -1131,7 +1148,7 @@ class ProductController extends Controller
                         ]);
 
                         if ($valuationImpact > 0) {
-                            // DEBIT 1040 Asset, CREDIT 5010 Gain
+                            // DEBIT 1040 Asset, CREDIT Offset Account (3010 Equity or 5010 Gain)
                             JournalEntryLine::create([
                                 'journal_entry_id' => $je->id,
                                 'account_id' => $assetAccount->id,
@@ -1139,28 +1156,28 @@ class ProductController extends Controller
                                 'credit_amount' => 0,
                                 'description' => 'Item Direct Stock Increase Asset Posting',
                             ]);
-                            if ($gainAccount) {
+                            if ($offsetAccount) {
                                 JournalEntryLine::create([
                                     'journal_entry_id' => $je->id,
-                                    'account_id' => $gainAccount->id,
+                                    'account_id' => $offsetAccount->id,
                                     'debit_amount' => 0,
                                     'credit_amount' => $absAmt,
-                                    'description' => 'Item Direct Stock Increase Gain Posting',
+                                    'description' => $hasBeenSold ? 'Item Direct Stock Increase Gain Posting' : 'Item Initial Opening Stock Equity Adjustment',
                                 ]);
-                                $gainAccount->increment('current_balance', $absAmt);
+                                $offsetAccount->increment('current_balance', $absAmt);
                             }
                             $assetAccount->increment('current_balance', $absAmt);
                         } else {
-                            // DEBIT 5010 Gain/Loss, CREDIT 1040 Asset
-                            if ($gainAccount) {
+                            // DEBIT Offset Account (3010 Equity or 5010 Loss), CREDIT 1040 Asset
+                            if ($offsetAccount) {
                                 JournalEntryLine::create([
                                     'journal_entry_id' => $je->id,
-                                    'account_id' => $gainAccount->id,
+                                    'account_id' => $offsetAccount->id,
                                     'debit_amount' => $absAmt,
                                     'credit_amount' => 0,
-                                    'description' => 'Item Direct Stock Reduction Gain/Loss Posting',
+                                    'description' => $hasBeenSold ? 'Item Direct Stock Reduction Gain/Loss Posting' : 'Item Initial Opening Stock Equity Reduction',
                                 ]);
-                                $gainAccount->decrement('current_balance', $absAmt);
+                                $offsetAccount->decrement('current_balance', $absAmt);
                             }
                             JournalEntryLine::create([
                                 'journal_entry_id' => $je->id,
@@ -1173,8 +1190,8 @@ class ProductController extends Controller
                         }
 
                         $assetAccount->updateCurrentBalance();
-                        if ($gainAccount) {
-                            $gainAccount->updateCurrentBalance();
+                        if ($offsetAccount) {
+                            $offsetAccount->updateCurrentBalance();
                         }
                     }
                 }
@@ -1211,11 +1228,18 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product->delete();
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $product->delete();
+            \Illuminate\Support\Facades\DB::commit();
 
-        return response()->json([
-            'message' => 'Product deleted successfully'
-        ]);
+            return response()->json([
+                'message' => 'Product deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Failed deleting product: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
