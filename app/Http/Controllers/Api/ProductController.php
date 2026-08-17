@@ -1120,7 +1120,7 @@ class ProductController extends Controller
                         $je = JournalEntry::create([
                             'company_id' => $companyId,
                             'entry_number' => 'JE-ITEM-' . date('YmdHis') . '-' . rand(100, 999),
-                            'entry_date' => now(),
+                            'entry_date' => now()->toDateString(),
                             'reference' => 'ITEM-UPDATE-' . $freshProduct->id,
                             'description' => "Item Direct Stock Update Posting ({$freshProduct->name})",
                             'entry_type' => 'adjustment',

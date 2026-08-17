@@ -111,7 +111,7 @@ class CustomerAccountingService
             // Create journal entry
             $journalEntry = JournalEntry::create([
                 'entry_number' => $this->generateJournalEntryNumber(),
-                'entry_date' => now(),
+                'entry_date' => now()->toDateString(),
                 'reference' => $sale->sale_number . '-PAY',
                 'description' => "Payment from {$sale->customer->name} for Sale #{$sale->sale_number}",
                 'entry_type' => 'automatic',
