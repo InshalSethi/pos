@@ -38,7 +38,7 @@ class CategoryController extends Controller
             ]);
         }
 
-        $query = Category::with('parent', 'children', 'tax')->withCount('products');
+        $query = Category::with('parent.parent', 'children', 'tax')->withCount('products');
 
         // Search functionality
         if ($request->has('search') && !empty($request->get('search'))) {
