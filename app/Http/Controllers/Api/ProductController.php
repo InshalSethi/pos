@@ -1108,28 +1108,38 @@ class ProductController extends Controller
 
             if ($valuationImpact != 0) {
                     $companyId = auth()->user()->current_company_id ?? $freshProduct->company_id;
-                    $assetAccount = Account::where('company_id', $companyId)->where('account_code', '1040')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_code', '1500')->first()
-                        ?? Account::where('company_id', $companyId)->where('account_name', 'LIKE', '%Inventory Asset%')->first();
+                    $assetAccount = Account::where('company_id', $companyId)
+                        ->where('account_type', 'asset')
+                        ->where(function ($q) {
+                            $q->where('account_code', '1040')
+                              ->orWhere('account_name', 'LIKE', '%Inventory%');
+                        })
+                        ->whereDoesntHave('children')
+                        ->first();
 
                     $hasBeenSold = $freshProduct->saleItems()->exists();
 
                     if (!$hasBeenSold) {
                         // Unsold setup item: adjust Opening Balance Equity (COA 3010 / Equity)
                         $offsetAccount = Account::where('company_id', $companyId)
+                            ->where('account_type', 'equity')
                             ->where(function ($q) {
                                 $q->where('account_code', '3010')
-                                  ->orWhere('account_subtype', 'owner_equity')
                                   ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%')
-                                  ->orWhere('account_name', 'LIKE', '%Owner%Equity%');
-                            })->first();
+                                  ->orWhere('account_name', 'LIKE', '%Owner%Equity%')
+                                  ->orWhere('account_name', 'LIKE', '%Owner%Capital%');
+                            })
+                            ->whereDoesntHave('children')
+                            ->first();
                     } else {
                         // Active selling item: adjust Inventory Adjustment Gain/Loss (COA 5010)
                         $offsetAccount = Account::where('company_id', $companyId)
                             ->where(function ($q) {
                                 $q->where('account_code', '5010')
                                   ->orWhere('account_name', 'LIKE', '%Inventory Adjustment%');
-                            })->first();
+                            })
+                            ->whereDoesntHave('children')
+                            ->first();
                     }
 
                     if ($assetAccount) {

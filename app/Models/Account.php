@@ -168,9 +168,12 @@ class Account extends Model
         $this->current_balance = $this->calculateBalance();
         $this->save();
 
-        // If this account has a parent account, trigger parent balance update as well
-        if ($this->parent_account_id && $this->parent) {
-            $this->parent->updateCurrentBalance();
+        // Recursively update and persist all parent accounts in the hierarchy chain
+        $parent = $this->parent;
+        while ($parent) {
+            $parent->current_balance = $parent->calculateBalance();
+            $parent->save();
+            $parent = $parent->parent;
         }
 
         // Direct COA Hard-Sync with Banking Module (Single Source of Truth)
