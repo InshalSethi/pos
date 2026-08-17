@@ -274,10 +274,10 @@
           </div>
           <!-- Table View Container -->
           <div v-if="viewMode === 'table'" class="w-full overflow-x-auto min-h-[400px]">
-            <table class="w-full min-w-max table-auto align-middle">
+            <table class="w-full table-auto align-middle border-collapse">
               <thead>
                 <tr class="border-b border-gray-100 dark:border-[#2E2E2E] bg-slate-50/50 dark:bg-[#252525] text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">
-                  <th class="px-6 py-3.5 w-12 text-center">
+                  <th class="px-3 py-3 w-10 text-center">
                     <input
                       type="checkbox"
                       :checked="isAllSelected"
@@ -285,19 +285,19 @@
                       class="w-4 h-4 text-emerald-600 border border-gray-300 dark:border-[#2E2E2E] dark:bg-[#1E1E1E] focus:ring-0 rounded-none cursor-pointer"
                     />
                   </th>
-                  <th class="px-6 py-3.5 text-left font-bold">Item Name &amp; Description</th>
-                  <th class="px-6 py-3.5 text-center font-bold">SKU</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Category</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Status</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Stock Status</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Price Matrix</th>
-                  <th class="px-6 py-3.5 text-center font-bold">Actions</th>
+                  <th class="px-3 sm:px-4 py-3 text-left font-bold">Item Name &amp; Description</th>
+                  <th class="px-3 py-3 text-center font-bold">SKU</th>
+                  <th class="px-3 py-3 text-center font-bold">Category</th>
+                  <th class="px-3 py-3 text-center font-bold">Status</th>
+                  <th class="px-3 py-3 text-center font-bold">Stock</th>
+                  <th class="px-3 py-3 text-center font-bold">Price Matrix</th>
+                  <th class="px-3 py-3 text-center font-bold w-16">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-[#2E2E2E]">
                 <!-- Loading State -->
                 <tr v-if="loading" class="dark:bg-[#1E1E1E]">
-                  <td colspan="8" class="px-6 py-16 text-center text-gray-400">
+                  <td colspan="8" class="px-4 py-16 text-center text-gray-400">
                     <div class="flex justify-center items-center gap-2">
                       <svg class="animate-spin h-5 w-5 text-emerald-600" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
@@ -310,7 +310,7 @@
 
                 <!-- Empty State -->
                 <tr v-else-if="products.length === 0" class="dark:bg-[#1E1E1E]">
-                  <td colspan="8" class="px-6 py-20 text-center text-gray-500">
+                  <td colspan="8" class="px-4 py-20 text-center text-gray-500">
                     <div class="flex flex-col items-center max-w-sm mx-auto">
                       <div class="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#252525] flex items-center justify-center mb-4 text-gray-400 dark:text-slate-500">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,7 +333,7 @@
                 <!-- Data Rows -->
                 <tr v-else v-for="item in products" :key="item.id" class="group hover:bg-slate-50/20 dark:hover:bg-[#2D2D2D]/80 dark:bg-transparent transition-colors relative">
                   <!-- Checkbox -->
-                  <td class="px-6 py-4.5 sm:py-5 text-center align-middle">
+                  <td class="px-3 py-3 text-center align-middle w-10">
                     <input
                       type="checkbox"
                       :value="item.id"
@@ -343,12 +343,12 @@
                   </td>
 
                   <!-- Name & Description -->
-                  <td class="px-6 py-4.5 sm:py-5 align-middle">
-                    <div class="flex items-center gap-3">
+                  <td class="px-3 sm:px-4 py-3 align-middle">
+                    <div class="flex items-center gap-2.5">
                       <!-- Product Image Thumbnail -->
                       <div 
                         @click.stop="openLightbox(item)"
-                        class="relative h-10 w-10 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center cursor-pointer hover:scale-110 transition-all group/thumb shadow-xs select-none"
+                        class="relative h-9 w-9 shrink-0 rounded-xl border border-gray-100 dark:border-[#2E2E2E] overflow-hidden bg-slate-50 dark:bg-[#1E1E1E] flex items-center justify-center cursor-pointer hover:scale-110 transition-all group/thumb shadow-xs select-none"
                         title="Click to view image gallery"
                       >
                         <div v-if="Number(item.discount_value) > 0" class="absolute top-0 right-0 z-10 pointer-events-none select-none">
@@ -372,7 +372,7 @@
 
                       <div class="flex flex-col min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
-                          <span class="font-extrabold text-gray-950 dark:text-slate-200 text-sm truncate max-w-xs sm:max-w-sm">{{ item.name }}</span>
+                          <span class="font-extrabold text-gray-950 dark:text-slate-200 text-sm truncate max-w-[200px] sm:max-w-xs">{{ item.name }}</span>
                           <span 
                             v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
                             class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wide bg-red-50 text-red-700 border border-red-100 dark:bg-red-500 dark:text-black dark:border-transparent uppercase shrink-0"
@@ -381,7 +381,7 @@
                           </span>
                           <span 
                             v-if="item.brand" 
-                            class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase shrink-0"
+                            class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase shrink-0"
                           >
                             {{ item.brand.name }}
                           </span>
@@ -390,18 +390,18 @@
                           <span 
                             v-for="(tag, tIdx) in parseItemTags(item)" 
                             :key="tIdx"
-                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/30"
+                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/30"
                           >
                             #{{ tag }}
                           </span>
                         </div>
-                        <span class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-medium truncate max-w-xs sm:max-w-sm">{{ stripHtmlTags(item.description) || item.sku || 'No description' }}</span>
+                        <span class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 font-medium truncate max-w-[220px] sm:max-w-xs">{{ stripHtmlTags(item.description) || item.sku || 'No description' }}</span>
                       </div>
                     </div>
                   </td>
 
                   <!-- SKU -->
-                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
+                  <td class="px-3 py-3 align-middle text-center whitespace-nowrap">
                     <div v-if="item.variations && item.variations.length > 0" class="flex flex-col items-center gap-0.5">
                       <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-650 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase">
                         {{ item.variations[0].sku || '-' }}
@@ -419,50 +419,50 @@
                   </td>
 
                   <!-- Category (Category, Sub Category, Child Category in same column) -->
-                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
+                  <td class="px-3 py-3 align-middle text-center">
                     <div class="flex flex-col items-center gap-1 justify-center">
                       <div v-if="getCategoryHierarchy(item.category).length > 0" class="contents">
                         <span 
                           v-for="(catName, index) in getCategoryHierarchy(item.category)" 
                           :key="index"
                           :class="[
-                            'inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                            'inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold',
                             index === 0 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-900/30' :
-                            index === 1 ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100/50 dark:border-indigo-900/30 text-[11px]' :
-                            'bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-[#2E2E2E] text-[10px]'
+                            index === 1 ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100/50 dark:border-indigo-900/30 text-[10px]' :
+                            'bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-[#2E2E2E] text-[9px]'
                           ]"
                         >
-                          <span class="w-1.5 h-1.5 rounded-full mr-1.5 shrink-0" :class="index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-indigo-500' : 'bg-slate-400'"></span>
+                          <span class="w-1.5 h-1.5 rounded-full mr-1 shrink-0" :class="index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-indigo-500' : 'bg-slate-400'"></span>
                           <span>{{ catName }}</span>
                         </span>
                       </div>
-                      <span v-else class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
+                      <span v-else class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
                         General
                       </span>
                     </div>
                   </td>
 
                   <!-- Status Toggle Switch Column -->
-                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
+                  <td class="px-3 py-3 align-middle text-center whitespace-nowrap">
                     <!-- Draft Badge (if status is draft) -->
                     <div v-if="item.status === 'draft'" class="inline-flex items-center gap-1.5 justify-center">
                       <span
-                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 shadow-xs cursor-default"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 shadow-xs cursor-default"
                         title="Draft items must be edited from the edit page to publish or change status"
                       >
-                        <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                         <span>Draft</span>
                       </span>
                     </div>
 
                     <!-- Active / Inactive Toggle Switch -->
-                    <div v-else class="inline-flex items-center gap-2 justify-center">
+                    <div v-else class="inline-flex items-center gap-1.5 justify-center">
                       <button
                         type="button"
                         @click.stop="toggleProductStatus(item)"
                         :disabled="togglingStatusId === item.id"
                         :class="[
-                          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed',
+                          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed',
                           item.is_active ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                         ]"
                         role="switch"
@@ -472,11 +472,11 @@
                         <span class="sr-only">Toggle product status</span>
                         <span
                           :class="[
-                            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out flex items-center justify-center',
-                            item.is_active ? 'translate-x-5' : 'translate-x-0'
+                            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out flex items-center justify-center',
+                            item.is_active ? 'translate-x-4' : 'translate-x-0'
                           ]"
                         >
-                          <svg v-if="togglingStatusId === item.id" class="animate-spin h-3 w-3 text-emerald-600" viewBox="0 0 24 24">
+                          <svg v-if="togglingStatusId === item.id" class="animate-spin h-2.5 w-2.5 text-emerald-600" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
@@ -492,7 +492,7 @@
                   </td>
 
                   <!-- Stock Status -->
-                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
+                  <td class="px-3 py-3 align-middle text-center whitespace-nowrap">
                     <span class="text-sm font-extrabold text-gray-900 dark:text-slate-200" v-if="item.stock_quantity !== null && item.stock_quantity !== undefined">
                       {{ item.stock_quantity }}
                     </span>
@@ -500,7 +500,7 @@
                   </td>
 
                   <!-- Price Matrix (Center Aligned) -->
-                  <td class="px-6 py-4.5 sm:py-5 text-center align-middle">
+                  <td class="px-3 py-3 text-center align-middle whitespace-nowrap">
                     <div class="flex flex-col items-center justify-center text-center">
                       <!-- Main Sale Price -->
                       <span class="text-sm font-extrabold text-gray-950 dark:text-slate-200">
@@ -514,7 +514,7 @@
                   </td>
 
                   <!-- Actions Dropdown Column -->
-                  <td class="px-6 py-4.5 sm:py-5 align-middle text-center relative">
+                  <td class="px-3 py-3 align-middle text-center w-16 relative">
                     <div class="relative inline-block text-left">
                       <button
                         @click.stop="toggleActionDropdown(item.id)"
@@ -603,17 +603,17 @@
             </div>
 
             <!-- Grid Items (Max 5 per row) -->
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
               <div 
                 v-for="item in products" 
                 :key="item.id"
-                class="group bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col justify-between relative"
+                class="group bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E] rounded-xl overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col justify-between relative"
               >
-                <!-- Top Image Area -->
-                <div class="relative w-full h-44 bg-slate-50 dark:bg-[#252525] overflow-hidden group/img">
+                <!-- Top Image Area (Compact h-32 height) -->
+                <div class="relative w-full h-32 bg-slate-50 dark:bg-[#252525] overflow-hidden group/img">
                   <!-- Sale Banner Ribbon -->
                   <div v-if="Number(item.discount_value) > 0" class="absolute top-2 right-2 z-10">
-                    <span class="px-2 py-0.5 bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-xs">
+                    <span class="px-1.5 py-0.5 bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider rounded-md shadow-xs">
                       Sale
                     </span>
                   </div>
@@ -642,37 +642,37 @@
                     @click.stop="openLightbox(item)"
                     class="w-full h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 cursor-pointer"
                   >
-                    <span class="text-3xl font-black uppercase tracking-wider">
+                    <span class="text-2xl font-black uppercase tracking-wider">
                       {{ item.name ? item.name.substring(0, 1) : 'P' }}
                     </span>
-                    <span class="text-[9px] font-bold text-slate-400 mt-1 uppercase">No Image</span>
+                    <span class="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">No Image</span>
                   </div>
                 </div>
 
                 <!-- Card Content Area -->
-                <div class="p-3.5 flex-1 flex flex-col justify-between space-y-3">
+                <div class="p-2.5 flex-1 flex flex-col justify-between space-y-2">
                   <div>
                     <!-- Title & Variants Count Badge -->
                     <div class="flex items-start justify-between gap-1 mb-1">
-                      <h3 class="font-extrabold text-sm text-gray-900 dark:text-slate-100 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" :title="item.name">
+                      <h3 class="font-extrabold text-xs text-gray-900 dark:text-slate-100 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" :title="item.name">
                         {{ item.name }}
                       </h3>
                       <span 
                         v-if="item.variations_count > 0 || (item.variations && item.variations.length > 0)"
-                        class="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400 shrink-0 uppercase"
+                        class="px-1 py-0.5 rounded text-[8px] font-black bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400 shrink-0 uppercase"
                       >
                         Variants
                       </span>
                     </div>
 
                     <!-- Category Hierarchy Path (Main > Sub > Child) -->
-                    <div class="mb-2">
+                    <div class="mb-1.5">
                       <div v-if="getCategoryHierarchy(item.category).length > 0" class="flex flex-wrap gap-1 items-center">
                         <span 
                           v-for="(catName, index) in getCategoryHierarchy(item.category)" 
                           :key="index"
                           :class="[
-                            'px-2 py-0.5 rounded-full text-[10px] font-semibold',
+                            'px-1.5 py-0.5 rounded-full text-[9px] font-semibold',
                             index === 0 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30' :
                             index === 1 ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30' :
                             'bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#2E2E2E]'
@@ -681,17 +681,17 @@
                           {{ catName }}
                         </span>
                       </div>
-                      <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
+                      <span v-else class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
                         General
                       </span>
                     </div>
 
                     <!-- Brand & Tags -->
-                    <div class="flex items-center gap-1.5 flex-wrap mb-2">
+                    <div class="flex items-center gap-1 flex-wrap mb-1.5">
                       <!-- Brand Badge -->
                       <span 
                         v-if="item.brand" 
-                        class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#2E2E2E] uppercase"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#2E2E2E] uppercase"
                       >
                         🏷️ {{ item.brand.name }}
                       </span>
@@ -700,22 +700,22 @@
                       <span 
                         v-for="(tag, tIdx) in parseItemTags(item)" 
                         :key="tIdx"
-                        class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/30"
+                        class="px-1 py-0.5 rounded text-[8px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/30"
                       >
                         #{{ tag }}
                       </span>
                     </div>
 
                     <!-- SKU & Barcode Row -->
-                    <div class="grid grid-cols-2 gap-1.5 text-[10px] bg-slate-50 dark:bg-[#252525] p-2 rounded-xl border border-slate-100 dark:border-[#2E2E2E] mb-3">
+                    <div class="grid grid-cols-2 gap-1 text-[9px] bg-slate-50 dark:bg-[#252525] p-1.5 rounded-lg border border-slate-100 dark:border-[#2E2E2E] mb-2">
                       <div>
-                        <span class="block text-slate-400 dark:text-slate-500 font-bold uppercase text-[9px]">SKU</span>
+                        <span class="block text-slate-400 dark:text-slate-500 font-bold uppercase text-[8px]">SKU</span>
                         <span class="font-bold text-slate-800 dark:text-slate-200 truncate block">
                           {{ item.sku || (item.variations && item.variations[0] ? item.variations[0].sku : '-') }}
                         </span>
                       </div>
                       <div>
-                        <span class="block text-slate-400 dark:text-slate-500 font-bold uppercase text-[9px]">Barcode</span>
+                        <span class="block text-slate-400 dark:text-slate-500 font-bold uppercase text-[8px]">Barcode</span>
                         <span class="font-bold text-slate-800 dark:text-slate-200 truncate block">
                           {{ item.barcode || '-' }}
                         </span>
@@ -723,17 +723,17 @@
                     </div>
 
                     <!-- Selling Price & Wholesale Price Row -->
-                    <div class="flex items-baseline justify-between border-t border-slate-100 dark:border-[#2E2E2E] pt-2 mb-2">
+                    <div class="flex items-baseline justify-between border-t border-slate-100 dark:border-[#2E2E2E] pt-1.5 mb-1">
                       <div>
-                        <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block">Selling Price</span>
-                        <span class="text-base font-black text-emerald-600 dark:text-emerald-400">
+                        <span class="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase block">Selling Price</span>
+                        <span class="text-sm font-black text-emerald-600 dark:text-emerald-400">
                           {{ currencyStore.formatPrice(getItemSellingPrice(item)) }}
                         </span>
                       </div>
 
                       <div v-if="getItemWholesalePrice(item) !== null" class="text-right">
-                        <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block">Wholesale</span>
-                        <span class="text-xs font-extrabold text-slate-600 dark:text-slate-300">
+                        <span class="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase block">Wholesale</span>
+                        <span class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300">
                           {{ currencyStore.formatPrice(getItemWholesalePrice(item)) }}
                         </span>
                       </div>
@@ -741,18 +741,18 @@
                   </div>
 
                   <!-- Card Footer Actions & Status Toggle -->
-                  <div class="border-t border-slate-100 dark:border-[#2E2E2E] pt-2.5 flex items-center justify-between gap-2">
+                  <div class="border-t border-slate-100 dark:border-[#2E2E2E] pt-1.5 flex items-center justify-between gap-1.5">
                     <!-- Active/Inactive Status Toggle Switch -->
-                    <div v-if="item.status === 'draft'" class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                      <span class="w-2 h-2 rounded-full bg-amber-500"></span> Draft
+                    <div v-if="item.status === 'draft'" class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Draft
                     </div>
-                    <div v-else class="flex items-center gap-1.5">
+                    <div v-else class="flex items-center gap-1">
                       <button
                         type="button"
                         @click.stop="toggleProductStatus(item)"
                         :disabled="togglingStatusId === item.id"
                         :class="[
-                          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50',
+                          'relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50',
                           item.is_active ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-gray-300 dark:bg-gray-700'
                         ]"
                         role="switch"
@@ -761,23 +761,23 @@
                       >
                         <span
                           :class="[
-                            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center',
-                            item.is_active ? 'translate-x-4' : 'translate-x-0'
+                            'pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center',
+                            item.is_active ? 'translate-x-3.5' : 'translate-x-0'
                           ]"
                         >
-                          <svg v-if="togglingStatusId === item.id" class="animate-spin h-2.5 w-2.5 text-emerald-600" viewBox="0 0 24 24">
+                          <svg v-if="togglingStatusId === item.id" class="animate-spin h-2 w-2 text-emerald-600" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                         </span>
                       </button>
-                      <span class="text-[10px] font-bold" :class="item.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'">
+                      <span class="text-[9px] font-bold" :class="item.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'">
                         {{ item.is_active ? 'Active' : 'Inactive' }}
                       </span>
                     </div>
 
                     <!-- Action Buttons (View, Edit, Delete) -->
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-0.5">
                       <button
                         @click.stop="viewProduct(item)"
                         class="p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors cursor-pointer"
