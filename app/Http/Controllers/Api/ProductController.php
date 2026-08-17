@@ -1618,7 +1618,79 @@ class ProductController extends Controller
     }
 
     /**
-     * Import products from CSV file.
+     * Parse XLSX file into array of rows without external dependencies.
+     */
+    private function parseXlsxToRows(string $filePath): array
+    {
+        $rows = [];
+        if (!class_exists('ZipArchive')) {
+            return [];
+        }
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) === true) {
+            $sharedStrings = [];
+            if (($ssIndex = $zip->locateName('xl/sharedStrings.xml')) !== false) {
+                $ssXml = $zip->getFromIndex($ssIndex);
+                $xml = @simplexml_load_string($ssXml);
+                if ($xml && isset($xml->si)) {
+                    foreach ($xml->si as $val) {
+                        if (isset($val->t)) {
+                            $sharedStrings[] = (string) $val->t;
+                        } elseif (isset($val->r)) {
+                            $t = '';
+                            foreach ($val->r as $r) {
+                                $t .= (string) $r->t;
+                            }
+                            $sharedStrings[] = $t;
+                        } else {
+                            $sharedStrings[] = '';
+                        }
+                    }
+                }
+            }
+
+            if (($sheetIndex = $zip->locateName('xl/worksheets/sheet1.xml')) !== false) {
+                $sheetXml = $zip->getFromIndex($sheetIndex);
+                $xml = @simplexml_load_string($sheetXml);
+                if ($xml && isset($xml->sheetData->row)) {
+                    foreach ($xml->sheetData->row as $r) {
+                        $row = [];
+                        foreach ($r->c as $c) {
+                            $cellRef = (string) $c['r'];
+                            $colLetters = preg_replace('/[0-9]/', '', $cellRef);
+                            $colIndex = 0;
+                            for ($i = 0; $i < strlen($colLetters); $i++) {
+                                $colIndex = $colIndex * 26 + (ord($colLetters[$i]) - 64);
+                            }
+                            $colIndex--; // 0-indexed
+
+                            $t = (string) $c['t'];
+                            $v = (string) $c->v;
+                            if ($t === 's' && isset($sharedStrings[(int)$v])) {
+                                $val = $sharedStrings[(int)$v];
+                            } else {
+                                $val = $v;
+                            }
+                            $row[$colIndex] = $val;
+                        }
+                        if (!empty($row)) {
+                            $maxCol = max(array_keys($row));
+                            for ($i = 0; $i <= $maxCol; $i++) {
+                                if (!isset($row[$i])) $row[$i] = '';
+                            }
+                            ksort($row);
+                            $rows[] = array_values($row);
+                        }
+                    }
+                }
+            }
+            $zip->close();
+        }
+        return $rows;
+    }
+
+    /**
+     * Import products from CSV or XLSX file.
      */
     public function import(Request $request): JsonResponse
     {
@@ -1636,60 +1708,110 @@ class ProductController extends Controller
 
         $file = $request->file('file');
         $filePath = $file->getRealPath();
+        $extension = strtolower($file->getClientOriginalExtension());
 
-        $handle = fopen($filePath, 'r');
-        if (!$handle) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unable to read the uploaded file.'
-            ], 400);
+        $allRows = [];
+        if (in_array($extension, ['xlsx', 'xls'])) {
+            $allRows = $this->parseXlsxToRows($filePath);
         }
 
-        // Read UTF-8 BOM if present
-        $bom = fread($handle, 3);
-        if ($bom !== "\xEF\xBB\xBF") {
-            rewind($handle);
-        }
+        // Fallback or CSV processing
+        if (empty($allRows)) {
+            $handle = fopen($filePath, 'r');
+            if (!$handle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to read the uploaded file.'
+                ], 400);
+            }
 
-        // Read header line
-        $header = fgetcsv($handle);
-        if (!$header) {
+            // Read UTF-8 BOM if present
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $allRows[] = $row;
+            }
             fclose($handle);
+        }
+
+        if (empty($allRows)) {
             return response()->json([
                 'success' => false,
                 'message' => 'The file appears to be empty.'
             ], 400);
         }
 
+        // Header row
+        $header = array_shift($allRows);
+        if (empty($header)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Header row is missing in the file.'
+            ], 400);
+        }
+
         // Normalize header keys
         $headerMap = [];
         foreach ($header as $index => $colName) {
-            $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', $colName))));
+            $normalized = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', (string)$colName))));
             $headerMap[$normalized] = $index;
         }
 
+        $getValueByAliases = function (array $aliases) use ($headerMap) {
+            return function ($row) use ($aliases, $headerMap) {
+                foreach ($aliases as $alias) {
+                    if (isset($headerMap[$alias]) && isset($row[$headerMap[$alias]])) {
+                        $val = trim((string)$row[$headerMap[$alias]]);
+                        if ($val !== '') return $val;
+                    }
+                }
+                return null;
+            };
+        };
+
+        $getName = $getValueByAliases(['name', 'product_name', 'item_name', 'product', 'item', 'title', 'productname', 'itemname', 'item_name_description']);
+        $getSku = $getValueByAliases(['sku', 'product_sku', 'item_sku', 'code', 'product_code', 'item_code']);
+        $getBarcode = $getValueByAliases(['barcode', 'upc', 'ean', 'barcode_number']);
+        $getShortDesc = $getValueByAliases(['short_description', 'short_desc', 'summary']);
+        $getDesc = $getValueByAliases(['description', 'desc', 'details', 'full_description']);
+        $getCost = $getValueByAliases(['cost_price', 'cost', 'buy_price', 'purchase_price']);
+        $getSelling = $getValueByAliases(['selling_price', 'price', 'unit_price', 'retail_price', 'sale_price', 'sellingprice']);
+        $getWholesale = $getValueByAliases(['wholesale_price', 'wholesale', 'wholesale_rate']);
+        $getStock = $getValueByAliases(['stock_quantity', 'stock', 'quantity', 'qty', 'opening_stock']);
+        $getMinStock = $getValueByAliases(['min_stock_level', 'min_stock', 'minimum_stock']);
+        $getMaxStock = $getValueByAliases(['max_stock_level', 'max_stock', 'maximum_stock']);
+        $getUnit = $getValueByAliases(['unit_of_measure', 'unit', 'uom', 'unit_name']);
+        $getCategory = $getValueByAliases(['category_name', 'category', 'cat', 'category_id']);
+        $getBrand = $getValueByAliases(['brand_name', 'brand', 'make', 'brand_id']);
+        $getSupplier = $getValueByAliases(['supplier_name', 'supplier', 'vendor', 'supplier_id']);
+        $getTax = $getValueByAliases(['tax_rate', 'tax', 'vat', 'tax_percentage']);
+        $getTrackInv = $getValueByAliases(['track_inventory', 'track_stock']);
+        $getIsActive = $getValueByAliases(['is_active', 'active', 'status']);
+        $getBatch = $getValueByAliases(['batch_number', 'batch', 'batch_no']);
+        $getExpiry = $getValueByAliases(['expiry_date', 'expiry', 'exp_date']);
+        $getDiscountType = $getValueByAliases(['discount_type']);
+        $getDiscountVal = $getValueByAliases(['discount_value', 'discount']);
+        $getTags = $getValueByAliases(['tags', 'tag']);
+
+        $companyId = auth()->user()->current_company_id;
         $imported = 0;
         $errors = [];
         $rowNum = 1;
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            while (($row = fgetcsv($handle)) !== false) {
+            foreach ($allRows as $row) {
                 $rowNum++;
 
-                // Skip blank lines
-                if (empty($row) || (count($row) === 1 && trim($row[0]) === '')) {
+                // Skip completely blank rows
+                if (empty($row) || (count($row) === 1 && trim((string)$row[0]) === '')) {
                     continue;
                 }
 
-                $getValue = function ($key) use ($row, $headerMap) {
-                    if (isset($headerMap[$key]) && isset($row[$headerMap[$key]])) {
-                        return trim($row[$headerMap[$key]]);
-                    }
-                    return null;
-                };
-
-                $name = $getValue('name');
+                $name = $getName($row);
                 if (!$name) {
                     $errors[] = [
                         'row' => $rowNum,
@@ -1698,81 +1820,99 @@ class ProductController extends Controller
                     continue;
                 }
 
-                $categoryName = $getValue('category_name');
+                $categoryName = $getCategory($row);
                 $categoryId = null;
                 if ($categoryName) {
-                    $category = Category::where('name', $categoryName)->first();
-                    if (!$category) {
+                    $category = Category::where('company_id', $companyId)
+                        ->where(function ($q) use ($categoryName) {
+                            $q->where('name', $categoryName)->orWhere('id', $categoryName);
+                        })->first();
+                    if (!$category && !is_numeric($categoryName)) {
                         $category = Category::create([
+                            'company_id' => $companyId,
                             'name' => $categoryName,
                             'slug' => Str::slug($categoryName),
                             'is_active' => true,
                         ]);
                     }
-                    $categoryId = $category->id;
+                    if ($category) {
+                        $categoryId = $category->id;
+                    }
                 }
 
-                $brandName = $getValue('brand_name');
+                $brandName = $getBrand($row);
                 $brandId = null;
                 if ($brandName) {
-                    $brand = Brand::where('name', $brandName)->first();
-                    if (!$brand) {
+                    $brand = Brand::where('company_id', $companyId)
+                        ->where(function ($q) use ($brandName) {
+                            $q->where('name', $brandName)->orWhere('id', $brandName);
+                        })->first();
+                    if (!$brand && !is_numeric($brandName)) {
                         $brand = Brand::create([
+                            'company_id' => $companyId,
                             'name' => $brandName,
                             'slug' => Str::slug($brandName),
                             'is_active' => true,
                         ]);
                     }
-                    $brandId = $brand->id;
+                    if ($brand) {
+                        $brandId = $brand->id;
+                    }
                 }
 
-                $supplierName = $getValue('supplier_name');
+                $supplierName = $getSupplier($row);
                 $supplierId = null;
                 if ($supplierName) {
-                    $supplier = Supplier::where('name', $supplierName)
-                        ->orWhere('company_name', $supplierName)
-                        ->first();
+                    $supplier = Supplier::where('company_id', $companyId)
+                        ->where(function ($q) use ($supplierName) {
+                            $q->where('name', $supplierName)
+                              ->orWhere('company_name', $supplierName)
+                              ->orWhere('id', $supplierName);
+                        })->first();
                     if ($supplier) {
                         $supplierId = $supplier->id;
                     }
                 }
 
-                $sku = $getValue('sku');
+                $sku = $getSku($row);
                 if (!$sku) {
                     $sku = 'SKU-' . strtoupper(Str::random(8));
                 }
 
-                $barcode = $getValue('barcode');
-                $shortDescription = $getValue('short_description');
-                $description = $getValue('description');
-                $costPrice = floatval($getValue('cost_price') ?? 0);
-                $sellingPrice = floatval($getValue('selling_price') ?? 0);
-                $wholesalePrice = floatval($getValue('wholesale_price') ?? 0);
-                $stockQuantity = intval($getValue('stock_quantity') ?? 0);
-                $minStockLevel = intval($getValue('min_stock_level') ?? 0);
-                $maxStockLevel = intval($getValue('max_stock_level') ?? 0);
-                $unitOfMeasure = $getValue('unit_of_measure') ?? 'pcs';
-                $taxRate = floatval($getValue('tax_rate') ?? 0);
+                $barcode = $getBarcode($row);
+                $shortDescription = $getShortDesc($row);
+                $description = $getDesc($row);
+                $costPrice = floatval($getCost($row) ?? 0);
+                $sellingPrice = floatval($getSelling($row) ?? 0);
+                $wholesalePrice = floatval($getWholesale($row) ?? 0);
+                $stockQuantity = intval($getStock($row) ?? 0);
+                $minStockLevel = intval($getMinStock($row) ?? 0);
+                $maxStockLevel = intval($getMaxStock($row) ?? 0);
+                $unitOfMeasure = $getUnit($row) ?? 'pcs';
+                $taxRate = floatval($getTax($row) ?? 0);
 
-                $trackInventoryVal = $getValue('track_inventory');
+                $trackInventoryVal = $getTrackInv($row);
                 $trackInventory = $trackInventoryVal !== null ? in_array(strtolower($trackInventoryVal), ['1', 'true', 'yes']) : true;
 
-                $isActiveVal = $getValue('is_active');
-                $isActive = $isActiveVal !== null ? in_array(strtolower($isActiveVal), ['1', 'true', 'yes']) : true;
+                $isActiveVal = $getIsActive($row);
+                $isActive = $isActiveVal !== null ? in_array(strtolower($isActiveVal), ['1', 'true', 'yes', 'active']) : true;
 
-                $batchNumber = $getValue('batch_number');
-                $expiryDate = $getValue('expiry_date') ? $getValue('expiry_date') : null;
-                $discountType = $getValue('discount_type') ?? 'percentage';
-                $discountValue = floatval($getValue('discount_value') ?? 0);
+                $batchNumber = $getBatch($row);
+                $expiryDate = $getExpiry($row) ? $getExpiry($row) : null;
+                $discountType = $getDiscountType($row) ?? 'percentage';
+                $discountValue = floatval($getDiscountVal($row) ?? 0);
 
-                $tagsRaw = $getValue('tags');
+                $tagsRaw = $getTags($row);
                 $tags = [];
                 if ($tagsRaw) {
                     $tags = array_map('trim', explode(',', $tagsRaw));
                 }
 
                 Product::updateOrCreate(
-                    ['sku' => $sku],
+                    [
+                        'company_id' => $companyId,
+                        'sku' => $sku,
+                    ],
                     [
                         'name' => $name,
                         'barcode' => $barcode,
@@ -1804,7 +1944,6 @@ class ProductController extends Controller
             }
 
             \Illuminate\Support\Facades\DB::commit();
-            fclose($handle);
 
             return response()->json([
                 'success' => true,
@@ -1814,7 +1953,6 @@ class ProductController extends Controller
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
-            fclose($handle);
 
             return response()->json([
                 'success' => false,
