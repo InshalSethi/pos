@@ -133,12 +133,12 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/products/advanced-search', [ProductController::class, 'advancedSearch']);
     Route::get('/products/drafts-summary', [ProductController::class, 'fetchDraftsSummary']);
     Route::post('/products/drafts/bulk-destroy', [ProductController::class, 'bulkDestroyDrafts']);
+    Route::post('/products/bulk-sale', [\App\Http\Controllers\Api\ProductSaleController::class, 'applyBulkSale']);
+    Route::post('/products/import', [ProductController::class, 'import']);
+    Route::get('/products/export', [ProductController::class, 'export']);
+    Route::get('/products/download-template', [ProductController::class, 'downloadTemplate']);
     Route::match(['PATCH', 'POST'], '/products/{product}/toggle-status', [ProductController::class, 'toggleStatus']);
     Route::apiResource('products', ProductController::class);
-    Route::post('/products/bulk-sale', [\App\Http\Controllers\Api\ProductSaleController::class, 'applyBulkSale']);
-    Route::post('/products/import', [ProductController::class , 'import']);
-    Route::get('/products/export', [ProductController::class , 'export']);
-    Route::get('/products/download-template', [ProductController::class , 'downloadTemplate']);
     Route::apiResource('categories', CategoryController::class);
     Route::post('/categories/{category}/apply-pricing', [CategoryController::class, 'applyPricing']);
     Route::apiResource('brands', BrandController::class);
