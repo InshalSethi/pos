@@ -43,14 +43,14 @@
 
       <!-- Header Section -->
       <div class="mb-8">
-        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Tax and Tags Management</h1>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Create and configure tax codes and tags to apply to your products and variant selections.</p>
+        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Tax, Tag & Unit Management</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Create and configure tax codes, product tags, and measurement units to apply across products and variant selections.</p>
       </div>
 
-      <!-- Main Content Layout (Grid) -->
+      <!-- Main Content Layout (2 Cards Per Row Grid) -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        <!-- LEFT COLUMN: TAXES -->
+        <!-- CARD 1: TAXES -->
         <div class="bg-white dark:bg-[#1E1E1E] rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-sm overflow-hidden flex flex-col h-[680px]">
           <!-- Card Header -->
           <div class="p-6 border-b border-slate-200 dark:border-[#2E2E2E] flex items-center justify-between">
@@ -176,7 +176,7 @@
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: TAGS -->
+        <!-- CARD 2: TAGS -->
         <div class="bg-white dark:bg-[#1E1E1E] rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-sm overflow-hidden flex flex-col h-[680px]">
           <!-- Card Header -->
           <div class="p-6 border-b border-slate-200 dark:border-[#2E2E2E] flex items-center justify-between">
@@ -269,6 +269,127 @@
                         @click="deleteTag(tag.id)"
                         class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-[#252525] transition-all focus:outline-none cursor-pointer dark:text-slate-400"
                         title="Delete Tag"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CARD 3: UNITS (Placed 3rd) -->
+        <div class="bg-white dark:bg-[#1E1E1E] rounded-3xl border border-slate-200 dark:border-[#2E2E2E] shadow-sm overflow-hidden flex flex-col h-[680px]">
+          <!-- Card Header -->
+          <div class="p-6 border-b border-slate-200 dark:border-[#2E2E2E] flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Units</h2>
+              <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 text-2xs px-2 py-0.5 rounded-full font-bold uppercase">
+                {{ units.length }} Types
+              </span>
+            </div>
+            <button 
+              type="button" 
+              @click="openUnitModal()" 
+              class="h-[34px] px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Unit
+            </button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="px-6 py-4 border-b border-slate-100 dark:border-[#2E2E2E] bg-slate-50/50 dark:bg-zinc-950">
+            <div class="relative w-full">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 dark:text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input 
+                v-model="unitSearch"
+                type="text" 
+                placeholder="Search unit by name or symbol..."
+                class="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] dark:text-slate-100 border border-transparent dark:border-[#2E2E2E] rounded-xl text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <div v-if="loadingUnits" class="text-center py-20">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p class="mt-3 text-slate-400 text-xs font-medium dark:text-slate-400">Loading units...</p>
+            </div>
+
+            <div v-else-if="filteredUnits.length === 0" class="text-center py-16 px-4">
+              <div class="w-12 h-12 bg-slate-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-[#2E2E2E]">
+                <svg class="w-6 h-6 text-slate-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7h12m0 0l-3 1m0 0l3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9H6" />
+                </svg>
+              </div>
+              <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">No units found</h3>
+              <p class="text-2xs text-slate-400 mt-1 max-w-xs mx-auto dark:text-slate-400">Measurement units (e.g. kg, pcs, liters) help quantify catalog items.</p>
+            </div>
+
+            <table v-else class="w-full table-auto border-collapse">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-[#252525] border-b border-slate-200 dark:border-[#2E2E2E] text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 sticky top-0 z-10">
+                  <th class="px-6 py-3.5 text-left">Unit Name</th>
+                  <th class="px-6 py-3.5 text-left">Short Symbol</th>
+                  <th class="px-6 py-3.5 text-center">Status</th>
+                  <th class="px-6 py-3.5 text-center w-28">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-[#2E2E2E]">
+                <tr 
+                  v-for="unit in filteredUnits" 
+                  :key="unit.id"
+                  class="hover:bg-slate-50/60 dark:hover:bg-[#2D2D2D]/80 transition-colors"
+                >
+                  <td class="px-6 py-4">
+                    <div class="font-bold text-slate-900 dark:text-slate-100 text-xs">
+                      {{ unit.name }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-block px-2.5 py-0.5 text-xs font-mono font-bold rounded-lg bg-slate-100 dark:bg-[#252525] text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-[#2E2E2E]">
+                      {{ unit.short_name }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span 
+                      :class="[
+                        'px-2 py-0.5 text-[9px] font-bold uppercase rounded-full',
+                        unit.is_active ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                      ]"
+                    >
+                      {{ unit.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-center align-middle">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button 
+                        type="button" 
+                        @click="openUnitModal(unit)"
+                        class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-[#252525] transition-all focus:outline-none cursor-pointer dark:text-slate-400"
+                        title="Edit Unit"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button 
+                        type="button" 
+                        @click="deleteUnit(unit.id)"
+                        class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-[#252525] transition-all focus:outline-none cursor-pointer dark:text-slate-400"
+                        title="Delete Unit"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -426,6 +547,84 @@
         </div>
       </transition>
 
+      <!-- UNIT DIALOG MODAL -->
+      <transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showUnitModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeUnitModal">
+          <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
+              <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                {{ isEditingUnit ? 'Edit Unit' : 'New Unit' }}
+              </h3>
+              <button @click="closeUnitModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-lg focus:outline-none dark:text-slate-400">&times;</button>
+            </div>
+
+            <form @submit.prevent="submitUnit" class="space-y-4 text-xs font-medium">
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Unit Name *</label>
+                <input 
+                  v-model="unitForm.name"
+                  type="text" 
+                  placeholder="e.g., Kilogram, Piece, Meter, Box" 
+                  class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Short Symbol / Code *</label>
+                <input 
+                  v-model="unitForm.short_name"
+                  type="text" 
+                  placeholder="e.g., kg, pc, m, bx" 
+                  class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 dark:text-slate-100 border border-slate-200 dark:border-[#2E2E2E] rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div class="flex items-center justify-between bg-slate-50 dark:bg-[#252525] p-3 rounded-2xl border border-slate-200/50 dark:border-[#2E2E2E]/80">
+                <div>
+                  <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200">Is Active</span>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">Toggle to enable/disable using this unit on items</p>
+                </div>
+                <input 
+                  v-model="unitForm.is_active"
+                  type="checkbox" 
+                  class="w-4.5 h-4.5 rounded border-slate-350 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                />
+              </div>
+
+              <div class="flex justify-end gap-2 pt-2">
+                <button 
+                  type="button" 
+                  @click="closeUnitModal" 
+                  class="px-4 py-2.5 text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  :disabled="submittingUnit" 
+                  class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <svg v-if="submittingUnit" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Save Unit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </transition>
+
       <!-- TAG DIALOG MODAL -->
       <transition
         enter-active-class="transition duration-300 ease-out"
@@ -438,7 +637,7 @@
         <div v-if="showTagModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeTagModal">
           <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto space-y-4">
             <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-[#2E2E2E]">
-              <h3 class="text-sm font-extrabold text-slate-808 dark:text-slate-100 uppercase tracking-wider">
+              <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
                 {{ isEditingTag ? 'Edit Tag' : 'New Tag' }}
               </h3>
               <button @click="closeTagModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-lg focus:outline-none dark:text-slate-400">&times;</button>
@@ -491,14 +690,18 @@ import axios from 'axios';
 
 // States
 const taxes = ref([]);
+const units = ref([]);
 const tags = ref([]);
+
 const loadingTaxes = ref(false);
+const loadingUnits = ref(false);
 const loadingTags = ref(false);
 
 const taxSearch = ref('');
+const unitSearch = ref('');
 const tagSearch = ref('');
 
-// Modals state
+// Modals state - Taxes
 const showTaxModal = ref(false);
 const isEditingTax = ref(false);
 const taxEditId = ref(null);
@@ -512,6 +715,18 @@ const taxForm = ref({
   purchase_order_required: false
 });
 
+// Modals state - Units
+const showUnitModal = ref(false);
+const isEditingUnit = ref(false);
+const unitEditId = ref(null);
+const submittingUnit = ref(false);
+const unitForm = ref({
+  name: '',
+  short_name: '',
+  is_active: true
+});
+
+// Modals state - Tags
 const showTagModal = ref(false);
 const isEditingTag = ref(false);
 const tagEditId = ref(null);
@@ -544,6 +759,12 @@ const filteredTaxes = computed(() => {
   if (!taxSearch.value.trim()) return taxes.value;
   const q = taxSearch.value.toLowerCase();
   return taxes.value.filter(t => t.name.toLowerCase().includes(q));
+});
+
+const filteredUnits = computed(() => {
+  if (!unitSearch.value.trim()) return units.value;
+  const q = unitSearch.value.toLowerCase();
+  return units.value.filter(u => u.name.toLowerCase().includes(q) || (u.short_name && u.short_name.toLowerCase().includes(q)));
 });
 
 const filteredTags = computed(() => {
@@ -640,6 +861,88 @@ const deleteTax = async (id) => {
   }
 };
 
+// API Calls - Units
+const fetchUnits = async () => {
+  loadingUnits.value = true;
+  try {
+    const res = await axios.get('/api/units');
+    units.value = res.data || [];
+  } catch (err) {
+    console.error('Failed to load units:', err);
+    triggerAlert('Error', 'Failed to load unit records from database.', 'error');
+  } finally {
+    loadingUnits.value = false;
+  }
+};
+
+const openUnitModal = (unit = null) => {
+  if (unit) {
+    isEditingUnit.value = true;
+    unitEditId.value = unit.id;
+    unitForm.value = {
+      name: unit.name,
+      short_name: unit.short_name,
+      is_active: unit.is_active !== undefined ? !!unit.is_active : true
+    };
+  } else {
+    isEditingUnit.value = false;
+    unitEditId.value = null;
+    unitForm.value = {
+      name: '',
+      short_name: '',
+      is_active: true
+    };
+  }
+  showUnitModal.value = true;
+};
+
+const closeUnitModal = () => {
+  showUnitModal.value = false;
+};
+
+const submitUnit = async () => {
+  if (!unitForm.value.name.trim()) {
+    triggerAlert('Validation Error', 'Unit name is required.', 'error');
+    return;
+  }
+  if (!unitForm.value.short_name.trim()) {
+    triggerAlert('Validation Error', 'Unit short symbol is required.', 'error');
+    return;
+  }
+
+  submittingUnit.value = true;
+  try {
+    if (isEditingUnit.value) {
+      const res = await axios.put(`/api/units/${unitEditId.value}`, unitForm.value);
+      triggerAlert('Success', res.data.message || 'Unit updated successfully.');
+    } else {
+      const res = await axios.post('/api/units', unitForm.value);
+      triggerAlert('Success', res.data.message || 'Unit created successfully.');
+    }
+    closeUnitModal();
+    fetchUnits();
+  } catch (err) {
+    console.error(err);
+    const msg = err.response?.data?.errors?.name?.[0] || err.response?.data?.errors?.short_name?.[0] || err.response?.data?.message || 'Failed to save unit.';
+    triggerAlert('Failed', msg, 'error');
+  } finally {
+    submittingUnit.value = false;
+  }
+};
+
+const deleteUnit = async (id) => {
+  if (!confirm('Are you sure you want to delete this unit?')) return;
+  try {
+    const res = await axios.delete(`/api/units/${id}`);
+    triggerAlert('Success', res.data.message || 'Unit deleted.');
+    fetchUnits();
+  } catch (err) {
+    console.error(err);
+    const msg = err.response?.data?.message || 'Failed to delete unit.';
+    triggerAlert('Error', msg, 'error');
+  }
+};
+
 // API Calls - Tags
 const fetchTags = async () => {
   loadingTags.value = true;
@@ -717,6 +1020,7 @@ const deleteTag = async (id) => {
 // Lifecycles
 onMounted(() => {
   fetchTaxes();
+  fetchUnits();
   fetchTags();
 });
 </script>
