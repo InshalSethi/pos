@@ -4,14 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderItem;
+use App\Models\PurchaseReturn;
+use App\Models\PurchaseReturnItem;
 use App\Models\Expense;
 use App\Models\Product;
+use App\Models\Inventory;
+use App\Models\Payment;
+use App\Models\PaymentReceipt;
+use App\Models\Transaction;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
-use App\Models\Account;
 use App\Models\AccountingSetting;
-use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -20,32 +26,34 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
     /**
-     * Get dashboard statistics
+     * Get dashboard statistics with real operational data
      */
     public function getStatistics(Request $request): JsonResponse
     {
-        $dateFrom = $request->get('date_from', today()->toDateString());
-        $dateTo = $request->get('date_to', today()->toDateString());
+        $dateFromStr = $request->input('date_from');
+        $dateToStr = $request->input('date_to');
+        $chartPeriod = $request->input('chart_period', '6_months');
 
-        $fromDate = Carbon::parse($dateFrom);
-        $toDate = Carbon::parse($dateTo);
+        $fromDate = ($dateFromStr !== null && $dateFromStr !== '') ? Carbon::parse($dateFromStr)->startOfDay() : null;
+        $toDate = ($dateToStr !== null && $dateToStr !== '') ? Carbon::parse($dateToStr)->endOfDay() : null;
 
         $statistics = [
-            'sales' => $this->getAccountingBasedSalesStatistics($fromDate, $toDate),
-            'returns' => $this->getAccountingBasedReturnsStatistics($fromDate, $toDate),
-            'purchases' => $this->getAccountingBasedPurchasesStatistics($fromDate, $toDate),
-            'expenses' => $this->getAccountingBasedExpensesStatistics($fromDate, $toDate),
-            'payments' => $this->getPaymentStatistics($fromDate, $toDate),
+            'sales' => $this->getRealSalesStatistics($fromDate, $toDate),
+            'returns' => $this->getRealReturnsStatistics($fromDate, $toDate),
+            'purchases' => $this->getRealPurchasesStatistics($fromDate, $toDate),
+            'purchase_returns' => $this->getRealPurchaseReturnsStatistics($fromDate, $toDate),
+            'expenses' => $this->getRealExpensesStatistics($fromDate, $toDate),
+            'payments' => $this->getRealPaymentStatistics($fromDate, $toDate),
             'low_stock' => $this->getLowStockStatistics(),
-            'sales_trend' => $this->getSalesTrend($fromDate),
-            'sales_purchases_chart' => $this->getSalesPurchasesChartData($fromDate),
-            'devices_breakdown' => $this->getDevicesBreakdown(),
-            'recent_invoices' => $this->getRecentInvoices($fromDate),
-            'stock_history' => $this->getStockHistory($fromDate),
-            'payment_trends' => $this->getPaymentTrends($fromDate),
+            'sales_trend' => $this->getSalesTrend($fromDate, $toDate),
+            'sales_purchases_chart' => $this->getSalesPurchasesChartData($fromDate, $toDate, $chartPeriod),
+            'financial_distribution' => $this->getFinancialDistribution($fromDate, $toDate),
+            'recent_invoices' => $this->getRecentInvoices($fromDate, $toDate),
+            'stock_history' => $this->getStockHistory($fromDate, $toDate),
+            'payment_trends' => $this->getPaymentTrends($fromDate, $toDate),
             'stock_alerts' => $this->getStockAlerts(),
-            'expense_categories' => $this->getExpenseCategories($fromDate),
-            'recent_transactions' => $this->getRecentTransactions($fromDate),
+            'expense_categories' => $this->getExpenseCategories($fromDate, $toDate),
+            'recent_transactions' => $this->getRecentTransactions($fromDate, $toDate),
             'accounting_summary' => $this->getAccountingSummary($fromDate, $toDate),
             'inventory_valuation' => $this->getInventoryValuation(),
             'product_intelligence' => $this->getProductIntelligence($fromDate, $toDate),
@@ -56,61 +64,263 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get sales statistics for the selected date range
+     * Helper to format product brand and category tree details
      */
-    private function getSalesStatistics(Carbon $fromDate, Carbon $toDate): array
+    private function formatProductDetails(?Product $product): array
     {
-        $sales = Sale::whereBetween('sale_date', [$fromDate, $toDate])
-                    ->where('is_refund', false)
-                    ->where('status', 'completed');
+        if (!$product) {
+            return [
+                'name' => 'Unknown Product',
+                'sku' => '',
+                'brand_name' => 'N/A',
+                'main_category' => 'Uncategorized',
+                'sub_category' => null,
+                'child_category' => null,
+                'category_path' => 'Uncategorized',
+            ];
+        }
+
+        $brandName = $product->brand->name ?? null;
+
+        $categories = [];
+        $cat = $product->category;
+        while ($cat) {
+            array_unshift($categories, $cat->name);
+            $cat = $cat->parent;
+        }
+
+        $mainCategory = $categories[0] ?? 'Uncategorized';
+        $subCategory = $categories[1] ?? null;
+        $childCategory = $categories[2] ?? null;
 
         return [
-            'total_amount' => $sales->sum('total_amount'),
-            'count' => $sales->count(),
-            'average_sale' => $sales->avg('total_amount') ?: 0
+            'id' => $product->id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'brand_name' => $brandName,
+            'main_category' => $mainCategory,
+            'sub_category' => $subCategory,
+            'child_category' => $childCategory,
+            'category_path' => count($categories) > 0 ? implode(' > ', $categories) : 'Uncategorized',
         ];
     }
 
     /**
-     * Get returns statistics for the selected date range
+     * Real Sales Statistics
      */
-    private function getReturnsStatistics(Carbon $fromDate, Carbon $toDate): array
+    private function getRealSalesStatistics(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        $returns = Sale::whereBetween('sale_date', [$fromDate, $toDate])
-                      ->where('is_refund', true)
-                      ->where('status', 'completed');
+        $query = Sale::where('is_refund', false)
+            ->whereNotIn('status', ['cancelled', 'void']);
+
+        if ($fromDate && $toDate) {
+            $query->where(function ($q) use ($fromDate, $toDate) {
+                $q->whereBetween('sale_date', [$fromDate, $toDate])
+                  ->orWhereBetween('created_at', [$fromDate, $toDate]);
+            });
+        }
+
+        $totalAmount = (float) $query->sum('total_amount');
+        $count = $query->count();
+        $averageSale = $count > 0 ? $totalAmount / $count : 0;
 
         return [
-            'total_amount' => $returns->sum('total_amount'),
-            'count' => $returns->count()
+            'total_amount' => $totalAmount,
+            'count' => $count,
+            'average_sale' => $averageSale
         ];
     }
 
     /**
-     * Get purchases statistics for the selected date range
+     * Real Sale Returns Statistics
      */
-    private function getPurchasesStatistics(Carbon $fromDate, Carbon $toDate): array
+    private function getRealReturnsStatistics(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        $purchases = PurchaseOrder::whereBetween('order_date', [$fromDate, $toDate])
-                                 ->whereIn('status', ['received', 'partially_received']);
+        $query = Sale::where('is_refund', true)
+            ->whereNotIn('status', ['cancelled', 'void']);
+
+        if ($fromDate && $toDate) {
+            $query->where(function ($q) use ($fromDate, $toDate) {
+                $q->whereBetween('sale_date', [$fromDate, $toDate])
+                  ->orWhereBetween('created_at', [$fromDate, $toDate]);
+            });
+        }
+
+        $totalAmount = (float) $query->sum('total_amount');
+        $count = $query->count();
 
         return [
-            'total_amount' => $purchases->sum('total_amount'),
-            'count' => $purchases->count()
+            'total_amount' => $totalAmount,
+            'count' => $count
         ];
     }
 
     /**
-     * Get expenses statistics for the selected date range
+     * Real Purchase Orders Statistics
      */
-    private function getExpensesStatistics(Carbon $fromDate, Carbon $toDate): array
+    private function getRealPurchasesStatistics(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        $expenses = Expense::whereBetween('expense_date', [$fromDate, $toDate])
-                          ->whereIn('status', ['approved', 'paid']);
+        $query = PurchaseOrder::whereNotIn('status', ['cancelled']);
+
+        if ($fromDate && $toDate) {
+            $query->where(function ($q) use ($fromDate, $toDate) {
+                $q->whereBetween('order_date', [$fromDate, $toDate])
+                  ->orWhereBetween('created_at', [$fromDate, $toDate]);
+            });
+        }
+
+        $totalAmount = (float) $query->sum('total_amount');
+        $count = $query->count();
 
         return [
-            'total_amount' => $expenses->sum('amount'),
-            'count' => $expenses->count()
+            'total_amount' => $totalAmount,
+            'count' => $count
+        ];
+    }
+
+    /**
+     * Real Purchase Returns Statistics
+     */
+    private function getRealPurchaseReturnsStatistics(?Carbon $fromDate, ?Carbon $toDate): array
+    {
+        $query = PurchaseReturn::whereNotIn('status', ['cancelled']);
+
+        if ($fromDate && $toDate) {
+            $query->where(function ($q) use ($fromDate, $toDate) {
+                $q->whereBetween('return_date', [$fromDate, $toDate])
+                  ->orWhereBetween('created_at', [$fromDate, $toDate]);
+            });
+        }
+
+        $totalAmount = (float) $query->sum('total_amount');
+        $count = $query->count();
+
+        return [
+            'total_amount' => $totalAmount,
+            'count' => $count
+        ];
+    }
+
+    /**
+     * Real Expenses Statistics
+     */
+    private function getRealExpensesStatistics(?Carbon $fromDate, ?Carbon $toDate): array
+    {
+        $query = Expense::whereIn('status', ['approved', 'paid']);
+
+        if ($fromDate && $toDate) {
+            $query->whereBetween('expense_date', [$fromDate, $toDate]);
+        }
+
+        $totalAmount = (float) $query->sum('amount');
+        $count = $query->count();
+
+        return [
+            'total_amount' => $totalAmount,
+            'count' => $count
+        ];
+    }
+
+    /**
+     * Real Payment Statistics (Payments In & Payments Out)
+     */
+    private function getRealPaymentStatistics(?Carbon $fromDate, ?Carbon $toDate): array
+    {
+        // 1. Payment In (Receipts + Sales Paid + Income Transactions)
+        $receiptsQuery = PaymentReceipt::whereIn('receipt_type', ['payment_in', 'customer_payment', 'sales_payment'])
+            ->where('status', '!=', 'cancelled');
+        if ($fromDate && $toDate) {
+            $receiptsQuery->whereBetween('receipt_date', [$fromDate, $toDate]);
+        }
+        $receiptsIn = (float) $receiptsQuery->sum('amount');
+
+        $txIncomeQuery = Transaction::whereIn('type', ['income', 'payment_in', 'credit']);
+        if ($fromDate && $toDate) {
+            $txIncomeQuery->whereBetween('paid_at', [$fromDate, $toDate]);
+        }
+        $txIncome = (float) $txIncomeQuery->sum('amount');
+
+        $salesPaidQuery = Sale::where('is_refund', false)->whereNotIn('status', ['cancelled', 'void']);
+        if ($fromDate && $toDate) {
+            $salesPaidQuery->whereBetween('sale_date', [$fromDate, $toDate]);
+        }
+        $salesPaid = (float) $salesPaidQuery->sum('paid_amount');
+
+        $paymentReceivedTotal = max($receiptsIn + $txIncome, $salesPaid);
+        if ($paymentReceivedTotal == 0 && ($receiptsIn > 0 || $txIncome > 0 || $salesPaid > 0)) {
+            $paymentReceivedTotal = $receiptsIn + $txIncome + $salesPaid;
+        }
+
+        // 2. Payment Out (Expenses + PO Amount Paid + Expense/Payment Out Transactions)
+        $expensesQuery = Expense::whereIn('status', ['approved', 'paid']);
+        if ($fromDate && $toDate) {
+            $expensesQuery->whereBetween('expense_date', [$fromDate, $toDate]);
+        }
+        $expensesTotal = (float) $expensesQuery->sum('amount');
+
+        $poPaidQuery = PurchaseOrder::whereNotIn('status', ['cancelled']);
+        if ($fromDate && $toDate) {
+            $poPaidQuery->whereBetween('order_date', [$fromDate, $toDate]);
+        }
+        $poPaidTotal = (float) $poPaidQuery->sum('amount_paid');
+
+        $txExpenseQuery = Transaction::whereIn('type', ['expense', 'payment_out', 'debit']);
+        if ($fromDate && $toDate) {
+            $txExpenseQuery->whereBetween('paid_at', [$fromDate, $toDate]);
+        }
+        $txExpenseTotal = (float) $txExpenseQuery->sum('amount');
+
+        $paymentSentTotal = max($expensesTotal + $poPaidTotal, $expensesTotal + $txExpenseTotal);
+
+        // 3. Transactions counts
+        $totalTxnsCount = Sale::whereNotIn('status', ['cancelled', 'void'])->count()
+            + PurchaseOrder::whereNotIn('status', ['cancelled'])->count()
+            + Transaction::count();
+
+        // 4. Pending payments
+        $pendingSales = Sale::where('status', 'pending')->whereNotIn('status', ['cancelled', 'void']);
+        if ($fromDate && $toDate) {
+            $pendingSales->whereBetween('sale_date', [$fromDate, $toDate]);
+        }
+        $pendingPOs = PurchaseOrder::where('status', 'pending')->whereNotIn('status', ['cancelled']);
+        if ($fromDate && $toDate) {
+            $pendingPOs->whereBetween('order_date', [$fromDate, $toDate]);
+        }
+
+        $pendingCount = $pendingSales->count() + $pendingPOs->count();
+        $pendingAmount = (float) $pendingSales->sum('total_amount') + (float) $pendingPOs->sum('due_amount');
+
+        return [
+            'total_payments' => $totalTxnsCount,
+            'total_amount' => $paymentReceivedTotal + $paymentSentTotal,
+            'pending_payments' => $pendingCount,
+            'pending_amount' => $pendingAmount,
+            'payment_sent' => [
+                'total_amount' => $paymentSentTotal,
+                'change_percentage' => 0
+            ],
+            'payment_received' => [
+                'total_amount' => $paymentReceivedTotal,
+                'change_percentage' => 0
+            ],
+        ];
+    }
+
+    /**
+     * Get financial distribution for circle chart
+     */
+    private function getFinancialDistribution(?Carbon $fromDate, ?Carbon $toDate): array
+    {
+        $sales = $this->getRealSalesStatistics($fromDate, $toDate)['total_amount'];
+        $saleReturns = $this->getRealReturnsStatistics($fromDate, $toDate)['total_amount'];
+        $purchases = $this->getRealPurchasesStatistics($fromDate, $toDate)['total_amount'];
+        $purchaseReturns = $this->getRealPurchaseReturnsStatistics($fromDate, $toDate)['total_amount'];
+
+        return [
+            ['name' => 'Real Sales', 'value' => $sales, 'color' => '#10b981'],
+            ['name' => 'Sale Returns', 'value' => $saleReturns, 'color' => '#f43f5e'],
+            ['name' => 'Purchase Orders', 'value' => $purchases, 'color' => '#3b82f6'],
+            ['name' => 'Purchase Returns', 'value' => $purchaseReturns, 'color' => '#f59e0b'],
         ];
     }
 
@@ -119,20 +329,10 @@ class DashboardController extends Controller
      */
     private function getLowStockStatistics(): array
     {
-        $lowStockCount = \App\Models\Inventory::whereHas('product', function ($q) {
-            $q->where('track_inventory', true)
-              ->where('is_active', true);
-        })
-        ->where(function ($q) {
-            $q->whereRaw('inventories.stock_qty <= COALESCE(inventories.min_stock_level, 0)')
-              ->orWhere(function ($sub) {
-                  $sub->whereNull('inventories.min_stock_level')
-                      ->whereHas('product', function ($pq) {
-                          $pq->whereRaw('inventories.stock_qty <= COALESCE(products.min_stock_level, 0)');
-                      });
-              });
-        })
-        ->count();
+        $lowStockCount = Product::active()
+            ->where('track_inventory', true)
+            ->whereRaw('stock_quantity <= COALESCE(min_stock_level, 0)')
+            ->count();
 
         return [
             'count' => $lowStockCount
@@ -140,19 +340,23 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get sales trend for the last 7 days
+     * Get sales trend (last 7 days or date range breakdown)
      */
-    private function getSalesTrend(Carbon $selectedDate): array
+    private function getSalesTrend(?Carbon $fromDate, ?Carbon $toDate): array
     {
+        $startDate = $fromDate ?? now()->subDays(6)->startOfDay();
+        $endDate = $toDate ?? now()->endOfDay();
+
         $trend = [];
-        
-        for ($i = 6; $i >= 0; $i--) {
-            $date = $selectedDate->copy()->subDays($i);
-            
+        $days = min(30, max(1, $startDate->diffInDays($endDate) + 1));
+
+        for ($i = 0; $i < $days; $i++) {
+            $date = $startDate->copy()->addDays($i);
+
             $dailySales = Sale::whereDate('sale_date', $date)
-                             ->where('is_refund', false)
-                             ->where('status', 'completed')
-                             ->sum('total_amount');
+                ->where('is_refund', false)
+                ->whereNotIn('status', ['cancelled', 'void'])
+                ->sum('total_amount');
 
             $trend[] = [
                 'date' => $date->toDateString(),
@@ -164,244 +368,136 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get expense categories for the selected date
+     * Get real sales and purchases chart data without mock sales targets
      */
-    private function getExpenseCategories(Carbon $date): array
+    private function getSalesPurchasesChartData(?Carbon $fromDate, ?Carbon $toDate, string $period = '6_months'): array
     {
-        $categories = Expense::with('category')
-                            ->whereDate('expense_date', $date)
-                            ->whereIn('status', ['approved', 'paid'])
-                            ->select('category_id', DB::raw('SUM(amount) as total_amount'))
-                            ->groupBy('category_id')
-                            ->get()
-                            ->map(function ($expense) {
-                                return [
-                                    'name' => $expense->category->name ?? 'Uncategorized',
-                                    'amount' => (float) $expense->total_amount
-                                ];
-                            });
+        if (!$fromDate || !$toDate) {
+            if ($period === '7_days') {
+                $startDate = now()->subDays(6)->startOfDay();
+                $endDate = now()->endOfDay();
+                $groupBy = 'day';
+            } elseif ($period === '1_month') {
+                $startDate = now()->subDays(29)->startOfDay();
+                $endDate = now()->endOfDay();
+                $groupBy = 'day';
+            } elseif ($period === '3_months') {
+                $startDate = now()->subMonths(3)->startOfMonth();
+                $endDate = now()->endOfMonth();
+                $groupBy = 'month';
+            } elseif ($period === '1_year') {
+                $startDate = now()->subYear()->startOfMonth();
+                $endDate = now()->endOfMonth();
+                $groupBy = 'month';
+            } else {
+                // 6_months (default)
+                $startDate = now()->subMonths(5)->startOfMonth();
+                $endDate = now()->endOfMonth();
+                $groupBy = 'month';
+            }
+        } else {
+            $startDate = $fromDate;
+            $endDate = $toDate;
+            $daysDiff = $startDate->diffInDays($endDate);
+            $groupBy = $daysDiff > 45 ? 'month' : 'day';
+        }
 
-        return $categories->toArray();
-    }
-
-    /**
-     * Get recent transactions for the selected date
-     */
-    private function getRecentTransactions(Carbon $date): array
-    {
-        $transactions = collect();
-
-        // Get recent sales
-        $sales = Sale::whereDate('sale_date', $date)
-                    ->where('status', 'completed')
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get()
-                    ->map(function ($sale) {
-                        return [
-                            'id' => $sale->id,
-                            'type' => $sale->is_refund ? 'return' : 'sale',
-                            'description' => $sale->is_refund 
-                                ? "Return #{$sale->sale_number}" 
-                                : "Sale #{$sale->sale_number}",
-                            'amount' => (float) $sale->total_amount,
-                            'created_at' => $sale->created_at
-                        ];
-                    });
-
-        // Get recent purchases
-        $purchases = PurchaseOrder::whereDate('order_date', $date)
-                                 ->orderBy('created_at', 'desc')
-                                 ->limit(3)
-                                 ->get()
-                                 ->map(function ($purchase) {
-                                     return [
-                                         'id' => $purchase->id,
-                                         'type' => 'purchase',
-                                         'description' => "Purchase #{$purchase->po_number}",
-                                         'amount' => (float) $purchase->total_amount,
-                                         'created_at' => $purchase->created_at
-                                     ];
-                                 });
-
-        // Get recent expenses
-        $expenses = Expense::whereDate('expense_date', $date)
-                          ->whereIn('status', ['approved', 'paid'])
-                          ->orderBy('created_at', 'desc')
-                          ->limit(3)
-                          ->get()
-                          ->map(function ($expense) {
-                              return [
-                                  'id' => $expense->id,
-                                  'type' => 'expense',
-                                  'description' => $expense->title,
-                                  'amount' => (float) $expense->amount,
-                                  'created_at' => $expense->created_at
-                              ];
-                          });
-
-        // Combine and sort by created_at
-        $transactions = $sales->concat($purchases)->concat($expenses)
-                             ->sortByDesc('created_at')
-                             ->take(10)
-                             ->values();
-
-        return $transactions->toArray();
-    }
-
-    /**
-     * Get payment statistics for the selected date range
-     */
-    private function getPaymentStatistics(Carbon $fromDate, Carbon $toDate): array
-    {
-        // Get payment statistics from the new Payment model
-        $totalPayments = Payment::whereBetween('payment_date', [$fromDate, $toDate])
-                               ->where('status', 'paid')
-                               ->count();
-
-        $totalAmount = Payment::whereBetween('payment_date', [$fromDate, $toDate])
-                             ->where('status', 'paid')
-                             ->sum('amount');
-
-        $pendingPayments = Payment::whereBetween('payment_date', [$fromDate, $toDate])
-                                 ->where('status', 'pending')
-                                 ->count();
-
-        $pendingAmount = Payment::whereBetween('payment_date', [$fromDate, $toDate])
-                               ->where('status', 'pending')
-                               ->sum('amount');
-
-        // Legacy calculation for backward compatibility
-        $paymentSent = Expense::whereBetween('expense_date', [$fromDate, $toDate])
-                             ->whereIn('status', ['approved', 'paid'])
-                             ->sum('amount');
-
-        $purchasePayments = PurchaseOrder::whereBetween('order_date', [$fromDate, $toDate])
-                                        ->whereIn('status', ['received', 'partially_received'])
-                                        ->sum('total_amount');
-
-        $totalPaymentSent = $paymentSent + $purchasePayments;
-
-        // Payment Received (sales payments)
-        $paymentReceived = Sale::whereBetween('sale_date', [$fromDate, $toDate])
-                              ->where('is_refund', false)
-                              ->where('status', 'completed')
-                              ->sum('total_amount');
-
-        // Calculate previous period for comparison
-        $previousFromDate = $fromDate->copy()->subDays($fromDate->diffInDays($toDate) + 1);
-        $previousToDate = $fromDate->copy()->subDay();
-
-        $prevPaymentSent = Expense::whereBetween('expense_date', [$previousFromDate, $previousToDate])
-                                 ->whereIn('status', ['approved', 'paid'])
-                                 ->sum('amount') +
-                          PurchaseOrder::whereBetween('order_date', [$previousFromDate, $previousToDate])
-                                      ->whereIn('status', ['received', 'partially_received'])
-                                      ->sum('total_amount');
-
-        $prevPaymentReceived = Sale::whereBetween('sale_date', [$previousFromDate, $previousToDate])
-                                  ->where('is_refund', false)
-                                  ->where('status', 'completed')
-                                  ->sum('total_amount');
-
-        return [
-            'total_payments' => $totalPayments,
-            'total_amount' => $totalAmount,
-            'pending_payments' => $pendingPayments,
-            'pending_amount' => $pendingAmount,
-            'payment_sent' => [
-                'total_amount' => $totalPaymentSent,
-                'previous_amount' => $prevPaymentSent,
-                'change_percentage' => $prevPaymentSent > 0 ?
-                    (($totalPaymentSent - $prevPaymentSent) / $prevPaymentSent) * 100 : 0
-            ],
-            'payment_received' => [
-                'total_amount' => $paymentReceived,
-                'previous_amount' => $prevPaymentReceived,
-                'change_percentage' => $prevPaymentReceived > 0 ?
-                    (($paymentReceived - $prevPaymentReceived) / $prevPaymentReceived) * 100 : 0
-            ],
-            'by_type' => Payment::whereBetween('payment_date', [$fromDate, $toDate])
-                               ->selectRaw('payment_type, COUNT(*) as count, SUM(amount) as total_amount')
-                               ->groupBy('payment_type')
-                               ->get(),
-            'by_status' => Payment::whereBetween('payment_date', [$fromDate, $toDate])
-                                 ->selectRaw('status, COUNT(*) as count, SUM(amount) as total_amount')
-                                 ->groupBy('status')
-                                 ->get(),
-        ];
-    }
-
-    /**
-     * Get sales and purchases chart data for the last 7 days
-     */
-    private function getSalesPurchasesChartData(Carbon $date): array
-    {
         $chartData = [];
 
-        for ($i = 6; $i >= 0; $i--) {
-            $currentDate = $date->copy()->subDays($i);
+        if ($groupBy === 'day') {
+            $days = min(60, max(1, $startDate->diffInDays($endDate) + 1));
+            for ($i = 0; $i < $days; $i++) {
+                $currentDate = $startDate->copy()->addDays($i);
 
-            $sales = Sale::whereDate('sale_date', $currentDate)
-                        ->where('is_refund', false)
-                        ->where('status', 'completed')
-                        ->sum('total_amount');
+                $sales = Sale::where('is_refund', false)
+                    ->whereNotIn('status', ['cancelled', 'void'])
+                    ->where(function ($q) use ($currentDate) {
+                        $q->whereDate('sale_date', $currentDate)
+                          ->orWhere(function ($sub) use ($currentDate) {
+                              $sub->whereNull('sale_date')->whereDate('created_at', $currentDate);
+                          });
+                    })
+                    ->sum('total_amount');
 
-            $purchases = PurchaseOrder::whereDate('order_date', $currentDate)
-                                    ->whereIn('status', ['received', 'partially_received'])
-                                    ->sum('total_amount');
+                $purchases = PurchaseOrder::whereNotIn('status', ['cancelled'])
+                    ->where(function ($q) use ($currentDate) {
+                        $q->whereDate('order_date', $currentDate)
+                          ->orWhere(function ($sub) use ($currentDate) {
+                              $sub->whereNull('order_date')->whereDate('created_at', $currentDate);
+                          });
+                    })
+                    ->sum('total_amount');
 
-            // Generate a sales target (for demo purposes, 120% of actual sales)
-            $salesTarget = $sales * 1.2;
+                $chartData[] = [
+                    'date' => $currentDate->format('M d'),
+                    'sales' => (float) $sales,
+                    'purchases' => (float) $purchases,
+                ];
+            }
+        } else {
+            $currentMonth = $startDate->copy()->startOfMonth();
+            $endMonth = $endDate->copy()->startOfMonth();
 
-            $chartData[] = [
-                'date' => $currentDate->format('M d'),
-                'sales' => (float) $sales,
-                'purchases' => (float) $purchases,
-                'sales_target' => (float) $salesTarget
-            ];
+            while ($currentMonth->lte($endMonth)) {
+                $monthStart = $currentMonth->copy()->startOfMonth();
+                $monthEnd = $currentMonth->copy()->endOfMonth();
+
+                $sales = Sale::where('is_refund', false)
+                    ->whereNotIn('status', ['cancelled', 'void'])
+                    ->where(function ($q) use ($monthStart, $monthEnd) {
+                        $q->whereBetween('sale_date', [$monthStart, $monthEnd])
+                          ->orWhere(function ($sub) use ($monthStart, $monthEnd) {
+                              $sub->whereNull('sale_date')->whereBetween('created_at', [$monthStart, $monthEnd]);
+                          });
+                    })
+                    ->sum('total_amount');
+
+                $purchases = PurchaseOrder::whereNotIn('status', ['cancelled'])
+                    ->where(function ($q) use ($monthStart, $monthEnd) {
+                        $q->whereBetween('order_date', [$monthStart, $monthEnd])
+                          ->orWhere(function ($sub) use ($monthStart, $monthEnd) {
+                              $sub->whereNull('order_date')->whereBetween('created_at', [$monthStart, $monthEnd]);
+                          });
+                    })
+                    ->sum('total_amount');
+
+                $chartData[] = [
+                    'date' => $currentMonth->format('M Y'),
+                    'sales' => (float) $sales,
+                    'purchases' => (float) $purchases,
+                ];
+
+                $currentMonth->addMonth();
+            }
         }
 
         return $chartData;
     }
 
     /**
-     * Get devices breakdown (mock data for demo)
+     * Get recent invoices (combine Sales and Purchase Orders)
      */
-    private function getDevicesBreakdown(): array
+    private function getRecentInvoices(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        // This would typically come from user agent analysis or device tracking
-        // For now, providing mock data that matches the reference image
-        return [
-            ['name' => 'iOS', 'value' => 40, 'color' => '#FF6B6B'],
-            ['name' => 'MacBook', 'value' => 30, 'color' => '#4ECDC4'],
-            ['name' => 'Smart TV', 'value' => 12, 'color' => '#45B7D1'],
-            ['name' => 'Xbox Series S', 'value' => 10, 'color' => '#96CEB4'],
-            ['name' => 'Google Pixel', 'value' => 8, 'color' => '#FFEAA7']
-        ];
-    }
+        $salesQuery = Sale::with('customer')
+            ->whereNotIn('status', ['cancelled', 'void'])
+            ->orderBy('sale_date', 'desc')
+            ->limit(10);
 
-    /**
-     * Get recent invoices
-     */
-    private function getRecentInvoices(Carbon $date): array
-    {
-        $invoices = Sale::with('customer')
-                       ->whereDate('sale_date', '>=', $date->copy()->subDays(7))
-                       ->where('status', 'completed')
-                       ->orderBy('sale_date', 'desc')
-                       ->limit(10)
-                       ->get()
-                       ->map(function ($sale) {
-                           return [
-                               'invoice_id' => 'INV' . str_pad($sale->id, 6, '0', STR_PAD_LEFT),
-                               'customer' => $sale->customer->name ?? 'Walk-in Customer',
-                               'sales_date' => $sale->sale_date,
-                               'paid_amount' => (float) $sale->total_amount,
-                               'sales_status' => $sale->is_refund ? 'Returned' : 'Delivered',
-                               'status_color' => $sale->is_refund ? 'red' : 'green'
-                           ];
-                       });
+        if ($fromDate && $toDate) {
+            $salesQuery->whereBetween('sale_date', [$fromDate, $toDate]);
+        }
+
+        $invoices = $salesQuery->get()->map(function ($sale) {
+            return [
+                'invoice_id' => $sale->sale_number ?? ('INV' . str_pad($sale->id, 6, '0', STR_PAD_LEFT)),
+                'customer' => $sale->customer->name ?? $sale->customer_phone ?? 'Walk-in Customer',
+                'sales_date' => $sale->sale_date ? $sale->sale_date->toDateString() : $sale->created_at->toDateString(),
+                'paid_amount' => (float) $sale->total_amount,
+                'sales_status' => $sale->is_refund ? 'Returned' : 'Delivered',
+                'status_color' => $sale->is_refund ? 'red' : 'green'
+            ];
+        });
 
         return $invoices->toArray();
     }
@@ -409,96 +505,88 @@ class DashboardController extends Controller
     /**
      * Get stock history
      */
-    private function getStockHistory(Carbon $date): array
+    private function getStockHistory(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        // Total Sales Items
-        $totalSalesItems = Sale::whereDate('sale_date', $date)
-                              ->where('status', 'completed')
-                              ->where('is_refund', false)
-                              ->withCount('saleItems')
-                              ->get()
-                              ->sum('sale_items_count');
+        // 1. Total Sales Items
+        $salesItemsQuery = SaleItem::whereHas('sale', function ($q) use ($fromDate, $toDate) {
+            $q->where('is_refund', false)->whereNotIn('status', ['cancelled', 'void']);
+            if ($fromDate && $toDate) {
+                $q->whereBetween('sale_date', [$fromDate, $toDate]);
+            }
+        });
+        $totalSalesItems = (int) $salesItemsQuery->sum('quantity');
 
-        $prevSalesItems = Sale::whereDate('sale_date', $date->copy()->subDay())
-                             ->where('status', 'completed')
-                             ->where('is_refund', false)
-                             ->withCount('saleItems')
-                             ->get()
-                             ->sum('sale_items_count');
+        // 2. Total Purchase Items
+        $purchaseItemsQuery = PurchaseOrderItem::whereHas('purchaseOrder', function ($q) use ($fromDate, $toDate) {
+            $q->whereNotIn('status', ['cancelled']);
+            if ($fromDate && $toDate) {
+                $q->whereBetween('order_date', [$fromDate, $toDate]);
+            }
+        });
+        $totalPurchaseItems = (int) $purchaseItemsQuery->sum('quantity_ordered');
 
-        // Total Purchase Items
-        $totalPurchaseItems = PurchaseOrder::whereDate('order_date', $date)
-                                          ->whereIn('status', ['received', 'partially_received'])
-                                          ->withCount('purchaseOrderItems')
-                                          ->get()
-                                          ->sum('purchase_order_items_count');
+        // 3. Total Sale Return Items
+        $saleReturnItemsQuery = SaleItem::whereHas('sale', function ($q) use ($fromDate, $toDate) {
+            $q->where('is_refund', true)->whereNotIn('status', ['cancelled', 'void']);
+            if ($fromDate && $toDate) {
+                $q->whereBetween('sale_date', [$fromDate, $toDate]);
+            }
+        });
+        $totalSaleReturnItems = (int) $saleReturnItemsQuery->sum('quantity');
 
-        $prevPurchaseItems = PurchaseOrder::whereDate('order_date', $date->copy()->subDay())
-                                         ->whereIn('status', ['received', 'partially_received'])
-                                         ->withCount('purchaseOrderItems')
-                                         ->get()
-                                         ->sum('purchase_order_items_count');
-
-        // Total Return Items
-        $totalReturnItems = Sale::whereDate('sale_date', $date)
-                               ->where('status', 'completed')
-                               ->where('is_refund', true)
-                               ->withCount('saleItems')
-                               ->get()
-                               ->sum('sale_items_count');
-
-        $prevReturnItems = Sale::whereDate('sale_date', $date->copy()->subDay())
-                              ->where('status', 'completed')
-                              ->where('is_refund', true)
-                              ->withCount('saleItems')
-                              ->get()
-                              ->sum('sale_items_count');
+        // 4. Total Purchase Return Items
+        $purchaseReturnItemsQuery = PurchaseReturnItem::whereHas('purchaseReturn', function ($q) use ($fromDate, $toDate) {
+            $q->whereNotIn('status', ['cancelled']);
+            if ($fromDate && $toDate) {
+                $q->whereBetween('return_date', [$fromDate, $toDate]);
+            }
+        });
+        $totalPurchaseReturnItems = (int) $purchaseReturnItemsQuery->sum('quantity');
 
         return [
             'total_sales_items' => [
                 'count' => $totalSalesItems,
-                'change_percentage' => $prevSalesItems > 0 ?
-                    (($totalSalesItems - $prevSalesItems) / $prevSalesItems) * 100 : 0
+                'change_percentage' => 0
             ],
             'total_purchase_items' => [
                 'count' => $totalPurchaseItems,
-                'change_percentage' => $prevPurchaseItems > 0 ?
-                    (($totalPurchaseItems - $prevPurchaseItems) / $prevPurchaseItems) * 100 : 0
+                'change_percentage' => 0
             ],
             'total_return_items' => [
-                'count' => $totalReturnItems,
-                'change_percentage' => $prevReturnItems > 0 ?
-                    (($totalReturnItems - $prevReturnItems) / $prevReturnItems) * 100 : 0
+                'count' => $totalSaleReturnItems + $totalPurchaseReturnItems,
+                'change_percentage' => 0
             ]
         ];
     }
 
     /**
-     * Get payment trends for the last 15 days
+     * Get payment trends
      */
-    private function getPaymentTrends(Carbon $date): array
+    private function getPaymentTrends(?Carbon $fromDate, ?Carbon $toDate): array
     {
         $trends = [];
+        $startDate = $fromDate ?? now()->subDays(14)->startOfDay();
+        $endDate = $toDate ?? now()->endOfDay();
 
-        for ($i = 14; $i >= 0; $i--) {
-            $currentDate = $date->copy()->subDays($i);
+        $days = min(30, max(1, $startDate->diffInDays($endDate) + 1));
 
-            // Payment Sent
+        for ($i = 0; $i < $days; $i++) {
+            $currentDate = $startDate->copy()->addDays($i);
+
             $paymentSent = Expense::whereDate('expense_date', $currentDate)
-                                 ->whereIn('status', ['approved', 'paid'])
-                                 ->sum('amount') +
-                          PurchaseOrder::whereDate('order_date', $currentDate)
-                                      ->whereIn('status', ['received', 'partially_received'])
-                                      ->sum('total_amount');
+                ->whereIn('status', ['approved', 'paid'])
+                ->sum('amount')
+                + PurchaseOrder::whereDate('order_date', $currentDate)
+                ->whereNotIn('status', ['cancelled'])
+                ->sum('amount_paid');
 
-            // Payment Received
             $paymentReceived = Sale::whereDate('sale_date', $currentDate)
-                                  ->where('is_refund', false)
-                                  ->where('status', 'completed')
-                                  ->sum('total_amount');
+                ->where('is_refund', false)
+                ->whereNotIn('status', ['cancelled', 'void'])
+                ->sum('paid_amount');
 
             $trends[] = [
-                'date' => $currentDate->format('j'),
+                'date' => $currentDate->format('j M'),
                 'payment_sent' => (float) $paymentSent,
                 'payment_received' => (float) $paymentReceived
             ];
@@ -508,178 +596,127 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get stock alerts for low stock products
+     * Get stock alerts with product brand and category tree details
      */
     private function getStockAlerts(): array
     {
-        $lowStockProducts = \App\Models\Inventory::with(['product', 'variation'])
-            ->whereHas('product', function ($q) {
-                $q->where('track_inventory', true)
-                  ->where('is_active', true);
-            })
-            ->where(function ($q) {
-                $q->whereRaw('inventories.stock_qty <= COALESCE(inventories.min_stock_level, 0)')
-                  ->orWhere(function ($sub) {
-                      $sub->whereNull('inventories.min_stock_level')
-                          ->whereHas('product', function ($pq) {
-                              $pq->whereRaw('inventories.stock_qty <= COALESCE(products.min_stock_level, 0)');
-                          });
-                  });
-            })
-            ->orderBy('stock_qty', 'asc')
+        $lowStockProducts = Product::active()
+            ->with(['brand', 'category.parent.parent'])
+            ->where('track_inventory', true)
+            ->whereRaw('stock_quantity <= COALESCE(min_stock_level, 0)')
+            ->orderBy('stock_quantity', 'asc')
             ->limit(10)
             ->get()
-            ->map(function ($inv) {
-                $name = $inv->product->name;
-                if ($inv->variation && $inv->variation->variation_name_string && $inv->variation->variation_name_string !== 'Default') {
-                    $name .= ' (' . $inv->variation->variation_name_string . ')';
-                }
-                return [
-                    'product' => $name,
-                    'quantity' => $inv->stock_qty,
-                    'minimum_level' => $inv->min_stock_level ?? $inv->product->min_stock_level ?? 5
-                ];
+            ->map(function ($product) {
+                $details = $this->formatProductDetails($product);
+                $details['quantity'] = (int) $product->stock_quantity;
+                $details['minimum_level'] = (int) ($product->min_stock_level ?? 5);
+                return $details;
             });
 
         return $lowStockProducts->toArray();
     }
 
     /**
-     * Get accounting-based sales statistics
+     * Get expense categories
      */
-    private function getAccountingBasedSalesStatistics(Carbon $fromDate, Carbon $toDate): array
+    private function getExpenseCategories(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        $accountingSettings = AccountingSetting::getSettings();
+        $query = Expense::with('category')
+            ->whereIn('status', ['approved', 'paid'])
+            ->select('category_id', DB::raw('SUM(amount) as total_amount'))
+            ->groupBy('category_id');
 
-        // Get sales revenue from journal entries
-        $salesRevenue = JournalEntryLine::whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', 'posted')
-                  ->whereBetween('entry_date', [$fromDate, $toDate])
-                  ->where('entry_type', 'sales_invoice');
-            })
-            ->where('account_id', $accountingSettings->sales_invoice_revenue_account_id)
-            ->sum('credit_amount');
+        if ($fromDate && $toDate) {
+            $query->whereBetween('expense_date', [$fromDate, $toDate]);
+        }
 
-        // Count of sales transactions
-        $salesCount = JournalEntry::where('status', 'posted')
-                                 ->whereBetween('entry_date', [$fromDate, $toDate])
-                                 ->where('entry_type', 'sales_invoice')
-                                 ->count();
+        $categories = $query->get()->map(function ($expense) {
+            return [
+                'name' => $expense->category->name ?? 'Uncategorized',
+                'amount' => (float) $expense->total_amount
+            ];
+        });
 
-        return [
-            'total_amount' => (float) $salesRevenue,
-            'count' => $salesCount,
-            'average_sale' => $salesCount > 0 ? (float) ($salesRevenue / $salesCount) : 0
-        ];
+        return $categories->toArray();
     }
 
     /**
-     * Get accounting-based returns statistics
+     * Get recent transactions
      */
-    private function getAccountingBasedReturnsStatistics(Carbon $fromDate, Carbon $toDate): array
+    private function getRecentTransactions(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        $accountingSettings = AccountingSetting::getSettings();
+        $querySales = Sale::whereNotIn('status', ['cancelled', 'void'])
+            ->orderBy('sale_date', 'desc')
+            ->limit(5);
 
-        // Get returns from journal entries
-        $returnsAmount = JournalEntryLine::whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', 'posted')
-                  ->whereBetween('entry_date', [$fromDate, $toDate])
-                  ->where('entry_type', 'sales_return');
-            })
-            ->where('account_id', $accountingSettings->sales_return_revenue_account_id)
-            ->sum('debit_amount');
+        if ($fromDate && $toDate) {
+            $querySales->whereBetween('sale_date', [$fromDate, $toDate]);
+        }
 
-        $returnsCount = JournalEntry::where('status', 'posted')
-                                  ->whereBetween('entry_date', [$fromDate, $toDate])
-                                  ->where('entry_type', 'sales_return')
-                                  ->count();
+        $sales = $querySales->get()->map(function ($sale) {
+            return [
+                'id' => $sale->id,
+                'type' => $sale->is_refund ? 'return' : 'sale',
+                'description' => $sale->is_refund ? "Return #{$sale->sale_number}" : "Sale #{$sale->sale_number}",
+                'amount' => (float) $sale->total_amount,
+                'created_at' => $sale->sale_date ? $sale->sale_date->toDateTimeString() : $sale->created_at->toDateTimeString()
+            ];
+        });
 
-        return [
-            'total_amount' => (float) $returnsAmount,
-            'count' => $returnsCount
-        ];
-    }
+        $queryPOs = PurchaseOrder::whereNotIn('status', ['cancelled'])
+            ->orderBy('order_date', 'desc')
+            ->limit(3);
 
-    /**
-     * Get accounting-based purchases statistics
-     */
-    private function getAccountingBasedPurchasesStatistics(Carbon $fromDate, Carbon $toDate): array
-    {
-        $accountingSettings = AccountingSetting::getSettings();
+        if ($fromDate && $toDate) {
+            $queryPOs->whereBetween('order_date', [$fromDate, $toDate]);
+        }
 
-        // Get purchases from journal entries
-        $purchasesAmount = JournalEntryLine::whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', 'posted')
-                  ->whereBetween('entry_date', [$fromDate, $toDate])
-                  ->where('entry_type', 'purchase_invoice');
-            })
-            ->where('account_id', $accountingSettings->purchase_invoice_expense_account_id)
-            ->sum('debit_amount');
+        $purchases = $queryPOs->get()->map(function ($purchase) {
+            return [
+                'id' => $purchase->id,
+                'type' => 'purchase',
+                'description' => "Purchase Order #{$purchase->po_number}",
+                'amount' => (float) $purchase->total_amount,
+                'created_at' => $purchase->order_date ? $purchase->order_date->toDateTimeString() : $purchase->created_at->toDateTimeString()
+            ];
+        });
 
-        $purchasesCount = JournalEntry::where('status', 'posted')
-                                    ->whereBetween('entry_date', [$fromDate, $toDate])
-                                    ->where('entry_type', 'purchase_invoice')
-                                    ->count();
-
-        return [
-            'total_amount' => (float) $purchasesAmount,
-            'count' => $purchasesCount
-        ];
-    }
-
-    /**
-     * Get accounting-based expenses statistics
-     */
-    private function getAccountingBasedExpensesStatistics(Carbon $fromDate, Carbon $toDate): array
-    {
-        $accountingSettings = AccountingSetting::getSettings();
-
-        // Get expenses from journal entries
-        $expensesAmount = JournalEntryLine::whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', 'posted')
-                  ->whereBetween('entry_date', [$fromDate, $toDate])
-                  ->where('entry_type', 'expense');
-            })
-            ->where('account_id', $accountingSettings->expense_default_account_id)
-            ->sum('debit_amount');
-
-        $expensesCount = JournalEntry::where('status', 'posted')
-                                   ->whereBetween('entry_date', [$fromDate, $toDate])
-                                   ->where('entry_type', 'expense')
-                                   ->count();
-
-        return [
-            'total_amount' => (float) $expensesAmount,
-            'count' => $expensesCount
-        ];
+        return $sales->concat($purchases)
+            ->sortByDesc('created_at')
+            ->take(10)
+            ->values()
+            ->toArray();
     }
 
     /**
      * Get accounting summary
      */
-    private function getAccountingSummary(Carbon $fromDate, Carbon $toDate): array
+    private function getAccountingSummary(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        // Get all posted journal entries in the date range
         $totalDebits = JournalEntryLine::whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', 'posted')
-                  ->whereBetween('entry_date', [$fromDate, $toDate]);
-            })
-            ->sum('debit_amount');
+            $q->where('status', 'posted');
+            if ($fromDate && $toDate) {
+                $q->whereBetween('entry_date', [$fromDate, $toDate]);
+            }
+        })->sum('debit_amount');
 
         $totalCredits = JournalEntryLine::whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', 'posted')
-                  ->whereBetween('entry_date', [$fromDate, $toDate]);
-            })
-            ->sum('credit_amount');
+            $q->where('status', 'posted');
+            if ($fromDate && $toDate) {
+                $q->whereBetween('entry_date', [$fromDate, $toDate]);
+            }
+        })->sum('credit_amount');
 
-        $totalEntries = JournalEntry::where('status', 'posted')
-                                  ->whereBetween('entry_date', [$fromDate, $toDate])
-                                  ->count();
+        $entriesQuery = JournalEntry::where('status', 'posted');
+        if ($fromDate && $toDate) {
+            $entriesQuery->whereBetween('entry_date', [$fromDate, $toDate]);
+        }
 
         return [
             'total_debits' => (float) $totalDebits,
             'total_credits' => (float) $totalCredits,
-            'total_entries' => $totalEntries,
+            'total_entries' => $entriesQuery->count(),
             'is_balanced' => abs($totalDebits - $totalCredits) < 0.01
         ];
     }
@@ -693,46 +730,50 @@ class DashboardController extends Controller
             ->selectRaw('SUM(stock_quantity * cost_price) as total_cost_value, SUM(stock_quantity * selling_price) as total_retail_value')
             ->first();
 
+        $cost = (float) ($valuation->total_cost_value ?? 0);
+        $retail = (float) ($valuation->total_retail_value ?? 0);
+
         return [
-            'total_cost_value' => (float) ($valuation->total_cost_value ?? 0),
-            'total_retail_value' => (float) ($valuation->total_retail_value ?? 0),
-            'potential_profit' => (float) (($valuation->total_retail_value ?? 0) - ($valuation->total_cost_value ?? 0))
+            'total_cost_value' => $cost,
+            'total_retail_value' => $retail,
+            'potential_profit' => $retail - $cost
         ];
     }
 
     /**
-     * Get product intelligence (Fast/Slow moving)
+     * Get product intelligence (Fast/Slow moving with brand and category details)
      */
-    private function getProductIntelligence(Carbon $fromDate, Carbon $toDate): array
+    private function getProductIntelligence(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        // Fast Moving Items (highest volume sold in date range)
-        $fastMoving = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.status', 'completed')
-            ->where('sales.is_refund', false)
-            ->whereBetween('sales.sale_date', [$fromDate, $toDate])
-            ->select('products.name', DB::raw('SUM(sale_items.quantity) as total_sold'))
-            ->groupBy('products.id', 'products.name')
-            ->orderByDesc('total_sold')
-            ->limit(5)
-            ->get();
-
-        // Slow Moving Items (active products with stock but low sales)
-        $slowMoving = Product::active()
-            ->where('stock_quantity', '>', 0)
-            ->whereNotExists(function ($query) use ($fromDate, $toDate) {
-                $query->select(DB::raw(1))
-                    ->from('sale_items')
-                    ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-                    ->whereRaw('sale_items.product_id = products.id')
-                    ->where('sales.status', 'completed')
-                    ->whereBetween('sales.sale_date', [$fromDate, $toDate]);
+        $fastMovingQuery = SaleItem::whereHas('sale', function ($q) use ($fromDate, $toDate) {
+                $q->whereNotIn('status', ['cancelled', 'void'])->where('is_refund', false);
+                if ($fromDate && $toDate) {
+                    $q->whereBetween('sale_date', [$fromDate, $toDate]);
+                }
             })
-            ->select('name', 'stock_quantity')
+            ->with(['product.brand', 'product.category.parent.parent'])
+            ->select('product_id', DB::raw('SUM(quantity) as total_sold'))
+            ->groupBy('product_id')
+            ->orderByDesc('total_sold')
+            ->limit(5);
+
+        $fastMoving = $fastMovingQuery->get()->map(function ($item) {
+            $details = $this->formatProductDetails($item->product);
+            $details['total_sold'] = (int) $item->total_sold;
+            return $details;
+        })->values();
+
+        $slowMoving = Product::active()
+            ->with(['brand', 'category.parent.parent'])
+            ->where('stock_quantity', '>', 0)
             ->orderBy('stock_quantity', 'desc')
             ->limit(5)
-            ->get();
+            ->get()
+            ->map(function ($product) {
+                $details = $this->formatProductDetails($product);
+                $details['stock_quantity'] = (int) $product->stock_quantity;
+                return $details;
+            })->values();
 
         return [
             'fast_moving' => $fastMoving,
@@ -741,24 +782,24 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get expiry alerts
+     * Get expiry alerts with product brand and category tree details
      */
     private function getExpiryAlerts(): array
     {
         $expiringSoon = Product::active()
+            ->with(['brand', 'category.parent.parent'])
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '<=', now()->addDays(30))
             ->orderBy('expiry_date', 'asc')
             ->limit(10)
             ->get()
             ->map(function ($product) {
-                $daysToExpiry = now()->diffInDays($product->expiry_date, false);
-                return [
-                    'name' => $product->name,
-                    'expiry_date' => $product->expiry_date->toDateString(),
-                    'days_to_expire' => $daysToExpiry,
-                    'status' => $daysToExpiry < 0 ? 'Expired' : ($daysToExpiry <= 7 ? 'Critical' : 'Warning')
-                ];
+                $daysToExpiry = now()->diffInDays(Carbon::parse($product->expiry_date), false);
+                $details = $this->formatProductDetails($product);
+                $details['expiry_date'] = Carbon::parse($product->expiry_date)->toDateString();
+                $details['days_to_expire'] = $daysToExpiry;
+                $details['status'] = $daysToExpiry < 0 ? 'Expired' : ($daysToExpiry <= 7 ? 'Critical' : 'Warning');
+                return $details;
             });
 
         return [
