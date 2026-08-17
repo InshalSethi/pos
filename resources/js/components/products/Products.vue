@@ -379,7 +379,7 @@
                   <!-- Category (Category, Sub Category, Child Category in same column) -->
                   <td class="px-6 py-4.5 sm:py-5 align-middle text-center">
                     <div class="flex flex-col items-center gap-1 justify-center">
-                      <template v-if="getCategoryHierarchy(item.category).length > 0">
+                      <div v-if="getCategoryHierarchy(item.category).length > 0" class="contents">
                         <span 
                           v-for="(catName, index) in getCategoryHierarchy(item.category)" 
                           :key="index"
@@ -393,7 +393,7 @@
                           <span class="w-1.5 h-1.5 rounded-full mr-1.5 shrink-0" :class="index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-indigo-500' : 'bg-slate-400'"></span>
                           <span>{{ catName }}</span>
                         </span>
-                      </template>
+                      </div>
                       <span v-else class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-[#252525] text-slate-500 dark:text-slate-400">
                         General
                       </span>
@@ -581,444 +581,25 @@
             </div>
           </div>
         </div>
-    </div>
-  </div>
 
+    <!-- Product Details View Modal Component -->
+    <ProductViewModal
+      :show="showViewModal"
+      :product="viewingProduct"
+      :loading="isLoadingViewProduct"
+      @close="showViewModal = false"
+      @edit="editProduct"
+    />
 
-    <!-- Product Details View Modal -->
-    <div
-      v-if="showViewModal"
-      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/50 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200"
-      style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"
-      @click.self="showViewModal = false"
-    >
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl rounded-2xl bg-white dark:bg-[#18181B] text-slate-800 dark:text-slate-100 overflow-hidden transition-all duration-300 z-10 max-h-[90vh] flex flex-col my-auto">
-        
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 px-6 py-4 bg-slate-50/50 dark:bg-zinc-900/50">
-          <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                  {{ viewingProduct?.type ? viewingProduct.type.toUpperCase() : 'PRODUCT' }} DETAILS
-                </span>
-                <span v-if="viewingProduct?.status === 'active'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/30">Active</span>
-                <span v-else-if="viewingProduct?.status === 'inactive'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Inactive</span>
-                <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/30">Draft</span>
-              </div>
-              <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-snug">
-                {{ viewingProduct?.name || 'Loading details...' }}
-              </h3>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button
-              v-if="viewingProduct"
-              @click="showViewModal = false; editProduct(viewingProduct);"
-              type="button"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-900/40 transition-all cursor-pointer"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span>Edit Item</span>
-            </button>
-            <button
-              type="button"
-              @click="showViewModal = false"
-              class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors focus:outline-none cursor-pointer"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Modal Body -->
-        <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar max-h-[calc(90vh-130px)]">
-          <div v-if="isLoadingViewProduct" class="py-12 text-center text-slate-400 dark:text-slate-500 font-semibold text-sm italic">
-            Loading item details...
-          </div>
-
-          <template v-else-if="viewingProduct">
-            <!-- 1. Top Section: Images & Key Metadata Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              <!-- Product Image / Gallery Preview -->
-              <div class="md:col-span-1 flex flex-col items-center">
-                <div class="w-full aspect-square rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-slate-50 dark:bg-zinc-900 flex items-center justify-center shadow-inner relative group">
-                  <img
-                    v-if="getItemImages(viewingProduct).length > 0"
-                    :src="getItemImages(viewingProduct)[0]"
-                    class="w-full h-full object-cover"
-                  />
-                  <div v-else class="flex flex-col items-center justify-center p-4 text-slate-300 dark:text-zinc-700">
-                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-xs font-bold mt-1 uppercase tracking-wider text-slate-400 dark:text-zinc-600">No Image</span>
-                  </div>
-                </div>
-
-                <!-- Gallery Thumbnails (if multiple images) -->
-                <div v-if="getItemImages(viewingProduct).length > 1" class="flex items-center gap-2 mt-3 overflow-x-auto max-w-full py-1">
-                  <div
-                    v-for="(img, idx) in getItemImages(viewingProduct)"
-                    :key="idx"
-                    class="w-12 h-12 rounded-lg border border-slate-200 dark:border-zinc-800 overflow-hidden shrink-0 shadow-xs"
-                  >
-                    <img :src="img" class="w-full h-full object-cover" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- General Info Cards -->
-              <div class="md:col-span-2 space-y-4">
-                <!-- Badges Row -->
-                <div class="flex flex-wrap items-center gap-2">
-                  <span v-if="viewingProduct.sku" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
-                    SKU: {{ viewingProduct.sku }}
-                  </span>
-                  <span v-if="viewingProduct.barcode" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-300 border border-slate-200 dark:border-zinc-700">
-                    Barcode: {{ viewingProduct.barcode }}
-                  </span>
-                  <span v-if="viewingProduct.brand?.name || viewingProduct.brand_name" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/30">
-                    Brand: {{ viewingProduct.brand?.name || viewingProduct.brand_name }}
-                  </span>
-                  <span v-if="viewingProduct.unit?.name || viewingProduct.unit_of_measure" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-900/30">
-                    Unit: {{ viewingProduct.unit?.name || viewingProduct.unit_of_measure }}
-                  </span>
-                </div>
-
-                <!-- Category Hierarchy -->
-                <div class="p-3.5 bg-slate-50 dark:bg-zinc-900/60 rounded-xl border border-slate-100 dark:border-zinc-800/80">
-                  <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Category Hierarchy</span>
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <template v-if="getCategoryHierarchy(viewingProduct.category).length > 0">
-                      <span
-                        v-for="(catName, idx) in getCategoryHierarchy(viewingProduct.category)"
-                        :key="idx"
-                        class="inline-flex items-center text-xs font-semibold"
-                      >
-                        <span class="px-2 py-0.5 rounded-md bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-slate-200">
-                          {{ catName }}
-                        </span>
-                        <svg v-if="idx < getCategoryHierarchy(viewingProduct.category).length - 1" class="w-3.5 h-3.5 text-slate-400 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                      </span>
-                    </template>
-                    <span v-else class="text-xs text-slate-400 italic">No category assigned</span>
-                  </div>
-                </div>
-
-                <!-- Tags -->
-                <div v-if="getParsedTags(viewingProduct).length > 0">
-                  <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Tags</span>
-                  <div class="flex flex-wrap gap-1.5">
-                    <span
-                      v-for="(tag, tidx) in getParsedTags(viewingProduct)"
-                      :key="tidx"
-                      class="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/30"
-                    >
-                      #{{ tag }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Service Details (if service) -->
-                <div v-if="viewingProduct.type === 'service' && (viewingProduct.service_type || viewingProduct.service_detail)" class="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
-                  <span class="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-0.5">Service Details</span>
-                  <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    <strong v-if="viewingProduct.service_type">{{ viewingProduct.service_type }}: </strong>
-                    <span>{{ viewingProduct.service_detail || 'N/A' }}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. Descriptions Section -->
-            <div v-if="viewingProduct.short_description || viewingProduct.description" class="p-4 bg-slate-50 dark:bg-zinc-900/50 rounded-2xl border border-slate-100 dark:border-zinc-800/80 space-y-3">
-              <div v-if="viewingProduct.short_description">
-                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Short Description</span>
-                <p class="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
-                  {{ viewingProduct.short_description }}
-                </p>
-              </div>
-              <div v-if="viewingProduct.description">
-                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Full Description</span>
-                <div class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed prose dark:prose-invert max-w-none" v-html="viewingProduct.description"></div>
-              </div>
-            </div>
-
-            <!-- 3. Financials & Pricing Summary -->
-            <div class="space-y-2">
-              <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Pricing & Financials</h4>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
-                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Cost / Purchase</span>
-                  <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 mt-1 block">
-                    {{ currencyStore.formatPrice(viewingProduct.cost_price || 0) }}
-                  </span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
-                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Retail / Selling</span>
-                  <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">
-                    {{ currencyStore.formatPrice(viewingProduct.selling_price || viewingProduct.retail_price || 0) }}
-                  </span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
-                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Wholesale</span>
-                  <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400 mt-1 block">
-                    {{ currencyStore.formatPrice(viewingProduct.wholesale_price || 0) }}
-                  </span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 text-center">
-                  <span class="block text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Tax Rate</span>
-                  <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 mt-1 block">
-                    {{ viewingProduct.tax_rate ? viewingProduct.tax_rate + '%' : '0%' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 4. Inventory & Stock Status -->
-            <div class="space-y-2">
-              <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Inventory & Stock</h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Stock</span>
-                  <span class="text-sm font-black text-slate-900 dark:text-white">
-                    {{ viewingProduct.stock_quantity ?? 'N/A' }}
-                  </span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Track Inventory</span>
-                  <span :class="viewingProduct.track_inventory ? 'text-emerald-600 dark:text-emerald-400 font-bold text-xs' : 'text-slate-400 text-xs'">
-                    {{ viewingProduct.track_inventory ? 'Yes' : 'No' }}
-                  </span>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-zinc-800 flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Returnable</span>
-                  <span :class="viewingProduct.is_returnable ? 'text-emerald-600 dark:text-emerald-400 font-bold text-xs' : 'text-slate-400 text-xs'">
-                    {{ viewingProduct.is_returnable ? 'Yes' : 'No' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 5. Product Variations (If Variant Product) -->
-            <div v-if="viewingProduct.variations && viewingProduct.variations.length > 0" class="space-y-2">
-              <div class="flex items-center justify-between">
-                <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Product Variations ({{ viewingProduct.variations.length }})
-                </h4>
-              </div>
-              <div class="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-inner">
-                <table class="w-full text-xs text-left">
-                  <thead class="bg-slate-100 dark:bg-zinc-900 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <tr>
-                      <th class="px-3 py-2">Variant</th>
-                      <th class="px-3 py-2">SKU</th>
-                      <th class="px-3 py-2 text-right">Cost</th>
-                      <th class="px-3 py-2 text-right">Retail</th>
-                      <th class="px-3 py-2 text-right">Wholesale</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-                    <tr v-for="variant in viewingProduct.variations" :key="variant.id" class="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
-                      <td class="px-3 py-2 font-extrabold text-slate-800 dark:text-slate-200">
-                        {{ variant.variation_name_string || variant.combination_key || 'Default Variant' }}
-                      </td>
-                      <td class="px-3 py-2 font-mono text-slate-500">{{ variant.sku || '-' }}</td>
-                      <td class="px-3 py-2 text-right font-medium text-slate-700 dark:text-slate-300">
-                        {{ currencyStore.formatPrice(variant.cost_price || 0) }}
-                      </td>
-                      <td class="px-3 py-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        {{ currencyStore.formatPrice(variant.retail_price || variant.selling_price || 0) }}
-                      </td>
-                      <td class="px-3 py-2 text-right font-medium text-indigo-600 dark:text-indigo-400">
-                        {{ currencyStore.formatPrice(variant.wholesale_price || 0) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </template>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="px-6 py-3 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            @click="showViewModal = false"
-            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            Close
-          </button>
-          <button
-            v-if="viewingProduct"
-            type="button"
-            @click="showViewModal = false; editProduct(viewingProduct);"
-            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
-          >
-            Edit Item Details
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Drafts Workbench Modal -->
-    <div v-if="isDraftsModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="isDraftsModalOpen = false">
-        <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-5xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto flex flex-col">
-            
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-[#2E2E2E]/60 pb-4 mb-5 px-1">
-                <div class="flex flex-col space-y-0.5">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-zinc-500">
-                        Incomplete Items Workbench
-                    </span>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100 tracking-wide">
-                        Product Drafts Workbench
-                    </h3>
-                </div>
-
-                <div class="flex items-center gap-5">
-                    <button v-show="selectedDraftIds.length > 0" 
-                            @click="deleteSelectedDrafts" 
-                            type="button" 
-                            class="inline-flex items-center gap-1.5 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-0 p-1 rounded-lg transition-colors focus:outline-none group cursor-pointer"
-                            title="Permanently remove selected slots">
-                        
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" 
-                             class="w-4 h-4 transition-transform group-hover:scale-105">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                        </svg>
-                        <span class="text-xs font-black tracking-wide">{{ selectedDraftIds.length }}</span>
-                    </button>
-
-                    <span v-show="selectedDraftIds.length > 0" class="w-[1px] h-4 bg-slate-200 dark:bg-[#252525]"></span>
-
-                    <button type="button" 
-                            @click="isDraftsModalOpen = false" 
-                            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-medium text-xl transition-all focus:outline-none hover:rotate-90 duration-200 p-1 rounded-lg leading-none select-none cursor-pointer">
-                        &times;
-                    </button>
-                </div>
-            </div>
-
-            <div class="w-full overflow-y-auto border border-slate-200/70 dark:border-[#2E2E2E]/80 rounded-2xl overflow-x-auto shadow-inner bg-slate-50/20 dark:bg-zinc-950/20 custom-scrollbar">
-                <table class="w-full min-w-max table-auto align-middle divide-y divide-slate-100 dark:divide-[#2E2E2E]/60 text-xs">
-                    
-                    <thead class="bg-slate-50/80 dark:bg-[#252525]/50 text-[10px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 z-10 backdrop-blur-xs">
-                        <tr>
-                            <th class="px-4 py-3.5 text-center w-12">
-                                <input type="checkbox" 
-                                       @click="toggleSelectAllDrafts" 
-                                       :checked="draftProducts.length > 0 && selectedDraftIds.length === draftProducts.length"
-                                       class="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-3.5 h-3.5 transition-all">
-                            </th>
-                            <th class="px-4 py-3.5 text-left">Product Title</th>
-                            <th class="px-4 py-3.5 text-left">Category</th>
-                            <th class="px-4 py-3.5 text-center">Tags</th>
-                            <th class="px-4 py-3.5 text-center">Product Type</th>
-                            <th class="px-4 py-3.5 text-center">Prices (W / R)</th>
-                            <th class="px-4 py-3.5 text-center">Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y divide-slate-100 dark:divide-[#2E2E2E]/40 text-[11px] bg-white dark:bg-[#1E1E1E]">
-                        <tr v-if="isLoadingDrafts">
-                            <td colspan="7" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">Fetching compiled draft lots...</td>
-                        </tr>
-                        
-                        <tr v-else-if="draftProducts.length === 0">
-                            <td colspan="7" class="text-center py-6 text-xs text-slate-400 dark:text-zinc-500 italic">No drafted items found in your workbench.</td>
-                        </tr>
-
-                        <tr v-else v-for="draft in draftProducts" :key="draft.id"
-                            :class="selectedDraftIds.includes(draft.id) ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-[#2D2D2D]/30'" 
-                            class="transition-colors duration-150">
-                            
-                            <td class="px-4 py-3.5 align-middle text-center">
-                                <input type="checkbox" 
-                                       :value="draft.id" 
-                                       v-model="selectedDraftIds"
-                                       class="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-3.5 h-3.5 transition-all">
-                            </td>
-
-                            <td class="px-4 py-3.5 align-middle text-xs">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-zinc-950 flex-shrink-0 flex items-center justify-center border border-slate-200/60 dark:border-[#2E2E2E] overflow-hidden shadow-xs">
-                                        <img v-if="draft.image || draft.image_path || draft.thumbnail || draft.logo" :src="draft.image || draft.image_path || draft.thumbnail || draft.logo" class="w-full h-full object-cover">
-                                        <div v-else class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-[11px]">
-                                            <span>{{ draft.name ? draft.name.charAt(0).toUpperCase() : 'P' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col text-left">
-                                        <span class="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">{{ draft.name }}</span>
-                                        <span class="text-[10px] text-slate-400 font-mono mt-0.5">{{ draft.sku || draft.id }}</span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="px-4 py-3.5 align-middle text-slate-500 text-left font-medium">{{ draft.category ? draft.category.name : 'No Category' }}</td>
-
-                            <td class="px-4 py-3.5 align-middle text-center">
-                                <div class="flex justify-center items-center gap-1 flex-wrap max-w-[130px] mx-auto">
-                                    <template v-if="draft.tags && draft.tags.length > 0">
-                                        <span v-for="(tag, i) in draft.tags" :key="i" class="text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-[#252525] dark:text-zinc-400 px-1.5 py-0.5 rounded-md">
-                                            #{{ typeof tag === 'object' ? tag.name : tag }}
-                                        </span>
-                                    </template>
-                                    <span v-else class="text-slate-300 dark:text-zinc-700 font-black">-</span>
-                                </div>
-                            </td>
-
-                            <td class="px-4 py-3.5 align-middle text-center">
-                                <span :class="draft.variations_count > 0 ? 'bg-red-50 text-red-700 dark:bg-red-500 dark-text-black' : 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'" 
-                                      class="inline-flex items-center px-2.5 py-0.5 rounded-md font-bold text-[10px]">
-                                    {{ draft.variations_count > 0 ? 'Variant Product' : 'Simple Product' }}
-                                </span>
-                            </td>
-
-                            <td class="px-4 py-3.5 align-middle text-center">
-                                <template v-if="draft.variations_count > 0">
-                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md text-[10px]">{{ draft.variations_count }} Matrix Prices</span>
-                                </template>
-                                <template v-else>
-                                    <div class="inline-flex flex-col text-center justify-center items-center mx-auto space-y-0.5">
-                                        <span class="text-[10px] text-slate-400 font-medium">W: <strong class="text-indigo-600 dark:text-indigo-400">${{ parseFloat(draft.wholesale_price || 0).toFixed(2) }}</strong></span>
-                                        <span class="text-[10px] text-slate-400 font-medium">R: <strong class="text-emerald-600 dark:text-emerald-400">${{ parseFloat(draft.retail_price || draft.selling_price || 0).toFixed(2) }}</strong></span>
-                                    </div>
-                                </template>
-                            </td>
-
-                            <td class="px-4 py-3.5 align-middle text-center">
-                                <button type="button"
-                                        @click="editProduct(draft); isDraftsModalOpen = false"
-                                        class="inline-flex items-center px-3 py-1.5 text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-all focus:outline-none shadow-xs dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20">
-                                    Resume Setup
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-5 flex justify-end px-1">
-                <button type="button" 
-                        @click="isDraftsModalOpen = false" 
-                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-[#252525] dark:text-zinc-200 dark:hover:bg-[#2D2D2D]/80 rounded-xl transition-all shadow-xs focus:outline-none cursor-pointer">
-                    Dismiss Workbench
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Drafts Workbench Modal Component -->
+    <ProductDraftsModal
+      :show="isDraftsModalOpen"
+      :drafts="draftProducts"
+      :loading="isLoadingDrafts"
+      @close="isDraftsModalOpen = false"
+      @edit="editProduct"
+      @delete-selected="deleteSelectedDrafts"
+    />
 
     <!-- Import Products Modal -->
     <div v-if="showImportModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="closeImportModal">
@@ -1104,9 +685,10 @@
                 {{ importing ? 'Importing...' : 'Import Products' }}
               </button>
             </div>
-          </div>
         </div>
       </div>
+    </div>
+  </div>
 
 
 
@@ -1173,143 +755,7 @@
       </div>
     </div>
 
-    <!-- View Product Modal -->
-    <div v-if="showViewModal && viewingProduct" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" @click.self="showViewModal = false">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 p-6 transition-all duration-300 z-10 max-h-[90vh] overflow-y-auto my-auto flex flex-col">
 
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 pt-6 pb-5">
-          <div class="flex items-center gap-4">
-            <!-- Product Avatar -->
-            <div class="relative h-14 w-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex-shrink-0">
-              <div v-if="Number(viewingProduct.discount_value) > 0" class="absolute top-0 right-0 z-10">
-                <div class="absolute transform rotate-45 bg-rose-600 text-white text-[6px] font-black uppercase text-center tracking-widest py-0.5 w-[50px] -right-[15px] top-[4px]">Sale</div>
-              </div>
-              <img
-                v-if="viewingProduct.image && !viewingProduct.image.includes('Temp') && !viewingProduct.image.includes('.tmp')"
-                :src="viewingProduct.image.startsWith('/') ? viewingProduct.image : '/' + viewingProduct.image"
-                :alt="viewingProduct.name"
-                class="h-full w-full object-cover"
-              >
-              <div v-else class="h-full w-full flex items-center justify-center bg-indigo-100">
-                <span class="text-xl font-black text-indigo-500 uppercase">{{ viewingProduct.name ? viewingProduct.name.substring(0, 1) : 'P' }}</span>
-              </div>
-            </div>
-            <!-- Name & SKU -->
-            <div>
-              <h2 class="text-base font-bold text-gray-900 leading-tight">{{ viewingProduct.name }}</h2>
-              <p class="text-xs text-gray-400 mt-0.5">SKU: #{{ viewingProduct.sku || 'N/A' }}</p>
-            </div>
-          </div>
-          <!-- Close X -->
-          <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Divider -->
-        <div class="border-t border-gray-100 mx-6"></div>
-
-        <!-- Body — two columns -->
-        <div class="grid grid-cols-2 gap-0 px-6 py-5 max-h-[60vh] overflow-y-auto">
-
-          <!-- Left: Product Info -->
-          <div class="pr-6 border-r border-gray-100 space-y-5">
-            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Product Info</p>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Category</p>
-              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.category?.name || 'No Category' }}</p>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Brand</p>
-              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.brand?.name || 'No Brand' }}</p>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Barcode</p>
-              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.barcode || 'N/A' }}</p>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Status</p>
-              <span :class="['inline-flex px-2 py-0.5 rounded-lg text-[11px] font-semibold', viewingProduct.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700']">
-                {{ viewingProduct.is_active ? 'Active' : 'Inactive' }}
-              </span>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Tags</p>
-              <div v-if="getParsedTags(viewingProduct).length > 0" class="flex flex-wrap gap-1">
-                <span v-for="(tag, i) in getParsedTags(viewingProduct)" :key="i" class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 text-slate-600">#{{ tag }}</span>
-              </div>
-              <p v-else class="text-sm font-medium text-gray-800">N/A</p>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Description</p>
-              <p class="text-sm text-gray-600 leading-relaxed">{{ viewingProduct.description || 'No description provided.' }}</p>
-            </div>
-          </div>
-
-          <!-- Right: Pricing & Stock -->
-          <div class="pl-6 space-y-5">
-            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Inventory &amp; Pricing</p>
-
-            <div>
-              <button type="button" 
-                      @click="openPricesModal(viewingProduct)" 
-                      class="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 shadow-sm transition-all focus:outline-none flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                  </svg>
-                  View Variations
-              </button>
-            </div>
-
-            <div v-if="Number(viewingProduct.discount_value) > 0">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Discount</p>
-              <p class="text-sm font-semibold text-rose-600">
-                {{ viewingProduct.discount_type === 'percentage' ? viewingProduct.discount_value + '%' : currencyStore.formatPrice(viewingProduct.discount_value) }}
-              </p>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Stock Quantity</p>
-              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.stock_quantity }} <span class="text-gray-400 text-xs">{{ viewingProduct.unit_of_measure }}</span></p>
-            </div>
-
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Min Stock Level</p>
-              <p class="text-sm font-medium text-gray-800">{{ viewingProduct.low_stock_threshold || viewingProduct.min_stock_level || '-' }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
-          <button
-            @click="showViewModal = false"
-            class="px-5 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
-          >
-            Close
-          </button>
-          <button
-            @click="editProduct(viewingProduct); showViewModal = false"
-            class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all flex items-center gap-2 shadow-sm"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Edit Details
-          </button>
-        </div>
-
-      </div>
-    </div>
 
 
     <!-- Category Management Modal -->
@@ -1429,9 +875,9 @@
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
+    </div>
 
     <!-- Barcode Printer Modal -->
     <BarcodePrinter v-if="showBarcodeModal" :product="printingProduct" @close="showBarcodeModal = false" />
@@ -1648,6 +1094,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -1656,6 +1103,8 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { debounce } from '@/utils/debounce';
 import BarcodePrinter from '@/components/common/BarcodePrinter.vue';
+import ProductViewModal from './ProductViewModal.vue';
+import ProductDraftsModal from './ProductDraftsModal.vue';
 import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
