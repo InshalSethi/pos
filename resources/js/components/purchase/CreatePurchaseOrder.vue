@@ -116,8 +116,30 @@
                           step="0.01"
                           min="0"
                           class="w-24 px-1.5 py-1 text-right border border-slate-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
-                          @input="updateItemTotal(index)"
+                          @input="onUnitCostInput(index)"
                         />
+                        <div class="text-[9.5px] font-bold mt-1 tracking-tight flex items-center justify-end gap-1 flex-wrap">
+                          <span class="text-slate-400 dark:text-zinc-500 whitespace-nowrap">
+                            Cost: {{ currencySymbol }}{{ getItemOriginalCost(item).toFixed(2) }}
+                          </span>
+                          <span class="text-slate-500 dark:text-zinc-400 whitespace-nowrap">
+                            Sale: {{ currencySymbol }}{{ getItemSellingPrice(item).toFixed(2) }}
+                          </span>
+                          <span v-if="getItemWholesalePrice(item) > 0" class="text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                            WS: {{ currencySymbol }}{{ getItemWholesalePrice(item).toFixed(2) }}
+                          </span>
+                          <span 
+                            v-if="Math.abs(getItemCostDiff(item)) > 0.001"
+                            :class="[
+                              getItemCostDiff(item) > 0 
+                                ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' 
+                                : 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+                              'px-1 py-0.2 text-[8.5px] font-extrabold rounded-md whitespace-nowrap'
+                            ]"
+                          >
+                            {{ getItemCostDiff(item) > 0 ? '+' : '' }}{{ currencySymbol }}{{ getItemCostDiff(item).toFixed(2) }}
+                          </span>
+                        </div>
                       </td>
 
                       <!-- Total Cost -->
@@ -1302,6 +1324,113 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- COST OVERRUN WARNING & SELLING PRICE ADJUSTMENT MODAL -->
+    <div
+      v-if="isCostOverrunModalOpen && activeOverrunItem"
+      class="fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+    >
+      <div class="relative bg-white dark:bg-zinc-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-amber-200 dark:border-amber-900/50 space-y-4 font-sans">
+        <!-- Close Button -->
+        <button
+          type="button"
+          @click="cancelCostOverrun"
+          class="absolute top-4 right-4 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 p-1.5 rounded-lg transition-all bg-transparent border-0 cursor-pointer"
+          title="Cancel"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <!-- Header -->
+        <div class="flex items-start gap-3">
+          <div class="p-2.5 bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Cost Increase / Overrun Warning</h3>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+              The entered purchase unit cost ({{ currencySymbol }}{{ activeOverrunItem.unit_cost.toFixed(2) }}) for <strong class="text-slate-800 dark:text-zinc-200">{{ activeOverrunItem.product.name }}</strong> exceeds the current cost or selling prices.
+            </p>
+          </div>
+        </div>
+
+        <!-- Warning Info Card -->
+        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-900/40 text-xs space-y-1">
+          <p class="font-bold text-amber-800 dark:text-amber-300">
+            Purchase Cost: {{ currencySymbol }}{{ activeOverrunItem.unit_cost.toFixed(2) }}
+          </p>
+          <p v-if="activeOverrunItem.current_cost > 0 && activeOverrunItem.unit_cost > activeOverrunItem.current_cost" class="text-amber-700 dark:text-amber-400 font-semibold">
+            • Exceeds Previous Cost ({{ currencySymbol }}{{ activeOverrunItem.current_cost.toFixed(2) }}) by {{ currencySymbol }}{{ (activeOverrunItem.unit_cost - activeOverrunItem.current_cost).toFixed(2) }}
+          </p>
+          <p v-if="activeOverrunItem.current_sale_price > 0 && activeOverrunItem.unit_cost > activeOverrunItem.current_sale_price" class="text-rose-600 dark:text-rose-400 font-semibold">
+            • Exceeds Sale Price ({{ currencySymbol }}{{ activeOverrunItem.current_sale_price.toFixed(2) }}) by {{ currencySymbol }}{{ (activeOverrunItem.unit_cost - activeOverrunItem.current_sale_price).toFixed(2) }}
+          </p>
+          <p v-if="activeOverrunItem.current_wholesale_price > 0 && activeOverrunItem.unit_cost > activeOverrunItem.current_wholesale_price" class="text-amber-700 dark:text-amber-400 font-semibold">
+            • Exceeds Wholesale Price ({{ currencySymbol }}{{ activeOverrunItem.current_wholesale_price.toFixed(2) }}) by {{ currencySymbol }}{{ (activeOverrunItem.unit_cost - activeOverrunItem.current_wholesale_price).toFixed(2) }}
+          </p>
+        </div>
+
+        <!-- Editable Selling Prices -->
+        <div class="space-y-3 pt-1">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
+              New Sale Price ({{ currencySymbol }}) *
+            </label>
+            <input
+              v-model="activeOverrunItem.new_sale_price"
+              type="number"
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            />
+          </div>
+
+          <div v-if="activeOverrunItem.has_wholesale">
+            <label class="block text-[11px] font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
+              New Wholesale Price ({{ currencySymbol }})
+            </label>
+            <input
+              v-model="activeOverrunItem.new_wholesale_price"
+              type="number"
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs font-bold bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+            />
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-zinc-800">
+          <button
+            type="button"
+            @click="cancelCostOverrun"
+            class="px-4 py-2 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition-all cursor-pointer border border-rose-200 dark:border-rose-800/60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="isCostOverrunModalOpen = false"
+            class="px-4 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer border-0"
+          >
+            Keep Current Prices
+          </button>
+          <button
+            type="button"
+            @click="applyCostOverrunAdjustment"
+            :disabled="savingOverrun"
+            class="px-5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 border-0"
+          >
+            <div v-if="savingOverrun" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
+            <span>{{ savingOverrun ? 'Updating...' : 'Update & Apply' }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2585,11 +2714,147 @@ const removeFromOrder = (index) => {
   orderItems.value.splice(index, 1);
 };
 
+const isCostOverrunModalOpen = ref(false);
+const activeOverrunItem = ref(null);
+const savingOverrun = ref(false);
+
 const updateItemTotal = (index) => {
   const item = orderItems.value[index];
   const qty = parseFloat(item.quantity_ordered) || 0;
   const cost = parseFloat(item.unit_cost) || 0;
   item.total_cost = qty * cost;
+};
+
+const getItemOriginalCost = (item) => {
+  const prod = item.product || {};
+  const cost = (prod.purchase_price !== undefined && prod.purchase_price !== null) 
+    ? prod.purchase_price 
+    : (prod.cost_price ?? prod.unit_cost ?? 0);
+  return parseFloat(cost) || 0;
+};
+
+const getItemSellingPrice = (item) => {
+  if (!item) return 0;
+  if (item.sale_price !== undefined && item.sale_price !== null) return parseFloat(item.sale_price) || 0;
+  const prod = item.product || {};
+  const price = prod.selling_price ?? prod.price ?? 0;
+  return parseFloat(price) || 0;
+};
+
+const getItemWholesalePrice = (item) => {
+  if (!item) return 0;
+  if (item.wholesale_price !== undefined && item.wholesale_price !== null) return parseFloat(item.wholesale_price) || 0;
+  const prod = item.product || {};
+  const price = prod.wholesale_price ?? 0;
+  return parseFloat(price) || 0;
+};
+
+const getItemCostDiff = (item) => {
+  const currentCost = getItemOriginalCost(item);
+  const enteredCost = parseFloat(item.unit_cost) || 0;
+  return enteredCost - currentCost;
+};
+
+const onUnitCostInput = (index) => {
+  updateItemTotal(index);
+  const item = orderItems.value[index];
+  if (!item) return;
+
+  const cost = parseFloat(item.unit_cost) || 0;
+  const currentCost = getItemOriginalCost(item);
+  const sale = getItemSellingPrice(item);
+  const wholesale = getItemWholesalePrice(item);
+
+  const isCostIncreased = currentCost > 0 && cost > currentCost;
+  const isSaleExceeded = sale > 0 && cost > sale;
+  const isWholesaleExceeded = wholesale > 0 && cost > wholesale;
+
+  if (isCostIncreased || isSaleExceeded || isWholesaleExceeded) {
+    activeOverrunItem.value = {
+      index,
+      item,
+      product: item.product || {},
+      unit_cost: cost,
+      current_cost: currentCost,
+      current_sale_price: sale,
+      current_wholesale_price: wholesale,
+      new_sale_price: sale.toFixed(2),
+      new_wholesale_price: wholesale.toFixed(2),
+      has_wholesale: wholesale > 0 || !!(item.product && item.product.has_wholesale)
+    };
+    isCostOverrunModalOpen.value = true;
+  }
+};
+
+const cancelCostOverrun = () => {
+  if (activeOverrunItem.value && activeOverrunItem.value.item) {
+    const item = activeOverrunItem.value.item;
+    const origCost = getItemOriginalCost(item);
+    item.unit_cost = origCost;
+    updateItemTotal(activeOverrunItem.value.index);
+  }
+  isCostOverrunModalOpen.value = false;
+  activeOverrunItem.value = null;
+};
+
+const applyCostOverrunAdjustment = async () => {
+  if (!activeOverrunItem.value) return;
+  savingOverrun.value = true;
+
+  try {
+    const prodId = activeOverrunItem.value.product.id || activeOverrunItem.value.item.product_id;
+    const varId = activeOverrunItem.value.item.product_variation_id;
+
+    const newSale = parseFloat(activeOverrunItem.value.new_sale_price) || 0;
+    const newWholesale = parseFloat(activeOverrunItem.value.new_wholesale_price) || 0;
+
+    const payload = {
+      selling_price: newSale,
+      wholesale_price: newWholesale,
+      product_variation_id: varId
+    };
+
+    // 1. Send API request to update product sale price in backend
+    await api.post(`/products/${prodId}/update-prices`, payload);
+
+    // 2. Update local line item properties
+    const item = activeOverrunItem.value.item || orderItems.value[activeOverrunItem.value.index];
+    if (item) {
+      item.sale_price = newSale;
+      item.wholesale_price = newWholesale;
+      if (!item.product) item.product = {};
+      item.product.selling_price = newSale;
+      item.product.price = newSale;
+      item.product.wholesale_price = newWholesale;
+    }
+
+    // 3. Update products list in scope
+    if (typeof products !== 'undefined' && products.value) {
+      const parentProd = products.value.find(p => (p.id || p.product_id) == prodId);
+      if (parentProd) {
+        parentProd.selling_price = newSale;
+        parentProd.price = newSale;
+        parentProd.wholesale_price = newWholesale;
+      }
+    }
+
+    // 4. Close the modal and clear active overrun context
+    isCostOverrunModalOpen.value = false;
+    activeOverrunItem.value = null;
+
+    // 5. Toast notification
+    if (typeof showNotification === 'function') {
+      showNotification('Selling price updated and applied successfully.', 'success');
+    }
+  } catch (error) {
+    console.error('Failed to update product price:', error);
+    const msg = error.response?.data?.message || error.message || 'Failed to update product price. Please try again.';
+    if (typeof showNotification === 'function') {
+      showNotification(msg, 'error');
+    }
+  } finally {
+    savingOverrun.value = false;
+  }
 };
 
 const onWalkinToggle = () => {

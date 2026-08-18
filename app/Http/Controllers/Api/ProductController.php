@@ -2328,4 +2328,54 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    public function updatePrices(Request $request, Product $product): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'selling_price' => 'nullable|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
+            'product_variation_id' => 'nullable|exists:product_variations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $updateData = [];
+        if ($request->has('selling_price')) {
+            $updateData['selling_price'] = $request->selling_price;
+            $updateData['price'] = $request->selling_price;
+        }
+        if ($request->has('wholesale_price')) {
+            $updateData['wholesale_price'] = $request->wholesale_price;
+        }
+        if ($request->has('cost_price')) {
+            $updateData['cost_price'] = $request->cost_price;
+            $updateData['purchase_price'] = $request->cost_price;
+        }
+
+        if (!empty($updateData)) {
+            $product->update($updateData);
+        }
+
+        if ($request->filled('product_variation_id')) {
+            $var = \App\Models\ProductVariation::find($request->product_variation_id);
+            if ($var) {
+                $varData = [];
+                if ($request->has('selling_price')) $varData['retail_price'] = $request->selling_price;
+                if ($request->has('wholesale_price')) $varData['wholesale_price'] = $request->wholesale_price;
+                if ($request->has('cost_price')) $varData['cost_price'] = $request->cost_price;
+                if (!empty($varData)) $var->update($varData);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Product prices updated successfully',
+            'product' => $product->fresh(['variations'])
+        ]);
+    }
 }

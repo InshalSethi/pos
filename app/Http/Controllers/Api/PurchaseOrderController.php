@@ -426,33 +426,49 @@ class PurchaseOrderController extends Controller
                     'notes' => $item['notes'] ?? null,
                 ]);
 
-                // Auto-stock inventory immediately upon creation
+                // Auto-stock inventory & record purchase price history
                 $product = Product::find($item['product_id']);
-                if ($product && $product->track_inventory) {
-                    // Calculate Weighted Average Cost (WAC) before adjusting stock
-                    $currentStock = (float) $product->stock_quantity;
-                    $currentCost = (float) $product->cost_price;
-                    $poUnitCost = (float) $item['unit_cost'];
+                if ($product) {
+                    $oldPrice = $product->purchase_price ?? $product->cost_price ?? 0;
+                    \App\Models\ProductPriceHistory::create([
+                        'company_id' => $companyId,
+                        'product_id' => $product->id,
+                        'source_type' => 'purchase_order',
+                        'source_id' => $purchaseOrder->id,
+                        'purchase_price' => $item['unit_cost'],
+                        'old_purchase_price' => $oldPrice,
+                    ]);
 
-                    $newTotalStock = $currentStock + $qtyOrdered;
-                    if ($newTotalStock > 0) {
-                        $wac = (($currentStock * $currentCost) + ($qtyOrdered * $poUnitCost)) / $newTotalStock;
-                        $product->update(['cost_price' => round($wac, 2)]);
-                    }
+                    $product->update([
+                        'purchase_price' => $item['unit_cost'],
+                    ]);
 
-                    foreach ($allocations as $alloc) {
-                        $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
-                        $allocQty = (int) ($alloc['quantity'] ?? 0);
-                        if ($allocQty > 0) {
-                            $inventoryService->adjustStock(
-                                $allocWhId,
-                                $product->id,
-                                $item['product_variation_id'] ?? null,
-                                $allocQty,
-                                $companyId,
-                                'Bill',
-                                $purchaseOrder->po_number
-                            );
+                    if ($product->track_inventory) {
+                        // Calculate Weighted Average Cost (WAC) before adjusting stock
+                        $currentStock = (float) $product->stock_quantity;
+                        $currentCost = (float) $product->cost_price;
+                        $poUnitCost = (float) $item['unit_cost'];
+
+                        $newTotalStock = $currentStock + $qtyOrdered;
+                        if ($newTotalStock > 0) {
+                            $wac = (($currentStock * $currentCost) + ($qtyOrdered * $poUnitCost)) / $newTotalStock;
+                            $product->update(['cost_price' => round($wac, 2)]);
+                        }
+
+                        foreach ($allocations as $alloc) {
+                            $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                            $allocQty = (int) ($alloc['quantity'] ?? 0);
+                            if ($allocQty > 0) {
+                                $inventoryService->adjustStock(
+                                    $allocWhId,
+                                    $product->id,
+                                    $item['product_variation_id'] ?? null,
+                                    $allocQty,
+                                    $companyId,
+                                    'Bill',
+                                    $purchaseOrder->po_number
+                                );
+                            }
                         }
                     }
                 }
@@ -681,34 +697,50 @@ class PurchaseOrderController extends Controller
                     'notes' => $item['notes'] ?? null,
                 ]);
 
-                // Adjust stock for new item with WAC calculation
+                // Adjust stock for new item with WAC calculation & price history
                 $product = Product::where('id', $item['product_id'])->lockForUpdate()->first();
-                if ($product && $product->track_inventory) {
+                if ($product) {
                     $product->refresh();
 
-                    $currentStock = (float) $product->stock_quantity;
-                    $currentCost = (float) $product->cost_price;
-                    $poUnitCost = (float) $item['unit_cost'];
+                    $oldPrice = $product->purchase_price ?? $product->cost_price ?? 0;
+                    \App\Models\ProductPriceHistory::create([
+                        'company_id' => $companyId,
+                        'product_id' => $product->id,
+                        'source_type' => 'purchase_order',
+                        'source_id' => $purchaseOrder->id,
+                        'purchase_price' => $item['unit_cost'],
+                        'old_purchase_price' => $oldPrice,
+                    ]);
 
-                    $newTotalStock = $currentStock + $qtyOrdered;
-                    if ($newTotalStock > 0) {
-                        $wac = (($currentStock * $currentCost) + ($qtyOrdered * $poUnitCost)) / $newTotalStock;
-                        $product->update(['cost_price' => round($wac, 2)]);
-                    }
+                    $product->update([
+                        'purchase_price' => $item['unit_cost'],
+                    ]);
 
-                    foreach ($allocations as $alloc) {
-                        $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
-                        $allocQty = (int) ($alloc['quantity'] ?? 0);
-                        if ($allocQty > 0) {
-                            $inventoryService->adjustStock(
-                                $allocWhId,
-                                $product->id,
-                                $item['product_variation_id'] ?? null,
-                                $allocQty,
-                                $companyId,
-                                'Bill',
-                                $purchaseOrder->po_number
-                            );
+                    if ($product->track_inventory) {
+                        $currentStock = (float) $product->stock_quantity;
+                        $currentCost = (float) $product->cost_price;
+                        $poUnitCost = (float) $item['unit_cost'];
+
+                        $newTotalStock = $currentStock + $qtyOrdered;
+                        if ($newTotalStock > 0) {
+                            $wac = (($currentStock * $currentCost) + ($qtyOrdered * $poUnitCost)) / $newTotalStock;
+                            $product->update(['cost_price' => round($wac, 2)]);
+                        }
+
+                        foreach ($allocations as $alloc) {
+                            $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                            $allocQty = (int) ($alloc['quantity'] ?? 0);
+                            if ($allocQty > 0) {
+                                $inventoryService->adjustStock(
+                                    $allocWhId,
+                                    $product->id,
+                                    $item['product_variation_id'] ?? null,
+                                    $allocQty,
+                                    $companyId,
+                                    'Bill',
+                                    $purchaseOrder->po_number
+                                );
+                            }
                         }
                     }
                 }
@@ -861,22 +893,33 @@ class PurchaseOrderController extends Controller
             // 1. Reverse GL Accounting Entry (Storno mechanism) for Purchase Order
             $accountingService->reverseJournalEntryBySource('purchase_order', $purchaseOrder->id);
 
-            // 2. Reverse physical stock and WAC for all received items
+            // 2. Reverse physical stock and WAC for all received items & revert product purchase price
             foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
-                if ($poItem->quantity_received > 0) {
-                    $product = Product::find($poItem->product_id);
-                    if ($product && $product->track_inventory) {
-                        // Reverse WAC calculation
-                        $currentStock = (float) $product->stock_quantity;
-                        $currentCost = (float) $product->cost_price;
-                        $voidQty = (int) $poItem->quantity_received;
-                        $voidUnitCost = (float) $poItem->unit_cost;
+                $product = Product::find($poItem->product_id);
+                if ($product) {
+                    // Revert to prior active cost
+                    $previousCost = \App\Models\ProductPriceHistory::where('product_id', $product->id)
+                        ->where('source_id', '!=', $purchaseOrder->id)
+                        ->latest('id')
+                        ->value('purchase_price') ?? $product->opening_cost ?? $product->purchase_price;
 
-                        $remainingStock = $currentStock - $voidQty;
-                        if ($remainingStock > 0) {
-                            $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
-                            $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
-                        }
+                    $product->update([
+                        'purchase_price' => $previousCost,
+                    ]);
+                }
+
+                if ($poItem->quantity_received > 0 && $product && $product->track_inventory) {
+                    // Reverse WAC calculation
+                    $currentStock = (float) $product->stock_quantity;
+                    $currentCost = (float) $product->cost_price;
+                    $voidQty = (int) $poItem->quantity_received;
+                    $voidUnitCost = (float) $poItem->unit_cost;
+
+                    $remainingStock = $currentStock - $voidQty;
+                    if ($remainingStock > 0) {
+                        $revertedCost = (($currentStock * $currentCost) - ($voidQty * $voidUnitCost)) / $remainingStock;
+                        $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
+                    }
 
                         // Deduct stock per warehouse allocation
                         $oldAllocations = $poItem->warehouse_allocations;
@@ -909,7 +952,6 @@ class PurchaseOrderController extends Controller
                         }
                     }
                 }
-            }
 
             // 3. Cancel attached payments & reverse bank transactions / accounting entries
             $payments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder', 'purchase_order'])

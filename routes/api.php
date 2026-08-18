@@ -137,6 +137,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/products/drafts-summary', [ProductController::class, 'fetchDraftsSummary']);
     Route::post('/products/drafts/bulk-destroy', [ProductController::class, 'bulkDestroyDrafts']);
     Route::post('/products/bulk-sale', [\App\Http\Controllers\Api\ProductSaleController::class, 'applyBulkSale']);
+    Route::post('/products/{product}/update-prices', [ProductController::class, 'updatePrices']);
     Route::post('/products/import', [ProductController::class, 'import']);
     Route::get('/products/export', [ProductController::class, 'export']);
     Route::get('/products/download-template', [ProductController::class, 'downloadTemplate']);
