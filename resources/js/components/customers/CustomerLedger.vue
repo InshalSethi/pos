@@ -1,13 +1,14 @@
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
-    @click.self="$emit('close')"
-  >
+  <Teleport to="body">
     <div
-      class="relative w-full max-w-7xl max-h-[92vh] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-200 my-auto"
-      @click.stop
+      v-if="show"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
+      @click.self="$emit('close')"
     >
+      <div
+        class="relative w-full max-w-7xl max-h-[92vh] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-200 my-auto"
+        @click.stop
+      >
       <!-- Modal Header -->
       <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
         <div class="flex items-center space-x-3">
@@ -824,6 +825,7 @@
 
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>
