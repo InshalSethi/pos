@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Employee;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,24 +19,20 @@ class CheckEmployeeActiveStatus
         $user = $request->user();
 
         if ($user) {
-            // Check if user is inactive directly or via linked employee
             $isInactive = !$user->is_active;
 
-            $employee = $user->employee;
-            if (!$isInactive && $employee) {
-                if ($employee->status === 'inactive' || !$employee->is_active) {
+            if (!$isInactive) {
+                $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+                if ($employee && ($employee->status === 'inactive' || !$employee->is_active || $employee->employment_status === 'inactive')) {
                     $isInactive = true;
                 }
             }
 
             if ($isInactive) {
-                // Delete active Sanctum tokens
                 if (method_exists($user, 'tokens')) {
                     try {
                         $user->tokens()->delete();
-                    } catch (\Exception $e) {
-                        // Suppress token purge exceptions if table does not exist
-                    }
+                    } catch (\Exception $e) {}
                 }
 
                 return response()->json([

@@ -42,6 +42,10 @@ const setupEchoListener = () => {
       .listen('EmployeeDeactivatedEvent', () => {
         authStore.triggerDeactivation();
       });
+    window.Echo.channel(`public-user-status.${authStore.user.id}`)
+      .listen('EmployeeDeactivatedEvent', () => {
+        authStore.triggerDeactivation();
+      });
   }
 };
 
@@ -76,8 +80,10 @@ onMounted(async () => {
     // Initialize stores after auth so the API calls are authenticated
     if (authStore.isAuthenticated) {
       setupEchoListener();
-      // Fast 5-second heartbeat poll for real-time deactivation detection
-      heartbeatInterval = setInterval(checkStatusHeartbeat, 5000);
+      await checkStatusHeartbeat();
+      window.addEventListener('focus', checkStatusHeartbeat);
+      // Fast 2-second heartbeat poll for real-time deactivation detection
+      heartbeatInterval = setInterval(checkStatusHeartbeat, 2000);
 
       try {
         await currencyStore.fetchCurrencies();
@@ -101,6 +107,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('focus', checkStatusHeartbeat);
   if (heartbeatInterval) clearInterval(heartbeatInterval);
 });
 </script>

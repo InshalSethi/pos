@@ -460,8 +460,13 @@ class AuthController extends Controller
             return response()->json(['error' => 'UNAUTHENTICATED'], 401);
         }
 
+        $isInactive = !$user->is_active;
         $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
-        if (($employee && ($employee->status === 'inactive' || !$employee->is_active)) || !$user->is_active) {
+        if ($employee && ($employee->status === 'inactive' || !$employee->is_active || $employee->employment_status === 'inactive')) {
+            $isInactive = true;
+        }
+
+        if ($isInactive) {
             if (method_exists($user, 'tokens')) {
                 try { $user->tokens()->delete(); } catch (\Exception $e) {}
             }
