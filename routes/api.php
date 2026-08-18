@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\InvoicePurchaseSettingsController;
+use App\Http\Controllers\Api\HardwareSettingsController;
 use App\Http\Controllers\Api\PurchaseReturnController;
 use App\Http\Controllers\Api\SalesReturnController;
 use App\Http\Controllers\Api\FinancialReportController;
@@ -349,6 +350,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         // Invoice & Purchase Settings routes
         Route::get('/invoice-purchase-settings', [InvoicePurchaseSettingsController::class, 'index']);
         Route::put('/invoice-purchase-settings', [InvoicePurchaseSettingsController::class, 'update']);
+
+        // Hardware Devices Settings routes
+        Route::get('/hardware-settings', [HardwareSettingsController::class, 'index']);
+        Route::put('/hardware-settings', [HardwareSettingsController::class, 'update']);
+        Route::post('/hardware-settings/test-device', [HardwareSettingsController::class, 'testDevice']);
 
         // FBR Pakistan Settings & Entry Log routes
         Route::get('/fbr-settings', [FbrSettingsController::class, 'getSettings']);
