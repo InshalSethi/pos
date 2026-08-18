@@ -8,6 +8,8 @@ use App\Traits\HasUtcDatabaseTimezones;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
 use App\Events\ExpenseApproved;
@@ -16,6 +18,8 @@ use App\Events\ExpenseRejected;
 
 class Expense extends Model
 {
+    use SoftDeletes;
+
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;

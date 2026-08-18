@@ -560,12 +560,19 @@ class DoubleEntryAccountingService
 
         return DB::transaction(function () use ($sale, $companyId, $totalCogs) {
             // 1. Resolve '1040 Inventory' Asset Account
-            $inventoryAccount = Account::where('company_id', $companyId)
+            $inventoryAccount = Account::withTrashed()
+                ->where('company_id', $companyId)
+                ->where('account_code', '1040')
+                ->first()
+                ?? Account::withTrashed()
+                ->where('company_id', $companyId)
                 ->where('account_type', 'asset')
-                ->where(function ($q) {
-                    $q->where('account_code', '1040')
-                      ->orWhere('account_name', 'LIKE', '%Inventory%');
-                })->first();
+                ->where('account_name', 'LIKE', '%Inventory%')
+                ->first();
+
+            if ($inventoryAccount && $inventoryAccount->trashed()) {
+                $inventoryAccount->restore();
+            }
 
             if (!$inventoryAccount) {
                 $inventoryAccount = Account::create([
@@ -582,13 +589,21 @@ class DoubleEntryAccountingService
             }
 
             // 2. Resolve 'Cost of Goods Sold' Expense Account
-            $cogsAccount = Account::where('company_id', $companyId)
+            $cogsAccount = Account::withTrashed()
+                ->where('company_id', $companyId)
+                ->where('account_code', '5010')
+                ->first()
+                ?? Account::withTrashed()
+                ->where('company_id', $companyId)
                 ->where('account_type', 'expense')
                 ->where(function ($q) {
-                    $q->where('account_code', '5010')
-                      ->orWhere('account_name', 'LIKE', '%Cost of Goods Sold%')
+                    $q->where('account_name', 'LIKE', '%Cost of Goods Sold%')
                       ->orWhere('account_name', 'LIKE', '%COGS%');
                 })->first();
+
+            if ($cogsAccount && $cogsAccount->trashed()) {
+                $cogsAccount->restore();
+            }
 
             if (!$cogsAccount) {
                 $cogsAccount = Account::create([
@@ -690,14 +705,20 @@ class DoubleEntryAccountingService
 
         return DB::transaction(function () use ($item, $companyId, $quantity, $purchasePrice, $totalOpeningValue) {
             // 1. Resolve Active Leaf / Child '1040 Inventory' Asset Account
-            $inventoryAccount = Account::where('company_id', $companyId)
+            $inventoryAccount = Account::withoutGlobalScopes()->withTrashed()
+                ->where('company_id', $companyId)
+                ->where('account_code', '1040')
+                ->first()
+                ?? Account::withoutGlobalScopes()->withTrashed()
+                ->where('company_id', $companyId)
                 ->where('account_type', 'asset')
-                ->where(function ($q) {
-                    $q->where('account_code', '1040')
-                      ->orWhere('account_name', 'LIKE', '%Inventory%');
-                })
+                ->where('account_name', 'LIKE', '%Inventory%')
                 ->whereDoesntHave('children')
                 ->first();
+
+            if ($inventoryAccount && $inventoryAccount->trashed()) {
+                $inventoryAccount->restore();
+            }
 
             if (!$inventoryAccount) {
                 $inventoryAccount = Account::create([
@@ -714,16 +735,24 @@ class DoubleEntryAccountingService
             }
 
             // 2. Resolve Active Leaf / Child '3010 Owner's Equity' Account
-            $equityAccount = Account::where('company_id', $companyId)
+            $equityAccount = Account::withoutGlobalScopes()->withTrashed()
+                ->where('company_id', $companyId)
+                ->where('account_code', '3010')
+                ->first()
+                ?? Account::withoutGlobalScopes()->withTrashed()
+                ->where('company_id', $companyId)
                 ->where('account_type', 'equity')
                 ->where(function ($q) {
-                    $q->where('account_code', '3010')
-                      ->orWhere('account_name', 'LIKE', '%Opening Balance Equity%')
+                    $q->where('account_name', 'LIKE', '%Opening Balance Equity%')
                       ->orWhere('account_name', 'LIKE', '%Owner%Equity%')
                       ->orWhere('account_name', 'LIKE', '%Owner%Capital%');
                 })
                 ->whereDoesntHave('children')
                 ->first();
+
+            if ($equityAccount && $equityAccount->trashed()) {
+                $equityAccount->restore();
+            }
 
             if (!$equityAccount) {
                 $equityAccount = Account::create([
@@ -745,7 +774,7 @@ class DoubleEntryAccountingService
 
             $journalEntry = JournalEntry::create([
                 'company_id' => $companyId,
-                'entry_number' => $this->generateEntryNumber('OS'),
+                'entry_number' => $this->generateEntryNumber('OS', $companyId),
                 'entry_date' => now()->toDateString(),
                 'reference' => "Opening Stock - {$itemName}{$skuStr}",
                 'description' => "Opening Stock valuation for {$itemName} ({$quantity} units @ {$purchasePrice})",
@@ -804,9 +833,19 @@ class DoubleEntryAccountingService
             $currentValuation += ($cost * $qty);
         }
 
-        $invAcc = Account::where('company_id', $companyId)->where(function ($q) {
-            $q->where('account_code', '1040')->orWhere('account_name', 'LIKE', '%Inventory%');
-        })->first();
+        $invAcc = Account::withTrashed()
+            ->where('company_id', $companyId)
+            ->where('account_code', '1040')
+            ->first()
+            ?? Account::withTrashed()
+            ->where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_name', 'LIKE', '%Inventory%');
+            })->first();
+
+        if ($invAcc && $invAcc->trashed()) {
+            $invAcc->restore();
+        }
 
         if (!$invAcc) {
             $invAcc = Account::create([
@@ -2070,23 +2109,40 @@ class DoubleEntryAccountingService
     }
 
     /**
-     * Generate journal entry number
+     * Generate journal entry number cleanly with withTrashed guard, company_id scope, and accurate sequence extraction
      */
-    private function generateEntryNumber(string $prefix): string
+    private function generateEntryNumber(string $prefix, ?int $companyId = null): string
     {
+        $companyId = $companyId ?? (auth()->user()?->current_company_id ?? 1);
         $year = Carbon::now()->year;
         $month = Carbon::now()->format('m');
+        $datePrefix = "{$year}{$month}";
 
-        $lastEntry = JournalEntry::where('entry_number', 'like', "{$prefix}{$year}{$month}%")
-                                ->orderBy('id', 'desc')
-                                ->first();
+        $query = JournalEntry::withoutGlobalScopes()
+            ->withTrashed()
+            ->where('company_id', $companyId)
+            ->where('entry_number', 'like', "{$prefix}{$datePrefix}%")
+            ->orderBy('id', 'desc');
 
-        $sequence = $lastEntry ? (int) substr($lastEntry->entry_number, -4) + 1 : 1;
-        $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        if (\Illuminate\Support\Facades\DB::transactionLevel() > 0) {
+            $query->lockForUpdate();
+        }
 
-        while (JournalEntry::where('entry_number', $entryNumber)->exists()) {
+        $lastEntry = $query->first();
+
+        $sequence = 1;
+        if ($lastEntry && strlen($lastEntry->entry_number) >= 4) {
+            $last4 = substr($lastEntry->entry_number, -4);
+            if (is_numeric($last4)) {
+                $sequence = (int) $last4 + 1;
+            }
+        }
+
+        $entryNumber = sprintf('%s%s%04d', $prefix, $datePrefix, $sequence);
+
+        while (JournalEntry::withoutGlobalScopes()->withTrashed()->where('company_id', $companyId)->where('entry_number', $entryNumber)->exists()) {
             $sequence++;
-            $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+            $entryNumber = sprintf('%s%s%04d', $prefix, $datePrefix, $sequence);
         }
 
         return $entryNumber;

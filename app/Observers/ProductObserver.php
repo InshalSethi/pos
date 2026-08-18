@@ -73,4 +73,17 @@ class ProductObserver
             Log::error("Failed cleaning up Journal Entries for deleted Product #{$product->id}: " . $e->getMessage());
         }
     }
+
+    /**
+     * Handle the Product "restored" event.
+     * Re-creates initial opening stock journal entry and updates COA balances when a product is restored.
+     */
+    public function restored(Product $product): void
+    {
+        try {
+            $this->accountingService->createOpeningStockEntry($product);
+        } catch (\Throwable $e) {
+            Log::error("Failed re-creating Opening Stock Journal Entry for restored Product #{$product->id}: " . $e->getMessage());
+        }
+    }
 }
