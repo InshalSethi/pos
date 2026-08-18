@@ -1221,6 +1221,7 @@ import { useToast } from '@/composables/useToast';
 import CustomerModalSimple from '@/components/customers/CustomerModalSimple.vue';
 import api from '@/services/api';
 import ProductSearch from '@/components/shared/ProductSearch.vue';
+import soundService from '@/services/SoundService';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -3434,8 +3435,10 @@ const handleWindowScrollOrResize = () => {
 
 const onProductSelected = ({ product, error, query }) => {
   if (error) {
-    showNotification(error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
+    soundService.playWarning();
+    showNotification(error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
   } else if (product) {
+    soundService.playSuccess();
     addToInvoice(product);
     showNotification(`Added "${product.name}" to invoice`, 'success');
   }

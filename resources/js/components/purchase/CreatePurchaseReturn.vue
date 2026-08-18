@@ -792,6 +792,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 import ProductSearch from '@/components/shared/ProductSearch.vue';
+import soundService from '@/services/SoundService';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -1584,13 +1585,14 @@ const fetchBankAccounts = async () => {
 
 const onProductSelected = ({ product, error, query }) => {
   if (error) {
-    // some modules use showNotification, some use errorMessage.value
+    soundService.playWarning();
     if (typeof showNotification === 'function') {
-      showNotification(error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
+      showNotification(error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
     } else if (typeof errorMessage !== 'undefined') {
-      errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+      errorMessage.value = error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`;
     }
   } else if (product) {
+    soundService.playSuccess();
     addProductToReturn(product);
   }
 };

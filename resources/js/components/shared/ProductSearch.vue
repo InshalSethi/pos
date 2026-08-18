@@ -5,8 +5,10 @@
               <!-- Search items input (takes full width minus gold category icon button) -->
               <div class="relative flex-1" id="product-search-container">
                 <input
+                  ref="searchInputRef"
                   v-model="productSearch"
                   type="text"
+                  autofocus
                   placeholder="Search products by title, code or barcode..."
                   class="w-full pl-5 pr-11 py-2.5 bg-white dark:bg-[#12161b]/90 border border-slate-300 dark:border-sky-500/40 focus:border-sky-400 rounded-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 text-xs font-medium shadow-[0_0_15px_rgba(56,189,248,0.15)] focus:shadow-[0_0_20px_rgba(56,189,248,0.3)] focus:outline-none transition-all duration-300"
                   @focus="isProductDropdownOpen = true"
@@ -647,6 +649,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import api from '@/services/api';
+import soundService from '@/services/SoundService';
 
 const props = defineProps({
   products: { type: Array, required: true },
@@ -672,6 +675,7 @@ const isPurchaseContext = computed(() => {
 const emit = defineEmits(['product-selected']);
 
 // Basic Search State
+const searchInputRef = ref(null);
 const isProductDropdownOpen = ref(false);
 const productSearch = ref('');
 const highlightedProductIndex = ref(-1);
@@ -1480,9 +1484,11 @@ const getDisplayPrice = (product) => {
 
 const selectProductFromDropdown = (product) => {
   if (isProductOutOfStock(product) && !isPurchaseContext.value) {
+    soundService.playWarning();
     emit('product-selected', { product, error: 'Out of Stock' });
     return;
   }
+  soundService.playSuccess();
   emit('product-selected', { product });
   productSearch.value = '';
   isProductDropdownOpen.value = false;
@@ -1500,11 +1506,13 @@ const handleProductSearchEnter = () => {
   if (matchedProduct) {
     selectProductFromDropdown(matchedProduct);
   } else {
+    soundService.playWarning();
     emit('product-selected', { error: 'Not Found', query: productSearch.value });
   }
 };
 
 const addAdvanceProductToInvoice = (product) => {
+  soundService.playSuccess();
   emit('product-selected', { product, isAdvance: true });
 };
 
@@ -1516,13 +1524,59 @@ const handleClickOutside = (event) => {
   activeDropdown.value = null;
 };
 
+let focusTimer = null;
+
+const focusSearchInput = () => {
+  if (searchInputRef.value) {
+    try {
+      searchInputRef.value.focus();
+    } catch (e) {}
+  }
+};
+
+const handleGlobalKeydown = (e) => {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    focusSearchInput();
+  }
+};
+
+watch(() => props.products, () => {
+  focusSearchInput();
+}, { deep: false });
+
 onMounted(() => {
   loadTags();
   loadCategoriesAndBrands();
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('keydown', handleGlobalKeydown);
+
+  // Auto-focus product search input on component mount across all transaction pages
+  focusSearchInput();
+  let attempts = 0;
+  focusTimer = setInterval(() => {
+    attempts++;
+    const active = document.activeElement;
+    const isSearchFocused = active === searchInputRef.value;
+    const isOtherInputFocused = active && active !== document.body && active !== document.documentElement && active !== searchInputRef.value && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+
+    if (isSearchFocused || isOtherInputFocused || attempts > 20) {
+      if (focusTimer) clearInterval(focusTimer);
+      return;
+    }
+
+    focusSearchInput();
+  }, 100);
 });
 
 onUnmounted(() => {
+  if (focusTimer) clearInterval(focusTimer);
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('keydown', handleGlobalKeydown);
+});
+
+defineExpose({
+  focusSearchInput,
+  searchInputRef
 });
 </script>
