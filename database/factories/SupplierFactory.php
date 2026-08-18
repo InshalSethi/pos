@@ -18,7 +18,7 @@ class SupplierFactory extends Factory
         return [
             'company_id' => Company::factory(),
             'name' => fake()->company() . ' Supplies',
-            'contact_person' => fake()->name(),
+            'company_name' => fake()->company(),
             'email' => fake()->companyEmail(),
             'phone' => fake()->phoneNumber(),
             'address' => fake()->address(),

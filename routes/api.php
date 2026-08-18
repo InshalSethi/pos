@@ -373,6 +373,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::get('/reports/financial/balance-sheet', [FinancialReportController::class , 'balanceSheet']);
         Route::get('/reports/financial/trial-balance', [FinancialReportController::class , 'trialBalance']);
         Route::get('/reports/financial/cash-flow', [FinancialReportController::class , 'cashFlow']);
+        Route::get('/reports/pdf/export', [FinancialReportController::class , 'exportPdf']);
         Route::get('/permissions', [RoleController::class , 'permissions']);
 
         // Report routes

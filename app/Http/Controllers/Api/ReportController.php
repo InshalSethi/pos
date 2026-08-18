@@ -15,10 +15,13 @@ class ReportController extends Controller
 {
     public function salesSummary(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::today()->toDateString());
+        $startDate = $request->get('start_date', Carbon::today()->subDays(30)->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
 
-        $sales = Sale::whereBetween('created_at', [$startDate, $endDate])
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
+        $sales = Sale::whereBetween('created_at', [$startDateTime, $endDateTime])
             ->selectRaw('
                 DATE(created_at) as date,
                 COUNT(*) as total_sales,
@@ -31,10 +34,10 @@ class ReportController extends Controller
             ->get();
 
         $summary = [
-            'total_sales' => $sales->sum('total_sales'),
-            'total_revenue' => $sales->sum('total_revenue'),
-            'total_paid' => $sales->sum('total_paid'),
-            'average_sale' => $sales->avg('average_sale'),
+            'total_sales' => (int) $sales->sum('total_sales'),
+            'total_revenue' => (float) $sales->sum('total_revenue'),
+            'total_paid' => (float) $sales->sum('total_paid'),
+            'average_sale' => (float) ($sales->count() > 0 ? $sales->avg('average_sale') : 0),
             'daily_breakdown' => $sales
         ];
 
@@ -66,9 +69,12 @@ class ReportController extends Controller
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
         $limit = $request->get('limit', 10);
 
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
         $products = SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->selectRaw('
                 products.id,
                 products.name,
@@ -91,8 +97,11 @@ class ReportController extends Controller
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
         $limit = $request->get('limit', 10);
 
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
         $customers = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->selectRaw('
                 customers.id,
                 customers.name,
@@ -181,9 +190,12 @@ class ReportController extends Controller
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
         $productId = $request->get('product_id');
 
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
         $query = SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->select([
                 'sales.created_at',
                 'sales.sale_number',
