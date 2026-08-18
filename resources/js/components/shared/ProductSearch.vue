@@ -31,7 +31,7 @@
                     @mouseenter="highlightedProductIndex = idx"
                     class="px-4 py-2.5 flex justify-between items-center text-xs border-b border-slate-100 dark:border-zinc-800/60 last:border-0 text-left transition-colors"
                     :class="[
-                      isProductOutOfStock(product)
+                      isProductOutOfStock(product) && !isPurchaseContext
                         ? 'opacity-50 cursor-not-allowed bg-slate-100/50 dark:bg-zinc-800/40 select-none'
                         : (highlightedProductIndex === idx
                             ? 'bg-indigo-50/90 dark:bg-zinc-800/90 text-indigo-900 dark:text-indigo-200 border-l-4 border-l-indigo-600 dark:border-l-indigo-400 font-bold cursor-pointer'
@@ -655,7 +655,18 @@ const props = defineProps({
   currencySymbol: { type: String, default: 'PKR' },
   targetWarehouseId: { type: [String, Number], default: 'all' },
   priceType: { type: String, default: 'selling' },
-  useCostPrice: { type: Boolean, default: false }
+  useCostPrice: { type: Boolean, default: false },
+  mode: { type: String, default: '' },
+  isPurchaseOrder: { type: Boolean, default: false },
+  allowOutOfStockSelection: { type: Boolean, default: false }
+});
+
+const isPurchaseContext = computed(() => {
+  return props.priceType === 'purchase' || 
+         props.priceType === 'cost' || 
+         props.mode === 'purchase' || 
+         props.isPurchaseOrder === true || 
+         props.allowOutOfStockSelection === true;
 });
 
 const emit = defineEmits(['product-selected']);
@@ -1468,6 +1479,10 @@ const getDisplayPrice = (product) => {
 };
 
 const selectProductFromDropdown = (product) => {
+  if (isProductOutOfStock(product) && !isPurchaseContext.value) {
+    emit('product-selected', { product, error: 'Out of Stock' });
+    return;
+  }
   emit('product-selected', { product });
   productSearch.value = '';
   isProductDropdownOpen.value = false;
