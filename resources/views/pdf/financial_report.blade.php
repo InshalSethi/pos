@@ -51,6 +51,7 @@
         }
         .badge-success { background-color: #d1fae5; color: #065f46; }
         .badge-warning { background-color: #fef3c7; color: #92400e; }
+        .badge-danger { background-color: #fee2e2; color: #991b1b; }
         .badge-indigo { background-color: #e0e7ff; color: #3730a3; }
         
         .kpi-table {
@@ -169,7 +170,7 @@
                 <div><strong>Period:</strong> {{ $periodText }}</div>
                 <div><strong>Generated Date:</strong> {{ $generatedAt }}</div>
                 <div style="margin-top: 2px;">
-                    <span class="badge badge-indigo">IFRS / GAAP Compliant</span>
+                    <span class="badge badge-indigo">Senior CA Audit Standard</span>
                 </div>
             </td>
         </tr>
@@ -297,7 +298,7 @@
             </tbody>
         </table>
 
-    <!-- REPORT BODY: BALANCE SHEET -->
+    <!-- BALANCE SHEET -->
     @elseif($reportType === 'balance-sheet')
         <table class="kpi-table">
             <tr>
@@ -403,7 +404,7 @@
             </tbody>
         </table>
 
-    <!-- REPORT BODY: TRIAL BALANCE -->
+    <!-- TRIAL BALANCE -->
     @elseif($reportType === 'trial-balance')
         <div class="section-header">General Ledger Trial Balance</div>
         <table class="data-table">
@@ -434,7 +435,7 @@
             </tbody>
         </table>
 
-    <!-- REPORT BODY: CASH FLOW STATEMENT -->
+    <!-- CASH FLOW -->
     @elseif($reportType === 'cash-flow')
         <div class="section-header">I. Cash Flow from Operating Activities</div>
         <table class="data-table">
@@ -484,39 +485,179 @@
             </tbody>
         </table>
 
-    <!-- GENERIC / OPERATIONAL REPORTS -->
-    @else
-        <div class="section-header">Report Summary & Detail Breakdown</div>
+    <!-- SALES SUMMARY -->
+    @elseif($reportType === 'sales-summary')
+        <table class="kpi-table">
+            <tr>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Invoices</div>
+                        <div class="kpi-value">{{ number_format($data['total_sales'] ?? 0) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">Gross Revenue</div>
+                        <div class="kpi-value">${{ number_format($data['total_revenue'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Collected Paid</div>
+                        <div class="kpi-value">${{ number_format($data['total_paid'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Outstanding Due</div>
+                        <div class="kpi-value text-debit">${{ number_format($data['total_due'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-header">Daily Sales Breakdown</div>
         <table class="data-table">
             <thead>
                 <tr>
-                    @if(isset($data['daily_breakdown']) || isset($data['summary']))
-                        <th>Date / Metric</th>
-                        <th class="text-right">Total Sales</th>
-                        <th class="text-right">Revenue</th>
-                        <th class="text-right">Paid</th>
-                    @elseif(isset($data['products']))
-                        <th>Product Code</th>
-                        <th>Product Name</th>
-                        <th class="text-right">Quantity Sold</th>
-                        <th class="text-right">Total Revenue</th>
-                    @else
-                        <th>Description</th>
-                        <th class="text-right">Value</th>
-                    @endif
+                    <th style="width: 20%;">Date</th>
+                    <th style="width: 15%;" class="text-center">Orders</th>
+                    <th style="width: 20%;" class="text-right">Gross Revenue</th>
+                    <th style="width: 20%;" class="text-right">Total Paid</th>
+                    <th style="width: 25%;" class="text-right">Outstanding Due</th>
                 </tr>
             </thead>
             <tbody>
-                @if(isset($data['daily_breakdown']))
-                    @foreach($data['daily_breakdown'] as $row)
-                        <tr>
-                            <td>{{ $row['date'] ?? $row['month_name'] ?? 'N/A' }}</td>
-                            <td class="text-right">{{ $row['total_sales'] ?? 0 }}</td>
-                            <td class="text-right">${{ number_format($row['total_revenue'] ?? 0, 2) }}</td>
-                            <td class="text-right">${{ number_format($row['total_paid'] ?? 0, 2) }}</td>
-                        </tr>
-                    @endforeach
-                @elseif(is_array($data))
+                @foreach($data['daily_breakdown'] ?? [] as $row)
+                    <tr>
+                        <td class="font-mono">{{ $row['date'] }}</td>
+                        <td class="text-center">{{ $row['total_sales'] }}</td>
+                        <td class="text-right">${{ number_format($row['total_revenue'], 2) }}</td>
+                        <td class="text-right">${{ number_format($row['total_paid'], 2) }}</td>
+                        <td class="text-right text-debit">${{ number_format($row['total_due'], 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+    <!-- TOP PRODUCTS -->
+    @elseif($reportType === 'top-products')
+        <table class="kpi-table">
+            <tr>
+                <td style="width: 33%; padding-right: 6px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Units Sold</div>
+                        <div class="kpi-value">{{ number_format($data['total_units_sold'] ?? 0) }}</div>
+                    </div>
+                </td>
+                <td style="width: 33%; padding-right: 6px;">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">Total Sales Revenue</div>
+                        <div class="kpi-value">${{ number_format($data['total_revenue'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 34%;">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">Total Net Margin</div>
+                        <div class="kpi-value">${{ number_format($data['total_profit'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-header">Product Sales & Margin Performance</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">SKU</th>
+                    <th style="width: 38%;">Product Name</th>
+                    <th style="width: 15%;">Category</th>
+                    <th style="width: 10%;" class="text-center">Qty Sold</th>
+                    <th style="width: 12.5%;" class="text-right">Revenue ($)</th>
+                    <th style="width: 12.5%;" class="text-right">Profit ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($data['products'] ?? [] as $p)
+                    <tr>
+                        <td class="font-mono">{{ $p['sku'] }}</td>
+                        <td>{{ $p['product_name'] }}</td>
+                        <td>{{ $p['category_name'] }}</td>
+                        <td class="text-center font-bold">{{ number_format($p['total_quantity']) }}</td>
+                        <td class="text-right font-mono">${{ number_format($p['total_revenue'], 2) }}</td>
+                        <td class="text-right font-mono text-credit">${{ number_format($p['net_profit'], 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+    <!-- INVENTORY VALUATION -->
+    @elseif($reportType === 'inventory-valuation')
+        <table class="kpi-table">
+            <tr>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Asset Cost Value</div>
+                        <div class="kpi-value">${{ number_format($data['total_cost_value'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">Retail Potential Value</div>
+                        <div class="kpi-value">${{ number_format($data['total_retail_value'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">Potential Gross Profit</div>
+                        <div class="kpi-value">${{ number_format($data['potential_profit'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Margin Potential</div>
+                        <div class="kpi-value">{{ $data['overall_margin_percent'] ?? 0 }}%</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-header">Category Stock Valuation Breakdown</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Category</th>
+                    <th style="width: 15%;" class="text-center">SKU Count</th>
+                    <th style="width: 15%;" class="text-center">Units Stock</th>
+                    <th style="width: 20%;" class="text-right">Cost Value ($)</th>
+                    <th style="width: 20%;" class="text-right">Retail Potential ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($data['categories'] ?? [] as $c)
+                    <tr>
+                        <td>{{ $c['category_name'] }}</td>
+                        <td class="text-center">{{ $c['product_count'] }}</td>
+                        <td class="text-center font-bold">{{ number_format($c['total_quantity']) }}</td>
+                        <td class="text-right font-mono">${{ number_format($c['cost_value'], 2) }}</td>
+                        <td class="text-right font-mono">${{ number_format($c['retail_value'], 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+    <!-- FALLBACK GENERIC REPORT -->
+    @else
+        <div class="section-header">Operational Audit Data Details</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Item / Metric</th>
+                    <th class="text-right">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(is_array($data))
                     @foreach($data as $key => $val)
                         @if(is_numeric($val) || is_string($val))
                             <tr>
@@ -532,7 +673,7 @@
 
     <!-- Footer -->
     <div class="footer">
-        Official Financial Statement generated by {{ config('app.name', 'POS System') }} on {{ $generatedAt }}. Page 1 of 1
+        Official Operational & Financial Audit Statement generated by {{ config('app.name', 'POS System') }} on {{ $generatedAt }}. Page 1 of 1
     </div>
 
 </body>

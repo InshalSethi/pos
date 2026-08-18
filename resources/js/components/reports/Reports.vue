@@ -728,47 +728,413 @@
                 </div>
               </div>
 
-              <!-- 5. OTHER / SALES / INVENTORY REPORTS (Fallback) -->
-              <div v-else class="space-y-4">
-                <!-- Sales Summary -->
-                <div v-if="currentReportType === 'sales-summary'" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900">
-                    <span class="text-xs font-semibold text-indigo-600">Total Sales</span>
-                    <div class="text-xl font-bold text-indigo-950 dark:text-indigo-100 mt-1">{{ reportData.total_sales || 0 }}</div>
+              <!-- 5. OPERATIONAL REPORTS (Sales & Inventory Analytics) -->
+              <div v-else class="space-y-6">
+
+                <!-- 5A. SALES SUMMARY REPORT -->
+                <div v-if="currentReportType === 'sales-summary'" class="space-y-4">
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Total Orders</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_sales || 0 }}</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Gross Revenue</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_revenue) }}</div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-100 dark:border-blue-900/60">
+                      <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Collected</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_paid) }}</div>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-xl border border-rose-100 dark:border-rose-900/60">
+                      <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Outstanding Due</span>
+                      <div class="text-2xl font-bold text-rose-700 dark:text-rose-400 mt-1">{{ formatCurrency(reportData.total_due) }}</div>
+                    </div>
                   </div>
-                  <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900">
-                    <span class="text-xs font-semibold text-emerald-600">Total Revenue</span>
-                    <div class="text-xl font-bold text-emerald-950 dark:text-emerald-100 mt-1">{{ formatCurrency(reportData.total_revenue) }}</div>
-                  </div>
-                  <div class="bg-purple-50 dark:bg-purple-950/40 p-4 rounded-xl border border-purple-100 dark:border-purple-900">
-                    <span class="text-xs font-semibold text-purple-600">Total Paid</span>
-                    <div class="text-xl font-bold text-purple-950 dark:text-purple-100 mt-1">{{ formatCurrency(reportData.total_paid) }}</div>
-                  </div>
-                  <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-100 dark:border-amber-900">
-                    <span class="text-xs font-semibold text-amber-600">Average Sale</span>
-                    <div class="text-xl font-bold text-amber-950 dark:text-amber-100 mt-1">{{ formatCurrency(reportData.average_sale) }}</div>
+
+                  <!-- Daily Breakdown Table -->
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <div class="px-4 py-3 bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-200 dark:border-zinc-800 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-zinc-300 flex justify-between items-center">
+                      <span>Daily Revenue & Collection History</span>
+                      <span class="text-slate-400 font-normal">AOV: {{ formatCurrency(reportData.average_sale) }}</span>
+                    </div>
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">Date</th>
+                          <th class="px-4 py-2.5 text-center">Orders</th>
+                          <th class="px-4 py-2.5 text-right">Gross Revenue</th>
+                          <th class="px-4 py-2.5 text-right">Collected Paid</th>
+                          <th class="px-4 py-2.5 text-right">Outstanding Due</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="row in (reportData.daily_breakdown || [])" :key="row.date" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-700 dark:text-zinc-300">{{ row.date }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ row.total_sales }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(row.total_revenue) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400">{{ formatCurrency(row.total_paid) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">{{ formatCurrency(row.total_due) }}</td>
+                        </tr>
+                        <tr v-if="!(reportData.daily_breakdown || []).length">
+                          <td colspan="5" class="px-4 py-6 text-center text-slate-400 italic">No sales records found for selected period</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <!-- Array Tables -->
-                <div v-if="Array.isArray(reportData)" class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-                  <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
-                    <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
-                      <tr>
-                        <th v-for="key in Object.keys(reportData[0] || {})" :key="key" class="px-4 py-3 text-left uppercase tracking-wider">
-                          {{ key.replace('_', ' ') }}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
-                      <tr v-for="(row, idx) in reportData" :key="idx" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
-                        <td v-for="(val, key) in row" :key="key" class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
-                          {{ typeof val === 'number' && (key.includes('revenue') || key.includes('price') || key.includes('amount')) ? formatCurrency(val) : val }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <!-- 5B. MONTHLY REVENUE REPORT -->
+                <div v-else-if="currentReportType === 'monthly-revenue'" class="space-y-4">
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Annual Orders</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_sales || 0 }}</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Annual Revenue</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_revenue) }}</div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-100 dark:border-blue-900/60">
+                      <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Annual Collected</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_paid) }}</div>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-xl border border-rose-100 dark:border-rose-900/60">
+                      <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Annual Receivables</span>
+                      <div class="text-2xl font-bold text-rose-700 dark:text-rose-400 mt-1">{{ formatCurrency(reportData.total_due) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">Month</th>
+                          <th class="px-4 py-2.5 text-center">Orders</th>
+                          <th class="px-4 py-2.5 text-right">Gross Revenue</th>
+                          <th class="px-4 py-2.5 text-right">Collected Paid</th>
+                          <th class="px-4 py-2.5 text-right">Outstanding Due</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="row in (reportData.monthly_breakdown || [])" :key="row.month" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-zinc-200">{{ row.month_name }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ row.total_sales }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(row.total_revenue) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400">{{ formatCurrency(row.total_paid) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">{{ formatCurrency(row.total_due) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
+                <!-- 5C. TOP SELLING PRODUCTS -->
+                <div v-else-if="currentReportType === 'top-products'" class="space-y-4">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Total Units Sold</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_units_sold || 0 }}</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Generated Revenue</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_revenue) }}</div>
+                    </div>
+                    <div class="bg-purple-50 dark:bg-purple-950/40 p-4 rounded-xl border border-purple-100 dark:border-purple-900/60">
+                      <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Total Net Margin Profit</span>
+                      <div class="text-2xl font-bold text-purple-950 dark:text-purple-100 mt-1">{{ formatCurrency(reportData.total_profit) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">SKU</th>
+                          <th class="px-4 py-2.5 text-left">Product Name</th>
+                          <th class="px-4 py-2.5 text-left">Category</th>
+                          <th class="px-4 py-2.5 text-center">Units Sold</th>
+                          <th class="px-4 py-2.5 text-right">Revenue</th>
+                          <th class="px-4 py-2.5 text-right">Net Profit</th>
+                          <th class="px-4 py-2.5 text-center">Margin %</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="p in (reportData.products || [])" :key="p.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-zinc-400">{{ p.sku }}</td>
+                          <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">{{ p.product_name }}</td>
+                          <td class="px-4 py-2.5 text-slate-500 dark:text-zinc-400">{{ p.category_name }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ p.total_quantity }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(p.total_revenue) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{{ formatCurrency(p.net_profit) }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-indigo-600 dark:text-indigo-400">{{ p.profit_margin_percent }}%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 5D. CUSTOMER SALES ANALYSIS -->
+                <div v-else-if="currentReportType === 'customer-analysis'" class="space-y-4">
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Active Customers</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.active_customers || 0 }}</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Sales</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_spent) }}</div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-100 dark:border-blue-900/60">
+                      <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Paid</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_paid) }}</div>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-xl border border-rose-100 dark:border-rose-900/60">
+                      <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Total Receivables</span>
+                      <div class="text-2xl font-bold text-rose-700 dark:text-rose-400 mt-1">{{ formatCurrency(reportData.total_due) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">Code</th>
+                          <th class="px-4 py-2.5 text-left">Customer Name</th>
+                          <th class="px-4 py-2.5 text-center">Orders</th>
+                          <th class="px-4 py-2.5 text-right">Total Spent</th>
+                          <th class="px-4 py-2.5 text-right">Total Paid</th>
+                          <th class="px-4 py-2.5 text-right">Due Balance</th>
+                          <th class="px-4 py-2.5 text-right">Avg Order</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="c in (reportData.customers || [])" :key="c.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-zinc-400">{{ c.customer_code || 'CUST-' + c.id }}</td>
+                          <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">{{ c.customer_name }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ c.total_purchases }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(c.total_spent) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400">{{ formatCurrency(c.total_paid) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400 font-semibold">{{ formatCurrency(c.total_due) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-slate-600 dark:text-zinc-400">{{ formatCurrency(c.average_purchase) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 5E. CURRENT STOCK LEVELS (INVENTORY SUMMARY) -->
+                <div v-else-if="currentReportType === 'inventory-summary'" class="space-y-4">
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Total Products</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_products || 0 }} ({{ reportData.total_units || 0 }} units)</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Asset Cost Value</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_inventory_cost_value) }}</div>
+                    </div>
+                    <div class="bg-purple-50 dark:bg-purple-950/40 p-4 rounded-xl border border-purple-100 dark:border-purple-900/60">
+                      <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Retail Valuation</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_inventory_retail_value) }}</div>
+                    </div>
+                    <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-100 dark:border-amber-900/60">
+                      <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Low/Out Stock Items</span>
+                      <div class="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">{{ (reportData.low_stock_items || 0) + (reportData.out_of_stock_items || 0) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">SKU</th>
+                          <th class="px-4 py-2.5 text-left">Product Name</th>
+                          <th class="px-4 py-2.5 text-left">Category</th>
+                          <th class="px-4 py-2.5 text-center">Stock Level</th>
+                          <th class="px-4 py-2.5 text-center">Min Buffer</th>
+                          <th class="px-4 py-2.5 text-right">Cost Price</th>
+                          <th class="px-4 py-2.5 text-right">Cost Value</th>
+                          <th class="px-4 py-2.5 text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="p in (reportData.products || [])" :key="p.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-zinc-400">{{ p.sku }}</td>
+                          <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">{{ p.product_name }}</td>
+                          <td class="px-4 py-2.5 text-slate-500 dark:text-zinc-400">{{ p.category_name }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ p.stock_quantity }}</td>
+                          <td class="px-4 py-2.5 text-center text-slate-400">{{ p.min_stock_level }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-zinc-300">{{ formatCurrency(p.cost_price) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(p.inventory_cost_value) }}</td>
+                          <td class="px-4 py-2.5 text-center">
+                            <span
+                              :class="{
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': p.stock_status === 'In Stock',
+                                'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': p.stock_status === 'Low Stock',
+                                'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': p.stock_status === 'Out of Stock'
+                              }"
+                              class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider inline-block"
+                            >
+                              {{ p.stock_status }}
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 5F. LOW STOCK ALERT -->
+                <div v-else-if="currentReportType === 'low-stock'" class="space-y-4">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-xl border border-rose-100 dark:border-rose-900/60">
+                      <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Alert SKUs Count</span>
+                      <div class="text-2xl font-bold text-rose-700 dark:text-rose-400 mt-1">{{ reportData.alert_count || 0 }} Items</div>
+                    </div>
+                    <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-100 dark:border-amber-900/60">
+                      <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Total Deficit Units</span>
+                      <div class="text-2xl font-bold text-amber-950 dark:text-amber-100 mt-1">{{ reportData.total_deficit_units || 0 }} Units</div>
+                    </div>
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Estimated Reorder Cost</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_reorder_cost) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">SKU</th>
+                          <th class="px-4 py-2.5 text-left">Product Name</th>
+                          <th class="px-4 py-2.5 text-left">Category</th>
+                          <th class="px-4 py-2.5 text-center">Current Qty</th>
+                          <th class="px-4 py-2.5 text-center">Min Level</th>
+                          <th class="px-4 py-2.5 text-center">Deficit Qty</th>
+                          <th class="px-4 py-2.5 text-right">Unit Cost</th>
+                          <th class="px-4 py-2.5 text-right">Reorder Budget</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="p in (reportData.products || [])" :key="p.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-zinc-400">{{ p.sku }}</td>
+                          <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">{{ p.product_name }}</td>
+                          <td class="px-4 py-2.5 text-slate-500 dark:text-zinc-400">{{ p.category_name }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-rose-600 dark:text-rose-400">{{ p.stock_quantity }}</td>
+                          <td class="px-4 py-2.5 text-center text-slate-400">{{ p.min_stock_level }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-amber-600 dark:text-amber-400">+{{ p.deficit_quantity }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-zinc-300">{{ formatCurrency(p.unit_cost) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ formatCurrency(p.reorder_cost) }}</td>
+                        </tr>
+                        <tr v-if="!(reportData.products || []).length">
+                          <td colspan="8" class="px-4 py-6 text-center text-emerald-600 dark:text-emerald-400 font-bold italic">All stock levels are optimal. No low stock alerts!</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 5G. INVENTORY VALUATION -->
+                <div v-else-if="currentReportType === 'inventory-valuation'" class="space-y-4">
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Asset Cost Value</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_cost_value) }}</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Retail Potential</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_retail_value) }}</div>
+                    </div>
+                    <div class="bg-purple-50 dark:bg-purple-950/40 p-4 rounded-xl border border-purple-100 dark:border-purple-900/60">
+                      <span class="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Potential Gross Profit</span>
+                      <div class="text-2xl font-bold text-purple-950 dark:text-purple-100 mt-1">{{ formatCurrency(reportData.potential_profit) }}</div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-100 dark:border-blue-900/60">
+                      <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Margin Potential</span>
+                      <div class="text-2xl font-bold text-blue-700 dark:text-blue-300 mt-1">{{ reportData.overall_margin_percent || 0 }}%</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">Category</th>
+                          <th class="px-4 py-2.5 text-center">SKU Count</th>
+                          <th class="px-4 py-2.5 text-center">Stock Units</th>
+                          <th class="px-4 py-2.5 text-right">Cost Value</th>
+                          <th class="px-4 py-2.5 text-right">Retail Potential</th>
+                          <th class="px-4 py-2.5 text-right">Potential Profit</th>
+                          <th class="px-4 py-2.5 text-center">Margin %</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="c in (reportData.categories || [])" :key="c.category_name" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">{{ c.category_name }}</td>
+                          <td class="px-4 py-2.5 text-center text-slate-600 dark:text-zinc-400">{{ c.product_count }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ c.total_quantity }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(c.cost_value) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{{ formatCurrency(c.retail_value) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-purple-600 dark:text-purple-400 font-semibold">{{ formatCurrency(c.potential_profit) }}</td>
+                          <td class="px-4 py-2.5 text-center font-bold text-indigo-600 dark:text-indigo-400">{{ c.margin_percent }}%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 5H. STOCK MOVEMENTS -->
+                <div v-else-if="currentReportType === 'stock-movement'" class="space-y-4">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Total Movements</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_movements || 0 }} Logged</div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-100 dark:border-blue-900/60">
+                      <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Units Moved</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_units_moved || 0 }} Units</div>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/60">
+                      <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Value Moved</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ formatCurrency(reportData.total_value_moved) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">Date & Time</th>
+                          <th class="px-4 py-2.5 text-left">Ref / Invoice</th>
+                          <th class="px-4 py-2.5 text-left">Product Name</th>
+                          <th class="px-4 py-2.5 text-left">SKU</th>
+                          <th class="px-4 py-2.5 text-center">Movement Type</th>
+                          <th class="px-4 py-2.5 text-center">Qty</th>
+                          <th class="px-4 py-2.5 text-right">Unit Price</th>
+                          <th class="px-4 py-2.5 text-right">Total Value</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="(m, idx) in (reportData.movements || [])" :key="idx" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-500 dark:text-zinc-400">{{ new Date(m.created_at).toLocaleString() }}</td>
+                          <td class="px-4 py-2.5 font-mono font-bold text-slate-900 dark:text-white">{{ m.reference_no }}</td>
+                          <td class="px-4 py-2.5 font-semibold text-slate-800 dark:text-zinc-200">{{ m.product_name }}</td>
+                          <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-zinc-400">{{ m.sku }}</td>
+                          <td class="px-4 py-2.5 text-center">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300">
+                              {{ m.movement_type }}
+                            </span>
+                          </td>
+                          <td class="px-4 py-2.5 text-center font-bold text-slate-900 dark:text-white">{{ m.quantity }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-zinc-300">{{ formatCurrency(m.unit_price) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(m.total_value) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
