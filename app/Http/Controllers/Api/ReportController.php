@@ -388,4 +388,104 @@ class ReportController extends Controller
             'movements' => $movements
         ]);
     }
+
+    /**
+     * Inactive Customer Report
+     * Shows customers who have no sale invoices in the selected date range.
+     * Optionally filters to only show those with pending payments (due amount > 0).
+     */
+    public function inactiveCustomers(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::today()->subMonth()->toDateString());
+        $endDate = $request->get('end_date', Carbon::today()->toDateString());
+        $pendingPaymentsOnly = filter_var($request->get('pending_payments_only', false), FILTER_VALIDATE_BOOLEAN);
+        $search = $request->get('search');
+        $statusFilter = $request->get('status');
+
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
+        // Customers with no sales within start_date and end_date
+        $query = Customer::whereDoesntHave('sales', function ($q) use ($startDateTime, $endDateTime) {
+            $q->where(function ($sub) use ($startDateTime, $endDateTime) {
+                $sub->whereBetween('sale_date', [$startDateTime, $endDateTime])
+                    ->orWhere(function ($sub2) use ($startDateTime, $endDateTime) {
+                        $sub2->whereNull('sale_date')
+                            ->whereBetween('created_at', [$startDateTime, $endDateTime]);
+                    });
+            })
+            ->where('is_refund', false)
+            ->whereNotIn('status', ['void', 'voided', 'cancelled']);
+        });
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($statusFilter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($statusFilter === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        $customers = $query->with(['sales' => function ($q) {
+            $q->where('is_refund', false)
+              ->whereNotIn('status', ['void', 'voided', 'cancelled'])
+              ->orderBy('sale_date', 'desc');
+        }])->get()->map(function ($customer) {
+            $lastSale = $customer->sales->first();
+            $lastSaleDate = $lastSale ? ($lastSale->sale_date ? $lastSale->sale_date->format('Y-m-d') : $lastSale->created_at->format('Y-m-d')) : null;
+            $lastSaleAmount = $lastSale ? (float) round($lastSale->total_amount, 2) : 0.0;
+
+            // Calculate total outstanding due balance
+            $dueAmount = (float) round($customer->sales->sum(function ($s) {
+                return max(0, (float) $s->total_amount - (float) $s->paid_amount);
+            }), 2);
+
+            $totalSpent = (float) round($customer->sales->sum('total_amount'), 2);
+
+            return [
+                'id' => $customer->id,
+                'customer_code' => 'CUST-' . $customer->id,
+                'customer_name' => $customer->name,
+                'email' => $customer->email,
+                'phone' => $customer->phone ?? $customer->mobile,
+                'is_active' => (bool) $customer->is_active,
+                'last_sale_date' => $lastSaleDate,
+                'last_sale_amount' => $lastSaleAmount,
+                'total_spent' => $totalSpent,
+                'due_amount' => $dueAmount,
+                'created_at' => $customer->created_at ? $customer->created_at->format('Y-m-d') : null,
+            ];
+        });
+
+        if ($pendingPaymentsOnly) {
+            $customers = $customers->filter(function ($c) {
+                return $c['due_amount'] > 0;
+            });
+        }
+
+        $customers = $customers->values();
+
+        $totalInactive = $customers->count();
+        $totalPendingPayments = (float) round($customers->sum('due_amount'), 2);
+        $customersWithPending = $customers->where('due_amount', '>', 0)->count();
+        $systemInactiveCount = $customers->where('is_active', false)->count();
+
+        return response()->json([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'pending_payments_only' => $pendingPaymentsOnly,
+            'total_inactive_customers' => $totalInactive,
+            'total_pending_payments' => $totalPendingPayments,
+            'customers_with_pending' => $customersWithPending,
+            'system_inactive_count' => $systemInactiveCount,
+            'customers' => $customers
+        ]);
+    }
 }

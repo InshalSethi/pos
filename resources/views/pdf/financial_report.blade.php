@@ -644,6 +644,71 @@
                     </tr>
                 @endforeach
             </tbody>
+    <!-- INACTIVE CUSTOMERS -->
+    @elseif($reportType === 'inactive-customers')
+        <table class="kpi-table">
+            <tr>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Inactive Customers</div>
+                        <div class="kpi-value">{{ number_format($data['total_inactive_customers'] ?? 0) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">Pending Payments</div>
+                        <div class="kpi-value text-debit">${{ number_format($data['total_pending_payments'] ?? 0, 2) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%; padding-right: 4px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">With Due Balance</div>
+                        <div class="kpi-value">{{ number_format($data['customers_with_pending'] ?? 0) }}</div>
+                    </div>
+                </td>
+                <td style="width: 25%;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Disabled Accounts</div>
+                        <div class="kpi-value">{{ number_format($data['system_inactive_count'] ?? 0) }}</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-header">Inactive Customer Audit Listing</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Code</th>
+                    <th style="width: 26%;">Customer Name</th>
+                    <th style="width: 18%;">Contact Info</th>
+                    <th style="width: 10%;" class="text-center">Status</th>
+                    <th style="width: 12%;" class="text-center">Last Invoice</th>
+                    <th style="width: 11%;" class="text-right">Total Spent ($)</th>
+                    <th style="width: 11%;" class="text-right">Due Amount ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($data['customers'] ?? [] as $cust)
+                    <tr>
+                        <td class="font-mono">{{ $cust['customer_code'] }}</td>
+                        <td><strong>{{ $cust['customer_name'] }}</strong></td>
+                        <td>{{ $cust['phone'] ?: ($cust['email'] ?: '-') }}</td>
+                        <td class="text-center">
+                            @if($cust['is_active'])
+                                <span class="badge badge-success">Active</span>
+                            @else
+                                <span class="badge badge-danger">Inactive</span>
+                            @endif
+                        </td>
+                        <td class="text-center font-mono">{{ $cust['last_sale_date'] ?: 'Never' }}</td>
+                        <td class="text-right font-mono">${{ number_format($cust['total_spent'], 2) }}</td>
+                        <td class="text-right font-mono {{ $cust['due_amount'] > 0 ? 'text-debit' : '' }}">
+                            ${{ number_format($cust['due_amount'], 2) }}
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
         </table>
 
     <!-- FALLBACK GENERIC REPORT -->

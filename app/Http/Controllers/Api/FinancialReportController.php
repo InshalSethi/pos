@@ -537,6 +537,7 @@ class FinancialReportController extends Controller
             'monthly-revenue' => 'Monthly Revenue Analysis',
             'top-products' => 'Top Selling Products Report',
             'customer-analysis' => 'Customer Sales & Credit Analysis',
+            'inactive-customers' => 'Inactive Customer Sales & Due Payments Report',
             'inventory-summary' => 'Inventory Stock Summary',
             'low-stock' => 'Low Stock & Reorder Alert',
             'inventory-valuation' => 'Inventory Valuation Report',
@@ -568,6 +569,8 @@ class FinancialReportController extends Controller
                 $data = json_decode($opController->topSellingProducts($request)->getContent(), true);
             } elseif ($reportType === 'customer-analysis') {
                 $data = json_decode($opController->customerSalesAnalysis($request)->getContent(), true);
+            } elseif ($reportType === 'inactive-customers') {
+                $data = json_decode($opController->inactiveCustomers($request)->getContent(), true);
             } elseif ($reportType === 'inventory-summary') {
                 $data = json_decode($opController->inventoryReport($request)->getContent(), true);
             } elseif ($reportType === 'low-stock') {

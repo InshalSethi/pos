@@ -675,12 +675,13 @@ const editInvoice = () => {
 };
 
 const printPOSReceipt = () => {
-  const printUrl = router.resolve(`/sales/invoices/${route.params.id}?print=1`).href;
-  window.open(printUrl, '_blank', 'width=400,height=600');
+  const printUrl = router.resolve(`/sales/invoices/${route.params.id}/print?type=thermal`).href;
+  window.open(printUrl, '_blank', 'width=450,height=700');
 };
 
 const printPDF = () => {
-  window.print();
+  const printUrl = router.resolve(`/sales/invoices/${route.params.id}/print`).href;
+  window.open(printUrl, '_blank');
 };
 
 const shareWhatsApp = () => {
