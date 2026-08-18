@@ -1151,7 +1151,7 @@
 
 
         <!-- Invoice & Purchase Settings Tab -->
-        <div v-else-if="activeTab === 'invoice-purchase'" class="p-6 bg-slate-50/50 dark:bg-zinc-950/40 min-h-screen space-y-8">
+        <div v-else-if="activeTab === 'invoice-purchase'" class="p-6 bg-slate-50/50 dark:bg-zinc-950/40 min-h-screen space-y-6">
           
           <!-- Loading state -->
           <div v-if="loadingInvoicePurchaseSettings" class="flex flex-col justify-center items-center h-64 space-y-3">
@@ -1161,33 +1161,55 @@
 
           <template v-else>
             <!-- Header -->
-            <div class="border-b border-slate-200 dark:border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Invoice & Purchase Settings</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure default preferences, prefix rules, tax behaviors, and default terms for Sales Invoices and Purchase Orders.</p>
-              </div>
+            <div class="border-b border-slate-200 dark:border-zinc-800 pb-4">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Invoice & Purchase Settings</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure default preferences, prefix rules, tax behaviors, and default terms for Sales Invoices and Purchase Orders.</p>
+            </div>
 
-              <!-- Top Save Action Button -->
+            <!-- Sub Tabs Navigation -->
+            <div class="flex items-center space-x-2 border-b border-slate-200 dark:border-zinc-800 pb-3">
               <button
-                @click="saveInvoicePurchaseSettings"
-                :disabled="savingInvoicePurchaseSettings"
-                class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer self-start sm:self-auto"
+                @click="invoicePurchaseSubTab = 'sale_invoice'"
+                :class="[
+                  'px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2',
+                  invoicePurchaseSubTab === 'sale_invoice'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
+                ]"
               >
-                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>{{ savingInvoicePurchaseSettings ? 'Saving...' : 'Save All Settings' }}</span>
+                <span>Sale Invoice Settings</span>
+              </button>
+
+              <button
+                @click="invoicePurchaseSubTab = 'purchase_order'"
+                :class="[
+                  'px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2',
+                  invoicePurchaseSubTab === 'purchase_order'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60'
+                ]"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <span>Purchase Order Settings</span>
               </button>
             </div>
 
-            <!-- SECTION A: Invoice Settings (Sales) -->
-            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
-              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
-                <span class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-bold text-xs">A</span>
+            <!-- SUB TAB 1: Sale Invoice Settings -->
+            <div v-if="invoicePurchaseSubTab === 'sale_invoice'" class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
+              <div class="flex items-center space-x-3 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
+                <div class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
                 <div>
-                  <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Section A: Invoice Settings (Sales)</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Default numbering, pricing mode, due periods, and terms for Sales Invoices.</p>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sale Invoice Settings</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Default numbering, pricing mode, due periods, row-level wholesale controls, and invoice terms for Sales Invoices.</p>
                 </div>
               </div>
 
@@ -1252,7 +1274,7 @@
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Number of days added to creation date to calculate default due date.</p>
                 </div>
 
-                <!-- 5. Show/Hide Item Wholesale Toggle -->
+                <!-- 4. Show/Hide Item Wholesale Toggle -->
                 <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200/60 dark:border-zinc-700/60">
                   <div>
                     <label class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Show Row-Level W.S Toggle</label>
@@ -1268,7 +1290,7 @@
                   </label>
                 </div>
 
-                <!-- 4. Default Invoice Terms & Conditions -->
+                <!-- 5. Default Invoice Terms & Conditions -->
                 <div class="md:col-span-2">
                   <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Default Invoice Terms & Conditions
@@ -1283,14 +1305,33 @@
                 </div>
 
               </div>
+
+              <!-- Sale Invoice Bottom Save Action Bar -->
+              <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-zinc-800">
+                <button
+                  @click="saveInvoicePurchaseSettings"
+                  :disabled="savingInvoicePurchaseSettings"
+                  class="px-6 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{{ savingInvoicePurchaseSettings ? 'Saving...' : 'Save Sale Invoice Settings' }}</span>
+                </button>
+              </div>
             </div>
 
-            <!-- SECTION B: Purchase Order Settings -->
-            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
-              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
-                <span class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-bold text-xs">B</span>
+            <!-- SUB TAB 2: Purchase Order Settings -->
+            <div v-else-if="invoicePurchaseSubTab === 'purchase_order'" class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-6 shadow-xs space-y-6">
+              <div class="flex items-center space-x-3 border-b border-slate-100 dark:border-zinc-800/80 pb-3">
+                <div class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
                 <div>
-                  <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Section B: Purchase Order Settings</h4>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Purchase Order Settings</h4>
                   <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Prefix rules, default receiving warehouses, and cost update behavior for Purchases.</p>
                 </div>
               </div>
@@ -1345,21 +1386,21 @@
                 </div>
 
               </div>
-            </div>
 
-            <!-- Bottom Save Action Bar -->
-            <div class="flex justify-end pt-4">
-              <button
-                @click="saveInvoicePurchaseSettings"
-                :disabled="savingInvoicePurchaseSettings"
-                class="px-6 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
-              >
-                <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>{{ savingInvoicePurchaseSettings ? 'Saving Settings...' : 'Save All Settings' }}</span>
-              </button>
+              <!-- Purchase Order Bottom Save Action Bar -->
+              <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-zinc-800">
+                <button
+                  @click="saveInvoicePurchaseSettings"
+                  :disabled="savingInvoicePurchaseSettings"
+                  class="px-6 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs shadow-xs transition-all flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <svg v-if="savingInvoicePurchaseSettings" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{{ savingInvoicePurchaseSettings ? 'Saving...' : 'Save Purchase Order Settings' }}</span>
+                </button>
+              </div>
             </div>
 
           </template>
@@ -1468,6 +1509,7 @@ const settings = ref({
 // Invoice & Purchase Settings state
 const loadingInvoicePurchaseSettings = ref(false);
 const savingInvoicePurchaseSettings = ref(false);
+const invoicePurchaseSubTab = ref('sale_invoice');
 const warehousesList = ref([]);
 const invoicePurchaseSettings = ref({
   invoice_prefix: 'INV-',
