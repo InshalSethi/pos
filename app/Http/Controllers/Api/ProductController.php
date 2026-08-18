@@ -945,12 +945,6 @@ class ProductController extends Controller
                     ->whereNull('product_variation_id')
                     ->delete();
 
-                \App\Models\Inventory::where('product_id', $product->id)
-                    ->whereNotNull('product_variation_id')
-                    ->delete();
-
-                $product->variations()->delete();
-
                 $defaultWarehouse = \App\Models\Warehouse::firstOrCreate([
                     'company_id' => $companyId,
                     'is_default' => true,
@@ -960,13 +954,30 @@ class ProductController extends Controller
                 ]);
 
                 $whService = new \App\Services\WarehouseInventoryService();
+                $keptVariationIds = [];
 
                 foreach ($request->variations as $index => $row) {
-                    $variation = \App\Models\ProductVariation::create([
+                    $vId = $row['id'] ?? null;
+                    $vSku = $row['sku'] ?? null;
+                    $vCombKey = $row['combination_key'] ?? $row['name_string'] ?? $row['variation_name_string'] ?? strval($index);
+
+                    $variation = null;
+                    if ($vId) {
+                        $variation = \App\Models\ProductVariation::withTrashed()->where('product_id', $product->id)->find($vId);
+                    }
+                    if (!$variation && $vSku) {
+                        $variation = \App\Models\ProductVariation::withTrashed()->where('company_id', $companyId)->where('sku', $vSku)->first();
+                    }
+                    if (!$variation && $vCombKey) {
+                        $variation = \App\Models\ProductVariation::withTrashed()->where('product_id', $product->id)->where('combination_key', $vCombKey)->first();
+                    }
+
+                    $varPayload = [
                         'product_id' => $product->id,
-                        'combination_key' => $row['combination_key'] ?? $row['name_string'] ?? strval($index),
-                        'variation_name_string' => $row['name_string'] ?? 'Default',
-                        'sku' => $row['sku'] ?? 'SKU-' . strtoupper(uniqid()),
+                        'company_id' => $companyId,
+                        'combination_key' => $vCombKey,
+                        'variation_name_string' => $row['name_string'] ?? $row['variation_name_string'] ?? 'Default',
+                        'sku' => $vSku ?? ($variation ? $variation->sku : ('SKU-' . strtoupper(uniqid()))),
                         'barcode' => $row['barcode'] ?? null,
                         'retail_price' => $row['retail_price'] ?? 0,
                         'wholesale_price' => $row['wholesale_price'] ?? 0,
@@ -980,15 +991,26 @@ class ProductController extends Controller
                         'min_stock_alert' => $row['min_stock_alert'] ?? 0,
                         'unit_of_measure' => $row['unit_of_measure'] ?? null,
                         'expiry_date' => $row['expiry_date'] ?? null,
-                    ]);
+                    ];
+
+                    if ($variation) {
+                        if ($variation->trashed()) {
+                            $variation->restore();
+                        }
+                        $variation->update($varPayload);
+                    } else {
+                        $variation = \App\Models\ProductVariation::create($varPayload);
+                    }
+
+                    $keptVariationIds[] = $variation->id;
 
                     $targetWarehouseIds = isset($row['warehouse_ids']) && is_array($row['warehouse_ids']) && count($row['warehouse_ids']) > 0
                         ? $row['warehouse_ids']
                         : [$defaultWarehouse->id];
 
                     foreach ($targetWarehouseIds as $whId) {
-                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int) $row['warehouse_stocks'][$whId] : 0;
-                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int) $row['warehouse_min_stocks'][$whId] : 0;
+                        $qty = isset($row['warehouse_stocks'][$whId]) ? (int) $row['warehouse_stocks'][$whId] : (int) ($row['stock_qty'] ?? 0);
+                        $minStock = isset($row['warehouse_min_stocks'][$whId]) ? (int) $row['warehouse_min_stocks'][$whId] : (int) ($row['min_stock_alert'] ?? 0);
 
                         $whService->setStock(
                             $whId,
@@ -1004,12 +1026,26 @@ class ProductController extends Controller
                             ->update(['min_stock_level' => $minStock]);
                     }
                 }
-            } else {
-                $product->variations()->delete();
 
-                \App\Models\Inventory::where('product_id', $product->id)
-                    ->whereNotNull('product_variation_id')
-                    ->delete();
+                // Force delete any variations for this product that were removed during edit
+                $removedVariations = \App\Models\ProductVariation::withTrashed()
+                    ->where('product_id', $product->id)
+                    ->whereNotIn('id', $keptVariationIds)
+                    ->get();
+
+                foreach ($removedVariations as $remVar) {
+                    \App\Models\Inventory::where('product_variation_id', $remVar->id)->delete();
+                    $remVar->forceDelete();
+                }
+            } else {
+                $removedVariations = \App\Models\ProductVariation::withTrashed()
+                    ->where('product_id', $product->id)
+                    ->get();
+
+                foreach ($removedVariations as $remVar) {
+                    \App\Models\Inventory::where('product_variation_id', $remVar->id)->delete();
+                    $remVar->forceDelete();
+                }
 
                 if ($product->track_inventory) {
                     $whService = new \App\Services\WarehouseInventoryService();
