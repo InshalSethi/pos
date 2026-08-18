@@ -3151,6 +3151,7 @@ const updateOrder = async () => {
         product_variation_id: item.product_variation_id,
         quantity_ordered: item.quantity_ordered,
         unit_cost: item.unit_cost,
+        sale_price: item.sale_price || item.product?.selling_price || item.product?.price || null,
         notes: item.notes || null
       }))
     };
