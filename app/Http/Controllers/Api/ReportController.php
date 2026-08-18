@@ -191,28 +191,53 @@ class ReportController extends Controller
     }
 
     /**
-     * Inventory Stock Level Report
+     * Inventory Stock Level Report (Supports Product Variations)
      */
     public function inventoryReport(Request $request)
     {
         $lowStockThreshold = (int) $request->get('low_stock_threshold', 10);
 
-        $inventory = Product::leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->select([
-                'products.id',
-                'products.sku',
-                'products.name as product_name',
-                'categories.name as category_name',
-                'products.stock_quantity',
-                'products.min_stock_level',
-                'products.cost_price',
-                'products.selling_price',
-            ])
-            ->get()
-            ->map(function ($p) use ($lowStockThreshold) {
-                $qty = (float) $p->stock_quantity;
-                $cost = (float) $p->cost_price;
-                $retail = (float) $p->selling_price;
+        $products = Product::with(['category', 'variations'])->get();
+        $itemsList = [];
+
+        foreach ($products as $p) {
+            $categoryName = $p->category->name ?? 'Uncategorized';
+
+            if ($p->has_variations && $p->variations->count() > 0) {
+                foreach ($p->variations as $v) {
+                    $qty = (float) ($v->stock_qty ?? 0);
+                    $cost = (float) ($v->cost_price ?? $p->cost_price ?? 0);
+                    $retail = (float) ($v->retail_price ?? $v->wholesale_price ?? $p->selling_price ?? 0);
+                    $minLevel = (float) ($v->min_stock_alert ?? $p->min_stock_level ?? $lowStockThreshold);
+
+                    if ($qty <= 0) {
+                        $status = 'Out of Stock';
+                    } elseif ($qty <= $minLevel) {
+                        $status = 'Low Stock';
+                    } else {
+                        $status = 'In Stock';
+                    }
+
+                    $varNameStr = $v->variation_name_string ?: $v->sku;
+                    $itemsList[] = [
+                        'id' => $p->id . '_var_' . $v->id,
+                        'sku' => $v->sku ?: $p->sku,
+                        'product_name' => $p->name . " ({$varNameStr})",
+                        'category_name' => $categoryName,
+                        'stock_quantity' => $qty,
+                        'min_stock_level' => $minLevel,
+                        'cost_price' => $cost,
+                        'selling_price' => $retail,
+                        'stock_status' => $status,
+                        'inventory_cost_value' => round($qty * $cost, 2),
+                        'inventory_retail_value' => round($qty * $retail, 2),
+                        'potential_margin' => round(($qty * $retail) - ($qty * $cost), 2),
+                    ];
+                }
+            } else {
+                $qty = (float) ($p->stock_quantity ?? 0);
+                $cost = (float) ($p->cost_price ?? 0);
+                $retail = (float) ($p->selling_price ?? 0);
                 $minLevel = (float) ($p->min_stock_level ?? $lowStockThreshold);
 
                 if ($qty <= 0) {
@@ -223,11 +248,11 @@ class ReportController extends Controller
                     $status = 'In Stock';
                 }
 
-                return [
+                $itemsList[] = [
                     'id' => $p->id,
                     'sku' => $p->sku,
-                    'product_name' => $p->product_name,
-                    'category_name' => $p->category_name ?? 'Uncategorized',
+                    'product_name' => $p->name,
+                    'category_name' => $categoryName,
                     'stock_quantity' => $qty,
                     'min_stock_level' => $minLevel,
                     'cost_price' => $cost,
@@ -237,7 +262,10 @@ class ReportController extends Controller
                     'inventory_retail_value' => round($qty * $retail, 2),
                     'potential_margin' => round(($qty * $retail) - ($qty * $cost), 2),
                 ];
-            });
+            }
+        }
+
+        $inventory = collect($itemsList);
 
         $summary = [
             'total_products' => $inventory->count(),
@@ -255,46 +283,63 @@ class ReportController extends Controller
     }
 
     /**
-     * Low Stock Alert & Reorder Planning Report
+     * Low Stock Alert & Reorder Planning Report (Supports Product Variations)
      */
     public function lowStockAlert(Request $request)
     {
         $threshold = (int) $request->get('threshold', 10);
 
-        $lowStockProducts = Product::leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->where(function ($q) use ($threshold) {
-                $q->where('stock_quantity', '<=', $threshold)
-                  ->orWhereColumn('stock_quantity', '<=', 'min_stock_level');
-            })
-            ->select([
-                'products.id',
-                'products.sku',
-                'products.name as product_name',
-                'categories.name as category_name',
-                'products.stock_quantity',
-                'products.min_stock_level',
-                'products.cost_price',
-            ])
-            ->orderBy('stock_quantity', 'asc')
-            ->get()
-            ->map(function ($p) {
-                $qty = (float) $p->stock_quantity;
-                $min = (float) ($p->min_stock_level ?? 10);
-                $deficit = max(0, $min - $qty + 10); // Target buffer
-                $cost = (float) $p->cost_price;
+        $products = Product::with(['category', 'variations'])->get();
+        $lowStockList = [];
 
-                return [
-                    'id' => $p->id,
-                    'sku' => $p->sku,
-                    'product_name' => $p->product_name,
-                    'category_name' => $p->category_name ?? 'Uncategorized',
-                    'stock_quantity' => $qty,
-                    'min_stock_level' => $min,
-                    'deficit_quantity' => $deficit,
-                    'unit_cost' => $cost,
-                    'reorder_cost' => round($deficit * $cost, 2),
-                ];
-            });
+        foreach ($products as $p) {
+            $categoryName = $p->category->name ?? 'Uncategorized';
+
+            if ($p->has_variations && $p->variations->count() > 0) {
+                foreach ($p->variations as $v) {
+                    $qty = (float) ($v->stock_qty ?? 0);
+                    $min = (float) ($v->min_stock_alert ?? $p->min_stock_level ?? $threshold);
+                    if ($qty <= $min || $qty <= $threshold) {
+                        $deficit = max(0, $min - $qty + 10);
+                        $cost = (float) ($v->cost_price ?? $p->cost_price ?? 0);
+                        $varNameStr = $v->variation_name_string ?: $v->sku;
+
+                        $lowStockList[] = [
+                            'id' => $p->id . '_var_' . $v->id,
+                            'sku' => $v->sku ?: $p->sku,
+                            'product_name' => $p->name . " ({$varNameStr})",
+                            'category_name' => $categoryName,
+                            'stock_quantity' => $qty,
+                            'min_stock_level' => $min,
+                            'deficit_quantity' => $deficit,
+                            'unit_cost' => $cost,
+                            'reorder_cost' => round($deficit * $cost, 2),
+                        ];
+                    }
+                }
+            } else {
+                $qty = (float) ($p->stock_quantity ?? 0);
+                $min = (float) ($p->min_stock_level ?? $threshold);
+                if ($qty <= $min || $qty <= $threshold) {
+                    $deficit = max(0, $min - $qty + 10);
+                    $cost = (float) ($p->cost_price ?? 0);
+
+                    $lowStockList[] = [
+                        'id' => $p->id,
+                        'sku' => $p->sku,
+                        'product_name' => $p->name,
+                        'category_name' => $categoryName,
+                        'stock_quantity' => $qty,
+                        'min_stock_level' => $min,
+                        'deficit_quantity' => $deficit,
+                        'unit_cost' => $cost,
+                        'reorder_cost' => round($deficit * $cost, 2),
+                    ];
+                }
+            }
+        }
+
+        $lowStockProducts = collect($lowStockList)->sortBy('stock_quantity')->values();
 
         return response()->json([
             'alert_count' => $lowStockProducts->count(),
@@ -305,29 +350,58 @@ class ReportController extends Controller
     }
 
     /**
-     * Inventory Valuation Report
+     * Inventory Valuation Report (Supports Product Variations)
      */
     public function inventoryValuation(Request $request)
     {
-        $valuation = Product::leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->selectRaw('
-                COALESCE(categories.name, "Uncategorized") as category_name,
-                COUNT(products.id) as product_count,
-                SUM(products.stock_quantity) as total_quantity,
-                SUM(products.stock_quantity * COALESCE(products.cost_price, 0)) as cost_value,
-                SUM(products.stock_quantity * COALESCE(products.selling_price, 0)) as retail_value
-            ')
-            ->groupBy('categories.id', 'categories.name')
-            ->get()
-            ->map(function ($c) {
-                $c->cost_value = (float) round($c->cost_value, 2);
-                $c->retail_value = (float) round($c->retail_value, 2);
-                $c->potential_profit = (float) round($c->retail_value - $c->cost_value, 2);
-                $c->margin_percent = $c->retail_value > 0
-                    ? (float) round(($c->potential_profit / $c->retail_value) * 100, 1)
-                    : 0;
-                return $c;
-            });
+        $products = Product::with(['category', 'variations'])->get();
+        $categoriesData = [];
+
+        foreach ($products as $p) {
+            $catName = $p->category->name ?? 'Uncategorized';
+
+            if (!isset($categoriesData[$catName])) {
+                $categoriesData[$catName] = [
+                    'category_name' => $catName,
+                    'product_count' => 0,
+                    'total_quantity' => 0,
+                    'cost_value' => 0.0,
+                    'retail_value' => 0.0,
+                ];
+            }
+
+            if ($p->has_variations && $p->variations->count() > 0) {
+                foreach ($p->variations as $v) {
+                    $qty = (float) ($v->stock_qty ?? 0);
+                    $cost = (float) ($v->cost_price ?? $p->cost_price ?? 0);
+                    $retail = (float) ($v->retail_price ?? $v->wholesale_price ?? $p->selling_price ?? 0);
+
+                    $categoriesData[$catName]['product_count'] += 1;
+                    $categoriesData[$catName]['total_quantity'] += $qty;
+                    $categoriesData[$catName]['cost_value'] += round($qty * $cost, 2);
+                    $categoriesData[$catName]['retail_value'] += round($qty * $retail, 2);
+                }
+            } else {
+                $qty = (float) ($p->stock_quantity ?? 0);
+                $cost = (float) ($p->cost_price ?? 0);
+                $retail = (float) ($p->selling_price ?? 0);
+
+                $categoriesData[$catName]['product_count'] += 1;
+                $categoriesData[$catName]['total_quantity'] += $qty;
+                $categoriesData[$catName]['cost_value'] += round($qty * $cost, 2);
+                $categoriesData[$catName]['retail_value'] += round($qty * $retail, 2);
+            }
+        }
+
+        $valuation = collect($categoriesData)->values()->map(function ($c) {
+            $c['cost_value'] = (float) round($c['cost_value'], 2);
+            $c['retail_value'] = (float) round($c['retail_value'], 2);
+            $c['potential_profit'] = (float) round($c['retail_value'] - $c['cost_value'], 2);
+            $c['margin_percent'] = $c['retail_value'] > 0
+                ? (float) round(($c['potential_profit'] / $c['retail_value']) * 100, 1)
+                : 0;
+            return $c;
+        });
 
         $totalCostValue = round($valuation->sum('cost_value'), 2);
         $totalRetailValue = round($valuation->sum('retail_value'), 2);

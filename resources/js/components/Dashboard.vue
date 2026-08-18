@@ -389,25 +389,43 @@
             </div>
           </div>
 
-          <!-- Pending Payments Card -->
+          <!-- Pending Receivables / Payables Single Card -->
           <div v-if="cardVisibility.pending_payments" class="bg-white dark:bg-zinc-900 overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white">
             <div class="p-6">
               <div class="flex items-center justify-between">
-                <div class="w-full">
-                  <div class="flex items-center justify-between">
-                    <div class="w-11 h-11 bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 rounded-xl flex items-center justify-center shadow-xs">
-                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <span class="text-[11px] font-medium bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 px-2.5 py-1 rounded-full border border-orange-200/60 dark:border-orange-800/50">
-                      {{ dashboardData.payments?.pending_payments || 0 }} PENDING
+                <div class="w-11 h-11 bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 rounded-xl flex items-center justify-center shadow-xs">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <span class="text-[11px] font-medium bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 px-2.5 py-1 rounded-full border border-orange-200/60 dark:border-orange-800/50">
+                  {{ dashboardData.payments?.pending_payments || 0 }} PENDING
+                </span>
+              </div>
+              <div class="mt-4">
+                <p class="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-zinc-500">Pending Receivables / Payables</p>
+                <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                      Receivables
                     </span>
+                    <p class="text-lg font-bold text-slate-800 dark:text-zinc-100 tracking-tight mt-0.5">
+                      {{ formatAmount(dashboardData.payments?.pending_receivables_amount || 0) }}
+                    </p>
+                    <p class="text-[10px] text-zinc-400 dark:text-zinc-500">
+                      {{ dashboardData.payments?.pending_receivables_count || 0 }} Customer Dues
+                    </p>
                   </div>
-                  <div class="mt-4">
-                    <p class="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-zinc-500">Pending Receivables / Payables</p>
-                    <p class="text-2xl font-bold text-slate-800 dark:text-zinc-100 mt-0.5 tracking-tight">{{ formatAmount(dashboardData.payments?.pending_amount || 0) }}</p>
-                    <p class="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">Outstanding dues</p>
+                  <div class="border-l border-zinc-100 dark:border-zinc-800 pl-3">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block">
+                      Payables
+                    </span>
+                    <p class="text-lg font-bold text-slate-800 dark:text-zinc-100 tracking-tight mt-0.5">
+                      {{ formatAmount(dashboardData.payments?.pending_payables_amount || 0) }}
+                    </p>
+                    <p class="text-[10px] text-zinc-400 dark:text-zinc-500">
+                      {{ dashboardData.payments?.pending_payables_count || 0 }} Supplier Dues
+                    </p>
                   </div>
                 </div>
               </div>
@@ -863,6 +881,8 @@ const defaultCardVisibility = {
   total_expenses: true,
   payments_in: true,
   payments_out: true,
+  pending_receivables: true,
+  pending_payables: true,
   pending_payments: true,
   inventory_valuation_cost: true,
   inventory_valuation_retail: true,
@@ -889,7 +909,8 @@ const cardDefinitions = {
     { key: 'total_expenses', label: 'Total Expenses Card' },
     { key: 'payments_in', label: 'Payments In Card' },
     { key: 'payments_out', label: 'Payments Out Card' },
-    { key: 'pending_payments', label: 'Pending Payments Card' },
+    { key: 'pending_receivables', label: 'Pending Receivables Card' },
+    { key: 'pending_payables', label: 'Pending Payables Card' },
   ],
   inventory: [
     { key: 'inventory_valuation_cost', label: 'Inventory Cost Value' },
