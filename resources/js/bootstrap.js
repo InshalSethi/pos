@@ -73,7 +73,7 @@ axios.interceptors.response.use(
             }
         } catch (e) {}
 
-        if (error.response?.status === 401 || error.response?.status === 403) {
+        if (error.response?.status === 401 || isDeactivatedError) {
             const url = error.config?.url || '';
             // If it's a login attempt, let the component handle the error and show validation message
             if (url.includes('/login')) {
@@ -86,13 +86,13 @@ axios.interceptors.response.use(
                 return Promise.reject(error);
             }
 
-            // If the user was logged in when this 401/403 occurred (e.g. employee account deactivated),
+            // If the user was logged in when explicit deactivation occurred,
             // trigger the deactivation modal overlay instead of forcing an immediate page redirect to /login.
             try {
                 const activePinia = window.__pinia;
                 if (activePinia && activePinia._s?.has('auth')) {
                     const authStore = activePinia._s.get('auth');
-                    if (authStore.isAuthenticated || authStore.isDeactivated || authStore.user) {
+                    if (isDeactivatedError || authStore.isDeactivated) {
                         authStore.triggerDeactivation();
                         return Promise.reject(error);
                     }
