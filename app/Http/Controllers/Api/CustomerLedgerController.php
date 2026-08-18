@@ -7,19 +7,16 @@ use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\Transaction;
 use App\Models\PaymentReceipt;
-use App\Models\JournalEntry;
-use App\Models\JournalEntryLine;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class CustomerLedgerController extends Controller
 {
     /**
-     * Export customer ledger as PDF
+     * Export customer general ledger as PDF (IAS & QuickBooks Standard Format)
      */
     public function exportPDF(Request $request, Customer $customer)
     {
@@ -33,78 +30,29 @@ class CustomerLedgerController extends Controller
             $endDate = null;
         }
 
-        $openingBalance = $startDate ? $this->calculateOpeningBalance($customer, $startDate) : 0.00;
-        $transactions = $this->getCustomerTransactions($customer, $startDate, $endDate);
-
-        $runningBalance = $openingBalance;
-        $processedTransactions = [];
-        $totalDebits = 0;
-        $totalCredits = 0;
-
-        foreach ($transactions as $transaction) {
-            $totalDebits += $transaction['debit'];
-            $totalCredits += $transaction['credit'];
-            $runningBalance += $transaction['debit'] - $transaction['credit'];
-            $transaction['running_balance'] = $runningBalance;
-            $processedTransactions[] = $transaction;
-        }
-
-        $closingBalance = $runningBalance;
-
-        // Get Sale Invoices
-        $salesQuery = Sale::where('customer_id', $customer->id)
-            ->where('is_refund', false)
-            ->where('sale_number', 'not like', 'RETURN-%')
-            ->with(['salesman', 'user']);
-
-        if ($startDate) {
-            $salesQuery->whereDate('sale_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $salesQuery->whereDate('sale_date', '<=', $endDate);
-        }
-        $sales = $salesQuery->orderBy('sale_date', 'desc')->get();
-
-        $paymentPending = $sales->sum(function ($s) {
-            return max(0, (float)$s->total_amount - (float)$s->paid_amount);
-        });
-
-        // Get Sale Returns
-        $returnsQuery = Sale::where('customer_id', $customer->id)
-            ->where(function ($q) {
-                $q->where('is_refund', true)
-                  ->orWhere('sale_number', 'like', 'RETURN-%');
-            });
-
-        if ($startDate) {
-            $returnsQuery->whereDate('sale_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $returnsQuery->whereDate('sale_date', '<=', $endDate);
-        }
-        $returns = $returnsQuery->orderBy('sale_date', 'desc')->get();
+        $ledgerData = $this->buildUnifiedLedger($customer, $startDate, $endDate);
 
         $pdf = Pdf::loadView('pdf.customer_ledger', [
             'customer' => $customer,
+            'accountCode' => 'AR-' . str_pad($customer->id, 5, '0', STR_PAD_LEFT),
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'openingBalance' => $openingBalance,
-            'closingBalance' => $closingBalance,
-            'paymentPending' => $paymentPending,
-            'paymentReceived' => $totalCredits,
-            'sales' => $sales,
-            'returns' => $returns,
-            'transactions' => $processedTransactions,
-            'totalDebits' => $totalDebits,
-            'totalCredits' => $totalCredits
+            'openingBalance' => $ledgerData['opening_balance'],
+            'closingBalance' => $ledgerData['closing_balance'],
+            'closingBalanceType' => $ledgerData['closing_balance_type'],
+            'totalDebits' => $ledgerData['total_debits'],
+            'totalCredits' => $ledgerData['total_credits'],
+            'transactions' => $ledgerData['transactions'],
+            'summary' => $ledgerData['summary']
         ]);
 
         $pdf->setPaper('a4', 'portrait');
-        $fileName = 'customer_ledger_' . Str::slug($customer->name ?: 'customer') . '_' . now()->format('Y-m-d') . '.pdf';
+        $fileName = 'general_ledger_' . Str::slug($customer->name ?: 'customer') . '_' . now()->format('Y-m-d') . '.pdf';
         return $pdf->download($fileName);
     }
+
     /**
-     * Get customer ledger report
+     * Get customer general ledger API
      */
     public function getLedger(Request $request, Customer $customer): JsonResponse
     {
@@ -118,363 +66,116 @@ class CustomerLedgerController extends Controller
             $endDate = null;
         }
 
-        // Get opening balance (0 if showing all-time data)
-        $openingBalance = $startDate ? $this->calculateOpeningBalance($customer, $startDate) : 0.00;
+        $ledgerData = $this->buildUnifiedLedger($customer, $startDate, $endDate);
 
-        // Get all transactions for the period (or all time if no dates selected)
-        $transactions = $this->getCustomerTransactions($customer, $startDate, $endDate);
-
-        // Calculate running balance
-        $runningBalance = $openingBalance;
-        $processedTransactions = [];
-        $totalDebits = 0;
-        $totalCredits = 0;
-
-        foreach ($transactions as $transaction) {
-            $totalDebits += $transaction['debit'];
-            $totalCredits += $transaction['credit'];
-            $runningBalance += $transaction['debit'] - $transaction['credit'];
-            $transaction['running_balance'] = $runningBalance;
-            $processedTransactions[] = $transaction;
-        }
-
-        $closingBalance = $runningBalance;
-
-        // Calculate Payment Pending for this customer
-        $periodSalesQuery = Sale::where('customer_id', $customer->id)
-            ->where('is_refund', false)
-            ->where('sale_number', 'not like', 'RETURN-%');
-
-        if ($startDate) {
-            $periodSalesQuery->whereDate('sale_date', '>=', $startDate);
-        }
-        if ($endDate) {
-            $periodSalesQuery->whereDate('sale_date', '<=', $endDate);
-        }
-
-        $periodSales = $periodSalesQuery->get();
-
-        $paymentPending = $periodSales->sum(function ($s) {
-            return max(0, (float)$s->total_amount - (float)$s->paid_amount);
-        });
-
-        $paymentReceived = $totalCredits;
+        $accountCode = 'AR-' . str_pad($customer->id, 5, '0', STR_PAD_LEFT);
 
         return response()->json([
-            'customer' => $customer->only([
+            'customer' => array_merge($customer->only([
                 'id', 'name', 'email', 'phone', 'type', 'city', 'state', 'country',
                 'address', 'credit_limit', 'wallet_balance', 'due_amount', 'is_active', 'profile_image'
+            ]), [
+                'account_code' => $accountCode,
+                'account_title' => 'Accounts Receivable - ' . $customer->name,
+                'account_type' => 'Asset (Debtors / Receivable)'
             ]),
             'period' => [
                 'start_date' => $startDate,
                 'end_date' => $endDate
             ],
-            'opening_balance' => (float)$openingBalance,
-            'closing_balance' => (float)$closingBalance,
-            'payment_pending' => (float)$paymentPending,
-            'payment_received' => (float)$paymentReceived,
-            'balance' => (float)$closingBalance,
-            'transactions' => $processedTransactions,
-            'summary' => [
-                'total_debits' => (float)$totalDebits,
-                'total_credits' => (float)$totalCredits,
-                'net_movement' => (float)($closingBalance - $openingBalance),
-                'transaction_count' => count($processedTransactions)
-            ]
+            'opening_balance' => $ledgerData['opening_balance'],
+            'closing_balance' => $ledgerData['closing_balance'],
+            'closing_balance_type' => $ledgerData['closing_balance_type'],
+            'total_debits' => $ledgerData['total_debits'],
+            'total_credits' => $ledgerData['total_credits'],
+            'net_receivable_due' => max(0, $ledgerData['closing_balance']),
+            'balance' => $ledgerData['closing_balance'],
+            'transactions' => $ledgerData['transactions'],
+            'summary' => $ledgerData['summary']
         ]);
     }
 
     /**
-     * Get customer aging report
+     * Build unified chronological general ledger entries for a customer with strict deduplication
      */
-    public function getAgingReport(Request $request, Customer $customer): JsonResponse
+    private function buildUnifiedLedger(Customer $customer, ?string $startDate, ?string $endDate): array
     {
-        $asOfDate = $request->get('as_of_date', now());
+        // 1. Calculate Opening Balance B/F as of $startDate
+        $openingBalance = $startDate ? $this->calculateOpeningBalance($customer, $startDate) : 0.00;
 
-        // Get unpaid sales
-        $unpaidSales = Sale::where('customer_id', $customer->id)
-                          ->where('status', 'pending')
-                          ->where('sale_date', '<=', $asOfDate)
-                          ->get();
+        $entries = [];
 
-        $aging = [
-            'current' => 0,      // 0-30 days
-            'days_31_60' => 0,   // 31-60 days
-            'days_61_90' => 0,   // 61-90 days
-            'over_90' => 0       // Over 90 days
-        ];
+        // 2. Fetch Sales Invoices (Debits) and Sales Returns (Credits)
+        $salesQuery = Sale::where('customer_id', $customer->id)
+            ->with(['saleItems.product', 'salesman', 'user']);
 
-        $details = [];
-
-        foreach ($unpaidSales as $sale) {
-            $daysOverdue = Carbon::parse($asOfDate)->diffInDays($sale->sale_date);
-            $outstandingAmount = $sale->total_amount - $sale->paid_amount;
-
-            if ($daysOverdue <= 30) {
-                $aging['current'] += $outstandingAmount;
-                $category = 'Current (0-30 days)';
-            } elseif ($daysOverdue <= 60) {
-                $aging['days_31_60'] += $outstandingAmount;
-                $category = '31-60 days';
-            } elseif ($daysOverdue <= 90) {
-                $aging['days_61_90'] += $outstandingAmount;
-                $category = '61-90 days';
-            } else {
-                $aging['over_90'] += $outstandingAmount;
-                $category = 'Over 90 days';
-            }
-
-            $details[] = [
-                'sale_id' => $sale->id,
-                'sale_number' => $sale->sale_number,
-                'sale_date' => $sale->sale_date->format('Y-m-d'),
-                'total_amount' => $sale->total_amount,
-                'paid_amount' => $sale->paid_amount,
-                'outstanding_amount' => $outstandingAmount,
-                'days_overdue' => $daysOverdue,
-                'aging_category' => $category
-            ];
-        }
-
-        $totalOutstanding = array_sum($aging);
-
-        return response()->json([
-            'customer' => $customer->only(['id', 'name', 'email', 'phone']),
-            'as_of_date' => $asOfDate,
-            'aging_summary' => $aging,
-            'total_outstanding' => $totalOutstanding,
-            'details' => $details
-        ]);
-    }
-
-    /**
-     * Get customer statement
-     */
-    public function getStatement(Request $request, Customer $customer): JsonResponse
-    {
-        $startDate = $request->get('start_date', now()->startOfMonth());
-        $endDate = $request->get('end_date', now()->endOfMonth());
-
-        // Get opening balance
-        $openingBalance = $this->calculateOpeningBalance($customer, $startDate);
-
-        // Get sales for the period
-        $sales = Sale::where('customer_id', $customer->id)
-                    ->whereBetween('sale_date', [$startDate, $endDate])
-                    ->with(['saleItems.product', 'user'])
-                    ->orderBy('sale_date')
-                    ->get();
-
-        // Get payments for the period
-        $payments = $this->getCustomerPayments($customer, $startDate, $endDate);
-
-        // Combine and sort transactions
-        $transactions = [];
-
-        foreach ($sales as $sale) {
-            $transactions[] = [
-                'date' => $sale->sale_date->format('Y-m-d'),
-                'type' => 'Sale',
-                'reference' => $sale->sale_number,
-                'description' => "Sale - {$sale->saleItems->count()} items",
-                'debit' => $sale->total_amount,
-                'credit' => 0,
-                'details' => $sale
-            ];
-        }
-
-        foreach ($payments as $payment) {
-            $transactions[] = [
-                'date' => $payment['date'],
-                'type' => 'Payment',
-                'reference' => $payment['reference'],
-                'description' => $payment['description'],
-                'debit' => 0,
-                'credit' => $payment['amount'],
-                'details' => $payment
-            ];
-        }
-
-        // Sort by date
-        usort($transactions, function ($a, $b) {
-            return strcmp($a['date'], $b['date']);
-        });
-
-        // Calculate running balance
-        $runningBalance = $openingBalance;
-        foreach ($transactions as &$transaction) {
-            $runningBalance += $transaction['debit'] - $transaction['credit'];
-            $transaction['balance'] = $runningBalance;
-        }
-
-        return response()->json([
-            'customer' => $customer->only(['id', 'name', 'email', 'phone', 'full_address']),
-            'period' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate
-            ],
-            'opening_balance' => $openingBalance,
-            'closing_balance' => $runningBalance,
-            'transactions' => $transactions,
-            'summary' => [
-                'total_sales' => collect($transactions)->where('type', 'Sale')->sum('debit'),
-                'total_payments' => collect($transactions)->where('type', 'Payment')->sum('credit'),
-                'net_change' => $runningBalance - $openingBalance
-            ]
-        ]);
-    }
-
-    /**
-     * Get customer transaction summary
-     */
-    public function getTransactionSummary(Request $request, Customer $customer): JsonResponse
-    {
-        $startDate = $request->get('start_date', now()->startOfYear());
-        $endDate = $request->get('end_date', now()->endOfYear());
-
-        $summary = [
-            'total_sales' => Sale::where('customer_id', $customer->id)
-                                ->whereBetween('sale_date', [$startDate, $endDate])
-                                ->sum('total_amount'),
-            'total_payments' => Sale::where('customer_id', $customer->id)
-                                  ->whereBetween('sale_date', [$startDate, $endDate])
-                                  ->sum('paid_amount'),
-            'sales_count' => Sale::where('customer_id', $customer->id)
-                               ->whereBetween('sale_date', [$startDate, $endDate])
-                               ->count(),
-            'average_sale_value' => Sale::where('customer_id', $customer->id)
-                                      ->whereBetween('sale_date', [$startDate, $endDate])
-                                      ->avg('total_amount'),
-            'largest_sale' => Sale::where('customer_id', $customer->id)
-                                ->whereBetween('sale_date', [$startDate, $endDate])
-                                ->max('total_amount'),
-            'last_sale_date' => Sale::where('customer_id', $customer->id)
-                                  ->whereBetween('sale_date', [$startDate, $endDate])
-                                  ->max('sale_date'),
-            'outstanding_balance' => $customer->getOutstandingBalance(),
-            'credit_limit' => $customer->credit_limit,
-            'available_credit' => $customer->getAvailableCredit(),
-            'credit_utilization' => $customer->getCreditUtilization()
-        ];
-
-        // Monthly breakdown
-        $monthlyBreakdown = Sale::where('customer_id', $customer->id)
-                              ->whereBetween('sale_date', [$startDate, $endDate])
-                              ->selectRaw('YEAR(sale_date) as year, MONTH(sale_date) as month, 
-                                         SUM(total_amount) as total_sales, 
-                                         SUM(paid_amount) as total_payments,
-                                         COUNT(*) as sales_count')
-                              ->groupBy('year', 'month')
-                              ->orderBy('year')
-                              ->orderBy('month')
-                              ->get();
-
-        return response()->json([
-            'customer' => $customer->only(['id', 'name', 'email', 'phone']),
-            'period' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate
-            ],
-            'summary' => $summary,
-            'monthly_breakdown' => $monthlyBreakdown
-        ]);
-    }
-
-    /**
-     * Calculate opening balance for a customer as of a specific date
-     */
-    private function calculateOpeningBalance(Customer $customer, $asOfDate): float
-    {
-        // Total Sale Invoices before start date (Debits)
-        $priorSales = Sale::where('customer_id', $customer->id)
-                         ->whereDate('sale_date', '<', $asOfDate)
-                         ->where('is_refund', false)
-                         ->where('sale_number', 'not like', 'RETURN-%')
-                         ->sum('total_amount');
-
-        // Total Sale Returns before start date (Credits)
-        $priorReturns = Sale::where('customer_id', $customer->id)
-                           ->whereDate('sale_date', '<', $asOfDate)
-                           ->where(function ($q) {
-                               $q->where('is_refund', true)
-                                 ->orWhere('sale_number', 'like', 'RETURN-%');
-                           })
-                           ->sum('total_amount');
-
-        // Income Banking Transactions before start date (Credits)
-        $priorTxIncome = Transaction::where('customer_id', $customer->id)
-                                    ->whereDate('paid_at', '<', $asOfDate)
-                                    ->where('type', 'income')
-                                    ->sum('amount');
-
-        // Expense Banking Transactions before start date (Debits)
-        $priorTxExpense = Transaction::where('customer_id', $customer->id)
-                                     ->whereDate('paid_at', '<', $asOfDate)
-                                     ->where('type', 'expense')
-                                     ->sum('amount');
-
-        // Payment Receipts before start date not in transactions table (Credits)
-        $trackedTxNumbers = Transaction::where('customer_id', $customer->id)
-                                       ->whereNotNull('number')
-                                       ->pluck('number')
-                                       ->toArray();
-
-        $priorReceipts = PaymentReceipt::where('payer_id', $customer->id)
-            ->where(function ($q) {
-                $q->whereNull('payer_type')
-                  ->orWhere('payer_type', '')
-                  ->orWhere('payer_type', 'customer')
-                  ->orWhere('payer_type', 'App\\Models\\Customer');
-            })
-            ->whereDate('receipt_date', '<', $asOfDate)
-            ->whereNotIn('receipt_number', $trackedTxNumbers)
-            ->sum('amount');
-
-        return (float) ($priorSales + $priorTxExpense) - ($priorReturns + $priorTxIncome + $priorReceipts);
-    }
-
-    /**
-     * Get customer transactions for a period (Banking and Payment Transactions only)
-     */
-    private function getCustomerTransactions(Customer $customer, $startDate, $endDate): array
-    {
-        $transactions = [];
-
-        // 1. Get registered banking transactions from `transactions` table (Banking -> Transactions module)
-        $bankingQuery = Transaction::where('customer_id', $customer->id);
         if ($startDate) {
-            $bankingQuery->whereDate('paid_at', '>=', $startDate);
+            $salesQuery->where(function ($q) use ($startDate) {
+                $q->whereDate('sale_date', '>=', $startDate)
+                  ->orWhereDate('created_at', '>=', $startDate);
+            });
         }
         if ($endDate) {
-            $bankingQuery->whereDate('paid_at', '<=', $endDate);
+            $salesQuery->where(function ($q) use ($endDate) {
+                $q->whereDate('sale_date', '<=', $endDate)
+                  ->orWhereDate('created_at', '<=', $endDate);
+            });
         }
-        $bankingTxs = $bankingQuery->get();
 
-        $trackedTxNumbers = [];
+        $sales = $salesQuery->get();
 
-        foreach ($bankingTxs as $tx) {
-            $formattedDate = $tx->paid_at ? Carbon::parse($tx->paid_at)->format('Y-m-d') : date('Y-m-d');
-            $ref = $tx->reference ?: $tx->number;
-            if ($ref) {
-                $trackedTxNumbers[] = $ref;
+        foreach ($sales as $sale) {
+            $isReturn = $sale->is_refund || Str::startsWith($sale->sale_number, 'RETURN-');
+            
+            $entryDate = $sale->sale_date ? Carbon::parse($sale->sale_date)->format('Y-m-d') : ($sale->created_at ? $sale->created_at->format('Y-m-d') : date('Y-m-d'));
+
+            $itemsBreakdown = [];
+            if ($sale->saleItems && $sale->saleItems->count() > 0) {
+                foreach ($sale->saleItems as $item) {
+                    $prodName = $item->product_name ?: ($item->product ? $item->product->name : 'Item');
+                    $itemsBreakdown[] = [
+                        'name' => $prodName,
+                        'qty' => (float)$item->quantity,
+                        'price' => (float)$item->unit_price,
+                        'total' => (float)($item->subtotal ?: ($item->quantity * $item->unit_price))
+                    ];
+                }
             }
 
-            $isIncome = ($tx->type === 'income');
+            $amount = (float)$sale->total_amount;
+            $paidAmount = (float)($sale->paid_amount ?? 0);
+            $dueAmount = max(0, $amount - $paidAmount);
+            $salesmanName = $sale->salesman ? $sale->salesman->name : ($sale->user ? $sale->user->name : 'Admin');
 
-            $transactions[] = [
-                'date' => $formattedDate,
-                'type' => $isIncome ? 'Payment Received' : 'Payment Out',
-                'reference' => $ref ?: "TX-{$tx->id}",
-                'description' => $tx->description ?: ($isIncome ? "Customer Payment ({$ref})" : "Transaction Out ({$ref})"),
-                'debit' => $isIncome ? 0 : (float) $tx->amount,
-                'credit' => $isIncome ? (float) $tx->amount : 0,
-                'source_id' => $tx->id,
-                'source_type' => 'transaction',
-                'created_at' => $tx->created_at ? $tx->created_at->toDateTimeString() : $formattedDate
+            $statusText = 'Unpaid / Due';
+            if ($paidAmount >= $amount && $amount > 0) {
+                $statusText = 'Paid';
+            } elseif ($paidAmount > 0) {
+                $statusText = 'Partially Paid';
+            }
+
+            $entries[] = [
+                'id' => 'sale_' . $sale->id,
+                'date' => $entryDate,
+                'reference' => $sale->sale_number,
+                'type' => $isReturn ? 'Sale Return' : 'Sale Invoice',
+                'description' => $sale->notes ?: ($isReturn ? "Credit Note / Sale Return #{$sale->sale_number}" : "Sales Invoice #{$sale->sale_number}"),
+                'particulars' => $isReturn ? "Sales Return #{$sale->sale_number}" : "Sales Invoice #{$sale->sale_number}",
+                'items' => $itemsBreakdown,
+                'salesman' => $salesmanName,
+                'status' => $isReturn ? 'Returned' : $statusText,
+                'total_amount' => $amount,
+                'paid_amount' => $paidAmount,
+                'due_amount' => $dueAmount,
+                'debit' => $isReturn ? 0.00 : $amount,
+                'credit' => $isReturn ? $amount : 0.00,
+                'created_at' => $sale->created_at ? $sale->created_at->toDateTimeString() : $entryDate . ' 00:00:00',
+                'source_type' => $isReturn ? 'sale_return' : 'sale_invoice',
+                'source_id' => $sale->id
             ];
         }
 
-        // 2. Get any Payment Receipts for this customer not already recorded in `transactions` table
+        // 3. Fetch Payment Receipts (Primary source of truth for Payments In)
         $receiptQuery = PaymentReceipt::where('payer_id', $customer->id)
             ->where(function ($q) {
                 $q->whereNull('payer_type')
@@ -483,97 +184,223 @@ class CustomerLedgerController extends Controller
                   ->orWhere('payer_type', 'App\\Models\\Customer');
             });
         if ($startDate) {
-            $receiptQuery->whereDate('receipt_date', '>=', $startDate);
+            $receiptQuery->where(function ($q) use ($startDate) {
+                $q->whereDate('receipt_date', '>=', $startDate)
+                  ->orWhereDate('created_at', '>=', $startDate);
+            });
         }
         if ($endDate) {
-            $receiptQuery->whereDate('receipt_date', '<=', $endDate);
+            $receiptQuery->where(function ($q) use ($endDate) {
+                $q->whereDate('receipt_date', '<=', $endDate)
+                  ->orWhereDate('created_at', '<=', $endDate);
+            });
         }
         $paymentReceipts = $receiptQuery->get();
 
+        $linkedReceiptNumbers = [];
+        $linkedTxReferences = [];
+
         foreach ($paymentReceipts as $pr) {
-            if ($pr->receipt_number && in_array($pr->receipt_number, $trackedTxNumbers)) {
-                continue; // Already processed via Transaction model
+            $entryDate = $pr->receipt_date ? Carbon::parse($pr->receipt_date)->format('Y-m-d') : ($pr->created_at ? $pr->created_at->format('Y-m-d') : date('Y-m-d'));
+            $amount = (float)$pr->amount;
+
+            if ($pr->receipt_number) {
+                $linkedReceiptNumbers[] = strtolower(trim($pr->receipt_number));
+            }
+            if ($pr->transaction_reference) {
+                $linkedTxReferences[] = strtolower(trim($pr->transaction_reference));
             }
 
-            $formattedDate = $pr->receipt_date ? Carbon::parse($pr->receipt_date)->format('Y-m-d') : date('Y-m-d');
-
-            $transactions[] = [
-                'date' => $formattedDate,
-                'type' => 'Payment Receipt',
-                'reference' => $pr->receipt_number,
-                'description' => $pr->description ?: "Customer Payment Receipt #{$pr->receipt_number}",
-                'debit' => 0,
-                'credit' => (float) $pr->amount,
-                'source_id' => $pr->id,
+            $entries[] = [
+                'id' => 'pr_' . $pr->id,
+                'date' => $entryDate,
+                'reference' => $pr->receipt_number ?: "PR-{$pr->id}",
+                'type' => 'Payment Received',
+                'description' => $pr->description ?: "Payment Receipt #{$pr->receipt_number}",
+                'particulars' => $pr->description ?: "Payment Received (" . ucfirst($pr->payment_method ?: 'cash') . ")",
+                'items' => [],
+                'salesman' => '-',
+                'status' => 'Received & Posted',
+                'total_amount' => $amount,
+                'paid_amount' => $amount,
+                'due_amount' => 0.00,
+                'debit' => 0.00,
+                'credit' => $amount,
+                'created_at' => $pr->created_at ? $pr->created_at->toDateTimeString() : $entryDate . ' 00:00:00',
                 'source_type' => 'payment_receipt',
-                'created_at' => $pr->created_at ? $pr->created_at->toDateTimeString() : $formattedDate
+                'source_id' => $pr->id
             ];
         }
 
-        // Sort chronologically by date and created_at
-        usort($transactions, function ($a, $b) {
+        // 4. Fetch Banking Transactions (`transactions` table) with STRICT DEDUPLICATION against PaymentReceipts
+        $bankingQuery = Transaction::where('customer_id', $customer->id);
+        if ($startDate) {
+            $bankingQuery->where(function ($q) use ($startDate) {
+                $q->whereDate('paid_at', '>=', $startDate)
+                  ->orWhereDate('created_at', '>=', $startDate);
+            });
+        }
+        if ($endDate) {
+            $bankingQuery->where(function ($q) use ($endDate) {
+                $q->whereDate('paid_at', '<=', $endDate)
+                  ->orWhereDate('created_at', '<=', $endDate);
+            });
+        }
+        $bankingTxs = $bankingQuery->get();
+
+        foreach ($bankingTxs as $tx) {
+            $txNumber = $tx->number ? strtolower(trim($tx->number)) : '';
+            $txRef = $tx->reference ? strtolower(trim($tx->reference)) : '';
+
+            // DEDUPLICATION: Skip if this transaction was automatically created by PaymentReceiptService!
+            if (
+                ($txNumber && (in_array($txNumber, $linkedReceiptNumbers) || in_array($txNumber, $linkedTxReferences))) ||
+                ($txRef && (in_array($txRef, $linkedReceiptNumbers) || in_array($txRef, $linkedTxReferences)))
+            ) {
+                continue; // Skip duplicate mirror entry!
+            }
+
+            $entryDate = $tx->paid_at ? Carbon::parse($tx->paid_at)->format('Y-m-d') : ($tx->created_at ? $tx->created_at->format('Y-m-d') : date('Y-m-d'));
+            $ref = $tx->reference ?: $tx->number;
+            $isIncome = ($tx->type === 'income');
+            $amount = (float)$tx->amount;
+
+            $entries[] = [
+                'id' => 'tx_' . $tx->id,
+                'date' => $entryDate,
+                'reference' => $ref ?: "TX-{$tx->id}",
+                'type' => $isIncome ? 'Payment Received' : 'Payment Out',
+                'description' => $tx->description ?: ($isIncome ? "Customer Payment Received ({$ref})" : "Refund / Payment Out ({$ref})"),
+                'particulars' => $tx->description ?: ($isIncome ? "Payment Received via Bank" : "Payment Out"),
+                'items' => [],
+                'salesman' => '-',
+                'status' => 'Received & Cleared',
+                'total_amount' => $amount,
+                'paid_amount' => $amount,
+                'due_amount' => 0.00,
+                'debit' => $isIncome ? 0.00 : $amount,
+                'credit' => $isIncome ? $amount : 0.00,
+                'created_at' => $tx->created_at ? $tx->created_at->toDateTimeString() : $entryDate . ' 00:00:00',
+                'source_type' => 'transaction',
+                'source_id' => $tx->id
+            ];
+        }
+
+        // 5. Sort entries chronologically by Date (ASC) and then Created_at (ASC)
+        usort($entries, function ($a, $b) {
             $dateCmp = strcmp($a['date'], $b['date']);
             if ($dateCmp !== 0) return $dateCmp;
-            return strcmp($a['created_at'] ?? '', $b['created_at'] ?? '');
+            return strcmp($a['created_at'], $b['created_at']);
         });
 
-        return $transactions;
+        // 6. Calculate Running Balance & Dr/Cr Indicators
+        $runningBalance = (float)$openingBalance;
+        $totalDebits = 0.00;
+        $totalCredits = 0.00;
+
+        $processedEntries = [];
+
+        foreach ($entries as $entry) {
+            $totalDebits += $entry['debit'];
+            $totalCredits += $entry['credit'];
+            $runningBalance += ($entry['debit'] - $entry['credit']);
+
+            $entry['balance'] = (float)$runningBalance;
+            $entry['balance_type'] = $runningBalance >= 0 ? 'Dr' : 'Cr';
+            $entry['abs_balance'] = abs($runningBalance);
+
+            $processedEntries[] = $entry;
+        }
+
+        $closingBalance = $runningBalance;
+
+        return [
+            'opening_balance' => (float)$openingBalance,
+            'closing_balance' => (float)$closingBalance,
+            'closing_balance_type' => $closingBalance >= 0 ? 'Dr' : 'Cr',
+            'total_debits' => (float)$totalDebits,
+            'total_credits' => (float)$totalCredits,
+            'transactions' => $processedEntries,
+            'summary' => [
+                'total_sales_billed' => (float)$totalDebits,
+                'total_payments_received' => (float)$totalCredits,
+                'net_outstanding_due' => max(0, (float)$closingBalance),
+                'wallet_advance_credit' => $closingBalance < 0 ? abs((float)$closingBalance) : 0.00,
+                'net_movement' => (float)($closingBalance - $openingBalance),
+                'transaction_count' => count($processedEntries)
+            ]
+        ];
     }
 
     /**
-     * Get customer payments for a period
+     * Calculate opening balance for a customer as of a specific date (B/F calculation with deduplication)
      */
-    private function getCustomerPayments(Customer $customer, $startDate, $endDate): array
+    private function calculateOpeningBalance(Customer $customer, string $asOfDate): float
     {
-        $payments = [];
+        $priorSales = Sale::where('customer_id', $customer->id)
+                         ->where(function ($q) use ($asOfDate) {
+                             $q->whereDate('sale_date', '<', $asOfDate)
+                               ->whereDate('created_at', '<', $asOfDate);
+                         })
+                         ->where('is_refund', false)
+                         ->where('sale_number', 'not like', 'RETURN-%')
+                         ->sum('total_amount');
 
-        // 1. From Banking Transactions module (`transactions` table)
-        $bankingTxs = Transaction::where('customer_id', $customer->id)
-            ->whereDate('paid_at', '>=', $startDate)
-            ->whereDate('paid_at', '<=', $endDate)
-            ->where('type', 'income')
-            ->get();
+        $priorReturns = Sale::where('customer_id', $customer->id)
+                           ->where(function ($q) use ($asOfDate) {
+                               $q->whereDate('sale_date', '<', $asOfDate)
+                                 ->whereDate('created_at', '<', $asOfDate);
+                           })
+                           ->where(function ($q) {
+                               $q->where('is_refund', true)
+                                 ->orWhere('sale_number', 'like', 'RETURN-%');
+                           })
+                           ->sum('total_amount');
 
-        foreach ($bankingTxs as $tx) {
-            $payments[] = [
-                'date' => $tx->paid_at ? Carbon::parse($tx->paid_at)->format('Y-m-d') : date('Y-m-d'),
-                'reference' => $tx->reference ?: $tx->number ?: "TX-{$tx->id}",
-                'description' => $tx->description ?: "Payment from customer",
-                'amount' => (float) $tx->amount,
-                'method' => $tx->payment_method ?? 'Bank'
-            ];
+        $priorReceiptsModel = PaymentReceipt::where('payer_id', $customer->id)
+            ->where(function ($q) {
+                $q->whereNull('payer_type')
+                  ->orWhere('payer_type', '')
+                  ->orWhere('payer_type', 'customer')
+                  ->orWhere('payer_type', 'App\\Models\\Customer');
+            })
+            ->where(function ($q) use ($asOfDate) {
+                $q->whereDate('receipt_date', '<', $asOfDate)
+                  ->whereDate('created_at', '<', $asOfDate);
+            })->get();
+
+        $priorReceipts = $priorReceiptsModel->sum('amount');
+        $linkedNumbers = [];
+        foreach ($priorReceiptsModel as $pr) {
+            if ($pr->receipt_number) $linkedNumbers[] = strtolower(trim($pr->receipt_number));
+            if ($pr->transaction_reference) $linkedNumbers[] = strtolower(trim($pr->transaction_reference));
         }
 
-        // 2. From Payment Receipts module
-        $trackedTxNumbers = Transaction::where('customer_id', $customer->id)
-            ->whereNotNull('number')
-            ->pluck('number')
-            ->toArray();
+        $priorBankingTxs = Transaction::where('customer_id', $customer->id)
+            ->where(function ($q) use ($asOfDate) {
+                $q->whereDate('paid_at', '<', $asOfDate)
+                  ->whereDate('created_at', '<', $asOfDate);
+            })->get();
 
-        $receipts = PaymentReceipt::where(function ($q) use ($customer) {
-                $q->where('payer_id', $customer->id)
-                  ->orWhere(function ($sub) use ($customer) {
-                      $sub->where('payer_type', 'App\\Models\\Customer')
-                          ->where('payer_id', $customer->id);
-                  });
-            })
-            ->whereDate('receipt_date', '>=', $startDate)
-            ->whereDate('receipt_date', '<=', $endDate)
-            ->get();
+        $priorTxIncome = 0.00;
+        $priorTxExpense = 0.00;
 
-        foreach ($receipts as $pr) {
-            if ($pr->receipt_number && in_array($pr->receipt_number, $trackedTxNumbers)) {
+        foreach ($priorBankingTxs as $tx) {
+            $num = $tx->number ? strtolower(trim($tx->number)) : '';
+            $ref = $tx->reference ? strtolower(trim($tx->reference)) : '';
+
+            // Skip duplicate mirror entry
+            if (($num && in_array($num, $linkedNumbers)) || ($ref && in_array($ref, $linkedNumbers))) {
                 continue;
             }
-            $payments[] = [
-                'date' => $pr->receipt_date ? Carbon::parse($pr->receipt_date)->format('Y-m-d') : date('Y-m-d'),
-                'reference' => $pr->receipt_number,
-                'description' => $pr->description ?: "Payment receipt",
-                'amount' => (float) $pr->amount,
-                'method' => $pr->payment_method ?? 'Cash'
-            ];
+
+            if ($tx->type === 'income') {
+                $priorTxIncome += (float)$tx->amount;
+            } else {
+                $priorTxExpense += (float)$tx->amount;
+            }
         }
 
-        return $payments;
+        return (float) ($priorSales + $priorTxExpense) - ($priorReturns + $priorTxIncome + $priorReceipts);
     }
 }

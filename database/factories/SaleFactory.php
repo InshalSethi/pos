@@ -22,7 +22,7 @@ class SaleFactory extends Factory
         $taxAmount = round($subtotal * 0.05, 2);
         $discountAmount = fake()->boolean(20) ? round($subtotal * 0.05, 2) : 0;
         $totalAmount = round($subtotal + $taxAmount - $discountAmount, 2);
-        $paidAmount = fake()->boolean(90) ? $totalAmount : round($totalAmount * 0.5, 2);
+        $paidAmount = 0.00;
 
         $saleDate = fake()->dateTimeBetween('-60 days', 'now');
 
@@ -40,7 +40,7 @@ class SaleFactory extends Factory
             'total_amount' => $totalAmount,
             'paid_amount' => $paidAmount,
             'payment_method' => fake()->randomElement(['cash', 'bank_transfer', 'card']),
-            'status' => 'completed',
+            'status' => 'pending',
             'notes' => fake()->sentence(),
         ];
     }
@@ -49,6 +49,12 @@ class SaleFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'completed',
+            'paid_amount' => $attributes['total_amount'] ?? 0,
         ]);
+    }
+
+    public function paid(): static
+    {
+        return $this->completed();
     }
 }

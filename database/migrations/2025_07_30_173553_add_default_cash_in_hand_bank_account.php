@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         // First, ensure we have a Cash account in chart of accounts
-        $cashAccount = Account::firstOrCreate(
-            ['account_code' => '1010'],
-            [
+        $cashAccountId = DB::table('chart_of_accounts')->where('account_code', '1010')->value('id');
+        if (!$cashAccountId) {
+            $cashAccountId = DB::table('chart_of_accounts')->insertGetId([
+                'account_code' => '1010',
                 'account_name' => 'Cash',
                 'account_type' => 'asset',
                 'account_subtype' => 'current_asset',
@@ -23,16 +24,19 @@ return new class extends Migration
                 'is_system_account' => true,
                 'opening_balance' => 0,
                 'current_balance' => 0,
-            ]
-        );
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-        $company = \Illuminate\Support\Facades\Schema::hasTable('companies') ? \App\Models\Company::first() : null;
+        $company = Schema::hasTable('companies') ? DB::table('companies')->first() : null;
         $companyCurrency = $company?->base_currency ?? $company?->currency_code ?? 'PKR';
 
         // Create the default "Cash in Hand" bank account
-        $cashInHandAccount = BankAccount::firstOrCreate(
-            ['account_name' => 'Cash in Hand'],
-            [
+        $cashInHandId = DB::table('bank_accounts')->where('account_name', 'Cash in Hand')->value('id');
+        if (!$cashInHandId) {
+            $cashInHandId = DB::table('bank_accounts')->insertGetId([
+                'account_name' => 'Cash in Hand',
                 'account_number' => 'CASH001',
                 'bank_name' => 'Cash',
                 'bank_branch' => null,
@@ -47,18 +51,17 @@ return new class extends Migration
                 'description' => 'Default cash in hand account for cash transactions',
                 'is_active' => true,
                 'is_default' => true,
-                'chart_account_id' => $cashAccount->id,
+                'chart_account_id' => $cashAccountId,
                 'notes' => 'System default cash account',
-            ]
-        );
-
-        // Ensure this is set as the default bank account
-        if ($cashInHandAccount->wasRecentlyCreated || !$cashInHandAccount->is_default) {
-            // Set all other bank accounts to not default
-            BankAccount::where('id', '!=', $cashInHandAccount->id)->update(['is_default' => false]);
-            // Set this account as default
-            $cashInHandAccount->update(['is_default' => true]);
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('bank_accounts')->where('id', $cashInHandId)->update(['is_default' => true]);
         }
+
+        // Set all other bank accounts to not default
+        DB::table('bank_accounts')->where('id', '!=', $cashInHandId)->update(['is_default' => false]);
     }
 
     /**
