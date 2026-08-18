@@ -144,12 +144,17 @@
               v-model="selectedEmployees"
               class="h-4 w-4 text-indigo-600 border-slate-300 dark:border-zinc-700 rounded focus:ring-0 cursor-pointer"
             />
-            <span
-              :class="getStatusBadgeClass(item.employment_status)"
-              class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase tracking-wider"
-            >
-              {{ getStatusText(item.employment_status) }}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span :class="getRoleBadgeClass(getEmployeeRole(item))" class="px-2 py-0.5 text-[10px] font-bold rounded-md capitalize">
+                {{ getEmployeeRole(item) }}
+              </span>
+              <span
+                :class="getStatusBadgeClass(item)"
+                class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase tracking-wider"
+              >
+                {{ getStatusText(item) }}
+              </span>
+            </div>
           </div>
 
           <div class="flex flex-col items-center my-3 text-center">
@@ -193,16 +198,7 @@
               ID: #{{ item.employee_number || item.id }}
             </div>
 
-            <!-- Manager Badge in Grid View -->
-            <div class="mt-2 flex items-center justify-center gap-1.5 text-[11px]">
-              <span class="text-slate-400 dark:text-zinc-500 font-medium">Manager:</span>
-              <span v-if="item.manager" class="font-bold text-slate-800 dark:text-zinc-200 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800/50">
-                {{ item.manager.first_name }} {{ item.manager.last_name }}
-              </span>
-              <span v-else class="text-slate-400 dark:text-zinc-500 italic text-[10px]">
-                Unassigned
-              </span>
-            </div>
+
           </div>
 
           <!-- Card Action Buttons -->
@@ -259,7 +255,7 @@
       :initial-search="filters.search"
       :initial-per-page="25"
       :default-per-page="25"
-      storage-key="employees-table-state"
+      storage-key="employees-table-v3"
       empty-message="No employees found"
       empty-sub-message="Get started by adding your first employee."
       @search="handleTableSearch"
@@ -289,7 +285,12 @@
             </div>
           </div>
           <div class="ml-3 min-w-0">
-            <div class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ item.full_name }}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+              <span>{{ item.full_name }}</span>
+              <span :class="getRoleBadgeClass(getEmployeeRole(item))" class="px-2 py-0.5 text-[10px] font-bold rounded-md capitalize">
+                {{ getEmployeeRole(item) }}
+              </span>
+            </div>
             <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ item.email }}</div>
           </div>
         </div>
@@ -312,22 +313,23 @@
         </div>
       </template>
 
-      <template #column-manager="{ item }">
-        <div v-if="item.manager" class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-bold text-[10px] flex items-center justify-center flex-shrink-0 border border-indigo-200/50 dark:border-indigo-800/50">
-            {{ item.manager.first_name?.[0] }}{{ item.manager.last_name?.[0] }}
-          </div>
-          <span class="text-xs font-semibold text-slate-800 dark:text-zinc-200">
-            {{ item.manager.first_name }} {{ item.manager.last_name }}
-          </span>
-        </div>
-        <span v-else class="text-xs text-slate-400 dark:text-zinc-500 italic">-</span>
-      </template>
+
 
       <template #column-status="{ item }">
-        <span :class="getStatusBadgeClass(item.employment_status)" class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
-          {{ getStatusText(item.employment_status) }}
-        </span>
+        <div class="flex items-center justify-center">
+          <button
+            type="button"
+            @click.stop="toggleEmployeeStatus(item)"
+            class="relative inline-flex items-center h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none"
+            :class="(item.status === 'active' && item.is_active !== false) ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-zinc-700'"
+            title="Toggle Active / Inactive Status"
+          >
+            <span
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-900 shadow-md ring-0 transition duration-200 ease-in-out"
+              :class="(item.status === 'active' && item.is_active !== false) ? 'translate-x-4' : 'translate-x-0.5'"
+            />
+          </button>
+        </div>
       </template>
 
       <template #column-salary="{ item }">
@@ -635,12 +637,7 @@ const tableColumns = ref([
     sortable: true,
     align: 'left'
   },
-  {
-    key: 'manager',
-    label: 'Manager',
-    sortable: false,
-    align: 'left'
-  },
+
   {
     key: 'hire_date',
     label: 'Hire Date',
@@ -765,6 +762,37 @@ const deleteEmployee = async (employee) => {
   }
 };
 
+const toggleEmployeeStatus = async (item) => {
+  const currentIsActive = (item.status === 'active' && item.is_active !== false);
+  const newStatus = currentIsActive ? 'inactive' : 'active';
+  const newIsActive = !currentIsActive;
+
+  // Optimistic UI update
+  item.status = newStatus;
+  item.is_active = newIsActive;
+  item.employment_status = newStatus;
+
+  try {
+    const res = await axios.patch(`/api/employees/${item.id}/toggle-status`, {
+      status: newStatus,
+      is_active: newIsActive
+    });
+    if (res.data?.status) {
+      item.status = res.data.status;
+      item.is_active = res.data.is_active;
+      if (res.data.employment_status) {
+        item.employment_status = res.data.employment_status;
+      }
+    }
+  } catch (error) {
+    console.error('Error toggling employee status:', error);
+    // Revert optimistic update on error
+    item.status = currentIsActive ? 'active' : 'inactive';
+    item.is_active = currentIsActive;
+    item.employment_status = currentIsActive ? 'active' : 'inactive';
+  }
+};
+
 const changePage = (page) => {
   if (page >= 1 && page <= employees.value.last_page) {
     filters.value.page = page;
@@ -802,10 +830,36 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString();
 };
 
-const getStatusBadgeClass = (status) => {
+const getEmployeeRole = (item) => {
+  if (item.user?.roles?.[0]?.name) {
+    const r = item.user.roles[0].name;
+    return r.charAt(0).toUpperCase() + r.slice(1).replace(/_/g, ' ');
+  }
+  if (item.role_name) {
+    return item.role_name.charAt(0).toUpperCase() + item.role_name.slice(1).replace(/_/g, ' ');
+  }
+  return item.is_manager ? 'Manager' : 'Employee';
+};
+
+const getRoleBadgeClass = (roleName) => {
+  switch (roleName?.toLowerCase()) {
+    case 'admin':
+    case 'company admin':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold';
+    case 'manager':
+      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold';
+    case 'cashier':
+      return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/80 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 font-bold';
+    default:
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold';
+  }
+};
+
+const getStatusBadgeClass = (item) => {
+  const status = typeof item === 'object' ? (item.status || (item.is_active ? 'active' : 'inactive')) : item;
   const classes = {
-    active: 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white font-bold',
-    inactive: 'bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-zinc-800 dark:text-slate-400 dark:border-zinc-700/50',
+    active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold',
+    inactive: 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold',
     terminated: 'bg-rose-50 text-rose-600 border border-rose-200/60 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/50',
     on_leave: 'bg-amber-50 text-amber-600 border border-amber-200/60 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800/50'
   };
@@ -816,7 +870,8 @@ const getStatusClass = (status) => {
   return getStatusBadgeClass(status);
 };
 
-const getStatusText = (status) => {
+const getStatusText = (item) => {
+  const status = typeof item === 'object' ? (item.status || (item.is_active ? 'active' : 'inactive')) : item;
   const texts = {
     active: 'Active',
     inactive: 'Inactive',

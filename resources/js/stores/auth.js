@@ -236,12 +236,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const isDeactivated = ref(false);
+
+  const triggerDeactivation = () => {
+    isDeactivated.value = true;
+    token.value = null;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('remember_me');
+    localStorage.removeItem('token_expiration');
+  };
+
   return {
     // State
     user,
     token,
     permissions,
     roles,
+    isDeactivated,
 
     // Getters
     isAuthenticated,
@@ -257,6 +269,7 @@ export const useAuthStore = defineStore('auth', () => {
     setToken,
     register,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    triggerDeactivation
   };
 });

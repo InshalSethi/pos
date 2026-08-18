@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EmployeeDeactivatedEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\User;
@@ -206,7 +207,7 @@ class EmployeeController extends Controller
                 'email',
                 Rule::unique('employees', 'email')->where('company_id', $companyId),
             ],
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'fax' => 'nullable|string|max:50',
             'address' => 'nullable|string',
@@ -265,7 +266,23 @@ class EmployeeController extends Controller
             $employeeData['employee_number'] = Employee::generateEmployeeNumber();
             $employeeData['company_id'] = $companyId;
 
-            // Auto-determine is_manager status from request or position level
+            // Status & System Access Logic
+            if ($request->has('status')) {
+                $statusVal = strtolower($request->get('status'));
+                $employeeData['status'] = in_array($statusVal, ['active', 'inactive']) ? $statusVal : 'active';
+                $employeeData['is_active'] = ($employeeData['status'] === 'active');
+            } elseif ($request->has('is_active')) {
+                $isActive = filter_var($request->get('is_active'), FILTER_VALIDATE_BOOLEAN);
+                $employeeData['is_active'] = $isActive;
+                $employeeData['status'] = $isActive ? 'active' : 'inactive';
+            } else {
+                $employeeData['status'] = 'active';
+                $employeeData['is_active'] = true;
+            }
+
+            $hasSystemAccess = filter_var($request->get('has_system_access', $request->get('create_user_account', false)), FILTER_VALIDATE_BOOLEAN);
+            $employeeData['has_system_access'] = $hasSystemAccess;
+
             $isManager = filter_var($request->get('is_manager', false), FILTER_VALIDATE_BOOLEAN);
             if (!$isManager && $request->filled('position_id')) {
                 $position = \App\Models\Position::find($request->position_id);
@@ -314,11 +331,14 @@ class EmployeeController extends Controller
                     'address' => $request->address ?: $user->address,
                     'profile_image' => $avatarPath ?: $user->profile_image,
                     'attachments' => !empty($uploadedAttachments) ? $uploadedAttachments : $user->attachments,
-                    'is_active' => filter_var($request->get('is_active', true), FILTER_VALIDATE_BOOLEAN),
+                    'is_active' => $employeeData['is_active'],
                     'current_company_id' => $companyId ?: $user->current_company_id,
                 ]);
                 if ($passwordHash) {
                     $user->update(['password' => $passwordHash]);
+                }
+                if (!$employeeData['is_active'] || !$hasSystemAccess) {
+                    $user->tokens()->delete();
                 }
             } else {
                 $user = User::create([
@@ -455,7 +475,7 @@ class EmployeeController extends Controller
                 'email',
                 Rule::unique('employees', 'email')->ignore($employee->id)->where('company_id', $companyId),
             ],
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'fax' => 'nullable|string|max:50',
             'address' => 'nullable|string',
@@ -529,6 +549,29 @@ class EmployeeController extends Controller
             DB::beginTransaction();
 
             $employeeData = $request->except(['profile_image', 'avatar', 'create_user_account', 'password', 'password_confirmation', 'role']);
+
+            if ($request->has('status')) {
+                $rawStatus = $request->get('status');
+                if (is_bool($rawStatus)) {
+                    $statusVal = $rawStatus ? 'active' : 'inactive';
+                } else {
+                    $strStatus = strtolower(trim((string)$rawStatus));
+                    $statusVal = in_array($strStatus, ['active', 'true', '1']) ? 'active' : 'inactive';
+                }
+                $employeeData['status'] = $statusVal;
+                $employeeData['is_active'] = ($statusVal === 'active');
+                $employeeData['employment_status'] = $statusVal;
+            } elseif ($request->has('is_active')) {
+                $isActive = filter_var($request->get('is_active'), FILTER_VALIDATE_BOOLEAN);
+                $employeeData['is_active'] = $isActive;
+                $employeeData['status'] = $isActive ? 'active' : 'inactive';
+                $employeeData['employment_status'] = $isActive ? 'active' : 'inactive';
+            }
+
+            if ($request->has('has_system_access') || $request->has('create_user_account')) {
+                $hasSystemAccess = filter_var($request->get('has_system_access', $request->get('create_user_account', false)), FILTER_VALIDATE_BOOLEAN);
+                $employeeData['has_system_access'] = $hasSystemAccess;
+            }
 
             if ($request->has('is_manager')) {
                 $employeeData['is_manager'] = filter_var($request->get('is_manager'), FILTER_VALIDATE_BOOLEAN);
@@ -621,6 +664,18 @@ class EmployeeController extends Controller
                 }
 
                 $user->update($userData);
+
+                if ((isset($employeeData['is_active']) && !$employeeData['is_active']) || (isset($employeeData['status']) && $employeeData['status'] === 'inactive')) {
+                    $user->tokens()->delete();
+                    try {
+                        DB::table('sessions')->where('user_id', $user->id)->delete();
+                    } catch (\Exception $e) {}
+                    try {
+                        event(new EmployeeDeactivatedEvent($user->id));
+                    } catch (\Exception $e) {}
+                } elseif (isset($employeeData['has_system_access']) && !$employeeData['has_system_access']) {
+                    $user->tokens()->delete();
+                }
 
                 if ($employee->user_id !== $user->id) {
                     $employee->update(['user_id' => $user->id]);
@@ -847,5 +902,60 @@ class EmployeeController extends Controller
             Log::error('Error in forDropdown method:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Quick toggle employee active status (active <-> inactive).
+     */
+    public function toggleStatus(Request $request, Employee $employee): JsonResponse
+    {
+        $rawStatus = $request->input('status');
+        $rawActive = $request->input('is_active');
+
+        if (!is_null($rawStatus)) {
+            if (is_bool($rawStatus)) {
+                $newStatus = $rawStatus ? 'active' : 'inactive';
+            } else {
+                $strStatus = strtolower(trim((string)$rawStatus));
+                $newStatus = in_array($strStatus, ['active', 'true', '1']) ? 'active' : 'inactive';
+            }
+        } elseif (!is_null($rawActive)) {
+            $newStatus = filter_var($rawActive, FILTER_VALIDATE_BOOLEAN) ? 'active' : 'inactive';
+        } else {
+            $newStatus = ($employee->status === 'active' && $employee->is_active) ? 'inactive' : 'active';
+        }
+
+        $isActive = ($newStatus === 'active');
+        $employmentStatus = $isActive ? 'active' : 'inactive';
+
+        $employee->update([
+            'status' => $newStatus,
+            'is_active' => $isActive,
+            'employment_status' => $employmentStatus,
+        ]);
+
+        $user = $employee->user ?: User::find($employee->user_id);
+        if ($user) {
+            $user->update(['is_active' => $isActive]);
+            if (!$isActive) {
+                try {
+                    $user->tokens()->delete();
+                    DB::table('sessions')->where('user_id', $user->id)->delete();
+                } catch (\Exception $e) {}
+                try {
+                    event(new EmployeeDeactivatedEvent($user->id));
+                } catch (\Exception $e) {
+                    Log::warn('Broadcasting EmployeeDeactivatedEvent failed:', ['error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => "Employee status updated to {$newStatus}",
+            'status' => $newStatus,
+            'is_active' => $isActive,
+            'employment_status' => $employmentStatus,
+            'employee' => $employee->fresh(['department', 'position', 'user.roles'])
+        ]);
     }
 }

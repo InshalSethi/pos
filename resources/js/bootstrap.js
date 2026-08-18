@@ -44,10 +44,24 @@ axios.interceptors.request.use(
     }
 );
 
-// Add response interceptor to handle auth errors
 axios.interceptors.response.use(
     (response) => response,
     (error) => {
+        const responseData = error.response?.data;
+        const isDeactivatedError = responseData?.error === 'ACCOUNT_INACTIVE' || 
+            (responseData?.message && responseData.message.toLowerCase().includes('deactivated'));
+
+        if (isDeactivatedError) {
+            try {
+                const activePinia = window.__pinia;
+                if (activePinia && activePinia._s?.has('auth')) {
+                    activePinia._s.get('auth').triggerDeactivation();
+                }
+            } catch (e) {}
+            localStorage.removeItem('auth_token');
+            return Promise.reject(error);
+        }
+
         if (error.response?.status === 401) {
             const url = error.config?.url || '';
             // If it's a login attempt, let the component handle the error and show validation message

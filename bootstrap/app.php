@@ -20,7 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SetSystemTimezone::class);
         $middleware->append(\App\Http\Middleware\PreventBackHistory::class);
         
-        $middleware->api(prepend: [
+        $middleware->api(append: [
+            \App\Http\Middleware\CheckEmployeeActiveStatus::class,
+        ], prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
@@ -46,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'check.employee.active' => \App\Http\Middleware\CheckEmployeeActiveStatus::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

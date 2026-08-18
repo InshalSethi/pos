@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSettings;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,9 +28,36 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || empty($user->password) || !$user->hasLoginAccess() || !Hash::check($request->password, $user->password)) {
+        if (!$user || empty($user->password) || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect or direct system login is restricted for this account.'],
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        // System Access & Employee Active Status Checks
+        $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+        if ($employee) {
+            if ($employee->status === 'inactive' || !$employee->is_active) {
+                throw ValidationException::withMessages([
+                    'email' => ['Your account is currently inactive. Please contact your administrator.'],
+                ]);
+            }
+            if (!$employee->has_system_access) {
+                throw ValidationException::withMessages([
+                    'email' => ['System login access is disabled for this account.'],
+                ]);
+            }
+        }
+
+        if (!$user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['Your account is currently inactive. Please contact your administrator.'],
+            ]);
+        }
+
+        if (!$user->hasLoginAccess()) {
+            throw ValidationException::withMessages([
+                'email' => ['System login access is disabled for this account.'],
             ]);
         }
 
@@ -423,5 +451,29 @@ class AuthController extends Controller
             return response()->json(['message' => 'Web session synchronized successfully']);
         }
         return response()->json(['message' => 'Unauthenticated'], 401);
+    }
+
+    public function checkStatus(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'UNAUTHENTICATED'], 401);
+        }
+
+        $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+        if (($employee && ($employee->status === 'inactive' || !$employee->is_active)) || !$user->is_active) {
+            if (method_exists($user, 'tokens')) {
+                try { $user->tokens()->delete(); } catch (\Exception $e) {}
+            }
+            return response()->json([
+                'error' => 'ACCOUNT_INACTIVE',
+                'message' => 'Your account has been deactivated by the administrator.'
+            ], 403);
+        }
+
+        return response()->json([
+            'status' => 'active',
+            'user_id' => $user->id
+        ]);
     }
 }
