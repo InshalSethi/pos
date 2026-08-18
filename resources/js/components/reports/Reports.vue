@@ -158,7 +158,7 @@
               </div>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <button @click="generateReport('sales-summary')" class="text-left p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all border border-slate-100 dark:border-zinc-800">
               📊 Sales Summary
             </button>
@@ -170,6 +170,9 @@
             </button>
             <button @click="generateReport('customer-analysis')" class="text-left p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all border border-slate-100 dark:border-zinc-800">
               👥 Customer Analysis
+            </button>
+            <button @click="generateReport('inactive-customers')" class="text-left p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all border border-slate-100 dark:border-zinc-800">
+              🚫 Inactive Customers
             </button>
           </div>
         </div>
@@ -923,6 +926,117 @@
                   </div>
                 </div>
 
+                <!-- 5D-2. INACTIVE CUSTOMERS REPORT -->
+                <div v-else-if="currentReportType === 'inactive-customers'" class="space-y-4">
+                  <!-- Custom Filter Controls Bar -->
+                  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-800">
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                      <div class="relative w-full sm:w-64">
+                        <input
+                          v-model="inactiveCustomerSearch"
+                          @input="refreshCurrentReport"
+                          type="text"
+                          placeholder="Search customer, phone..."
+                          class="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-200"
+                        />
+                        <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      </div>
+                      <select
+                        v-model="inactiveCustomerStatus"
+                        @change="refreshCurrentReport"
+                        class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs py-1.5 px-3 focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-200"
+                      >
+                        <option value="all">All Accounts</option>
+                        <option value="active">Active System Accounts</option>
+                        <option value="inactive">Disabled System Accounts</option>
+                      </select>
+                    </div>
+
+                    <!-- Pending Payments Checkbox Filter -->
+                    <label class="inline-flex items-center space-x-2 cursor-pointer bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 shadow-2xs hover:border-amber-400 transition-all select-none">
+                      <input
+                        type="checkbox"
+                        v-model="pendingPaymentsOnlyFilter"
+                        @change="refreshCurrentReport"
+                        class="w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-zinc-700 focus:ring-amber-500 accent-amber-600 cursor-pointer"
+                      />
+                      <span class="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Pending Payments Only (Due > 0)
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- KPI Cards -->
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60">
+                      <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Inactive Customers</span>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ reportData.total_inactive_customers || 0 }}</div>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-xl border border-rose-100 dark:border-rose-900/60">
+                      <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Total Pending Payments</span>
+                      <div class="text-2xl font-bold text-rose-700 dark:text-rose-400 mt-1">{{ formatCurrency(reportData.total_pending_payments) }}</div>
+                    </div>
+                    <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-100 dark:border-amber-900/60">
+                      <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">With Pending Balance</span>
+                      <div class="text-2xl font-bold text-amber-950 dark:text-amber-100 mt-1">{{ reportData.customers_with_pending || 0 }} Customers</div>
+                    </div>
+                    <div class="bg-slate-100 dark:bg-zinc-800/60 p-4 rounded-xl border border-slate-200 dark:border-zinc-700">
+                      <span class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Disabled System Accounts</span>
+                      <div class="text-2xl font-bold text-slate-700 dark:text-zinc-200 mt-1">{{ reportData.system_inactive_count || 0 }} Accounts</div>
+                    </div>
+                  </div>
+
+                  <!-- Data Table -->
+                  <div class="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+                      <thead class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                        <tr>
+                          <th class="px-4 py-2.5 text-left">Code</th>
+                          <th class="px-4 py-2.5 text-left">Customer Name</th>
+                          <th class="px-4 py-2.5 text-left">Contact Info</th>
+                          <th class="px-4 py-2.5 text-center">Account Status</th>
+                          <th class="px-4 py-2.5 text-center">Last Invoice Date</th>
+                          <th class="px-4 py-2.5 text-right">Last Invoice Amount</th>
+                          <th class="px-4 py-2.5 text-right">Total Lifetime Spent</th>
+                          <th class="px-4 py-2.5 text-right">Pending Due Balance</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="c in (reportData.customers || [])" :key="c.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                          <td class="px-4 py-2.5 font-mono text-slate-600 dark:text-zinc-400">{{ c.customer_code || 'CUST-' + c.id }}</td>
+                          <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">{{ c.customer_name }}</td>
+                          <td class="px-4 py-2.5 text-slate-500 dark:text-zinc-400">{{ c.phone || c.email || '-' }}</td>
+                          <td class="px-4 py-2.5 text-center">
+                            <span
+                              :class="{
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': c.is_active,
+                                'bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-zinc-300': !c.is_active
+                              }"
+                              class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider inline-block"
+                            >
+                              {{ c.is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                          </td>
+                          <td class="px-4 py-2.5 text-center font-mono text-slate-600 dark:text-zinc-400">
+                            {{ c.last_sale_date || 'Never' }}
+                          </td>
+                          <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-zinc-300">{{ formatCurrency(c.last_sale_amount) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-semibold text-slate-900 dark:text-white">{{ formatCurrency(c.total_spent) }}</td>
+                          <td class="px-4 py-2.5 text-right font-mono font-bold" :class="c.due_amount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-zinc-400'">
+                            {{ formatCurrency(c.due_amount) }}
+                          </td>
+                        </tr>
+                        <tr v-if="!(reportData.customers || []).length">
+                          <td colspan="8" class="px-4 py-8 text-center text-slate-500 dark:text-zinc-400 font-medium italic">
+                            No inactive customers found matching the selected criteria.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
                 <!-- 5E. CURRENT STOCK LEVELS (INVENTORY SUMMARY) -->
                 <div v-else-if="currentReportType === 'inventory-summary'" class="space-y-4">
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1204,6 +1318,11 @@ const activePreset = ref('this-month');
 const tbSearchQuery = ref('');
 const tbAccountTypeFilter = ref('');
 
+// Inactive Customer Filter State
+const pendingPaymentsOnlyFilter = ref(false);
+const inactiveCustomerSearch = ref('');
+const inactiveCustomerStatus = ref('all');
+
 const isFinancialReport = (type) => {
   return ['profit-loss', 'balance-sheet', 'cash-flow', 'trial-balance'].includes(type);
 };
@@ -1278,7 +1397,7 @@ const fetchReportData = async (reportType) => {
     let endpoint = '';
     const params = {};
 
-    if (['profit-loss', 'cash-flow', 'sales-summary', 'monthly-revenue', 'top-products', 'customer-analysis', 'stock-movement'].includes(reportType)) {
+    if (['profit-loss', 'cash-flow', 'sales-summary', 'monthly-revenue', 'top-products', 'customer-analysis', 'inactive-customers', 'stock-movement'].includes(reportType)) {
       params.start_date = filterStartDate.value;
       params.end_date = filterEndDate.value;
     } else if (reportType === 'balance-sheet' || reportType === 'trial-balance') {
@@ -1309,6 +1428,12 @@ const fetchReportData = async (reportType) => {
         break;
       case 'customer-analysis':
         endpoint = '/api/reports/sales/customer-analysis';
+        break;
+      case 'inactive-customers':
+        endpoint = '/api/reports/sales/inactive-customers';
+        params.pending_payments_only = pendingPaymentsOnlyFilter.value ? 1 : 0;
+        params.search = inactiveCustomerSearch.value || '';
+        params.status = inactiveCustomerStatus.value || 'all';
         break;
       case 'inventory-summary':
         endpoint = '/api/reports/inventory/summary';
@@ -1374,6 +1499,7 @@ const getReportTitle = (type) => {
     'monthly-revenue': 'Monthly Revenue Report',
     'top-products': 'Top Selling Products',
     'customer-analysis': 'Customer Sales Analysis',
+    'inactive-customers': 'Inactive Customer Sales & Due Payments Report',
     'inventory-summary': 'Current Stock Levels',
     'low-stock': 'Low Stock Alert Report',
     'inventory-valuation': 'Inventory Valuation',
@@ -1397,6 +1523,9 @@ const downloadPdfReport = async () => {
       start_date: filterStartDate.value || '',
       end_date: filterEndDate.value || '',
       as_of_date: filterAsOfDate.value || filterEndDate.value || '',
+      pending_payments_only: pendingPaymentsOnlyFilter.value ? '1' : '0',
+      search: inactiveCustomerSearch.value || '',
+      status: inactiveCustomerStatus.value || 'all',
     });
 
     const url = `/api/reports/pdf/export?${params.toString()}`;
@@ -1420,7 +1549,13 @@ const exportReport = () => {
   if (!reportData.value) return;
 
   let csvContent = '';
-  if (Array.isArray(reportData.value)) {
+  if (currentReportType.value === 'inactive-customers' && reportData.value?.customers) {
+    const headers = ['Customer Code', 'Customer Name', 'Phone', 'Email', 'Status', 'Last Invoice Date', 'Last Invoice Amount', 'Total Lifetime Spent', 'Pending Due Balance'];
+    csvContent = headers.join(',') + '\n';
+    reportData.value.customers.forEach(c => {
+      csvContent += `"${c.customer_code}","${c.customer_name}","${c.phone || ''}","${c.email || ''}","${c.is_active ? 'Active' : 'Inactive'}","${c.last_sale_date || 'Never'}","${c.last_sale_amount}","${c.total_spent}","${c.due_amount}"\n`;
+    });
+  } else if (Array.isArray(reportData.value)) {
     if (reportData.value.length > 0) {
       const headers = Object.keys(reportData.value[0]);
       csvContent = headers.join(',') + '\n';

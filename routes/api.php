@@ -382,6 +382,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
             Route::get('/sales/monthly-revenue', [ReportController::class , 'monthlyRevenue']);
             Route::get('/sales/top-products', [ReportController::class , 'topSellingProducts']);
             Route::get('/sales/customer-analysis', [ReportController::class , 'customerSalesAnalysis']);
+            Route::get('/sales/inactive-customers', [ReportController::class , 'inactiveCustomers']);
             Route::get('/inventory/summary', [ReportController::class , 'inventoryReport']);
             Route::get('/inventory/low-stock', [ReportController::class , 'lowStockAlert']);
             Route::get('/inventory/valuation', [ReportController::class , 'inventoryValuation']);
