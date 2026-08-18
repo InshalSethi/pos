@@ -86,21 +86,50 @@
             <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-900 dark:text-white font-sans">Basic Information</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label for="name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
-                Full Name <span class="text-rose-500">*</span>
+              <label for="first_name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
+                First Name <span class="text-rose-500">*</span>
               </label>
               <input
-                id="name"
-                v-model="profileForm.name"
+                id="first_name"
+                v-model="profileForm.first_name"
                 type="text"
                 required
                 class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
-                placeholder="Enter full name"
+                placeholder="First name"
               />
             </div>
 
+            <div>
+              <label for="middle_name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
+                Middle Name
+              </label>
+              <input
+                id="middle_name"
+                v-model="profileForm.middle_name"
+                type="text"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="Middle name"
+              />
+            </div>
+
+            <div>
+              <label for="last_name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
+                Last Name <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="last_name"
+                v-model="profileForm.last_name"
+                type="text"
+                required
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="Last name"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div>
               <label for="email" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
                 Email Address <span class="text-rose-500">*</span>
@@ -112,6 +141,19 @@
                 required
                 class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
                 placeholder="Enter email address"
+              />
+            </div>
+
+            <div>
+              <label for="phone" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 font-sans">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                v-model="profileForm.phone"
+                type="text"
+                class="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl py-2 px-3 text-xs font-sans font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-transparent transition-all"
+                placeholder="Enter phone number"
               />
             </div>
           </div>
@@ -256,8 +298,11 @@ const showConfirmPassword = ref(false);
 
 // Profile form
 const profileForm = ref({
-  name: '',
+  first_name: '',
+  middle_name: '',
+  last_name: '',
   email: '',
+  phone: '',
   current_password: '',
   new_password: '',
   new_password_confirmation: ''
@@ -265,9 +310,24 @@ const profileForm = ref({
 
 // Methods
 const initializeForm = () => {
-  profileForm.value.name = authStore.user?.name || '';
+  const emp = authStore.user?.employee;
+  let fName = emp?.first_name || '';
+  let mName = emp?.middle_name || '';
+  let lName = emp?.last_name || '';
+
+  if (!fName && authStore.user?.name) {
+    const parts = authStore.user.name.trim().split(' ');
+    fName = parts.shift() || '';
+    lName = parts.length > 0 ? parts.pop() : '';
+    mName = parts.join(' ');
+  }
+
+  profileForm.value.first_name = fName;
+  profileForm.value.middle_name = mName;
+  profileForm.value.last_name = lName;
   profileForm.value.email = authStore.user?.email || '';
-  profileImage.value = authStore.user?.profile_image || null;
+  profileForm.value.phone = authStore.user?.phone || emp?.phone || emp?.mobile || '';
+  profileImage.value = authStore.user?.profile_image || emp?.profile_image || null;
 };
 
 const getProfileImageUrl = (imagePath) => {
@@ -308,6 +368,7 @@ const handleImageUpload = async (event) => {
     });
 
     profileImage.value = response.data.profile_image_url;
+    await authStore.fetchUser();
     showToast('Profile image updated successfully!', 'success');
   } catch (error) {
     showToast(error.response?.data?.message || 'Failed to upload image', 'error');

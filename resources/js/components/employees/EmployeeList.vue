@@ -495,7 +495,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { debounce } from '@/utils/debounce';
 import DataTable from '@/components/common/DataTable.vue';
@@ -927,6 +927,40 @@ const openImagePreview = (item) => {
   showImagePreview.value = true;
 };
 
+const handleRealtimeEmployeeUpdate = (updatedEmployee) => {
+  if (!updatedEmployee || !updatedEmployee.id) return;
+  const idx = employeeList.value.findIndex(e => e.id === updatedEmployee.id);
+  if (idx !== -1) {
+    employeeList.value[idx] = {
+      ...employeeList.value[idx],
+      ...updatedEmployee,
+      first_name: updatedEmployee.first_name || employeeList.value[idx].first_name,
+      last_name: updatedEmployee.last_name || employeeList.value[idx].last_name,
+      full_name: updatedEmployee.full_name || employeeList.value[idx].full_name,
+      email: updatedEmployee.email || employeeList.value[idx].email,
+      phone: updatedEmployee.phone || updatedEmployee.mobile || employeeList.value[idx].phone,
+      profile_image: updatedEmployee.profile_image || employeeList.value[idx].profile_image,
+      avatar_url: updatedEmployee.avatar_url || employeeList.value[idx].avatar_url,
+    };
+  } else {
+    fetchEmployees();
+  }
+};
+
+const setupRealtimeListeners = () => {
+  if (window.Echo) {
+    const cid = authStore.currentCompanyId || 1;
+    window.Echo.channel(`company-employees.${cid}`)
+      .listen('.EmployeeUpdatedEvent', (e) => {
+        handleRealtimeEmployeeUpdate(e.employee);
+      });
+    window.Echo.channel('public-employees-updates')
+      .listen('.EmployeeUpdatedEvent', (e) => {
+        handleRealtimeEmployeeUpdate(e.employee);
+      });
+  }
+};
+
 defineExpose({
   fetchEmployees
 });
@@ -940,5 +974,12 @@ onMounted(async () => {
 
   fetchEmployees();
   fetchDepartments();
+  setupRealtimeListeners();
+
+  window.addEventListener('focus', fetchEmployees);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('focus', fetchEmployees);
 });
 </script>

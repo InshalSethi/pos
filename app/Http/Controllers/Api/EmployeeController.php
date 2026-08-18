@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\EmployeeDeactivatedEvent;
+use App\Events\EmployeeUpdatedEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\User;
@@ -729,6 +730,10 @@ class EmployeeController extends Controller
 
             DB::commit();
 
+            try {
+                event(new EmployeeUpdatedEvent($employee->fresh()));
+            } catch (\Exception $e) {}
+
             return response()->json([
                 'message' => 'Employee updated successfully',
                 'employee' => $employee
@@ -877,22 +882,27 @@ class EmployeeController extends Controller
     {
         try {
             $employees = Employee::nonAdmin()
-                ->where('is_active', true)
-                ->where(function ($q) {
-                    $q->where('is_manager', true)
-                      ->orWhereHas('position', function ($pq) {
-                          $pq->whereIn('level', ['lead', 'manager', 'director', 'executive']);
-                      });
-                })
-                ->with('user')
+                ->with(['user', 'position', 'department'])
                 ->orderBy('first_name')
                 ->get()
                 ->map(function ($employee) {
-                    $displayName = trim($employee->first_name . ' ' . $employee->last_name) ?: ($employee->user->name ?? 'Employee #' . $employee->id);
+                    $displayName = trim($employee->first_name . ' ' . ($employee->middle_name ? $employee->middle_name . ' ' : '') . $employee->last_name);
+                    if (!$displayName) {
+                        $displayName = $employee->user ? $employee->user->name : ('Employee #' . $employee->id);
+                    }
+                    $sublabelParts = array_filter([
+                        $employee->employee_number,
+                        $employee->position ? $employee->position->title : null,
+                        $employee->department ? $employee->department->name : null
+                    ]);
                     return [
                         'id' => $employee->id,
                         'full_name' => $displayName,
+                        'label' => $displayName,
+                        'value' => $employee->id,
+                        'sublabel' => implode(' • ', $sublabelParts),
                         'employee_number' => $employee->employee_number,
+                        'is_active' => (bool)$employee->is_active,
                         'is_owner' => false,
                     ];
                 });
@@ -949,6 +959,10 @@ class EmployeeController extends Controller
                 }
             }
         }
+
+        try {
+            event(new EmployeeUpdatedEvent($employee->fresh()));
+        } catch (\Exception $e) {}
 
         return response()->json([
             'message' => "Employee status updated to {$newStatus}",
