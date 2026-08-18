@@ -393,6 +393,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCurrencyStore } from '@/stores/currency'
 import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue'
 import ProductSearch from '@/components/shared/ProductSearch.vue'
+import soundService from '@/services/SoundService'
 import axios from 'axios'
 
 const router = useRouter()
@@ -565,8 +566,10 @@ const remainingUnpaidLedger = computed(() => {
 
 const onProductSelected = ({ product, error, query }) => {
   if (error) {
-    errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+    soundService.playWarning();
+    errorMessage.value = error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`;
   } else if (product) {
+    soundService.playSuccess();
     addProductToReturn(product);
   }
 };
@@ -806,22 +809,32 @@ const onOriginalSaleSelect = async () => {
   }
 }
 const addProductToReturn = (prod) => {
-  form.items.push({
-    original_item_id: null,
-    product_id: prod.product_id || prod.id,
-    product_variation_id: prod.product_variation_id || prod.variation_id || null,
-    name: prod.name,
-    sku: prod.sku,
-    brand_name: prod.brand_name || (typeof prod.brand === 'string' ? prod.brand : prod.brand?.name),
-    category_path: prod.category_path || (typeof prod.category === 'string' ? prod.category : prod.category?.name),
-    quantity: 1,
-    original_qty: null,
-    unit_price: prod.price || 0,
-    tax_amount: 0,
-    original_tax: 0,
-    total_amount: prod.price || 0,
-    source_warehouse_name: null
-  })
+  const matchId = prod.product_id || prod.id;
+  const matchVarId = prod.product_variation_id || prod.variation_id || null;
+  const existing = form.items.find(item => item.product_id === matchId && (item.product_variation_id || null) === matchVarId);
+  if (existing) {
+    existing.quantity = parseInt(existing.quantity || 0) + 1;
+    calculateRowTotal(existing);
+  } else {
+    const newItem = {
+      original_item_id: null,
+      product_id: matchId,
+      product_variation_id: matchVarId,
+      name: prod.name,
+      sku: prod.sku,
+      brand_name: prod.brand_name || (typeof prod.brand === 'string' ? prod.brand : prod.brand?.name),
+      category_path: prod.category_path || (typeof prod.category === 'string' ? prod.category : prod.category?.name),
+      quantity: 1,
+      original_qty: null,
+      unit_price: prod.price || 0,
+      tax_amount: 0,
+      original_tax: 0,
+      total_amount: prod.price || 0,
+      source_warehouse_name: null
+    };
+    form.items.push(newItem);
+    calculateRowTotal(newItem);
+  }
 }
 
 const calculateRowTotal = (item) => {

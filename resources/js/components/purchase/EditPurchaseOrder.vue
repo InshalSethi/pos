@@ -1469,6 +1469,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
 import ProductSearch from '@/components/shared/ProductSearch.vue';
+import soundService from '@/services/SoundService';
 
 const route = useRoute();
 const router = useRouter();
@@ -3305,13 +3306,14 @@ const isEditPaymentBalanceExceeded = computed(() => {
 
 const onProductSelected = ({ product, error, query }) => {
   if (error) {
-    // some modules use showNotification, some use errorMessage.value
+    soundService.playWarning();
     if (typeof showNotification === 'function') {
-      showNotification(error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
+      showNotification(error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`, 'error');
     } else if (typeof errorMessage !== 'undefined') {
-      errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+      errorMessage.value = error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`;
     }
   } else if (product) {
+    soundService.playSuccess();
     addToOrder(product);
   }
 };

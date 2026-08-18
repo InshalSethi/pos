@@ -354,6 +354,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCurrencyStore } from '@/stores/currency'
 import CustomFloatingSelect from '@/components/common/CustomFloatingSelect.vue'
 import ProductSearch from '@/components/shared/ProductSearch.vue'
+import soundService from '@/services/SoundService'
 import axios from 'axios'
 
 const router = useRouter()
@@ -505,8 +506,10 @@ const remainingUnpaidLedger = computed(() => {
 
 const onProductSelected = ({ product, error, query }) => {
   if (error) {
-    errorMessage.value = error === 'Out of Stock' ? `Product "${product.name}" is currently Out of Stock.` : `No product found matching: ${query}`;
+    soundService.playWarning();
+    errorMessage.value = error === 'Out of Stock' ? `Product "${product?.name || 'Item'}" is currently Out of Stock.` : `No product found matching: ${query}`;
   } else if (product) {
+    soundService.playSuccess();
     addProductToReturn(product);
   }
 };
