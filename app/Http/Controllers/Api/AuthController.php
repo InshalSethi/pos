@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSettings;
+use App\Models\Employee;
+use App\Services\EmployeeUserService;
+use App\Events\EmployeeDeactivatedEvent;
+use App\Events\EmployeeUpdatedEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,9 +31,36 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || empty($user->password) || !$user->hasLoginAccess() || !Hash::check($request->password, $user->password)) {
+        if (!$user || empty($user->password) || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect or direct system login is restricted for this account.'],
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        // System Access & Employee Active Status Checks
+        $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+        if ($employee) {
+            if ($employee->status === 'inactive' || !$employee->is_active) {
+                throw ValidationException::withMessages([
+                    'email' => ['Your account is currently inactive. Please contact your administrator.'],
+                ]);
+            }
+            if (!$employee->has_system_access) {
+                throw ValidationException::withMessages([
+                    'email' => ['System login access is disabled for this account.'],
+                ]);
+            }
+        }
+
+        if (!$user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['Your account is currently inactive. Please contact your administrator.'],
+            ]);
+        }
+
+        if (!$user->hasLoginAccess()) {
+            throw ValidationException::withMessages([
+                'email' => ['System login access is disabled for this account.'],
             ]);
         }
 
@@ -171,6 +202,7 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         $user = $request->user();
+        $user->load(['employee', 'roles']);
         
         // Get user permissions and roles
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
@@ -217,8 +249,12 @@ class AuthController extends Controller
         $user = $request->user();
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'first_name' => 'nullable|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'name' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:50',
             'current_password' => 'nullable|string',
             'new_password' => 'nullable|string|min:8|confirmed',
         ]);
@@ -230,6 +266,20 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Extract first, middle, last name
+        $firstName = trim($request->input('first_name', ''));
+        $middleName = trim($request->input('middle_name', ''));
+        $lastName = trim($request->input('last_name', ''));
+
+        if (!$firstName && $request->has('name')) {
+            $nameParts = explode(' ', trim($request->name));
+            $firstName = array_shift($nameParts) ?: $request->name;
+            $lastName = count($nameParts) > 0 ? array_pop($nameParts) : '';
+            $middleName = count($nameParts) > 0 ? implode(' ', $nameParts) : '';
+        }
+
+        $fullName = trim($firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName);
+
         // If changing password, verify current password
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
@@ -239,20 +289,46 @@ class AuthController extends Controller
             }
         }
 
-        $updateData = [
-            'name' => $request->name,
+        $userUpdate = [
+            'name' => $fullName ?: $user->name,
             'email' => $request->email,
         ];
 
-        if ($request->filled('new_password')) {
-            $updateData['password'] = Hash::make($request->new_password);
+        if ($request->has('phone')) {
+            $userUpdate['phone'] = $request->phone;
         }
 
-        $user->update($updateData);
+        if ($request->filled('new_password')) {
+            $userUpdate['password'] = Hash::make($request->new_password);
+        }
+
+        $user->update($userUpdate);
+
+        // DIRECT EMPLOYEES TABLE SYNC
+        $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+        if ($employee) {
+            $employeeUpdate = [
+                'first_name' => $firstName ?: $employee->first_name,
+                'middle_name' => $middleName ?: null,
+                'last_name' => $lastName ?: $employee->last_name,
+                'email' => $request->email,
+                'user_id' => $user->id,
+            ];
+
+            if ($request->has('phone')) {
+                $employeeUpdate['phone'] = $request->phone;
+                $employeeUpdate['mobile'] = $request->phone;
+            }
+
+            $employee->update($employeeUpdate);
+            try {
+                event(new EmployeeUpdatedEvent($employee->fresh()));
+            } catch (\Exception $e) {}
+        }
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user->fresh()
+            'user' => $user->fresh(['employee'])
         ]);
     }
 
@@ -280,6 +356,21 @@ class AuthController extends Controller
         $path = $request->file('profile_image')->store('profile-images', 'public');
 
         $user->update(['profile_image' => $path]);
+
+        // DIRECT EMPLOYEES TABLE SYNC
+        $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+        if ($employee) {
+            if ($employee->profile_image && $employee->profile_image !== $path) {
+                Storage::disk('public')->delete($employee->profile_image);
+            }
+            $employee->update([
+                'profile_image' => $path,
+                'user_id' => $user->id,
+            ]);
+            try {
+                event(new EmployeeUpdatedEvent($employee->fresh()));
+            } catch (\Exception $e) {}
+        }
 
         return response()->json([
             'message' => 'Profile image uploaded successfully',
@@ -423,5 +514,34 @@ class AuthController extends Controller
             return response()->json(['message' => 'Web session synchronized successfully']);
         }
         return response()->json(['message' => 'Unauthenticated'], 401);
+    }
+
+    public function checkStatus(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'UNAUTHENTICATED'], 401);
+        }
+
+        $isInactive = !$user->is_active;
+        $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+        if ($employee && ($employee->status === 'inactive' || !$employee->is_active || $employee->employment_status === 'inactive')) {
+            $isInactive = true;
+        }
+
+        if ($isInactive) {
+            if (method_exists($user, 'tokens')) {
+                try { $user->tokens()->delete(); } catch (\Exception $e) {}
+            }
+            return response()->json([
+                'error' => 'ACCOUNT_INACTIVE',
+                'message' => 'Your account has been deactivated by the administrator.'
+            ], 403);
+        }
+
+        return response()->json([
+            'status' => 'active',
+            'user_id' => $user->id
+        ]);
     }
 }

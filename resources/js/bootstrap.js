@@ -44,11 +44,36 @@ axios.interceptors.request.use(
     }
 );
 
-// Add response interceptor to handle auth errors
 axios.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const responseData = error.response?.data;
+        const isDeactivatedError = responseData?.error === 'ACCOUNT_INACTIVE' || 
+            (responseData?.message && responseData.message.toLowerCase().includes('deactivated'));
+
+        if (isDeactivatedError) {
+            try {
+                const activePinia = window.__pinia;
+                if (activePinia && activePinia._s?.has('auth')) {
+                    activePinia._s.get('auth').triggerDeactivation();
+                }
+            } catch (e) {}
+            localStorage.removeItem('auth_token');
+            return Promise.reject(error);
+        }
+
+        // If auth store is already deactivated, suppress auto-redirect to /login
+        try {
+            const activePinia = window.__pinia;
+            if (activePinia && activePinia._s?.has('auth')) {
+                const authStore = activePinia._s.get('auth');
+                if (authStore.isDeactivated) {
+                    return Promise.reject(error);
+                }
+            }
+        } catch (e) {}
+
+        if (error.response?.status === 401 || error.response?.status === 403) {
             const url = error.config?.url || '';
             // If it's a login attempt, let the component handle the error and show validation message
             if (url.includes('/login')) {
@@ -58,16 +83,29 @@ axios.interceptors.response.use(
             if (url.includes('/admin/api/') || url.includes('/admin/')) {
                 localStorage.removeItem('admin_token');
                 window.location.href = '/admin/login';
-            } else {
-                localStorage.removeItem('auth_token');
-                window.location.href = '/login';
+                return Promise.reject(error);
             }
-        }
-        if (error.response?.status === 403) {
-            if (error.response.data?.redirect) {
+
+            // If the user was logged in when this 401/403 occurred (e.g. employee account deactivated),
+            // trigger the deactivation modal overlay instead of forcing an immediate page redirect to /login.
+            try {
+                const activePinia = window.__pinia;
+                if (activePinia && activePinia._s?.has('auth')) {
+                    const authStore = activePinia._s.get('auth');
+                    if (authStore.isAuthenticated || authStore.isDeactivated || authStore.user) {
+                        authStore.triggerDeactivation();
+                        return Promise.reject(error);
+                    }
+                }
+            } catch (e) {}
+
+            if (error.response?.data?.redirect) {
                 window.location.href = error.response.data.redirect;
                 return Promise.reject(error);
             }
+
+            localStorage.removeItem('auth_token');
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }

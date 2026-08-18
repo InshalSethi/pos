@@ -117,6 +117,7 @@ Route::get('/test-departments', function () {
 // Protected routes
 Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::class])->group(function () {
     Route::get('/user', [AuthController::class , 'user']);
+    Route::get('/user/status-check', [AuthController::class , 'checkStatus']);
     Route::post('/logout', [AuthController::class , 'logout']);
 
     // User profile routes
@@ -418,6 +419,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::post('/employees/bulk-create-user-accounts', [EmployeeUserController::class , 'bulkCreateUserAccounts']);
         Route::post('/employees/{employee}/terminate', [EmployeeController::class , 'terminate']);
         Route::post('/employees/{employee}/reactivate', [EmployeeController::class , 'reactivate']);
+        Route::patch('/employees/{employee}/toggle-status', [EmployeeController::class , 'toggleStatus']);
+        Route::post('/employees/{employee}/toggle-status', [EmployeeController::class , 'toggleStatus']);
         Route::post('/employees/{employee}/create-user-account', [EmployeeUserController::class , 'createUserAccount']);
         Route::post('/employees/{employee}/sync-user-account', [EmployeeUserController::class , 'syncUserAccount']);
         Route::post('/employees/{employee}/reset-password', [EmployeeUserController::class , 'resetPassword']);

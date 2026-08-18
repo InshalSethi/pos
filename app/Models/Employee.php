@@ -67,6 +67,8 @@ class Employee extends Model
         'emergency_contact_email',
         'notes',
         'is_active',
+        'status',
+        'has_system_access',
         'is_manager',
         'avatar',
         'profile_photo_path',
@@ -81,11 +83,20 @@ class Employee extends Model
         'basic_salary' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
         'is_active' => 'boolean',
+        'has_system_access' => 'boolean',
         'is_manager' => 'boolean',
         'attachments' => 'array',
     ];
 
-    protected $appends = ['full_name', 'avatar_url', 'profile_photo_path', 'attachments_urls'];
+    protected $appends = ['full_name', 'role_name', 'avatar_url', 'profile_photo_path', 'attachments_urls'];
+
+    public function getRoleNameAttribute(): string
+    {
+        if ($this->user && $this->user->roles && $this->user->roles->first()) {
+            return $this->user->roles->first()->name;
+        }
+        return $this->is_manager ? 'manager' : 'employee';
+    }
 
     public function getAttachmentsUrlsAttribute(): array
     {

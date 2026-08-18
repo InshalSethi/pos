@@ -49,9 +49,10 @@
         :style="floatingStyle"
         class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-1.5 space-y-0.5 max-h-56 overflow-y-auto animate-fade-in z-[99999]"
       >
-        <!-- Optional Search Bar if > 6 options -->
-        <div v-if="normalizedOptions.length > 6" class="p-1 mb-1 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-slate-100 dark:border-zinc-800">
+        <!-- Search Bar if searchable or > 4 options -->
+        <div v-if="searchable || normalizedOptions.length > 4" class="p-1 mb-1 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-slate-100 dark:border-zinc-800">
           <input
+            ref="searchInputRef"
             v-model="searchQuery"
             type="text"
             placeholder="Search..."
@@ -61,8 +62,8 @@
         </div>
 
         <button
-          v-for="opt in filteredOptions"
-          :key="opt.value"
+          v-for="(opt, idx) in filteredOptions"
+          :key="'opt-' + idx + '-' + opt.value"
           type="button"
           @click="selectOption(opt)"
           class="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl flex items-center justify-between transition-all cursor-pointer"
@@ -129,6 +130,10 @@ const props = defineProps({
   placement: {
     type: String,
     default: 'down'
+  },
+  searchable: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -136,6 +141,7 @@ const emit = defineEmits(['update:modelValue', 'change']);
 
 const rootRef = ref(null);
 const dropdownMenuRef = ref(null);
+const searchInputRef = ref(null);
 const isOpen = ref(false);
 const searchQuery = ref('');
 
@@ -187,7 +193,7 @@ const updatePosition = () => {
   const menuEl = dropdownMenuRef.value;
   const actualHeight = (menuEl && menuEl.offsetHeight)
     ? menuEl.offsetHeight
-    : Math.min(224, (normalizedOptions.value.length * 36 + (normalizedOptions.value.length > 6 ? 45 : 0)));
+    : Math.min(224, (normalizedOptions.value.length * 36 + 45));
   
   const spaceBelow = window.innerHeight - rect.bottom;
   
@@ -196,12 +202,15 @@ const updatePosition = () => {
     top = rect.top - actualHeight - 4;
   }
 
+  const calculatedWidth = rect.width > 50 ? rect.width : (rootRef.value?.offsetWidth || 260);
+
   floatingStyle.value = {
     position: 'fixed',
     top: `${Math.max(4, top)}px`,
     left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    zIndex: '99999'
+    width: `${calculatedWidth}px`,
+    minWidth: '220px',
+    zIndex: '999999'
   };
 };
 
@@ -212,6 +221,8 @@ const toggle = () => {
     searchQuery.value = '';
     nextTick(() => {
       updatePosition();
+      searchInputRef.value?.focus();
+      setTimeout(updatePosition, 50);
     });
   }
 };

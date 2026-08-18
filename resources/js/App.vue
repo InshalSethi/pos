@@ -4,20 +4,50 @@
     <Toast />
     <ConfirmModal />
     <ModalsContainer />
+    <AccountDeactivatedModal />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useCurrencyStore } from '@/stores/currency';
 import { ModalsContainer } from 'vue-final-modal';
 import Toast from '@/components/common/Toast.vue';
 import ConfirmModal from '@/components/common/ConfirmModal.vue';
+import AccountDeactivatedModal from '@/components/common/AccountDeactivatedModal.vue';
 import axios from 'axios';
 
 const authStore = useAuthStore();
 const currencyStore = useCurrencyStore();
+let heartbeatInterval = null;
+
+const checkStatusHeartbeat = async () => {
+  if (!authStore.isAuthenticated || authStore.isDeactivated) return;
+  try {
+    const res = await axios.get('/api/user/status-check');
+    if (res.data?.error === 'ACCOUNT_INACTIVE') {
+      authStore.triggerDeactivation();
+    }
+  } catch (err) {
+    if (err.response?.status === 403 || err.response?.data?.error === 'ACCOUNT_INACTIVE') {
+      authStore.triggerDeactivation();
+    }
+  }
+};
+
+const setupEchoListener = () => {
+  if (window.Echo && authStore.user?.id) {
+    window.Echo.private(`user.${authStore.user.id}`)
+      .listen('EmployeeDeactivatedEvent', () => {
+        authStore.triggerDeactivation();
+      });
+    window.Echo.channel(`public-user-status.${authStore.user.id}`)
+      .listen('EmployeeDeactivatedEvent', () => {
+        authStore.triggerDeactivation();
+      });
+  }
+};
 
 const applyTheme = (theme) => {
   const html = document.documentElement;
@@ -49,6 +79,12 @@ onMounted(async () => {
 
     // Initialize stores after auth so the API calls are authenticated
     if (authStore.isAuthenticated) {
+      setupEchoListener();
+      await checkStatusHeartbeat();
+      window.addEventListener('focus', checkStatusHeartbeat);
+      // Fast 2-second heartbeat poll for real-time deactivation detection
+      heartbeatInterval = setInterval(checkStatusHeartbeat, 2000);
+
       try {
         await currencyStore.fetchCurrencies();
       } catch (error) {
@@ -68,6 +104,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('Auth initialization error:', error);
   }
+});
+
+onUnmounted(() => {
+  window.removeEventListener('focus', checkStatusHeartbeat);
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
 });
 </script>
 

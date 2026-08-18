@@ -165,8 +165,10 @@
                   <CustomPhoneInput
                     label="Phone Number"
                     v-model="form.phone"
+                    :required="true"
                     :error="errors.phone"
                   />
+                  <p v-if="errors.phone" class="mt-1 text-[10px] text-red-500">{{ errors.phone[0] }}</p>
                 </div>
                 <div>
                   <CustomPhoneInput
@@ -441,20 +443,51 @@
                 <p v-if="errors.hourly_rate" class="mt-1 text-[10px] text-red-500">{{ errors.hourly_rate[0] }}</p>
               </div>
 
-              <!-- System Login Access & User Account Integration Section -->
-              <div class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-4 rounded-xl space-y-3">
-                <div class="flex items-center justify-between">
+              <!-- System Login Access & Employee Status Integration Section -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Employee Status Toggle Card -->
+                <div class="bg-slate-50 dark:bg-zinc-950/40 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl flex items-center justify-between">
                   <div>
-                    <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">System Login Access</h4>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Grant direct portal login access to this employee</p>
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">Employee Status</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                      {{ form.status === 'active' ? 'Account active & operational' : 'Account is currently inactive' }}
+                    </p>
                   </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="form.create_user_account" class="sr-only peer" />
-                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:peer-focus:ring-indigo-800 peer-checked:bg-indigo-600"></div>
-                  </label>
+                  <button
+                    type="button"
+                    @click="form.status = form.status === 'active' ? 'inactive' : 'active'; form.is_active = (form.status === 'active');"
+                    class="relative inline-flex items-center h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none"
+                    :class="form.status === 'active' ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-zinc-700'"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-900 shadow-md ring-0 transition duration-200 ease-in-out"
+                      :class="form.status === 'active' ? 'translate-x-4' : 'translate-x-0.5'"
+                    />
+                  </button>
                 </div>
 
-                <div v-if="form.create_user_account || (isEditing && employee?.user_id)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-indigo-100 dark:border-indigo-900/30">
+                <!-- System Login Access Toggle Card -->
+                <div class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-4 rounded-xl flex items-center justify-between">
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">System Login Access</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Grant direct portal login access</p>
+                  </div>
+                  <button
+                    type="button"
+                    @click="form.create_user_account = !form.create_user_account; form.has_system_access = form.create_user_account;"
+                    class="relative inline-flex items-center h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none"
+                    :class="form.create_user_account ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-slate-200 dark:bg-zinc-700'"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-900 shadow-md ring-0 transition duration-200 ease-in-out"
+                      :class="form.create_user_account ? 'translate-x-4' : 'translate-x-0.5'"
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="form.create_user_account || (isEditing && employee?.user_id)" class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 p-4 rounded-xl space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">
                       {{ isEditing && employee?.user_id ? 'New Password' : 'Password *' }}
@@ -728,8 +761,9 @@
               <p v-if="quickManagerErrors.email" class="text-[10px] text-red-500 mt-0.5">{{ quickManagerErrors.email[0] }}</p>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Phone Number</label>
-              <input v-model="quickManagerForm.phone" type="text" placeholder="Phone number" class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Phone Number *</label>
+              <input v-model="quickManagerForm.phone" type="text" required placeholder="Phone number" class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+              <p v-if="quickManagerErrors.phone" class="text-[10px] text-red-500 mt-0.5">{{ quickManagerErrors.phone[0] }}</p>
             </div>
           </div>
 
@@ -860,6 +894,9 @@ const form = ref({
   salary_type: '',
   hourly_rate: '',
   is_manager: false,
+  status: 'active',
+  is_active: true,
+  has_system_access: false,
   create_user_account: false,
   password: '',
   password_confirmation: '',
@@ -1274,6 +1311,9 @@ const validateForm = () => {
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email.trim())) {
     errs.email = ['Please enter a valid email address.'];
   }
+  if (!form.value.phone || !form.value.phone.trim()) {
+    errs.phone = ['Phone number is required.'];
+  }
   if (!form.value.gender) {
     errs.gender = ['Gender selection is required.'];
   }
@@ -1504,7 +1544,25 @@ const initializeForm = () => {
       photoPreview.value = props.employee.user.profile_image.startsWith('http') ? props.employee.user.profile_image : `/storage/${props.employee.user.profile_image}`;
     }
 
-    // 5. ATTACHMENTS PRE-SELECTION
+    // 5. STATUS & SYSTEM ACCESS PRE-SELECTION
+    if (props.employee.status) {
+      form.value.status = props.employee.status;
+      form.value.is_active = props.employee.status === 'active';
+    } else if (props.employee.is_active !== undefined) {
+      form.value.is_active = !!props.employee.is_active;
+      form.value.status = props.employee.is_active ? 'active' : 'inactive';
+    }
+
+    if (props.employee.has_system_access !== undefined && props.employee.has_system_access !== null) {
+      form.value.has_system_access = !!props.employee.has_system_access;
+    } else if (props.employee.user_id || props.employee.user) {
+      form.value.has_system_access = true;
+    } else {
+      form.value.has_system_access = false;
+    }
+    form.value.create_user_account = form.value.has_system_access;
+
+    // 6. ATTACHMENTS PRE-SELECTION
     if (props.employee.attachments_urls && Array.isArray(props.employee.attachments_urls)) {
       existingAttachments.value = [...props.employee.attachments_urls];
     } else if (props.employee.user?.attachments_urls && Array.isArray(props.employee.user.attachments_urls)) {
@@ -1532,6 +1590,10 @@ const initializeForm = () => {
         form.value.role = 'employee';
       }
     }
+    form.value.status = 'active';
+    form.value.is_active = true;
+    form.value.has_system_access = false;
+    form.value.create_user_account = false;
     form.value.password = '';
     form.value.password_confirmation = '';
   }

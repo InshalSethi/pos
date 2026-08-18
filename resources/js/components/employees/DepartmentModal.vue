@@ -162,7 +162,11 @@ const parentDepartmentOptions = computed(() => [
 
 const managerSelectOptions = computed(() => [
   { value: '', label: 'Select Manager' },
-  ...employees.value.map(e => ({ value: e.id, label: e.full_name }))
+  ...employees.value.map(e => ({
+    value: e.id,
+    label: e.full_name || e.label,
+    sublabel: e.sublabel || e.employee_number || ''
+  }))
 ]);
 
 // Methods

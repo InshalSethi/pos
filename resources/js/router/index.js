@@ -610,7 +610,10 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login');
+    if (authStore.isDeactivated || !localStorage.getItem('auth_token')) {
+      return next('/');
+    }
+    return next('/login');
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
     next('/dashboard');
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {

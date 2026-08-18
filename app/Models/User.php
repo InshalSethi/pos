@@ -256,7 +256,16 @@ class User extends Authenticatable
      */
     public function hasLoginAccess(): bool
     {
-        return $this->type === 'user' && !empty($this->password) && (bool) $this->is_active;
+        if (!(bool)$this->is_active || empty($this->password)) {
+            return false;
+        }
+
+        $employee = $this->employee ?: Employee::where('user_id', $this->id)->orWhere('email', $this->email)->first();
+        if ($employee) {
+            return (bool)$employee->has_system_access && ($employee->status === 'active' || (bool)$employee->is_active);
+        }
+
+        return $this->type === 'user';
     }
 
     /**

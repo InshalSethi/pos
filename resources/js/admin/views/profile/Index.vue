@@ -15,10 +15,20 @@
               </div>
 
               <form @submit.prevent="updateProfile" class="space-y-6 max-w-2xl">
-                  <!-- Name -->
-                  <div>
-                      <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Full Name</label>
-                      <input type="text" v-model="form.name" required class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600">
+                  <!-- Name Fields -->
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                          <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">First Name <span class="text-rose-500">*</span></label>
+                          <input type="text" v-model="form.first_name" required class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="First name">
+                      </div>
+                      <div>
+                          <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Middle Name</label>
+                          <input type="text" v-model="form.middle_name" class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="Middle name">
+                      </div>
+                      <div>
+                          <label class="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">Last Name <span class="text-rose-500">*</span></label>
+                          <input type="text" v-model="form.last_name" required class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white transition-all shadow-xs outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs font-bold placeholder-zinc-400 dark:placeholder-zinc-600" placeholder="Last name">
+                      </div>
                   </div>
 
                   <!-- Email (Disabled) -->
@@ -66,7 +76,9 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 const form = ref({
-    name: '',
+    first_name: '',
+    middle_name: '',
+    last_name: '',
     email: '',
     current_password: '',
     password: '',
@@ -80,7 +92,15 @@ const errorMessage = ref('');
 const loadProfile = async () => {
     try {
         const { data } = await axios.get('/admin/api/profile');
-        form.value.name = data.name;
+        form.value.first_name = data.first_name || '';
+        form.value.middle_name = data.middle_name || '';
+        form.value.last_name = data.last_name || '';
+        if (!form.value.first_name && data.name) {
+            const parts = data.name.trim().split(' ');
+            form.value.first_name = parts.shift() || '';
+            form.value.last_name = parts.length > 0 ? parts.pop() : '';
+            form.value.middle_name = parts.join(' ');
+        }
         form.value.email = data.email;
     } catch (e) {
         errorMessage.value = 'Failed to load profile data.';
