@@ -34,6 +34,7 @@ class Employee extends Model
         'email',
         'phone',
         'mobile',
+        'fax',
         'address',
         'city',
         'state',

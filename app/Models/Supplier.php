@@ -27,6 +27,7 @@ class Supplier extends Model
         'email',
         'phone',
         'mobile',
+        'fax',
         'address',
         'city',
         'state',
