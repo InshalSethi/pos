@@ -2,51 +2,74 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Supplier General Ledger - {{ $supplier->name }}</title>
+    <title>Supplier General Ledger Statement - {{ $supplier->name }}</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 11px;
+            font-size: 9.5px;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             color: #1e293b;
         }
 
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #6366f1;
-            padding-bottom: 15px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 8px;
         }
 
         .company-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            color: #4f46e5;
+            color: #0f172a;
             margin: 0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .report-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            color: #0f172a;
-            margin: 4px 0 0 0;
+            color: #475569;
+            margin: 3px 0 0 0;
         }
 
         .meta-text {
-            font-size: 10px;
+            font-size: 9px;
             color: #64748b;
+        }
+
+        /* Executive Status Alert Box */
+        .executive-banner {
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 10px;
+        }
+        .banner-due {
+            background-color: #fff1f2;
+            border: 1.5px solid #f43f5e;
+            color: #9f1239;
+        }
+        .banner-advance {
+            background-color: #ecfdf5;
+            border: 1.5px solid #10b981;
+            color: #065f46;
+        }
+        .banner-cleared {
+            background-color: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            color: #334155;
         }
 
         .supplier-info-box {
             background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 20px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
         }
 
         .supplier-info-table {
@@ -55,16 +78,16 @@
         }
 
         .supplier-info-table td {
-            padding: 3px 5px;
+            padding: 2px 4px;
             vertical-align: top;
-            font-size: 10px;
+            font-size: 9px;
         }
 
         .info-label {
             font-weight: bold;
             color: #475569;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .info-value {
@@ -75,117 +98,110 @@
         .stats-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 25px;
+            margin-bottom: 12px;
         }
 
         .stat-card {
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 10px;
+            border-radius: 4px;
+            padding: 8px;
             text-align: center;
         }
 
-        .stat-card.pending {
-            border-left: 4px solid #f59e0b;
-            background-color: #fffbeb;
-        }
-
-        .stat-card.received {
-            border-left: 4px solid #10b981;
-            background-color: #ecfdf5;
-        }
-
-        .stat-card.balance {
-            border-left: 4px solid #6366f1;
-            background-color: #eef2ff;
-        }
+        .stat-card.opening { border-left: 3px solid #64748b; background-color: #f8fafc; }
+        .stat-card.credits { border-left: 3px solid #059669; background-color: #ecfdf5; }
+        .stat-card.debits { border-left: 3px solid #e11d48; background-color: #fff1f2; }
+        .stat-card.balance { border-left: 3px solid #be123c; background-color: #ffe4e6; }
 
         .stat-label {
-            font-size: 9px;
+            font-size: 8px;
             font-weight: bold;
             text-transform: uppercase;
             color: #475569;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
 
         .stat-amount {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #0f172a;
         }
 
-        .section-header {
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #1e293b;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #cbd5e1;
-        }
-
-        .data-table {
+        /* ACCOUNTS PAYABLE LEDGER TABLE STYLES */
+        .ledger-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
-        .data-table th {
-            background-color: #f1f5f9;
-            color: #334155;
-            font-size: 9px;
+        .ledger-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 8.5px;
             font-weight: bold;
             text-transform: uppercase;
             padding: 6px 8px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #334155;
             text-align: left;
         }
 
-        .data-table td {
-            padding: 6px 8px;
-            border: 1px solid #e2e8f0;
-            font-size: 10px;
-            color: #1e293b;
+        .ledger-table th.group-header {
+            background-color: #1e293b;
+            text-align: center;
         }
 
-        .data-table tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
-
-        .text-right {
-            text-align: right !important;
-        }
-
-        .text-center {
-            text-align: center !important;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
+        .ledger-table th.sub-header-debit {
+            background-color: #881337;
+            color: #fecdd3;
             font-size: 8px;
-            font-weight: bold;
-            text-transform: uppercase;
+            text-align: right;
         }
 
-        .badge-paid { background-color: #d1fae5; color: #065f46; }
-        .badge-partial { background-color: #fef3c7; color: #92400e; }
-        .badge-unpaid { background-color: #fee2e2; color: #991b1b; }
-        .badge-income { background-color: #d1fae5; color: #065f46; }
-        .badge-expense { background-color: #fee2e2; color: #991b1b; }
+        .ledger-table th.sub-header-credit {
+            background-color: #064e3b;
+            color: #a7f3d0;
+            font-size: 8px;
+            text-align: right;
+        }
 
-        .text-debit { color: #dc2626; font-weight: bold; }
-        .text-credit { color: #16a34a; font-weight: bold; }
+        .ledger-table td {
+            padding: 5px 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 9px;
+            color: #1e293b;
+            vertical-align: top;
+        }
+
+        .ledger-table tr.opening-row {
+            background-color: #f8fafc;
+            font-weight: bold;
+        }
+
+        .ledger-table tr.summary-row {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .ledger-table tr.summary-row td {
+            border: 1px solid #334155;
+            color: #ffffff;
+            font-size: 9.5px;
+        }
+
+        .text-right { text-align: right !important; }
+        .text-center { text-align: center !important; }
+
+        /* RED DEBIT, GREEN CREDIT */
+        .text-debit { color: #e11d48 !important; font-weight: bold; }
+        .text-credit { color: #059669 !important; font-weight: bold; }
 
         .footer {
-            margin-top: 30px;
-            padding-top: 10px;
+            margin-top: 20px;
+            padding-top: 8px;
             border-top: 1px solid #e2e8f0;
-            font-size: 9px;
+            font-size: 8px;
             color: #94a3b8;
             text-align: center;
         }
@@ -199,47 +215,76 @@
             <td>
                 <div class="company-title">{{ config('app.name', 'POS System') }}</div>
                 <div class="report-title">SUPPLIER GENERAL LEDGER STATEMENT</div>
+                <div style="font-size: 9px; font-weight: bold; color: #4f46e5; margin-top: 2px;">
+                    ACCOUNT CODE: {{ $accountCode ?? ('AP-' . str_pad($supplier->id, 5, '0', STR_PAD_LEFT)) }} (Accounts Payable)
+                </div>
             </td>
             <td class="text-right" style="vertical-align: bottom;">
-                <div class="meta-text"><strong>Period:</strong> 
+                <div class="meta-text"><strong>Statement Period:</strong> 
                     @if($startDate && $endDate)
                         {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
+                    @elseif($startDate)
+                        From {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }}
+                    @elseif($endDate)
+                        Until {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
                     @else
-                        All Time
+                        All Time Chronological
                     @endif
                 </div>
-                <div class="meta-text"><strong>Generated Date:</strong> {{ now()->format('M d, Y g:i A') }}</div>
+                <div class="meta-text"><strong>Issue Date & Time:</strong> {{ now()->format('M d, Y g:i A') }}</div>
             </td>
         </tr>
     </table>
+
+    <!-- EXECUTIVE FINANCIAL SUMMARY BANNER -->
+    @if($closingBalance > 0)
+        <div class="executive-banner banner-due">
+            <strong>ACTION REQUIRED — OUTSTANDING PAYMENT DUE TO SUPPLIER:</strong><br>
+            You have an outstanding liability of <strong>${{ number_format($closingBalance, 2) }}</strong> payable to <strong>{{ $supplier->name }}</strong>.
+        </div>
+    @elseif($closingBalance < 0)
+        <div class="executive-banner banner-advance">
+            <strong>SUPPLIER ADVANCE / DEBIT BALANCE:</strong><br>
+            You have an advance credit / overpayment of <strong>${{ number_format(abs($closingBalance), 2) }}</strong> with <strong>{{ $supplier->name }}</strong>. No payment is currently due.
+        </div>
+    @else
+        <div class="executive-banner banner-cleared">
+            <strong>ACCOUNT FULLY SETTLED:</strong><br>
+            All purchase bills for <strong>{{ $supplier->name }}</strong> have been settled in full ($0.00 Outstanding).
+        </div>
+    @endif
 
     <!-- Supplier Basic Information -->
     <div class="supplier-info-box">
         <table class="supplier-info-table">
             <tr>
-                <td style="width: 33%;">
-                    <div class="info-label">Supplier Name</div>
-                    <div class="info-value">{{ $supplier->name }}</div>
+                <td style="width: 25%;">
+                    <div class="info-label">Supplier ID / Code</div>
+                    <div class="info-value">{{ $accountCode ?? ('# ' . str_pad($supplier->id, 4, '0', STR_PAD_LEFT)) }}</div>
                 </td>
-                <td style="width: 33%;">
-                    <div class="info-label">Company Name</div>
-                    <div class="info-value">{{ $supplier->company_name ?: 'N/A' }}</div>
+                <td style="width: 35%;">
+                    <div class="info-label">Supplier Legal / Company Name</div>
+                    <div class="info-value">{{ $supplier->company_name ?: $supplier->name }}</div>
                 </td>
-                <td style="width: 34%;">
+                <td style="width: 20%;">
                     <div class="info-label">Phone Number</div>
                     <div class="info-value">{{ $supplier->phone ?: 'N/A' }}</div>
                 </td>
+                <td style="width: 20%;">
+                    <div class="info-label">Credit Limit</div>
+                    <div class="info-value">${{ number_format((float)($supplier->credit_limit ?? 0), 2) }}</div>
+                </td>
             </tr>
             <tr>
-                <td style="margin-top: 5px;">
-                    <div class="info-label">Supplier ID</div>
-                    <div class="info-value">#{{ str_pad($supplier->id, 4, '0', STR_PAD_LEFT) }}</div>
-                </td>
-                <td style="margin-top: 5px;">
+                <td style="margin-top: 4px;">
                     <div class="info-label">Email Address</div>
                     <div class="info-value">{{ $supplier->email ?: 'N/A' }}</div>
                 </td>
-                <td style="margin-top: 5px;">
+                <td style="margin-top: 4px;" colspan="2">
+                    <div class="info-label">Address</div>
+                    <div class="info-value">{{ implode(', ', array_filter([$supplier->address, $supplier->city, $supplier->state, $supplier->country])) ?: 'N/A' }}</div>
+                </td>
+                <td style="margin-top: 4px;">
                     <div class="info-label">Advance Balance</div>
                     <div class="info-value" style="color: #059669;">${{ number_format((float)($supplier->advance_balance ?? 0), 2) }}</div>
                 </td>
@@ -250,132 +295,87 @@
     <!-- Summary Stats Cards -->
     <table class="stats-table">
         <tr>
-            <td style="width: 32%; padding-right: 8px;">
-                <div class="stat-card pending">
-                    <div class="stat-label">Payment Pending</div>
-                    <div class="stat-amount" style="color: #b45309;">${{ number_format($paymentPending, 2) }}</div>
+            <td style="width: 25%; padding-right: 6px;">
+                <div class="stat-card opening">
+                    <div class="stat-label">Opening Balance B/F</div>
+                    <div class="stat-amount" style="color: #475569;">${{ number_format($openingBalance, 2) }}</div>
                 </div>
             </td>
-            <td style="width: 32%; padding-right: 8px;">
-                <div class="stat-card received">
-                    <div class="stat-label">Payment Made</div>
-                    <div class="stat-amount" style="color: #047857;">${{ number_format($paymentMade, 2) }}</div>
+            <td style="width: 25%; padding-right: 6px;">
+                <div class="stat-card credits">
+                    <div class="stat-label">Total Billed / Purchases (Credit)</div>
+                    <div class="stat-amount" style="color: #059669;">${{ number_format($totalCredits, 2) }}</div>
                 </div>
             </td>
-            <td style="width: 36%;">
+            <td style="width: 25%; padding-right: 6px;">
+                <div class="stat-card debits">
+                    <div class="stat-label">Total Paid / Returned (Debit)</div>
+                    <div class="stat-amount" style="color: #e11d48;">${{ number_format($totalDebits, 2) }}</div>
+                </div>
+            </td>
+            <td style="width: 25%;">
                 <div class="stat-card balance">
-                    <div class="stat-label">Closing Balance</div>
-                    <div class="stat-amount" style="color: #4338ca;">${{ number_format($closingBalance, 2) }}</div>
+                    <div class="stat-label">Net Payable Due</div>
+                    <div class="stat-amount" style="color: {{ $closingBalance > 0 ? '#e11d48' : '#059669' }};">
+                        ${{ number_format(abs($closingBalance), 2) }} {{ $closingBalanceType ?? 'Cr' }}
+                    </div>
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- SECTION 1: Purchase Orders -->
-    <div class="section-header">Purchase Orders</div>
-    <table class="data-table">
+    <!-- ACCOUNTS PAYABLE GENERAL LEDGER TABLE -->
+    <table class="ledger-table">
         <thead>
             <tr>
-                <th style="width: 15%;">PO #</th>
-                <th style="width: 13%;">Date</th>
-                <th style="width: 20%;">Purchaser</th>
-                <th style="width: 12%;" class="text-center">Status</th>
-                <th style="width: 14%;" class="text-right">Total</th>
-                <th style="width: 14%;" class="text-right">Paid</th>
-                <th style="width: 14%;" class="text-right">Due</th>
+                <th rowspan="2" style="width: 12%;">Date</th>
+                <th rowspan="2" style="width: 34%;">Description / Transaction Details</th>
+                <th rowspan="2" style="width: 16%;">Journal Ref</th>
+                <th colspan="2" class="group-header" style="width: 19%;">Transactions</th>
+                <th colspan="2" class="group-header" style="width: 19%;">Running Balance</th>
+            </tr>
+            <tr>
+                <th class="sub-header-debit">Debit (Paid / Returned -)</th>
+                <th class="sub-header-credit">Credit (Purchases +)</th>
+                <th class="sub-header-debit">Debit (Dr)</th>
+                <th class="sub-header-credit">Credit (Cr)</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($purchaseOrders as $po)
-                @php
-                    $paid = (float) ($po->amount_paid ?? $po->paid_amount ?? 0);
-                    $total = (float) ($po->total_amount ?? $po->grand_total ?? 0);
-                    $due = max(0, $total - $paid);
-                    $status = strtoupper($po->status ?: 'PENDING');
-                    $statusClass = 'badge-partial';
-                    if (in_array(strtolower($po->status), ['received', 'completed', 'paid'])) {
-                        $statusClass = 'badge-paid';
-                    } elseif (in_array(strtolower($po->status), ['cancelled', 'void'])) {
-                        $statusClass = 'badge-unpaid';
-                    }
-                @endphp
-                <tr>
-                    <td style="font-weight: bold; color: #4338ca;">{{ $po->po_number }}</td>
-                    <td>{{ $po->order_date ? \Carbon\Carbon::parse($po->order_date)->format('M d, Y') : 'N/A' }}</td>
-                    <td>{{ $po->user ? $po->user->name : 'N/A' }}</td>
-                    <td class="text-center"><span class="badge {{ $statusClass }}">{{ $status }}</span></td>
-                    <td class="text-right" style="font-weight: bold;">${{ number_format($total, 2) }}</td>
-                    <td class="text-right text-credit">${{ number_format($paid, 2) }}</td>
-                    <td class="text-right text-debit">${{ number_format($due, 2) }}</td>
+            @if($startDate)
+                <tr class="opening-row">
+                    <td>{{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }}</td>
+                    <td><strong>Balance B/F (Opening Balance)</strong></td>
+                    <td style="font-weight: bold; color: #475569;">OPENING</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right text-debit">{{ $openingBalance < 0 ? '$' . number_format(abs($openingBalance), 2) . ' Dr' : '-' }}</td>
+                    <td class="text-right text-credit">{{ $openingBalance >= 0 ? '$' . number_format($openingBalance, 2) . ' Cr' : '-' }}</td>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="text-center" style="padding: 15px; color: #94a3b8; font-style: italic;">
-                        No purchase orders found for this supplier in selected period.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+            @endif
 
-    <!-- SECTION 2: Purchase Returns -->
-    <div class="section-header">Purchase Returns</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width: 18%;">Return #</th>
-                <th style="width: 14%;">Date</th>
-                <th style="width: 20%;">Original PO #</th>
-                <th style="width: 15%;" class="text-center">Refund Method</th>
-                <th style="width: 15%;" class="text-right">Refund Amount</th>
-                <th style="width: 18%;">Notes / Reason</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($returns as $ret)
-                <tr>
-                    <td style="font-weight: bold; color: #dc2626;">{{ $ret->return_number }}</td>
-                    <td>{{ $ret->return_date ? \Carbon\Carbon::parse($ret->return_date)->format('M d, Y') : 'N/A' }}</td>
-                    <td style="color: #4338ca; font-weight: bold;">{{ $ret->purchaseOrder ? $ret->purchaseOrder->po_number : 'N/A' }}</td>
-                    <td class="text-center" style="text-transform: uppercase;">{{ $ret->payment_method ?: 'Credit Note' }}</td>
-                    <td class="text-right text-debit">${{ number_format((float)$ret->total_amount, 2) }}</td>
-                    <td>{{ $ret->reason ?: $ret->notes ?: 'No reason specified' }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="text-center" style="padding: 15px; color: #94a3b8; font-style: italic;">
-                        No purchase returns recorded for this supplier in selected period.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-    <!-- SECTION 3: Transactions -->
-    <div class="section-header">Transactions</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width: 12%;">Date</th>
-                <th style="width: 16%;">Reference</th>
-                <th style="width: 28%;">Description</th>
-                <th style="width: 14%;" class="text-center">Type</th>
-                <th style="width: 10%;" class="text-right">Debit ($)</th>
-                <th style="width: 10%;" class="text-right">Credit ($)</th>
-                <th style="width: 10%;" class="text-right">Balance ($)</th>
-            </tr>
-        </thead>
-        <tbody>
             @forelse($transactions as $tx)
                 <tr>
-                    <td>{{ $tx['date'] ? \Carbon\Carbon::parse($tx['date'])->format('M d, Y') : 'N/A' }}</td>
-                    <td style="font-weight: bold;">{{ $tx['reference'] }}</td>
-                    <td>{{ $tx['description'] }}</td>
-                    <td class="text-center">
-                        <span class="badge {{ $tx['debit'] > 0 ? 'badge-expense' : 'badge-income' }}">
-                            {{ $tx['type'] }}
-                        </span>
+                    <td>{{ $tx['date'] ? \Carbon\Carbon::parse($tx['date'])->format('d/m/Y') : 'N/A' }}</td>
+                    <td>
+                        <div style="font-weight: bold;">{{ $tx['particulars'] ?: $tx['description'] }}</div>
+                        <div style="font-size: 8px; color: #64748b;">
+                            Status: <strong>{{ $tx['status'] ?? 'Posted' }}</strong>
+                            @if(!empty($tx['due_amount']) && $tx['due_amount'] > 0)
+                                | <span style="color: #e11d48; font-weight: bold;">Due: ${{ number_format($tx['due_amount'], 2) }}</span>
+                            @endif
+                        </div>
+                        @if(!empty($tx['items']))
+                            <div style="margin-top: 3px; font-size: 8px; color: #475569;">
+                                @foreach($tx['items'] as $item)
+                                    <div>• {{ $item['name'] }} ({{ $item['qty'] }} x ${{ number_format($item['price'], 2) }} = ${{ number_format($item['total'], 2) }})</div>
+                                @endforeach
+                            </div>
+                        @endif
                     </td>
+                    <td style="font-weight: bold; color: #4f46e5;">{{ $tx['reference'] }}</td>
+                    
+                    <!-- Transactions Debit (RED) -->
                     <td class="text-right">
                         @if($tx['debit'] > 0)
                             <span class="text-debit">${{ number_format($tx['debit'], 2) }}</span>
@@ -383,6 +383,8 @@
                             -
                         @endif
                     </td>
+
+                    <!-- Transactions Credit (GREEN) -->
                     <td class="text-right">
                         @if($tx['credit'] > 0)
                             <span class="text-credit">${{ number_format($tx['credit'], 2) }}</span>
@@ -390,22 +392,45 @@
                             -
                         @endif
                     </td>
-                    <td class="text-right" style="font-weight: bold;">
-                        ${{ number_format($tx['running_balance'], 2) }}
+
+                    <!-- Balance Debit (Dr RED) -->
+                    <td class="text-right font-bold text-debit">
+                        @if($tx['balance'] < 0)
+                            <span>${{ number_format(abs($tx['balance']), 2) }} <span style="font-size: 8px;">Dr</span></span>
+                        @else
+                            -
+                        @endif
+                    </td>
+
+                    <!-- Balance Credit (Cr GREEN) -->
+                    <td class="text-right font-bold text-credit">
+                        @if($tx['balance'] >= 0)
+                            <span>${{ number_format($tx['balance'], 2) }} <span style="font-size: 8px;">Cr</span></span>
+                        @else
+                            -
+                        @endif
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="text-center" style="padding: 15px; color: #94a3b8; font-style: italic;">
-                        No transactions found for this supplier in selected period.
+                    <td colspan="7" class="text-center" style="padding: 20px; color: #94a3b8; font-style: italic;">
+                        No ledger transactions found for this supplier in the selected period.
                     </td>
                 </tr>
             @endforelse
+
+            <tr class="summary-row">
+                <td colspan="3" class="text-center uppercase" style="letter-spacing: 0.5px;">Total Summary</td>
+                <td class="text-right" style="color: #fecdd3;">${{ number_format($totalDebits, 2) }}</td>
+                <td class="text-right" style="color: #a7f3d0;">${{ number_format($totalCredits, 2) }}</td>
+                <td class="text-right" style="color: #fecdd3;">{{ $closingBalance < 0 ? '$' . number_format(abs($closingBalance), 2) . ' Dr' : '-' }}</td>
+                <td class="text-right" style="color: #a7f3d0;">{{ $closingBalance >= 0 ? '$' . number_format($closingBalance, 2) . ' Cr' : '-' }}</td>
+            </tr>
         </tbody>
     </table>
 
     <div class="footer">
-        This document is an official financial ledger statement generated by {{ config('app.name', 'POS System') }}. Page 1 of 1
+        IAS 1 / IFRS Compliant Accounts Payable General Ledger Statement — Generated by {{ config('app.name', 'POS System') }}
     </div>
 
 </body>

@@ -205,6 +205,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     // Supplier Ledger and Accounting routes
     Route::get('/suppliers/{supplier}/ledger', [SupplierLedgerController::class, 'getLedger']);
     Route::get('/suppliers/{supplier}/ledger/pdf', [SupplierLedgerController::class, 'exportPDF']);
+    Route::get('/suppliers/{supplier}/ledger/export-pdf', [SupplierLedgerController::class, 'exportPDF']);
     Route::get('/suppliers/{supplier}/purchase-orders', [SupplierLedgerController::class, 'getPurchaseOrders']);
     Route::get('/suppliers/{supplier}/purchase-returns', [SupplierLedgerController::class, 'getPurchaseReturns']);
     Route::get('/suppliers/{supplier}/transactions', [SupplierLedgerController::class, 'getTransactions']);

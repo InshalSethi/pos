@@ -1,629 +1,643 @@
 <template>
-  <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-black/60 backdrop-blur-sm transition-all duration-200" @click.self="$emit('close')">
-    <div class="relative mx-auto border border-slate-200/80 dark:border-zinc-800 w-full max-w-7xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 transition-all duration-300 z-10 max-h-[92vh] flex flex-col overflow-hidden my-auto" @click.stop>
-      
-      <!-- Modal Top Header Bar -->
-      <div class="px-6 py-4 bg-white dark:bg-zinc-900 border-b border-slate-200/80 dark:border-zinc-800 flex items-center justify-between shrink-0">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+  <Teleport to="body">
+    <div
+      v-if="show"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
+      @click.self="$emit('close')"
+    >
+      <div
+        class="relative w-full max-w-7xl max-h-[92vh] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-200 my-auto"
+        @click.stop
+      >
+        <!-- Modal Header with IAS 1 Metadata -->
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
+          <div class="flex items-center space-x-3">
+            <div class="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-black text-slate-900 dark:text-zinc-100 tracking-tight">Supplier General Ledger</h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                  {{ accountCode }} • Official Account Statement
+                </span>
+              </div>
+              <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                Accounts Payable Ledger for {{ activeSupplier?.name || supplier?.name }}
+              </p>
+            </div>
           </div>
-          <div>
-            <div class="flex items-center space-x-2">
-              <h2 class="text-lg font-black text-slate-800 dark:text-zinc-100 tracking-tight">Supplier General Ledger</h2>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-wider">
-                Statement
+
+          <!-- Top Right Controls & Date Filter -->
+          <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <FloatingDateRangePicker
+              v-model="dateRange"
+              :show-presets="true"
+              placeholder="All Time"
+              @update:modelValue="fetchLedgerData"
+              @clear="fetchLedgerData"
+            />
+
+            <!-- Download PDF Button -->
+            <button
+              type="button"
+              @click="downloadPDF"
+              :disabled="downloadingPdf"
+              class="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl text-xs font-extrabold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+              title="Export Supplier General Ledger PDF Statement"
+            >
+              <svg v-if="!downloadingPdf" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <div v-else class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+              <span>{{ downloadingPdf ? 'Exporting...' : 'PDF Statement' }}</span>
+            </button>
+
+            <button
+              type="button"
+              @click="$emit('close')"
+              class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs font-bold transition-all cursor-pointer shrink-0"
+              title="Close modal"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body (Supplier Account Info Sidebar + General Ledger Table Grid) -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 bg-slate-50/50 dark:bg-black/20 space-y-4">
+          
+          <!-- EXECUTIVE FINANCIAL STATUS BANNER (CRYSTAL CLEAR ACCOUNTS PAYABLE SUMMARY) -->
+          <div
+            v-if="closingBalance > 0"
+            class="p-4 rounded-2xl bg-rose-500/10 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs"
+          >
+            <div class="flex items-start space-x-3">
+              <div class="p-2 bg-rose-600 text-white rounded-xl font-black text-sm shrink-0">
+                ⚠
+              </div>
+              <div>
+                <h5 class="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                  Payment Payable Action Required
+                </h5>
+                <p class="text-xs font-medium text-rose-700 dark:text-rose-300 mt-0.5">
+                  You have an outstanding balance of <strong class="text-sm font-black text-rose-800 dark:text-rose-100 underline underline-offset-2">{{ formatCurrency(closingBalance) }}</strong> payable to {{ activeSupplier?.name || supplier?.name }}.
+                </p>
+              </div>
+            </div>
+            <div class="shrink-0 self-end sm:self-center">
+              <span class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-rose-600 text-white shadow-xs">
+                NET PAYABLE DUE: {{ formatCurrency(closingBalance) }}
               </span>
             </div>
-            <p class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-              Real-time statement for <span class="font-bold text-slate-700 dark:text-zinc-200">{{ activeSupplier?.name || supplier?.name }}</span>
-              <span v-if="activeSupplier?.company_name" class="text-slate-400 dark:text-zinc-500"> ({{ activeSupplier.company_name }})</span>
-            </p>
+          </div>
+
+          <div
+            v-else-if="closingBalance < 0"
+            class="p-4 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs"
+          >
+            <div class="flex items-start space-x-3">
+              <div class="p-2 bg-emerald-600 text-white rounded-xl font-black text-sm shrink-0">
+                ✓
+              </div>
+              <div>
+                <h5 class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                  Supplier Advance / Debit Balance Credit
+                </h5>
+                <p class="text-xs font-medium text-emerald-700 dark:text-emerald-300 mt-0.5">
+                  You have an advance overpayment / debit credit of <strong class="text-sm font-black text-emerald-800 dark:text-emerald-100">{{ formatCurrency(Math.abs(closingBalance)) }}</strong> with {{ activeSupplier?.name || supplier?.name }}. No payment is currently due.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else
+            class="p-4 rounded-2xl bg-emerald-50 dark:bg-zinc-800/80 border border-emerald-200 dark:border-zinc-700 flex items-center space-x-3"
+          >
+            <div class="p-2 bg-emerald-600 text-white rounded-xl font-black text-sm shrink-0">
+              ✓
+            </div>
+            <div>
+              <h5 class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                Account Fully Cleared ($0.00 Outstanding)
+              </h5>
+              <p class="text-xs font-medium text-slate-600 dark:text-zinc-400 mt-0.5">
+                All purchase invoices for {{ activeSupplier?.name || supplier?.name }} have been paid in full. No payment is due.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT SIDE: Supplier Account Information Sidebar (col-span-3) -->
+            <div class="lg:col-span-3 space-y-4">
+              <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-slate-200/80 dark:border-zinc-800 shadow-xs space-y-5">
+                
+                <!-- Profile & Account Code Header -->
+                <div class="text-center pb-4 border-b border-slate-100 dark:border-zinc-800">
+                  <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-xl shadow-md mx-auto mb-3">
+                    {{ getInitials(activeSupplier?.name || supplier?.name) }}
+                  </div>
+                  <h4 class="font-extrabold text-slate-900 dark:text-zinc-100 text-base leading-tight">
+                    {{ activeSupplier?.name || supplier?.name || 'Supplier Ledger' }}
+                  </h4>
+                  <p v-if="activeSupplier?.company_name" class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                    {{ activeSupplier.company_name }}
+                  </p>
+                  <p class="text-xs font-black text-indigo-600 dark:text-indigo-400 mt-1">
+                    Account Code: {{ accountCode }}
+                  </p>
+                  <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase mt-0.5">
+                    {{ accountType }}
+                  </p>
+                </div>
+
+                <!-- Info Fields -->
+                <div class="space-y-3 text-xs">
+                  
+                  <!-- Email -->
+                  <div class="flex items-start space-x-3">
+                    <div class="p-1.5 bg-slate-100 dark:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 shrink-0">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500">Email Address</p>
+                      <p class="font-medium text-slate-800 dark:text-zinc-200 truncate">
+                        {{ activeSupplier?.email || supplier?.email || 'N/A' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Phone -->
+                  <div class="flex items-start space-x-3">
+                    <div class="p-1.5 bg-slate-100 dark:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 shrink-0">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500">Phone Number</p>
+                      <p class="font-medium text-slate-800 dark:text-zinc-200">
+                        {{ activeSupplier?.phone || supplier?.phone || 'N/A' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Address -->
+                  <div class="flex items-start space-x-3">
+                    <div class="p-1.5 bg-slate-100 dark:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 shrink-0">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500">Address</p>
+                      <p class="font-medium text-slate-800 dark:text-zinc-200 leading-snug">
+                        {{ formatAddress(activeSupplier || supplier) }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="pt-3 border-t border-slate-100 dark:border-zinc-800 space-y-2.5">
+                    <!-- Credit Limit -->
+                    <div class="flex items-start space-x-3">
+                      <div class="p-1.5 bg-slate-100 dark:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500">Credit Limit</p>
+                        <p class="font-extrabold text-slate-900 dark:text-zinc-100">
+                          {{ formatCurrency(activeSupplier?.credit_limit || supplier?.credit_limit || 0) }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Advance Balance -->
+                    <div class="flex items-start space-x-3">
+                      <div class="p-1.5 bg-slate-200/60 dark:bg-zinc-800 rounded-lg text-slate-500 dark:text-zinc-400 shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-[10px] font-extrabold uppercase text-slate-400 dark:text-zinc-500">Advance Balance</p>
+                        <p class="font-extrabold text-emerald-600 dark:text-emerald-400">
+                          {{ formatCurrency(activeSupplier?.advance_balance || supplier?.advance_balance || 0) }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT SIDE: General Ledger Main Section (col-span-9) -->
+            <div class="lg:col-span-9 space-y-5">
+              
+              <!-- 4-Card Summary Header (CLEAR ACTIONABLE FINANCIAL CARDS) -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <!-- Opening Balance B/F -->
+                <div class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-2xs space-y-1">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Opening Balance B/F</span>
+                  <p class="text-base font-black text-slate-700 dark:text-zinc-300">
+                    {{ formatCurrency(openingBalance) }}
+                  </p>
+                </div>
+
+                <!-- Total Billed / Purchases (Credit - GREEN) -->
+                <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-500/15 dark:via-emerald-500/5 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs space-y-1">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Total Purchases (Credit)</span>
+                  <p class="text-base font-black text-emerald-600 dark:text-emerald-400">
+                    {{ formatCurrency(totalCredits) }}
+                  </p>
+                </div>
+
+                <!-- Total Paid / Returned (Debit - RED) -->
+                <div class="bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent dark:from-rose-500/15 dark:via-rose-500/5 p-4 rounded-2xl border border-rose-200 dark:border-rose-900/60 shadow-2xs space-y-1">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400">Total Paid / Returned (Debit)</span>
+                  <p class="text-base font-black text-rose-600 dark:text-rose-400">
+                    {{ formatCurrency(totalDebits) }}
+                  </p>
+                </div>
+
+                <!-- NET AMOUNT OUTSTANDING TO PAY (DUE) -->
+                <div
+                  :class="[
+                    'p-4 rounded-2xl border shadow-2xs space-y-1 transition-all',
+                    closingBalance > 0
+                      ? 'bg-rose-500/15 border-rose-400 dark:border-rose-800'
+                      : 'bg-emerald-500/15 border-emerald-400 dark:border-emerald-800'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'text-[10px] font-black uppercase tracking-wider',
+                      closingBalance > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'
+                    ]"
+                  >
+                    {{ closingBalance > 0 ? 'Net Payable Due' : (closingBalance < 0 ? 'Supplier Advance' : 'Account Settled') }}
+                  </span>
+                  <p
+                    :class="[
+                      'text-base font-black',
+                      closingBalance > 0 ? 'text-rose-700 dark:text-rose-200' : 'text-emerald-700 dark:text-emerald-200'
+                    ]"
+                  >
+                    {{ formatCurrency(Math.abs(closingBalance)) }}
+                    <span class="text-xs font-extrabold">({{ closingBalanceType }})</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Datatable Card Container -->
+              <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs flex flex-col overflow-hidden">
+                
+                <!-- Table Controls (Search, Sort Order Toggle & Per Page) -->
+                <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/50 dark:bg-zinc-900/50">
+                  <div class="relative w-full sm:w-80">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      v-model="searchQuery"
+                      type="text"
+                      placeholder="Search ref # (e.g. PO-1001), particulars..."
+                      class="w-full pl-9 pr-4 py-1.5 text-xs bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 dark:text-zinc-200 placeholder-slate-400 transition-all"
+                    />
+                  </div>
+
+                  <!-- Quick Controls: Sort Order & Page Size -->
+                  <div class="flex items-center space-x-3 text-xs text-slate-500 dark:text-zinc-400 shrink-0">
+                    <!-- Sort Order Toggle -->
+                    <button
+                      type="button"
+                      @click="toggleSortDirection"
+                      class="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 font-extrabold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all flex items-center space-x-1 cursor-pointer"
+                      title="Toggle Chronological Order"
+                    >
+                      <span>Order:</span>
+                      <span class="text-indigo-600 dark:text-indigo-400">{{ sortOrder === 'desc' ? 'Newest First' : 'Oldest First' }}</span>
+                      <span>{{ sortOrder === 'desc' ? '▼' : '▲' }}</span>
+                    </button>
+
+                    <!-- Entries Per Page -->
+                    <div class="flex items-center space-x-1.5">
+                      <span>Show</span>
+                      <select
+                        v-model="perPage"
+                        class="px-2 py-1 text-xs bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg focus:outline-none text-slate-800 dark:text-zinc-200 font-semibold"
+                      >
+                        <option :value="10">10</option>
+                        <option :value="25">25</option>
+                        <option :value="50">50</option>
+                        <option :value="100">100</option>
+                        <option value="all">All</option>
+                      </select>
+                      <span>entries</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ACCOUNTS PAYABLE GENERAL LEDGER TABLE -->
+                <div class="overflow-x-auto custom-scrollbar">
+                  <table class="w-full text-xs text-left border-collapse">
+                    <thead class="bg-slate-900 text-white dark:bg-zinc-950 dark:text-zinc-100 font-black uppercase text-[10px] tracking-wider border-b border-slate-800">
+                      <!-- Group Header Row -->
+                      <tr>
+                        <th rowspan="2" @click="toggleSort('date')" class="py-3 px-4 cursor-pointer select-none hover:text-indigo-300 transition-colors w-28 border-r border-slate-800">
+                          <div class="flex items-center space-x-1">
+                            <span>Date</span>
+                            <span class="text-[10px] text-indigo-400">
+                              {{ sortKey === 'date' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕' }}
+                            </span>
+                          </div>
+                        </th>
+                        <th rowspan="2" class="py-3 px-4 border-r border-slate-800">Description / Transaction Details</th>
+                        <th rowspan="2" @click="toggleSort('reference')" class="py-3 px-3 cursor-pointer select-none hover:text-indigo-300 transition-colors w-32 border-r border-slate-800">
+                          <div class="flex items-center space-x-1">
+                            <span>Journal Ref</span>
+                            <span class="text-[10px] text-indigo-400">
+                              {{ sortKey === 'reference' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕' }}
+                            </span>
+                          </div>
+                        </th>
+                        <th colspan="2" class="py-2 px-4 text-center border-r border-slate-800 bg-slate-800/90 dark:bg-zinc-900">
+                          Transactions
+                        </th>
+                        <th colspan="2" class="py-2 px-4 text-center bg-slate-800/90 dark:bg-zinc-900">
+                          Running Balance
+                        </th>
+                      </tr>
+                      <!-- Sub Header Row (RED FOR DEBIT, GREEN FOR CREDIT) -->
+                      <tr class="bg-slate-800/70 dark:bg-zinc-900/70 text-[9px]">
+                        <th @click="toggleSort('debit')" class="py-2 px-3 text-right cursor-pointer select-none text-rose-400 border-r border-slate-700/80 w-28">
+                          Debit (Paid/Ret -)
+                        </th>
+                        <th @click="toggleSort('credit')" class="py-2 px-3 text-right cursor-pointer select-none text-emerald-400 border-r border-slate-800 w-28">
+                          Credit (Purchases +)
+                        </th>
+                        <th class="py-2 px-3 text-right border-r border-slate-700/80 w-28 text-rose-300">Debit (Dr)</th>
+                        <th class="py-2 px-3 text-right w-28 text-emerald-300">Credit (Cr)</th>
+                      </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                      
+                      <!-- Opening Balance Row -->
+                      <tr v-if="dateRange?.start" class="bg-slate-50/80 dark:bg-zinc-800/40 font-bold">
+                        <td class="py-2.5 px-4 text-slate-600 dark:text-zinc-400 border-r border-slate-100 dark:border-zinc-800">{{ formatDate(dateRange.start) }}</td>
+                        <td class="py-2.5 px-4 text-slate-800 dark:text-zinc-200 border-r border-slate-100 dark:border-zinc-800">Balance B/F (Opening Balance)</td>
+                        <td class="py-2.5 px-3 text-slate-500 dark:text-zinc-400 uppercase text-[11px] border-r border-slate-100 dark:border-zinc-800">OPENING</td>
+                        <td class="py-2.5 px-3 text-right text-slate-400 border-r border-slate-100 dark:border-zinc-800">-</td>
+                        <td class="py-2.5 px-3 text-right text-slate-400 border-r border-slate-100 dark:border-zinc-800">-</td>
+                        <!-- Balance Debit vs Credit -->
+                        <td class="py-2.5 px-3 text-right font-black text-rose-600 dark:text-rose-400 border-r border-slate-100 dark:border-zinc-800">
+                          {{ openingBalance < 0 ? `${formatCurrency(Math.abs(openingBalance))} Dr` : '-' }}
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-black text-emerald-600 dark:text-emerald-400">
+                          {{ openingBalance >= 0 ? `${formatCurrency(openingBalance)} Cr` : '-' }}
+                        </td>
+                      </tr>
+
+                      <!-- Loading Skeleton State -->
+                      <tr v-if="loading">
+                        <td colspan="7" class="py-12 text-center">
+                          <div class="inline-flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
+                            <div class="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent"></div>
+                            <span class="font-extrabold text-xs">Loading general ledger entries...</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Empty State -->
+                      <tr v-else-if="paginatedTransactions.length === 0">
+                        <td colspan="7" class="py-12 text-center text-slate-400 dark:text-zinc-500">
+                          <p class="font-bold text-xs">No ledger transactions recorded for this supplier in selected period.</p>
+                        </td>
+                      </tr>
+
+                      <!-- Ledger Transaction Rows -->
+                      <template v-else v-for="tx in paginatedTransactions" :key="tx.id">
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
+                          
+                          <!-- Date -->
+                          <td class="py-3 px-4 font-semibold text-slate-600 dark:text-zinc-400 whitespace-nowrap border-r border-slate-100 dark:border-zinc-800">
+                            {{ formatDate(tx.date) }}
+                          </td>
+
+                          <!-- Description / Particulars & Status Badges -->
+                          <td class="py-3 px-4 border-r border-slate-100 dark:border-zinc-800">
+                            <div class="flex items-center justify-between gap-2">
+                              <div>
+                                <div class="flex items-center space-x-2">
+                                  <span class="font-bold text-slate-900 dark:text-zinc-100">
+                                    {{ tx.particulars || tx.description }}
+                                  </span>
+
+                                  <!-- Status Badge -->
+                                  <span
+                                    :class="[
+                                      'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider',
+                                      tx.status === 'Paid' || tx.status === 'Paid & Posted' || tx.status === 'Posted'
+                                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                        : (tx.status === 'Partially Paid'
+                                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                          : (tx.status === 'Returned & Credited'
+                                            ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
+                                            : 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'))
+                                    ]"
+                                  >
+                                    {{ tx.status }}
+                                  </span>
+                                </div>
+
+                                <div class="flex items-center space-x-2 text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                                  <span v-if="tx.due_amount > 0" class="text-rose-600 dark:text-rose-400 font-bold">
+                                    Outstanding Due: {{ formatCurrency(tx.due_amount) }}
+                                  </span>
+                                  <span v-else-if="tx.paid_amount > 0" class="text-emerald-600 dark:text-emerald-400 font-bold">
+                                    Settled: {{ formatCurrency(tx.paid_amount) }}
+                                  </span>
+                                  <span v-if="tx.purchaser && tx.purchaser !== '-'">• Purchaser: {{ tx.purchaser }}</span>
+                                </div>
+                              </div>
+
+                              <!-- Line Items Expand Toggle Button -->
+                              <button
+                                v-if="tx.items && tx.items.length > 0"
+                                type="button"
+                                @click="toggleExpand(tx.id)"
+                                class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 hover:bg-indigo-100 transition-all cursor-pointer flex items-center space-x-1 shrink-0"
+                              >
+                                <span>{{ expandedRows[tx.id] ? 'Hide Items' : `${tx.items.length} Item(s)` }}</span>
+                                <span>{{ expandedRows[tx.id] ? '▲' : '▼' }}</span>
+                              </button>
+                            </div>
+                          </td>
+
+                          <!-- Journal Reference -->
+                          <td class="py-3 px-3 font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap border-r border-slate-100 dark:border-zinc-800">
+                            {{ tx.reference }}
+                          </td>
+
+                          <!-- Transactions Debit (Paid / Returned - RED) -->
+                          <td class="py-3 px-3 text-right font-black whitespace-nowrap border-r border-slate-100 dark:border-zinc-800">
+                            <span v-if="tx.debit > 0" class="text-rose-600 dark:text-rose-400">
+                              {{ formatCurrency(tx.debit) }}
+                            </span>
+                            <span v-else class="text-slate-300 dark:text-zinc-700">-</span>
+                          </td>
+
+                          <!-- Transactions Credit (Purchases + GREEN) -->
+                          <td class="py-3 px-3 text-right font-black whitespace-nowrap border-r border-slate-100 dark:border-zinc-800">
+                            <span v-if="tx.credit > 0" class="text-emerald-600 dark:text-emerald-400">
+                              {{ formatCurrency(tx.credit) }}
+                            </span>
+                            <span v-else class="text-slate-300 dark:text-zinc-700">-</span>
+                          </td>
+
+                          <!-- Balance Debit ($ RED Dr) -->
+                          <td class="py-3 px-3 text-right font-black text-rose-600 dark:text-rose-400 whitespace-nowrap border-r border-slate-100 dark:border-zinc-800">
+                            <span v-if="tx.balance < 0">{{ formatCurrency(Math.abs(tx.balance)) }} <span class="text-[9px] text-rose-500">Dr</span></span>
+                            <span v-else class="text-slate-300 dark:text-zinc-700">-</span>
+                          </td>
+
+                          <!-- Balance Credit ($ GREEN Cr) -->
+                          <td class="py-3 px-3 text-right font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                            <span v-if="tx.balance >= 0">{{ formatCurrency(tx.balance) }} <span class="text-[9px] text-emerald-500">Cr</span></span>
+                            <span v-else class="text-slate-300 dark:text-zinc-700">-</span>
+                          </td>
+                        </tr>
+
+                        <!-- Expandable Item Breakdown Drawer -->
+                        <tr v-if="expandedRows[tx.id] && tx.items && tx.items.length > 0" class="bg-indigo-50/40 dark:bg-indigo-950/20">
+                          <td colspan="7" class="py-2.5 px-6">
+                            <div class="pl-6 border-l-2 border-indigo-400 dark:border-indigo-600 space-y-1 text-[11px]">
+                              <p class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-wider mb-1">
+                                Line Items Breakdown:
+                              </p>
+                              <div
+                                v-for="(item, idx) in tx.items"
+                                :key="idx"
+                                class="flex items-center justify-between text-slate-700 dark:text-zinc-300 py-0.5 border-b border-indigo-100/50 dark:border-indigo-900/30 last:border-0"
+                              >
+                                <span class="font-semibold">{{ item.name }}</span>
+                                <div class="space-x-3 text-xs">
+                                  <span class="text-slate-500 dark:text-zinc-400">{{ item.qty }} x {{ formatCurrency(item.price) }}</span>
+                                  <strong class="font-bold text-slate-900 dark:text-zinc-100">{{ formatCurrency(item.total) }}</strong>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </template>
+
+                    </tbody>
+
+                    <!-- Summary Footer Row (QuickBooks Style Total Row) -->
+                    <tfoot v-if="filteredTransactions.length > 0" class="bg-slate-900 text-white dark:bg-zinc-950 dark:text-zinc-100 font-black border-t-2 border-slate-800">
+                      <tr>
+                        <td colspan="3" class="py-3 px-4 text-center uppercase text-[11px] tracking-wider">
+                          Total Summary
+                        </td>
+                        <td class="py-3 px-3 text-right text-rose-400 text-xs border-r border-slate-800">
+                          {{ formatCurrency(totalDebits) }}
+                        </td>
+                        <td class="py-3 px-3 text-right text-emerald-400 text-xs border-r border-slate-800">
+                          {{ formatCurrency(totalCredits) }}
+                        </td>
+                        <td class="py-3 px-3 text-right text-rose-400 text-xs border-r border-slate-800">
+                          {{ closingBalance < 0 ? `${formatCurrency(Math.abs(closingBalance))} Dr` : '-' }}
+                        </td>
+                        <td class="py-3 px-3 text-right text-emerald-400 text-xs">
+                          {{ closingBalance >= 0 ? `${formatCurrency(closingBalance)} Cr` : '-' }}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div v-if="filteredTransactions.length > 0" class="px-4 py-3 bg-slate-50/80 dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+                  <span class="text-slate-500 dark:text-zinc-400 font-medium">
+                    Showing <strong class="text-slate-700 dark:text-zinc-200">{{ paginationInfo.from }}</strong> to <strong class="text-slate-700 dark:text-zinc-200">{{ paginationInfo.to }}</strong> of <strong class="text-slate-700 dark:text-zinc-200">{{ paginationInfo.total }}</strong> entries
+                  </span>
+
+                  <div v-if="perPage !== 'all' && totalPages > 1" class="flex items-center space-x-1">
+                    <button
+                      @click="currentPage = 1"
+                      :disabled="currentPage <= 1"
+                      class="px-2 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-bold text-slate-600 dark:text-zinc-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      title="First Page"
+                    >
+                      «
+                    </button>
+                    <button
+                      @click="currentPage--"
+                      :disabled="currentPage <= 1"
+                      class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-bold text-slate-600 dark:text-zinc-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                    >
+                      Prev
+                    </button>
+                    <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-extrabold rounded-lg border border-indigo-200 dark:border-indigo-800">
+                      {{ currentPage }} / {{ totalPages }}
+                    </span>
+                    <button
+                      @click="currentPage++"
+                      :disabled="currentPage >= totalPages"
+                      class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-bold text-slate-600 dark:text-zinc-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                    >
+                      Next
+                    </button>
+                    <button
+                      @click="currentPage = totalPages"
+                      :disabled="currentPage >= totalPages"
+                      class="px-2 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-bold text-slate-600 dark:text-zinc-300 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      title="Last Page"
+                    >
+                      »
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
         </div>
 
-        <div class="flex items-center space-x-3">
-          <!-- PDF Export Button -->
-          <button
-            @click="downloadPDF"
-            :disabled="downloadingPdf"
-            class="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-            title="Download PDF Ledger Report"
-          >
-            <svg v-if="!downloadingPdf" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <svg v-else class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>{{ downloadingPdf ? 'Generating PDF...' : 'PDF' }}</span>
-          </button>
-
-          <!-- Floating Date Range Picker Component -->
-          <FloatingDateRangePicker
-            v-model="dateRange"
-            @update:modelValue="handleDateFilterChange"
-          />
-
-          <!-- Close Modal Button -->
+        <!-- Modal Footer -->
+        <div class="px-6 py-3.5 bg-slate-50/80 dark:bg-zinc-900 border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-between">
+          <p class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+            IAS 1 Compliant Accounts Payable General Ledger Statement — <strong class="text-slate-700 dark:text-zinc-300">{{ transactions.length }} Total Ledger Entries</strong>
+          </p>
           <button
             @click="$emit('close')"
-            class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all flex items-center justify-center cursor-pointer ml-2"
+            class="px-5 py-2 bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
           >
-            ✕
+            Close
           </button>
         </div>
+
       </div>
-
-      <!-- Main Body Container: Left 25% (col-3) & Right 75% (col-9) -->
-      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50 dark:bg-zinc-950">
-        <div class="grid grid-cols-12 gap-6">
-          
-          <!-- LEFT SIDE: 25% Width (col-span-12 lg:col-span-3) - Supplier Basic Info -->
-          <div class="col-span-12 lg:col-span-3 space-y-4">
-            <!-- Profile Info Card -->
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl p-5 shadow-xs relative overflow-hidden">
-              <div class="absolute -top-12 -right-12 w-28 h-28 bg-indigo-500/5 rounded-full blur-xl pointer-events-none"></div>
-              
-              <div class="flex flex-col items-center text-center">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-black text-xl flex items-center justify-center shadow-md shadow-indigo-500/20 mb-3 border-2 border-white dark:border-zinc-800">
-                  {{ getInitials(activeSupplier?.name || supplier?.name) }}
-                </div>
-                <h3 class="text-base font-extrabold text-slate-800 dark:text-zinc-100 line-clamp-1">
-                  {{ activeSupplier?.name || supplier?.name || 'Supplier' }}
-                </h3>
-                <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5 line-clamp-1">
-                  {{ activeSupplier?.company_name || supplier?.company_name || 'Individual Supplier' }}
-                </p>
-                <div class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
-                  ID: #{{ strPad(activeSupplier?.id || supplier?.id) }}
-                </div>
-              </div>
-
-              <!-- Contact & Details Grid -->
-              <div class="mt-5 pt-4 border-t border-slate-100 dark:border-zinc-800/80 space-y-2.5 text-xs">
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400 dark:text-zinc-500 font-medium">Email</span>
-                  <span class="font-bold text-slate-700 dark:text-zinc-200 truncate max-w-[140px] text-right" :title="activeSupplier?.email">
-                    {{ activeSupplier?.email || supplier?.email || 'N/A' }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400 dark:text-zinc-500 font-medium">Phone</span>
-                  <span class="font-bold text-slate-700 dark:text-zinc-200">
-                    {{ activeSupplier?.phone || supplier?.phone || 'N/A' }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400 dark:text-zinc-500 font-medium">City/Location</span>
-                  <span class="font-bold text-slate-700 dark:text-zinc-200">
-                    {{ activeSupplier?.city || supplier?.city || 'N/A' }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400 dark:text-zinc-500 font-medium">Payment Terms</span>
-                  <span class="font-bold text-slate-700 dark:text-zinc-200">
-                    {{ (activeSupplier?.payment_terms_days || supplier?.payment_terms_days) ? (activeSupplier?.payment_terms_days || supplier?.payment_terms_days) + ' days' : 'Standard' }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400 dark:text-zinc-500 font-medium">Credit Limit</span>
-                  <span class="font-bold text-indigo-600 dark:text-indigo-400">
-                    {{ currencySymbol }}{{ formatAmount(activeSupplier?.credit_limit || supplier?.credit_limit || 0) }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Advance & Due Balances Box -->
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl p-4 shadow-xs space-y-3">
-              <div class="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between">
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Advance Balance</p>
-                  <p class="text-sm font-black text-emerald-700 dark:text-emerald-300 mt-0.5">
-                    {{ currencySymbol }}{{ formatAmount(activeSupplier?.advance_balance || supplier?.advance_balance || 0) }}
-                  </p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  💰
-                </div>
-              </div>
-
-              <div class="p-3 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 flex items-center justify-between">
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Outstanding Due</p>
-                  <p class="text-sm font-black text-rose-700 dark:text-rose-300 mt-0.5">
-                    {{ currencySymbol }}{{ formatAmount(activeSupplier?.due_amount || supplier?.due_amount || 0) }}
-                  </p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                  ⚠️
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- RIGHT SIDE: 75% Width (col-span-12 lg:col-span-9) - Stats Cards & 3 Datatables -->
-          <div class="col-span-12 lg:col-span-9 space-y-6">
-            
-            <!-- Top Stats Cards: Payment Pending, Payment Made, Balance -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <!-- Stats 1: Payment Pending -->
-              <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 shadow-xs relative overflow-hidden group">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500 rounded-l-2xl"></div>
-                <div class="flex items-center justify-between pl-2">
-                  <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Payment Pending</p>
-                    <h4 class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
-                      {{ currencySymbol }}{{ formatAmount(stats.paymentPending) }}
-                    </h4>
-                  </div>
-                  <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Stats 2: Payment Made -->
-              <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 shadow-xs relative overflow-hidden group">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 rounded-l-2xl"></div>
-                <div class="flex items-center justify-between pl-2">
-                  <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Payment Made</p>
-                    <h4 class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                      {{ currencySymbol }}{{ formatAmount(stats.paymentMade) }}
-                    </h4>
-                  </div>
-                  <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Stats 3: Balance -->
-              <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 shadow-xs relative overflow-hidden group">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600 rounded-l-2xl"></div>
-                <div class="flex items-center justify-between pl-2">
-                  <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Closing Balance</p>
-                    <h4 class="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
-                      {{ currencySymbol }}{{ formatAmount(stats.balance) }}
-                    </h4>
-                  </div>
-                  <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TABLE 1: Purchase Orders -->
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs">
-              <div class="px-5 py-3.5 border-b border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-zinc-900/50">
-                <div class="flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                  <h3 class="text-sm font-black text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Purchase Orders</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                    {{ ordersPagination.total || 0 }} total
-                  </span>
-                </div>
-
-                <div class="flex items-center space-x-3">
-                  <!-- Search -->
-                  <div class="relative w-48 sm:w-56">
-                    <input
-                      v-model="ordersSearch"
-                      @input="debouncedFetchOrders"
-                      type="text"
-                      placeholder="Search PO #, status..."
-                      class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 dark:text-zinc-200 placeholder-slate-400"
-                    />
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                  </div>
-
-                  <!-- Limit Selection Dropdown -->
-                  <div class="flex items-center space-x-1.5 text-xs text-slate-500 dark:text-zinc-400">
-                    <span class="hidden sm:inline text-[11px] font-medium">Show</span>
-                    <select
-                      v-model="ordersPerPage"
-                      @change="fetchOrders(1)"
-                      class="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-2 py-1 text-xs font-bold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option :value="5">5</option>
-                      <option :value="10">10</option>
-                      <option :value="25">25</option>
-                      <option :value="50">50</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Orders Table Content -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr class="bg-slate-50 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider border-b border-slate-200/80 dark:border-zinc-800 text-[10px]">
-                      <th @click="toggleOrdersSort('po_number')" class="py-2.5 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center space-x-1">
-                          <span>PO #</span>
-                          <span v-if="ordersSortKey === 'po_number'">{{ ordersSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th @click="toggleOrdersSort('order_date')" class="py-2.5 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center space-x-1">
-                          <span>Date</span>
-                          <span v-if="ordersSortKey === 'order_date'">{{ ordersSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th class="py-2.5 px-4">Purchaser</th>
-                      <th @click="toggleOrdersSort('status')" class="py-2.5 px-4 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center justify-center space-x-1">
-                          <span>Status</span>
-                          <span v-if="ordersSortKey === 'status'">{{ ordersSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th @click="toggleOrdersSort('total_amount')" class="py-2.5 px-4 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center justify-end space-x-1">
-                          <span>Total</span>
-                          <span v-if="ordersSortKey === 'total_amount'">{{ ordersSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th class="py-2.5 px-4 text-right">Paid</th>
-                      <th @click="toggleOrdersSort('due')" class="py-2.5 px-4 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center justify-end space-x-1">
-                          <span>Due</span>
-                          <span v-if="ordersSortKey === 'due'">{{ ordersSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-slate-700 dark:text-zinc-200">
-                    <tr v-if="ordersLoading">
-                      <td colspan="7" class="py-8 text-center text-slate-400 dark:text-zinc-500">
-                        <div class="inline-block animate-spin rounded-full h-5 w-5 border-2 border-indigo-500 border-t-transparent"></div>
-                        <p class="mt-1 text-xs">Loading purchase orders...</p>
-                      </td>
-                    </tr>
-                    <tr v-else-if="!sortedPurchaseOrders.length">
-                      <td colspan="7" class="py-8 text-center text-slate-400 dark:text-zinc-500 italic">
-                        No purchase orders found for this supplier.
-                      </td>
-                    </tr>
-                    <tr v-else v-for="po in sortedPurchaseOrders" :key="po.id" class="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td class="py-3 px-4 font-bold text-indigo-600 dark:text-indigo-400">{{ po.po_number }}</td>
-                      <td class="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">{{ formatDate(po.order_date) }}</td>
-                      <td class="py-3 px-4 font-medium">{{ po.user?.name || 'System' }}</td>
-                      <td class="py-3 px-4 text-center">
-                        <span :class="getPoStatusBadge(po.status)" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide">
-                          {{ po.status || 'PENDING' }}
-                        </span>
-                      </td>
-                      <td class="py-3 px-4 text-right font-black">{{ currencySymbol }}{{ formatAmount(po.total_amount || po.grand_total || 0) }}</td>
-                      <td class="py-3 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        {{ currencySymbol }}{{ formatAmount(po.amount_paid || po.paid_amount || 0) }}
-                      </td>
-                      <td class="py-3 px-4 text-right font-bold" :class="getPoDue(po) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'">
-                        {{ currencySymbol }}{{ formatAmount(getPoDue(po)) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Orders Pagination Bar -->
-              <div v-if="ordersPagination.last_page > 1" class="px-4 py-2.5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
-                <span class="text-slate-500 dark:text-zinc-400 font-medium">
-                  Showing {{ ordersPagination.from || 0 }} to {{ ordersPagination.to || 0 }} of {{ ordersPagination.total || 0 }} orders
-                </span>
-                <div class="flex items-center space-x-1">
-                  <button
-                    @click="fetchOrders(ordersPagination.current_page - 1)"
-                    :disabled="ordersPagination.current_page === 1"
-                    class="px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer font-bold"
-                  >
-                    «
-                  </button>
-                  <span class="px-2 font-bold text-slate-700 dark:text-zinc-200">
-                    {{ ordersPagination.current_page }} / {{ ordersPagination.last_page }}
-                  </span>
-                  <button
-                    @click="fetchOrders(ordersPagination.current_page + 1)"
-                    :disabled="ordersPagination.current_page === ordersPagination.last_page"
-                    class="px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer font-bold"
-                  >
-                    »
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- TABLE 2: Purchase Returns -->
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs">
-              <div class="px-5 py-3.5 border-b border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-zinc-900/50">
-                <div class="flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                  <h3 class="text-sm font-black text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Purchase Returns</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
-                    {{ returnsPagination.total || 0 }} total
-                  </span>
-                </div>
-
-                <div class="flex items-center space-x-3">
-                  <!-- Search -->
-                  <div class="relative w-48 sm:w-56">
-                    <input
-                      v-model="returnsSearch"
-                      @input="debouncedFetchReturns"
-                      type="text"
-                      placeholder="Search Return #, notes..."
-                      class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 dark:text-zinc-200 placeholder-slate-400"
-                    />
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                  </div>
-
-                  <!-- Limit Selection Dropdown -->
-                  <div class="flex items-center space-x-1.5 text-xs text-slate-500 dark:text-zinc-400">
-                    <span class="hidden sm:inline text-[11px] font-medium">Show</span>
-                    <select
-                      v-model="returnsPerPage"
-                      @change="fetchReturns(1)"
-                      class="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-2 py-1 text-xs font-bold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option :value="5">5</option>
-                      <option :value="10">10</option>
-                      <option :value="25">25</option>
-                      <option :value="50">50</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Returns Table Content -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr class="bg-slate-50 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider border-b border-slate-200/80 dark:border-zinc-800 text-[10px]">
-                      <th @click="toggleReturnsSort('return_number')" class="py-2.5 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center space-x-1">
-                          <span>Return #</span>
-                          <span v-if="returnsSortKey === 'return_number'">{{ returnsSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th @click="toggleReturnsSort('return_date')" class="py-2.5 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center space-x-1">
-                          <span>Date</span>
-                          <span v-if="returnsSortKey === 'return_date'">{{ returnsSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th class="py-2.5 px-4">Original PO #</th>
-                      <th class="py-2.5 px-4 text-center">Refund Method</th>
-                      <th @click="toggleReturnsSort('total_amount')" class="py-2.5 px-4 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition-colors">
-                        <div class="flex items-center justify-end space-x-1">
-                          <span>Refund Amount</span>
-                          <span v-if="returnsSortKey === 'total_amount'">{{ returnsSortOrder === 'asc' ? '↑' : '↓' }}</span>
-                        </div>
-                      </th>
-                      <th class="py-2.5 px-4">Notes / Reason</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-slate-700 dark:text-zinc-200">
-                    <tr v-if="returnsLoading">
-                      <td colspan="6" class="py-8 text-center text-slate-400 dark:text-zinc-500">
-                        <div class="inline-block animate-spin rounded-full h-5 w-5 border-2 border-rose-500 border-t-transparent"></div>
-                        <p class="mt-1 text-xs">Loading purchase returns...</p>
-                      </td>
-                    </tr>
-                    <tr v-else-if="!sortedPurchaseReturns.length">
-                      <td colspan="6" class="py-8 text-center text-slate-400 dark:text-zinc-500 italic">
-                        No purchase returns recorded for this supplier.
-                      </td>
-                    </tr>
-                    <tr v-else v-for="ret in sortedPurchaseReturns" :key="ret.id" class="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td class="py-3 px-4 font-bold text-rose-600 dark:text-rose-400">{{ ret.return_number }}</td>
-                      <td class="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">{{ formatDate(ret.return_date) }}</td>
-                      <td class="py-3 px-4 font-bold text-indigo-600 dark:text-indigo-400">
-                        {{ ret.purchase_order?.po_number || ret.purchase_order_id || 'N/A' }}
-                      </td>
-                      <td class="py-3 px-4 text-center font-bold uppercase text-[10px] text-slate-600 dark:text-zinc-400">
-                        {{ ret.payment_method || 'CREDIT NOTE' }}
-                      </td>
-                      <td class="py-3 px-4 text-right font-black text-rose-600 dark:text-rose-400">
-                        {{ currencySymbol }}{{ formatAmount(ret.total_amount || 0) }}
-                      </td>
-                      <td class="py-3 px-4 text-slate-500 dark:text-zinc-400 truncate max-w-[200px]" :title="ret.reason || ret.notes">
-                        {{ ret.reason || ret.notes || 'No reason specified' }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Returns Pagination Bar -->
-              <div v-if="returnsPagination.last_page > 1" class="px-4 py-2.5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
-                <span class="text-slate-500 dark:text-zinc-400 font-medium">
-                  Showing {{ returnsPagination.from || 0 }} to {{ returnsPagination.to || 0 }} of {{ returnsPagination.total || 0 }} returns
-                </span>
-                <div class="flex items-center space-x-1">
-                  <button
-                    @click="fetchReturns(returnsPagination.current_page - 1)"
-                    :disabled="returnsPagination.current_page === 1"
-                    class="px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer font-bold"
-                  >
-                    «
-                  </button>
-                  <span class="px-2 font-bold text-slate-700 dark:text-zinc-200">
-                    {{ returnsPagination.current_page }} / {{ returnsPagination.last_page }}
-                  </span>
-                  <button
-                    @click="fetchReturns(returnsPagination.current_page + 1)"
-                    :disabled="returnsPagination.current_page === returnsPagination.last_page"
-                    class="px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer font-bold"
-                  >
-                    »
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- TABLE 3: Transactions -->
-            <div class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs">
-              <div class="px-5 py-3.5 border-b border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-zinc-900/50">
-                <div class="flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <h3 class="text-sm font-black text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Transactions</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                    {{ transactionsPagination.total || 0 }} total
-                  </span>
-                </div>
-
-                <div class="flex items-center space-x-3">
-                  <!-- Search -->
-                  <div class="relative w-48 sm:w-56">
-                    <input
-                      v-model="transactionsSearch"
-                      @input="debouncedFetchTransactions"
-                      type="text"
-                      placeholder="Search ref, desc..."
-                      class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 dark:text-zinc-200 placeholder-slate-400"
-                    />
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                  </div>
-
-                  <!-- Limit Selection Dropdown -->
-                  <div class="flex items-center space-x-1.5 text-xs text-slate-500 dark:text-zinc-400">
-                    <span class="hidden sm:inline text-[11px] font-medium">Show</span>
-                    <select
-                      v-model="transactionsPerPage"
-                      @change="fetchTransactions(1)"
-                      class="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-2 py-1 text-xs font-bold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option :value="5">5</option>
-                      <option :value="10">10</option>
-                      <option :value="25">25</option>
-                      <option :value="50">50</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Transactions Table Content -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr class="bg-slate-50 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider border-b border-slate-200/80 dark:border-zinc-800 text-[10px]">
-                      <th class="py-2.5 px-4">Date</th>
-                      <th class="py-2.5 px-4">Reference</th>
-                      <th class="py-2.5 px-4">Description</th>
-                      <th class="py-2.5 px-4 text-center">Type</th>
-                      <th class="py-2.5 px-4 text-right">Debit ($)</th>
-                      <th class="py-2.5 px-4 text-right">Credit ($)</th>
-                      <th class="py-2.5 px-4 text-right">Balance ($)</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/60 text-slate-700 dark:text-zinc-200">
-                    <tr v-if="transactionsLoading">
-                      <td colspan="7" class="py-8 text-center text-slate-400 dark:text-zinc-500">
-                        <div class="inline-block animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"></div>
-                        <p class="mt-1 text-xs">Loading transactions...</p>
-                      </td>
-                    </tr>
-                    <tr v-else-if="!transactionsList.length">
-                      <td colspan="7" class="py-8 text-center text-slate-400 dark:text-zinc-500 italic">
-                        No transactions registered for this supplier.
-                      </td>
-                    </tr>
-                    <tr v-else v-for="(tx, idx) in transactionsList" :key="idx" class="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td class="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400 font-medium">{{ formatDate(tx.date) }}</td>
-                      <td class="py-3 px-4 font-bold text-slate-800 dark:text-zinc-100">{{ tx.reference }}</td>
-                      <td class="py-3 px-4 text-slate-600 dark:text-zinc-300 max-w-[220px] truncate" :title="tx.description">{{ tx.description }}</td>
-                      <td class="py-3 px-4 text-center">
-                        <span :class="tx.debit > 0 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'" class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wide">
-                          {{ tx.type }}
-                        </span>
-                      </td>
-                      <td class="py-3 px-4 text-right font-bold text-rose-600 dark:text-rose-400">
-                        {{ tx.debit > 0 ? currencySymbol + formatAmount(tx.debit) : '-' }}
-                      </td>
-                      <td class="py-3 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        {{ tx.credit > 0 ? currencySymbol + formatAmount(tx.credit) : '-' }}
-                      </td>
-                      <td class="py-3 px-4 text-right font-black text-slate-800 dark:text-zinc-100">
-                        {{ currencySymbol }}{{ formatAmount(tx.running_balance) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Transactions Pagination Bar -->
-              <div v-if="transactionsPagination.last_page > 1" class="px-4 py-2.5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
-                <span class="text-slate-500 dark:text-zinc-400 font-medium">
-                  Showing {{ transactionsPagination.from || 0 }} to {{ transactionsPagination.to || 0 }} of {{ transactionsPagination.total || 0 }} transactions
-                </span>
-                <div class="flex items-center space-x-1">
-                  <button
-                    @click="fetchTransactions(transactionsPagination.current_page - 1)"
-                    :disabled="transactionsPagination.current_page === 1"
-                    class="px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer font-bold"
-                  >
-                    «
-                  </button>
-                  <span class="px-2 font-bold text-slate-700 dark:text-zinc-200">
-                    {{ transactionsPagination.current_page }} / {{ transactionsPagination.last_page }}
-                  </span>
-                  <button
-                    @click="fetchTransactions(transactionsPagination.current_page + 1)"
-                    :disabled="transactionsPagination.current_page === transactionsPagination.last_page"
-                    class="px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer font-bold"
-                  >
-                    »
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="px-6 py-3.5 bg-white dark:bg-zinc-900 border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-between shrink-0">
-        <p class="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-          Default period: <strong class="text-slate-700 dark:text-zinc-300">This Month</strong>
-        </p>
-        <button
-          @click="$emit('close')"
-          class="px-5 py-2 bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
-        >
-          Close
-        </button>
-      </div>
-
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
 import { useCurrencyStore } from '@/stores/currency';
 import api from '@/services/api';
-import { debounce } from '@/utils/debounce';
 import FloatingDateRangePicker from '@/components/common/FloatingDateRangePicker.vue';
 
 const props = defineProps({
@@ -634,362 +648,217 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const currencyStore = useCurrencyStore();
+const activeSupplier = ref(null);
 
-const currencySymbol = computed(() => {
-  return currencyStore.symbol || '$';
-});
-
-const getFirstDayOfMonth = () => {
-  const date = new Date();
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}-01`;
-};
-
-const getLastDayOfMonth = () => {
-  const date = new Date();
-  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  const y = lastDay.getFullYear();
-  const m = String(lastDay.getMonth() + 1).padStart(2, '0');
-  const d = String(lastDay.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
-
-const dateRange = ref({
-  start_date: getFirstDayOfMonth(),
-  end_date: getLastDayOfMonth(),
-  start: getFirstDayOfMonth(),
-  end: getLastDayOfMonth()
-});
-
-const getStartDate = () => {
-  if (dateRange.value?.start_date !== undefined) return dateRange.value.start_date;
-  if (dateRange.value?.start !== undefined) return dateRange.value.start;
-  return getFirstDayOfMonth();
-};
-
-const getEndDate = () => {
-  if (dateRange.value?.end_date !== undefined) return dateRange.value.end_date;
-  if (dateRange.value?.end !== undefined) return dateRange.value.end;
-  return getLastDayOfMonth();
-};
-
+const loading = ref(false);
 const downloadingPdf = ref(false);
 
+const dateRange = ref({ start: '', end: '' });
+const searchQuery = ref('');
+
+const accountCode = ref('');
+const accountType = ref('Liability (Creditors / Payable)');
+const openingBalance = ref(0);
+const closingBalance = ref(0);
+const closingBalanceType = ref('Cr');
+const totalDebits = ref(0);
+const totalCredits = ref(0);
+const transactions = ref([]);
+
+const expandedRows = ref({});
+const toggleExpand = (id) => {
+  expandedRows.value[id] = !expandedRows.value[id];
+};
+
+const perPage = ref(25);
+const currentPage = ref(1);
+
+const sortKey = ref('date');
+const sortOrder = ref('desc'); // Default to DESC (Newest First)
+
+const toggleSortDirection = () => {
+  sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+};
+
+const toggleSort = (key) => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'desc';
+  }
+};
+
+const fetchLedgerData = async () => {
+  const suppId = props.supplier?.id;
+  if (!suppId) return;
+
+  loading.value = true;
+  try {
+    const params = {};
+    if (dateRange.value?.start) params.start_date = dateRange.value.start;
+    if (dateRange.value?.end) params.end_date = dateRange.value.end;
+
+    const res = await api.get(`/suppliers/${suppId}/ledger`, { params });
+    const data = res.data;
+
+    activeSupplier.value = data.supplier || props.supplier;
+    accountCode.value = data.supplier?.account_code || `AP-${String(suppId).padStart(5, '0')}`;
+    accountType.value = data.supplier?.account_type || 'Liability (Creditors / Payable)';
+    openingBalance.value = data.opening_balance || 0;
+    closingBalance.value = data.closing_balance || 0;
+    closingBalanceType.value = data.closing_balance_type || 'Cr';
+    totalDebits.value = data.total_debits || 0;
+    totalCredits.value = data.total_credits || 0;
+    transactions.value = data.transactions || [];
+    currentPage.value = 1;
+  } catch (err) {
+    console.error('Failed to fetch supplier ledger:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const filteredTransactions = computed(() => {
+  let list = [...transactions.value];
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim();
+    list = list.filter(tx => 
+      (tx.reference && tx.reference.toLowerCase().includes(q)) ||
+      (tx.particulars && tx.particulars.toLowerCase().includes(q)) ||
+      (tx.description && tx.description.toLowerCase().includes(q)) ||
+      (tx.date && tx.date.includes(q)) ||
+      (tx.purchaser && tx.purchaser.toLowerCase().includes(q)) ||
+      (tx.items && tx.items.some(i => i.name.toLowerCase().includes(q)))
+    );
+  }
+
+  list.sort((a, b) => {
+    let valA = a[sortKey.value];
+    let valB = b[sortKey.value];
+
+    if (valA === undefined || valA === null) valA = '';
+    if (valB === undefined || valB === null) valB = '';
+
+    if (typeof valA === 'string') valA = valA.toLowerCase();
+    if (typeof valB === 'string') valB = valB.toLowerCase();
+
+    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  return list;
+});
+
+const totalPages = computed(() => {
+  if (perPage.value === 'all') return 1;
+  return Math.ceil(filteredTransactions.value.length / perPage.value) || 1;
+});
+
+const paginatedTransactions = computed(() => {
+  if (perPage.value === 'all') return filteredTransactions.value;
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredTransactions.value.slice(start, start + perPage.value);
+});
+
+const paginationInfo = computed(() => {
+  const total = filteredTransactions.value.length;
+  if (total === 0) return { from: 0, to: 0, total: 0 };
+  if (perPage.value === 'all') return { from: 1, to: total, total };
+
+  const from = (currentPage.value - 1) * perPage.value + 1;
+  const to = Math.min(currentPage.value * perPage.value, total);
+  return { from, to, total };
+});
+
 const downloadPDF = async () => {
-  if (!props.supplier?.id) return;
+  const suppId = activeSupplier.value?.id || props.supplier?.id;
+  if (!suppId) return;
+
   downloadingPdf.value = true;
   try {
-    const start = getStartDate();
-    const end = getEndDate();
-    
-    const response = await api.get(`/suppliers/${props.supplier.id}/ledger/pdf`, {
-      params: {
-        start_date: start,
-        end_date: end
-      },
+    const params = {};
+    if (dateRange.value?.start) params.start_date = dateRange.value.start;
+    if (dateRange.value?.end) params.end_date = dateRange.value.end;
+
+    const response = await api.get(`/suppliers/${suppId}/ledger/pdf`, {
+      params,
       responseType: 'blob'
     });
 
-    const blobData = response.data instanceof Blob 
-      ? response.data 
-      : new Blob([response.data], { type: 'application/pdf' });
+    if (response.data.type === 'application/json' || response.data.type === 'text/html') {
+      const text = await response.data.text();
+      console.error('PDF export failed:', text);
+      alert('Failed to generate PDF statement.');
+      return;
+    }
 
-    const url = window.URL.createObjectURL(blobData);
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const name = (activeSupplier.value?.name || props.supplier?.name || 'supplier').toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const dateStr = new Date().toISOString().split('T')[0];
-    link.setAttribute('download', `supplier_ledger_${name}_${dateStr}.pdf`);
+    const suppName = (activeSupplier.value?.name || props.supplier?.name || 'supplier').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.setAttribute('download', `supplier_general_ledger_${suppName}_${new Date().toISOString().slice(0,10)}.pdf`);
     document.body.appendChild(link);
     link.click();
-    setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-      window.URL.revokeObjectURL(url);
-    }, 200);
+    link.remove();
+    window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error('Error downloading supplier ledger PDF:', err);
+    console.error('Failed to export supplier ledger PDF:', err);
+    alert('An error occurred while exporting PDF statement.');
   } finally {
     downloadingPdf.value = false;
   }
 };
 
-const activeSupplier = ref(null);
+const formatCurrency = (val) => {
+  if (currencyStore && typeof currencyStore.formatPrice === 'function') {
+    return currencyStore.formatPrice(val || 0);
+  }
+  return `$${Number(val || 0).toFixed(2)}`;
+};
 
-const stats = ref({
-  paymentPending: 0,
-  paymentMade: 0,
-  balance: 0
-});
-
-// Purchase Orders State
-const ordersLoading = ref(false);
-const purchaseOrders = ref([]);
-const ordersSearch = ref('');
-const ordersPerPage = ref(5);
-const ordersSortKey = ref('order_date');
-const ordersSortOrder = ref('desc');
-const ordersPagination = ref({
-  current_page: 1,
-  last_page: 1,
-  from: 0,
-  to: 0,
-  total: 0
-});
-
-// Purchase Returns State
-const returnsLoading = ref(false);
-const purchaseReturns = ref([]);
-const returnsSearch = ref('');
-const returnsPerPage = ref(5);
-const returnsSortKey = ref('return_date');
-const returnsSortOrder = ref('desc');
-const returnsPagination = ref({
-  current_page: 1,
-  last_page: 1,
-  from: 0,
-  to: 0,
-  total: 0
-});
-
-// Transactions State
-const transactionsLoading = ref(false);
-const transactionsList = ref([]);
-const transactionsSearch = ref('');
-const transactionsPerPage = ref(5);
-const transactionsPagination = ref({
-  current_page: 1,
-  last_page: 1,
-  from: 0,
-  to: 0,
-  total: 0
-});
-
-// Fetch Overall Ledger Summary
-const fetchLedgerStats = async () => {
-  if (!props.supplier?.id) return;
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
   try {
-    const response = await api.get(`/suppliers/${props.supplier.id}/ledger`, {
-      params: {
-        start_date: getStartDate(),
-        end_date: getEndDate()
-      }
-    });
-
-    if (response.data) {
-      activeSupplier.value = response.data.supplier || props.supplier;
-      stats.value = {
-        paymentPending: response.data.stats?.payment_pending || 0,
-        paymentMade: response.data.stats?.payment_made || 0,
-        balance: response.data.closing_balance || 0
-      };
+    const [year, month, day] = dateStr.split('T')[0].split('-');
+    if (year && month && day) {
+      return `${day}/${month}/${year}`;
     }
-  } catch (err) {
-    console.error('Error fetching supplier ledger summary:', err);
+    return dateStr;
+  } catch (e) {
+    return dateStr;
   }
 };
 
-// Fetch Purchase Orders
-const fetchOrders = async (page = 1) => {
-  if (!props.supplier?.id) return;
-  ordersLoading.value = true;
-  try {
-    const response = await api.get(`/suppliers/${props.supplier.id}/purchase-orders`, {
-      params: {
-        page,
-        per_page: ordersPerPage.value,
-        start_date: getStartDate(),
-        end_date: getEndDate(),
-        search: ordersSearch.value,
-        sort_by: ordersSortKey.value,
-        sort_dir: ordersSortOrder.value
-      }
-    });
-
-    purchaseOrders.value = response.data.data || [];
-    ordersPagination.value = {
-      current_page: response.data.current_page || 1,
-      last_page: response.data.last_page || 1,
-      from: response.data.from || 0,
-      to: response.data.to || 0,
-      total: response.data.total || 0
-    };
-  } catch (err) {
-    console.error('Error fetching supplier purchase orders:', err);
-  } finally {
-    ordersLoading.value = false;
-  }
-};
-
-const debouncedFetchOrders = debounce(() => fetchOrders(1), 300);
-
-const toggleOrdersSort = (key) => {
-  if (ordersSortKey.value === key) {
-    ordersSortOrder.value = ordersSortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    ordersSortKey.value = key;
-    ordersSortOrder.value = 'asc';
-  }
-  fetchOrders(1);
-};
-
-const sortedPurchaseOrders = computed(() => {
-  return purchaseOrders.value;
-});
-
-// Fetch Purchase Returns
-const fetchReturns = async (page = 1) => {
-  if (!props.supplier?.id) return;
-  returnsLoading.value = true;
-  try {
-    const response = await api.get(`/suppliers/${props.supplier.id}/purchase-returns`, {
-      params: {
-        page,
-        per_page: returnsPerPage.value,
-        start_date: getStartDate(),
-        end_date: getEndDate(),
-        search: returnsSearch.value,
-        sort_by: returnsSortKey.value,
-        sort_dir: returnsSortOrder.value
-      }
-    });
-
-    purchaseReturns.value = response.data.data || [];
-    returnsPagination.value = {
-      current_page: response.data.current_page || 1,
-      last_page: response.data.last_page || 1,
-      from: response.data.from || 0,
-      to: response.data.to || 0,
-      total: response.data.total || 0
-    };
-  } catch (err) {
-    console.error('Error fetching supplier purchase returns:', err);
-  } finally {
-    returnsLoading.value = false;
-  }
-};
-
-const debouncedFetchReturns = debounce(() => fetchReturns(1), 300);
-
-const toggleReturnsSort = (key) => {
-  if (returnsSortKey.value === key) {
-    returnsSortOrder.value = returnsSortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    returnsSortKey.value = key;
-    returnsSortOrder.value = 'asc';
-  }
-  fetchReturns(1);
-};
-
-const sortedPurchaseReturns = computed(() => {
-  return purchaseReturns.value;
-});
-
-// Fetch Transactions
-const fetchTransactions = async (page = 1) => {
-  if (!props.supplier?.id) return;
-  transactionsLoading.value = true;
-  try {
-    const response = await api.get(`/suppliers/${props.supplier.id}/transactions`, {
-      params: {
-        page,
-        per_page: transactionsPerPage.value,
-        start_date: getStartDate(),
-        end_date: getEndDate(),
-        search: transactionsSearch.value
-      }
-    });
-
-    transactionsList.value = response.data.data || [];
-    transactionsPagination.value = {
-      current_page: response.data.current_page || 1,
-      last_page: response.data.last_page || 1,
-      from: response.data.from || 0,
-      to: response.data.to || 0,
-      total: response.data.total || 0
-    };
-  } catch (err) {
-    console.error('Error fetching supplier transactions:', err);
-  } finally {
-    transactionsLoading.value = false;
-  }
-};
-
-const debouncedFetchTransactions = debounce(() => fetchTransactions(1), 300);
-
-// Reload all data
-const loadAllLedgerData = () => {
-  fetchLedgerStats();
-  fetchOrders(1);
-  fetchReturns(1);
-  fetchTransactions(1);
-};
-
-const handleDateFilterChange = () => {
-  loadAllLedgerData();
-};
-
-const getPoDue = (po) => {
-  const total = parseFloat(po.total_amount || po.grand_total || 0);
-  const paid = parseFloat(po.amount_paid || po.paid_amount || 0);
-  return Math.max(0, total - paid);
-};
-
-const getPoStatusBadge = (status) => {
-  const s = (status || '').toLowerCase();
-  if (['received', 'completed', 'paid'].includes(s)) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300';
-  if (['cancelled', 'void'].includes(s)) return 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300';
-  return 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300';
-};
-
-const formatAmount = (num) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(num || 0);
-};
-
-const formatDate = (d) => {
-  if (!d) return 'N/A';
-  return new Date(d).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+const formatAddress = (supp) => {
+  if (!supp) return 'N/A';
+  const parts = [supp.address, supp.city, supp.state, supp.country].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : 'N/A';
 };
 
 const getInitials = (name) => {
   if (!name) return 'SP';
-  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 };
 
-const strPad = (val) => {
-  if (!val) return '0000';
-  return String(val).padStart(4, '0');
-};
-
-watch(() => props.show, (newVal) => {
-  if (newVal && props.supplier) {
-    activeSupplier.value = props.supplier;
-    loadAllLedgerData();
-  }
-});
-
-watch(() => props.supplier, (newSupplier) => {
-  if (newSupplier && props.show) {
-    activeSupplier.value = newSupplier;
-    loadAllLedgerData();
-  }
-});
-
-onMounted(() => {
-  if (props.show && props.supplier) {
-    activeSupplier.value = props.supplier;
-    loadAllLedgerData();
-  }
-});
+watch(
+  () => props.show,
+  (newVal) => {
+    if (newVal) {
+      activeSupplier.value = props.supplier;
+      fetchLedgerData();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -1001,10 +870,10 @@ onMounted(() => {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.4);
+  background: #cbd5e1;
   border-radius: 9999px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.7);
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f46;
 }
 </style>
