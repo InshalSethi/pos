@@ -2803,8 +2803,8 @@ const applyCostOverrunAdjustment = async () => {
   savingOverrun.value = true;
 
   try {
-    const prodId = activeOverrunItem.value.product.id || activeOverrunItem.value.item.product_id;
-    const varId = activeOverrunItem.value.item.product_variation_id;
+    const prodId = activeOverrunItem.value.product?.id || activeOverrunItem.value.item?.product_id || activeOverrunItem.value.product?.product_id;
+    const varId = activeOverrunItem.value.item?.product_variation_id || activeOverrunItem.value.product?.product_variation_id;
 
     const newCost = parseFloat(activeOverrunItem.value.unit_cost) || 0;
     const newSale = parseFloat(activeOverrunItem.value.new_sale_price) || 0;
@@ -2840,14 +2840,18 @@ const applyCostOverrunAdjustment = async () => {
 
     // 3. Update products list in scope
     if (typeof products !== 'undefined' && products.value) {
-      const parentProd = products.value.find(p => (p.id || p.product_id) == prodId);
-      if (parentProd) {
-        parentProd.cost_price = newCost;
-        parentProd.purchase_price = newCost;
-        parentProd.selling_price = newSale;
-        parentProd.price = newSale;
-        parentProd.wholesale_price = newWholesale;
-      }
+      products.value.forEach(p => {
+        const matchId = p.product_id || p.id;
+        if (matchId == prodId) {
+          if (!varId || p.product_variation_id == varId) {
+            p.cost_price = newCost;
+            p.purchase_price = newCost;
+            p.selling_price = newSale;
+            p.price = newSale;
+            p.wholesale_price = newWholesale;
+          }
+        }
+      });
     }
 
     // 4. Close the modal and clear active overrun context
@@ -3072,6 +3076,7 @@ const saveOrder = async () => {
         product_variation_id: item.product_variation_id,
         quantity_ordered: item.quantity_ordered,
         unit_cost: item.unit_cost,
+        sale_price: item.sale_price || item.product?.selling_price || item.product?.price || null,
         notes: item.notes || null,
         allocations: item.allocations || []
       }))

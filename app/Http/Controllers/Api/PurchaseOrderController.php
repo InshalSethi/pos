@@ -439,9 +439,25 @@ class PurchaseOrderController extends Controller
                         'old_purchase_price' => $oldPrice,
                     ]);
 
-                    $product->update([
-                        'purchase_price' => $item['unit_cost'],
-                    ]);
+                    $prodUpdates = [];
+                    if (isset($item['sale_price']) && floatval($item['sale_price']) > 0) {
+                        $prodUpdates['selling_price'] = (float) $item['sale_price'];
+                    } elseif (isset($item['selling_price']) && floatval($item['selling_price']) > 0) {
+                        $prodUpdates['selling_price'] = (float) $item['selling_price'];
+                    }
+                    if (!empty($prodUpdates)) {
+                        $product->update($prodUpdates);
+                    }
+
+                    if (!empty($item['product_variation_id'])) {
+                        $var = \App\Models\ProductVariation::find($item['product_variation_id']);
+                        if ($var && isset($prodUpdates['selling_price'])) {
+                            $var->update([
+                                'retail_price' => $prodUpdates['selling_price'],
+                                'sale_price' => $prodUpdates['selling_price'],
+                            ]);
+                        }
+                    }
 
                     if ($product->track_inventory) {
                         // Calculate Weighted Average Cost (WAC) before adjusting stock
@@ -712,9 +728,25 @@ class PurchaseOrderController extends Controller
                         'old_purchase_price' => $oldPrice,
                     ]);
 
-                    $product->update([
-                        'purchase_price' => $item['unit_cost'],
-                    ]);
+                    $prodUpdates = [];
+                    if (isset($item['sale_price']) && floatval($item['sale_price']) > 0) {
+                        $prodUpdates['selling_price'] = (float) $item['sale_price'];
+                    } elseif (isset($item['selling_price']) && floatval($item['selling_price']) > 0) {
+                        $prodUpdates['selling_price'] = (float) $item['selling_price'];
+                    }
+                    if (!empty($prodUpdates)) {
+                        $product->update($prodUpdates);
+                    }
+
+                    if (!empty($item['product_variation_id'])) {
+                        $var = \App\Models\ProductVariation::find($item['product_variation_id']);
+                        if ($var && isset($prodUpdates['selling_price'])) {
+                            $var->update([
+                                'retail_price' => $prodUpdates['selling_price'],
+                                'sale_price' => $prodUpdates['selling_price'],
+                            ]);
+                        }
+                    }
 
                     if ($product->track_inventory) {
                         $currentStock = (float) $product->stock_quantity;
