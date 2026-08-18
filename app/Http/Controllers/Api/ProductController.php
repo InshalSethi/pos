@@ -2333,8 +2333,10 @@ class ProductController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'selling_price' => 'nullable|numeric|min:0',
+            'sale_price' => 'nullable|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
+            'purchase_price' => 'nullable|numeric|min:0',
             'product_variation_id' => 'nullable|exists:product_variations,id',
             'purchase_order_id' => 'nullable|integer',
         ]);
@@ -2349,27 +2351,31 @@ class ProductController extends Controller
         $oldCostPrice = $product->cost_price;
 
         $updateData = [];
-        if ($request->has('selling_price')) {
-            $updateData['selling_price'] = $request->selling_price;
+        $sellingPrice = $request->input('selling_price') ?? $request->input('sale_price');
+        if (!is_null($sellingPrice)) {
+            $updateData['selling_price'] = $sellingPrice;
         }
+
         if ($request->has('wholesale_price')) {
             $updateData['wholesale_price'] = $request->wholesale_price;
         }
-        if ($request->has('cost_price')) {
-            $updateData['cost_price'] = $request->cost_price;
+
+        $costPrice = $request->input('cost_price') ?? $request->input('purchase_price');
+        if (!is_null($costPrice)) {
+            $updateData['cost_price'] = $costPrice;
         }
 
         if (!empty($updateData)) {
             $product->update($updateData);
         }
 
-        if ($request->has('cost_price') && floatval($oldCostPrice) != floatval($request->cost_price)) {
+        if (!is_null($costPrice) && floatval($oldCostPrice) != floatval($costPrice)) {
             \App\Models\ProductPriceHistory::create([
                 'company_id' => $product->company_id,
                 'product_id' => $product->id,
                 'source_type' => 'purchase_order',
                 'source_id' => $request->purchase_order_id ?? null,
-                'purchase_price' => $request->cost_price,
+                'purchase_price' => $costPrice,
                 'old_purchase_price' => $oldCostPrice ?? 0,
             ]);
         }
@@ -2378,10 +2384,36 @@ class ProductController extends Controller
             $var = \App\Models\ProductVariation::find($request->product_variation_id);
             if ($var) {
                 $varData = [];
-                if ($request->has('selling_price')) $varData['retail_price'] = $request->selling_price;
-                if ($request->has('wholesale_price')) $varData['wholesale_price'] = $request->wholesale_price;
-                if ($request->has('cost_price')) $varData['cost_price'] = $request->cost_price;
-                if (!empty($varData)) $var->update($varData);
+                if (!is_null($sellingPrice)) {
+                    $varData['retail_price'] = $sellingPrice;
+                    $varData['sale_price'] = $sellingPrice;
+                }
+                if ($request->has('wholesale_price')) {
+                    $varData['wholesale_price'] = $request->wholesale_price;
+                }
+                if (!is_null($costPrice)) {
+                    $varData['cost_price'] = $costPrice;
+                }
+                if (!empty($varData)) {
+                    $var->update($varData);
+                }
+            }
+        } else {
+            if ($product->variations()->exists()) {
+                $varData = [];
+                if (!is_null($sellingPrice)) {
+                    $varData['retail_price'] = $sellingPrice;
+                    $varData['sale_price'] = $sellingPrice;
+                }
+                if ($request->has('wholesale_price')) {
+                    $varData['wholesale_price'] = $request->wholesale_price;
+                }
+                if (!is_null($costPrice)) {
+                    $varData['cost_price'] = $costPrice;
+                }
+                if (!empty($varData)) {
+                    $product->variations()->update($varData);
+                }
             }
         }
 
