@@ -13,34 +13,49 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
+    /**
+     * Daily & Period Sales Summary Report
+     */
     public function salesSummary(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::today()->toDateString());
+        $startDate = $request->get('start_date', Carbon::today()->startOfMonth()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
 
-        $sales = Sale::whereBetween('created_at', [$startDate, $endDate])
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
+        $sales = Sale::whereBetween('created_at', [$startDateTime, $endDateTime])
             ->selectRaw('
                 DATE(created_at) as date,
                 COUNT(*) as total_sales,
                 SUM(total_amount) as total_revenue,
                 SUM(paid_amount) as total_paid,
+                SUM(total_amount - paid_amount) as total_due,
+                SUM(discount_amount) as total_discount,
+                SUM(tax_amount) as total_tax,
                 AVG(total_amount) as average_sale
             ')
             ->groupBy('date')
-            ->orderBy('date')
+            ->orderBy('date', 'desc')
             ->get();
 
         $summary = [
-            'total_sales' => $sales->sum('total_sales'),
-            'total_revenue' => $sales->sum('total_revenue'),
-            'total_paid' => $sales->sum('total_paid'),
-            'average_sale' => $sales->avg('average_sale'),
+            'total_sales' => (int) $sales->sum('total_sales'),
+            'total_revenue' => (float) round($sales->sum('total_revenue'), 2),
+            'total_paid' => (float) round($sales->sum('total_paid'), 2),
+            'total_due' => (float) round($sales->sum('total_due'), 2),
+            'total_discount' => (float) round($sales->sum('total_discount'), 2),
+            'total_tax' => (float) round($sales->sum('total_tax'), 2),
+            'average_sale' => (float) round($sales->count() > 0 ? $sales->avg('average_sale') : 0, 2),
             'daily_breakdown' => $sales
         ];
 
         return response()->json($summary);
     }
 
+    /**
+     * Monthly Revenue Analysis Report
+     */
     public function monthlyRevenue(Request $request)
     {
         $year = $request->get('year', Carbon::now()->year);
@@ -51,155 +66,326 @@ class ReportController extends Controller
                 MONTHNAME(created_at) as month_name,
                 COUNT(*) as total_sales,
                 SUM(total_amount) as total_revenue,
-                SUM(paid_amount) as total_paid
+                SUM(paid_amount) as total_paid,
+                SUM(total_amount - paid_amount) as total_due,
+                AVG(total_amount) as average_sale
             ')
             ->groupBy('month', 'month_name')
             ->orderBy('month')
             ->get();
 
-        return response()->json($revenue);
+        $totalRevenue = (float) round($revenue->sum('total_revenue'), 2);
+        $totalPaid = (float) round($revenue->sum('total_paid'), 2);
+        $totalDue = (float) round($revenue->sum('total_due'), 2);
+        $totalSalesCount = (int) $revenue->sum('total_sales');
+
+        return response()->json([
+            'year' => (int) $year,
+            'total_revenue' => $totalRevenue,
+            'total_paid' => $totalPaid,
+            'total_due' => $totalDue,
+            'total_sales' => $totalSalesCount,
+            'monthly_breakdown' => $revenue
+        ]);
     }
 
+    /**
+     * Top Selling Products & Velocity Report
+     */
     public function topSellingProducts(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::today()->subDays(30)->toDateString());
+        $startDate = $request->get('start_date', Carbon::today()->startOfMonth()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
-        $limit = $request->get('limit', 10);
+        $limit = (int) $request->get('limit', 25);
+
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
 
         $products = SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->selectRaw('
                 products.id,
-                products.name,
+                products.name as product_name,
                 products.sku,
+                COALESCE(categories.name, "Uncategorized") as category_name,
                 SUM(sale_items.quantity) as total_quantity,
                 SUM(sale_items.quantity * sale_items.unit_price) as total_revenue,
+                SUM(sale_items.quantity * COALESCE(products.cost_price, 0)) as total_cost,
                 COUNT(DISTINCT sales.id) as times_sold
             ')
-            ->groupBy('products.id', 'products.name', 'products.sku')
+            ->groupBy('products.id', 'products.name', 'products.sku', 'categories.name')
             ->orderBy('total_quantity', 'desc')
             ->limit($limit)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->total_quantity = (float) $item->total_quantity;
+                $item->total_revenue = (float) round($item->total_revenue, 2);
+                $item->total_cost = (float) round($item->total_cost, 2);
+                $item->net_profit = (float) round($item->total_revenue - $item->total_cost, 2);
+                $item->profit_margin_percent = $item->total_revenue > 0
+                    ? (float) round(($item->net_profit / $item->total_revenue) * 100, 1)
+                    : 0;
+                return $item;
+            });
 
-        return response()->json($products);
+        $totalUnits = $products->sum('total_quantity');
+        $totalRevenue = $products->sum('total_revenue');
+        $totalProfit = $products->sum('net_profit');
+
+        return response()->json([
+            'total_units_sold' => $totalUnits,
+            'total_revenue' => $totalRevenue,
+            'total_profit' => $totalProfit,
+            'products' => $products
+        ]);
     }
 
+    /**
+     * Customer Sales & Credit Analysis Report
+     */
     public function customerSalesAnalysis(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::today()->subDays(30)->toDateString());
+        $startDate = $request->get('start_date', Carbon::today()->startOfMonth()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
-        $limit = $request->get('limit', 10);
+        $limit = (int) $request->get('limit', 25);
+
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
 
         $customers = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->selectRaw('
                 customers.id,
-                customers.name,
+                CONCAT("CUST-", customers.id) as customer_code,
+                customers.name as customer_name,
                 customers.email,
+                customers.phone,
                 COUNT(sales.id) as total_purchases,
                 SUM(sales.total_amount) as total_spent,
+                SUM(sales.paid_amount) as total_paid,
+                SUM(sales.total_amount - sales.paid_amount) as total_due,
                 AVG(sales.total_amount) as average_purchase,
                 MAX(sales.created_at) as last_purchase
             ')
-            ->groupBy('customers.id', 'customers.name', 'customers.email')
+            ->groupBy('customers.id', 'customers.name', 'customers.email', 'customers.phone')
             ->orderBy('total_spent', 'desc')
             ->limit($limit)
-            ->get();
+            ->get()
+            ->map(function ($c) {
+                $c->total_spent = (float) round($c->total_spent, 2);
+                $c->total_paid = (float) round($c->total_paid, 2);
+                $c->total_due = (float) round($c->total_due, 2);
+                $c->average_purchase = (float) round($c->average_purchase, 2);
+                return $c;
+            });
 
-        return response()->json($customers);
+        return response()->json([
+            'active_customers' => $customers->count(),
+            'total_spent' => (float) round($customers->sum('total_spent'), 2),
+            'total_paid' => (float) round($customers->sum('total_paid'), 2),
+            'total_due' => (float) round($customers->sum('total_due'), 2),
+            'customers' => $customers
+        ]);
     }
 
+    /**
+     * Inventory Stock Level Report
+     */
     public function inventoryReport(Request $request)
     {
-        $lowStockThreshold = $request->get('low_stock_threshold', 10);
+        $lowStockThreshold = (int) $request->get('low_stock_threshold', 10);
 
-        $inventory = Product::with('category')
-            ->selectRaw('
-                products.*,
-                CASE
-                    WHEN stock_quantity <= min_stock_level THEN "Low Stock"
-                    WHEN stock_quantity = 0 THEN "Out of Stock"
-                    ELSE "In Stock"
-                END as stock_status,
-                (stock_quantity * cost_price) as inventory_value
-            ')
-            ->get();
+        $inventory = Product::leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->select([
+                'products.id',
+                'products.sku',
+                'products.name as product_name',
+                'categories.name as category_name',
+                'products.stock_quantity',
+                'products.min_stock_level',
+                'products.cost_price',
+                'products.selling_price',
+            ])
+            ->get()
+            ->map(function ($p) use ($lowStockThreshold) {
+                $qty = (float) $p->stock_quantity;
+                $cost = (float) $p->cost_price;
+                $retail = (float) $p->selling_price;
+                $minLevel = (float) ($p->min_stock_level ?? $lowStockThreshold);
+
+                if ($qty <= 0) {
+                    $status = 'Out of Stock';
+                } elseif ($qty <= $minLevel) {
+                    $status = 'Low Stock';
+                } else {
+                    $status = 'In Stock';
+                }
+
+                return [
+                    'id' => $p->id,
+                    'sku' => $p->sku,
+                    'product_name' => $p->product_name,
+                    'category_name' => $p->category_name ?? 'Uncategorized',
+                    'stock_quantity' => $qty,
+                    'min_stock_level' => $minLevel,
+                    'cost_price' => $cost,
+                    'selling_price' => $retail,
+                    'stock_status' => $status,
+                    'inventory_cost_value' => round($qty * $cost, 2),
+                    'inventory_retail_value' => round($qty * $retail, 2),
+                    'potential_margin' => round(($qty * $retail) - ($qty * $cost), 2),
+                ];
+            });
 
         $summary = [
             'total_products' => $inventory->count(),
-            'low_stock_items' => $inventory->where('stock_quantity', '<=', $lowStockThreshold)->count(),
-            'out_of_stock_items' => $inventory->where('stock_quantity', 0)->count(),
-            'total_inventory_value' => $inventory->sum('inventory_value'),
-            'products' => $inventory
+            'total_units' => $inventory->sum('stock_quantity'),
+            'in_stock_items' => $inventory->where('stock_status', 'In Stock')->count(),
+            'low_stock_items' => $inventory->where('stock_status', 'Low Stock')->count(),
+            'out_of_stock_items' => $inventory->where('stock_status', 'Out of Stock')->count(),
+            'total_inventory_cost_value' => round($inventory->sum('inventory_cost_value'), 2),
+            'total_inventory_retail_value' => round($inventory->sum('inventory_retail_value'), 2),
+            'potential_gross_profit' => round($inventory->sum('potential_margin'), 2),
+            'products' => $inventory->values()->all()
         ];
 
         return response()->json($summary);
     }
 
+    /**
+     * Low Stock Alert & Reorder Planning Report
+     */
     public function lowStockAlert(Request $request)
     {
-        $threshold = $request->get('threshold', 10);
+        $threshold = (int) $request->get('threshold', 10);
 
-        $lowStockProducts = Product::with('category')
-            ->where('stock_quantity', '<=', $threshold)
-            ->orWhere('stock_quantity', '<=', DB::raw('min_stock_level'))
+        $lowStockProducts = Product::leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->where(function ($q) use ($threshold) {
+                $q->where('stock_quantity', '<=', $threshold)
+                  ->orWhereColumn('stock_quantity', '<=', 'min_stock_level');
+            })
+            ->select([
+                'products.id',
+                'products.sku',
+                'products.name as product_name',
+                'categories.name as category_name',
+                'products.stock_quantity',
+                'products.min_stock_level',
+                'products.cost_price',
+            ])
             ->orderBy('stock_quantity', 'asc')
-            ->get();
+            ->get()
+            ->map(function ($p) {
+                $qty = (float) $p->stock_quantity;
+                $min = (float) ($p->min_stock_level ?? 10);
+                $deficit = max(0, $min - $qty + 10); // Target buffer
+                $cost = (float) $p->cost_price;
 
-        return response()->json($lowStockProducts);
-    }
-
-    public function inventoryValuation(Request $request)
-    {
-        $valuation = Product::with('category')
-            ->selectRaw('
-                categories.name as category_name,
-                COUNT(products.id) as product_count,
-                SUM(products.stock_quantity) as total_quantity,
-                SUM(products.stock_quantity * products.cost_price) as cost_value,
-                SUM(products.stock_quantity * products.selling_price) as retail_value
-            ')
-            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->groupBy('categories.id', 'categories.name')
-            ->get();
-
-        $totalCostValue = $valuation->sum('cost_value');
-        $totalRetailValue = $valuation->sum('retail_value');
+                return [
+                    'id' => $p->id,
+                    'sku' => $p->sku,
+                    'product_name' => $p->product_name,
+                    'category_name' => $p->category_name ?? 'Uncategorized',
+                    'stock_quantity' => $qty,
+                    'min_stock_level' => $min,
+                    'deficit_quantity' => $deficit,
+                    'unit_cost' => $cost,
+                    'reorder_cost' => round($deficit * $cost, 2),
+                ];
+            });
 
         return response()->json([
+            'alert_count' => $lowStockProducts->count(),
+            'total_deficit_units' => $lowStockProducts->sum('deficit_quantity'),
+            'total_reorder_cost' => round($lowStockProducts->sum('reorder_cost'), 2),
+            'products' => $lowStockProducts
+        ]);
+    }
+
+    /**
+     * Inventory Valuation Report
+     */
+    public function inventoryValuation(Request $request)
+    {
+        $valuation = Product::leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->selectRaw('
+                COALESCE(categories.name, "Uncategorized") as category_name,
+                COUNT(products.id) as product_count,
+                SUM(products.stock_quantity) as total_quantity,
+                SUM(products.stock_quantity * COALESCE(products.cost_price, 0)) as cost_value,
+                SUM(products.stock_quantity * COALESCE(products.selling_price, 0)) as retail_value
+            ')
+            ->groupBy('categories.id', 'categories.name')
+            ->get()
+            ->map(function ($c) {
+                $c->cost_value = (float) round($c->cost_value, 2);
+                $c->retail_value = (float) round($c->retail_value, 2);
+                $c->potential_profit = (float) round($c->retail_value - $c->cost_value, 2);
+                $c->margin_percent = $c->retail_value > 0
+                    ? (float) round(($c->potential_profit / $c->retail_value) * 100, 1)
+                    : 0;
+                return $c;
+            });
+
+        $totalCostValue = round($valuation->sum('cost_value'), 2);
+        $totalRetailValue = round($valuation->sum('retail_value'), 2);
+        $potentialProfit = round($totalRetailValue - $totalCostValue, 2);
+        $overallMargin = $totalRetailValue > 0 ? round(($potentialProfit / $totalRetailValue) * 100, 1) : 0;
+
+        return response()->json([
+            'total_categories' => $valuation->count(),
             'total_cost_value' => $totalCostValue,
             'total_retail_value' => $totalRetailValue,
-            'potential_profit' => $totalRetailValue - $totalCostValue,
+            'potential_profit' => $potentialProfit,
+            'overall_margin_percent' => $overallMargin,
             'categories' => $valuation
         ]);
     }
 
+    /**
+     * Stock Movement Audit Trail Report
+     */
     public function stockMovementHistory(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::today()->subDays(30)->toDateString());
+        $startDate = $request->get('start_date', Carbon::today()->startOfMonth()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
         $productId = $request->get('product_id');
 
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
         $query = SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->select([
                 'sales.created_at',
-                'sales.sale_number',
+                'sales.sale_number as reference_no',
                 'products.name as product_name',
                 'products.sku',
                 'sale_items.quantity',
                 'sale_items.unit_price',
-                DB::raw('"Sale" as movement_type')
+                DB::raw('"Customer Sale" as movement_type')
             ]);
 
         if ($productId) {
             $query->where('products.id', $productId);
         }
 
-        $movements = $query->orderBy('sales.created_at', 'desc')->get();
+        $movements = $query->orderBy('sales.created_at', 'desc')
+            ->limit(100)
+            ->get()
+            ->map(function ($m) {
+                $m->total_value = round($m->quantity * $m->unit_price, 2);
+                return $m;
+            });
 
-        return response()->json($movements);
+        return response()->json([
+            'total_movements' => $movements->count(),
+            'total_units_moved' => $movements->sum('quantity'),
+            'total_value_moved' => round($movements->sum('total_value'), 2),
+            'movements' => $movements
+        ]);
     }
 }
