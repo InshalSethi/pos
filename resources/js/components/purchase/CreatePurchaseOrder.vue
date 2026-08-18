@@ -2805,33 +2805,44 @@ const applyCostOverrunAdjustment = async () => {
     const prodId = activeOverrunItem.value.product.id || activeOverrunItem.value.item.product_id;
     const varId = activeOverrunItem.value.item.product_variation_id;
 
+    const newCost = parseFloat(activeOverrunItem.value.unit_cost) || 0;
     const newSale = parseFloat(activeOverrunItem.value.new_sale_price) || 0;
     const newWholesale = parseFloat(activeOverrunItem.value.new_wholesale_price) || 0;
 
     const payload = {
+      cost_price: newCost,
       selling_price: newSale,
       wholesale_price: newWholesale,
       product_variation_id: varId
     };
 
-    // 1. Send API request to update product sale price in backend
+    // 1. Send API request to update product sale price and purchase cost in backend
     await api.post(`/products/${prodId}/update-prices`, payload);
 
     // 2. Update local line item properties
     const item = activeOverrunItem.value.item || orderItems.value[activeOverrunItem.value.index];
     if (item) {
+      item.unit_cost = newCost;
       item.sale_price = newSale;
       item.wholesale_price = newWholesale;
       if (!item.product) item.product = {};
+      item.product.cost_price = newCost;
+      item.product.purchase_price = newCost;
       item.product.selling_price = newSale;
       item.product.price = newSale;
       item.product.wholesale_price = newWholesale;
+
+      if (typeof updateItemTotal === 'function') {
+        updateItemTotal(activeOverrunItem.value.index);
+      }
     }
 
     // 3. Update products list in scope
     if (typeof products !== 'undefined' && products.value) {
       const parentProd = products.value.find(p => (p.id || p.product_id) == prodId);
       if (parentProd) {
+        parentProd.cost_price = newCost;
+        parentProd.purchase_price = newCost;
         parentProd.selling_price = newSale;
         parentProd.price = newSale;
         parentProd.wholesale_price = newWholesale;
@@ -2844,7 +2855,7 @@ const applyCostOverrunAdjustment = async () => {
 
     // 5. Toast notification
     if (typeof showNotification === 'function') {
-      showNotification('Selling price updated and applied successfully.', 'success');
+      showNotification('Purchase cost and sale price updated successfully.', 'success');
     }
   } catch (error) {
     console.error('Failed to update product price:', error);

@@ -1146,6 +1146,7 @@
                             </label>
                           </div>
                         </th>
+                        <th class="px-2.5 py-2 text-left min-w-[120px]">Barcode</th>
                         <th class="px-2.5 py-2 text-left min-w-[150px]">Warehouse(s) *</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Purchase Cost ($)</th>
                         <th class="px-2.5 py-2 text-left min-w-[100px]">Retail Price ($) *</th>
@@ -1179,6 +1180,14 @@
                               </div>
                             </label>
                           </div>
+                        </td>
+                        <td class="px-2.5 py-1.5 min-w-[130px]">
+                          <input 
+                            type="text" 
+                            v-model="row.barcode" 
+                            placeholder="Barcode" 
+                            class="px-2 py-1 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2E2E2E] rounded-lg text-xs w-full font-semibold focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/25 text-slate-800 dark:text-slate-300 transition-all"
+                          />
                         </td>
                         <td class="px-2.5 py-1.5 relative wh-dropdown-cell">
                           <button
@@ -4382,7 +4391,7 @@ const activeRowTaxDropdown = ref(null);
 const taxDropdownStyles = ref({});
 
 const totalMatrixColumns = computed(() => {
-  let cols = 8; // Variant Profile, SKU, Warehouse, Cost, Retail, Stock, Expiry, Action
+  let cols = 9; // Variant Profile, SKU, Barcode, Warehouse, Cost, Retail, Stock, Expiry, Action
   if (form.value.show_wholesale_price) cols++;
   if (form.value.show_tax_rate) cols++;
   return cols;

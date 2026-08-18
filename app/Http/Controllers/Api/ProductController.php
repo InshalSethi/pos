@@ -2336,6 +2336,7 @@ class ProductController extends Controller
             'wholesale_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'product_variation_id' => 'nullable|exists:product_variations,id',
+            'purchase_order_id' => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -2345,21 +2346,32 @@ class ProductController extends Controller
             ], 422);
         }
 
+        $oldCostPrice = $product->cost_price;
+
         $updateData = [];
         if ($request->has('selling_price')) {
             $updateData['selling_price'] = $request->selling_price;
-            $updateData['price'] = $request->selling_price;
         }
         if ($request->has('wholesale_price')) {
             $updateData['wholesale_price'] = $request->wholesale_price;
         }
         if ($request->has('cost_price')) {
             $updateData['cost_price'] = $request->cost_price;
-            $updateData['purchase_price'] = $request->cost_price;
         }
 
         if (!empty($updateData)) {
             $product->update($updateData);
+        }
+
+        if ($request->has('cost_price') && floatval($oldCostPrice) != floatval($request->cost_price)) {
+            \App\Models\ProductPriceHistory::create([
+                'company_id' => $product->company_id,
+                'product_id' => $product->id,
+                'source_type' => 'purchase_order',
+                'source_id' => $request->purchase_order_id ?? null,
+                'purchase_price' => $request->cost_price,
+                'old_purchase_price' => $oldCostPrice ?? 0,
+            ]);
         }
 
         if ($request->filled('product_variation_id')) {
