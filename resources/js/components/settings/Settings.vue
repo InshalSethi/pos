@@ -1231,31 +1231,80 @@
 
                 <!-- 2. Default Pricing Mode -->
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
                     Default Pricing Mode
                   </label>
-                  <div class="flex items-center space-x-4 pt-1">
-                    <label class="inline-flex items-center cursor-pointer space-x-2">
-                      <input
-                        type="radio"
-                        value="retail"
-                        v-model="invoicePurchaseSettings.default_pricing_mode"
-                        class="text-slate-900 dark:text-white focus:ring-0 h-4 w-4"
-                      />
-                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Retail Mode</span>
-                    </label>
+                  <div class="inline-flex items-center bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-full border border-slate-200/80 dark:border-zinc-700/80 shadow-inner select-none">
+                    <button
+                      type="button"
+                      @click="invoicePurchaseSettings.default_pricing_mode = 'retail'"
+                      class="px-3.5 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer flex items-center gap-2"
+                      :class="invoicePurchaseSettings.default_pricing_mode === 'retail' 
+                        ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 font-bold shadow-xs border border-slate-200/60 dark:border-zinc-700' 
+                        : 'text-slate-500 dark:text-zinc-400 font-semibold hover:text-slate-800 dark:hover:text-zinc-200'"
+                    >
+                      <span 
+                        class="w-2.5 h-2.5 rounded-full transition-colors" 
+                        :class="invoicePurchaseSettings.default_pricing_mode === 'retail' ? 'bg-black dark:bg-white' : 'bg-slate-300 dark:bg-zinc-600'"
+                      ></span>
+                      Retail Mode
+                    </button>
 
-                    <label class="inline-flex items-center cursor-pointer space-x-2">
-                      <input
-                        type="radio"
-                        value="wholesale"
-                        v-model="invoicePurchaseSettings.default_pricing_mode"
-                        class="text-slate-900 dark:text-white focus:ring-0 h-4 w-4"
-                      />
-                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Wholesale Mode</span>
-                    </label>
+                    <button
+                      type="button"
+                      @click="invoicePurchaseSettings.default_pricing_mode = 'wholesale'"
+                      class="px-3.5 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer flex items-center gap-2"
+                      :class="invoicePurchaseSettings.default_pricing_mode === 'wholesale' 
+                        ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 font-bold shadow-xs border border-slate-200/60 dark:border-zinc-700' 
+                        : 'text-slate-500 dark:text-zinc-400 font-semibold hover:text-slate-800 dark:hover:text-zinc-200'"
+                    >
+                      <span 
+                        class="w-2.5 h-2.5 rounded-full transition-colors" 
+                        :class="invoicePurchaseSettings.default_pricing_mode === 'wholesale' ? 'bg-black dark:bg-white' : 'bg-slate-300 dark:bg-zinc-600'"
+                      ></span>
+                      Wholesale Mode
+                    </button>
                   </div>
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Default active mode when initializing Create Invoice screen.</p>
+                </div>
+
+                <!-- 3. Default Printer Type -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Default Printer Type
+                  </label>
+                  <div class="inline-flex items-center bg-slate-100 dark:bg-zinc-800/80 p-1 rounded-full border border-slate-200/80 dark:border-zinc-700/80 shadow-inner select-none">
+                    <button
+                      type="button"
+                      @click="invoicePurchaseSettings.default_printer = 'standard'"
+                      class="px-3.5 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer flex items-center gap-2"
+                      :class="(invoicePurchaseSettings.default_printer || 'standard') === 'standard' 
+                        ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 font-bold shadow-xs border border-slate-200/60 dark:border-zinc-700' 
+                        : 'text-slate-500 dark:text-zinc-400 font-semibold hover:text-slate-800 dark:hover:text-zinc-200'"
+                    >
+                      <span 
+                        class="w-2.5 h-2.5 rounded-full transition-colors" 
+                        :class="(invoicePurchaseSettings.default_printer || 'standard') === 'standard' ? 'bg-black dark:bg-white' : 'bg-slate-300 dark:bg-zinc-600'"
+                      ></span>
+                      Standard (A4 / Letter)
+                    </button>
+
+                    <button
+                      type="button"
+                      @click="invoicePurchaseSettings.default_printer = 'thermal'"
+                      class="px-3.5 py-1.5 rounded-full text-xs transition-all duration-200 cursor-pointer flex items-center gap-2"
+                      :class="invoicePurchaseSettings.default_printer === 'thermal' 
+                        ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 font-bold shadow-xs border border-slate-200/60 dark:border-zinc-700' 
+                        : 'text-slate-500 dark:text-zinc-400 font-semibold hover:text-slate-800 dark:hover:text-zinc-200'"
+                    >
+                      <span 
+                        class="w-2.5 h-2.5 rounded-full transition-colors" 
+                        :class="invoicePurchaseSettings.default_printer === 'thermal' ? 'bg-black dark:bg-white' : 'bg-slate-300 dark:bg-zinc-600'"
+                      ></span>
+                      Thermal (80mm)
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Automatically selects printer type layout when opening Sales Invoice print page.</p>
                 </div>
 
                 <!-- 3. Default Due Period (Days) -->
@@ -1291,17 +1340,821 @@
                 </div>
 
                 <!-- 5. Default Invoice Terms & Conditions -->
-                <div class="md:col-span-2">
+                <div>
                   <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Default Invoice Terms & Conditions
                   </label>
                   <textarea
                     v-model="invoicePurchaseSettings.default_terms_conditions"
-                    rows="3"
+                    rows="2"
                     placeholder="Enter default terms and conditions text for sales invoices..."
-                    class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-medium focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500"
+                    class="w-full px-3.5 py-2 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-medium focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500"
                   ></textarea>
                   <p class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Appears in footer notes section on printed and digital invoices.</p>
+                </div>
+
+                <!-- ================================================================= -->
+                <!-- SECTION 1: STANDARD INVOICE PRINT SETTINGS (A4 / LETTER / LEGAL)  -->
+                <!-- ================================================================= -->
+                <div class="md:col-span-2 bg-slate-50/50 dark:bg-zinc-900/50 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 space-y-6">
+                  <div class="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
+                    <div>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Standard Invoice Print Settings (A4 / Letter / Legal)
+                      </h3>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Configure layout template, header defaults, and column labels for standard sheet invoices.</p>
+                    </div>
+                    <span class="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold rounded-lg uppercase tracking-wider">A4 / Letter</span>
+                  </div>
+
+                  <!-- 1.1 Template Selection (First Thing on Top) -->
+                  <div class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        Select Standard Print Template
+                      </label>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400">Choose your default layout template for standard sheet invoice printing.</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-5 items-start pt-1">
+                      <!-- Default Standard Card -->
+                      <div 
+                        @click="invoicePurchaseSettings.sale_invoice_template = 'default'"
+                        :class="[
+                          'w-48 p-2.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center group',
+                          (invoicePurchaseSettings.sale_invoice_template || 'default') === 'default'
+                            ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/10'
+                            : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700'
+                        ]"
+                      >
+                        <div class="w-full h-56 bg-white text-slate-900 rounded-md p-2 flex flex-col justify-between border border-slate-200 shadow-xs overflow-hidden select-none text-[6.5px] leading-[8px]">
+                          <div>
+                            <div class="flex justify-between items-start pb-1">
+                              <div>
+                                <div class="font-extrabold text-slate-800 text-[7px] mb-1">Invoice</div>
+                                <div class="w-4 h-4 bg-slate-300 rounded-full flex items-center justify-center text-[3.5px] text-slate-600 font-bold">LOGO</div>
+                              </div>
+                              <div class="text-right text-[4.5px] text-slate-500 leading-[6.5px]">
+                                <div class="font-bold text-slate-700 text-[5px]">Company Name</div>
+                                <div>Tax Number: 6401433945</div>
+                                <div>124124214(phonenumber)</div>
+                                <div>companymail@mail.com</div>
+                                <div>Address address address</div>
+                              </div>
+                            </div>
+
+                            <div class="border-b border-slate-200 my-1"></div>
+
+                            <div class="flex justify-between text-[5px] text-slate-600 my-1">
+                              <div>
+                                <div class="font-bold text-slate-800 text-[5.5px]">Bill To (Customer Name)</div>
+                                <div class="text-[4.5px] text-slate-500">Address address address</div>
+                                <div class="text-[4.5px] text-slate-500">Tax Number: 6401433945</div>
+                                <div class="text-[4.5px] text-slate-500">customermail@mail.com</div>
+                              </div>
+                              <div class="text-right text-[4.5px] space-y-0.2">
+                                <div><span class="text-slate-400">Order Number:</span> 12345678</div>
+                                <div><span class="text-slate-400">Invoice Number:</span> INV-00003</div>
+                                <div><span class="text-slate-400">Invoice Date:</span> 01 Jul 2021</div>
+                                <div><span class="text-slate-400">Due Date:</span> 31 Aug 2021</div>
+                              </div>
+                            </div>
+
+                            <div class="mt-1.5 border border-slate-200 rounded-xs overflow-hidden">
+                              <div 
+                                class="grid grid-cols-4 font-bold p-0.5 text-white text-[5px] transition-colors"
+                                :style="{ backgroundColor: getColorHex(invoicePurchaseSettings.template_color || 'slate-400') }"
+                              >
+                                <span class="col-span-2">Items</span>
+                                <span class="text-center">Quantity</span>
+                                <span class="text-right">Amount</span>
+                              </div>
+                              <div class="grid grid-cols-4 p-0.5 border-b border-slate-100 text-[4.5px] text-slate-600">
+                                <span class="col-span-2 truncate font-medium">Item name</span>
+                                <span class="text-center">12</span>
+                                <span class="text-right">£1,440.00</span>
+                              </div>
+                              <div class="grid grid-cols-4 p-0.5 text-[4.5px] text-slate-600">
+                                <span class="col-span-2 truncate font-medium">Item name</span>
+                                <span class="text-center">12</span>
+                                <span class="text-right">£1,440.00</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="pt-1 text-[5px] text-right space-y-0.2">
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Subtotal:</span><span>£120.00</span></div>
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Tax:</span><span>£9.00</span></div>
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Paid:</span><span>-£120.00</span></div>
+                            <div class="flex justify-end gap-2 font-black text-slate-900 text-[6px] border-t border-slate-200 pt-0.5"><span>Total:</span><span>£1,329.00</span></div>
+                          </div>
+                        </div>
+
+                        <label class="inline-flex items-center space-x-1.5 cursor-pointer mt-2.5">
+                          <input 
+                            type="radio" 
+                            value="default" 
+                            v-model="invoicePurchaseSettings.sale_invoice_template"
+                            class="text-indigo-600 focus:ring-0 h-3.5 w-3.5"
+                          />
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Default</span>
+                        </label>
+                      </div>
+
+                      <!-- Classic Standard Card -->
+                      <div 
+                        @click="invoicePurchaseSettings.sale_invoice_template = 'classic'"
+                        :class="[
+                          'w-48 p-2.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center group',
+                          invoicePurchaseSettings.sale_invoice_template === 'classic'
+                            ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/10'
+                            : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700'
+                        ]"
+                      >
+                        <div class="w-full h-56 bg-white text-slate-900 rounded-md p-2 flex flex-col justify-between border border-slate-200 shadow-xs overflow-hidden select-none text-[6.5px] leading-[8px]">
+                          <div>
+                            <div class="flex justify-between items-start pb-1">
+                              <div class="flex items-center space-x-1">
+                                <div class="w-3.5 h-3.5 bg-slate-300 rounded-full flex items-center justify-center text-[3.5px] text-slate-600 font-bold">LOGO</div>
+                                <div class="font-extrabold text-slate-800 text-[6px]">Invoice</div>
+                              </div>
+                              <div class="text-right text-[4.5px] text-slate-500 leading-[6.5px]">
+                                <div class="font-bold text-slate-700 text-[5px]">Company Name</div>
+                                <div>Tax Number: 6401433945</div>
+                                <div>124124214(phonenumber)</div>
+                                <div>companymail@mail.com</div>
+                              </div>
+                            </div>
+
+                            <div class="relative my-1 flex items-center justify-center">
+                              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                              <div class="relative bg-white px-1.5 py-0.5 border border-slate-300 rounded text-[4px] text-center shadow-2xs">
+                                <div class="text-slate-400 uppercase text-[3.5px]">Invoice Number</div>
+                                <div class="font-bold text-slate-800">INV-00003</div>
+                              </div>
+                            </div>
+
+                            <div class="flex justify-between text-[5px] text-slate-600 my-1">
+                              <div>
+                                <div class="font-bold text-slate-800 text-[5.5px]">Bill To (Customer Name)</div>
+                                <div class="text-[4.5px] text-slate-500">Address address address</div>
+                                <div class="text-[4.5px] text-slate-500">Tax Number: 6401433945</div>
+                              </div>
+                              <div class="text-right text-[4.5px] space-y-0.2">
+                                <div><span class="text-slate-400">Order Number:</span> 12345678</div>
+                                <div><span class="text-slate-400">Invoice Date:</span> 01 Jul 2021</div>
+                                <div><span class="text-slate-400">Due Date:</span> 31 Aug 2021</div>
+                                <div class="font-bold text-slate-800"><span class="text-slate-400 font-normal">Total:</span> £1,329.00</div>
+                              </div>
+                            </div>
+
+                            <div class="mt-1">
+                              <div 
+                                class="grid grid-cols-4 font-bold border-b border-dashed p-0.5 text-[5px] transition-colors"
+                                :style="{ borderColor: getColorHex(invoicePurchaseSettings.template_color || 'slate-400'), color: getColorHex(invoicePurchaseSettings.template_color || 'slate-400') }"
+                              >
+                                <span class="col-span-2">Items</span>
+                                <span class="text-center">Quantity</span>
+                                <span class="text-right">Amount</span>
+                              </div>
+                              <div class="grid grid-cols-4 p-0.5 border-b border-dashed border-slate-100 text-[4.5px] text-slate-600">
+                                <span class="col-span-2 truncate">Item name</span>
+                                <span class="text-center">12</span>
+                                <span class="text-right">£1,440.00</span>
+                              </div>
+                              <div class="grid grid-cols-4 p-0.5 text-[4.5px] text-slate-600">
+                                <span class="col-span-2 truncate">Item name</span>
+                                <span class="text-center">12</span>
+                                <span class="text-right">£1,440.00</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="pt-1 text-[5px] text-right space-y-0.2">
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Subtotal:</span><span>£120.00</span></div>
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Tax:</span><span>£9.00</span></div>
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Paid:</span><span>-£120.00</span></div>
+                            <div class="flex justify-end gap-2 font-black text-slate-900 text-[6px] border-t border-dashed border-slate-300 pt-0.5"><span>Total:</span><span>£1,329.00</span></div>
+                          </div>
+                        </div>
+
+                        <label class="inline-flex items-center space-x-1.5 cursor-pointer mt-2.5">
+                          <input 
+                            type="radio" 
+                            value="classic" 
+                            v-model="invoicePurchaseSettings.sale_invoice_template"
+                            class="text-indigo-600 focus:ring-0 h-3.5 w-3.5"
+                          />
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Classic</span>
+                        </label>
+                      </div>
+
+                      <!-- Modern Standard Card -->
+                      <div 
+                        @click="invoicePurchaseSettings.sale_invoice_template = 'modern'"
+                        :class="[
+                          'w-48 p-2.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center group',
+                          invoicePurchaseSettings.sale_invoice_template === 'modern'
+                            ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/10'
+                            : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700'
+                        ]"
+                      >
+                        <div class="w-full h-56 bg-white text-slate-900 rounded-md flex flex-col justify-between border border-slate-200 shadow-xs overflow-hidden select-none text-[6.5px] leading-[8px]">
+                          <div>
+                            <div 
+                              class="text-white p-1.5 rounded-t-md flex justify-between items-center transition-colors"
+                              :style="{ backgroundColor: getColorHex(invoicePurchaseSettings.template_color || 'purple-500') }"
+                            >
+                              <div class="flex items-center space-x-1">
+                                <div class="w-3.5 h-3.5 bg-white/20 rounded-full flex items-center justify-center text-[3.5px] text-white font-bold">LOGO</div>
+                                <div>
+                                  <div class="font-extrabold text-white text-[6px]">Company Name</div>
+                                  <div class="text-[4px] text-slate-200">Address address address</div>
+                                </div>
+                              </div>
+                              <div class="text-right text-[4px] text-slate-200">
+                                <div>Tax #: 6401433945</div>
+                                <div>124124214(phonenumber)</div>
+                              </div>
+                            </div>
+
+                            <div class="p-1 space-y-1">
+                              <div class="flex justify-between text-[5px] text-slate-600">
+                                <div>
+                                  <div class="font-bold text-slate-800 text-[5.5px]">Bill To (Customer Name)</div>
+                                  <div class="text-[4.5px] text-slate-500">Address address address</div>
+                                  <div class="text-[4.5px] text-slate-500">Tax #: 6401433945</div>
+                                </div>
+                                <div class="text-right text-[4.5px] space-y-0.2">
+                                  <div><span class="text-slate-400">Order Number:</span> 12345678</div>
+                                  <div><span class="text-slate-400">Invoice Number:</span> INV-00001</div>
+                                  <div><span class="text-slate-400">Invoice Date:</span> 01 Jul 2021</div>
+                                  <div><span class="text-slate-400">Due Date:</span> 31 Aug 2021</div>
+                                </div>
+                              </div>
+
+                              <div class="border border-slate-200 rounded-xs overflow-hidden">
+                                <div 
+                                  class="grid grid-cols-4 font-bold p-0.5 text-white text-[5px] transition-colors"
+                                  :style="{ backgroundColor: getColorHex(invoicePurchaseSettings.template_color || 'purple-500') }"
+                                >
+                                  <span class="col-span-2">Items</span>
+                                  <span class="text-center">Quantity</span>
+                                  <span class="text-right">Amount</span>
+                                </div>
+                                <div class="grid grid-cols-4 p-0.5 border-b border-slate-100 text-[4.5px] text-slate-600">
+                                  <span class="col-span-2 truncate">Item name</span>
+                                  <span class="text-center">12</span>
+                                  <span class="text-right">£1,440.00</span>
+                                </div>
+                                <div class="grid grid-cols-4 p-0.5 text-[4.5px] text-slate-600">
+                                  <span class="col-span-2 truncate">Item name</span>
+                                  <span class="text-center">12</span>
+                                  <span class="text-right">£1,440.00</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="p-1 text-[5px] text-right space-y-0.2">
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Subtotal:</span><span>£120.00</span></div>
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Tax:</span><span>£9.00</span></div>
+                            <div class="flex justify-end gap-2 text-slate-500"><span>Paid:</span><span>-£120.00</span></div>
+                            <div class="flex justify-end gap-2 font-black text-slate-900 text-[6px] border-t border-slate-200 pt-0.5"><span>Total:</span><span>£1,329.00</span></div>
+                          </div>
+                        </div>
+
+                        <label class="inline-flex items-center space-x-1.5 cursor-pointer mt-2.5">
+                          <input 
+                            type="radio" 
+                            value="modern" 
+                            v-model="invoicePurchaseSettings.sale_invoice_template"
+                            class="text-indigo-600 focus:ring-0 h-3.5 w-3.5"
+                          />
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Modern</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Color Picker for Standard A4 Print Template (Directly below templates) -->
+                    <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-zinc-800/60 relative">
+                      <label class="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
+                        Color
+                      </label>
+
+                      <div class="relative w-72">
+                        <!-- Input Box displaying color name and preview color badge -->
+                        <div 
+                          @click="showColorPickerPopover = !showColorPickerPopover"
+                          class="flex items-center justify-between px-3.5 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-xl cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition-all shadow-2xs group select-none"
+                        >
+                          <span class="text-xs font-mono font-medium text-slate-800 dark:text-slate-200">
+                            {{ invoicePurchaseSettings.template_color || 'purple-500' }}
+                          </span>
+                          <div 
+                            class="w-5 h-5 rounded-full border border-slate-200 dark:border-zinc-600 shadow-xs transition-transform group-hover:scale-110"
+                            :style="{ backgroundColor: getColorHex(invoicePurchaseSettings.template_color || 'purple-500') }"
+                          ></div>
+                        </div>
+
+                        <!-- Grid Popover Color Palette -->
+                        <div 
+                          v-if="showColorPickerPopover"
+                          class="absolute z-50 top-full left-0 mt-2 p-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-2xl shadow-xl space-y-2 w-80 max-w-[90vw]"
+                        >
+                          <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
+                            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Select Template Theme Color</span>
+                            <button 
+                              type="button"
+                              @click="showColorPickerPopover = false" 
+                              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold px-1.5 py-0.5 rounded cursor-pointer"
+                            >✕</button>
+                          </div>
+
+                          <div class="grid grid-cols-8 gap-1.5 p-1 max-h-72 overflow-y-auto">
+                            <template v-for="(col, cIdx) in colorPaletteGrid" :key="cIdx">
+                              <div class="flex flex-col gap-1.5 items-center">
+                                <button
+                                  v-for="swatch in col"
+                                  :key="swatch.name"
+                                  type="button"
+                                  @click="selectTemplateColor(swatch.name)"
+                                  :title="swatch.name"
+                                  :class="[
+                                    'w-5.5 h-5.5 rounded-full transition-all hover:scale-125 focus:outline-none relative cursor-pointer border border-black/10 dark:border-white/10',
+                                    (invoicePurchaseSettings.template_color || 'purple-500') === swatch.name 
+                                      ? 'ring-2 ring-indigo-600 ring-offset-2 dark:ring-offset-zinc-900 scale-110 z-10' 
+                                      : ''
+                                  ]"
+                                  :style="{ backgroundColor: swatch.hex }"
+                                />
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 1.2 Standard Defaults Section -->
+                  <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Standard Defaults</h4>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Selecting defaults for standard invoices will pre-populate titles, subheadings, notes, and footers.
+                      </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Title</label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.invoice_title"
+                          placeholder="Invoice"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Subheading</label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.invoice_subheading"
+                          placeholder="Enter Subheading"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Logo Width</label>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            v-model="invoicePurchaseSettings.logo_width"
+                            placeholder="128"
+                            class="w-full px-3 py-2 pr-8 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                          <span class="absolute right-2.5 top-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">PX</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Logo Height</label>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            v-model="invoicePurchaseSettings.logo_height"
+                            placeholder="128"
+                            class="w-full px-3 py-2 pr-8 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                          <span class="absolute right-2.5 top-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">PX</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
+                        <textarea
+                          rows="3"
+                          v-model="invoicePurchaseSettings.default_notes"
+                          placeholder="Enter Notes"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y"
+                        ></textarea>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Footer</label>
+                        <textarea
+                          rows="3"
+                          v-model="invoicePurchaseSettings.default_footer"
+                          placeholder="Enter Footer"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 1.3 Standard Columns Section -->
+                  <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Standard Columns</h4>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Customize how the standard invoice columns are named and set item visibility options.
+                      </p>
+                    </div>
+
+                    <div class="space-y-4 max-w-xl">
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Item Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.column_item_name"
+                          placeholder="Items"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Price Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.column_price_name"
+                          placeholder="Price"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Quantity Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.column_quantity_name"
+                          placeholder="Quantity"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div class="flex items-center justify-between p-3 bg-white dark:bg-zinc-800/80 rounded-xl border border-slate-200 dark:border-zinc-700/80">
+                          <div>
+                            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                              Hide Item Description
+                            </label>
+                            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Hide product description lines on invoice</p>
+                          </div>
+                          <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              v-model="invoicePurchaseSettings.hide_item_description"
+                              class="sr-only peer"
+                            />
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-slate-900 dark:peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-white dark:bg-zinc-800/80 rounded-xl border border-slate-200 dark:border-zinc-700/80">
+                          <div>
+                            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                              Hide Amount
+                            </label>
+                            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Hide item amount column on invoice</p>
+                          </div>
+                          <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              v-model="invoicePurchaseSettings.hide_amount"
+                              class="sr-only peer"
+                            />
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-slate-900 dark:peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ================================================================= -->
+                <!-- SECTION 2: THERMAL RECEIPT PRINT SETTINGS (80MM POS PRINTERS)     -->
+                <!-- ================================================================= -->
+                <div class="md:col-span-2 bg-slate-50/50 dark:bg-zinc-900/50 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 space-y-6">
+                  <div class="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
+                    <div>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Thermal Receipt Print Settings (80mm POS Printers)
+                      </h3>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Configure compact template styles, header defaults, and column rules for thermal printers.</p>
+                    </div>
+                    <span class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg uppercase tracking-wider">80mm Roll</span>
+                  </div>
+
+                  <!-- 2.1 Thermal Template Selection (First Thing on Top) -->
+                  <div class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        Select Thermal Receipt Template
+                      </label>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400">Choose compact receipt layout for 80mm thermal receipt paper rolls.</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-5 items-start pt-1">
+                      <!-- Classic Thermal Card -->
+                      <div 
+                        @click="invoicePurchaseSettings.thermal_receipt_template = 'classic'"
+                        :class="[
+                          'w-40 p-2.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center group',
+                          (invoicePurchaseSettings.thermal_receipt_template || 'classic') === 'classic'
+                            ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/10'
+                            : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700'
+                        ]"
+                      >
+                        <div class="w-full h-48 bg-amber-50/40 text-slate-900 rounded-md p-1.5 flex flex-col justify-between border border-slate-200 shadow-xs overflow-hidden select-none font-mono text-[6px] leading-[7.5px]">
+                          <div class="text-center space-y-0.5">
+                            <div class="font-extrabold text-[6.5px]">STORE NAME</div>
+                            <div class="text-[4.5px] text-slate-500">123 POS Street</div>
+                            <div class="border-b border-dashed border-slate-400 my-1"></div>
+                            <div class="text-left text-[5px]">RCPT #: INV-00124</div>
+                            <div class="text-left text-[5px]">DATE: 18/08/2026</div>
+                            <div class="border-b border-dashed border-slate-400 my-1"></div>
+                          </div>
+                          <div class="space-y-0.5 my-1 text-[5.5px]">
+                            <div class="flex justify-between">
+                              <span>1x Item Name 1</span>
+                              <span>$10.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                              <span>2x Item Name 2</span>
+                              <span>$30.00</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div class="border-b border-dashed border-slate-400 my-1"></div>
+                            <div class="flex justify-between font-bold text-[6px]">
+                              <span>TOTAL:</span>
+                              <span>$44.00</span>
+                            </div>
+                            <div class="text-center text-[4.5px] text-slate-500 mt-1">THANK YOU!</div>
+                          </div>
+                        </div>
+
+                        <label class="inline-flex items-center space-x-1.5 cursor-pointer mt-2.5">
+                          <input 
+                            type="radio" 
+                            value="classic" 
+                            v-model="invoicePurchaseSettings.thermal_receipt_template"
+                            class="text-indigo-600 focus:ring-0 h-3.5 w-3.5"
+                          />
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Classic Thermal</span>
+                        </label>
+                      </div>
+
+                      <!-- Modern Thermal Card -->
+                      <div 
+                        @click="invoicePurchaseSettings.thermal_receipt_template = 'modern'"
+                        :class="[
+                          'w-40 p-2.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center group',
+                          invoicePurchaseSettings.thermal_receipt_template === 'modern'
+                            ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/10'
+                            : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700'
+                        ]"
+                      >
+                        <div class="w-full h-48 bg-white text-slate-900 rounded-md p-1.5 flex flex-col justify-between border border-slate-200 shadow-xs overflow-hidden select-none font-sans text-[6px] leading-[7.5px]">
+                          <div>
+                            <div class="flex items-center space-x-1 pb-1 border-b border-slate-200">
+                              <div class="w-2 h-2 rounded bg-indigo-600 text-[4px] text-white flex items-center justify-center font-bold">P</div>
+                              <div class="font-extrabold text-[6.5px]">STORE NAME</div>
+                            </div>
+                            <div class="p-1 bg-slate-50 border border-slate-100 rounded my-1 text-[5px]">
+                              <div>Rcpt #: INV-00124</div>
+                              <div class="text-slate-400">18 Aug 2026</div>
+                            </div>
+                            <div class="space-y-0.5 text-[5.5px]">
+                              <div class="p-0.5 bg-slate-50 rounded flex justify-between">
+                                <span>1x Item 1</span>
+                                <span class="font-bold">$10.00</span>
+                              </div>
+                              <div class="p-0.5 bg-slate-50 rounded flex justify-between">
+                                <span>2x Item 2</span>
+                                <span class="font-bold">$30.00</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div class="bg-indigo-600 text-white p-1 rounded flex justify-between font-bold text-[6px]">
+                              <span>TOTAL</span>
+                              <span>$44.00</span>
+                            </div>
+                            <div class="text-center font-mono text-[4px] text-slate-400 mt-1">||| |||| || |||</div>
+                          </div>
+                        </div>
+
+                        <label class="inline-flex items-center space-x-1.5 cursor-pointer mt-2.5">
+                          <input 
+                            type="radio" 
+                            value="modern" 
+                            v-model="invoicePurchaseSettings.thermal_receipt_template"
+                            class="text-indigo-600 focus:ring-0 h-3.5 w-3.5"
+                          />
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Modern Thermal</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 2.2 Thermal Defaults Section -->
+                  <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Thermal Defaults</h4>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Default titles, subheadings, logo sizes, notes, and footers specifically for thermal receipts.
+                      </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Receipt Title</label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.thermal_title"
+                          placeholder="Receipt"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Receipt Subheading</label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.thermal_subheading"
+                          placeholder="Enter Subheading"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Logo Width</label>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            v-model="invoicePurchaseSettings.thermal_logo_width"
+                            placeholder="64"
+                            class="w-full px-3 py-2 pr-8 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                          <span class="absolute right-2.5 top-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">PX</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Logo Height</label>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            v-model="invoicePurchaseSettings.thermal_logo_height"
+                            placeholder="64"
+                            class="w-full px-3 py-2 pr-8 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                          <span class="absolute right-2.5 top-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">PX</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Receipt Notes</label>
+                        <textarea
+                          rows="3"
+                          v-model="invoicePurchaseSettings.thermal_notes"
+                          placeholder="Enter Notes"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y"
+                        ></textarea>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Receipt Footer</label>
+                        <textarea
+                          rows="3"
+                          v-model="invoicePurchaseSettings.thermal_footer"
+                          placeholder="Enter Footer"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 2.3 Thermal Columns Section -->
+                  <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Thermal Columns</h4>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Customize column names and item visibility for 80mm thermal receipts.
+                      </p>
+                    </div>
+
+                    <div class="space-y-4 max-w-xl">
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Item Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.thermal_column_item_name"
+                          placeholder="Items"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Price Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.thermal_column_price_name"
+                          placeholder="Price"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Quantity Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          v-model="invoicePurchaseSettings.thermal_column_quantity_name"
+                          placeholder="Quantity"
+                          class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div class="flex items-center justify-between p-3 bg-white dark:bg-zinc-800/80 rounded-xl border border-slate-200 dark:border-zinc-700/80">
+                          <div>
+                            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                              Hide Item Description
+                            </label>
+                            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Hide product description lines on receipt</p>
+                          </div>
+                          <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              v-model="invoicePurchaseSettings.thermal_hide_item_description"
+                              class="sr-only peer"
+                            />
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-slate-900 dark:peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-white dark:bg-zinc-800/80 rounded-xl border border-slate-200 dark:border-zinc-700/80">
+                          <div>
+                            <label class="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                              Hide Amount
+                            </label>
+                            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Hide item amount column on receipt</p>
+                          </div>
+                          <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              v-model="invoicePurchaseSettings.thermal_hide_amount"
+                              class="sr-only peer"
+                            />
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-slate-900 dark:peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
                 </div>
 
               </div>
@@ -1514,15 +2367,167 @@ const warehousesList = ref([]);
 const invoicePurchaseSettings = ref({
   invoice_prefix: 'INV-',
   default_pricing_mode: 'retail',
+  default_printer: 'standard',
   default_due_period_days: 30,
   default_terms_conditions: 'Thank you for your business!',
   show_item_wholesale_toggle: true,
+  sale_invoice_template: 'default',
+  template_color: 'slate-400',
+  thermal_receipt_template: 'classic',
   po_prefix: 'PO-',
   default_purchase_warehouse_id: null,
   auto_update_product_cost: true,
   default_system_tax_ids: [],
-  allow_manual_taxes_discounts: true
+  allow_manual_taxes_discounts: true,
+  invoice_title: 'Invoice',
+  invoice_subheading: '',
+  logo_width: 128,
+  logo_height: 128,
+  default_notes: '',
+  default_footer: '',
+  column_item_name: 'Items',
+  column_price_name: 'Price',
+  column_quantity_name: 'Quantity',
+  hide_item_description: false,
+  hide_amount: false,
+  thermal_title: 'Receipt',
+  thermal_subheading: '',
+  thermal_logo_width: 64,
+  thermal_logo_height: 64,
+  thermal_notes: '',
+  thermal_footer: '',
+  thermal_column_item_name: 'Items',
+  thermal_column_price_name: 'Price',
+  thermal_column_quantity_name: 'Quantity',
+  thermal_hide_item_description: false,
+  thermal_hide_amount: false
 });
+
+// Color picker state & color palette grid
+const showColorPickerPopover = ref(false);
+
+const colorPaletteGrid = [
+  // Slate/Gray
+  [
+    { name: 'slate-100', hex: '#f1f5f9' },
+    { name: 'slate-200', hex: '#e2e8f0' },
+    { name: 'slate-300', hex: '#cbd5e1' },
+    { name: 'slate-400', hex: '#94a3b8' },
+    { name: 'slate-500', hex: '#64748b' },
+    { name: 'slate-600', hex: '#475569' },
+    { name: 'slate-700', hex: '#334155' },
+    { name: 'slate-800', hex: '#1e293b' },
+    { name: 'slate-900', hex: '#0f172a' },
+    { name: 'slate-950', hex: '#020617' }
+  ],
+  // Red
+  [
+    { name: 'red-100', hex: '#fee2e2' },
+    { name: 'red-200', hex: '#fecaca' },
+    { name: 'red-300', hex: '#fca5a5' },
+    { name: 'red-400', hex: '#f87171' },
+    { name: 'red-500', hex: '#ef4444' },
+    { name: 'red-600', hex: '#dc2626' },
+    { name: 'red-700', hex: '#b91c1c' },
+    { name: 'red-800', hex: '#991b1b' },
+    { name: 'red-900', hex: '#7f1d1d' },
+    { name: 'red-950', hex: '#450a0a' }
+  ],
+  // Amber/Yellow
+  [
+    { name: 'amber-100', hex: '#fef3c7' },
+    { name: 'amber-200', hex: '#fde68a' },
+    { name: 'amber-300', hex: '#fcd34d' },
+    { name: 'amber-400', hex: '#fbbf24' },
+    { name: 'amber-500', hex: '#f59e0b' },
+    { name: 'amber-600', hex: '#d97706' },
+    { name: 'amber-700', hex: '#b45309' },
+    { name: 'amber-800', hex: '#92400e' },
+    { name: 'amber-900', hex: '#78350f' },
+    { name: 'amber-950', hex: '#451a03' }
+  ],
+  // Green/Emerald
+  [
+    { name: 'emerald-100', hex: '#d1fae5' },
+    { name: 'emerald-200', hex: '#a7f3d0' },
+    { name: 'emerald-300', hex: '#6ee7b7' },
+    { name: 'emerald-400', hex: '#34d399' },
+    { name: 'emerald-500', hex: '#10b981' },
+    { name: 'emerald-600', hex: '#059669' },
+    { name: 'emerald-700', hex: '#047857' },
+    { name: 'emerald-800', hex: '#065f46' },
+    { name: 'emerald-900', hex: '#064e3b' },
+    { name: 'emerald-950', hex: '#022c22' }
+  ],
+  // Cyan/Sky
+  [
+    { name: 'sky-100', hex: '#e0f2fe' },
+    { name: 'sky-200', hex: '#bae6fd' },
+    { name: 'sky-300', hex: '#7dd3fc' },
+    { name: 'sky-400', hex: '#38bdf8' },
+    { name: 'sky-500', hex: '#0ea5e9' },
+    { name: 'sky-600', hex: '#0284c7' },
+    { name: 'sky-700', hex: '#0369a1' },
+    { name: 'sky-800', hex: '#075985' },
+    { name: 'sky-900', hex: '#0c4a6e' },
+    { name: 'sky-950', hex: '#082f49' }
+  ],
+  // Blue/Indigo
+  [
+    { name: 'indigo-100', hex: '#e0e7ff' },
+    { name: 'indigo-200', hex: '#c7d2fe' },
+    { name: 'indigo-300', hex: '#a5b4fc' },
+    { name: 'indigo-400', hex: '#818cf8' },
+    { name: 'indigo-500', hex: '#6366f1' },
+    { name: 'indigo-600', hex: '#4f46e5' },
+    { name: 'indigo-700', hex: '#4338ca' },
+    { name: 'indigo-800', hex: '#3730a3' },
+    { name: 'indigo-900', hex: '#312e81' },
+    { name: 'indigo-950', hex: '#1e1b4b' }
+  ],
+  // Purple/Violet
+  [
+    { name: 'purple-100', hex: '#f3e8ff' },
+    { name: 'purple-200', hex: '#e9d5ff' },
+    { name: 'purple-300', hex: '#d8b4fe' },
+    { name: 'purple-400', hex: '#c084fc' },
+    { name: 'purple-500', hex: '#4c4b7c' },
+    { name: 'purple-600', hex: '#9333ea' },
+    { name: 'purple-700', hex: '#7e22ce' },
+    { name: 'purple-800', hex: '#6b21a8' },
+    { name: 'purple-900', hex: '#581c87' },
+    { name: 'purple-950', hex: '#3b0764' }
+  ],
+  // Pink/Rose
+  [
+    { name: 'rose-100', hex: '#ffe4e6' },
+    { name: 'rose-200', hex: '#fecdd3' },
+    { name: 'rose-300', hex: '#fda4af' },
+    { name: 'rose-400', hex: '#fb7185' },
+    { name: 'rose-500', hex: '#f43f5e' },
+    { name: 'rose-600', hex: '#e11d48' },
+    { name: 'rose-700', hex: '#be123c' },
+    { name: 'rose-800', hex: '#9f1239' },
+    { name: 'rose-900', hex: '#881337' },
+    { name: 'rose-950', hex: '#4c0519' }
+  ]
+];
+
+const getColorHex = (colorName) => {
+  if (!colorName) return '#94a3b8';
+  if (colorName.startsWith('#')) return colorName;
+  for (const col of colorPaletteGrid) {
+    for (const swatch of col) {
+      if (swatch.name === colorName) return swatch.hex;
+    }
+  }
+  return '#94a3b8';
+};
+
+const selectTemplateColor = (name) => {
+  invoicePurchaseSettings.value.template_color = name;
+  showColorPickerPopover.value = false;
+};
 
 // Users tab data and states
 const users = ref({ data: [], current_page: 1, last_page: 1, total: 0 });

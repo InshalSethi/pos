@@ -125,7 +125,22 @@ class Company extends Model
         'fiscal_year_end',
         'can_edit_fiscal_year',
         'formatted_fiscal_year_cycle',
+        'logo_url',
     ];
+
+    /**
+     * Get full public URL for company logo.
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if ($this->company_logo) {
+            if (str_starts_with($this->company_logo, 'http') || str_starts_with($this->company_logo, '/')) {
+                return $this->company_logo;
+            }
+            return asset('storage/' . $this->company_logo);
+        }
+        return null;
+    }
 
     /**
      * Get calculated fiscal year end date (12 months minus 1 day from fiscal_year_start).
