@@ -226,7 +226,7 @@ class DashboardController extends Controller
      */
     private function getRealPaymentStatistics(?Carbon $fromDate, ?Carbon $toDate): array
     {
-        // 1. Payment In (Receipts + Sales Paid + Income Transactions)
+        // 1. Payment In (Receipts OR Sales Paid + Standalone Income Transactions)
         $receiptsQuery = PaymentReceipt::whereIn('receipt_type', ['payment_in', 'customer_payment', 'sales_payment'])
             ->where('status', '!=', 'cancelled');
         if ($fromDate && $toDate) {
@@ -234,24 +234,29 @@ class DashboardController extends Controller
         }
         $receiptsIn = (float) $receiptsQuery->sum('amount');
 
-        $txIncomeQuery = Transaction::whereIn('type', ['income', 'payment_in', 'credit']);
-        if ($fromDate && $toDate) {
-            $txIncomeQuery->whereBetween('paid_at', [$fromDate, $toDate]);
-        }
-        $txIncome = (float) $txIncomeQuery->sum('amount');
-
         $salesPaidQuery = Sale::where('is_refund', false)->whereNotIn('status', ['cancelled', 'void']);
         if ($fromDate && $toDate) {
             $salesPaidQuery->whereBetween('sale_date', [$fromDate, $toDate]);
         }
         $salesPaid = (float) $salesPaidQuery->sum('paid_amount');
 
-        $paymentReceivedTotal = max($receiptsIn + $txIncome, $salesPaid);
-        if ($paymentReceivedTotal == 0 && ($receiptsIn > 0 || $txIncome > 0 || $salesPaid > 0)) {
-            $paymentReceivedTotal = $receiptsIn + $txIncome + $salesPaid;
+        // Standalone Income Transactions (exclude transactions generated from payment receipts)
+        $txIncomeQuery = Transaction::whereIn('type', ['income', 'payment_in', 'credit'])
+            ->where(function ($q) {
+                $q->whereNull('number')
+                  ->orWhere(function ($sub) {
+                      $sub->where('number', 'not like', 'RCP%')
+                          ->where('reference', 'not like', 'RCP%');
+                  });
+            });
+        if ($fromDate && $toDate) {
+            $txIncomeQuery->whereBetween('paid_at', [$fromDate, $toDate]);
         }
+        $txIncomeStandalone = (float) $txIncomeQuery->sum('amount');
 
-        // 2. Payment Out (Expenses + PO Amount Paid + Expense/Payment Out Transactions)
+        $paymentReceivedTotal = max($receiptsIn, $salesPaid) + $txIncomeStandalone;
+
+        // 2. Payment Out (Payments / Expenses + PO Amount Paid)
         $expensesQuery = Expense::whereIn('status', ['approved', 'paid']);
         if ($fromDate && $toDate) {
             $expensesQuery->whereBetween('expense_date', [$fromDate, $toDate]);
@@ -264,37 +269,60 @@ class DashboardController extends Controller
         }
         $poPaidTotal = (float) $poPaidQuery->sum('amount_paid');
 
-        $txExpenseQuery = Transaction::whereIn('type', ['expense', 'payment_out', 'debit']);
+        $paymentsOutQuery = Payment::where('status', '!=', 'cancelled');
         if ($fromDate && $toDate) {
-            $txExpenseQuery->whereBetween('paid_at', [$fromDate, $toDate]);
+            $paymentsOutQuery->whereBetween('payment_date', [$fromDate, $toDate]);
         }
-        $txExpenseTotal = (float) $txExpenseQuery->sum('amount');
+        $paymentsOutTotal = (float) $paymentsOutQuery->sum('amount');
 
-        $paymentSentTotal = max($expensesTotal + $poPaidTotal, $expensesTotal + $txExpenseTotal);
+        $paymentSentTotal = max($expensesTotal + $poPaidTotal, $paymentsOutTotal + $expensesTotal);
 
         // 3. Transactions counts
-        $totalTxnsCount = Sale::whereNotIn('status', ['cancelled', 'void'])->count()
-            + PurchaseOrder::whereNotIn('status', ['cancelled'])->count()
-            + Transaction::count();
+        $totalTxnsCount = PaymentReceipt::where('status', '!=', 'cancelled')->count()
+            + Payment::where('status', '!=', 'cancelled')->count()
+            + Expense::whereIn('status', ['approved', 'paid'])->count();
 
-        // 4. Pending payments
-        $pendingSales = Sale::where('status', 'pending')->whereNotIn('status', ['cancelled', 'void']);
+        // 4. Pending payments (Receivables & Payables with balance due)
+        $pendingSales = Sale::where('is_refund', false)
+            ->whereNotIn('status', ['cancelled', 'void'])
+            ->whereRaw('(total_amount - COALESCE(paid_amount, 0)) > 0.01');
         if ($fromDate && $toDate) {
             $pendingSales->whereBetween('sale_date', [$fromDate, $toDate]);
         }
-        $pendingPOs = PurchaseOrder::where('status', 'pending')->whereNotIn('status', ['cancelled']);
+
+        $pendingPOs = PurchaseOrder::whereNotIn('status', ['cancelled'])
+            ->where(function ($q) {
+                $q->where('due_amount', '>', 0)
+                  ->orWhereRaw('(total_amount - COALESCE(amount_paid, 0)) > 0.01');
+            });
         if ($fromDate && $toDate) {
             $pendingPOs->whereBetween('order_date', [$fromDate, $toDate]);
         }
 
-        $pendingCount = $pendingSales->count() + $pendingPOs->count();
-        $pendingAmount = (float) $pendingSales->sum('total_amount') + (float) $pendingPOs->sum('due_amount');
+        $pendingSalesCount = $pendingSales->count();
+        $pendingPOsCount = $pendingPOs->count();
+
+        $salesDue = (float) $pendingSales->get()->sum(function ($s) {
+            return max(0, (float) $s->total_amount - (float) $s->paid_amount);
+        });
+        $posDue = (float) $pendingPOs->get()->sum(function ($p) {
+            return $p->due_amount > 0 ? (float) $p->due_amount : max(0, (float) $p->total_amount - (float) $p->amount_paid);
+        });
+
+        $pendingSalesDue = round($salesDue, 2);
+        $pendingPOsDue = round($posDue, 2);
+        $pendingCount = $pendingSalesCount + $pendingPOsCount;
+        $pendingAmount = round($salesDue + $posDue, 2);
 
         return [
             'total_payments' => $totalTxnsCount,
             'total_amount' => $paymentReceivedTotal + $paymentSentTotal,
             'pending_payments' => $pendingCount,
             'pending_amount' => $pendingAmount,
+            'pending_receivables_count' => $pendingSalesCount,
+            'pending_receivables_amount' => $pendingSalesDue,
+            'pending_payables_count' => $pendingPOsCount,
+            'pending_payables_amount' => $pendingPOsDue,
             'payment_sent' => [
                 'total_amount' => $paymentSentTotal,
                 'change_percentage' => 0
@@ -722,21 +750,42 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get smart inventory valuation
+     * Get smart inventory valuation (Supports Product Variations)
      */
     private function getInventoryValuation(): array
     {
-        $valuation = Product::active()
-            ->selectRaw('SUM(stock_quantity * cost_price) as total_cost_value, SUM(stock_quantity * selling_price) as total_retail_value')
-            ->first();
+        $products = Product::active()->with('variations')->get();
+        $cost = 0.0;
+        $retail = 0.0;
 
-        $cost = (float) ($valuation->total_cost_value ?? 0);
-        $retail = (float) ($valuation->total_retail_value ?? 0);
+        foreach ($products as $p) {
+            if ($p->has_variations && $p->variations->count() > 0) {
+                foreach ($p->variations as $v) {
+                    $qty = (float) ($v->stock_qty ?? 0);
+                    $c = (float) ($v->cost_price ?? $p->cost_price ?? 0);
+                    $r = (float) ($v->retail_price ?? $v->wholesale_price ?? $p->selling_price ?? 0);
+
+                    $cost += round($qty * $c, 2);
+                    $retail += round($qty * $r, 2);
+                }
+            } else {
+                $qty = (float) ($p->stock_quantity ?? 0);
+                $c = (float) ($p->cost_price ?? 0);
+                $r = (float) ($p->selling_price ?? 0);
+
+                $cost += round($qty * $c, 2);
+                $retail += round($qty * $r, 2);
+            }
+        }
+
+        $cost = round($cost, 2);
+        $retail = round($retail, 2);
+        $potentialProfit = round($retail - $cost, 2);
 
         return [
             'total_cost_value' => $cost,
             'total_retail_value' => $retail,
-            'potential_profit' => $retail - $cost
+            'potential_profit' => $potentialProfit
         ];
     }
 
