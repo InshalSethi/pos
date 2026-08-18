@@ -66,7 +66,7 @@
             
             <!-- Tab 1: Basic Information -->
             <div v-if="activeTab === 'basic'" class="space-y-4">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">First Name *</label>
                   <input
@@ -102,9 +102,6 @@
                   />
                   <p v-if="errors.last_name" class="mt-1 text-[10px] text-red-500">{{ errors.last_name[0] }}</p>
                 </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
                   <input

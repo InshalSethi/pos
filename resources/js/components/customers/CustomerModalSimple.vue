@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl h-[560px] max-h-[85vh] shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col my-auto z-10" @click.stop>
+    <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl h-[560px] max-h-[85vh] shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col my-auto z-10" @click.stop>
         
         <!-- Header -->
         <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative">
@@ -95,10 +95,10 @@
                     </button>
 
                     <!-- Custom Calendar Popover -->
-                    <div v-if="showCalendar" class="absolute z-50 left-0 top-full mt-1.5 w-[225px] rounded-xl shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 p-2 select-none">
+                    <div v-if="showCalendar" class="absolute z-50 left-0 top-full mt-1.5 w-[225px] rounded-xl shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-800 p-2 select-none">
                       <!-- Month/Year Nav -->
                       <div class="flex items-center justify-between mb-1">
-                        <button type="button" @click="calPrevMonth" class="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
+                        <button type="button" @click="calPrevMonth" class="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
                           <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
                         
@@ -109,7 +109,7 @@
                             <button
                               type="button"
                               @click="showMonthList = !showMonthList"
-                              class="flex items-center space-x-0.5 px-1 py-0.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer focus:outline-none"
+                              class="flex items-center space-x-0.5 px-1 py-0.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer focus:outline-none"
                             >
                               <span>{{ calMonthName.slice(0, 3) }}</span>
                               <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showMonthList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,7 +119,7 @@
                             <!-- Month Floating List -->
                             <div
                               v-if="showMonthList"
-                              class="absolute z-[60] left-0 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                              class="absolute z-[60] left-0 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
                             >
                               <button
                                 v-for="(name, idx) in monthNames"
@@ -140,7 +140,7 @@
                             <button
                               type="button"
                               @click="showYearList = !showYearList"
-                              class="flex items-center space-x-0.5 px-1 py-0.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer focus:outline-none"
+                              class="flex items-center space-x-0.5 px-1 py-0.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer focus:outline-none"
                             >
                               <span>{{ calYear }}</span>
                               <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showYearList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,7 +150,7 @@
                             <!-- Year Floating List -->
                             <div
                               v-if="showYearList"
-                              class="absolute z-[60] left-1/2 -translate-x-1/2 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
+                              class="absolute z-[60] left-1/2 -translate-x-1/2 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
                             >
                               <button
                                 v-for="y in yearOptions"
