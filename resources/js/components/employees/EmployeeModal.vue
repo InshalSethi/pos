@@ -32,6 +32,13 @@
           </button>
           <button
             type="button"
+            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'contact' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
+            @click="activeTab = 'contact'"
+          >
+            Contact
+          </button>
+          <button
+            type="button"
             :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'employment' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
             @click="activeTab = 'employment'"
           >
@@ -97,19 +104,7 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address *</label>
-                  <input
-                    v-model="form.email"
-                    type="email"
-                    required
-                    placeholder="e.g. employee@example.com"
-                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
-                    :class="{ 'border-red-300 dark:border-red-700': errors.email }"
-                  />
-                  <p v-if="errors.email" class="mt-1 text-[10px] text-red-500">{{ errors.email[0] }}</p>
-                </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
                   <input
@@ -120,26 +115,6 @@
                   />
                   <p v-if="errors.date_of_birth" class="mt-1 text-[10px] text-red-500">{{ errors.date_of_birth[0] }}</p>
                 </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <CustomPhoneInput
-                    label="Phone"
-                    v-model="form.phone"
-                    :error="errors.phone"
-                  />
-                </div>
-                <div>
-                  <CustomPhoneInput
-                    label="Mobile"
-                    v-model="form.mobile"
-                    :error="errors.mobile"
-                  />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <FloatingSelect
                     v-model="form.gender"
@@ -160,6 +135,126 @@
                     :error="!!errors.marital_status"
                   />
                   <p v-if="errors.marital_status" class="mt-1 text-[10px] text-red-500">{{ errors.marital_status[0] }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Contact Information -->
+            <div v-if="activeTab === 'contact'" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address *</label>
+                  <input
+                    v-model="form.email"
+                    type="email"
+                    required
+                    placeholder="e.g. employee@example.com"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.email }"
+                  />
+                  <p v-if="errors.email" class="mt-1 text-[10px] text-red-500">{{ errors.email[0] }}</p>
+                </div>
+                <div>
+                  <CustomPhoneInput
+                    label="Mobile Number"
+                    v-model="form.mobile"
+                    :error="errors.mobile"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <CustomPhoneInput
+                    label="Phone Number"
+                    v-model="form.phone"
+                    :error="errors.phone"
+                  />
+                </div>
+                <div>
+                  <CustomPhoneInput
+                    label="Fax Number"
+                    v-model="form.fax"
+                    :error="errors.fax"
+                  />
+                </div>
+              </div>
+
+              <!-- Address Details Section -->
+              <div class="pt-2 border-t border-slate-100 dark:border-zinc-800">
+                <h4 class="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider mb-3">Address Details</h4>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Street Address</label>
+                    <input
+                      v-model="form.address"
+                      type="text"
+                      placeholder="Street address..."
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    />
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">City</label>
+                      <input
+                        v-model="form.city"
+                        type="text"
+                        placeholder="City"
+                        class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">State / Province</label>
+                      <input
+                        v-model="form.state"
+                        type="text"
+                        placeholder="State"
+                        class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Emergency Contact Section -->
+              <div class="pt-2 border-t border-slate-100 dark:border-zinc-800">
+                <h4 class="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider mb-3">Emergency Contact</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Contact Person Name</label>
+                    <input
+                      v-model="form.emergency_contact_name"
+                      type="text"
+                      placeholder="e.g. Jane Doe"
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Relationship</label>
+                    <input
+                      v-model="form.emergency_contact_relationship"
+                      type="text"
+                      placeholder="e.g. Spouse / Parent"
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <CustomPhoneInput
+                      label="Emergency Phone"
+                      v-model="form.emergency_contact_phone"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Emergency Email</label>
+                    <input
+                      v-model="form.emergency_contact_email"
+                      type="email"
+                      placeholder="e.g. emergency@example.com"
+                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -614,6 +709,63 @@
         </form>
       </div>
     </div>
+
+    <!-- Quick Add Manager Sub-Modal -->
+    <div v-if="showQuickAddManagerModal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" @click.self="showQuickAddManagerModal = false">
+      <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 text-slate-800 dark:text-zinc-100" @click.stop>
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Quick Add New Manager</h3>
+          <button type="button" @click="showQuickAddManagerModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveQuickManager" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">First Name *</label>
+              <input v-model="quickManagerForm.first_name" type="text" required placeholder="First name" class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+              <p v-if="quickManagerErrors.first_name" class="text-[10px] text-red-500 mt-0.5">{{ quickManagerErrors.first_name[0] }}</p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Last Name *</label>
+              <input v-model="quickManagerForm.last_name" type="text" required placeholder="Last name" class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+              <p v-if="quickManagerErrors.last_name" class="text-[10px] text-red-500 mt-0.5">{{ quickManagerErrors.last_name[0] }}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Email Address *</label>
+              <input v-model="quickManagerForm.email" type="email" required placeholder="Email address" class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+              <p v-if="quickManagerErrors.email" class="text-[10px] text-red-500 mt-0.5">{{ quickManagerErrors.email[0] }}</p>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Phone Number</label>
+              <input v-model="quickManagerForm.phone" type="text" placeholder="Phone number" class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Assign Company *</label>
+              <FloatingSelect v-model="quickManagerForm.company_id" label="" placeholder="Select Company" :options="companySelectOptions" required />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Hire Date *</label>
+              <input v-model="quickManagerForm.hire_date" type="date" required class="w-full px-3 py-2 border rounded-lg text-xs bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200" />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
+            <button type="button" @click="showQuickAddManagerModal = false" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800">Cancel</button>
+            <button type="submit" :disabled="savingQuickManager" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
+              {{ savingQuickManager ? 'Saving...' : 'Save Manager' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </Teleport>
 </template>
 
@@ -696,6 +848,16 @@ const form = ref({
   email: '',
   phone: '',
   mobile: '',
+  fax: '',
+  address: '',
+  city: '',
+  state: '',
+  postal_code: '',
+  country: '',
+  emergency_contact_name: '',
+  emergency_contact_relationship: '',
+  emergency_contact_phone: '',
+  emergency_contact_email: '',
   date_of_birth: '',
   gender: '',
   marital_status: '',
@@ -736,6 +898,76 @@ const attachmentInputRef = ref(null);
 const attachmentFiles = ref([]);
 const existingAttachments = ref([]);
 const isDraggingAttachment = ref(false);
+
+// Quick Add Manager State & Logic
+const showQuickAddManagerModal = ref(false);
+const savingQuickManager = ref(false);
+const quickManagerErrors = ref({});
+const quickManagerForm = ref({
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  hire_date: new Date().toISOString().split('T')[0],
+  company_id: '',
+  department_ids: [],
+  position_id: '',
+  employment_type: 'full_time',
+  gender: 'male',
+  basic_salary: 0,
+  salary_type: 'monthly',
+  is_manager: true
+});
+
+const openQuickAddManagerModal = () => {
+  quickManagerForm.value = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    hire_date: new Date().toISOString().split('T')[0],
+    company_id: form.value.company_id || (companies.value[0]?.id ? String(companies.value[0].id) : ''),
+    department_ids: form.value.department_id ? [String(form.value.department_id)] : [],
+    position_id: '',
+    employment_type: 'full_time',
+    gender: 'male',
+    basic_salary: 0,
+    salary_type: 'monthly',
+    is_manager: true
+  };
+  quickManagerErrors.value = {};
+  showQuickAddManagerModal.value = true;
+};
+
+const saveQuickManager = async () => {
+  savingQuickManager.value = true;
+  quickManagerErrors.value = {};
+  try {
+    const payload = {
+      ...quickManagerForm.value,
+      is_manager: 1,
+      role: 'manager'
+    };
+    const res = await axios.post('/api/employees', payload);
+    const newMgr = res.data.employee || res.data;
+    showToast('Manager created successfully', 'success');
+    
+    await fetchEmployees();
+    
+    if (newMgr && newMgr.id) {
+      form.value.manager_id = String(newMgr.id);
+    }
+    showQuickAddManagerModal.value = false;
+  } catch (err) {
+    if (err.response?.status === 422) {
+      quickManagerErrors.value = err.response.data.errors || {};
+    } else {
+      showToast(err.response?.data?.message || 'Failed to create manager', 'error');
+    }
+  } finally {
+    savingQuickManager.value = false;
+  }
+};
 
 const triggerAttachmentInput = () => {
   if (attachmentInputRef.value) attachmentInputRef.value.click();

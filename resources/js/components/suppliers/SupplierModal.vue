@@ -30,6 +30,13 @@
           </button>
           <button
             type="button"
+            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'contact' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
+            @click="activeTab = 'contact'"
+          >
+            Contact
+          </button>
+          <button
+            type="button"
             :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'address' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
             @click="activeTab = 'address'"
           >
@@ -41,13 +48,6 @@
             @click="activeTab = 'business'"
           >
             Business
-          </button>
-          <button
-            type="button"
-            :class="['px-4 py-2 font-bold rounded-t-lg transition-all focus:outline-none border-b-2 cursor-pointer', activeTab === 'contact' ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 bg-white dark:bg-zinc-900' : 'text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-300 border-transparent']"
-            @click="activeTab = 'contact'"
-          >
-            Contact
           </button>
           <button
             type="button"
@@ -87,155 +87,6 @@
                     :class="{ 'border-red-300 dark:border-red-700': errors.company_name }"
                   />
                   <p v-if="errors.company_name" class="mt-1 text-[10px] text-red-500">{{ errors.company_name[0] }}</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address</label>
-                  <input
-                    v-model="form.email"
-                    type="email"
-                    placeholder="e.g. supplier@example.com"
-                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
-                    :class="{ 'border-red-300 dark:border-red-700': errors.email }"
-                  />
-                  <p v-if="errors.email" class="mt-1 text-[10px] text-red-500">{{ errors.email[0] }}</p>
-                </div>
-
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
-                  <div class="relative">
-                    <div v-if="showCalendar" class="fixed inset-0 z-40" @click.stop="showCalendar = false"></div>
-                    <button
-                      type="button"
-                      @click="showCalendar = !showCalendar"
-                      class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs bg-white dark:bg-zinc-950 transition-all flex items-center gap-2 text-left cursor-pointer"
-                      :class="[form.date_of_birth ? 'text-slate-800 dark:text-zinc-200' : 'text-slate-400 dark:text-zinc-500', { 'border-red-300 dark:border-red-700': errors.date_of_birth }]"
-                    >
-                      <svg class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span class="font-medium">{{ form.date_of_birth ? formatDisplayDate(form.date_of_birth) : 'Select date' }}</span>
-                    </button>
-
-                    <!-- Custom Calendar Popover -->
-                    <div v-if="showCalendar" class="absolute z-50 left-0 top-full mt-1.5 w-[225px] rounded-xl shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 p-2 select-none">
-                      <!-- Month/Year Nav -->
-                      <div class="flex items-center justify-between mb-1">
-                        <button type="button" @click="calPrevMonth" class="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
-                          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                        </button>
-                        
-                        <div class="flex items-center space-x-1">
-                          <!-- Month Dropdown -->
-                          <div class="relative">
-                            <div v-if="showMonthList" class="fixed inset-0 z-40" @click.stop="showMonthList = false"></div>
-                            <button
-                              type="button"
-                              @click="showMonthList = !showMonthList"
-                              class="flex items-center space-x-0.5 px-1 py-0.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer focus:outline-none"
-                            >
-                              <span>{{ calMonthName.slice(0, 3) }}</span>
-                              <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showMonthList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                            <!-- Month Floating List -->
-                            <div
-                              v-if="showMonthList"
-                              class="absolute z-[60] left-0 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
-                            >
-                              <button
-                                v-for="(name, idx) in monthNames"
-                                :key="idx"
-                                type="button"
-                                @click="selectCalMonth(idx)"
-                                class="w-full text-left px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer"
-                                :class="calMonth === idx ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
-                              >
-                                {{ name.slice(0, 3) }}
-                              </button>
-                            </div>
-                          </div>
-
-                          <!-- Year Dropdown -->
-                          <div class="relative">
-                            <div v-if="showYearList" class="fixed inset-0 z-40" @click.stop="showYearList = false"></div>
-                            <button
-                              type="button"
-                              @click="showYearList = !showYearList"
-                              class="flex items-center space-x-0.5 px-1 py-0.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer focus:outline-none"
-                            >
-                              <span>{{ calYear }}</span>
-                              <svg class="h-2.5 w-2.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200" :class="{ 'rotate-180': showYearList }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                            <!-- Year Floating List -->
-                            <div
-                              v-if="showYearList"
-                              class="absolute z-[60] left-1/2 -translate-x-1/2 top-full mt-1 w-20 max-h-36 overflow-y-auto rounded-lg shadow-none dark:shadow-none dark:[box-shadow:none] bg-white text-slate-900 border border-slate-200 dark:bg-[#1E1E2D] dark:text-slate-100 dark:border-slate-800 py-0.5 custom-scrollbar-thin text-left animate-in fade-in duration-100"
-                            >
-                              <button
-                                v-for="y in yearOptions"
-                                :key="y"
-                                type="button"
-                                @click="selectCalYear(y)"
-                                class="w-full text-left px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer"
-                                :class="calYear === y ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
-                              >
-                                {{ y }}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button type="button" @click="calNextMonth" class="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer">
-                          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        </button>
-                      </div>
-                      <!-- Day Headers -->
-                      <div class="grid grid-cols-7 mb-0.5 gap-y-0.5">
-                        <span v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d" class="text-center text-[9px] font-semibold text-slate-400 dark:text-zinc-500 uppercase py-0.5">{{ d }}</span>
-                      </div>
-                      <!-- Day Grid -->
-                      <div class="grid grid-cols-7 gap-y-0.5">
-                        <button
-                          v-for="(day, i) in calDays" :key="i"
-                          type="button"
-                          @click="day.val && selectCalDay(day.val)"
-                          :disabled="!day.val"
-                          class="h-6 w-6 mx-auto rounded-md text-[10px] font-medium transition-all cursor-pointer disabled:cursor-default disabled:opacity-0 flex items-center justify-center"
-                          :class="day.val && isSelectedDay(day.val) ? 'bg-indigo-600 text-white font-bold' : day.val && isTodayDay(day.val) ? 'text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : day.val ? 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800' : ''"
-                        >{{ day.val || '' }}</button>
-                      </div>
-                      <!-- Quick Actions -->
-                      <div class="flex items-center justify-between mt-1 pt-1 border-t border-slate-100 dark:border-zinc-800">
-                        <button type="button" @click="clearCalDate" class="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors cursor-pointer py-0.5">Clear</button>
-                        <button type="button" @click="selectToday" class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors cursor-pointer py-0.5">Today</button>
-                      </div>
-                    </div>
-                  </div>
-                  <p v-if="errors.date_of_birth" class="mt-1 text-[10px] text-red-500">{{ errors.date_of_birth[0] }}</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <CustomPhoneInput
-                    label="Mobile Number"
-                    v-model="form.mobile"
-                    :error="errors.mobile"
-                  />
-                </div>
-
-                <div>
-                  <CustomPhoneInput
-                    label="Phone Number"
-                    v-model="form.phone"
-                    :error="errors.phone"
-                  />
                 </div>
               </div>
 
@@ -287,7 +138,64 @@
               </div>
             </div>
 
-            <!-- Tab 2: Address Information (2nd Tab right after Basic Info) -->
+            <!-- Tab 2: Contact Information (2nd Tab right after Basic Info) -->
+            <div v-if="activeTab === 'contact'" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                  <input
+                    v-model="form.email"
+                    type="email"
+                    placeholder="e.g. supplier@example.com"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.email }"
+                  />
+                  <p v-if="errors.email" class="mt-1 text-[10px] text-red-500">{{ errors.email[0] }}</p>
+                </div>
+
+                <div>
+                  <CustomPhoneInput
+                    label="Mobile Number"
+                    v-model="form.mobile"
+                    :error="errors.mobile"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <CustomPhoneInput
+                    label="Phone Number"
+                    v-model="form.phone"
+                    :error="errors.phone"
+                  />
+                </div>
+
+                <div>
+                  <CustomPhoneInput
+                    label="Fax Number"
+                    v-model="form.fax"
+                    :error="errors.fax"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Website</label>
+                  <input
+                    v-model="form.website"
+                    type="url"
+                    placeholder="https://www.supplier.com"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
+                    :class="{ 'border-red-300 dark:border-red-700': errors.website }"
+                  />
+                  <p v-if="errors.website" class="mt-1 text-[10px] text-red-500">{{ errors.website[0] }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Address Information -->
             <div v-if="activeTab === 'address'" class="space-y-4">
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Street Address</label>
@@ -351,21 +259,6 @@
                   />
                   <p v-if="errors.country" class="mt-1 text-[10px] text-red-500">{{ errors.country[0] }}</p>
                 </div>
-              </div>
-            </div>
-
-            <!-- Tab 3: Contact Information -->
-            <div v-if="activeTab === 'contact'" class="space-y-4">
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Website</label>
-                <input
-                  v-model="form.website"
-                  type="url"
-                  placeholder="https://www.supplier.com"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 bg-white dark:bg-zinc-950 transition-all"
-                  :class="{ 'border-red-300 dark:border-red-700': errors.website }"
-                />
-                <p v-if="errors.website" class="mt-1 text-[10px] text-red-500">{{ errors.website[0] }}</p>
               </div>
             </div>
 
@@ -714,6 +607,7 @@ export default {
       email: '',
       phone: '',
       mobile: '',
+      fax: '',
       address: '',
       city: '',
       state: '',
