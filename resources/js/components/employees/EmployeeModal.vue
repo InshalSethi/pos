@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full bg-slate-900/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-200" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col max-h-[90vh] overflow-y-auto my-auto z-10" @click.stop>
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-3xl h-[600px] max-h-[85vh] shadow-2xl rounded-2xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col my-auto z-10" @click.stop>
         
         <!-- Header -->
         <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative">
@@ -66,7 +66,7 @@
             
             <!-- Tab 1: Basic Information -->
             <div v-if="activeTab === 'basic'" class="space-y-4">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">First Name *</label>
                   <input
@@ -102,9 +102,6 @@
                   />
                   <p v-if="errors.last_name" class="mt-1 text-[10px] text-red-500">{{ errors.last_name[0] }}</p>
                 </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
                   <input
@@ -323,23 +320,13 @@
 
                 <div>
                   <FloatingSelect
-                    v-model="form.manager_id"
-                    label="Manager"
-                    placeholder="Select Manager"
-                    :options="managerSelectOptions"
-                    :error="!!errors.manager_id"
+                    v-model="form.role"
+                    label="Role"
+                    placeholder="Select Role"
+                    :options="roleSelectOptions"
+                    :error="!!errors.role"
                   />
-                  <div class="flex items-center justify-between mt-1">
-                    <p v-if="errors.manager_id" class="text-[10px] text-red-500">{{ errors.manager_id[0] }}</p>
-                    <button
-                      type="button"
-                      @click="emit('add-manager')"
-                      class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 cursor-pointer transition-colors flex items-center gap-0.5 ml-auto"
-                    >
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                      Add New Manager
-                    </button>
-                  </div>
+                  <p v-if="errors.role" class="mt-1 text-[10px] text-red-500">{{ errors.role[0] }}</p>
                 </div>
               </div>
 
@@ -532,7 +519,7 @@
                       v-model="form.role"
                       label="System Role"
                       placeholder="Select Role"
-                      :options="roleOptions"
+                      :options="roleSelectOptions"
                       :error="!!errors.role"
                     />
                     <p v-if="errors.role" class="mt-1 text-[10px] text-red-500">{{ errors.role[0] }}</p>
@@ -1112,8 +1099,18 @@ const positionSelectOptions = computed(() => [
 
 const managerSelectOptions = computed(() => [
   { value: '', label: 'Select Manager' },
+  { value: '__add_new__', label: '+ Add New Manager' },
   ...filteredManagerList.value.map(m => ({ value: m.id, label: m.full_name }))
 ]);
+
+watch(() => form.value.manager_id, (newVal) => {
+  if (newVal === '__add_new__') {
+    nextTick(() => {
+      form.value.manager_id = '';
+      openQuickAddManagerModal();
+    });
+  }
+});
 
 const roleOptions = computed(() => {
   const map = new Map();
@@ -1127,9 +1124,14 @@ const roleOptions = computed(() => {
   }
   if (!map.has('employee')) map.set('employee', { value: 'employee', label: 'Employee' });
   if (!map.has('manager')) map.set('manager', { value: 'manager', label: 'Manager' });
-  if (!map.has('admin')) map.set('admin', { value: 'Company Admin', label: 'Company Admin' });
+  if (!map.has('admin')) map.set('admin', { value: 'admin', label: 'Company Admin' });
   return Array.from(map.values());
 });
+
+const roleSelectOptions = computed(() => [
+  { value: '', label: 'Select Role' },
+  ...roleOptions.value
+]);
 
 // Two-way Watcher 1: Department Selection -> Preserve Manager & Position if valid
 watch(() => form.value.department_id, (newDeptId) => {
@@ -1478,21 +1480,16 @@ const initializeForm = () => {
     }
 
     // 3. SYSTEM ROLE PRE-SELECTION
-    if (props.employee.user_id || props.employee.user) {
-      form.value.create_user_account = true;
-      if (props.employee.user?.roles?.[0]?.name) {
-        form.value.role = props.employee.user.roles[0].name;
-      } else if (props.isManagerMode || props.employee.is_manager) {
-        form.value.role = 'manager';
-      } else {
-        form.value.role = 'employee';
-      }
+    if (props.employee?.user?.roles?.[0]?.name) {
+      form.value.role = props.employee.user.roles[0].name;
+    } else if (props.employee?.role) {
+      form.value.role = props.employee.role;
+    } else if (props.employee?.role_name) {
+      form.value.role = props.employee.role_name;
+    } else if (props.isManagerMode || props.employee?.is_manager) {
+      form.value.role = 'manager';
     } else {
-      if (props.isManagerMode || props.employee.is_manager) {
-        form.value.role = 'manager';
-      } else {
-        form.value.role = 'employee';
-      }
+      form.value.role = 'employee';
     }
 
     // 4. BLANK PASSWORD FIELDS ON EDIT

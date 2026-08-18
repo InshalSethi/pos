@@ -66,7 +66,7 @@ class EmployeeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Employee::nonAdmin()
-            ->with(['department', 'position', 'manager', 'subordinates.department', 'subordinates.position', 'managedDepartments', 'user'])
+            ->with(['department', 'position', 'manager', 'subordinates.department', 'subordinates.position', 'managedDepartments', 'user.roles'])
             ->withCount('subordinates');
 
         // Search functionality
@@ -337,17 +337,15 @@ class EmployeeController extends Controller
                 ]);
             }
 
-            if ($createUserAccount) {
-                $roleName = $request->role ?: ($isManager ? 'manager' : 'employee');
-                if ($isManager && $roleName === 'employee') {
-                    $roleName = 'manager';
-                }
-
-                if ($companyId) {
-                    $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
-                }
-                $user->assignRole($roleName);
+            $roleName = $request->role ?: ($isManager ? 'manager' : 'employee');
+            if ($isManager && $roleName === 'employee') {
+                $roleName = 'manager';
             }
+
+            if ($companyId) {
+                $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
+            }
+            $user->syncRoles([$roleName]);
 
             $employeeData['user_id'] = $user->id;
 
@@ -613,12 +611,13 @@ class EmployeeController extends Controller
                     if ($request->filled('password')) {
                         $userData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
                     }
-                    if ($companyId) {
-                        $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
-                    }
-                    if ($request->filled('role')) {
-                        $user->syncRoles([$request->role]);
-                    }
+                }
+
+                if ($companyId && $roleName) {
+                    $user->companies()->syncWithoutDetaching([$companyId => ['role' => $roleName]]);
+                }
+                if ($roleName) {
+                    $user->syncRoles([$roleName]);
                 }
 
                 $user->update($userData);
