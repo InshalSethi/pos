@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto h-full w-full transition-all duration-200" style="background-color: rgba(0, 0, 0, 0.6) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);">
-      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col z-10" @click.stop>
+      <div class="relative mx-auto border border-slate-200 dark:border-zinc-800 w-full max-w-2xl h-[560px] max-h-[85vh] shadow-2xl rounded-2xl bg-white dark:bg-[#12141a] text-slate-800 dark:text-slate-100 text-left transition-all duration-300 flex flex-col my-auto z-10" @click.stop>
         
         <!-- Header -->
         <div class="p-6 pb-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 relative">
@@ -59,8 +59,8 @@
         </div>
 
         <!-- Form area -->
-        <form @submit.prevent="saveCustomer" class="flex flex-col">
-          <div class="p-6 pb-12 space-y-4">
+        <form @submit.prevent="saveCustomer" class="flex flex-col flex-1 min-h-0">
+          <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
             
             <!-- Tab 1: Basic Information -->
             <div v-if="activeTab === 'basic'" class="space-y-4">
