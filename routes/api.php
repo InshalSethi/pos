@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     // Customer Ledger and Accounting routes
     Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class , 'getLedger']);
     Route::get('/customers/{customer}/ledger/pdf', [CustomerLedgerController::class , 'exportPDF']);
+    Route::get('/customers/{customer}/ledger/export-pdf', [CustomerLedgerController::class , 'exportPDF']);
     Route::get('/customers/{customer}/aging-report', [CustomerLedgerController::class , 'getAgingReport']);
     Route::get('/customers/{customer}/statement', [CustomerLedgerController::class , 'getStatement']);
     Route::get('/customers/{customer}/transaction-summary', [CustomerLedgerController::class , 'getTransactionSummary']);

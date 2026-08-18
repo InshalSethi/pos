@@ -778,22 +778,31 @@ const downloadPDF = async () => {
     if (dateRange.value?.start) params.start_date = dateRange.value.start;
     if (dateRange.value?.end) params.end_date = dateRange.value.end;
 
-    const response = await api.get(`/customers/${custId}/ledger/export-pdf`, {
+    const response = await api.get(`/customers/${custId}/ledger/pdf`, {
       params,
       responseType: 'blob'
     });
+
+    if (response.data.type === 'application/json' || response.data.type === 'text/html') {
+      const text = await response.data.text();
+      console.error('PDF export failed:', text);
+      alert('Failed to generate PDF statement.');
+      return;
+    }
 
     const blob = new Blob([response.data], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `general_ledger_${activeCustomer.value?.name || 'customer'}_${new Date().toISOString().slice(0,10)}.pdf`);
+    const custName = (activeCustomer.value?.name || props.customer?.name || 'customer').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.setAttribute('download', `general_ledger_${custName}_${new Date().toISOString().slice(0,10)}.pdf`);
     document.body.appendChild(link);
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
     console.error('Failed to export customer ledger PDF:', err);
+    alert('An error occurred while exporting PDF statement.');
   } finally {
     downloadingPdf.value = false;
   }
