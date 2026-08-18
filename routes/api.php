@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     // Customer Ledger and Accounting routes
     Route::get('/customers/{customer}/ledger', [CustomerLedgerController::class , 'getLedger']);
     Route::get('/customers/{customer}/ledger/pdf', [CustomerLedgerController::class , 'exportPDF']);
+    Route::get('/customers/{customer}/ledger/export-pdf', [CustomerLedgerController::class , 'exportPDF']);
     Route::get('/customers/{customer}/aging-report', [CustomerLedgerController::class , 'getAgingReport']);
     Route::get('/customers/{customer}/statement', [CustomerLedgerController::class , 'getStatement']);
     Route::get('/customers/{customer}/transaction-summary', [CustomerLedgerController::class , 'getTransactionSummary']);
@@ -204,6 +205,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     // Supplier Ledger and Accounting routes
     Route::get('/suppliers/{supplier}/ledger', [SupplierLedgerController::class, 'getLedger']);
     Route::get('/suppliers/{supplier}/ledger/pdf', [SupplierLedgerController::class, 'exportPDF']);
+    Route::get('/suppliers/{supplier}/ledger/export-pdf', [SupplierLedgerController::class, 'exportPDF']);
     Route::get('/suppliers/{supplier}/purchase-orders', [SupplierLedgerController::class, 'getPurchaseOrders']);
     Route::get('/suppliers/{supplier}/purchase-returns', [SupplierLedgerController::class, 'getPurchaseReturns']);
     Route::get('/suppliers/{supplier}/transactions', [SupplierLedgerController::class, 'getTransactions']);

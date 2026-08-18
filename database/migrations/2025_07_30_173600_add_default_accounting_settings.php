@@ -15,53 +15,55 @@ return new class extends Migration
         $this->ensureRequiredAccountsExist();
 
         // Get account IDs by account codes
-        $salesRevenueAccount = Account::where('account_code', '4010')->first();
-        $accountsReceivableAccount = Account::where('account_code', '1030')->first();
-        $salesTaxPayableAccount = Account::where('account_code', '2020')->first();
-        $accountsPayableAccount = Account::where('account_code', '2010')->first();
-        $costOfGoodsSoldAccount = Account::where('account_code', '5000')->first();
-        $inventoryAccount = Account::where('account_code', '1040')->first();
-        $cashAccount = Account::where('account_code', '1010')->first();
-        $bankAccount = Account::where('account_code', '1020')->first();
-        $operatingExpensesAccount = Account::where('account_code', '6000')->first();
+        $salesRevenueAccountId = DB::table('chart_of_accounts')->where('account_code', '4010')->value('id');
+        $accountsReceivableAccountId = DB::table('chart_of_accounts')->where('account_code', '1030')->value('id');
+        $salesTaxPayableAccountId = DB::table('chart_of_accounts')->where('account_code', '2020')->value('id');
+        $accountsPayableAccountId = DB::table('chart_of_accounts')->where('account_code', '2010')->value('id');
+        $costOfGoodsSoldAccountId = DB::table('chart_of_accounts')->where('account_code', '5000')->value('id');
+        $inventoryAccountId = DB::table('chart_of_accounts')->where('account_code', '1040')->value('id');
+        $cashAccountId = DB::table('chart_of_accounts')->where('account_code', '1010')->value('id');
+        $bankAccountId = DB::table('chart_of_accounts')->where('account_code', '1020')->value('id');
+        $operatingExpensesAccountId = DB::table('chart_of_accounts')->where('account_code', '6000')->value('id');
 
-        // Create default accounting settings
-        AccountingSetting::firstOrCreate(
-            ['id' => 1], // Singleton pattern
-            [
+        // Create default accounting settings if not exists
+        if (!DB::table('accounting_settings')->where('id', 1)->exists()) {
+            DB::table('accounting_settings')->insert([
+                'id' => 1,
                 // Sales Invoice Accounts
-                'sales_invoice_revenue_account_id' => $salesRevenueAccount?->id,
-                'sales_invoice_receivable_account_id' => $accountsReceivableAccount?->id,
-                'sales_invoice_tax_account_id' => $salesTaxPayableAccount?->id,
+                'sales_invoice_revenue_account_id' => $salesRevenueAccountId,
+                'sales_invoice_receivable_account_id' => $accountsReceivableAccountId,
+                'sales_invoice_tax_account_id' => $salesTaxPayableAccountId,
 
                 // Sales Return Accounts
-                'sales_return_revenue_account_id' => $salesRevenueAccount?->id,
-                'sales_return_receivable_account_id' => $accountsReceivableAccount?->id,
-                'sales_return_tax_account_id' => $salesTaxPayableAccount?->id,
+                'sales_return_revenue_account_id' => $salesRevenueAccountId,
+                'sales_return_receivable_account_id' => $accountsReceivableAccountId,
+                'sales_return_tax_account_id' => $salesTaxPayableAccountId,
 
                 // Purchase Invoice Accounts
-                'purchase_invoice_expense_account_id' => $operatingExpensesAccount?->id,
-                'purchase_invoice_payable_account_id' => $accountsPayableAccount?->id,
-                'purchase_invoice_tax_account_id' => $salesTaxPayableAccount?->id,
+                'purchase_invoice_expense_account_id' => $operatingExpensesAccountId,
+                'purchase_invoice_payable_account_id' => $accountsPayableAccountId,
+                'purchase_invoice_tax_account_id' => $salesTaxPayableAccountId,
 
                 // Purchase Return Accounts
-                'purchase_return_expense_account_id' => $operatingExpensesAccount?->id,
-                'purchase_return_payable_account_id' => $accountsPayableAccount?->id,
-                'purchase_return_tax_account_id' => $salesTaxPayableAccount?->id,
+                'purchase_return_expense_account_id' => $operatingExpensesAccountId,
+                'purchase_return_payable_account_id' => $accountsPayableAccountId,
+                'purchase_return_tax_account_id' => $salesTaxPayableAccountId,
 
                 // Expense Accounts
-                'expense_default_account_id' => $operatingExpensesAccount?->id,
-                'expense_payable_account_id' => $accountsPayableAccount?->id,
+                'expense_default_account_id' => $operatingExpensesAccountId,
+                'expense_payable_account_id' => $accountsPayableAccountId,
 
                 // Cash and Bank Accounts
-                'cash_account_id' => $cashAccount?->id,
-                'bank_account_id' => $bankAccount?->id,
+                'cash_account_id' => $cashAccountId,
+                'bank_account_id' => $bankAccountId,
 
                 // Inventory Accounts
-                'inventory_asset_account_id' => $inventoryAccount?->id,
-                'cost_of_goods_sold_account_id' => $costOfGoodsSoldAccount?->id,
-            ]
-        );
+                'inventory_asset_account_id' => $inventoryAccountId,
+                'cost_of_goods_sold_account_id' => $costOfGoodsSoldAccountId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     /**
@@ -82,16 +84,18 @@ return new class extends Migration
         ];
 
         foreach ($requiredAccounts as $accountData) {
-            Account::firstOrCreate(
-                ['account_code' => $accountData['account_code']],
-                array_merge($accountData, [
+            $exists = DB::table('chart_of_accounts')->where('account_code', $accountData['account_code'])->exists();
+            if (!$exists) {
+                DB::table('chart_of_accounts')->insert(array_merge($accountData, [
                     'description' => $accountData['account_name'],
                     'is_active' => true,
                     'is_system_account' => true,
                     'opening_balance' => 0,
                     'current_balance' => 0,
-                ])
-            );
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
         }
     }
 
@@ -101,6 +105,6 @@ return new class extends Migration
     public function down(): void
     {
         // Remove the default accounting settings
-        AccountingSetting::where('id', 1)->delete();
+        DB::table('accounting_settings')->where('id', 1)->delete();
     }
 };
