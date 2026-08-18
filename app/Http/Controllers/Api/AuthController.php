@@ -202,7 +202,7 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         $user = $request->user();
-        $user->load(['employee', 'roles']);
+        $user->load(['employee.company', 'employee.department', 'employee.position', 'currentCompany', 'roles']);
         
         // Get user permissions and roles
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
@@ -255,6 +255,32 @@ class AuthController extends Controller
             'name' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:50',
+            'mobile' => 'nullable|string|max:50',
+            'fax' => 'nullable|string|max:50',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'marital_status' => 'nullable|in:single,married,divorced,widowed',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:30',
+            'country' => 'nullable|string|max:100',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            'emergency_contact_phone' => 'nullable|string|max:50',
+            'emergency_contact_email' => 'nullable|email',
+            'company_id' => 'nullable|exists:companies,id',
+            'hire_date' => 'nullable|date',
+            'department_id' => 'nullable|exists:departments,id',
+            'position_id' => 'nullable|exists:positions,id',
+            'employment_type' => 'nullable|in:full_time,part_time,contract,intern',
+            'employment_status' => 'nullable|in:active,inactive,on_leave,terminated',
+            'basic_salary' => 'nullable|numeric|min:0',
+            'salary_type' => 'nullable|in:monthly,hourly,daily',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'bank_account_number' => 'nullable|string|max:50',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_branch' => 'nullable|string|max:255',
             'current_password' => 'nullable|string',
             'new_password' => 'nullable|string|min:8|confirmed',
         ]);
@@ -266,7 +292,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Extract first, middle, last name
+        // Extract names
         $firstName = trim($request->input('first_name', ''));
         $middleName = trim($request->input('middle_name', ''));
         $lastName = trim($request->input('last_name', ''));
@@ -280,7 +306,7 @@ class AuthController extends Controller
 
         $fullName = trim($firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName);
 
-        // If changing password, verify current password
+        // Password check
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
                 return response()->json([
@@ -294,8 +320,12 @@ class AuthController extends Controller
             'email' => $request->email,
         ];
 
-        if ($request->has('phone')) {
-            $userUpdate['phone'] = $request->phone;
+        if ($request->has('phone') || $request->has('mobile')) {
+            $userUpdate['phone'] = $request->input('phone', $request->input('mobile', $user->phone));
+        }
+
+        if ($request->has('address')) {
+            $userUpdate['address'] = $request->address;
         }
 
         if ($request->filled('new_password')) {
@@ -304,23 +334,67 @@ class AuthController extends Controller
 
         $user->update($userUpdate);
 
+        // Handle profile image upload if included in request
+        if ($request->hasFile('profile_image')) {
+            if ($user->profile_image) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            $imgPath = $request->file('profile_image')->store('profile-images', 'public');
+            $user->update(['profile_image' => $imgPath]);
+        }
+
         // DIRECT EMPLOYEES TABLE SYNC
         $employee = $user->employee ?: Employee::where('user_id', $user->id)->orWhere('email', $user->email)->first();
         if ($employee) {
-            $employeeUpdate = [
-                'first_name' => $firstName ?: $employee->first_name,
-                'middle_name' => $middleName ?: null,
-                'last_name' => $lastName ?: $employee->last_name,
-                'email' => $request->email,
-                'user_id' => $user->id,
-            ];
+            $employeeData = $request->only([
+                'first_name', 'middle_name', 'last_name', 'email', 'phone', 'mobile', 'fax',
+                'date_of_birth', 'gender', 'marital_status', 'address', 'city', 'state',
+                'postal_code', 'country', 'emergency_contact_name', 'emergency_contact_relationship',
+                'emergency_contact_phone', 'emergency_contact_email', 'company_id', 'hire_date',
+                'department_id', 'position_id', 'employment_type', 'employment_status',
+                'basic_salary', 'salary_type', 'hourly_rate', 'bank_account_number', 'bank_name', 'bank_branch'
+            ]);
 
-            if ($request->has('phone')) {
-                $employeeUpdate['phone'] = $request->phone;
-                $employeeUpdate['mobile'] = $request->phone;
+            // Ensure null for empty optional values
+            foreach ($employeeData as $k => $v) {
+                if ($v === '') {
+                    $employeeData[$k] = null;
+                }
             }
 
-            $employee->update($employeeUpdate);
+            if ($firstName) $employeeData['first_name'] = $firstName;
+            if ($lastName) $employeeData['last_name'] = $lastName;
+            $employeeData['middle_name'] = $middleName ?: null;
+            $employeeData['email'] = $request->email;
+            $employeeData['user_id'] = $user->id;
+
+            if (isset($imgPath)) {
+                $employeeData['profile_image'] = $imgPath;
+            }
+
+            // Handle attachment file uploads if present
+            if ($request->hasFile('attachments')) {
+                $existing = is_array($employee->attachments) ? $employee->attachments : [];
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('employee-attachments', 'public');
+                    $existing[] = [
+                        'path' => $path,
+                        'url' => asset('storage/' . $path),
+                        'filename' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                    ];
+                }
+                $employeeData['attachments'] = array_slice($existing, 0, 5);
+            } elseif ($request->has('existing_attachments')) {
+                $rawExist = $request->get('existing_attachments');
+                $parsed = is_string($rawExist) ? json_decode($rawExist, true) : $rawExist;
+                if (is_array($parsed)) {
+                    $employeeData['attachments'] = $parsed;
+                }
+            }
+
+            $employee->update($employeeData);
+
             try {
                 event(new EmployeeUpdatedEvent($employee->fresh()));
             } catch (\Exception $e) {}
@@ -328,7 +402,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user->fresh(['employee'])
+            'user' => $user->fresh(['employee.department', 'employee.position'])
         ]);
     }
 
