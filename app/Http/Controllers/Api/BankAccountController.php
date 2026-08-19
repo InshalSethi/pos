@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\Account;
+use App\Models\Company;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use Illuminate\Http\Request;
@@ -29,6 +30,13 @@ class BankAccountController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $companyId = auth()->user()?->current_company_id ?? 1;
+        $company = Company::find($companyId);
+        $baseCurrency = $company?->base_currency ?: ($company?->currency_code ?: 'PKR');
+
+        // Self-healing: Ensure strictly ONE default cash account with the exact company base currency
+        $this->consolidateDefaultCashAccount($companyId, $baseCurrency);
+
         $query = BankAccount::with(['chartAccount']);
 
         // Filter by active status
@@ -784,5 +792,86 @@ class BankAccountController extends Controller
 
         $accName = trim($accountName ?: 'Account');
         return "{$accName} ({$typeLabel}{$last4})";
+    }
+
+    /**
+     * Ensure strictly ONE default Cash Bank Account per company with currency matching company setup.
+     */
+    protected function consolidateDefaultCashAccount(int $companyId, string $baseCurrency): void
+    {
+        if (!$companyId) return;
+
+        $cashAccounts = BankAccount::where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('is_default', true)
+                  ->orWhere('account_name', 'Cash Account')
+                  ->orWhere('bank_name', 'Cash')
+                  ->orWhere('account_number', 'CASH-001');
+            })
+            ->get();
+
+        $cashCoa = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '1010')
+                  ->orWhere('account_name', 'Cash Account')
+                  ->orWhere('account_name', 'Cash');
+            })
+            ->first();
+
+        if ($cashAccounts->count() > 1) {
+            // Pick primary: account with transactions or matching base currency
+            $primary = $cashAccounts->first(function ($acc) use ($baseCurrency) {
+                return $acc->bankTransactions()->exists() ||
+                       \App\Models\Transaction::where('account_id', $acc->id)->exists() ||
+                       \App\Models\Payment::where('bank_account_id', $acc->id)->exists() ||
+                       strtoupper((string)$acc->currency) === strtoupper((string)$baseCurrency);
+            }) ?? $cashAccounts->first();
+
+            $primary->update([
+                'currency'         => $baseCurrency,
+                'is_default'       => true,
+                'is_active'        => true,
+                'chart_account_id' => $cashCoa?->id ?: $primary->chart_account_id,
+            ]);
+
+            // Purge duplicate empty cash accounts without transactions
+            foreach ($cashAccounts as $acc) {
+                if ($acc->id !== $primary->id) {
+                    $hasTx = $acc->bankTransactions()->exists() ||
+                             \App\Models\Transaction::where('account_id', $acc->id)->exists() ||
+                             \App\Models\Payment::where('bank_account_id', $acc->id)->exists();
+                    if (!$hasTx && (float)$acc->current_balance == 0) {
+                        $acc->forceDelete();
+                    } else {
+                        $acc->update(['is_default' => false]);
+                    }
+                }
+            }
+        } elseif ($cashAccounts->count() === 1) {
+            $acc = $cashAccounts->first();
+            if ($acc->currency !== $baseCurrency || !$acc->is_default) {
+                $acc->update([
+                    'currency'   => $baseCurrency,
+                    'is_default' => true,
+                ]);
+            }
+        } elseif ($cashAccounts->count() === 0) {
+            BankAccount::create([
+                'company_id'       => $companyId,
+                'account_name'     => 'Cash Account',
+                'bank_name'        => 'Cash',
+                'account_number'   => 'CASH-001',
+                'account_type'     => 'checking',
+                'currency'         => $baseCurrency,
+                'opening_balance'  => 0.00,
+                'current_balance'  => 0.00,
+                'opening_date'     => date('Y-01-01'),
+                'description'      => 'Default system Cash Account for daily transactions and POS payments.',
+                'is_active'        => true,
+                'is_default'       => true,
+                'chart_account_id' => $cashCoa?->id,
+            ]);
+        }
     }
 }

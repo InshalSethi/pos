@@ -68,7 +68,7 @@ class DefaultBankAccountSeeder extends Seeder
                     'bank_name' => 'Cash',
                     'account_number' => 'CASH-001',
                     'account_type' => 'checking',
-                    'currency' => $company->base_currency ?: 'USD',
+                    'currency' => $company->base_currency ?: 'PKR',
                     'opening_balance' => 0.00,
                     'current_balance' => 0.00,
                     'opening_date' => date('Y-01-01'),
@@ -79,7 +79,11 @@ class DefaultBankAccountSeeder extends Seeder
                 ]);
                 $this->command->info("Created default Cash Bank Account for company: {$company->company_name}");
             } else {
-                $this->command->info("Default Cash Bank Account already exists for company: {$company->company_name}");
+                $bankAccount->update([
+                    'currency' => $company->base_currency ?: 'PKR',
+                    'is_default' => true,
+                ]);
+                $this->command->info("Updated default Cash Bank Account for company: {$company->company_name}");
             }
         }
     }

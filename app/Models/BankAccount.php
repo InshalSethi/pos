@@ -55,6 +55,7 @@ class BankAccount extends Model
     }
 
     protected $fillable = [
+        'company_id',
         'account_name',
         'bank_name',
         'bank_phone',
