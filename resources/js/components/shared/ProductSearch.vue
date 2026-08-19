@@ -153,9 +153,12 @@
                 </svg>
               </div>
               <input
+                ref="advanceSearchInputRef"
                 v-model="advanceFilters.query"
                 type="text"
-                placeholder="Search by Name or Description"
+                placeholder="Search by Name, SKU, Barcode or Description"
+                @keydown.enter.prevent="handleAdvanceSearchEnter"
+                @keydown.esc="closeAdvanceSearchModal"
                 class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-zinc-500 transition-all"
               />
             </div>
@@ -184,6 +187,7 @@
                     v-model="advanceFilters.sku"
                     type="text"
                     placeholder="Search by SKU"
+                    @keydown.enter.prevent="handleAdvanceSearchEnter"
                     class="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#12161b] border border-slate-300 dark:border-[#2E2E2E] focus:border-sky-500 dark:focus:border-sky-400 focus:ring-0 focus-visible:ring-0 focus:outline-none shadow-none rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-500"
                   />
                 </div>
@@ -729,6 +733,7 @@ function debounce(func, wait) {
 
 // Advance Search Modal State
 const isAdvanceSearchModalOpen = ref(false);
+const advanceSearchInputRef = ref(null);
 const isTagDropdownOpen = ref(false);
 const isCategorySelectModalOpen = ref(false);
 const isTaxDropdownOpen = ref(false);
@@ -972,6 +977,16 @@ const taxInputRef = ref(null);
 
 const openAdvanceSearchModal = () => {
   isAdvanceSearchModalOpen.value = true;
+  nextTick(() => {
+    if (advanceSearchInputRef.value) {
+      advanceSearchInputRef.value.focus();
+    }
+  });
+  setTimeout(() => {
+    if (advanceSearchInputRef.value) {
+      advanceSearchInputRef.value.focus();
+    }
+  }, 100);
 };
 
 const closeAdvanceSearchModal = () => {
@@ -985,7 +1000,33 @@ const closeAdvanceSearchModal = () => {
   mainCategorySearchQuery.value = '';
   subCategorySearchQuery.value = '';
   childCategorySearchQuery.value = '';
+
+  // Multi-stage focus restoration back to main product search bar
+  nextTick(() => focusSearchInput());
+  setTimeout(() => focusSearchInput(), 50);
+  setTimeout(() => focusSearchInput(), 150);
+  setTimeout(() => focusSearchInput(), 300);
 };
+
+watch(isAdvanceSearchModalOpen, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      if (advanceSearchInputRef.value) {
+        advanceSearchInputRef.value.focus();
+      }
+    });
+    setTimeout(() => {
+      if (advanceSearchInputRef.value) {
+        advanceSearchInputRef.value.focus();
+      }
+    }, 100);
+  } else {
+    nextTick(() => focusSearchInput());
+    setTimeout(() => focusSearchInput(), 50);
+    setTimeout(() => focusSearchInput(), 150);
+    setTimeout(() => focusSearchInput(), 300);
+  }
+});
 
 const clearAdvanceFilters = () => {
   advanceFilters.value = {
@@ -1040,7 +1081,10 @@ const searchItemsFromBackend = debounce(async () => {
     isSearchingAdvance.value = true;
     const f = advanceFilters.value;
     const params = {};
-    if (f.query && f.query.trim()) params.search_term = f.query.trim();
+    if (f.query && f.query.trim()) {
+      params.search_term = f.query.trim();
+      params.barcode = f.query.trim();
+    }
     if (f.sku && f.sku.trim()) params.sku = f.sku.trim();
     if (f.brand_id) params.brand_id = f.brand_id;
     if (f.child_category_id) params.child_category_id = f.child_category_id;
@@ -1512,8 +1556,71 @@ const handleProductSearchEnter = () => {
 };
 
 const addAdvanceProductToInvoice = (product) => {
+  if (isProductOutOfStock(product) && !isPurchaseContext.value) {
+    soundService.playWarning();
+    emit('product-selected', { product, error: 'Out of Stock' });
+    return;
+  }
   soundService.playSuccess();
   emit('product-selected', { product, isAdvance: true });
+};
+
+const handleAdvanceSearchEnter = async () => {
+  const query = advanceFilters.value.query ? advanceFilters.value.query.trim().toLowerCase() : '';
+  const skuQuery = advanceFilters.value.sku ? advanceFilters.value.sku.trim().toLowerCase() : '';
+
+  if (!query && !skuQuery && advanceFilteredProducts.value.length === 0) return;
+
+  // 1. Try to find exact barcode or SKU match locally first
+  let matchedProduct = null;
+  if (query) {
+    matchedProduct = advanceFilteredProducts.value.find(p =>
+      (p.barcode && p.barcode.toLowerCase() === query) ||
+      (p.sku && p.sku.toLowerCase() === query)
+    );
+  }
+  if (!matchedProduct && skuQuery) {
+    matchedProduct = advanceFilteredProducts.value.find(p =>
+      (p.sku && p.sku.toLowerCase() === skuQuery) ||
+      (p.barcode && p.barcode.toLowerCase() === skuQuery)
+    );
+  }
+
+  // 2. Fallback to first filtered product if available
+  if (!matchedProduct && advanceFilteredProducts.value.length > 0) {
+    matchedProduct = advanceFilteredProducts.value[0];
+  }
+
+  // 3. If still no local match, search backend API for barcode / SKU
+  if (!matchedProduct && (query || skuQuery)) {
+    try {
+      const searchTerm = query || skuQuery;
+      const res = await api.get('/items/advanced-search', {
+        params: { search_term: searchTerm, barcode: searchTerm, sku: searchTerm }
+      });
+      const remoteItems = res.data.items || res.data.data || [];
+      if (remoteItems.length > 0) {
+        matchedProduct = remoteItems.find(p =>
+          (p.barcode && p.barcode.toLowerCase() === searchTerm) ||
+          (p.sku && p.sku.toLowerCase() === searchTerm)
+        ) || remoteItems[0];
+        
+        emit('products-fetched', [matchedProduct]);
+      }
+    } catch (err) {
+      console.error('Advanced search barcode fetch error:', err);
+    }
+  }
+
+  // 4. If product found, add to cart & reset query field for next scan
+  if (matchedProduct) {
+    addAdvanceProductToInvoice(matchedProduct);
+    advanceFilters.value.query = '';
+    advanceFilters.value.sku = '';
+  } else {
+    soundService.playWarning();
+    emit('product-selected', { error: 'Not Found', query: query || skuQuery });
+  }
 };
 
 const handleClickOutside = (event) => {
