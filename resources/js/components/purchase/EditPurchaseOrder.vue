@@ -1047,9 +1047,9 @@
               <!-- Row 1: Primary Action (Update Purchase Order) -->
               <button
                 @click="updateOrder"
-                :disabled="orderItems.length === 0 || saving || !selectedSupplier || isEditPaymentBalanceExceeded"
+                :disabled="orderItems.length === 0 || saving || !selectedSupplier"
                 class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
-                :title="isEditPaymentBalanceExceeded ? 'Cannot update: Insufficient balance in selected payment account' : ''"
+                :title="isEditPaymentBalanceExceeded ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''"
               >
                 <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1435,7 +1435,7 @@
           </button>
           <button
             type="button"
-            @click="isCostOverrunModalOpen = false"
+            @click="keepCurrentPricesForOverrun"
             class="px-4 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer border-0"
           >
             Keep Current Prices
@@ -2808,6 +2808,8 @@ const onUnitCostInput = (index) => {
   const item = orderItems.value[index];
   if (!item) return;
 
+  if (item.dismissedOverrunWarning) return;
+
   const cost = parseFloat(item.unit_cost) || 0;
   const currentCost = getItemOriginalCost(item);
   const sale = getItemSellingPrice(item);
@@ -2834,11 +2836,19 @@ const onUnitCostInput = (index) => {
   }
 };
 
+const keepCurrentPricesForOverrun = () => {
+  if (activeOverrunItem.value && activeOverrunItem.value.item) {
+    activeOverrunItem.value.item.dismissedOverrunWarning = true;
+  }
+  isCostOverrunModalOpen.value = false;
+};
+
 const cancelCostOverrun = () => {
   if (activeOverrunItem.value && activeOverrunItem.value.item) {
     const item = activeOverrunItem.value.item;
     const origCost = getItemOriginalCost(item);
     item.unit_cost = origCost;
+    item.dismissedOverrunWarning = false;
     updateItemTotal(activeOverrunItem.value.index);
   }
   isCostOverrunModalOpen.value = false;
@@ -3096,8 +3106,7 @@ const updateOrder = async () => {
   }
 
   if (hasInsufficientPaymentBalance.value) {
-    showNotification('Cannot update purchase order: Insufficient balance in selected payment account', 'error');
-    return;
+    showNotification('Warning: Entered amount exceeds selected account\'s available balance', 'warning');
   }
 
   saving.value = true;

@@ -503,13 +503,46 @@ class PurchaseOrderController extends Controller
                 $accountingService->createVendorAdvanceApplicationEntry($purchaseOrder, $advanceApplied);
             }
 
+            // --- OVERPAYMENT / ADVANCE BALANCE & STATUS COMPUTATION ---
+            $purchaseOrder->refresh();
+            $totalPaid = (float) $purchaseOrder->amount_paid;
+            $grandTotal = (float) $purchaseOrder->grand_total;
+
+            if ($totalPaid > $grandTotal) {
+                $excess = $totalPaid - $grandTotal;
+                if ($supplier) {
+                    $supplier->creditAdvance($excess);
+                }
+                $purchaseOrder->update([
+                    'due_amount' => 0,
+                    'status' => 'received',
+                ]);
+            } elseif ($totalPaid < $grandTotal) {
+                $due = max(0, $grandTotal - $totalPaid);
+                $purchaseOrder->update([
+                    'due_amount' => $due,
+                    'status' => $totalPaid > 0 ? 'partially_received' : 'received',
+                ]);
+            } else {
+                $purchaseOrder->update([
+                    'due_amount' => 0,
+                    'status' => 'received',
+                ]);
+            }
+
             DB::commit();
 
             $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
 
+            $freshSupplier = $supplier ? $supplier->fresh() : null;
+
             return response()->json([
                 'message' => 'Purchase order created successfully and items added to inventory',
-                'purchase_order' => $purchaseOrder
+                'purchase_order' => $purchaseOrder,
+                'supplier_balance' => [
+                    'advance_balance' => $freshSupplier ? (float) $freshSupplier->advance_balance : 0,
+                    'due_amount' => $freshSupplier ? (float) $freshSupplier->getOutstandingBalance() : 0,
+                ]
             ], 201);
 
         } catch (\Throwable $e) {
@@ -1140,46 +1173,7 @@ class PurchaseOrderController extends Controller
      */
     protected function validatePaymentBalances(Request $request): ?JsonResponse
     {
-        // 1. Check array of payment_details if provided
-        if ($request->has('payment_details') && is_array($request->payment_details)) {
-            foreach ($request->payment_details as $payDetail) {
-                $payAmt = (float) ($payDetail['amount'] ?? 0);
-                if ($payAmt > 0 && !empty($payDetail['bank_account_id'])) {
-                    $bankAcc = \App\Models\BankAccount::where('id', $payDetail['bank_account_id'])->lockForUpdate()->first();
-                    if ($bankAcc) {
-                        $available = (float) $bankAcc->current_balance;
-                        if ($payAmt > $available) {
-                            $accountName = $bankAcc->account_name ?: ($bankAcc->bank_name ?: 'Selected Account');
-                            return response()->json([
-                                'message' => "Payment failed due to insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($payAmt, 2) . ".",
-                                'errors' => [
-                                    'payment_details' => ["Insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($payAmt, 2) . "."]
-                                ]
-                            ], 422);
-                        }
-                    }
-                }
-            }
-        }
-
-        // 2. Check direct amount_paid & bank_account_id if provided
-        $amountPaid = (float) $request->get('amount_paid', 0);
-        if ($amountPaid > 0 && $request->filled('bank_account_id')) {
-            $bankAcc = \App\Models\BankAccount::where('id', $request->bank_account_id)->lockForUpdate()->first();
-            if ($bankAcc) {
-                $available = (float) $bankAcc->current_balance;
-                if ($amountPaid > $available) {
-                    $accountName = $bankAcc->account_name ?: ($bankAcc->bank_name ?: 'Selected Account');
-                    return response()->json([
-                        'message' => "Payment failed due to insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($amountPaid, 2) . ".",
-                        'errors' => [
-                            'payment_details' => ["Insufficient balance in {$accountName}. Available: $" . number_format($available, 2) . ", Required: $" . number_format($amountPaid, 2) . "."]
-                        ]
-                    ], 422);
-                }
-            }
-        }
-
+        // Non-blocking payment balance validation: allow form submission to proceed even if account balance is low
         return null;
     }
 
