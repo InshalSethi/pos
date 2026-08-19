@@ -2039,20 +2039,25 @@ class DoubleEntryAccountingService
             })->first();
         $payableAccountId = $apAcc?->id;
 
-        $vendorAdvanceAcc = Account::where('company_id', $companyId)
+        $vendorAdvanceAcc = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
             ->where(function ($q) {
-                $q->where('account_code', '10500')
+                $q->where('account_code', '1310')
+                  ->orWhere('account_code', '10500')
                   ->orWhere('account_code', '1050')
+                  ->orWhere('account_name', 'LIKE', '%Advance to Suppliers%')
                   ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Prepayments%')
                   ->orWhere('account_name', 'LIKE', '%Vendor Credit%');
             })->first();
         if (!$vendorAdvanceAcc) {
             $vendorAdvanceAcc = Account::create([
                 'company_id' => $companyId,
-                'account_code' => '10500',
-                'account_name' => 'Vendor Advance',
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
                 'account_type' => 'asset',
                 'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
                 'opening_balance' => 0,
                 'current_balance' => 0,
                 'is_active' => true,

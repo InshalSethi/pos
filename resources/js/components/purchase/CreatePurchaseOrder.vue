@@ -3016,6 +3016,8 @@ const closeSupplierModal = () => {
 };
 
 const saveOrder = async () => {
+  if (saving.value) return;
+
   if (!selectedSupplier.value) {
     showNotification('Please select a supplier', 'error');
     return;
@@ -3041,7 +3043,7 @@ const saveOrder = async () => {
   try {
     const orderData = {
       supplier_id: orderForm.value.supplier_id,
-      po_number: orderForm.value.po_number || null,
+      po_number: isManualPoNumber.value && orderForm.value.po_number?.trim() ? orderForm.value.po_number.trim() : null,
       warehouse_id: selectedGlobalWarehouseIds.value[0] || (warehouses.value[0]?.id || null),
       warehouse_ids: selectedGlobalWarehouseIds.value.length > 0 ? selectedGlobalWarehouseIds.value : (warehouses.value[0] ? [warehouses.value[0].id] : []),
       order_date: orderForm.value.order_date,
@@ -3099,9 +3101,8 @@ const saveOrder = async () => {
 
     showNotification('Purchase order created successfully and items added to inventory', 'success');
 
-    setTimeout(() => {
-      router.push('/purchase/orders');
-    }, 1500);
+    // Instantly navigate to Purchase Orders table
+    router.push('/purchase/orders');
 
   } catch (error) {
     showNotification(error.response?.data?.message || 'Error creating purchase order', 'error');

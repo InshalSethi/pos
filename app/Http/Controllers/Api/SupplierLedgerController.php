@@ -343,13 +343,14 @@ class SupplierLedgerController extends Controller
         }
 
         // 4. Fetch Payments Out (`Payment` table where payee is Supplier)
-        $paymentQuery = Payment::where(function ($q) use ($supplier) {
-            $q->where('payee_id', $supplier->id)
-              ->orWhere(function ($sub) use ($supplier) {
-                  $sub->where('payee_type', 'App\\Models\\Supplier')
-                      ->where('payee_id', $supplier->id);
-              });
-        });
+        $paymentQuery = Payment::whereNotIn('status', ['cancelled', 'void', 'failed'])
+            ->where(function ($q) use ($supplier) {
+                $q->where('payee_id', $supplier->id)
+                  ->orWhere(function ($sub) use ($supplier) {
+                      $sub->where('payee_type', 'App\\Models\\Supplier')
+                          ->where('payee_id', $supplier->id);
+                  });
+            });
 
         if ($startDate) {
             $paymentQuery->where(function ($q) use ($startDate) {
@@ -521,7 +522,8 @@ class SupplierLedgerController extends Controller
             ->pluck('number')
             ->toArray();
 
-        $priorPayments = Payment::where(function ($q) use ($supplier) {
+        $priorPayments = Payment::whereNotIn('status', ['cancelled', 'void', 'failed'])
+            ->where(function ($q) use ($supplier) {
                 $q->where('payee_id', $supplier->id)
                   ->orWhere('payee_type', 'App\\Models\\Supplier');
             })

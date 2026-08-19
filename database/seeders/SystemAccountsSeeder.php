@@ -65,6 +65,17 @@ class SystemAccountsSeeder extends Seeder
                 'opening_balance' => 25000.00,
                 'current_balance' => 25000.00,
             ],
+            [
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers',
+                'is_active' => true,
+                'is_system_account' => true,
+                'opening_balance' => 0.00,
+                'current_balance' => 0.00,
+            ],
 
             // Liabilities
             [

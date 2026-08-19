@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
         // 4. Seed system accounts and global currencies
         $this->command->info('Seeding system accounts and currencies...');
         $this->call(SystemAccountsSeeder::class);
+        $this->call(AdvanceToSuppliersSeeder::class);
         $this->call(CurrencySeeder::class);
 
         // 5. Seed chart of accounts, default bank account, and default warehouse

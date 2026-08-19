@@ -97,17 +97,17 @@ class PaymentService
     public function markPaymentAsPaid(Payment $payment, int $userId): Payment
     {
         return DB::transaction(function () use ($payment, $userId) {
-            // Create or update journal entry
+            // 1. Process supplier dues & advance allocation FIRST so allocation is recorded in additional_data
+            $this->processSupplierPaymentAllocation($payment);
+
+            // 2. Create or update journal entry
             $journalEntry = $this->createOrUpdateJournalEntry($payment);
 
-            // Create bank transaction and sync bank account balance
+            // 3. Create bank transaction and sync bank account balance
             $bankTransaction = $this->createBankTransaction($payment, $journalEntry->id);
             
-            // Mark payment as paid
+            // 4. Mark payment as paid
             $payment->markAsPaid($userId, $journalEntry->id, $bankTransaction->id);
-            
-            // Process supplier dues & advance allocation
-            $this->processSupplierPaymentAllocation($payment);
 
             return $payment;
         });
@@ -204,9 +204,11 @@ class PaymentService
     {
         $companyId = $payment->company_id ?? auth()->user()?->current_company_id ?? 1;
 
+        // 1. Accounts Payable Account (2010 / 20100)
         $payableAccountId = $this->accountingSettings->purchase_invoice_payable_account_id;
         if (!$payableAccountId) {
-            $apAcc = Account::where('company_id', $companyId)
+            $apAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
                 ->where(function ($q) {
                     $q->where('account_code', '20100')
                       ->orWhere('account_code', '2010')
@@ -228,17 +230,45 @@ class PaymentService
             $payableAccountId = $apAcc->id;
         }
 
+        // 2. Advance to Suppliers Account (1310)
+        $advanceAcc = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '1310')
+                  ->orWhere('account_name', 'LIKE', '%Advance to Suppliers%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Prepayments%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Advance%');
+            })->first();
+        if (!$advanceAcc) {
+            $advanceAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $advanceAccountId = $advanceAcc->id;
+
+        // 3. Bank / Cash Chart Account
         $bankChartAccountId = $payment->bankAccount?->chart_account_id;
         if (!$bankChartAccountId && $payment->bankAccount) {
             $bAccount = $payment->bankAccount;
-            $bankChartAccount = Account::where('company_id', $companyId)
+            $bankChartAccount = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
                 ->where('account_type', 'asset')
                 ->where(function ($q) use ($bAccount) {
                     $q->where('account_name', 'LIKE', "%{$bAccount->bank_name}%")
                       ->orWhere('account_name', 'LIKE', "%{$bAccount->account_name}%")
                       ->orWhere('account_code', '1610')
                       ->orWhere('account_code', '1600')
-                      ->orWhere('account_code', '1010');
+                      ->orWhere('account_code', '1010')
+                      ->orWhere('account_code', '1020');
                 })->first();
             if (!$bankChartAccount) {
                 $bankChartAccount = Account::create([
@@ -255,24 +285,66 @@ class PaymentService
             $bankChartAccountId = $bankChartAccount->id;
         }
 
-        // Debit: Accounts Payable
-        JournalEntryLine::create([
-            'journal_entry_id' => $journalEntry->id,
-            'account_id' => $payableAccountId,
-            'description' => "Payment to supplier: {$payment->payee_name}",
-            'debit_amount' => $payment->amount,
-            'credit_amount' => 0,
-            'partner_type' => $payment->payee_type ? 'App\\Models\\Supplier' : null,
-            'partner_id' => $payment->payee_id,
-        ]);
+        // 4. Determine Split: Accounts Payable vs Advance to Suppliers (1310)
+        $additionalData = $payment->additional_data ?? [];
+        $allocation = $additionalData['supplier_allocation'] ?? null;
+        $totalPaid = (float) $payment->amount;
 
-        // Credit: Bank Account
+        if ($allocation) {
+            $appliedDue = (float) ($allocation['applied_due'] ?? 0);
+            $appliedAdvance = (float) ($allocation['applied_advance'] ?? 0);
+        } else {
+            // Fallback: If no allocation metadata exists, check if payment is linked to PO
+            $appliedDue = $totalPaid;
+            $appliedAdvance = 0.00;
+        }
+
+        // DEBIT 1: Accounts Payable (Code 2010 / 20100) for settled bill portion
+        if ($appliedDue > 0) {
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $payableAccountId,
+                'description' => "Payment to supplier (Accounts Payable): {$payment->payee_name}",
+                'debit_amount' => $appliedDue,
+                'credit_amount' => 0,
+                'partner_type' => $payment->payee_type ? 'App\\Models\\Supplier' : null,
+                'partner_id' => $payment->payee_id,
+            ]);
+        }
+
+        // DEBIT 2: Advance to Suppliers (Code 1310 / Current Asset) for excess / advance voucher portion
+        if ($appliedAdvance > 0) {
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $advanceAccountId,
+                'description' => "Advance to supplier (Account 1310): {$payment->payee_name}",
+                'debit_amount' => $appliedAdvance,
+                'credit_amount' => 0,
+                'partner_type' => $payment->payee_type ? 'App\\Models\\Supplier' : null,
+                'partner_id' => $payment->payee_id,
+            ]);
+        }
+
+        // If both appliedDue and appliedAdvance are 0 (e.g. edge case), default full amount to Accounts Payable or Advance
+        if ($appliedDue <= 0 && $appliedAdvance <= 0 && $totalPaid > 0) {
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $advanceAccountId,
+                'description' => "Advance payment to supplier: {$payment->payee_name}",
+                'debit_amount' => $totalPaid,
+                'credit_amount' => 0,
+                'partner_type' => $payment->payee_type ? 'App\\Models\\Supplier' : null,
+                'partner_id' => $payment->payee_id,
+            ]);
+        }
+
+        // CREDIT: Cash / Bank Account (Code 1010 / 1020 / Bank)
         JournalEntryLine::create([
             'journal_entry_id' => $journalEntry->id,
             'account_id' => $bankChartAccountId,
-            'description' => "Payment from {$payment->bankAccount->account_name}",
+            'description' => "Payment from " . ($payment->bankAccount ? $payment->bankAccount->account_name : 'Bank/Cash Account'),
             'debit_amount' => 0,
-            'credit_amount' => $payment->amount,
+            'credit_amount' => $totalPaid,
             'partner_type' => $payment->payee_type ? 'App\\Models\\Supplier' : null,
             'partner_id' => $payment->payee_id,
         ]);
@@ -431,10 +503,9 @@ class PaymentService
         ]);
 
         // Sync bank account current_balance and COA balance
+        $bankAccount->update(['current_balance' => $newBalance]);
         if ($bankAccount->chartAccount) {
             $bankAccount->chartAccount->updateCurrentBalance();
-        } else {
-            $bankAccount->update(['current_balance' => $newBalance]);
         }
 
         // Also create a record in `transactions` table so it shows up in Banking -> Transactions list
@@ -518,6 +589,21 @@ class PaymentService
                         $bAccount->chartAccount->updateCurrentBalance();
                     }
                 }
+            }
+
+            // Delete matching Transaction records in banking module
+            try {
+                \App\Models\Transaction::where('company_id', $payment->company_id)
+                    ->where(function ($q) use ($payment) {
+                        $q->where('number', $payment->payment_number)
+                          ->orWhere('reference', $payment->payment_number);
+                        if ($payment->reference_number) {
+                            $q->orWhere('reference', $payment->reference_number);
+                        }
+                    })
+                    ->delete();
+            } catch (\Throwable $e) {
+                // Ignore if Transaction model/table write is optional
             }
 
             // 3. Update payment status to cancelled
