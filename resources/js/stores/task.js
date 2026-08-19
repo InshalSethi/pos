@@ -108,10 +108,13 @@ export const useTaskStore = defineStore('task', () => {
   const createTask = async (taskData) => {
     try {
       let payload = taskData;
-      let headers = {};
+      const targetBoardId = taskData.task_board_id || activeBoardId.value || (boards.value[0] ? boards.value[0].id : null);
+      
       if (!(taskData instanceof FormData)) {
         payload = new FormData();
-        payload.append('task_board_id', activeBoardId.value);
+        if (targetBoardId) {
+          payload.append('task_board_id', targetBoardId);
+        }
         Object.keys(taskData).forEach(key => {
           if (key === 'attachments') {
             (taskData.attachments || []).forEach(file => {
@@ -123,13 +126,13 @@ export const useTaskStore = defineStore('task', () => {
             payload.append(key, taskData[key]);
           }
         });
-        headers = { 'Content-Type': 'multipart/form-data' };
       } else {
-        payload.append('task_board_id', activeBoardId.value);
-        headers = { 'Content-Type': 'multipart/form-data' };
+        if (targetBoardId && !payload.has('task_board_id')) {
+          payload.append('task_board_id', targetBoardId);
+        }
       }
 
-      const response = await axios.post('/api/tasks', payload, { headers });
+      const response = await axios.post('/api/tasks', payload);
       if (response.data && response.data.task) {
         tasks.value.push(response.data.task);
       }
@@ -143,7 +146,6 @@ export const useTaskStore = defineStore('task', () => {
   const updateTask = async (taskId, taskData) => {
     try {
       let payload = taskData;
-      let headers = {};
       if (!(taskData instanceof FormData)) {
         payload = new FormData();
         payload.append('_method', 'PUT');
@@ -158,10 +160,9 @@ export const useTaskStore = defineStore('task', () => {
             payload.append(key, taskData[key]);
           }
         });
-        headers = { 'Content-Type': 'multipart/form-data' };
       }
 
-      const response = await axios.post(`/api/tasks/${taskId}`, payload, { headers });
+      const response = await axios.post(`/api/tasks/${taskId}`, payload);
       if (response.data && response.data.task) {
         const idx = tasks.value.findIndex(t => t.id === taskId);
         if (idx > -1) {

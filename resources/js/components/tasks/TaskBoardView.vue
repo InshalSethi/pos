@@ -307,11 +307,11 @@
                 @dragend="handleDragEnd"
                 @click="openTaskDrawer(task)"
                 :class="[
-                  'bg-white dark:bg-zinc-900 rounded-xl border p-3.5 shadow-sm hover:shadow-md transition-all group relative space-y-2 cursor-grab active:cursor-grabbing select-none',
-                  draggedTask?.id === task.id ? 'opacity-30 scale-95 border-2 border-dashed border-purple-400 bg-purple-50 dark:bg-purple-900/20' : (selectedTaskIds.includes(task.id) ? 'border-purple-400 ring-2 ring-purple-500/10 dark:ring-purple-500/10' : 'border-slate-200/90 dark:border-zinc-800')
+                  'bg-white dark:bg-zinc-900 rounded-2xl border p-4 shadow-xs hover:shadow-md transition-all group relative cursor-grab active:cursor-grabbing select-none',
+                  draggedTask?.id === task.id ? 'opacity-30 scale-95 border-2 border-dashed border-purple-400 bg-purple-50 dark:bg-purple-900/20' : (selectedTaskIds.includes(task.id) ? 'border-purple-400 ring-2 ring-purple-500/10 dark:ring-purple-500/10' : 'border-slate-200/80 dark:border-zinc-800')
                 ]"
               >
-                <!-- Title Row: Checkbox, ID, Title, Star -->
+                <!-- Title Row: Checkbox, ID + Title, Star -->
                 <div class="flex gap-2 items-start relative">
                   <div class="flex items-center pt-0.5 shrink-0 absolute -left-[28px] group-hover:translate-x-[28px] transition-transform duration-200" :class="selectedTaskIds.includes(task.id) ? 'translate-x-[28px]' : ''">
                     <input
@@ -326,14 +326,14 @@
                     />
                   </div>
                   <div class="flex-1 min-w-0 transition-transform duration-200" :class="selectedTaskIds.includes(task.id) || 'group-hover:translate-x-5'">
-                    <span v-if="draggedTask?.id === task.id" class="px-2 py-0.5 mb-1 text-[9px] font-bold uppercase tracking-wider bg-purple-500 text-white dark:bg-purple-600 rounded-md inline-flex items-center gap-1">
+                    <span v-if="draggedTask?.id === task.id" class="px-2 py-0.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider bg-purple-500 text-white dark:bg-purple-600 rounded-md inline-flex items-center gap-1">
                       ⋮⋮ MOVING
                     </span>
-                    <h4 class="text-[13px] font-medium text-slate-700 dark:text-white leading-snug cursor-pointer group-hover:text-purple-600 transition-colors">
-                      <span class="text-slate-300 font-medium mr-1 select-text transition-opacity" :class="selectedTaskIds.includes(task.id) || 'group-hover:opacity-0'">#{{ task.id }}</span>
-                      {{ task.title }}
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-snug tracking-tight cursor-pointer group-hover:text-purple-600 transition-colors">
+                      <span class="text-slate-400 font-mono text-xs font-semibold mr-1.5 select-text">#{{ task.id }}</span>
+                      <span>{{ task.title }}</span>
                     </h4>
-                    <p v-if="task.description" class="text-[11px] text-slate-400 dark:text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
+                    <p v-if="task.description" class="text-xs text-slate-400 dark:text-zinc-400 font-normal mt-2 leading-relaxed line-clamp-2">
                       {{ stripHtml(task.description) }}
                     </p>
                   </div>
@@ -352,28 +352,30 @@
                   </button>
                 </div>
 
-                <!-- Badges Row: Priority, Due Date, Attachments -->
-                <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
-                  <div class="flex items-center gap-1.5">
-                    <span :class="['px-2 py-0.5 font-extrabold uppercase rounded-md border', getPriorityBadgeClass(task.priority)]">
-                      {{ task.priority }}
+                <!-- Footer Row: Priority Pill, Due Date, Attachments, Assignees -->
+                <div class="flex items-center justify-between gap-2 pt-3 mt-1">
+                  <div class="flex items-center gap-2.5">
+                    <span :class="['px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg tracking-wider border', getPriorityBadgeClass(task.priority)]">
+                      {{ task.priority || 'NORMAL' }}
                     </span>
 
-                    <span v-if="task.due_date" :class="['font-bold flex items-center gap-1', isOverdue(task.due_date) ? 'text-rose-600 font-extrabold' : 'text-slate-500']">
-                      🕒 {{ formatDateShort(task.due_date) }}
+                    <span v-if="task.due_date" :class="['text-xs font-medium flex items-center gap-1', isOverdue(task.due_date) ? 'text-rose-600 font-bold' : 'text-slate-400 dark:text-zinc-400']">
+                      <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      <span>{{ formatDateShort(task.due_date) }}</span>
                     </span>
 
-                    <span v-if="task.attachments && task.attachments.length > 0" class="font-bold text-slate-500 flex items-center gap-0.5">
-                      📎 {{ task.attachments.length }}
+                    <span v-if="task.attachments && task.attachments.length > 0" class="text-xs font-medium text-slate-400 dark:text-zinc-400 flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                      <span>{{ task.attachments.length }}</span>
                     </span>
                   </div>
 
                   <!-- Stacked Assignee Avatars -->
-                  <div class="flex -space-x-1.5 overflow-hidden items-center">
+                  <div v-if="getTaskAssignees(task).length > 0" class="flex -space-x-1.5 overflow-hidden items-center">
                     <div
                       v-for="u in getTaskAssignees(task).slice(0, 3)"
                       :key="u.id"
-                      class="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-700 text-white font-black text-[9px] flex items-center justify-center ring-1 ring-white dark:ring-zinc-900 shrink-0"
+                      class="w-5 h-5 rounded-full bg-slate-800 dark:bg-slate-700 text-white font-extrabold text-[9px] flex items-center justify-center ring-2 ring-white dark:ring-zinc-900 shrink-0 shadow-xs"
                       :title="u.name"
                     >
                       {{ getInitials(u.name) }}
@@ -381,12 +383,12 @@
                   </div>
                 </div>
 
-                <!-- Tag Pills -->
-                <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1 pt-0.5">
+                <!-- Tag Pills (if any) -->
+                <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1 pt-1">
                   <span
                     v-for="tg in task.tags"
                     :key="tg"
-                    class="px-2 py-0.5 text-[9px] font-extrabold rounded-md border bg-slate-100 text-slate-800 border-slate-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700"
+                    class="px-2 py-0.5 text-[9px] font-bold rounded-md bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"
                   >
                     {{ tg }}
                   </span>
@@ -823,12 +825,45 @@
                   </select>
                 </div>
 
-                <!-- Assignees -->
-                <div class="space-y-1">
+                <!-- Assignees Dropdown Selector -->
+                <div class="space-y-1 relative" ref="drawerAssigneeDropdownRef">
                   <label class="text-[10px] font-black uppercase text-slate-400">ASSIGNEES</label>
-                  <div class="flex flex-wrap gap-1.5">
-                    <div v-for="u in getTaskAssignees(activeDrawerTask)" :key="u.id" class="px-2 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 border border-slate-300 dark:border-zinc-700 rounded-lg text-[10px] font-bold flex items-center gap-1">
-                      <span>{{ u.name }}</span>
+                  
+                  <!-- Trigger -->
+                  <div 
+                    @click="showDrawerAssigneeDropdown = !showDrawerAssigneeDropdown"
+                    class="w-full min-h-[38px] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-medium cursor-pointer flex items-center justify-between transition-colors hover:border-slate-300 dark:hover:border-zinc-600"
+                  >
+                    <div class="flex flex-wrap gap-1 flex-1">
+                      <span v-if="!getTaskAssignees(activeDrawerTask).length" class="text-slate-400 text-[11px] my-0.5">Select assignees...</span>
+                      <div v-else class="flex flex-wrap gap-1">
+                        <span v-for="u in getTaskAssignees(activeDrawerTask)" :key="u.id" class="flex items-center gap-1 bg-slate-100 dark:bg-zinc-700 px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-600 text-[10px] text-slate-700 dark:text-zinc-200 font-bold shadow-xs">
+                          <div class="w-3.5 h-3.5 rounded-full bg-purple-600 text-white flex items-center justify-center text-[7px] font-black shrink-0">
+                            {{ getInitials(u.name) }}
+                          </div>
+                          <span>{{ u.name }}</span>
+                          <span @click.stop="toggleDrawerAssignee(u.id)" class="cursor-pointer text-slate-400 hover:text-rose-500 pl-0.5">×</span>
+                        </span>
+                      </div>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+
+                  <!-- Dropdown Menu -->
+                  <div v-if="showDrawerAssigneeDropdown" class="absolute z-[110] w-full mt-1 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-lg max-h-52 overflow-y-auto custom-scrollbar p-1">
+                    <div 
+                      v-for="user in taskStore.assignees" 
+                      :key="user.id"
+                      @click="toggleDrawerAssignee(user.id)"
+                      class="flex items-center gap-2.5 px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-zinc-700/50 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <div class="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0" :class="isDrawerAssigneeSelected(user.id) ? 'bg-purple-500 border-purple-500' : 'border-slate-300 dark:border-zinc-600'">
+                        <svg v-if="isDrawerAssigneeSelected(user.id)" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                      <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-zinc-600 flex items-center justify-center text-[9px] font-bold text-slate-600 dark:text-zinc-300 shrink-0 shadow-xs">
+                        {{ getInitials(user.name) }}
+                      </div>
+                      <span class="text-xs font-semibold text-slate-700 dark:text-zinc-200">{{ user.name }}</span>
                     </div>
                   </div>
                 </div>
@@ -853,13 +888,53 @@
                   </div>
                 </div>
 
-                <!-- Attachments -->
-                <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-zinc-800">
-                  <label class="text-[10px] font-black uppercase text-slate-400">ATTACHMENTS</label>
-                  <div class="space-y-1">
-                    <div v-for="att in (activeDrawerTask.attachments || [])" :key="att.id" class="p-2 bg-white dark:bg-zinc-800 rounded-lg border text-[11px] truncate flex justify-between">
-                      <span class="truncate">📎 {{ att.file_name }}</span>
+                <!-- Attachments Section (Gallery Grid + Upload Button) -->
+                <div class="space-y-2.5 pt-2 border-t border-slate-200 dark:border-zinc-800">
+                  <div class="flex items-center justify-between">
+                    <label class="text-[10px] font-black uppercase text-slate-400">ATTACHMENTS</label>
+                    <button
+                      @click="triggerDrawerFileUpload"
+                      :disabled="isUploadingDrawerFile"
+                      class="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <span v-if="isUploadingDrawerFile" class="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></span>
+                      <span v-else>+ Upload file</span>
+                    </button>
+                    <input type="file" ref="drawerFileInput" class="hidden" multiple @change="handleDrawerFileUpload" />
+                  </div>
+
+                  <!-- Gallery Grid -->
+                  <div v-if="activeDrawerTask.attachments && activeDrawerTask.attachments.length > 0" class="grid grid-cols-2 gap-2">
+                    <div
+                      v-for="att in activeDrawerTask.attachments"
+                      :key="att.id"
+                      @click="openImagePreview(att)"
+                      class="group relative border border-slate-200 dark:border-zinc-700/80 rounded-xl overflow-hidden bg-white dark:bg-zinc-800/80 hover:border-purple-400 dark:hover:border-purple-500 transition-all cursor-pointer flex flex-col items-center justify-center p-1.5 h-24 shadow-xs"
+                    >
+                      <template v-if="isImageFile(att)">
+                        <img
+                          :src="att.file_url || ('/storage/' + att.file_path)"
+                          :alt="att.file_name"
+                          class="w-full h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
+                        />
+                        <span class="text-[9px] font-semibold text-slate-600 dark:text-zinc-300 truncate w-full text-center mt-1 px-1">
+                          {{ att.file_name }}
+                        </span>
+                      </template>
+                      <template v-else>
+                        <div class="flex flex-col items-center justify-center h-16 space-y-1">
+                          <span class="text-xl">📄</span>
+                          <span class="text-[9px] font-extrabold text-slate-500 uppercase">{{ (att.file_name.split('.').pop() || 'file').substring(0, 4) }}</span>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600 dark:text-zinc-300 truncate w-full text-center mt-1 px-1">
+                          {{ att.file_name }}
+                        </span>
+                      </template>
                     </div>
+                  </div>
+
+                  <div v-else class="text-slate-400 italic text-[11px] text-center py-3 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
+                    No attachments uploaded yet
                   </div>
                 </div>
 
@@ -1240,18 +1315,44 @@
               <button
                 type="button"
                 @click="showCreateTaskModal = false"
-                class="px-4 py-2 text-[13px] font-medium text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                :disabled="isSaving"
+                class="px-4 py-2 text-[13px] font-medium text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 @click="submitTaskModal"
-                class="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white text-[13px] font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                :disabled="isSaving"
+                class="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white text-[13px] font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
               >
-                <span>+</span>
-                <span>{{ isEditingTask ? 'Update Task' : 'Create Task' }}</span>
+                <div v-if="isSaving" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span v-else>+</span>
+                <span>{{ isSaving ? (isEditingTask ? 'Updating...' : 'Saving...') : (isEditingTask ? 'Update Task' : 'Create Task') }}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- MODAL: IMAGE / ATTACHMENT LIGHTBOX PREVIEW -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+        <div v-if="showImageModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div class="fixed inset-0 bg-slate-900/80 dark:bg-black/90 backdrop-blur-md cursor-pointer" @click="showImageModal = false"></div>
+          <div class="relative max-w-4xl max-h-[90vh] bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 z-10 flex flex-col items-center overflow-hidden">
+            <div class="w-full flex justify-between items-center pb-3 border-b border-slate-100 dark:border-zinc-800 px-1">
+              <span class="font-extrabold text-sm text-slate-900 dark:text-white truncate max-w-md">📎 {{ previewImageName }}</span>
+              <div class="flex items-center gap-3">
+                <a :href="previewImageUrl" download target="_blank" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors shadow-xs">
+                  <span>⬇</span> Download
+                </a>
+                <button @click="showImageModal = false" class="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white text-lg font-bold cursor-pointer">✕</button>
+              </div>
+            </div>
+            <div class="p-4 flex-1 flex items-center justify-center overflow-auto max-h-[75vh]">
+              <img :src="previewImageUrl" :alt="previewImageName" class="max-w-full max-h-[70vh] object-contain rounded-2xl shadow-xl border border-slate-200 dark:border-zinc-800" />
             </div>
           </div>
         </div>
@@ -1303,9 +1404,13 @@ const getAssigneeName = (userId) => {
 
 // Close dropdown on click outside
 const assigneeDropdownRef = ref(null);
+const drawerAssigneeDropdownRef = ref(null);
 const handleClickOutside = (e) => {
   if (assigneeDropdownRef.value && !assigneeDropdownRef.value.contains(e.target)) {
     showAssigneeDropdown.value = false;
+  }
+  if (drawerAssigneeDropdownRef.value && !drawerAssigneeDropdownRef.value.contains(e.target)) {
+    showDrawerAssigneeDropdown.value = false;
   }
 };
 onMounted(() => {
@@ -1321,6 +1426,92 @@ const commentText = ref('');
 const newChecklistItem = ref('');
 const isTimerRunning = ref(false);
 const drawerDueDate = ref(null);
+
+// Drawer Assignee Management
+const showDrawerAssigneeDropdown = ref(false);
+
+const isDrawerAssigneeSelected = (userId) => {
+  if (!activeDrawerTask.value) return false;
+  const currentAssignees = getTaskAssignees(activeDrawerTask.value);
+  return currentAssignees.some(u => Number(u.id) === Number(userId));
+};
+
+const toggleDrawerAssignee = async (userId) => {
+  if (!activeDrawerTask.value) return;
+  
+  let currentIds = getTaskAssignees(activeDrawerTask.value).map(u => u.id);
+  const idx = currentIds.indexOf(userId);
+  if (idx > -1) {
+    currentIds.splice(idx, 1);
+  } else {
+    currentIds.push(userId);
+  }
+
+  // Optimistic local assignees update
+  activeDrawerTask.value.assignees = taskStore.assignees.filter(u => currentIds.includes(u.id));
+
+  // Persist to backend
+  try {
+    const res = await taskStore.updateTask(activeDrawerTask.value.id, {
+      assignee_ids: currentIds
+    });
+    if (res && res.task) {
+      activeDrawerTask.value.assignees = res.task.assignees;
+    }
+  } catch (err) {
+    console.error('Failed to update task assignees:', err);
+  }
+};
+
+// Drawer File Upload
+const drawerFileInput = ref(null);
+const isUploadingDrawerFile = ref(false);
+
+const triggerDrawerFileUpload = () => {
+  if (drawerFileInput.value) drawerFileInput.value.click();
+};
+
+const handleDrawerFileUpload = async (event) => {
+  if (!event.target.files || !event.target.files.length || !activeDrawerTask.value) return;
+  const files = Array.from(event.target.files);
+  isUploadingDrawerFile.value = true;
+  try {
+    const res = await taskStore.updateTask(activeDrawerTask.value.id, {
+      attachments: files
+    });
+    if (res && res.task) {
+      activeDrawerTask.value.attachments = res.task.attachments;
+    }
+  } catch (error) {
+    console.error('Failed to upload attachment:', error);
+  } finally {
+    isUploadingDrawerFile.value = false;
+    if (drawerFileInput.value) drawerFileInput.value.value = '';
+  }
+};
+
+// Lightbox Preview Modal
+const showImageModal = ref(false);
+const previewImageUrl = ref('');
+const previewImageName = ref('');
+
+const isImageFile = (att) => {
+  if (!att) return false;
+  if (att.file_type && att.file_type.startsWith('image/')) return true;
+  const name = (att.file_name || att.file_path || '').toLowerCase();
+  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.gif') || name.endsWith('.webp') || name.endsWith('.svg');
+};
+
+const openImagePreview = (att) => {
+  const url = att.file_url || ('/storage/' + att.file_path);
+  if (isImageFile(att)) {
+    previewImageUrl.value = url;
+    previewImageName.value = att.file_name;
+    showImageModal.value = true;
+  } else {
+    window.open(url, '_blank');
+  }
+};
 
 const isEditingTask = ref(false);
 const editingTaskId = ref(null);
@@ -1434,17 +1625,17 @@ const allFilteredTasks = computed(() => {
   }
   
   if (filters.statusId) {
-    list = list.filter(t => t.task_column_id === filters.statusId);
+    list = list.filter(t => Number(t.task_column_id) === Number(filters.statusId));
   }
-  
+
   if (filters.priority !== 'all') {
     list = list.filter(t => t.priority === filters.priority);
   }
   
   if (filters.assigneeId !== 'all') {
     list = list.filter(t => {
-      if (t.assignees && t.assignees.some(a => a.id === filters.assigneeId)) return true;
-      if (t.assigned_to_id === filters.assigneeId) return true;
+      if (t.assignees && t.assignees.some(a => Number(a.id) === Number(filters.assigneeId))) return true;
+      if (Number(t.assigned_to_id) === Number(filters.assigneeId)) return true;
       return false;
     });
   }
@@ -1485,7 +1676,7 @@ const allFilteredTasks = computed(() => {
 });
 
 const getFilteredTasksForColumn = (colId) => {
-  return allFilteredTasks.value.filter(t => t.task_column_id === colId);
+  return allFilteredTasks.value.filter(t => Number(t.task_column_id) === Number(colId));
 };
 
 // Drag & Drop
@@ -1662,6 +1853,7 @@ const removeFile = (index) => {
 const openCreateTaskModal = (defaultColumnId = null) => {
   isEditingTask.value = false;
   editingTaskId.value = null;
+  isSaving.value = false;
   taskForm.title = '';
   taskForm.description = '';
   taskForm.task_column_id = defaultColumnId || (taskStore.columns[0] ? taskStore.columns[0].id : null);
@@ -1676,6 +1868,7 @@ const openCreateTaskModal = (defaultColumnId = null) => {
 const editTaskModal = (task) => {
   isEditingTask.value = true;
   editingTaskId.value = task.id;
+  isSaving.value = false;
   taskForm.title = task.title;
   taskForm.description = task.description || '';
   taskForm.task_column_id = task.task_column_id;
@@ -1688,31 +1881,39 @@ const editTaskModal = (task) => {
 };
 
 const submitTaskModal = async () => {
-  if (!taskForm.title || !taskForm.title.trim()) return;
+  if (!taskForm.title || !taskForm.title.trim() || isSaving.value) return;
 
-  const tagList = tagsInput.value ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean) : [];
+  isSaving.value = true;
 
-  const payload = {
-    title: taskForm.title.trim(),
-    description: taskForm.description,
-    task_column_id: taskForm.task_column_id,
-    priority: taskForm.priority,
-    due_date: taskForm.due_date,
-    assignee_ids: taskForm.assignee_ids,
-    tags: tagList,
-    attachments: selectedFiles.value,
-  };
+  try {
+    const tagList = tagsInput.value ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-  if (isEditingTask.value && editingTaskId.value) {
-    await taskStore.updateTask(editingTaskId.value, payload);
-    if (activeDrawerTask.value && activeDrawerTask.value.id === editingTaskId.value) {
-      Object.assign(activeDrawerTask.value, payload);
+    const payload = {
+      title: taskForm.title.trim(),
+      description: taskForm.description,
+      task_column_id: taskForm.task_column_id || (taskStore.columns[0] ? taskStore.columns[0].id : null),
+      priority: taskForm.priority,
+      due_date: taskForm.due_date,
+      assignee_ids: taskForm.assignee_ids,
+      tags: tagList,
+      attachments: selectedFiles.value,
+    };
+
+    if (isEditingTask.value && editingTaskId.value) {
+      const res = await taskStore.updateTask(editingTaskId.value, payload);
+      if (res && res.task && activeDrawerTask.value && activeDrawerTask.value.id === editingTaskId.value) {
+        Object.assign(activeDrawerTask.value, res.task);
+      }
+    } else {
+      await taskStore.createTask(payload);
     }
-  } else {
-    await taskStore.createTask(payload);
-  }
 
-  showCreateTaskModal.value = false;
+    showCreateTaskModal.value = false;
+  } catch (error) {
+    console.error('Failed to save task:', error);
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 const openCreateTaskForDate = (day) => {

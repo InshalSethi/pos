@@ -265,16 +265,22 @@ class TaskController extends Controller
 
         // Handle file attachments
         if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('task_attachments', 'public');
-                TaskAttachment::create([
-                    'task_id' => $task->id,
-                    'file_name' => $file->getClientOriginalName(),
-                    'file_path' => $path,
-                    'file_type' => $file->getClientMimeType(),
-                    'file_size' => $file->getSize(),
-                    'uploaded_by_id' => $user->id,
-                ]);
+            $files = $request->file('attachments');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('task_attachments', 'public');
+                    TaskAttachment::create([
+                        'task_id' => $task->id,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $path,
+                        'file_type' => $file->getClientMimeType(),
+                        'file_size' => $file->getSize(),
+                        'uploaded_by_id' => $user->id,
+                    ]);
+                }
             }
         }
 
@@ -344,16 +350,22 @@ class TaskController extends Controller
 
         // Handle file attachments
         if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('task_attachments', 'public');
-                TaskAttachment::create([
-                    'task_id' => $task->id,
-                    'file_name' => $file->getClientOriginalName(),
-                    'file_path' => $path,
-                    'file_type' => $file->getClientMimeType(),
-                    'file_size' => $file->getSize(),
-                    'uploaded_by_id' => $user->id,
-                ]);
+            $files = $request->file('attachments');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('task_attachments', 'public');
+                    TaskAttachment::create([
+                        'task_id' => $task->id,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $path,
+                        'file_type' => $file->getClientMimeType(),
+                        'file_size' => $file->getSize(),
+                        'uploaded_by_id' => $user->id,
+                    ]);
+                }
             }
         }
 
