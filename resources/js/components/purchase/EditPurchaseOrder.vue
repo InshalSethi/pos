@@ -3131,7 +3131,7 @@ const updateOrder = async () => {
       payment_details: [
         ...(useAdvanceBalance.value && advanceToApply.value > 0 ? [{
           payment_method: 'vendor_advance',
-          account_id: 'COA_10500',
+          account_id: 'COA_1310',
           amount: parseFloat(advanceToApply.value) || 0
         }] : []),
         ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{

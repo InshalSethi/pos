@@ -41,15 +41,11 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
     {
         parent::setUp();
 
-        $permissions = [
-            'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.delete', 'purchases.approve',
-            'payments.view', 'payments.create', 'payments.edit', 'payments.delete',
-            'banking.view', 'banking.create'
-        ];
-
-        foreach ($permissions as $perm) {
-            Permission::findOrCreate($perm, 'web');
-        }
+        $this->withoutMiddleware([
+            \App\Http\Middleware\EnsureCompanySetup::class,
+            \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            \Spatie\Permission\Middleware\RoleMiddleware::class,
+        ]);
 
         $this->user = User::factory()->create([
             'name' => 'Auditor User',
@@ -81,8 +77,8 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
             'is_setup_completed' => true,
             'onboarding_completed' => true,
         ]);
-        $this->user->givePermissionTo($permissions);
         \Laravel\Sanctum\Sanctum::actingAs($this->user, ['*']);
+        $this->actingAs($this->user);
 
         // Chart of Accounts Setup
         $this->inventoryAccount = Account::firstOrCreate(
@@ -461,5 +457,99 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
 
         $prVoided = PurchaseReturn::find($prC->id);
         $this->assertEquals('rejected', $prVoided->status);
+    }
+
+    /** @test */
+    public function test_scenario_3_purchase_order_void_and_advance_restoration()
+    {
+        // 1. Give supplier an initial advance balance of $100 & post initial advance to COA 1310
+        $this->supplier->update(['advance_balance' => 100.00]);
+        $advJe = JournalEntry::create([
+            'company_id' => $this->company->id,
+            'entry_number' => 'ADV-INIT-001',
+            'entry_date' => now()->toDateString(),
+            'reference' => 'Initial Supplier Advance',
+            'description' => 'Initial Advance Payment to Supplier',
+            'entry_type' => 'manual',
+            'status' => 'posted',
+            'total_debit' => 100.00,
+            'total_credit' => 100.00,
+            'created_by' => $this->user->id,
+            'posted_by' => $this->user->id,
+            'posted_at' => now(),
+            'source_type' => 'manual',
+            'source_id' => 1,
+        ]);
+        JournalEntryLine::create([
+            'journal_entry_id' => $advJe->id,
+            'account_id' => $this->vendorAdvanceAccount->id,
+            'debit_amount' => 100.00,
+            'credit_amount' => 0,
+            'description' => 'Supplier Advance',
+            'partner_type' => Supplier::class,
+            'partner_id' => $this->supplier->id,
+        ]);
+        JournalEntryLine::create([
+            'journal_entry_id' => $advJe->id,
+            'account_id' => $this->cashChartAccount->id,
+            'debit_amount' => 0,
+            'credit_amount' => 100.00,
+            'description' => 'Cash Vault',
+        ]);
+        $this->vendorAdvanceAccount->updateCurrentBalance();
+        $this->cashChartAccount->updateCurrentBalance();
+
+        $this->assertEquals(100.00, (float) $this->supplier->fresh()->advance_balance);
+        $this->assertEquals(100.00, (float) $this->vendorAdvanceAccount->fresh()->current_balance);
+
+        // 2. Create Purchase Order for $100 utilizing $100 advance balance
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'use_advance_balance' => true,
+            'used_advance_amount' => 100.00,
+            'advance_applied' => 100.00,
+            'amount_paid' => 100.00,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 10,
+                    'quantity_ordered' => 10,
+                    'unit_cost' => 10.00,
+                    'subtotal' => 100.00,
+                    'total_cost' => 100.00,
+                ]
+            ]
+        ];
+
+        $response = $this->postJson('/api/purchase-orders', $poData);
+        $response->assertStatus(201);
+        $po = PurchaseOrder::find($response->json('purchase_order.id'));
+
+        // Advance was consumed
+        $this->assertEquals(0.00, (float) $this->supplier->fresh()->advance_balance);
+        $this->assertEquals(0.00, (float) $this->vendorAdvanceAccount->fresh()->current_balance);
+
+        // 3. Void the Purchase Order
+        $voidResponse = $this->postJson("/api/purchase-orders/{$po->id}/void");
+        $voidResponse->assertStatus(200);
+
+        // Advance balance restored to supplier
+        $this->assertEquals(100.00, (float) $this->supplier->fresh()->advance_balance);
+
+        // COA 1310 Advance to Suppliers ledger restored to $100
+        $this->assertEquals(100.00, (float) $this->vendorAdvanceAccount->fresh()->current_balance);
+
+        // Check reversal journal entry
+        $reversalEntries = JournalEntry::where('source_type', 'purchase_order')
+            ->where('source_id', $po->id)
+            ->where('is_reversal', true)
+            ->get();
+        $this->assertNotEmpty($reversalEntries);
+
+        // PO status is cancelled
+        $this->assertEquals('cancelled', $po->fresh()->status);
     }
 }

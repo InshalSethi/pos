@@ -2356,19 +2356,40 @@ const remainingBillDue = computed(() => {
 const advanceToApply = computed(() => {
   if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
   const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
-  return Math.min(advanceBal, remainingBillDue.value);
+  return Math.min(advanceBal, grandTotal.value);
 });
 
 const effectiveDueAmount = computed(() => {
-  return Math.max(0, remainingBillDue.value - advanceToApply.value);
+  return Math.max(0, grandTotal.value - (directPaymentsSum.value + (useAdvanceBalance.value ? advanceToApply.value : 0)));
 });
 
 const dueAmount = computed(() => {
   return effectiveDueAmount.value;
 });
 
+watch(useAdvanceBalance, (isUsed) => {
+  if (isUsed) {
+    const adv = advanceToApply.value;
+    const remaining = Math.max(0, grandTotal.value - adv);
+    if (selectedPaymentMethods.value.includes('cash')) {
+      paymentAmounts.value.cash = parseFloat(remaining.toFixed(2));
+    } else if (selectedBankIds.value.length > 0) {
+      bankPaymentAmounts.value[selectedBankIds.value[0]] = parseFloat(remaining.toFixed(2));
+    }
+  } else {
+    const val = parseFloat(grandTotal.value.toFixed(2));
+    if (selectedPaymentMethods.value.includes('cash')) {
+      paymentAmounts.value.cash = val;
+    } else if (selectedBankIds.value.length > 0) {
+      bankPaymentAmounts.value[selectedBankIds.value[0]] = val;
+    }
+  }
+});
+
 watch(grandTotal, (newGrandTotal) => {
-  const val = parseFloat(newGrandTotal.toFixed(2));
+  const adv = useAdvanceBalance.value ? advanceToApply.value : 0;
+  const remaining = Math.max(0, newGrandTotal - adv);
+  const val = parseFloat(remaining.toFixed(2));
   if (selectedPaymentMethods.value.includes('cash')) {
     paymentAmounts.value.cash = val;
   } else if (selectedBankIds.value.length > 0) {
@@ -2587,7 +2608,7 @@ const loadProducts = async () => {
 
 const loadSuppliers = async () => {
   try {
-    const response = await api.get('/suppliers');
+    const response = await api.get('/suppliers', { params: { per_page: 100 } });
     suppliers.value = response.data.data || response.data || [];
   } catch (error) {
     console.error('Error loading suppliers:', error);
@@ -2595,16 +2616,30 @@ const loadSuppliers = async () => {
 };
 
 const searchSuppliers = async (query = '') => {
-  if (!query) {
-    supplierSearchResults.value = suppliers.value.slice(0, 5);
-    return;
+  try {
+    const response = await api.get('/suppliers', { params: { search: query, per_page: 15 } });
+    const list = response.data.data || response.data || [];
+    supplierSearchResults.value = list;
+    list.forEach(s => {
+      const idx = suppliers.value.findIndex(existing => existing.id === s.id);
+      if (idx !== -1) {
+        suppliers.value[idx] = { ...suppliers.value[idx], ...s };
+      } else {
+        suppliers.value.push(s);
+      }
+    });
+  } catch (e) {
+    if (!query) {
+      supplierSearchResults.value = suppliers.value.slice(0, 5);
+      return;
+    }
+    const search = query.toLowerCase();
+    supplierSearchResults.value = suppliers.value.filter(supplier =>
+      supplier.name.toLowerCase().includes(search) ||
+      (supplier.phone && supplier.phone.includes(search)) ||
+      (supplier.email && supplier.email.toLowerCase().includes(search))
+    ).slice(0, 5);
   }
-  const search = query.toLowerCase();
-  supplierSearchResults.value = suppliers.value.filter(supplier =>
-    supplier.name.toLowerCase().includes(search) ||
-    (supplier.phone && supplier.phone.includes(search)) ||
-    (supplier.email && supplier.email.toLowerCase().includes(search))
-  ).slice(0, 5);
 };
 
 const debouncedSupplierSearch = debounce(() => {
@@ -2901,7 +2936,7 @@ const onWalkinToggle = () => {
   }
 };
 
-const selectSupplier = (supplier) => {
+const selectSupplier = async (supplier) => {
   selectedSupplier.value = supplier;
   orderForm.value.supplier_id = supplier.id;
   orderForm.value.supplier_name = supplier.name || '';
@@ -2910,20 +2945,25 @@ const selectSupplier = (supplier) => {
   supplierSearch.value = supplier.name;
   supplierSearchResults.value = [];
   useAdvanceBalance.value = false;
-  // Fetch fresh supplier details from API
-  api.get(`/suppliers/${supplier.id}`).then(res => {
+  // Fetch fresh supplier details from API for real-time advance balance
+  try {
+    const res = await api.get(`/suppliers/${supplier.id}`);
     if (res.data) {
-      if (res.data.advance_balance !== undefined) {
-        selectedSupplier.value = { ...selectedSupplier.value, advance_balance: res.data.advance_balance };
-      }
+      selectedSupplier.value = { ...selectedSupplier.value, ...res.data };
       if (res.data.phone && !orderForm.value.supplier_phone) {
         orderForm.value.supplier_phone = res.data.phone;
       }
       if (res.data.email && !orderForm.value.supplier_email) {
         orderForm.value.supplier_email = res.data.email;
       }
+      const idx = suppliers.value.findIndex(s => s.id === supplier.id);
+      if (idx !== -1) {
+        suppliers.value[idx] = { ...suppliers.value[idx], ...res.data };
+      }
     }
-  }).catch(() => {});
+  } catch (e) {
+    console.error('Error fetching supplier details:', e);
+  }
 };
 
 const clearSupplier = () => {
@@ -3050,15 +3090,16 @@ const saveOrder = async () => {
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
-      amount_paid: totalPaidAmount.value || 0,
+      amount_paid: (totalPaidAmount.value || 0) + (useAdvanceBalance.value ? (parseFloat(advanceToApply.value) || 0) : 0),
       use_advance_balance: useAdvanceBalance.value,
-      advance_applied: advanceToApply.value,
+      used_advance_amount: useAdvanceBalance.value ? (parseFloat(advanceToApply.value) || 0) : 0,
+      advance_applied: useAdvanceBalance.value ? (parseFloat(advanceToApply.value) || 0) : 0,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       payment_details: [
         ...(useAdvanceBalance.value && advanceToApply.value > 0 ? [{
           payment_method: 'vendor_advance',
-          account_id: 'COA_10500',
+          account_id: 'COA_1310',
           amount: parseFloat(advanceToApply.value) || 0
         }] : []),
         ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{
