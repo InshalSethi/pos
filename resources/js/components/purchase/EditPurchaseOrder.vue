@@ -1435,7 +1435,7 @@
           </button>
           <button
             type="button"
-            @click="isCostOverrunModalOpen = false"
+            @click="keepCurrentPricesForOverrun"
             class="px-4 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer border-0"
           >
             Keep Current Prices
@@ -2808,6 +2808,8 @@ const onUnitCostInput = (index) => {
   const item = orderItems.value[index];
   if (!item) return;
 
+  if (item.dismissedOverrunWarning) return;
+
   const cost = parseFloat(item.unit_cost) || 0;
   const currentCost = getItemOriginalCost(item);
   const sale = getItemSellingPrice(item);
@@ -2834,11 +2836,19 @@ const onUnitCostInput = (index) => {
   }
 };
 
+const keepCurrentPricesForOverrun = () => {
+  if (activeOverrunItem.value && activeOverrunItem.value.item) {
+    activeOverrunItem.value.item.dismissedOverrunWarning = true;
+  }
+  isCostOverrunModalOpen.value = false;
+};
+
 const cancelCostOverrun = () => {
   if (activeOverrunItem.value && activeOverrunItem.value.item) {
     const item = activeOverrunItem.value.item;
     const origCost = getItemOriginalCost(item);
     item.unit_cost = origCost;
+    item.dismissedOverrunWarning = false;
     updateItemTotal(activeOverrunItem.value.index);
   }
   isCostOverrunModalOpen.value = false;
