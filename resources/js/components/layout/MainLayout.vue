@@ -1171,8 +1171,21 @@
           </div>
 
           <!-- Right side - User menu -->
-          <!-- Right side - User menu -->
-          <div class="flex items-center gap-4 ml-auto">
+          <div class="flex items-center gap-3.5 ml-auto">
+            <!-- Active Currency Sign Badge -->
+            <router-link
+              to="/settings"
+              class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/90 hover:bg-slate-200/90 dark:bg-[#252525] dark:hover:bg-[#2E2E2E] border border-gray-200 dark:border-[#2E2E2E] text-slate-800 dark:text-slate-200 shadow-xs transition-all duration-200 cursor-pointer select-none group"
+              :title="'Active Currency: ' + currencyCode + ' (' + currencySymbol + ') • Click to configure in Settings'"
+            >
+              <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-md bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60 text-xs font-black text-slate-900 dark:text-white shadow-xs group-hover:scale-105 transition-transform">
+                {{ currencySymbol }}
+              </span>
+              <span class="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">
+                {{ currencyCode }}
+              </span>
+            </router-link>
+
             <!-- Quick Add Dropdown -->
             <div class="relative">
               <button
@@ -1989,10 +2002,16 @@
 import { ref, onMounted, onUnmounted, computed, onErrorCaptured, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 import axios from 'axios';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
+
+const currencySymbol = computed(() => currencyStore.symbol);
+const currencyCode = computed(() => currencyStore.currencyCode);
+
 const hasPermission = (perm) => authStore.hasPermission(perm);
 
 const renderError = ref(false);
@@ -2508,11 +2527,17 @@ const addCompanyUrl = computed(() => {
 });
 
 // Lifecycle hooks
+const handleGlobalCompanySwitch = () => {
+  fetchCompanies();
+  currencyStore.fetchCurrencies();
+};
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  window.addEventListener('company-switched-globally', fetchCompanies);
+  window.addEventListener('company-switched-globally', handleGlobalCompanySwitch);
   fetchNotifications();
   fetchCompanies();
+  currencyStore.fetchCurrencies();
 
   // Initialize Theme
   applyTheme(currentThemeSetting.value);
@@ -2530,6 +2555,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
-  window.removeEventListener('company-switched-globally', fetchCompanies);
+  window.removeEventListener('company-switched-globally', handleGlobalCompanySwitch);
 });
 </script>
