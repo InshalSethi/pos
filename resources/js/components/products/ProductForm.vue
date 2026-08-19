@@ -32,39 +32,74 @@
           
           <!-- 1. GENERAL SECTION HEADER -->
           <div class="space-y-3">
-            <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-2 mb-3 flex items-center justify-between">
-              <!-- Left Side: Product / Service Radio Toggle -->
-              <div class="flex items-center gap-2 select-none">
-                <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
-                  <button
-                    v-for="opt in typeOptions"
-                    :key="opt.value"
-                    type="button"
-                    @click="form.type = opt.value"
-                    class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
-                    :class="form.type === opt.value
-                      ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
-                      : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
-                  >
-                    {{ opt.label }}
-                  </button>
+            <div class="border-b border-gray-200 dark:border-[#2E2E2E] pb-3 mb-3 space-y-3">
+              <!-- Top Header Controls Bar -->
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <!-- Left Side: Expanded 5-Type Selector Pill Buttons -->
+                <div class="flex items-center gap-2 select-none w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                  <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner gap-1">
+                    <button
+                      v-for="opt in typeOptions"
+                      :key="opt.value"
+                      type="button"
+                      @click="setItemType(opt.value)"
+                      class="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                      :class="(form.item_type === opt.value || (!form.item_type && form.type === opt.value))
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-200/50 dark:hover:bg-zinc-800/50'"
+                    >
+                      <span>{{ opt.label }}</span>
+                    </button>
+                  </div>
+                </div>
+                <!-- Right Side: Status Toggle (Draft, Inactive, Active) -->
+                <div class="flex items-center gap-2 select-none shrink-0">
+                  <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
+                    <button
+                      v-for="opt in statusOptions"
+                      :key="opt.value"
+                      type="button"
+                      @click="setStatus(opt.value)"
+                      class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
+                      :class="form.status === opt.value
+                        ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
+                        : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
+                    >
+                      {{ opt.label }}
+                    </button>
+                  </div>
                 </div>
               </div>
-              <!-- Right Side: Status Toggle (Draft, Inactive, Active) -->
-              <div class="flex items-center gap-2 select-none">
-                <div class="inline-flex p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-inner">
-                  <button
-                    v-for="opt in statusOptions"
-                    :key="opt.value"
-                    type="button"
-                    @click="setStatus(opt.value)"
-                    class="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer"
-                    :class="form.status === opt.value
-                      ? 'bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-md border border-slate-200/80 dark:border-zinc-750'
-                      : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'"
-                  >
-                    {{ opt.label }}
-                  </button>
+
+              <!-- Item Type Description & Business Capability Flags Sub-bar -->
+              <div class="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-medium">
+                  <span class="px-2 py-0.5 rounded-md bg-indigo-600 text-white font-bold text-[10px] uppercase">
+                    {{ (typeOptions.find(o => o.value === form.item_type) || {}).label || 'Standard Product' }}
+                  </span>
+                  <span class="text-slate-600 dark:text-slate-400 text-[11px]">
+                    <template v-if="form.item_type === 'raw_material'">Purchased raw material used in recipe BOMs (e.g. Chicken, Flour, Spices). Not listed for direct sale.</template>
+                    <template v-else-if="form.item_type === 'finished_good'">Manufactured / Cooked recipe product (e.g. Burger, Pizza, Cake). Auto-deducts ingredients when sold.</template>
+                    <template v-else-if="form.item_type === 'fixed_asset'">Fixed asset / Shop equipment (e.g. Fridges, Machinery, Chairs). Managed in Fixed Asset registry.</template>
+                    <template v-else-if="form.item_type === 'service'">Non-inventory service item.</template>
+                    <template v-else>Standard inventory item bought and sold directly.</template>
+                  </span>
+                </div>
+
+                <!-- Business Flags Checks -->
+                <div class="flex items-center gap-4 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" v-model="form.can_be_sold" class="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5">
+                    <span>Can be Sold</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" v-model="form.can_be_purchased" class="rounded border-slate-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5">
+                    <span>Can be Purchased</span>
+                  </label>
+                  <label v-if="form.item_type === 'finished_good'" class="flex items-center gap-1.5 cursor-pointer text-amber-700 dark:text-amber-400 font-bold">
+                    <input type="checkbox" v-model="form.auto_deduct_ingredients" class="rounded border-amber-300 dark:border-amber-700 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5">
+                    <span>Auto Deduct Ingredients on Sale</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -1968,11 +2003,60 @@ const emit = defineEmits(['submit']);
 // Hollow favorite star state
 const isStarred = ref(false);
 
-// Item type options (Product, Service)
+// Expanded 5 Item Types for multi-business, restaurant, bakery, factory, asset management
 const typeOptions = [
-  { label: 'Product', value: 'product' },
+  { label: 'Standard Product', value: 'standard' },
+  { label: 'Raw Material', value: 'raw_material' },
+  { label: 'Finished Good', value: 'finished_good' },
+  { label: 'Fixed Asset', value: 'fixed_asset' },
   { label: 'Service', value: 'service' }
 ];
+
+const setItemType = (typeVal) => {
+  form.value.item_type = typeVal;
+  
+  if (typeVal === 'service') {
+    form.value.type = 'service';
+    form.value.can_be_sold = true;
+    form.value.enabled_for_sale = true;
+    form.value.can_be_purchased = false;
+    form.value.enabled_for_purchase = false;
+    form.value.track_inventory = false;
+    form.value.cost_price = '';
+  } else if (typeVal === 'raw_material') {
+    form.value.type = 'product';
+    form.value.can_be_purchased = true;
+    form.value.enabled_for_purchase = true;
+    form.value.can_be_sold = false;
+    form.value.enabled_for_sale = false;
+    form.value.track_inventory = true;
+    form.value.selling_price = '';
+  } else if (typeVal === 'finished_good') {
+    form.value.type = 'product';
+    form.value.can_be_sold = true;
+    form.value.enabled_for_sale = true;
+    form.value.can_be_purchased = false;
+    form.value.enabled_for_purchase = false;
+    form.value.auto_deduct_ingredients = true;
+    form.value.track_inventory = true;
+    form.value.cost_price = '';
+  } else if (typeVal === 'fixed_asset') {
+    form.value.type = 'product';
+    form.value.can_be_purchased = true;
+    form.value.enabled_for_purchase = true;
+    form.value.can_be_sold = false;
+    form.value.enabled_for_sale = false;
+    form.value.track_inventory = false;
+    form.value.selling_price = '';
+  } else { // standard
+    form.value.type = 'product';
+    form.value.can_be_sold = true;
+    form.value.enabled_for_sale = true;
+    form.value.can_be_purchased = true;
+    form.value.enabled_for_purchase = true;
+    form.value.track_inventory = true;
+  }
+};
 
 // Service type options (Hourly, Daily, Weekly, Monthly, Yearly, Task Based, One Time)
 const serviceTypeOptions = [
@@ -2133,6 +2217,10 @@ const sanitizeInitialData = (data) => {
     image: null,
     image_url: null,
     type: 'product',
+    item_type: 'standard',
+    can_be_sold: true,
+    can_be_purchased: true,
+    auto_deduct_ingredients: true,
     service_type: 'hourly',
     service_detail: '',
     enabled_for_sale: true,
@@ -2192,12 +2280,22 @@ const sanitizeInitialData = (data) => {
     sanitized.warehouse_id = sanitized.warehouse_ids[0] || '';
   }
 
-  // Set enabled fields on edit/load based on data values
+  // Set enabled fields on edit/load based on data values and item_type flags
   if (data) {
     sanitized.enabled_for_wholesale = data.wholesale_price && parseFloat(data.wholesale_price) > 0 ? true : false;
     sanitized.enabled_for_tax = data.tax_rate !== undefined && data.tax_rate !== null && parseFloat(data.tax_rate) > 0 ? true : false;
-    sanitized.enabled_for_sale = data.selling_price && parseFloat(data.selling_price) > 0 ? true : (data.selling_price === undefined ? true : false);
-    sanitized.enabled_for_purchase = data.cost_price && parseFloat(data.cost_price) > 0 ? true : (data.cost_price === undefined ? true : false);
+    
+    if (sanitized.can_be_sold !== undefined) {
+      sanitized.enabled_for_sale = !!sanitized.can_be_sold;
+    } else {
+      sanitized.enabled_for_sale = data.selling_price && parseFloat(data.selling_price) > 0 ? true : true;
+    }
+
+    if (sanitized.can_be_purchased !== undefined) {
+      sanitized.enabled_for_purchase = !!sanitized.can_be_purchased;
+    } else {
+      sanitized.enabled_for_purchase = data.cost_price && parseFloat(data.cost_price) > 0 ? true : true;
+    }
   }
 
   // Backward compatibility check
@@ -3748,6 +3846,38 @@ watch(() => form.value.type, (newType) => {
     form.value.track_inventory = false;
   }
 }, { immediate: true });
+
+watch(() => form.value.can_be_sold, (newVal) => {
+  form.value.enabled_for_sale = !!newVal;
+  if (!newVal) {
+    form.value.selling_price = '';
+  }
+});
+
+watch(() => form.value.can_be_purchased, (newVal) => {
+  form.value.enabled_for_purchase = !!newVal;
+  if (!newVal) {
+    form.value.cost_price = '';
+  }
+});
+
+watch(() => form.value.enabled_for_sale, (newVal) => {
+  if (form.value.can_be_sold !== !!newVal) {
+    form.value.can_be_sold = !!newVal;
+  }
+  if (!newVal) {
+    form.value.selling_price = '';
+  }
+});
+
+watch(() => form.value.enabled_for_purchase, (newVal) => {
+  if (form.value.can_be_purchased !== !!newVal) {
+    form.value.can_be_purchased = !!newVal;
+  }
+  if (!newVal) {
+    form.value.cost_price = '';
+  }
+});
 
 watch(
   [() => form.value.has_variations, () => form.value.variations],

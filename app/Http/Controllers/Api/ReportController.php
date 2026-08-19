@@ -562,4 +562,63 @@ class ReportController extends Controller
             'customers' => $customers
         ]);
     }
+
+    /**
+     * Business Assets & Inventory Valuation Breakdown Report
+     */
+    public function businessValuation(Request $request)
+    {
+        $products = Product::with(['category', 'variations'])->get();
+
+        $rawMaterialsValue = 0;
+        $finishedGoodsValue = 0;
+        $standardProductsValue = 0;
+
+        foreach ($products as $p) {
+            if ($p->has_variations && $p->variations->count() > 0) {
+                foreach ($p->variations as $v) {
+                    $cost = (float) ($v->cost_price ?? $p->cost_price ?? 0);
+                    $qty = (float) ($v->stock_qty ?? 0);
+                    $val = $cost * $qty;
+
+                    if ($p->item_type === 'raw_material') {
+                        $rawMaterialsValue += $val;
+                    } elseif ($p->item_type === 'finished_good') {
+                        $finishedGoodsValue += $val;
+                    } else {
+                        $standardProductsValue += $val;
+                    }
+                }
+            } else {
+                $cost = (float) ($p->cost_price ?? 0);
+                $qty = (float) ($p->stock_quantity ?? 0);
+                $val = $cost * $qty;
+
+                if ($p->item_type === 'raw_material') {
+                    $rawMaterialsValue += $val;
+                } elseif ($p->item_type === 'finished_good') {
+                    $finishedGoodsValue += $val;
+                } else {
+                    $standardProductsValue += $val;
+                }
+            }
+        }
+
+        $assetSummary = json_decode(app(\App\Http\Controllers\Api\AssetController::class)->summary()->getContent(), true);
+        $totalFixedAssetsValue = $assetSummary['total_current_valuation'] ?? 0;
+        $totalFixedAssetsCost = $assetSummary['total_purchase_cost'] ?? 0;
+
+        $totalInventoryValue = $rawMaterialsValue + $finishedGoodsValue + $standardProductsValue;
+        $totalBusinessAssets = $totalInventoryValue + $totalFixedAssetsValue;
+
+        return response()->json([
+            'raw_materials_valuation' => round($rawMaterialsValue, 2),
+            'finished_goods_valuation' => round($finishedGoodsValue, 2),
+            'standard_inventory_valuation' => round($standardProductsValue, 2),
+            'total_inventory_valuation' => round($totalInventoryValue, 2),
+            'fixed_assets_cost' => round($totalFixedAssetsCost, 2),
+            'fixed_assets_current_valuation' => round($totalFixedAssetsValue, 2),
+            'total_business_assets_valuation' => round($totalBusinessAssets, 2),
+        ]);
+    }
 }

@@ -517,6 +517,30 @@
                 <div v-if="$route.path === '/inventory/histories'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
                 Histories
               </router-link>
+              <router-link
+                to="/manufacturing/recipes"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/manufacturing/recipes'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/manufacturing/recipes'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Bill of Materials
+              </router-link>
+              <router-link
+                to="/manufacturing/production"
+                :class="[
+                  'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                  $route.path === '/manufacturing/production'
+                    ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                    : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                ]"
+              >
+                <div v-if="$route.path === '/manufacturing/production'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                Batch Production
+              </router-link>
             </div>
           </transition>
         </div>
@@ -721,6 +745,19 @@
                 >
                   <div v-if="$route.path === '/banking/manual-journals' || $route.path === '/accounting/journal-entries'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
                   Journal Entries
+                </router-link>
+
+                <router-link
+                  to="/assets"
+                  :class="[
+                    'group flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 relative',
+                    $route.path === '/assets'
+                      ? 'text-indigo-600 bg-indigo-50/40 dark:text-indigo-400 dark:bg-indigo-600/10 font-semibold'
+                      : 'text-slate-500 dark:text-slate-100 hover:text-slate-950 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-all duration-200 font-medium'
+                  ]"
+                >
+                  <div v-if="$route.path === '/assets'" class="absolute -left-[18.5px] top-0 bottom-0 w-[1.5px] bg-indigo-600"></div>
+                  Fixed Assets
                 </router-link>
               </div>
             </transition>

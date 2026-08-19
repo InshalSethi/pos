@@ -2615,7 +2615,7 @@ const fetchPurchaseOrder = async () => {
 const loadProducts = async () => {
   try {
     loadingProducts.value = true;
-    const response = await api.get('/sales/products-with-stock');
+    const response = await api.get('/sales/products-with-stock', { params: { can_be_purchased: true } });
     products.value = response.data.items || response.data.products || [];
   } catch (error) {
     showNotification('Error loading products', 'error');

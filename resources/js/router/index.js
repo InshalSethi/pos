@@ -179,6 +179,24 @@ const routes = [
         meta: { permission: 'inventory.view' }
       },
       {
+        path: 'manufacturing/recipes',
+        name: 'Recipes',
+        component: () => import('@/components/manufacturing/Recipes.vue'),
+        meta: { permission: 'products.view' }
+      },
+      {
+        path: 'manufacturing/production',
+        name: 'ProductionOrders',
+        component: () => import('@/components/manufacturing/ProductionOrders.vue'),
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'assets',
+        name: 'Assets',
+        component: () => import('@/components/assets/Assets.vue'),
+        meta: { permission: 'accounting.view' }
+      },
+      {
         path: 'inventory/transfer-orders/create',
         name: 'CreateTransferOrder',
         component: () => import('@/components/inventory/CreateTransferOrder.vue'),

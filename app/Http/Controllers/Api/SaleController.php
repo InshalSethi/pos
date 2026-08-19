@@ -880,6 +880,13 @@ class SaleController extends Controller
                 \Illuminate\Support\Facades\Log::warning('Accounting entry creation failed (non-blocking): ' . $accountingError->getMessage());
             }
 
+            // Execute recipe auto-deduction for finished goods
+            try {
+                (new \App\Services\RecipeDeductionService())->deductForSale($sale);
+            } catch (\Throwable $recipeError) {
+                \Illuminate\Support\Facades\Log::warning('Recipe auto-deduction failed (non-blocking): ' . $recipeError->getMessage());
+            }
+
             DB::commit();
 
             $sale->load(['customer', 'user', 'saleItems.product', 'saleItems.variation', 'saleItems.warehouse']);
@@ -2379,9 +2386,21 @@ class SaleController extends Controller
         $taxes = \App\Models\Tax::where('company_id', $companyId)->where('is_active', true)->get();
 
         // Fetch products with category hierarchy, brand, unit and variations
-        $products = Product::where('company_id', $companyId)
+        $productQuery = Product::where('company_id', $companyId)
             ->where('status', '!=', 'draft')
-            ->where('is_active', true)
+            ->where('is_active', true);
+
+        if ($request->filled('can_be_sold')) {
+            $productQuery->where('can_be_sold', $request->boolean('can_be_sold'));
+        } elseif ($request->filled('can_be_purchased')) {
+            $productQuery->where('can_be_purchased', $request->boolean('can_be_purchased'));
+        } elseif ($request->input('context') === 'purchase' || $request->boolean('is_purchase')) {
+            $productQuery->where('can_be_purchased', true);
+        } else {
+            $productQuery->where('can_be_sold', true);
+        }
+
+        $products = $productQuery
             ->with(['category.parent.parent', 'brand', 'unit', 'variations'])
             ->get();
 
@@ -2468,6 +2487,9 @@ class SaleController extends Controller
                         'category_id' => $product->category_id,
                         'category_path' => $categoryPath,
                         'brand_name' => $brandName,
+                        'item_type' => $product->item_type ?? 'standard',
+                        'can_be_sold' => (bool) ($product->can_be_sold ?? true),
+                        'can_be_purchased' => (bool) ($product->can_be_purchased ?? true),
                     ];
                 }
             } else {
@@ -2507,6 +2529,9 @@ class SaleController extends Controller
                     'category_id' => $product->category_id,
                     'category_path' => $categoryPath,
                     'brand_name' => $brandName,
+                    'item_type' => $product->item_type ?? 'standard',
+                    'can_be_sold' => (bool) ($product->can_be_sold ?? true),
+                    'can_be_purchased' => (bool) ($product->can_be_purchased ?? true),
                 ];
             }
         }
