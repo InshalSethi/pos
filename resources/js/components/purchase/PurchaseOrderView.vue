@@ -126,7 +126,19 @@
               </div>
               <div class="border-t pt-2 flex justify-between">
                 <span class="text-base font-semibold">Total:</span>
-                <span class="text-base font-semibold">{{ formatCurrency(purchaseOrder.total_amount) }}</span>
+                <span class="text-base font-semibold">{{ formatCurrency(purchaseOrder.total_amount || purchaseOrder.grand_total) }}</span>
+              </div>
+              <div v-if="parseFloat(purchaseOrder.amount_paid || 0) > 0" class="flex justify-between text-emerald-600 font-medium">
+                <span>Paid:</span>
+                <span>{{ formatCurrency(purchaseOrder.amount_paid) }}</span>
+              </div>
+              <div v-if="parseFloat(purchaseOrder.advance_amount || 0) > 0" class="flex justify-between text-amber-600 font-bold">
+                <span>Advance:</span>
+                <span>{{ formatCurrency(purchaseOrder.advance_amount) }}</span>
+              </div>
+              <div v-if="parseFloat(purchaseOrder.due_amount || 0) > 0" class="flex justify-between text-rose-600 font-semibold">
+                <span>Due:</span>
+                <span>{{ formatCurrency(purchaseOrder.due_amount) }}</span>
               </div>
             </div>
           </div>

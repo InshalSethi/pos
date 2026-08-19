@@ -522,21 +522,31 @@ class PurchaseOrderController extends Controller
             }
 
             // --- OVERPAYMENT / ADVANCE BALANCE & STATUS COMPUTATION ---
-            $totalPaymentsPaid = (float) Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
+            $paidPayments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
                 ->where('reference_id', $purchaseOrder->id)
-                ->where('status', 'paid')
-                ->sum('amount');
+                ->whereIn('status', ['paid', 'completed'])
+                ->get();
 
+            $totalPaymentsPaid = (float) $paidPayments->sum('amount');
             $totalPaid = $advanceApplied + $totalPaymentsPaid;
             $grandTotal = (float) $purchaseOrder->grand_total;
 
             if ($totalPaid >= $grandTotal) {
                 $excess = $totalPaid - $grandTotal;
                 if ($excess > 0 && $supplier) {
-                    $supplier->creditAdvance($excess);
+                    $alreadyCredited = 0;
+                    foreach ($paidPayments as $p) {
+                        $alloc = $p->additional_data['supplier_allocation'] ?? [];
+                        $alreadyCredited += (float) ($alloc['applied_advance'] ?? 0);
+                    }
+                    $uncreditedExcess = max(0, $excess - $alreadyCredited);
+                    if ($uncreditedExcess > 0) {
+                        $supplier->creditAdvance($uncreditedExcess);
+                    }
                 }
                 $purchaseOrder->update([
                     'amount_paid' => $grandTotal,
+                    'advance_amount' => $excess,
                     'due_amount' => 0,
                     'status' => 'paid',
                 ]);
@@ -544,12 +554,14 @@ class PurchaseOrderController extends Controller
                 $due = max(0, $grandTotal - $totalPaid);
                 $purchaseOrder->update([
                     'amount_paid' => $totalPaid,
+                    'advance_amount' => 0,
                     'due_amount' => $due,
                     'status' => 'partial',
                 ]);
             } else {
                 $purchaseOrder->update([
                     'amount_paid' => 0,
+                    'advance_amount' => 0,
                     'due_amount' => $grandTotal,
                     'status' => 'due',
                 ]);
@@ -848,17 +860,31 @@ class PurchaseOrderController extends Controller
             }
 
             // --- STATUS COMPUTATION FOR UPDATED PO ---
-            $totalPaymentsPaid = (float) Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
+            $paidPayments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
                 ->where('reference_id', $purchaseOrder->id)
-                ->where('status', 'paid')
-                ->sum('amount');
+                ->whereIn('status', ['paid', 'completed'])
+                ->get();
 
+            $totalPaymentsPaid = (float) $paidPayments->sum('amount');
             $totalPaid = $totalPaymentsPaid;
             $grandTotal = (float) $purchaseOrder->grand_total;
 
             if ($totalPaid >= $grandTotal) {
+                $excess = $totalPaid - $grandTotal;
+                if ($excess > 0 && $supplier) {
+                    $alreadyCredited = 0;
+                    foreach ($paidPayments as $p) {
+                        $alloc = $p->additional_data['supplier_allocation'] ?? [];
+                        $alreadyCredited += (float) ($alloc['applied_advance'] ?? 0);
+                    }
+                    $uncreditedExcess = max(0, $excess - $alreadyCredited);
+                    if ($uncreditedExcess > 0) {
+                        $supplier->creditAdvance($uncreditedExcess);
+                    }
+                }
                 $purchaseOrder->update([
                     'amount_paid' => $grandTotal,
+                    'advance_amount' => $excess,
                     'due_amount' => 0,
                     'status' => 'paid',
                 ]);
@@ -866,12 +892,14 @@ class PurchaseOrderController extends Controller
                 $due = max(0, $grandTotal - $totalPaid);
                 $purchaseOrder->update([
                     'amount_paid' => $totalPaid,
+                    'advance_amount' => 0,
                     'due_amount' => $due,
                     'status' => 'partial',
                 ]);
             } else {
                 $purchaseOrder->update([
                     'amount_paid' => 0,
+                    'advance_amount' => 0,
                     'due_amount' => $grandTotal,
                     'status' => 'due',
                 ]);
@@ -1260,8 +1288,10 @@ class PurchaseOrderController extends Controller
                 }
 
                 if ($bankAccId) {
+                    $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
                     $payment = Payment::create([
-                        'payment_number' => Payment::generatePaymentNumber(),
+                        'company_id' => $companyId,
+                        'payment_number' => Payment::generatePaymentNumber($companyId),
                         'payment_type' => 'supplier_payment',
                         'payee_type' => Supplier::class,
                         'payee_id' => $supplier->id,
@@ -1307,8 +1337,10 @@ class PurchaseOrderController extends Controller
                 }
 
                 if ($bankAccId) {
+                    $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
                     $payment = Payment::create([
-                        'payment_number' => Payment::generatePaymentNumber(),
+                        'company_id' => $companyId,
+                        'payment_number' => Payment::generatePaymentNumber($companyId),
                         'payment_type' => 'supplier_payment',
                         'payee_type' => Supplier::class,
                         'payee_id' => $supplier->id,

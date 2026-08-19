@@ -252,20 +252,36 @@ class Payment extends Model
     }
 
     // Generate payment number
-    public static function generatePaymentNumber(): string
+    public static function generatePaymentNumber(?int $companyId = null): string
     {
+        $companyId = $companyId ?? (auth()->user()?->current_company_id ?? 1);
         $prefix = 'PAY';
         $year = Carbon::now()->year;
         $month = Carbon::now()->format('m');
+        $datePrefix = "{$year}{$month}";
 
-        $lastPayment = static::whereYear('created_at', $year)
-                           ->whereMonth('created_at', $month)
+        $lastPayment = static::withoutGlobalScopes()
+                           ->where('company_id', $companyId)
+                           ->where('payment_number', 'like', "{$prefix}{$datePrefix}%")
                            ->orderBy('id', 'desc')
                            ->first();
 
-        $sequence = $lastPayment ? (int) substr($lastPayment->payment_number, -4) + 1 : 1;
+        $sequence = 1;
+        if ($lastPayment && strlen($lastPayment->payment_number) >= 4) {
+            $last4 = substr($lastPayment->payment_number, -4);
+            if (is_numeric($last4)) {
+                $sequence = (int) $last4 + 1;
+            }
+        }
 
-        return sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        $paymentNumber = sprintf('%s%s%04d', $prefix, $datePrefix, $sequence);
+
+        while (static::withoutGlobalScopes()->where('company_id', $companyId)->where('payment_number', $paymentNumber)->exists()) {
+            $sequence++;
+            $paymentNumber = sprintf('%s%s%04d', $prefix, $datePrefix, $sequence);
+        }
+
+        return $paymentNumber;
     }
 
     // Check if payment can be edited

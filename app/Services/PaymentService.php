@@ -136,9 +136,11 @@ class PaymentService
         }
 
         return DB::transaction(function () use ($payment) {
+            $companyId = $payment->company_id ?: (auth()->user()?->current_company_id ?? 1);
             // Create journal entry
             $journalEntry = JournalEntry::create([
-                'entry_number' => $this->generateJournalEntryNumber(),
+                'company_id' => $companyId,
+                'entry_number' => $this->generateJournalEntryNumber($companyId),
                 'entry_date' => $payment->payment_date,
                 'reference' => $payment->payment_number,
                 'description' => $this->getJournalEntryDescription($payment),
@@ -586,26 +588,41 @@ class PaymentService
     }
 
     /**
-     * Generate journal entry number
+     * Generate journal entry number cleanly with company scope and withoutGlobalScopes
      */
-    protected function generateJournalEntryNumber(): string
+    protected function generateJournalEntryNumber(?int $companyId = null): string
     {
+        $companyId = $companyId ?? (auth()->user()?->current_company_id ?? 1);
         $prefix = 'JE';
         $year = now()->year;
         $month = now()->format('m');
+        $datePrefix = "{$year}{$month}";
 
-        $lastEntry = JournalEntry::whereYear('created_at', $year)
-            ->where('entry_number', 'like', $prefix . '%')
-                               ->whereMonth('created_at', $month)
-                               ->orderBy('id', 'desc')
-                               ->first();
+        $query = JournalEntry::withoutGlobalScopes()
+            ->withTrashed()
+            ->where('company_id', $companyId)
+            ->where('entry_number', 'like', "{$prefix}{$datePrefix}%")
+            ->orderBy('id', 'desc');
 
-        $sequence = $lastEntry ? (int) substr($lastEntry->entry_number, -4) + 1 : 1;
-        $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+        if (\Illuminate\Support\Facades\DB::transactionLevel() > 0) {
+            $query->lockForUpdate();
+        }
 
-        while (JournalEntry::where('entry_number', $entryNumber)->exists()) {
+        $lastEntry = $query->first();
+
+        $sequence = 1;
+        if ($lastEntry && strlen($lastEntry->entry_number) >= 4) {
+            $last4 = substr($lastEntry->entry_number, -4);
+            if (is_numeric($last4)) {
+                $sequence = (int) $last4 + 1;
+            }
+        }
+
+        $entryNumber = sprintf('%s%s%04d', $prefix, $datePrefix, $sequence);
+
+        while (JournalEntry::withoutGlobalScopes()->withTrashed()->where('company_id', $companyId)->where('entry_number', $entryNumber)->exists()) {
             $sequence++;
-            $entryNumber = sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
+            $entryNumber = sprintf('%s%s%04d', $prefix, $datePrefix, $sequence);
         }
 
         return $entryNumber;

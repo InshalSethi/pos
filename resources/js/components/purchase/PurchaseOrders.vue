@@ -164,6 +164,7 @@
               <th class="py-3 px-4">Warehouse / Location</th>
               <th class="py-3 px-4 text-right">Total</th>
               <th class="py-3 px-4 text-right">Paid</th>
+              <th class="py-3 px-4 text-right">Advance</th>
               <th class="py-3 px-4 text-right">Due</th>
               <th class="py-3 px-4">Due Date</th>
               <th class="py-3 px-4 text-center">Status</th>
@@ -172,13 +173,13 @@
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
+              <td colspan="11" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
                 <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
                 Loading purchase orders...
               </td>
             </tr>
             <tr v-else-if="orders.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
+              <td colspan="11" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -252,6 +253,19 @@
               <!-- Paid Amount -->
               <td class="py-4 px-4 text-right font-semibold text-emerald-600 dark:text-emerald-400 text-sm align-middle bg-white dark:bg-zinc-900">
                 {{ parseFloat(item.amount_paid || item.paid_amount || 0) > 0 ? formatCurrency(item.amount_paid || item.paid_amount) : '-' }}
+              </td>
+
+              <!-- Advance Amount -->
+              <td class="py-4 px-4 text-right font-bold text-sm align-middle bg-white dark:bg-zinc-900">
+                <span
+                  v-if="parseFloat(item.advance_amount || 0) > 0"
+                  class="text-amber-600 dark:text-amber-400"
+                >
+                  {{ formatCurrency(item.advance_amount) }}
+                </span>
+                <span v-else class="text-slate-400 dark:text-zinc-500 font-medium">
+                  -
+                </span>
               </td>
 
               <!-- Due Amount -->
