@@ -1047,9 +1047,9 @@
               <!-- Row 1: Primary Action (Update Purchase Order) -->
               <button
                 @click="updateOrder"
-                :disabled="orderItems.length === 0 || saving || !selectedSupplier || isEditPaymentBalanceExceeded"
+                :disabled="orderItems.length === 0 || saving || !selectedSupplier"
                 class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
-                :title="isEditPaymentBalanceExceeded ? 'Cannot update: Insufficient balance in selected payment account' : ''"
+                :title="isEditPaymentBalanceExceeded ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''"
               >
                 <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -3096,8 +3096,7 @@ const updateOrder = async () => {
   }
 
   if (hasInsufficientPaymentBalance.value) {
-    showNotification('Cannot update purchase order: Insufficient balance in selected payment account', 'error');
-    return;
+    showNotification('Warning: Entered amount exceeds selected account\'s available balance', 'warning');
   }
 
   saving.value = true;

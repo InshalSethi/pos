@@ -1030,9 +1030,9 @@
             <!-- Row 1: Primary Action (Save Purchase Order) -->
             <button
               @click="saveOrder"
-              :disabled="orderItems.length === 0 || saving || !selectedSupplier || hasInsufficientPaymentBalance"
+              :disabled="orderItems.length === 0 || saving || !selectedSupplier"
               class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
-              :title="hasInsufficientPaymentBalance ? 'Cannot save: Insufficient balance in selected payment account(s)' : ''"
+              :title="hasInsufficientPaymentBalance ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''"
             >
               <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -3013,8 +3013,7 @@ const saveOrder = async () => {
   }
 
   if (hasInsufficientPaymentBalance.value) {
-    showNotification('Cannot submit purchase order: Insufficient balance in selected payment account(s)', 'error');
-    return;
+    showNotification('Warning: Entered amount exceeds selected account\'s available balance', 'warning');
   }
 
   const invalidItem = orderItems.value.find(item => !isItemAllocationValid(item));
