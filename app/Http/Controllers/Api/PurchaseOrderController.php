@@ -73,34 +73,42 @@ class PurchaseOrderController extends Controller
     public function getStatusCounts(): JsonResponse
     {
         try {
-            $hasDueCol = \Schema::hasColumn('purchase_orders', 'due_amount');
-            $hasPaidCol = \Schema::hasColumn('purchase_orders', 'amount_paid');
+            $companyId = auth()->user()?->current_company_id ?? 1;
 
-            $all = PurchaseOrder::count();
-            $draft = PurchaseOrder::where('status', 'draft')->count();
-            $approved = PurchaseOrder::whereIn('status', ['approved', 'confirmed', 'sent'])->count();
+            $all = PurchaseOrder::where('company_id', $companyId)->count();
+            $draft = PurchaseOrder::where('company_id', $companyId)->where('status', 'draft')->count();
+            $approved = PurchaseOrder::where('company_id', $companyId)->whereIn('status', ['approved', 'confirmed', 'sent'])->count();
             
-            $paid = PurchaseOrder::where(function ($q) use ($hasDueCol) {
-                $q->where('status', 'received');
-                if ($hasDueCol) {
-                    $q->orWhere(function ($sub) {
-                        $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
-                    });
-                }
+            $paid = PurchaseOrder::where('company_id', $companyId)->where(function ($q) {
+                $q->where('status', 'paid')
+                  ->orWhere(function ($sub) {
+                      $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
+                  });
             })->count();
 
-            $partial = PurchaseOrder::where(function ($q) use ($hasDueCol, $hasPaidCol) {
-                $q->where('status', 'partially_received');
-                if ($hasDueCol && $hasPaidCol) {
-                    $q->orWhere(function ($sub) {
-                        $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
-                    });
-                }
+            $partial = PurchaseOrder::where('company_id', $companyId)->where(function ($q) {
+                $q->where('status', 'partial')
+                  ->orWhere('status', 'partially_received')
+                  ->orWhere(function ($sub) {
+                      $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+                  });
             })->count();
 
-            $overdue = PurchaseOrder::whereNotIn('status', ['received', 'cancelled', 'void'])
+            $due = PurchaseOrder::where('company_id', $companyId)->where(function ($q) {
+                $q->where('status', 'due')
+                  ->orWhere(function ($sub) {
+                      $sub->where('due_amount', '>', 0)->where(function ($amt) {
+                          $amt->whereNull('amount_paid')->orWhere('amount_paid', '<=', 0);
+                      });
+                  });
+            })->whereNotIn('status', ['cancelled', 'void', 'voided', 'draft'])->count();
+
+            $overdue = PurchaseOrder::where('company_id', $companyId)
+                ->whereNotIn('status', ['paid', 'received', 'cancelled', 'void', 'voided'])
+                ->where('due_amount', '>', 0)
+                ->whereNotNull('expected_delivery_date')
                 ->where('expected_delivery_date', '<', today())->count();
-            $void = PurchaseOrder::whereIn('status', ['cancelled', 'void', 'voided'])->count();
+            $void = PurchaseOrder::where('company_id', $companyId)->whereIn('status', ['cancelled', 'void', 'voided'])->count();
 
             return response()->json([
                 'all' => $all,
@@ -108,6 +116,7 @@ class PurchaseOrderController extends Controller
                 'approved' => $approved,
                 'paid' => $paid,
                 'partial' => $partial,
+                'due' => $due,
                 'overdue' => $overdue,
                 'void' => $void,
             ]);
@@ -166,18 +175,26 @@ class PurchaseOrderController extends Controller
                     $st = trim($st);
                     if ($st === 'overdue') {
                         $q->orWhere(function ($sub) {
-                            $sub->whereNotIn('status', ['received', 'cancelled', 'void'])
+                            $sub->whereNotIn('status', ['paid', 'received', 'cancelled', 'void'])
                                 ->where('expected_delivery_date', '<', today());
                         });
                     } elseif ($st === 'paid' || $st === 'completed') {
-                        $q->orWhere('status', 'received')
+                        $q->orWhere('status', 'paid')
                           ->orWhere(function ($sub) {
                               $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
                           });
                     } elseif ($st === 'partial' || $st === 'partially_paid' || $st === 'partially_received') {
-                        $q->orWhere('status', 'partially_received')
+                        $q->orWhere('status', 'partial')
+                          ->orWhere('status', 'partially_received')
                           ->orWhere(function ($sub) {
                               $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+                          });
+                    } elseif ($st === 'due' || $st === 'unpaid') {
+                        $q->orWhere('status', 'due')
+                          ->orWhere(function ($sub) {
+                              $sub->where('due_amount', '>', 0)->where(function ($amt) {
+                                  $amt->whereNull('amount_paid')->orWhere('amount_paid', '<=', 0);
+                              });
                           });
                     } elseif ($st === 'approved' || $st === 'confirmed') {
                         $q->orWhereIn('status', ['approved', 'confirmed', 'sent']);
@@ -349,8 +366,9 @@ class PurchaseOrderController extends Controller
             // The actual payments will be processed and added by PaymentService.
             $initialAmountPaid = $advanceApplied;
             $initialDueAmount = max(0, $grandTotal - $initialAmountPaid);
+            $initialStatus = ($initialAmountPaid >= $grandTotal && $grandTotal > 0) ? 'paid' : (($initialAmountPaid > 0) ? 'partial' : 'due');
 
-            // Create purchase order with status received
+            // Create purchase order with correct status
             $purchaseOrder = PurchaseOrder::create([
                 'po_number' => $poNumber,
                 'supplier_id' => $supplier->id,
@@ -361,7 +379,7 @@ class PurchaseOrderController extends Controller
                 'user_id' => auth()->id(),
                 'order_date' => now(),
                 'expected_delivery_date' => $request->expected_delivery_date,
-                'status' => 'received',
+                'status' => $initialStatus,
                 'actual_delivery_date' => now(),
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
@@ -504,29 +522,36 @@ class PurchaseOrderController extends Controller
             }
 
             // --- OVERPAYMENT / ADVANCE BALANCE & STATUS COMPUTATION ---
-            $purchaseOrder->refresh();
-            $totalPaid = (float) $purchaseOrder->amount_paid;
+            $totalPaymentsPaid = (float) Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
+                ->where('reference_id', $purchaseOrder->id)
+                ->where('status', 'paid')
+                ->sum('amount');
+
+            $totalPaid = $advanceApplied + $totalPaymentsPaid;
             $grandTotal = (float) $purchaseOrder->grand_total;
 
-            if ($totalPaid > $grandTotal) {
+            if ($totalPaid >= $grandTotal) {
                 $excess = $totalPaid - $grandTotal;
-                if ($supplier) {
+                if ($excess > 0 && $supplier) {
                     $supplier->creditAdvance($excess);
                 }
                 $purchaseOrder->update([
+                    'amount_paid' => $grandTotal,
                     'due_amount' => 0,
-                    'status' => 'received',
+                    'status' => 'paid',
                 ]);
-            } elseif ($totalPaid < $grandTotal) {
+            } elseif ($totalPaid > 0) {
                 $due = max(0, $grandTotal - $totalPaid);
                 $purchaseOrder->update([
+                    'amount_paid' => $totalPaid,
                     'due_amount' => $due,
-                    'status' => $totalPaid > 0 ? 'partially_received' : 'received',
+                    'status' => 'partial',
                 ]);
             } else {
                 $purchaseOrder->update([
-                    'due_amount' => 0,
-                    'status' => 'received',
+                    'amount_paid' => 0,
+                    'due_amount' => $grandTotal,
+                    'status' => 'due',
                 ]);
             }
 
@@ -698,6 +723,8 @@ class PurchaseOrderController extends Controller
 
             $supplier = Supplier::findOrFail($request->supplier_id);
 
+            $initialStatus = ($amountPaid >= $grandTotal && $grandTotal > 0) ? 'paid' : (($amountPaid > 0) ? 'partial' : 'due');
+
             // 4. Update purchase order record
             $purchaseOrder->update([
                 'supplier_id' => $supplier->id,
@@ -705,7 +732,7 @@ class PurchaseOrderController extends Controller
                 'supplier_phone' => $supplier->phone,
                 'supplier_email' => $supplier->email,
                 'expected_delivery_date' => $request->expected_delivery_date,
-                'status' => 'received',
+                'status' => $initialStatus,
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
                 'shipping_cost' => $shippingCost,
@@ -818,6 +845,36 @@ class PurchaseOrderController extends Controller
             $supplier = Supplier::find($purchaseOrder->supplier_id);
             if ($supplier) {
                 $this->processPurchaseOrderPayments($purchaseOrder->fresh(), $request, $supplier);
+            }
+
+            // --- STATUS COMPUTATION FOR UPDATED PO ---
+            $totalPaymentsPaid = (float) Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
+                ->where('reference_id', $purchaseOrder->id)
+                ->where('status', 'paid')
+                ->sum('amount');
+
+            $totalPaid = $totalPaymentsPaid;
+            $grandTotal = (float) $purchaseOrder->grand_total;
+
+            if ($totalPaid >= $grandTotal) {
+                $purchaseOrder->update([
+                    'amount_paid' => $grandTotal,
+                    'due_amount' => 0,
+                    'status' => 'paid',
+                ]);
+            } elseif ($totalPaid > 0) {
+                $due = max(0, $grandTotal - $totalPaid);
+                $purchaseOrder->update([
+                    'amount_paid' => $totalPaid,
+                    'due_amount' => $due,
+                    'status' => 'partial',
+                ]);
+            } else {
+                $purchaseOrder->update([
+                    'amount_paid' => 0,
+                    'due_amount' => $grandTotal,
+                    'status' => 'due',
+                ]);
             }
 
             DB::commit();

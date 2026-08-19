@@ -690,6 +690,7 @@ const allStatusTabs = [
   { id: 'approved', label: 'Approved' },
   { id: 'paid', label: 'Paid' },
   { id: 'partial', label: 'Partial' },
+  { id: 'due', label: 'Due' },
   { id: 'overdue', label: 'Overdue' },
   { id: 'void', label: 'Void' }
 ];
@@ -823,6 +824,7 @@ const counts = ref({
   approved: 0,
   paid: 0,
   partial: 0,
+  due: 0,
   overdue: 0,
   void: 0
 });
@@ -1062,21 +1064,48 @@ const isPartiallyReturned = (item) => {
 const getStatusBadgeClass = (item) => {
   if (isFullyReturned(item)) return 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300';
   const st = item.status;
-  if (st === 'received' || st === 'paid' || st === 'completed') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-  if (st === 'partially_received' || st === 'partial') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
   if (st === 'draft') return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
   if (st === 'approved' || st === 'confirmed' || st === 'sent') return 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
-  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+
+  const bal = getBalanceState(item);
+  if (bal.type === 'due') {
+    const paid = parseFloat(item.amount_paid || item.paid_amount || 0);
+    if (paid > 0) {
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+    }
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+  }
+
+  if (st === 'paid' || st === 'received' || st === 'completed' || bal.type === 'settled' || bal.type === 'return') {
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+  }
+  if (st === 'partially_received' || st === 'partial') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+  if (st === 'due') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
   return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
 };
 
 const getStatusLabel = (item) => {
   if (isFullyReturned(item)) return 'Returned';
   const st = item.status;
-  if (st === 'received') return 'Paid';
-  if (st === 'partially_received') return 'Partial';
-  if (st === 'confirmed' || st === 'sent') return 'Approved';
-  if (st === 'cancelled' || st === 'voided') return 'Void';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'Void';
+  if (st === 'draft') return 'Draft';
+  if (st === 'approved' || st === 'confirmed' || st === 'sent') return 'Approved';
+
+  const bal = getBalanceState(item);
+  if (bal.type === 'due') {
+    const paid = parseFloat(item.amount_paid || item.paid_amount || 0);
+    if (paid > 0) {
+      return 'Partial';
+    }
+    return 'Due';
+  }
+
+  if (st === 'paid' || st === 'received' || st === 'completed' || bal.type === 'settled' || bal.type === 'return') {
+    return 'Paid';
+  }
+  if (st === 'partially_received' || st === 'partial') return 'Partial';
+  if (st === 'due') return 'Due';
   return st ? st.charAt(0).toUpperCase() + st.slice(1) : '-';
 };
 

@@ -122,15 +122,23 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         return DB::transaction(function () use ($request) {
+            $fullName = trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? ''));
+            if (empty($fullName) && $request->filled('name')) {
+                $fullName = $request->name;
+            }
+
             // Create user
             $user = User::create([
-                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'name' => $fullName,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'onboarding_completed' => false,
