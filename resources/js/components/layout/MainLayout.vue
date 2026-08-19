@@ -1261,8 +1261,8 @@
 
                       <!-- Employee -->
                       <router-link
-                        v-if="authStore.hasPermission('employees.create')"
-                        to="/employees/create"
+                        v-if="authStore.hasPermission('employees.create') || authStore.hasPermission('employees.view')"
+                        to="/hr/employees/create"
                         @click="showQuickAdd = false"
                         class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 dark:hover:bg-[#2D2D2D]/80 transition-colors duration-200 group"
                       >
@@ -1337,94 +1337,135 @@
             <!-- Notifications -->
             <div class="relative">
               <button
-                @click="showNotifications = !showNotifications"
+                @click="toggleNotifications"
                 data-notification-button
-                class="bg-white dark:bg-[#1E1E1E] p-1 rounded-full text-gray-400 dark:text-slate-450 hover:text-gray-500 dark:hover:text-slate-350 focus:outline-none focus-visible:outline-none focus:ring-0 relative"
+                class="bg-white dark:bg-[#1E1E1E] p-1.5 rounded-xl text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 focus:outline-none relative transition-colors duration-150 cursor-pointer"
+                title="Notifications"
               >
                 <span class="sr-only">View notifications</span>
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 0 1 6 6v2.25l2.25 2.25v2.25H2.25v-2.25L4.5 12V9.75a6 6 0 0 1 6-6z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 <!-- Notification badge -->
-                <span v-if="unreadNotifications > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span v-if="unreadNotifications > 0" class="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4.5 min-w-[18px] px-1 flex items-center justify-center shadow-sm">
                   {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
                 </span>
               </button>
 
-              <!-- Notifications dropdown -->
-              <div
-                v-if="showNotifications"
-                ref="notificationsRef"
-                class="origin-top-right absolute right-0 mt-3 w-96 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-xl border border-white/40 dark:border-[#2E2E2E] ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden transform transition-all duration-300 animate-in fade-in zoom-in-95"
+              <!-- Notifications dropdown popup -->
+              <transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0 translate-y-1 scale-95"
+                enter-to-class="opacity-100 translate-y-0 scale-100"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100 translate-y-0 scale-100"
+                leave-to-class="opacity-0 translate-y-1 scale-95"
               >
-                <div class="py-0">
-                  <div class="px-6 py-5 bg-gradient-to-br from-gray-50/80 to-white/80 dark:from-[#252525]/85 dark:to-[#1E1E1E]/85 border-b border-gray-100/50 dark:border-[#2E2E2E] flex justify-between items-center">
-                    <div>
-                      <h3 class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">Intelligence Center</h3>
-                      <p class="text-[11px] text-gray-400 dark:text-slate-550 font-medium">Real-time system activities and alerts</p>
+                <div
+                  v-if="showNotifications"
+                  ref="notificationsRef"
+                  class="origin-top-right absolute right-0 mt-3.5 w-80 sm:w-[350px] rounded-2xl shadow-xl bg-white dark:bg-[#1E1E1E] border border-gray-200/80 dark:border-[#2E2E2E] focus:outline-none z-50 overflow-hidden"
+                >
+                  <!-- Header -->
+                  <div class="px-5 py-4 flex items-center justify-between">
+                    <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-slate-100">Notifications</h3>
+                    <div class="flex items-center gap-2.5">
+                      <span class="text-xs text-slate-500 dark:text-slate-400 font-normal select-none">Auto-mark as read</span>
+                      <button
+                        type="button"
+                        @click.stop="toggleAutoMarkAsRead"
+                        :class="[
+                          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                          autoMarkAsRead ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-gray-200 dark:bg-zinc-700'
+                        ]"
+                        role="switch"
+                        :aria-checked="autoMarkAsRead"
+                      >
+                        <span
+                          :class="[
+                            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out',
+                            autoMarkAsRead ? 'translate-x-4' : 'translate-x-0'
+                          ]"
+                        />
+                      </button>
                     </div>
-                    <button @click="markAllAsRead" class="text-[9px] font-black text-gray-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-widest bg-gray-100 dark:bg-[#252525] hover:bg-indigo-50 dark:hover:bg-[#2D2D2D]/80 px-2 py-1 rounded-full transition-all">
-                      Clear All
-                    </button>
                   </div>
-                  <div v-if="notifications.length === 0" class="px-6 py-10 flex flex-col items-center justify-center space-y-3 opacity-40">
-                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 0 1 6 6v2.25l2.25 2.25v2.25H2.25v-2.25L4.5 12V9.75a6 6 0 0 1 6-6z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No active alerts</p>
+
+                  <!-- Divider line -->
+                  <div class="border-b border-gray-100 dark:border-zinc-800"></div>
+
+                  <!-- Popup Body: Empty state -->
+                  <div v-if="notifications.length === 0" class="py-10 px-6 flex flex-col items-center justify-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800/80 flex items-center justify-center mb-4 text-gray-400 dark:text-zinc-400">
+                      <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                      </svg>
+                    </div>
+                    <h4 class="text-sm font-semibold text-gray-700 dark:text-zinc-200 mb-1">No notifications yet</h4>
+                    <p class="text-xs text-gray-400 dark:text-zinc-400 max-w-[220px] leading-normal">You'll see updates here when they arrive</p>
                   </div>
-                  <div v-else class="max-h-80 overflow-y-auto custom-scrollbar">
+
+                  <!-- Popup Body: With notifications -->
+                  <div v-else class="max-h-80 overflow-y-auto custom-scrollbar divide-y divide-gray-100 dark:divide-zinc-800">
                     <div
                       v-for="notification in notifications"
                       :key="notification.id"
-                      class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors"
+                      class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors"
                       :class="{'opacity-60': notification.read_at}"
                       @click="markAsRead(notification.id)"
                     >
                       <!-- Low-stock alert style -->
                       <template v-if="notification.data && notification.data.type === 'low_stock'">
                         <div class="flex items-start gap-2.5">
-                          <div class="mt-0.5 shrink-0 w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center">
+                          <div class="mt-0.5 shrink-0 w-7 h-7 rounded-full bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center">
                             <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                           </div>
                           <div class="flex-1 min-w-0">
-                            <p class="text-[11px] font-black text-rose-700 uppercase tracking-wide">{{ notification.data.title }}</p>
-                            <p class="text-[12px] text-gray-700 mt-0.5 leading-snug">{{ notification.data.message }}</p>
+                            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">{{ notification.data.title || 'Low Stock Alert' }}</p>
+                            <p class="text-xs text-gray-700 dark:text-slate-300 mt-0.5 leading-snug">{{ notification.data.message }}</p>
                             <div class="flex items-center gap-2 mt-1.5">
-                              <span class="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-bold rounded">
+                              <span v-if="notification.data.current_stock !== undefined" class="px-1.5 py-0.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 text-[9px] font-bold rounded">
                                 Stock: {{ notification.data.current_stock }} / Min: {{ notification.data.min_alert }}
                               </span>
-                              <span class="text-[10px] text-gray-400">{{ formatDate(notification.created_at) }}</span>
+                              <span class="text-[10px] text-gray-400 dark:text-zinc-500">{{ formatDate(notification.created_at) }}</span>
                             </div>
                           </div>
-                          <div v-if="!notification.read_at" class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0 animate-pulse"></div>
+                          <div v-if="!notification.read_at" class="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0 animate-pulse"></div>
                         </div>
                       </template>
                       <!-- Generic notification style -->
                       <template v-else>
-                        <div class="flex items-start">
-                          <div class="flex-shrink-0">
-                            <div :class="['w-2 h-2 rounded-full mt-2', notification.read_at ? 'bg-gray-300' : 'bg-blue-500']"></div>
+                        <div class="flex items-start gap-2.5">
+                          <div class="mt-0.5 shrink-0 w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                           </div>
-                          <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-gray-900">{{ notification.data?.title }}</p>
-                            <p class="text-sm text-gray-500">{{ notification.data?.message }}</p>
-                            <p class="text-xs text-gray-400 mt-1">{{ formatDate(notification.created_at) }}</p>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-gray-900 dark:text-slate-100">{{ notification.data?.title || 'System Notification' }}</p>
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{{ notification.data?.message }}</p>
+                            <p class="text-[10px] text-gray-400 dark:text-zinc-500 mt-1">{{ formatDate(notification.created_at) }}</p>
                           </div>
+                          <div v-if="!notification.read_at" class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-1.5 shrink-0"></div>
                         </div>
                       </template>
                     </div>
                   </div>
-                  <div class="px-4 py-2 border-t border-gray-200">
+
+                  <!-- Footer Action Bar (if notifications exist) -->
+                  <div v-if="notifications.length > 0" class="px-4 py-2.5 bg-gray-50/80 dark:bg-zinc-900/60 border-t border-gray-100 dark:border-zinc-800 flex justify-between items-center">
                     <button
                       @click="markAllAsRead"
-                      class="text-sm text-indigo-600 hover:text-indigo-500"
+                      class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
                     >
                       Mark all as read
                     </button>
+                    <span class="text-[10px] text-gray-400 dark:text-zinc-500 font-medium">{{ unreadNotifications }} unread</span>
                   </div>
                 </div>
-              </div>
+              </transition>
             </div>
 
             <!-- Profile dropdown -->
@@ -2027,6 +2068,7 @@ const showThemeMenu = ref(false);
 const showUserMenu = ref(false);
 const showMobileMenu = ref(false);
 const showNotifications = ref(false);
+const autoMarkAsRead = ref(localStorage.getItem('pos_auto_mark_read') === 'true');
 const showQuickAdd = ref(false);
 const showSalesMenu = ref(false);
 const showPurchaseMenu = ref(false);
@@ -2352,8 +2394,8 @@ const handleClickOutside = (event) => {
 
   // Check if click is outside notifications
   if (showNotifications.value && notificationsRef.value && !notificationsRef.value.contains(event.target)) {
-    const notifButton = document.querySelector('[data-notifications-button]');
-    if (!notifButton || !notifButton.contains(event.target)) {
+    const notificationButton = document.querySelector('[data-notification-button]');
+    if (!notificationButton || !notificationButton.contains(event.target)) {
       showNotifications.value = false;
     }
   }
@@ -2363,13 +2405,6 @@ const handleClickOutside = (event) => {
     const switcherBtn = document.querySelector('[data-company-switcher-button]');
     if (!switcherBtn || !switcherBtn.contains(event.target)) {
       showCompanySwitcher.value = false;
-    }
-  }
-  if (showNotifications.value && notificationsRef.value && !notificationsRef.value.contains(event.target)) {
-    // Also check if the click is not on the notifications button
-    const notificationButton = document.querySelector('[data-notification-button]');
-    if (!notificationButton || !notificationButton.contains(event.target)) {
-      showNotifications.value = false;
     }
   }
 
@@ -2402,10 +2437,28 @@ const handleClickOutside = (event) => {
 };
 
 // Notification methods
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value;
+  if (showNotifications.value && autoMarkAsRead.value && unreadNotifications.value > 0) {
+    markAllAsRead();
+  }
+};
+
+const toggleAutoMarkAsRead = () => {
+  autoMarkAsRead.value = !autoMarkAsRead.value;
+  localStorage.setItem('pos_auto_mark_read', autoMarkAsRead.value ? 'true' : 'false');
+  if (autoMarkAsRead.value && unreadNotifications.value > 0) {
+    markAllAsRead();
+  }
+};
+
 const fetchNotifications = async () => {
   try {
     const response = await axios.get('/api/notifications');
     notifications.value = response.data;
+    if (showNotifications.value && autoMarkAsRead.value && unreadNotifications.value > 0) {
+      markAllAsRead();
+    }
   } catch (error) {
     console.error('Error fetching notifications:', error);
   }

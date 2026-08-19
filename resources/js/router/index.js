@@ -449,8 +449,18 @@ const routes = [
         redirect: '/hr/employees'
       },
       {
+        path: 'employees/create',
+        redirect: '/hr/employees/create'
+      },
+      {
         path: 'hr/employees',
         name: 'HREmployees',
+        component: Employees,
+        meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'hr/employees/create',
+        name: 'CreateHREmployee',
         component: Employees,
         meta: { permission: 'employees.view' }
       },

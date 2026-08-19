@@ -13,13 +13,51 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $notifications = $request->user()
-            ->notifications()
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([]);
+        }
+
+        $laravelNotifications = $user->notifications()
             ->orderBy('created_at', 'desc')
             ->limit(50)
-            ->get();
+            ->get()
+            ->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'type' => 'laravel',
+                    'data' => $n->data,
+                    'read_at' => $n->read_at ? $n->read_at->toISOString() : null,
+                    'created_at' => $n->created_at ? $n->created_at->toISOString() : now()->toISOString(),
+                ];
+            });
 
-        return response()->json($notifications);
+        $companyId = $user->current_company_id;
+        $systemNotifications = \DB::table('system_notifications')
+            ->where('company_id', $companyId)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id' => (string)$s->id,
+                    'type' => 'system',
+                    'data' => [
+                        'title' => 'Low Stock Warning',
+                        'message' => $s->message,
+                        'type' => $s->type ?? 'low_stock',
+                        'product_id' => $s->product_id,
+                    ],
+                    'read_at' => $s->is_read ? ($s->updated_at ?? $s->created_at) : null,
+                    'created_at' => $s->created_at,
+                ];
+            });
+
+        $merged = $laravelNotifications->concat($systemNotifications)
+            ->sortByDesc('created_at')
+            ->values();
+
+        return response()->json($merged);
     }
 
     /**
