@@ -209,6 +209,7 @@ const apiMethods = {
     transfer: (data) => api.post('/bank-accounts/transfer', data),
     transfersList: () => api.get('/bank-accounts/transfers-list'),
     transactions: (params = {}) => api.get('/bank-transactions', { params }),
+    exportPDF: (params = {}) => api.get('/bank-transactions/export-pdf', { params, responseType: 'blob' }),
   },
 
   // Reports methods
