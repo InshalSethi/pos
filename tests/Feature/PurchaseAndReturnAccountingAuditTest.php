@@ -1035,11 +1035,23 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
         $this->assertEquals(15.00, (float) $debitLine->account->calculateBalance());
         $this->assertEquals(15.00, (float) $debitLine->account->current_balance);
 
-        // 8. Verify Mark as Completed status update
+        // 8. Verify Parent PO Due Amount reduced to $15.00
+        $poFresh = PurchaseOrder::find($poId);
+        $this->assertEquals(15.00, (float) $poFresh->due_amount);
+
+        // 9. Verify Supplier Module List due_amount = $15.00
+        $supplierListRes = $this->getJson('/api/suppliers');
+        $supplierListRes->assertStatus(200);
+        $supplierRecord = collect($supplierListRes->json('data'))->firstWhere('id', $this->supplier->id);
+        $this->assertNotNull($supplierRecord);
+        $this->assertEquals(15.00, (float) $supplierRecord['due_amount']);
+
+        // 10. Verify Mark as Completed status update
         $completeRes = $this->patchJson("/api/purchase-returns/{$returnId}/status", ['status' => 'completed']);
         $completeRes->assertStatus(200);
         $completeRes->assertJsonFragment(['status' => 'completed']);
         $this->assertEquals('completed', PurchaseReturn::find($returnId)->status);
+        $this->assertEquals(15.00, (float) PurchaseOrder::find($poId)->due_amount);
     }
 }
 

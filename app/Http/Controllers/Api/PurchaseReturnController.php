@@ -822,13 +822,17 @@ class PurchaseReturnController extends Controller
         }
 
         if ($newStatus === 'completed') {
-            if (!in_array($purchaseReturn->status, ['approved'])) {
+            if (!in_array($purchaseReturn->status, ['approved', 'completed'])) {
                 return response()->json([
                     'message' => 'Return must be approved before it can be marked as completed.'
                 ], 400);
             }
             $purchaseReturn->status = 'completed';
             $purchaseReturn->save();
+
+            if ($purchaseReturn->purchase_order_id) {
+                $this->syncPurchaseOrderDueAmount((int) $purchaseReturn->purchase_order_id);
+            }
 
             return response()->json([
                 'message' => 'Purchase return marked as completed',
@@ -969,6 +973,10 @@ class PurchaseReturnController extends Controller
 
             $purchaseReturn->update(['status' => 'rejected']);
 
+            if ($purchaseReturn->purchase_order_id) {
+                $this->syncPurchaseOrderDueAmount((int) $purchaseReturn->purchase_order_id);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -1012,5 +1020,55 @@ class PurchaseReturnController extends Controller
 
         // Post accounting entry
         $accountingService->createPurchaseReturnEntry($purchaseReturn);
+
+        // Synchronize parent PO due amount if linked
+        if ($purchaseReturn->purchase_order_id) {
+            $this->syncPurchaseOrderDueAmount((int) $purchaseReturn->purchase_order_id);
+        }
+    }
+
+    /**
+     * Synchronize and recalculate parent Purchase Order due_amount when AP Credit returns are approved/completed/cancelled.
+     */
+    public function syncPurchaseOrderDueAmount(int $poId): void
+    {
+        $po = PurchaseOrder::find($poId);
+        if (!$po) {
+            return;
+        }
+
+        // Sum all approved / completed AP Credit returns for this PO
+        $returns = PurchaseReturn::where('purchase_order_id', $poId)
+            ->whereIn('status', ['approved', 'completed'])
+            ->get();
+
+        $totalApCredit = 0;
+        foreach ($returns as $ret) {
+            if ($ret->payment_method === 'ap_credit') {
+                $totalApCredit += (float) $ret->total_amount;
+            } elseif ($ret->payment_method === 'mixed' && is_array($ret->refund_splits)) {
+                foreach ($ret->refund_splits as $split) {
+                    if (($split['type'] ?? '') === 'ap_credit' || ($split['type'] ?? '') === 'ap') {
+                        $totalApCredit += (float) ($split['amount'] ?? 0);
+                    }
+                }
+            }
+        }
+
+        $poTotal = (float) ($po->total_amount ?? $po->grand_total ?? 0);
+        $amountPaid = (float) ($po->amount_paid ?? 0);
+
+        // New due amount is max(0, total - amountPaid - totalApCredit)
+        $newDue = max(0, round($poTotal - $amountPaid - $totalApCredit, 2));
+
+        $updates = ['due_amount' => $newDue];
+
+        if ($newDue <= 0) {
+            $updates['payment_status'] = ($amountPaid > 0) ? 'paid' : 'credited';
+        } elseif ($newDue < ($poTotal - $amountPaid)) {
+            $updates['payment_status'] = 'partial';
+        }
+
+        $po->update($updates);
     }
 }

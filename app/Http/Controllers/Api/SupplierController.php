@@ -33,7 +33,7 @@ class SupplierController extends Controller
         $query->addSelect([
             'due_amount' => \App\Models\PurchaseOrder::selectRaw('COALESCE(SUM(due_amount), 0)')
                 ->whereColumn('supplier_id', 'suppliers.id')
-                ->where('status', '!=', 'cancelled')
+                ->whereNotIn('status', ['cancelled', 'void', 'draft'])
         ]);
 
         // Search functionality
