@@ -54,3 +54,51 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+if (getenv('LARAVEL_STORAGE_PATH')) {
+    $_ENV['LARAVEL_STORAGE_PATH'] = getenv('LARAVEL_STORAGE_PATH');
+    $_SERVER['LARAVEL_STORAGE_PATH'] = getenv('LARAVEL_STORAGE_PATH');
+}
+
+if (env('LARAVEL_STORAGE_PATH')) {
+    $storagePath = env('LARAVEL_STORAGE_PATH');
+    $_ENV['LARAVEL_STORAGE_PATH'] = $storagePath;
+    $_SERVER['LARAVEL_STORAGE_PATH'] = $storagePath;
+    $app->useStoragePath($storagePath);
+
+    $viewsPath = env('VIEW_COMPILED_PATH', $storagePath . '/framework/views');
+    $sessionsPath = $storagePath . '/framework/sessions';
+    $cachePath = $storagePath . '/framework/cache/data';
+    $logsPath = $storagePath . '/logs/laravel.log';
+
+    foreach ([$viewsPath, $sessionsPath, dirname($cachePath), dirname($logsPath)] as $dir) {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+    }
+
+    config([
+        'view.compiled' => $viewsPath,
+        'session.files' => $sessionsPath,
+        'cache.stores.file.path' => $cachePath,
+        'cache.stores.file.lock_path' => $cachePath,
+        'logging.channels.single.path' => $logsPath,
+        'logging.channels.daily.path' => $logsPath,
+    ]);
+}
+
+$app->booted(function () {
+    if (env('LARAVEL_STORAGE_PATH')) {
+        $storagePath = env('LARAVEL_STORAGE_PATH');
+        config([
+            'view.compiled' => env('VIEW_COMPILED_PATH', $storagePath . '/framework/views'),
+            'session.files' => $storagePath . '/framework/sessions',
+            'cache.stores.file.path' => $storagePath . '/framework/cache/data',
+            'cache.stores.file.lock_path' => $storagePath . '/framework/cache/data',
+            'logging.channels.single.path' => $storagePath . '/logs/laravel.log',
+            'logging.channels.daily.path' => $storagePath . '/logs/laravel.log',
+        ]);
+    }
+});
+
+return $app;

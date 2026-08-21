@@ -9,7 +9,7 @@
           <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
           <div class="w-1.5 h-full rounded-full bg-white/40"></div>
         </div>
-        <span class="text-xl font-black tracking-tight text-slate-950 group-hover:text-slate-700 transition-colors">POS</span>
+        <span class="text-xl font-black text-slate-900 tracking-tight leading-none group-hover:text-slate-800 transition-colors">AcuteBills</span>
       </router-link>
 
       <!-- Nav Links -->
@@ -48,7 +48,7 @@
             Log In
           </router-link>
           <router-link
-            to="/register"
+            to="/plans"
             class="bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow-md transition-all"
           >
             Sign Up
@@ -97,7 +97,7 @@
             Log In
           </router-link>
           <router-link
-            to="/register"
+            to="/plans"
             class="bg-slate-950 hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-md transition-all text-center"
             @click="isMobileMenuOpen = false"
           >

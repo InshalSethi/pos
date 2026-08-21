@@ -128,7 +128,7 @@
               <!-- Screen Display -->
               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4 text-center shadow-inner">
                 <div class="flex items-center justify-between text-[10px] text-slate-400 mb-2">
-                  <span>POS SYSTEM v3.4</span>
+                  <span>ACUTEBILLS v3.4</span>
                   <span class="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded text-[9px] font-bold">ONLINE</span>
                 </div>
                 <div class="text-xs text-slate-400 font-medium">Total Amount</div>
@@ -249,7 +249,7 @@
         <div class="bg-slate-950 rounded-3xl p-8 sm:p-12 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
           <div class="space-y-2 text-center sm:text-left">
             <h3 class="text-2xl sm:text-3xl font-extrabold">Ready to transform your POS business?</h3>
-            <p class="text-slate-400 text-sm">Join over 5,600+ businesses world-wide using POS System.</p>
+            <p class="text-slate-400 text-sm">Join over 5,600+ businesses world-wide using AcuteBills.</p>
           </div>
           <router-link
             to="/plans"
@@ -269,7 +269,7 @@
           <div class="w-6 h-6 rounded-full bg-white text-slate-950 flex items-center justify-center font-black text-[10px]">P</div>
           <span class="text-white font-bold text-sm">POS & Accounting</span>
         </div>
-        <p>© 2026 POS System. All rights reserved.</p>
+        <p>© 2026 AcuteBills. All rights reserved.</p>
       </div>
     </footer>
 

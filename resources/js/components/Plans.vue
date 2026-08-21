@@ -8,7 +8,7 @@
     <Navbar />
 
     <!-- Plans & Pricing Section -->
-    <section class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative z-10">
+    <section class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
       <div class="text-center space-y-4 max-w-2xl mx-auto mb-16">
         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-200 border border-slate-300 text-slate-900 text-xs font-extrabold uppercase tracking-wider">
           <span>SUBSCRIPTION TIERS</span>
@@ -17,12 +17,12 @@
           Flexible Plans for Every Business
         </h1>
         <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
-          Select the tailored subscription plan designed for your retail store or multi-company enterprise accounting operations.
+          Select the tailored subscription plan designed for your retail store or multi-company enterprise operations.
         </p>
       </div>
 
       <!-- Billing Toggle Switch -->
-      <div class="flex justify-center items-center gap-3 mb-10 text-sm font-semibold max-w-sm mx-auto">
+      <div class="flex justify-center items-center gap-3 mb-12 text-sm font-semibold max-w-sm mx-auto">
         <span :class="billingCycle === 'monthly' ? 'text-slate-950 font-bold' : 'text-slate-500'">Monthly</span>
         <button 
           @click="billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly'"
@@ -41,118 +41,158 @@
       </div>
 
       <!-- Plans Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-stretch max-w-4xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch max-w-full mx-auto">
         
-        <!-- BASIC PLAN CARD -->
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-8 flex flex-col justify-between shadow-xl transform hover:scale-[1.015] transition-transform duration-300 ease-out outline-none focus:outline-none relative group">
+        <!-- STARTER PLAN -->
+        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group">
           <div>
-            <!-- Header -->
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-extrabold uppercase tracking-wider text-slate-900 bg-slate-100 border border-slate-300 px-3 py-1 rounded-full">
-                BASIC PLAN
-              </span>
-              <span class="text-xs text-slate-500 font-semibold">Standard Retail</span>
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-900 bg-slate-100 border border-slate-300 px-2 py-1 rounded-full">STARTER</span>
             </div>
-
-            <!-- Price -->
-            <div class="mb-6">
-              <span class="text-4xl font-black text-slate-950">{{ billingCycle === 'monthly' ? '$29' : '$279' }}</span>
-              <span class="text-slate-500 text-sm font-medium"> / {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
+            <div class="mb-4">
+              <span class="text-3xl font-black text-slate-950">Free</span>
+              <span class="text-slate-500 text-xs font-medium block mt-1">14-Day Trial</span>
             </div>
-
-            <!-- Description -->
-            <p class="text-slate-600 text-xs leading-relaxed mb-6">
-              Essential POS solution for single-store setups with complete inventory & return management.
+            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
+              Try the platform with no payment method required.
             </p>
-
-            <!-- Features List -->
-            <div class="space-y-3.5 mb-8 text-xs sm:text-sm text-slate-800">
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 1:</strong> Single Company Registration</span>
+            <div class="space-y-3 mb-8 text-xs text-slate-800">
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span><strong>1 Device</strong> Limit</span>
               </div>
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 2:</strong> Complete Inventory Management</span>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 3:</strong> Sales & Purchase Management</span>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 4:</strong> Sales & Purchase Returns</span>
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span>Full Feature Access</span>
               </div>
             </div>
           </div>
-
-          <!-- Disabled CTA Button -->
-          <button
-            type="button"
-            disabled
-            class="w-full text-center bg-slate-100 text-slate-400 font-extrabold py-3.5 rounded-full border border-slate-200 transition-all text-xs tracking-wide uppercase disabled cursor-not-allowed opacity-70 shadow-none disabled:cursor-not-allowed disabled:opacity-70 outline-none focus:outline-none"
-          >
-            SELECT BASIC PLAN
-          </button>
+          <router-link to="/register?plan=starter" class="w-full block text-center bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold py-3 rounded-full border border-slate-300 transition-all text-xs tracking-wide uppercase">
+            Start Free Trial
+          </router-link>
         </div>
 
-        <!-- MASTER PLAN CARD (RECOMMENDED) -->
-        <div class="bg-slate-950 text-white border-2 border-slate-900 rounded-3xl p-8 flex flex-col justify-between shadow-2xl transform hover:scale-[1.015] transition-transform duration-300 ease-out outline-none focus:outline-none relative group md:-translate-y-2">
-          
-          <!-- Recommended Badge -->
-          <div class="absolute -top-4 right-8 bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg border border-slate-200">
-            ★ RECOMMENDED
-          </div>
-
+        <!-- BASIC PLAN -->
+        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group">
           <div>
-            <!-- Header -->
-            <div class="flex items-center justify-between mb-4 pt-1">
-              <span class="text-xs font-extrabold uppercase tracking-wider text-white bg-white/10 border border-white/20 px-3 py-1 rounded-full">
-                MASTER PLAN
-              </span>
-              <span class="text-xs text-slate-400 font-semibold">Enterprise Accounting</span>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-900 bg-blue-100 border border-blue-300 px-2 py-1 rounded-full">BASIC</span>
             </div>
-
-            <!-- Price -->
-            <div class="mb-6">
-              <span class="text-4xl font-black text-white">{{ billingCycle === 'monthly' ? '$79' : '$759' }}</span>
-              <span class="text-slate-400 text-sm font-medium"> / {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
+            <div class="mb-4">
+              <span class="text-3xl font-black text-slate-950">{{ billingCycle === 'monthly' ? '$80' : '$768' }}</span>
+              <span class="text-slate-500 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
             </div>
-
-            <!-- Description -->
-            <p class="text-slate-300 text-xs leading-relaxed mb-6">
-              Full-featured multi-company POS & Double-Entry Accounting platform with advanced financial ledgers.
+            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
+              Essential POS solution for single-store setups.
             </p>
-
-            <!-- Features List -->
-            <div class="space-y-3.5 mb-8 text-xs sm:text-sm text-slate-100">
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 1:</strong> Multi-Company Support</span>
+            <div class="space-y-3 mb-8 text-xs text-slate-800">
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span><strong>1 Device</strong> Limit</span>
               </div>
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 2:</strong> Everything in Basic Plan</span>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 3:</strong> Advanced Accounting & Finance Module (General Ledger, Chart of Accounts, Bank Subledgers)</span>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="w-5 h-5 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>Feature 4:</strong> Priority Multi-Branch Support</span>
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span>Inventory & Sales</span>
               </div>
             </div>
           </div>
+          <router-link :to="`/register?plan=basic&cycle=${billingCycle}`" class="w-full block text-center bg-white text-blue-700 hover:bg-blue-50 border-2 border-blue-600 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase">
+            Select Basic
+          </router-link>
+        </div>
 
-          <!-- Disabled CTA Button -->
-          <button
-            type="button"
-            disabled
-            class="w-full text-center bg-slate-800 text-slate-400 font-extrabold py-3.5 rounded-full shadow-md transition-all text-xs tracking-wide uppercase disabled cursor-not-allowed opacity-70 border border-slate-700 disabled:cursor-not-allowed disabled:opacity-70 outline-none focus:outline-none"
-          >
-            SELECT MASTER PLAN
-          </button>
+        <!-- MASTER PLAN -->
+        <div class="bg-slate-950 text-white border-2 border-slate-800 rounded-3xl p-6 flex flex-col justify-between shadow-2xl transform hover:scale-[1.015] transition-transform duration-300 relative group lg:-translate-y-2">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+            Most Popular
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-4 mt-2">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-white bg-white/10 border border-white/20 px-2 py-1 rounded-full">MASTER</span>
+            </div>
+            <div class="mb-4">
+              <span class="text-3xl font-black text-white">{{ billingCycle === 'monthly' ? '$200' : '$1,920' }}</span>
+              <span class="text-slate-400 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
+            </div>
+            <p class="text-slate-300 text-xs leading-relaxed mb-6 h-12">
+              Advanced accounting and multi-company features.
+            </p>
+            <div class="space-y-3 mb-8 text-xs text-slate-100">
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span><strong>3 Devices</strong> Limit</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span>Advanced Accounting</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span>Multi-Company</span>
+              </div>
+            </div>
+          </div>
+          <router-link :to="`/register?plan=master&cycle=${billingCycle}`" class="w-full block text-center bg-white text-slate-950 hover:bg-slate-100 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            Select Master
+          </router-link>
+        </div>
+
+        <!-- ELITE PLAN -->
+        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-900 bg-purple-100 border border-purple-300 px-2 py-1 rounded-full">ELITE</span>
+            </div>
+            <div class="mb-4">
+              <span class="text-3xl font-black text-slate-950">{{ billingCycle === 'monthly' ? '$650' : '$6,240' }}</span>
+              <span class="text-slate-500 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
+            </div>
+            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
+              For high-volume retail chains and large enterprises.
+            </p>
+            <div class="space-y-3 mb-8 text-xs text-slate-800">
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span><strong>10 Devices</strong> Limit</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span>Priority Support</span>
+              </div>
+            </div>
+          </div>
+          <router-link :to="`/register?plan=elite&cycle=${billingCycle}`" class="w-full block text-center bg-white text-purple-700 hover:bg-purple-50 border-2 border-purple-600 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase">
+            Select Elite
+          </router-link>
+        </div>
+
+        <!-- CUSTOM PLAN -->
+        <div class="bg-slate-100 border border-slate-300 rounded-3xl p-6 flex flex-col justify-between shadow-inner transform hover:scale-[1.015] transition-transform duration-300 relative group">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-700 bg-slate-200 border border-slate-300 px-2 py-1 rounded-full">CUSTOM</span>
+            </div>
+            <div class="mb-4">
+              <span class="text-2xl font-black text-slate-950">Starts $1,500</span>
+              <span class="text-slate-500 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
+            </div>
+            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
+              Bespoke deployment for massive scale (20 to 50+ devices).
+            </p>
+            <div class="space-y-3 mb-8 text-xs text-slate-800">
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span><strong>20-50 Devices</strong></span>
+              </div>
+              <div class="flex items-start gap-2">
+                <div class="w-4 h-4 rounded-full bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
+                <span>Dedicated Account Manager</span>
+              </div>
+            </div>
+          </div>
+          <router-link :to="`/register?plan=custom&cycle=${billingCycle}`" class="w-full block text-center bg-slate-800 text-white hover:bg-slate-950 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase shadow-md">
+            Contact Sales
+          </router-link>
         </div>
 
       </div>
@@ -165,7 +205,7 @@
           <div class="w-6 h-6 rounded-full bg-white text-slate-950 flex items-center justify-center font-black text-[10px]">P</div>
           <span class="text-white font-bold text-sm">POS & Accounting</span>
         </div>
-        <p>© 2026 POS System. All rights reserved.</p>
+        <p>© 2026 AcuteBills. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -173,9 +213,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useAuthStore } from '@/stores/auth';
 import Navbar from '@/components/shared/Navbar.vue';
 
-const authStore = useAuthStore();
 const billingCycle = ref('monthly');
 </script>

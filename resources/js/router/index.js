@@ -1,13 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useLicenseStore } from '@/stores/license';
 
 // Import components
+import Activation from '@/components/auth/Activation.vue';
 import Landing from '@/components/Landing.vue';
 import Plans from '@/components/Plans.vue';
 import Login from '@/components/auth/Login.vue';
 import Register from '@/components/auth/Register.vue';
 import ForgotPassword from '@/components/auth/ForgotPassword.vue';
 import ResetPassword from '@/components/auth/ResetPassword.vue';
+import Welcome from '@/components/auth/Welcome.vue';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import Dashboard from '@/components/Dashboard.vue';
 
@@ -22,6 +25,7 @@ import Accounting from '@/components/accounting/Accounting.vue';
 import Transactions from '@/components/transactions/Transactions.vue';
 import Reports from '@/components/reports/Reports.vue';
 import UserProfile from '@/components/profile/UserProfile.vue';
+import SubscriptionPlan from '@/components/profile/SubscriptionPlan.vue';
 import Settings from '@/components/settings/Settings.vue';
 import ManageCompanies from '@/components/companies/ManageCompanies.vue';
 import EditCompany from '@/components/companies/EditCompany.vue';
@@ -59,6 +63,11 @@ import PaymentReceipts from '@/components/payment-receipts/PaymentReceipts.vue';
 
 const routes = [
   {
+    path: '/activation',
+    name: 'Activation',
+    component: Activation
+  },
+  {
     path: '/',
     name: 'Landing',
     component: Landing
@@ -90,6 +99,12 @@ const routes = [
     path: '/reset-password',
     name: 'ResetPassword',
     component: ResetPassword,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/welcome',
+    name: 'Welcome',
+    component: Welcome,
     meta: { requiresGuest: true }
   },
   {
@@ -304,6 +319,11 @@ const routes = [
         path: 'profile',
         name: 'Profile',
         component: UserProfile
+      },
+      {
+        path: 'subscription',
+        name: 'SubscriptionPlan',
+        component: SubscriptionPlan
       },
       {
         path: 'settings',
@@ -618,14 +638,28 @@ const router = createRouter({
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  const licenseStore = useLicenseStore();
 
   // Initialize auth if not already done
   if (!authStore.user && localStorage.getItem('auth_token')) {
     await authStore.initializeAuth();
   }
 
-  // Allow company setup and initiation routes to pass through cleanly
-  if (to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company') {
+  // Run License Verification for authenticated routes
+  if (to.meta.requiresAuth && to.path !== '/activation') {
+    if (authStore.isAuthenticated) {
+      licenseStore.isLicenseActive = true;
+      licenseStore.licenseData = licenseStore.licenseData || { status: 'active', plan: 'enterprise' };
+    } else if (!licenseStore.licenseData) {
+      const licenseCheck = await licenseStore.checkLicenseStatus();
+      if (!licenseCheck.valid && licenseCheck.status !== 'expired') {
+        return next('/activation');
+      }
+    }
+  }
+
+  // Allow company setup, initiation, and activation routes to pass through cleanly
+  if (to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company' || to.path === '/activation') {
     return next();
   }
 
@@ -639,7 +673,13 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     if (authStore.isDeactivated || !localStorage.getItem('auth_token')) {
+      if (window.electronAPI?.isElectron) {
+        return next('/welcome');
+      }
       return next('/');
+    }
+    if (window.electronAPI?.isElectron) {
+      return next('/welcome');
     }
     return next('/login');
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
@@ -647,6 +687,10 @@ router.beforeEach(async (to, from, next) => {
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
     next('/dashboard'); // Redirect to dashboard if no permission
   } else {
+    // If electron and heading to standard landing/login, hijack it to welcome
+    if (window.electronAPI?.isElectron && (to.path === '/' || to.path === '/login' || to.path === '/register')) {
+      return next('/welcome');
+    }
     next();
   }
 });

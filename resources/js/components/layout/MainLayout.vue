@@ -1142,7 +1142,7 @@
             <!-- Page Title & Favorite Star Toggle -->
             <div class="hidden lg:flex items-center gap-3 pl-4">
               <h1 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight select-none">
-                {{ currentMenuItem?.name || 'POS System' }}
+                {{ currentMenuItem?.name || 'AcuteBills' }}
               </h1>
               
               <!-- Star Toggle -->
@@ -1208,8 +1208,10 @@
           </div>
 
           <!-- Right side - User menu -->
-          <!-- Right side - User menu -->
           <div class="flex items-center gap-4 ml-auto">
+            <!-- Offline / Live Sync Status Indicator -->
+            <SyncStatusBadge />
+
             <!-- Quick Add Dropdown -->
             <div class="relative">
               <button
@@ -1554,6 +1556,15 @@
                   >
                     <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
                     <span>Account Profile</span>
+                  </router-link>
+                  <router-link
+                    v-if="authStore.hasRole('admin') || authStore.hasRole('owner')"
+                    to="/subscription"
+                    class="group flex items-center px-3 py-2.5 text-[13px] font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-[#2D2D2D]/80 hover:text-gray-900 dark:hover:text-slate-200 transition-all duration-200"
+                    @click="showUserMenu = false"
+                  >
+                    <svg class="flex-shrink-0 h-5 w-5 mr-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                    <span>Subscription & Plan</span>
                   </router-link>
                 </div>
 
@@ -2019,21 +2030,287 @@
         </div>
       </div>
     </transition>
+    
+    <!-- Global License Expiration Lockout Modal -->
+    <div v-if="isLicenseExpired" class="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md"></div>
+      
+      <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-rose-200 dark:border-rose-900/50 shadow-2xl w-full max-w-xl relative z-10 overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+        
+        <!-- Header -->
+        <div class="px-8 py-6 border-b border-rose-100 dark:border-rose-900/30 flex items-center justify-between gap-4 bg-rose-50/50 dark:bg-rose-900/10 shrink-0">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-black text-rose-800 dark:text-rose-400">Subscription Expired</h3>
+              <p class="text-xs text-rose-600/80 dark:text-rose-400/80 font-medium mt-1">Your system access has been suspended.</p>
+            </div>
+          </div>
+          
+          <!-- Current User Info -->
+          <div class="hidden sm:flex items-center gap-3">
+            <div class="text-right">
+              <p class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ authStore.user?.name }}</p>
+              <p class="text-[10px] font-medium text-slate-500 dark:text-slate-400">{{ authStore.user?.email }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
+              <span class="text-indigo-600 dark:text-indigo-400 font-bold text-sm">{{ authStore.user?.name ? authStore.user.name.charAt(0).toUpperCase() : 'U' }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Scrollable Content -->
+        <div class="p-8 overflow-y-auto space-y-6">
+          
+          <template v-if="authStore.hasRole('admin') || authStore.hasRole('owner')">
+            <div v-if="!showGlobalChangePlan">
+            <!-- Expired Plan Summary -->
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <p class="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider mb-1">Expired Plan</p>
+                <p class="text-2xl font-black text-rose-700 dark:text-rose-300 capitalize">{{ licenseStore.licenseData?.plan || 'Unknown' }}</p>
+              </div>
+              <div class="flex flex-col gap-1 text-left sm:text-right">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Started: <span class="font-bold text-slate-700 dark:text-slate-300 ml-1">{{ formatDate(licenseStore.licenseData?.start_date) || 'N/A' }}</span></p>
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Expired: <span class="font-bold text-rose-600 dark:text-rose-400 ml-1">{{ formatDate(licenseStore.licenseData?.expires_at) || 'N/A' }}</span></p>
+              </div>
+            </div>
+
+            <!-- Renewal Options -->
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Payment Method</label>
+                <button @click="showGlobalChangePlan = true" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 text-xs font-bold transition-colors">
+                  Change Plan Instead?
+                </button>
+              </div>
+              
+              <!-- Existing Card Option -->
+              <label class="flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all" :class="globalPaymentMethod === 'existing' ? 'border-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800'">
+                <div class="flex items-center gap-4">
+                  <input type="radio" v-model="globalPaymentMethod" value="existing" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                  <div class="flex items-center gap-2">
+                    <div class="bg-slate-800 text-white dark:bg-zinc-700 rounded px-2.5 py-1 text-xs font-bold shadow-sm">VISA</div>
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300">•••• 4242</span>
+                  </div>
+                </div>
+                <span class="text-xs font-medium text-slate-500">Exp 12/28</span>
+              </label>
+
+              <!-- New Card Option -->
+              <label class="flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all" :class="globalPaymentMethod === 'new' ? 'border-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800'">
+                <input type="radio" v-model="globalPaymentMethod" value="new" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Use a new credit card</span>
+              </label>
+
+              <!-- New Card Form -->
+              <div v-if="globalPaymentMethod === 'new'" class="space-y-3 pt-2 animate-fade-in p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-xl border border-slate-100 dark:border-zinc-800">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Card Number</label>
+                  <input type="text" placeholder="0000 0000 0000 0000" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Expiry (MM/YY)</label>
+                    <input type="text" placeholder="MM/YY" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">CVC</label>
+                    <input type="text" placeholder="123" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change Plan Interface -->
+          <div v-else class="animate-fade-in space-y-4">
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select a New Plan</label>
+              <button @click="showGlobalChangePlan = false" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 text-xs font-bold transition-colors">
+                Back to Renewal
+              </button>
+            </div>
+            
+            <div class="flex justify-center mb-4">
+              <div class="bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg inline-flex items-center">
+                <button @click="globalBillingCycle = 'monthly'" :class="globalBillingCycle === 'monthly' ? 'bg-white dark:bg-zinc-700 shadow text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'" class="px-4 py-1.5 text-xs font-bold rounded-md transition-all">Monthly</button>
+                <button @click="globalBillingCycle = 'annual'" :class="globalBillingCycle === 'annual' ? 'bg-white dark:bg-zinc-700 shadow text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'" class="px-4 py-1.5 text-xs font-bold rounded-md transition-all">Annual (Save 20%)</button>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div 
+                v-for="plan in globalAvailablePlans" 
+                :key="plan.id"
+                @click="globalSelectedPlan = plan"
+                class="p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col"
+                :class="globalSelectedPlan?.id === plan.id ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-slate-200 dark:border-zinc-700 hover:border-indigo-300 dark:hover:border-indigo-700'"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <h4 class="font-black text-slate-900 dark:text-white">{{ plan.name }}</h4>
+                  <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded">{{ globalBillingCycle === 'monthly' ? plan.priceMonthly : plan.priceAnnual }}/{{ globalBillingCycle === 'monthly' ? 'mo' : 'yr' }}</span>
+                </div>
+                <div class="mt-auto pt-3 flex flex-wrap gap-1">
+                  <span v-for="feat in plan.features" :key="feat" class="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{{ feat }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        
+        <template v-else>
+            <!-- Restricted Message for Employees -->
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-6 rounded-2xl border border-rose-100 dark:border-rose-900/30 text-center">
+              <svg class="w-12 h-12 text-rose-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Your subscription plan has expired</h4>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Ask your admin user to renew the plan.</p>
+              
+              <div class="inline-flex flex-col items-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-slate-100 dark:border-zinc-700 w-full sm:w-auto min-w-[250px] shadow-sm">
+                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-bold text-lg">{{ licenseStore.adminName ? licenseStore.adminName.charAt(0).toUpperCase() : 'A' }}</span>
+                </div>
+                <p class="text-sm font-bold text-slate-900 dark:text-white">{{ licenseStore.adminName }}</p>
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ licenseStore.adminEmail }}</p>
+                <span class="mt-2 text-[9px] font-bold uppercase tracking-wider text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">Admin User</span>
+              </div>
+            </div>
+          </template>
+
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-6 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/30 shrink-0">
+          <button @click="logout" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors">
+            Logout
+          </button>
+          
+          <button v-if="!showGlobalChangePlan && (authStore.hasRole('admin') || authStore.hasRole('owner'))" @click="processGlobalRenewal" :disabled="isProcessingGlobalRenew" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-3 px-8 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:opacity-70">
+            <div v-if="isProcessingGlobalRenew" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span>{{ isProcessingGlobalRenew ? 'Processing...' : 'Pay & Restore Access' }}</span>
+          </button>
+          
+          <button v-else-if="showGlobalChangePlan && (authStore.hasRole('admin') || authStore.hasRole('owner'))" @click="processGlobalChangePlan" :disabled="!globalSelectedPlan || isProcessingGlobalRenew" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-3 px-8 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:opacity-70">
+            <div v-if="isProcessingGlobalRenew" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span>{{ isProcessingGlobalRenew ? 'Processing...' : 'Change Plan & Restore' }}</span>
+          </button>
+          
+          <button v-else-if="!authStore.hasRole('admin') && !authStore.hasRole('owner')" @click="checkRefreshStatus" :disabled="isCheckingStatus" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-3 px-8 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:opacity-70">
+            <svg :class="{'animate-spin': isCheckingStatus}" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            <span>{{ isCheckingStatus ? 'Checking...' : 'Refresh Status' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import SyncStatusBadge from '@/components/SyncStatusBadge.vue';
 import { ref, onMounted, onUnmounted, computed, onErrorCaptured, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useLicenseStore } from '@/stores/license';
+import { useToast } from '@/composables/useToast';
 import axios from 'axios';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const licenseStore = useLicenseStore();
+const { showToast } = useToast();
 const hasPermission = (perm) => authStore.hasPermission(perm);
 
 const renderError = ref(false);
 const renderErrorMessage = ref('');
+const isProcessingGlobalRenew = ref(false);
+
+const globalBillingCycle = ref('monthly');
+const globalPaymentMethod = ref('existing');
+const showGlobalChangePlan = ref(false);
+const globalSelectedPlan = ref(null);
+
+const globalAllPlans = [
+  { id: 'basic', name: 'Basic Plan', priceMonthly: '$80', priceAnnual: '$768', features: ['1 Device', 'Inventory'] },
+  { id: 'master', name: 'Master Plan', priceMonthly: '$200', priceAnnual: '$1,920', features: ['3 Devices', 'Accounting'] },
+  { id: 'elite', name: 'Elite Plan', priceMonthly: '$650', priceAnnual: '$6,240', features: ['10 Devices', 'Priority Support'] },
+  { id: 'custom', name: 'Custom Plan', priceMonthly: '$1500+', priceAnnual: '$1,500+', features: ['Unlimited Devices', 'Dedicated Account Manager'] },
+];
+
+const globalAvailablePlans = computed(() => {
+  const current = licenseStore.licenseData?.plan?.toLowerCase() || '';
+  return globalAllPlans.filter(p => p.id !== current);
+});
+
+const logout = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
+
+const isLicenseExpired = computed(() => {
+  if (!licenseStore.licenseData) return false;
+  
+  const status = licenseStore.licenseData.status;
+  if (status === 'cancelled') return true;
+  
+  if (licenseStore.licenseData.expires_at) {
+    const end = new Date(licenseStore.licenseData.expires_at);
+    const now = new Date();
+    if (end < now) return true;
+  }
+  return false;
+});
+
+const processGlobalRenewal = async () => {
+  isProcessingGlobalRenew.value = true;
+  try {
+    const res = await axios.post('/api/license/renew');
+    if (res.data.license && licenseStore.licenseData) {
+      licenseStore.licenseData.status = res.data.license.status;
+      licenseStore.licenseData.expires_at = res.data.license.expires_at;
+    }
+    showToast('Subscription renewed! System access restored.', 'success');
+  } catch (error) {
+    showToast('Failed to renew subscription', 'error');
+  } finally {
+    isProcessingGlobalRenew.value = false;
+  }
+};
+
+const processGlobalChangePlan = async () => {
+  isProcessingGlobalRenew.value = true;
+  try {
+    const res = await axios.post('/api/license/renew'); // Mocking using the same renew API
+    if (res.data.license && licenseStore.licenseData && globalSelectedPlan.value) {
+      licenseStore.licenseData.plan = globalSelectedPlan.value.id;
+      licenseStore.licenseData.status = 'active';
+      licenseStore.licenseData.expires_at = res.data.license.expires_at;
+    }
+    showToast(`Successfully changed plan to ${globalSelectedPlan.value?.name}! System access restored.`, 'success');
+    showGlobalChangePlan.value = false;
+  } catch (error) {
+    showToast('Failed to change plan', 'error');
+  } finally {
+    isProcessingGlobalRenew.value = false;
+  }
+};
+
+const isCheckingStatus = ref(false);
+const checkRefreshStatus = async () => {
+  isCheckingStatus.value = true;
+  
+  // Enforce a minimum 1s delay so the UI shows the 'Checking...' state clearly
+  await Promise.all([
+    licenseStore.checkLicenseStatus(),
+    new Promise(resolve => setTimeout(resolve, 1000))
+  ]);
+
+  if (licenseStore.isLicenseActive) {
+    isLicenseExpired.value = false;
+  }
+  isCheckingStatus.value = false;
+};
 
 onErrorCaptured((err, instance, info) => {
   console.error('[Error Boundary] Captured error in layout:', err);
@@ -2545,11 +2822,12 @@ const addCompanyUrl = computed(() => {
 });
 
 // Lifecycle hooks
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('company-switched-globally', fetchCompanies);
   fetchNotifications();
   fetchCompanies();
+  await licenseStore.checkLicenseStatus();
 
   // Initialize Theme
   applyTheme(currentThemeSetting.value);
@@ -2561,8 +2839,11 @@ onMounted(() => {
     }
   });
 
-  // Poll for new notifications every 30 seconds
-  setInterval(fetchNotifications, 30000);
+  // Poll for new notifications and license status every 30 seconds
+  setInterval(() => {
+    fetchNotifications();
+    licenseStore.checkLicenseStatus();
+  }, 30000);
 });
 
 onUnmounted(() => {

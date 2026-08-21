@@ -1,16 +1,27 @@
 {
     "$schema": "https://json.schemastore.org/package.json",
+    "name": "acutebills",
+    "version": "1.0.0",
+    "description": "AcuteBills Desktop Application",
+    "author": "AcuteBills",
     "private": true,
+    "main": "electron/main.cjs",
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "electron:dev": "concurrently -k \"npm run dev\" \"node node_modules/electron/cli.js .\"",
+        "electron:start": "node node_modules/electron/cli.js .",
+        "electron:build": "npm run build && npx electron-builder"
     },
     "devDependencies": {
+        "@noble/hashes": "1.6.1",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.0",
         "axios": "^1.8.2",
         "concurrently": "^9.0.1",
+        "electron": "^41.7.1",
+        "electron-builder": "24.13.3",
         "laravel-vite-plugin": "^2.0.0",
         "playwright": "^1.62.1",
         "tailwindcss": "^4.0.0",
@@ -32,11 +43,54 @@
         "html2pdf.js": "^0.14.0",
         "html5-qrcode": "^2.3.8",
         "lodash": "^4.17.21",
+        "node-machine-id": "^1.1.12",
         "pinia": "^3.0.3",
         "sweetalert2": "^11.26.25",
         "vue": "^3.5.18",
         "vue-chartjs": "^5.3.2",
         "vue-final-modal": "^4.5.5",
         "vue-router": "^4.5.1"
+    },
+    "build": {
+        "appId": "com.acutebills.desktop",
+        "productName": "AcuteBills",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "app/**/*",
+            "bootstrap/**/*",
+            "config/**/*",
+            "database/**/*",
+            "electron/**/*",
+            "public/**/*",
+            "resources/**/*",
+            "routes/**/*",
+            "storage/**/*",
+            "vendor/**/*",
+            "artisan",
+            "composer.json",
+            "package.json",
+            ".env",
+            ".env.example"
+        ],
+        "protocols": {
+            "name": "acutebills-protocol",
+            "schemes": [
+                "acutebills"
+            ]
+        },
+        "win": {
+            "target": "nsis"
+        },
+        "asar": false,
+        "nsis": {
+            "oneClick": false,
+            "perMachine": true,
+            "allowToChangeInstallationDirectory": true,
+            "license": "build/license.txt",
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        }
     }
 }

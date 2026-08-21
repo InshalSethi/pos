@@ -141,6 +141,12 @@ class GoogleAuthController extends Controller
                 $user->update($updateData);
             }
 
+            // Check if user came from desktop app login flow
+            if (session('desktop_auth_pending') || $flow === 'desktop') {
+                session()->forget('desktop_auth_pending');
+                return redirect()->to('/desktop-login');
+            }
+
             // If user has no company linked, force them to setup
             $destination = (is_null($user->company_id) || !$user->is_setup_completed)
                 ? '/company-setup'

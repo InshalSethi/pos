@@ -30,7 +30,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="google" content="notranslate" />
 
-    <title>{{ config('app.name', 'POS System') }}</title>
+    <title>{{ config('app.name', 'AcuteBills') }}</title>
 
     <script>
         window.systemTimezones = @json(\DateTimeZone::listIdentifiers());

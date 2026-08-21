@@ -15,6 +15,11 @@ Route::match(['get', 'post'], '/company-setup/cancel', [GoogleAuthController::cl
 Route::get('/sync-session', [\App\Http\Controllers\Api\AuthController::class, 'syncSession'])
     ->middleware(['web', 'auth:sanctum']);
 
+// Desktop Application OAuth Cloud Endpoint
+Route::get('/desktop-login', [\App\Http\Controllers\Api\DesktopAuthController::class, 'showDesktopLogin'])
+    ->middleware(['web'])
+    ->name('desktop.login');
+
 // 2. Password reset routes
 Route::get('/reset-password/{token}', function (string $token) {
     return view('app', ['token' => $token]);

@@ -58,6 +58,20 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeding categories...');
         $this->call(CategorySeeder::class);
 
+        // 8. Seed Elite License for Demo
+        $this->command->info('Allocating Elite Yearly License...');
+        \App\Models\License::updateOrCreate(
+            ['id' => 1],
+            [
+                'license_key' => 'DEMO-ELITE-YEARLY',
+                'plan' => 'elite',
+                'status' => 'active',
+                'start_date' => now()->toDateString(),
+                'expires_at' => now()->addYear()->toDateString(),
+                'last_opened_at' => now(),
+            ]
+        );
+
         $this->command->info('Database seeding completed successfully!');
         $this->command->info('');
         $this->command->info('Default Admin Credentials:');

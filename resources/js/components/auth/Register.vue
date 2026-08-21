@@ -157,6 +157,52 @@
                 </div>
               </div>
 
+              <!-- Selected Plan Info -->
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center mt-4">
+                <div>
+                  <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Selected Plan</div>
+                  <div class="text-sm font-black text-slate-900">{{ selectedPlanName }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-black text-slate-900">{{ selectedPlanPrice }}</div>
+                  <router-link to="/plans" class="text-[10px] text-primary-600 hover:underline font-bold">Change Plan</router-link>
+                </div>
+              </div>
+
+              <!-- Payment Details (Mock Test Cards) -->
+              <div v-if="form.plan !== 'starter'" class="pt-2 border-t border-slate-100 space-y-2.5 mt-2">
+                <div class="flex items-center gap-2 mb-1">
+                  <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                  <span class="text-[11px] font-bold text-slate-700">Payment Details (Test Mode)</span>
+                </div>
+                
+                <div>
+                  <input
+                    v-model="form.cardNumber"
+                    type="text"
+                    required
+                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                    placeholder="Card Number (e.g. 4242 4242 4242 4242)"
+                  />
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                  <input
+                    v-model="form.cardExpiry"
+                    type="text"
+                    required
+                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                    placeholder="MM/YY"
+                  />
+                  <input
+                    v-model="form.cardCvc"
+                    type="text"
+                    required
+                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                    placeholder="CVC"
+                  />
+                </div>
+              </div>
+
               <!-- Terms Checkbox -->
               <div class="flex items-start pt-0.5">
                 <input id="terms" v-model="form.terms" type="checkbox" required class="mt-0.5 h-3.5 w-3.5 text-slate-950 border-slate-300 rounded focus:ring-2 focus:ring-slate-200/60 focus:ring-offset-0" />
@@ -199,7 +245,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Navbar from '@/components/shared/Navbar.vue';
@@ -213,7 +259,12 @@ const form = ref({
   email: '',
   password: '',
   password_confirmation: '',
-  terms: false
+  terms: false,
+  plan: 'starter',
+  cycle: 'monthly',
+  cardNumber: '',
+  cardExpiry: '',
+  cardCvc: ''
 });
 
 const loading = ref(false);
@@ -224,8 +275,29 @@ const successMessage = ref('');
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
+const plans = {
+  starter: { name: 'Starter Plan', monthlyPrice: 'Free / 14 Days', yearlyPrice: 'Free / 14 Days' },
+  basic: { name: 'Basic Plan', monthlyPrice: '$80 / month', yearlyPrice: '$768 / year' },
+  master: { name: 'Master Plan', monthlyPrice: '$200 / month', yearlyPrice: '$1,920 / year' },
+  elite: { name: 'Elite Plan', monthlyPrice: '$650 / month', yearlyPrice: '$6,240 / year' },
+  custom: { name: 'Custom Plan', monthlyPrice: '$1,500+ / month', yearlyPrice: '$14,400+ / year' }
+};
+
+const selectedPlanName = computed(() => plans[form.value.plan]?.name || 'Starter Plan');
+const selectedPlanPrice = computed(() => {
+  const plan = plans[form.value.plan];
+  if (!plan) return 'Free';
+  return form.value.cycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
+});
+
 // Google Callback Handling
 onMounted(async () => {
+  if (route.query.plan && plans[route.query.plan]) {
+    form.value.plan = route.query.plan;
+  }
+  if (route.query.cycle && ['monthly', 'yearly'].includes(route.query.cycle)) {
+    form.value.cycle = route.query.cycle;
+  }
   const token = route.query.token;
   const errorParam = route.query.error;
   const redirectParam = route.query.redirect;

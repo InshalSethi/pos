@@ -64,9 +64,15 @@ use App\Http\Controllers\Api\AssetController;
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
 Route::get('/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
 Route::get('/custom-forms/get-fields', [\App\Http\Controllers\Admin\AdminCustomFormController::class, 'getFormForArea']);
+
+// License Activation & Verification
+Route::get('/license/status', [\App\Http\Controllers\Api\LicenseController::class, 'checkStatus']);
+Route::post('/license/activate', [\App\Http\Controllers\Api\LicenseController::class, 'activate']);
+Route::post('/license/renew', [\App\Http\Controllers\Api\LicenseController::class, 'renew']);
 Route::middleware('web')->group(function() {
     Route::post('/login', [AuthController::class , 'login'])->name('api.login');
     Route::post('/register', [AuthController::class , 'register']);
+    Route::post('/cloud-auth-sync', [AuthController::class, 'cloudAuthSync']);
 });
 Route::post('/forgot-password', [AuthController::class , 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class , 'resetPassword']);
@@ -509,5 +515,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment']);
 
         Route::get('/tasks/assignees', [TaskController::class, 'getAssignees']);
+
+        // Offline Desktop Synchronization routes
+        Route::get('/sync/ping', [\App\Http\Controllers\Api\SyncController::class, 'ping']);
+        Route::post('/sync/push', [\App\Http\Controllers\Api\SyncController::class, 'push']);
+        Route::get('/sync/pull', [\App\Http\Controllers\Api\SyncController::class, 'pull']);
 
     });

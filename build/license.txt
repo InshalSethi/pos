@@ -1,0 +1,16 @@
+END USER LICENSE AGREEMENT (EULA)
+
+Please read this End User License Agreement ("Agreement") carefully before clicking the "I Agree" button, downloading or using the POS System ("Application").
+
+By clicking the "I Agree" button, downloading or using the Application, you are agreeing to be bound by the terms and conditions of this Agreement.
+
+1. License Grant
+We grant you a revocable, non-exclusive, non-transferable, limited license to download, install and use the Application strictly in accordance with the terms of this Agreement.
+
+2. Restrictions
+You agree not to, and you will not permit others to license, sell, rent, lease, assign, distribute, transmit, host, outsource, disclose or otherwise commercially exploit the Application.
+
+3. Term and Termination
+This Agreement shall remain in effect until terminated by you or us. We may, in its sole discretion, at any time and for any or no reason, suspend or terminate this Agreement with or without prior notice.
+
+By continuing, you acknowledge that you have read, understood, and agree to be bound by these terms.

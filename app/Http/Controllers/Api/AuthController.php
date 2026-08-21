@@ -105,12 +105,17 @@ class AuthController extends Controller
             ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
             : null;
 
+        $redirectUrl = $user->onboarding_completed ? '/dashboard' : '/company-setup';
+        if (session('desktop_auth_pending') || $request->input('redirect') === '/desktop-login') {
+            $redirectUrl = '/desktop-login';
+        }
+
         return response()->json([
             'token'           => $token,
             'user'            => $user,
             'permissions'     => $permissions,
             'roles'           => $roles,
-            'redirect_url'    => $user->onboarding_completed ? '/dashboard' : '/company-setup',
+            'redirect_url'    => $redirectUrl,
             'company_context' => $company ? [
                 'base_currency'   => $company->base_currency   ?? 'USD',
                 'system_language' => $company->system_language ?? 'en',
@@ -618,4 +623,98 @@ class AuthController extends Controller
             'user_id' => $user->id
         ]);
     }
+
+    public function cloudAuthSync(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'nullable|string',
+            'name'  => 'nullable|string',
+        ]);
+
+        $email = $request->input('email');
+        $name = $request->input('name');
+
+        // Find existing user or provision local account for cloud user
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name'                 => $name ?: 'Cloud User',
+                'email'                => $email,
+                'password'             => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+                'is_active'            => true,
+                'onboarding_completed' => true,
+                'is_setup_completed'   => true,
+            ]);
+
+            try {
+                $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+                $user->assignRole($adminRole);
+            } catch (\Throwable $th) {
+                // Ignore permission seeder errors if already existing
+            }
+        } else {
+            $user->update([
+                'is_active'            => true,
+                'onboarding_completed' => true,
+                'is_setup_completed'   => true,
+            ]);
+        }
+
+        // Sync license details dynamically from incoming cloud authentication payload
+        $licenseKey = $request->input('license_key');
+        $plan       = $request->input('plan');
+        $startDate  = $request->input('start_date');
+        $expiresAt  = $request->input('expires_at');
+
+        if ($licenseKey || $plan || $expiresAt) {
+            $licenseFields = array_filter([
+                'license_key'    => $licenseKey,
+                'plan'          => $plan,
+                'status'        => 'active',
+                'start_date'    => $startDate,
+                'expires_at'    => $expiresAt,
+                'device_id'     => 'CLOUD-AUTHENTICATED',
+                'last_opened_at' => now(),
+            ], fn($val) => !is_null($val) && $val !== '');
+
+            \App\Models\License::updateOrCreate(
+                ['id' => 1],
+                $licenseFields
+            );
+        }
+
+        // Issue a local Sanctum token valid for this local Desktop installation
+        $localToken = $user->createToken('desktop-local-session')->plainTextToken;
+        $localToken = $user->createToken('desktop-local-session')->plainTextToken;
+
+        // Establish Web Session for local Blade/Vue middleware
+        Auth::guard('web')->login($user, true);
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        $permissions = method_exists($user, 'getAllPermissions') ? $user->getAllPermissions()->pluck('name')->toArray() : [];
+        $roles = method_exists($user, 'getRoleNames') ? $user->getRoleNames()->toArray() : [];
+
+        $company = $user->current_company_id
+            ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
+            : null;
+
+        return response()->json([
+            'token'           => $localToken,
+            'user'            => $user->fresh(['roles']),
+            'permissions'     => $permissions,
+            'roles'           => $roles,
+            'redirect_url'    => '/dashboard',
+            'company_context' => $company ? [
+                'base_currency'   => $company->base_currency   ?? 'USD',
+                'system_language' => $company->system_language ?? 'en',
+                'timezone_offset' => $company->timezone_offset ?? 'UTC',
+            ] : null,
+        ]);
+    }
 }
+

@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE expenses MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'draft'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE expenses MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'draft'");
+        }
     }
 
     /**
@@ -18,6 +20,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE expenses MODIFY COLUMN status ENUM('draft', 'submitted', 'approved', 'rejected', 'paid') NOT NULL DEFAULT 'draft'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE expenses MODIFY COLUMN status ENUM('draft', 'submitted', 'approved', 'rejected', 'paid') NOT NULL DEFAULT 'draft'");
+        }
     }
 };
