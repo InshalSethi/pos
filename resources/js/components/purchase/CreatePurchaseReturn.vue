@@ -307,14 +307,24 @@
                     >
                       {{ item.category_path || (item.product && item.product.category_path) || (typeof item.product?.category === 'string' ? item.product?.category : item.product?.category?.name) }}
                     </div>
-                    <div v-if="item.max_returnable !== undefined" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
-                      Max Returnable from PO: {{ item.max_returnable }}
-                    </div>
-                    <!-- Warehouse Badge -->
-                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                        <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        {{ getWarehouseNameForItem(item) }} ({{ item.quantity }} Qty)
+                    <!-- Badges for Limits & Stock -->
+                    <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                      <span v-if="item.po_limit !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                        PO Limit: {{ item.po_limit }}
+                      </span>
+                      <span v-else-if="item.max_returnable !== undefined && item.po_limit === undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                        PO Limit: {{ item.max_returnable }}
+                      </span>
+                      <span v-if="item.available_stock !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold" :class="item.available_stock > 0 ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40' : 'bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40'">
+                        In Stock: {{ item.available_stock }}
+                      </span>
+                      <span v-if="item.max_returnable !== undefined || getItemMaxAllowed(item) !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                        Max Returnable: {{ item.max_returnable !== undefined ? item.max_returnable : getItemMaxAllowed(item) }}
+                      </span>
+                      <!-- Warehouse Badge -->
+                      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
+                        <svg class="w-2.5 h-2.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        {{ getWarehouseNameForItem(item) }}
                       </span>
                     </div>
                   </td>
@@ -328,14 +338,24 @@
                     />
                   </td>
                   <td class="py-3 px-4 text-center">
-                    <input
-                      v-model.number="item.quantity"
-                      type="number"
-                      min="1"
-                      :max="item.max_returnable !== undefined ? item.max_returnable : undefined"
-                      @input="validateItemQty(item)"
-                      class="w-20 text-center px-2 py-1 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:ring-1 focus:ring-blue-500"
-                    />
+                    <div class="flex flex-col items-center">
+                      <input
+                        v-model.number="item.quantity"
+                        type="number"
+                        min="1"
+                        :max="item.max_returnable !== undefined ? item.max_returnable : getItemMaxAllowed(item)"
+                        class="w-20 text-center px-2 py-1 bg-white dark:bg-zinc-800 border rounded text-xs font-bold focus:ring-1 transition-all"
+                        :class="isItemQtyExceeded(item) ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30 text-rose-600 focus:ring-rose-500' : 'border-slate-300 dark:border-zinc-700 focus:ring-blue-500'"
+                      />
+                      <span v-if="isItemQtyExceeded(item)" class="text-[9px] text-rose-600 dark:text-rose-400 font-bold mt-1 leading-tight text-center">
+                        <template v-if="item.available_stock !== undefined && (parseFloat(item.quantity) || 0) > item.available_stock && item.available_stock <= (item.po_limit ?? item.available_stock)">
+                          Only {{ item.available_stock }} units available in warehouse stock.
+                        </template>
+                        <template v-else>
+                          Exceeds limit (Max: {{ item.max_returnable !== undefined ? item.max_returnable : getItemMaxAllowed(item) }})
+                        </template>
+                      </span>
+                    </div>
                   </td>
                   <td class="py-3 px-4 text-center">
                     <input
@@ -400,48 +420,118 @@
             </div>
           </div>
 
-          <!-- Return Reason Dropdown -->
-          <div>
+          <!-- Return Reason (Floating Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Reason for Return *</label>
-            <select
-              v-model="form.reason"
-              required
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
-            >
-              <option value="Damaged Goods">Damaged Goods</option>
-              <option value="Defective / Quality Issue">Defective / Quality Issue</option>
-              <option value="Wrong Item Shipped">Wrong Item Shipped</option>
-              <option value="Overstocked / Excess">Overstocked / Excess</option>
-              <option value="Expired Product">Expired Product</option>
-              <option value="Other">Other Reason</option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('reason')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer font-semibold"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'reason' }"
+              >
+                <span class="truncate font-semibold">{{ form.reason || 'Select Reason' }}</span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': activeDropdown === 'reason' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'reason'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 flex flex-col animate-fade-in"
+              >
+                <button
+                  v-for="r in reasonOptions"
+                  :key="r"
+                  type="button"
+                  @click="form.reason = r; activeDropdown = null"
+                  class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center last:border-b-0"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.reason === r }"
+                >
+                  <span>{{ r }}</span>
+                  <svg v-if="form.reason === r" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Return Status -->
-          <div>
+          <!-- Return Status (Floating Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Return Status</label>
-            <select
-              v-model="form.status"
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
-            >
-              <option value="draft">Draft</option>
-              <option value="pending">Pending Approval</option>
-              <option value="approved">Approved (Deduct Inventory &amp; Post Ledger)</option>
-              <option value="completed">Completed</option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('return_status')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer font-semibold"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'return_status' }"
+              >
+                <span class="truncate font-semibold">{{ getReturnStatusLabel(form.status) }}</span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': activeDropdown === 'return_status' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'return_status'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 flex flex-col animate-fade-in"
+              >
+                <button
+                  v-for="opt in returnStatusOptions"
+                  :key="opt.value"
+                  type="button"
+                  @click="form.status = opt.value; activeDropdown = null"
+                  class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center last:border-b-0"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.status === opt.value }"
+                >
+                  <div class="flex flex-col">
+                    <span class="font-semibold">{{ opt.label }}</span>
+                    <span v-if="opt.desc" class="text-[10px] text-slate-400 font-normal mt-0.5">{{ opt.desc }}</span>
+                  </div>
+                  <svg v-if="form.status === opt.value" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Refund Status -->
-          <div>
-            <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Refund Status</label>
-            <select
-              v-model="form.refund_status"
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
-            >
-              <option value="pending">Pending Refund</option>
-              <option value="partial">Partial Refund</option>
-              <option value="refunded">Refunded / Credited</option>
-            </select>
+          <!-- Refund Status (Floating Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Refund Status</label>
+              <span v-if="isUnpaidPo" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">(Auto-locked)</span>
+            </div>
+            <div class="relative">
+              <button
+                type="button"
+                @click="!isUnpaidPo && toggleDropdown('refund_status')"
+                :disabled="isUnpaidPo"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed cursor-pointer font-semibold"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'refund_status' }"
+              >
+                <span class="truncate font-semibold">{{ getRefundStatusLabel(form.refund_status) }}</span>
+                <svg v-if="!isUnpaidPo" class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': activeDropdown === 'refund_status' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <svg v-else class="w-3.5 h-3.5 text-amber-500 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'refund_status' && !isUnpaidPo"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 flex flex-col animate-fade-in"
+              >
+                <button
+                  v-for="opt in refundStatusOptions"
+                  :key="opt.value"
+                  type="button"
+                  @click="form.refund_status = opt.value; activeDropdown = null"
+                  class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center last:border-b-0"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.refund_status === opt.value }"
+                >
+                  <div class="flex flex-col">
+                    <span class="font-semibold">{{ opt.label }}</span>
+                    <span v-if="opt.desc" class="text-[10px] text-slate-400 font-normal mt-0.5">{{ opt.desc }}</span>
+                  </div>
+                  <svg v-if="form.refund_status === opt.value" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+              </div>
+            </div>
+            <p v-if="isUnpaidPo" class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1 font-medium">
+              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Auto-set to Refunded / Credited (AP Credit adjustment is immediate)</span>
+            </p>
           </div>
 
           <!-- REFUND COLLECTION DETAILS (Directly below Refund Status) -->
@@ -584,17 +674,35 @@
                 </div>
               </div>
 
-              <!-- Amount Received Field -->
+              <!-- Amount Received / AP Credit Settled Field -->
               <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Amount Received:</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase">
+                    {{ (isUnpaidPo || form.payment_method === 'ap_credit') ? 'AP Credit Settled' : 'Amount Received' }}:
+                  </label>
+                  <span v-if="isUnpaidPo || form.payment_method === 'ap_credit'" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                    Auto-locked to Total
+                  </span>
+                </div>
                 <input
                   v-model.number="form.amount_received"
                   type="number"
                   step="0.01"
                   min="0"
-                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border rounded-lg text-xs font-bold text-slate-800 dark:text-zinc-100"
+                  :disabled="isUnpaidPo || form.payment_method === 'ap_credit'"
+                  :readonly="isUnpaidPo || form.payment_method === 'ap_credit'"
+                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border rounded-lg text-xs font-bold text-slate-800 dark:text-zinc-100 disabled:bg-slate-100 dark:disabled:bg-zinc-800/80 disabled:cursor-not-allowed disabled:text-slate-500"
                   :class="isLiquidRefundExceeded ? 'border-rose-500 ring-1 ring-rose-500 text-rose-600' : 'border-slate-300 dark:border-zinc-700'"
                 />
+                
+                <!-- Notice Alert when 100% Unpaid PO / AP Credit -->
+                <div v-if="isUnpaidPo || form.payment_method === 'ap_credit'" class="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl flex items-start gap-2 text-amber-800 dark:text-amber-300 text-[11px] leading-relaxed">
+                  <span class="text-sm shrink-0">⚠️</span>
+                  <span>
+                    <strong>This PO was 100% on credit (Unpaid).</strong> Amount is automatically locked to Return Grand Total (<strong>{{ currencySymbol }}{{ formatCurrency(returnGrandTotal) }}</strong>) and settled directly against Accounts Payable.
+                  </span>
+                </div>
+
                 <p v-if="isLiquidRefundExceeded" class="text-[10px] text-rose-500 font-semibold mt-1">
                   Cannot refund more cash/bank than originally paid (${{ formatCurrency(poAmountPaid) }}).
                 </p>
@@ -756,7 +864,7 @@
         <div class="pt-6 border-t border-slate-200 dark:border-zinc-800 space-y-2 mt-6">
           <button
             @click="submitReturn('approved')"
-            :disabled="submitting || form.items.length === 0"
+            :disabled="submitting || form.items.length === 0 || hasStockValidationErrors || (isUnpaidPo ? false : !isRefundBalanced) || isLiquidRefundExceeded"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all disabled:opacity-50 flex items-center justify-center space-x-2 cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -765,7 +873,7 @@
 
           <button
             @click="submitReturn('draft')"
-            :disabled="submitting || form.items.length === 0"
+            :disabled="submitting || form.items.length === 0 || hasStockValidationErrors"
             class="w-full bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold py-2.5 px-4 rounded-xl text-xs transition-all disabled:opacity-50 flex items-center justify-center space-x-2 cursor-pointer"
           >
             <span>Save as Draft</span>
@@ -788,13 +896,14 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 import ProductSearch from '@/components/shared/ProductSearch.vue';
 import soundService from '@/services/SoundService';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const currencySymbol = computed(() => authStore.currencySymbol || '$');
 
@@ -827,6 +936,38 @@ const toggleDropdown = (name) => {
 const closeAllDropdowns = () => {
   activeDropdown.value = null;
   openBankSplitDropdownIndex.value = null;
+};
+
+const reasonOptions = [
+  'Damaged Goods',
+  'Defective / Quality Issue',
+  'Wrong Item Shipped',
+  'Overstocked / Excess',
+  'Expired Product',
+  'Other',
+];
+
+const returnStatusOptions = [
+  { value: 'draft', label: 'Draft', desc: 'Save without deducting stock or posting GL entries' },
+  { value: 'pending', label: 'Pending Approval', desc: 'Awaiting manager approval' },
+  { value: 'approved', label: 'Approved (Deduct Inventory & Post Ledger)', desc: 'Immediately deducts stock & posts GL entries' },
+  { value: 'completed', label: 'Completed', desc: 'Fully processed and closed' },
+];
+
+const getReturnStatusLabel = (val) => {
+  const opt = returnStatusOptions.find(o => o.value === val);
+  return opt ? opt.label : 'Pending Approval';
+};
+
+const refundStatusOptions = [
+  { value: 'pending', label: 'Pending Refund', desc: 'Refund / credit note is in progress' },
+  { value: 'partial', label: 'Partial Refund', desc: 'Partially received / credited' },
+  { value: 'refunded', label: 'Refunded / Credited', desc: 'Fully settled / credited' },
+];
+
+const getRefundStatusLabel = (val) => {
+  const opt = refundStatusOptions.find(o => o.value === val);
+  return opt ? opt.label : 'Pending Refund';
 };
 
 const form = reactive({
@@ -1161,16 +1302,47 @@ const isApCreditExceeded = computed(() => {
   return val > (poDueAmount.value + 0.009);
 });
 
+const getItemMaxAllowed = (item) => {
+  let limits = [];
+  if (item.po_limit !== undefined && item.po_limit !== null) {
+    limits.push(Number(item.po_limit));
+  }
+  if (item.available_stock !== undefined && item.available_stock !== null) {
+    limits.push(Number(item.available_stock));
+  }
+  if (item.max_allowed_qty !== undefined && item.max_allowed_qty !== null) {
+    limits.push(Number(item.max_allowed_qty));
+  }
+  if (item.max_returnable !== undefined && item.max_returnable !== null) {
+    limits.push(Number(item.max_returnable));
+  }
+  return limits.length > 0 ? Math.min(...limits) : undefined;
+};
+
+const isItemQtyExceeded = (item) => {
+  const max = getItemMaxAllowed(item);
+  if (max === undefined) return false;
+  return (parseFloat(item.quantity) || 0) > max;
+};
+
+const hasStockValidationErrors = computed(() => {
+  return form.items.some(i => isItemQtyExceeded(i) || (parseFloat(i.quantity) || 0) <= 0);
+});
+
 watch(
-  [() => form.payment_method, () => returnGrandTotal.value, () => selectedPoData.value],
+  [() => form.payment_method, () => returnGrandTotal.value, () => selectedPoData.value, () => isUnpaidPo.value],
   ([newMethod, newTotal]) => {
     const total = newTotal || 0;
 
-    if (isUnpaidPo.value) {
+    if (isUnpaidPo.value || newMethod === 'ap_credit') {
       form.payment_method = 'ap_credit';
+      form.refund_status = 'refunded';
       form.bank_account_id = 'COA_20100';
       form.ap_credit_amount = total;
       form.amount_received = total;
+      form.cash_amount = 0;
+      form.vendor_credit_amount = 0;
+      form.bank_splits = [];
     } else if (isPartiallyPaidPo.value) {
       form.payment_method = 'mixed';
       const apCap = Math.min(total, poDueAmount.value);
@@ -1385,13 +1557,13 @@ const onPoChange = async (poIdOverride = null) => {
     let rawItems = [];
 
     try {
+      const res = await axios.get(`/api/purchase-returns/po-items/${poId}`);
+      poData = res.data.purchase_order || res.data;
+      rawItems = res.data.items || [];
+    } catch (e) {
       const res = await axios.get(`/api/purchase-orders/${poId}`);
       poData = res.data;
       rawItems = poData.purchase_order_items || poData.purchaseOrderItems || poData.items || [];
-    } catch (e) {
-      const res = await axios.get(`/api/purchase-returns/po-items/${poId}`);
-      poData = res.data.purchase_order || res.data;
-      rawItems = res.data.items || poData.purchase_order_items || [];
     }
 
     if (poData) {
@@ -1424,21 +1596,37 @@ const onPoChange = async (poIdOverride = null) => {
     if (rawItems.length > 0) {
       form.items = rawItems.map(i => {
         const qtyPurchased = Number(
-          i.qty_purchased ?? i.quantity_received ?? i.quantity_ordered ?? i.quantity ?? 0
+          i.quantity_received ?? i.quantity_ordered ?? i.qty_purchased ?? i.quantity ?? 0
         );
+        const poLimit = i.po_limit !== undefined ? Number(i.po_limit) : (qtyPurchased > 0 ? qtyPurchased : undefined);
+        const availableStock = i.available_stock !== undefined ? Number(i.available_stock) : undefined;
+        const maxReturnable = i.max_returnable !== undefined 
+          ? Number(i.max_returnable) 
+          : (poLimit !== undefined && availableStock !== undefined ? Math.min(poLimit, availableStock) : poLimit);
+        const maxAllowed = i.max_allowed_qty !== undefined 
+          ? Number(i.max_allowed_qty) 
+          : maxReturnable;
+        const initialQty = maxAllowed !== undefined ? maxAllowed : (qtyPurchased > 0 ? qtyPurchased : 1);
         const itemWhId = i.warehouse_id || i.warehouse?.id || poData?.warehouse_id || form.warehouse_id || 1;
         const itemWhObj = warehouses.value.find(w => w.id == itemWhId);
+
         return {
           product_id: i.product_id,
           product_variation_id: i.product_variation_id || null,
           product_name: i.product?.name || i.product_name || 'Unknown Product',
           product_sku: i.product?.sku || i.product_sku || '',
+          brand_name: i.brand_name || i.product?.brand_name || (typeof i.product?.brand === 'string' ? i.product?.brand : i.product?.brand?.name),
+          category_path: i.category_path || i.product?.category_path || (typeof i.product?.category === 'string' ? i.product?.category : i.product?.category?.name),
+          product: i.product || null,
           warehouse_id: itemWhId,
           warehouse_name: i.warehouse_name || i.warehouse?.name || itemWhObj?.name || getWarehouseNameById(itemWhId),
           unit_cost: parseFloat(i.unit_cost || i.unit_price || 0),
-          quantity: qtyPurchased > 0 ? qtyPurchased : 1,
-          qty_returned: qtyPurchased > 0 ? qtyPurchased : 1,
-          max_returnable: qtyPurchased > 0 ? qtyPurchased : undefined,
+          quantity: initialQty,
+          qty_returned: initialQty,
+          po_limit: poLimit,
+          max_returnable: maxReturnable,
+          available_stock: availableStock,
+          max_allowed_qty: maxAllowed,
           tax_amount: parseFloat(i.tax_amount || 0),
           discount_amount: parseFloat(i.discount_amount || 0),
         };
@@ -1465,6 +1653,8 @@ const addProductToReturn = (product) => {
   const matchId = product.product_id || product.id;
   const matchVarId = product.product_variation_id || null;
   const existing = form.items.find(i => i.product_id === matchId && (i.product_variation_id || null) === matchVarId && i.warehouse_id == targetWhId);
+  const stockQty = Number(product.stock_quantity ?? product.stock_qty ?? 0);
+
   if (existing) {
     existing.quantity += 1;
   } else {
@@ -1480,6 +1670,8 @@ const addProductToReturn = (product) => {
       warehouse_name: targetWhObj?.name || getWarehouseNameById(targetWhId),
       unit_cost: parseFloat(product.cost_price || product.selling_price || product.price || 0),
       quantity: 1,
+      available_stock: stockQty,
+      max_allowed_qty: stockQty,
       tax_amount: 0,
       discount_amount: 0,
     });
@@ -1537,7 +1729,17 @@ const submitReturn = async (overrideStatus = null) => {
     return;
   }
 
-  if (form.payment_method === 'mixed') {
+  if (isUnpaidPo.value || form.payment_method === 'ap_credit') {
+    form.payment_method = 'ap_credit';
+    form.refund_status = 'refunded';
+    form.bank_account_id = 'COA_20100';
+    form.amount_received = returnGrandTotal.value;
+    form.ap_credit_amount = returnGrandTotal.value;
+    form.cash_amount = 0;
+    form.vendor_credit_amount = 0;
+    form.bank_splits = [];
+    form.refund_splits = [];
+  } else if (form.payment_method === 'mixed') {
     const splits = [];
     if ((form.ap_credit_amount || 0) > 0) {
       splits.push({ type: 'ap_credit', account_id: 'COA_20100', amount: form.ap_credit_amount });
@@ -1562,12 +1764,32 @@ const submitReturn = async (overrideStatus = null) => {
     form.status = overrideStatus;
   }
 
+  const cleanBankAccountId = (form.bank_account_id && !String(form.bank_account_id).startsWith('COA_') && !isNaN(Number(form.bank_account_id)))
+    ? Number(form.bank_account_id)
+    : null;
+
+  const payload = {
+    ...form,
+    amount_received: returnGrandTotal.value,
+    bank_account_id: cleanBankAccountId,
+    reason: form.reason || 'Defective / Return items',
+  };
+
   submitting.value = true;
   try {
-    await axios.post('/api/purchase-returns', form);
+    await axios.post('/api/purchase-returns', payload);
     router.push('/purchase/returns');
   } catch (err) {
-    alert(err.response?.data?.message || 'Failed to submit purchase return');
+    let errorMsg = err.response?.data?.message || 'Failed to submit purchase return';
+    if (err.response?.data?.errors) {
+      const errList = Object.entries(err.response.data.errors)
+        .map(([field, msgs]) => `• ${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+        .join('\n');
+      if (errList) {
+        errorMsg += `:\n\n${errList}`;
+      }
+    }
+    alert(errorMsg);
   } finally {
     submitting.value = false;
   }
@@ -1619,13 +1841,20 @@ const onProductsFetched = (newItems) => {
 };
 
 
-onMounted(() => {
+onMounted(async () => {
   fetchNextNumber();
   fetchSuppliers();
   fetchPurchaseOrders();
   fetchWarehouses();
   fetchProducts();
   fetchBankAccounts();
+
+  const queryPoId = route?.query?.po_id || route?.query?.purchase_order_id;
+  if (queryPoId) {
+    form.purchase_order_id = Number(queryPoId);
+    await onPoChange(Number(queryPoId));
+  }
+
   document.addEventListener('click', closeAllDropdowns);
 });
 

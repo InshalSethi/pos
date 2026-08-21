@@ -127,6 +127,15 @@ class CompanySwitcherController extends Controller
             }
 
             $company->update($validatedData);
+
+            if ($request->filled('base_currency')) {
+                session(['app_currency' => $company->base_currency]);
+
+                \App\Models\BankAccount::withoutGlobalScopes()
+                    ->where('company_id', $company->id)
+                    ->where('is_default', true)
+                    ->update(['currency' => $company->base_currency]);
+            }
         }
 
         return response()->json([

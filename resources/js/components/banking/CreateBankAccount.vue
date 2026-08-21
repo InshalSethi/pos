@@ -528,10 +528,14 @@ export default {
       return map[upper] || upper || companyCurrencySymbol.value;
     };
 
-    onMounted(() => {
-      currencyStore.fetchCurrencies();
+    onMounted(async () => {
+      await currencyStore.fetchCurrencies();
       if (route.params.id) {
         fetchAccountDetail(route.params.id);
+      } else {
+        if (currencyStore.tenantCurrencyCode) {
+          form.value.currency = currencyStore.tenantCurrencyCode;
+        }
       }
     });
 

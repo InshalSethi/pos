@@ -400,7 +400,9 @@ class OnboardingWizard extends Component
                 'is_active' => true,
             ]);
 
-            // Seed Default Cash Bank Account
+            // Seed Default Cash Bank Account (Strictly Single Account with Selected Company Currency)
+            $targetCurrency = $company->base_currency ?: ($this->base_currency ?: 'PKR');
+
             $cashAccount = \App\Models\Account::withoutGlobalScopes()
                 ->where('company_id', $company->id)
                 ->where(function ($query) {
@@ -417,23 +419,57 @@ class OnboardingWizard extends Component
                     ->first();
             }
 
-            if ($cashAccount) {
-                \App\Models\BankAccount::withoutGlobalScopes()
-                    ->updateOrCreate([
-                        'company_id' => $company->id,
-                        'is_default' => true,
-                    ], [
-                        'account_name' => 'Cash Account',
-                        'bank_name' => 'Cash',
-                        'account_number' => 'CASH-001',
-                        'account_type' => 'checking',
-                        'chart_account_id' => $cashAccount->id,
-                        'currency' => $company->base_currency ?: 'USD',
-                        'is_active' => true,
-                        'is_default' => true,
-                        'opening_balance' => 0.00,
-                        'opening_date' => now()->format('Y-m-d'),
-                    ]);
+            $allCompanyCashAccounts = \App\Models\BankAccount::withoutGlobalScopes()
+                ->where('company_id', $company->id)
+                ->where(function ($query) {
+                    $query->where('is_default', true)
+                        ->orWhere('account_name', 'Cash Account')
+                        ->orWhere('bank_name', 'Cash')
+                        ->orWhere('account_number', 'CASH-001');
+                })
+                ->get();
+
+            if ($allCompanyCashAccounts->count() > 0) {
+                $primaryCash = $allCompanyCashAccounts->first();
+                $primaryCash->update([
+                    'account_name'     => 'Cash Account',
+                    'bank_name'        => 'Cash',
+                    'account_number'   => 'CASH-001',
+                    'account_type'     => 'checking',
+                    'chart_account_id' => $cashAccount?->id,
+                    'currency'         => $targetCurrency,
+                    'is_active'        => true,
+                    'is_default'       => true,
+                    'opening_date'     => now()->format('Y-m-d'),
+                ]);
+
+                // Purge any extra duplicate unlinked cash accounts
+                foreach ($allCompanyCashAccounts->slice(1) as $dupAcc) {
+                    $hasTx = $dupAcc->bankTransactions()->exists() ||
+                             \App\Models\Transaction::where('account_id', $dupAcc->id)->exists() ||
+                             \App\Models\Payment::where('bank_account_id', $dupAcc->id)->exists();
+                    if (!$hasTx && (float)$dupAcc->current_balance == 0) {
+                        $dupAcc->forceDelete();
+                    } else {
+                        $dupAcc->update(['is_default' => false]);
+                    }
+                }
+            } else {
+                \App\Models\BankAccount::withoutGlobalScopes()->create([
+                    'company_id'       => $company->id,
+                    'account_name'     => 'Cash Account',
+                    'bank_name'        => 'Cash',
+                    'account_number'   => 'CASH-001',
+                    'account_type'     => 'checking',
+                    'chart_account_id' => $cashAccount?->id,
+                    'currency'         => $targetCurrency,
+                    'is_active'        => true,
+                    'is_default'       => true,
+                    'opening_balance'  => 0.00,
+                    'current_balance'  => 0.00,
+                    'opening_date'     => now()->format('Y-m-d'),
+                    'description'      => 'Default system Cash Account for daily transactions and POS payments.',
+                ]);
             }
         });
 

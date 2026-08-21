@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('licenses', function (Blueprint $table) {
-            try {
+        if (Schema::hasIndex('licenses', 'licenses_license_key_unique')) {
+            Schema::table('licenses', function (Blueprint $table) {
                 $table->dropUnique('licenses_license_key_unique');
-            } catch (\Exception $e) {
-                // Index might not exist or already dropped
-            }
-        });
+            });
+        }
 
         Schema::table('licenses', function (Blueprint $table) {
             $table->text('license_key')->change();

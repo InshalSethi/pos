@@ -327,6 +327,28 @@
             </div>
           </div>
 
+          <!-- Company Currency Settings -->
+          <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
+            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Company Currency</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Set the primary base currency for financial transactions, billing, and accounting.</p>
+            <div class="space-y-4">
+              <div class="max-w-md w-full">
+                <SystemSelect
+                  label="Default Currency"
+                  v-model="companyData.base_currency"
+                  :options="availableCurrencies"
+                  placeholder="Select company currency"
+                />
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-1.5 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Pre-filled from Company Setup. You can change this anytime to update your system's base currency.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Fiscal Year Settings -->
           <div class="border-t border-slate-200/80 dark:border-zinc-800 pt-8">
             <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Fiscal Year</h3>
@@ -2320,6 +2342,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCurrencyStore } from '@/stores/currency';
 
 import axios from 'axios';
 import { useToast } from '@/composables/useToast';
@@ -2334,6 +2357,7 @@ import ThirdPartyIntegrationsTab from './ThirdPartyIntegrationsTab.vue';
 import HardwareDevicesTab from './HardwareDevicesTab.vue';
 
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
 
 const { showToast } = useToast();
 
@@ -2344,6 +2368,29 @@ const saving = ref(false);
 const companyData = ref({});
 const loadingCompany = ref(false);
 const savingCompany = ref(false);
+
+const availableCurrencies = [
+  { value: 'PKR', label: 'PKR - Pakistani Rupee (Rs / ₨)' },
+  { value: 'USD', label: 'USD - US Dollar ($)' },
+  { value: 'EUR', label: 'EUR - Euro (€)' },
+  { value: 'GBP', label: 'GBP - British Pound (£)' },
+  { value: 'AED', label: 'AED - UAE Dirham (د.إ)' },
+  { value: 'SAR', label: 'SAR - Saudi Riyal (ر.س)' },
+  { value: 'CAD', label: 'CAD - Canadian Dollar (CA$)' },
+  { value: 'AUD', label: 'AUD - Australian Dollar (A$)' },
+  { value: 'INR', label: 'INR - Indian Rupee (₹)' },
+  { value: 'CNY', label: 'CNY - Chinese Yuan (¥)' },
+  { value: 'TRY', label: 'TRY - Turkish Lira (₺)' },
+  { value: 'KWD', label: 'KWD - Kuwaiti Dinar (د.ك)' },
+  { value: 'QAR', label: 'QAR - Qatari Riyal (ر.ق)' },
+  { value: 'OMR', label: 'OMR - Omani Rial (ر.ع.)' },
+  { value: 'BHD', label: 'BHD - Bahraini Dinar (.د.ب)' },
+  { value: 'JPY', label: 'JPY - Japanese Yen (¥)' },
+  { value: 'SGD', label: 'SGD - Singapore Dollar (S$)' },
+  { value: 'NZD', label: 'NZD - New Zealand Dollar (NZ$)' },
+  { value: 'CHF', label: 'CHF - Swiss Franc (Fr)' },
+  { value: 'MYR', label: 'MYR - Malaysian Ringgit (RM)' }
+];
 
 const businessTypes = [
   { value: 'agriculture', label: 'Agriculture' },
@@ -3091,7 +3138,10 @@ const loadCompanyDetails = async () => {
   loadingCompany.value = true;
   try {
     const response = await axios.get('/api/companies/active');
-    companyData.value = response.data.company;
+    companyData.value = response.data.company || {};
+    if (!companyData.value.base_currency) {
+      companyData.value.base_currency = currencyStore.tenantCurrencyCode || 'PKR';
+    }
     if (authStore.user) {
       companyData.value.company_email = authStore.user.email;
     }
@@ -3109,8 +3159,15 @@ const saveCompanyDetails = async () => {
     if (authStore.user?.email) {
       payload.company_email = authStore.user.email;
     }
-    await axios.put('/api/companies/active', payload);
-    showToast('Company details updated successfully', 'success');
+    const res = await axios.put('/api/companies/active', payload);
+    if (res.data?.company) {
+      companyData.value = res.data.company;
+      if (res.data.company.base_currency) {
+        currencyStore.seedFromCompany(res.data.company.base_currency);
+        await currencyStore.fetchCurrencies();
+      }
+    }
+    showToast('Company details and currency updated successfully', 'success');
   } catch (error) {
     const errorMsg = error.response?.data?.message || 'Failed to update company details';
     const errors = error.response?.data?.errors;

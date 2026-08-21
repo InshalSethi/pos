@@ -158,6 +158,18 @@
             <span v-if="errors.payer_name" class="text-rose-500 text-[11px] font-semibold mt-1 block">{{ errors.payer_name[0] }}</span>
           </div>
 
+          <!-- Supplier Advance Balance Available Banner -->
+          <div
+            v-if="form.payer_type === 'supplier' && form.payer_id && selectedSupplierAdvance > 0"
+            class="md:col-span-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between text-xs"
+          >
+            <div class="flex items-center space-x-2">
+              <span class="p-1 bg-amber-500 text-white rounded-lg text-[10px] font-bold">ℹ</span>
+              <span class="font-bold text-amber-800 dark:text-amber-300">Available Advance Balance for {{ form.payer_name }}:</span>
+            </div>
+            <span class="font-black text-amber-700 dark:text-amber-400 text-sm">{{ currencySymbol }}{{ formatNumber(selectedSupplierAdvance) }}</span>
+          </div>
+
           <!-- Transaction Reference -->
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5">
@@ -652,12 +664,23 @@ const onPayerTypeChange = () => {
   invoiceAllocations.value = {};
 };
 
+const selectedSupplierAdvance = computed(() => {
+  if (form.payer_type === 'supplier' && form.payer_id) {
+    const supp = (receiptOptions.value.suppliers || []).find(s => s.id == form.payer_id);
+    return parseFloat(supp?.advance_balance || 0);
+  }
+  return 0;
+});
+
 const onPayerChange = async () => {
   if (form.payer_id) {
     const payerOptions = getPayerOptions();
     const selectedPayer = payerOptions.find(p => p.id == form.payer_id);
     if (selectedPayer) {
       form.payer_name = selectedPayer.name;
+      if (form.receipt_type === 'supplier_refund' && !form.description) {
+        form.description = `Supplier Advance Refund: ${selectedPayer.name}`;
+      }
     }
 
     if (form.receipt_type === 'customer_payment' && form.payer_type === 'customer') {

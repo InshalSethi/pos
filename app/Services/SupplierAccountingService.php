@@ -263,12 +263,32 @@ class SupplierAccountingService
     private function getAccountsPayableAccount(): Account
     {
         return Account::firstOrCreate(
-            ['account_code' => '2000'],
+            ['account_code' => '2010'],
             [
                 'account_name' => 'Accounts Payable',
                 'account_type' => 'liability',
                 'account_subtype' => 'current_liability',
                 'description' => 'Supplier accounts payable',
+                'is_active' => true,
+                'is_system_account' => true,
+                'opening_balance' => 0,
+                'current_balance' => 0,
+            ]
+        );
+    }
+
+    /**
+     * Get or create supplier advance account (1310)
+     */
+    private function getSupplierAdvanceAccount(): Account
+    {
+        return Account::firstOrCreate(
+            ['account_code' => '1310'],
+            [
+                'account_name' => 'Advance to Suppliers',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
                 'is_active' => true,
                 'is_system_account' => true,
                 'opening_balance' => 0,

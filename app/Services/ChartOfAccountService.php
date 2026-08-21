@@ -166,6 +166,15 @@ class ChartOfAccountService
                 'is_system_account' => false,
                 'parent_code' => '1000',
             ],
+            [
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
+                'is_system_account' => true,
+                'parent_code' => '1000',
+            ],
 
             // Parent: Non-Current / Fixed Assets
             [

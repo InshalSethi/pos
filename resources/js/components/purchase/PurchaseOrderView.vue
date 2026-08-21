@@ -126,7 +126,19 @@
               </div>
               <div class="border-t pt-2 flex justify-between">
                 <span class="text-base font-semibold">Total:</span>
-                <span class="text-base font-semibold">{{ formatCurrency(purchaseOrder.total_amount) }}</span>
+                <span class="text-base font-semibold">{{ formatCurrency(purchaseOrder.total_amount || purchaseOrder.grand_total) }}</span>
+              </div>
+              <div v-if="parseFloat(purchaseOrder.amount_paid || 0) > 0" class="flex justify-between text-emerald-600 font-medium">
+                <span>Paid:</span>
+                <span>{{ formatCurrency(purchaseOrder.amount_paid) }}</span>
+              </div>
+              <div v-if="parseFloat(purchaseOrder.advance_amount || 0) > 0" class="flex justify-between text-amber-600 font-bold">
+                <span>Advance:</span>
+                <span>{{ formatCurrency(purchaseOrder.advance_amount) }}</span>
+              </div>
+              <div v-if="parseFloat(purchaseOrder.due_amount || 0) > 0" class="flex justify-between text-rose-600 font-semibold">
+                <span>Due:</span>
+                <span>{{ formatCurrency(purchaseOrder.due_amount) }}</span>
               </div>
             </div>
           </div>
@@ -208,6 +220,10 @@ const formatCurrency = (amount) => {
 };
 
 const formatStatus = (status) => {
+  if (!status) return '-';
+  if (status === 'due') return 'Due';
+  if (status === 'partial' || status === 'partially_received') return 'Partial';
+  if (status === 'paid' || status === 'received') return 'Paid';
   return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
@@ -216,9 +232,13 @@ const getStatusClass = (status) => {
     draft: 'bg-gray-100 text-gray-800',
     sent: 'bg-blue-100 text-blue-800',
     confirmed: 'bg-yellow-100 text-yellow-800',
+    partial: 'bg-orange-100 text-orange-800',
     partially_received: 'bg-orange-100 text-orange-800',
+    paid: 'bg-green-100 text-green-800',
     received: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800'
+    due: 'bg-rose-100 text-rose-800',
+    cancelled: 'bg-red-100 text-red-800',
+    void: 'bg-red-100 text-red-800'
   };
   return classes[status] || 'bg-gray-100 text-gray-800';
 };

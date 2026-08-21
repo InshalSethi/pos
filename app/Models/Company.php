@@ -14,6 +14,12 @@ class Company extends Model
     protected static function booted()
     {
         static::created(function ($company) {
+            // If the company is created as a draft during onboarding wizard, skip creating defaults
+            // Defaults will be seeded when the onboarding wizard completes with the user's chosen currency
+            if ($company->status === 'draft') {
+                return;
+            }
+
             // Seed default measurement units
             $defaultUnits = [
                 ['name' => 'Pieces', 'short_name' => 'PCS'],
@@ -37,6 +43,7 @@ class Company extends Model
                 ['account_code' => '1020', 'account_name' => 'Bank Account',         'account_type' => 'asset',     'account_subtype' => 'cash_and_bank',      'is_system_account' => true],
                 ['account_code' => '1030', 'account_name' => 'Accounts Receivable',  'account_type' => 'asset',     'account_subtype' => 'current_asset',      'is_system_account' => true],
                 ['account_code' => '1040', 'account_name' => 'Inventory',            'account_type' => 'asset',     'account_subtype' => 'current_asset',      'is_system_account' => true],
+                ['account_code' => '1310', 'account_name' => 'Advance to Suppliers',  'account_type' => 'asset',     'account_subtype' => 'current_asset',      'is_system_account' => true],
                 ['account_code' => '2010', 'account_name' => 'Accounts Payable',     'account_type' => 'liability', 'account_subtype' => 'current_liability',  'is_system_account' => true],
                 ['account_code' => '3010', 'account_name' => "Owner's Equity",       'account_type' => 'equity',    'account_subtype' => 'equity',             'is_system_account' => true],
                 ['account_code' => '4010', 'account_name' => 'Sales Revenue',        'account_type' => 'revenue',   'account_subtype' => 'operating_income',   'is_system_account' => true],
@@ -57,21 +64,39 @@ class Company extends Model
             }
 
             if ($cashCoaAccount) {
-                \App\Models\BankAccount::create([
-                    'company_id' => $company->id,
-                    'account_name' => 'Cash Account',
-                    'bank_name' => 'Cash',
-                    'account_number' => 'CASH-001',
-                    'account_type' => 'checking',
-                    'currency' => $company->base_currency ?: 'USD',
-                    'opening_balance' => 0.00,
-                    'current_balance' => 0.00,
-                    'opening_date' => date('Y-01-01'),
-                    'description' => 'Default system Cash Account for daily transactions and POS payments.',
-                    'is_active' => true,
-                    'is_default' => true,
-                    'chart_account_id' => $cashCoaAccount->id,
-                ]);
+                $existingCashAcc = \App\Models\BankAccount::withoutGlobalScopes()
+                    ->where('company_id', $company->id)
+                    ->where(function ($q) {
+                        $q->where('is_default', true)
+                          ->orWhere('account_name', 'Cash Account')
+                          ->orWhere('bank_name', 'Cash');
+                    })
+                    ->first();
+
+                if ($existingCashAcc) {
+                    $existingCashAcc->update([
+                        'currency' => $company->base_currency ?: 'PKR',
+                        'chart_account_id' => $cashCoaAccount->id,
+                        'is_default' => true,
+                        'is_active' => true,
+                    ]);
+                } else {
+                    \App\Models\BankAccount::create([
+                        'company_id' => $company->id,
+                        'account_name' => 'Cash Account',
+                        'bank_name' => 'Cash',
+                        'account_number' => 'CASH-001',
+                        'account_type' => 'checking',
+                        'currency' => $company->base_currency ?: 'PKR',
+                        'opening_balance' => 0.00,
+                        'current_balance' => 0.00,
+                        'opening_date' => date('Y-01-01'),
+                        'description' => 'Default system Cash Account for daily transactions and POS payments.',
+                        'is_active' => true,
+                        'is_default' => true,
+                        'chart_account_id' => $cashCoaAccount->id,
+                    ]);
+                }
             }
 
             // Seed default Warehouse for the new company

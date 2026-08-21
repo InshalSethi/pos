@@ -11,6 +11,10 @@ use App\Models\Payment;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\Warehouse;
+use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
+use App\Models\Account;
+use App\Models\Transaction;
 use App\Services\DoubleEntryAccountingService;
 use App\Services\WarehouseInventoryService;
 use App\Services\PaymentService;
@@ -73,34 +77,42 @@ class PurchaseOrderController extends Controller
     public function getStatusCounts(): JsonResponse
     {
         try {
-            $hasDueCol = \Schema::hasColumn('purchase_orders', 'due_amount');
-            $hasPaidCol = \Schema::hasColumn('purchase_orders', 'amount_paid');
+            $companyId = auth()->user()?->current_company_id ?? 1;
 
-            $all = PurchaseOrder::count();
-            $draft = PurchaseOrder::where('status', 'draft')->count();
-            $approved = PurchaseOrder::whereIn('status', ['approved', 'confirmed', 'sent'])->count();
+            $all = PurchaseOrder::where('company_id', $companyId)->count();
+            $draft = PurchaseOrder::where('company_id', $companyId)->where('status', 'draft')->count();
+            $approved = PurchaseOrder::where('company_id', $companyId)->whereIn('status', ['approved', 'confirmed', 'sent'])->count();
             
-            $paid = PurchaseOrder::where(function ($q) use ($hasDueCol) {
-                $q->where('status', 'received');
-                if ($hasDueCol) {
-                    $q->orWhere(function ($sub) {
-                        $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
-                    });
-                }
+            $paid = PurchaseOrder::where('company_id', $companyId)->where(function ($q) {
+                $q->where('status', 'paid')
+                  ->orWhere(function ($sub) {
+                      $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
+                  });
             })->count();
 
-            $partial = PurchaseOrder::where(function ($q) use ($hasDueCol, $hasPaidCol) {
-                $q->where('status', 'partially_received');
-                if ($hasDueCol && $hasPaidCol) {
-                    $q->orWhere(function ($sub) {
-                        $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
-                    });
-                }
+            $partial = PurchaseOrder::where('company_id', $companyId)->where(function ($q) {
+                $q->where('status', 'partial')
+                  ->orWhere('status', 'partially_received')
+                  ->orWhere(function ($sub) {
+                      $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+                  });
             })->count();
 
-            $overdue = PurchaseOrder::whereNotIn('status', ['received', 'cancelled', 'void'])
+            $due = PurchaseOrder::where('company_id', $companyId)->where(function ($q) {
+                $q->where('status', 'due')
+                  ->orWhere(function ($sub) {
+                      $sub->where('due_amount', '>', 0)->where(function ($amt) {
+                          $amt->whereNull('amount_paid')->orWhere('amount_paid', '<=', 0);
+                      });
+                  });
+            })->whereNotIn('status', ['cancelled', 'void', 'voided', 'draft'])->count();
+
+            $overdue = PurchaseOrder::where('company_id', $companyId)
+                ->whereNotIn('status', ['paid', 'received', 'cancelled', 'void', 'voided'])
+                ->where('due_amount', '>', 0)
+                ->whereNotNull('expected_delivery_date')
                 ->where('expected_delivery_date', '<', today())->count();
-            $void = PurchaseOrder::whereIn('status', ['cancelled', 'void', 'voided'])->count();
+            $void = PurchaseOrder::where('company_id', $companyId)->whereIn('status', ['cancelled', 'void', 'voided'])->count();
 
             return response()->json([
                 'all' => $all,
@@ -108,6 +120,7 @@ class PurchaseOrderController extends Controller
                 'approved' => $approved,
                 'paid' => $paid,
                 'partial' => $partial,
+                'due' => $due,
                 'overdue' => $overdue,
                 'void' => $void,
             ]);
@@ -137,7 +150,11 @@ class PurchaseOrderController extends Controller
             $withRelations[] = 'counter';
         }
 
-        $query = PurchaseOrder::with($withRelations)->withSum('returns', 'total_amount');
+        $query = PurchaseOrder::with($withRelations)
+            ->withSum('returns', 'total_amount')
+            ->withCount(['returns as active_returns_count' => function ($q) {
+                $q->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
+            }]);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -166,18 +183,26 @@ class PurchaseOrderController extends Controller
                     $st = trim($st);
                     if ($st === 'overdue') {
                         $q->orWhere(function ($sub) {
-                            $sub->whereNotIn('status', ['received', 'cancelled', 'void'])
+                            $sub->whereNotIn('status', ['paid', 'received', 'cancelled', 'void'])
                                 ->where('expected_delivery_date', '<', today());
                         });
                     } elseif ($st === 'paid' || $st === 'completed') {
-                        $q->orWhere('status', 'received')
+                        $q->orWhere('status', 'paid')
                           ->orWhere(function ($sub) {
                               $sub->where('due_amount', '<=', 0)->where('total_amount', '>', 0);
                           });
                     } elseif ($st === 'partial' || $st === 'partially_paid' || $st === 'partially_received') {
-                        $q->orWhere('status', 'partially_received')
+                        $q->orWhere('status', 'partial')
+                          ->orWhere('status', 'partially_received')
                           ->orWhere(function ($sub) {
                               $sub->where('amount_paid', '>', 0)->where('due_amount', '>', 0);
+                          });
+                    } elseif ($st === 'due' || $st === 'unpaid') {
+                        $q->orWhere('status', 'due')
+                          ->orWhere(function ($sub) {
+                              $sub->where('due_amount', '>', 0)->where(function ($amt) {
+                                  $amt->whereNull('amount_paid')->orWhere('amount_paid', '<=', 0);
+                              });
                           });
                     } elseif ($st === 'approved' || $st === 'confirmed') {
                         $q->orWhereIn('status', ['approved', 'confirmed', 'sent']);
@@ -272,6 +297,8 @@ class PurchaseOrderController extends Controller
             'amount_paid' => 'nullable|numeric|min:0',
             'use_advance_balance' => 'nullable|boolean',
             'advance_applied' => 'nullable|numeric|min:0',
+            'used_advance_amount' => 'nullable|numeric|min:0',
+            'advance_amount' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -302,6 +329,8 @@ class PurchaseOrderController extends Controller
 
             $totalAmount = $subtotal + $taxAmount + $shippingCost;
 
+            $companyId = auth()->user()?->current_company_id ?? 1;
+
             // Generate or validate custom PO number
             $providedPoNumber = trim($request->po_number ?? '');
             if ($providedPoNumber !== '') {
@@ -314,7 +343,7 @@ class PurchaseOrderController extends Controller
                     ], 403);
                 }
 
-                if (PurchaseOrder::where('po_number', $providedPoNumber)->exists()) {
+                if (PurchaseOrder::withoutGlobalScopes()->where('company_id', $companyId)->whereRaw('LOWER(po_number) = ?', [strtolower($providedPoNumber)])->exists()) {
                     return response()->json([
                         'message' => "The PO number '{$providedPoNumber}' is already in use.",
                         'errors' => ['po_number' => ["The PO number '{$providedPoNumber}' is already in use."]]
@@ -322,16 +351,20 @@ class PurchaseOrderController extends Controller
                 }
                 $poNumber = $providedPoNumber;
             } else {
-                $lastOrder = PurchaseOrder::orderBy('id', 'desc')->first();
-                $nextNumber = 1;
-                if ($lastOrder) {
-                    if (preg_match('/BIll-(\d+)/i', $lastOrder->po_number, $matches)) {
-                        $nextNumber = (int)$matches[1] + 1;
-                    } else {
-                        $nextNumber = PurchaseOrder::count() + 1;
+                $maxNumber = 0;
+                $companyPos = PurchaseOrder::withoutGlobalScopes()->where('company_id', $companyId)->pluck('po_number');
+                foreach ($companyPos as $existingPo) {
+                    if (preg_match('/BILL-(\d+)/i', (string)$existingPo, $m)) {
+                        $val = (int) $m[1];
+                        if ($val > $maxNumber) $maxNumber = $val;
                     }
                 }
-                $poNumber = 'BIll-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                $nextNumber = $maxNumber + 1;
+                $poNumber = 'BILL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                while (PurchaseOrder::withoutGlobalScopes()->where('company_id', $companyId)->whereRaw('LOWER(po_number) = ?', [strtolower($poNumber)])->exists()) {
+                    $nextNumber++;
+                    $poNumber = 'BILL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                }
             }
 
             $requestedPaid = (float) $request->get('amount_paid', 0);
@@ -340,8 +373,32 @@ class PurchaseOrderController extends Controller
             // --- ADVANCE BALANCE APPLICATION ---
             $advanceApplied = 0;
             $supplier = Supplier::findOrFail($request->supplier_id);
-            if ($supplier && $request->boolean('use_advance_balance') && (float) $supplier->advance_balance > 0 && $grandTotal > 0) {
-                $requestedAdvance = (float) ($request->advance_applied ?? $supplier->advance_balance);
+            $requestedAdvance = 0;
+            if ($request->filled('used_advance_amount')) {
+                $requestedAdvance = (float) $request->input('used_advance_amount');
+            } elseif ($request->filled('advance_applied')) {
+                $requestedAdvance = (float) $request->input('advance_applied');
+            } elseif ($request->filled('advance_amount')) {
+                $requestedAdvance = (float) $request->input('advance_amount');
+            } elseif ($request->boolean('use_advance_balance')) {
+                $requestedAdvance = (float) $supplier->advance_balance;
+            }
+
+            // Also check payment_details for vendor_advance if any
+            if ($requestedAdvance <= 0 && $request->has('payment_details') && is_array($request->payment_details)) {
+                foreach ($request->payment_details as $pDetail) {
+                    if (in_array($pDetail['payment_method'] ?? '', ['vendor_advance', 'advance', 'vendor_credit'])) {
+                        $requestedAdvance += (float) ($pDetail['amount'] ?? 0);
+                    }
+                }
+            }
+
+            $shouldUseAdvance = $request->boolean('use_advance_balance') || $requestedAdvance > 0;
+
+            if ($supplier && $shouldUseAdvance && (float) $supplier->advance_balance > 0 && $grandTotal > 0) {
+                if ($requestedAdvance <= 0) {
+                    $requestedAdvance = (float) $supplier->advance_balance;
+                }
                 $advanceApplied = min($requestedAdvance, (float) $supplier->advance_balance, $grandTotal);
             }
 
@@ -349,8 +406,9 @@ class PurchaseOrderController extends Controller
             // The actual payments will be processed and added by PaymentService.
             $initialAmountPaid = $advanceApplied;
             $initialDueAmount = max(0, $grandTotal - $initialAmountPaid);
+            $initialStatus = ($initialAmountPaid >= $grandTotal && $grandTotal > 0) ? 'paid' : (($initialAmountPaid > 0) ? 'partial' : 'due');
 
-            // Create purchase order with status received
+            // Create purchase order with correct status
             $purchaseOrder = PurchaseOrder::create([
                 'po_number' => $poNumber,
                 'supplier_id' => $supplier->id,
@@ -361,7 +419,7 @@ class PurchaseOrderController extends Controller
                 'user_id' => auth()->id(),
                 'order_date' => now(),
                 'expected_delivery_date' => $request->expected_delivery_date,
-                'status' => 'received',
+                'status' => $initialStatus,
                 'actual_delivery_date' => now(),
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
@@ -374,7 +432,7 @@ class PurchaseOrderController extends Controller
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
 
-            $companyId = auth()->user()->current_company_id ?? 1;
+            $companyId = auth()->user()?->current_company_id ?? 1;
             $warehouse = Warehouse::where('company_id', $companyId)->where('id', $request->warehouse_id)->first()
                 ?? Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $warehouse?->id;
@@ -494,39 +552,59 @@ class PurchaseOrderController extends Controller
             $accountingService = new DoubleEntryAccountingService();
             $accountingService->createPurchaseInvoiceEntry($purchaseOrder);
 
-            // Process upfront payments (Entry #2: Accounts Payable Debit & Cash/Bank Credit + BankTransaction Subledger)
-            $this->processPurchaseOrderPayments($purchaseOrder, $request, $supplier);
-
-            // --- DEBIT ADVANCE if advance was applied ---
+            // --- DEBIT ADVANCE if advance was applied (Entry #2: AP Debit & 1310 Advance Credit) ---
             if ($advanceApplied > 0 && $supplier) {
                 $supplier->debitAdvance($advanceApplied);
+                $supplier->refresh();
                 $accountingService->createVendorAdvanceApplicationEntry($purchaseOrder, $advanceApplied);
             }
 
+            // Process upfront cash/bank payments (Entry #3: Accounts Payable Debit & Cash/Bank Credit + BankTransaction Subledger)
+            $this->processPurchaseOrderPayments($purchaseOrder, $request, $supplier);
+
             // --- OVERPAYMENT / ADVANCE BALANCE & STATUS COMPUTATION ---
-            $purchaseOrder->refresh();
-            $totalPaid = (float) $purchaseOrder->amount_paid;
+            $paidPayments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
+                ->where('reference_id', $purchaseOrder->id)
+                ->whereIn('status', ['paid', 'completed'])
+                ->get();
+
+            $totalPaymentsPaid = (float) $paidPayments->sum('amount');
+            $totalPaid = $advanceApplied + $totalPaymentsPaid;
             $grandTotal = (float) $purchaseOrder->grand_total;
 
-            if ($totalPaid > $grandTotal) {
+            if ($totalPaid >= $grandTotal) {
                 $excess = $totalPaid - $grandTotal;
-                if ($supplier) {
-                    $supplier->creditAdvance($excess);
+                if ($excess > 0 && $supplier) {
+                    $alreadyCredited = 0;
+                    foreach ($paidPayments as $p) {
+                        $alloc = $p->additional_data['supplier_allocation'] ?? [];
+                        $alreadyCredited += (float) ($alloc['applied_advance'] ?? 0);
+                    }
+                    $uncreditedExcess = max(0, $excess - $alreadyCredited);
+                    if ($uncreditedExcess > 0) {
+                        $supplier->creditAdvance($uncreditedExcess);
+                    }
                 }
                 $purchaseOrder->update([
+                    'amount_paid' => $grandTotal,
+                    'advance_amount' => $excess,
                     'due_amount' => 0,
-                    'status' => 'received',
+                    'status' => 'paid',
                 ]);
-            } elseif ($totalPaid < $grandTotal) {
+            } elseif ($totalPaid > 0) {
                 $due = max(0, $grandTotal - $totalPaid);
                 $purchaseOrder->update([
+                    'amount_paid' => $totalPaid,
+                    'advance_amount' => 0,
                     'due_amount' => $due,
-                    'status' => $totalPaid > 0 ? 'partially_received' : 'received',
+                    'status' => 'partial',
                 ]);
             } else {
                 $purchaseOrder->update([
-                    'due_amount' => 0,
-                    'status' => 'received',
+                    'amount_paid' => 0,
+                    'advance_amount' => 0,
+                    'due_amount' => $grandTotal,
+                    'status' => 'due',
                 ]);
             }
 
@@ -559,17 +637,23 @@ class PurchaseOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(PurchaseOrder $purchaseOrder): JsonResponse
+    public function show($purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product', 'payments.bankAccount']);
+        $purchaseOrder->loadCount(['returns as active_returns_count' => function ($q) {
+            $q->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
+        }]);
+        $purchaseOrder->has_active_returns = ($purchaseOrder->active_returns_count > 0);
         return response()->json($purchaseOrder);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    public function update(Request $request, $purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'required|exists:suppliers,id',
             'expected_delivery_date' => 'nullable|date',
@@ -617,9 +701,9 @@ class PurchaseOrderController extends Controller
             DB::beginTransaction();
 
             // Lock Purchase Order record for update
-            $purchaseOrder = PurchaseOrder::where('id', $purchaseOrder->id)->lockForUpdate()->firstOrFail();
+            $purchaseOrder = PurchaseOrder::withoutGlobalScopes()->where('id', $purchaseOrder->id)->lockForUpdate()->firstOrFail();
 
-            $companyId = auth()->user()->current_company_id ?? 1;
+            $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
             $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $request->warehouse_id ?? ($purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1));
@@ -633,7 +717,7 @@ class PurchaseOrderController extends Controller
             // 2. Reverse previous physical stock adjustments and WAC if previously received
             foreach ($purchaseOrder->purchaseOrderItems as $oldItem) {
                 if ($oldItem->quantity_received > 0) {
-                    $product = Product::where('id', $oldItem->product_id)->lockForUpdate()->first();
+                    $product = Product::withoutGlobalScopes()->where('id', $oldItem->product_id)->lockForUpdate()->first();
                     if ($product && $product->track_inventory) {
                         // Reverse WAC: revert cost_price before deducting stock
                         $currentStock = (float) $product->stock_quantity;
@@ -696,7 +780,9 @@ class PurchaseOrderController extends Controller
             $amountPaid = $alreadyPaid; 
             $dueAmount = max(0, $grandTotal - $amountPaid);
 
-            $supplier = Supplier::findOrFail($request->supplier_id);
+            $supplier = Supplier::withoutGlobalScopes()->findOrFail($request->supplier_id);
+
+            $initialStatus = ($amountPaid >= $grandTotal && $grandTotal > 0) ? 'paid' : (($amountPaid > 0) ? 'partial' : 'due');
 
             // 4. Update purchase order record
             $purchaseOrder->update([
@@ -705,7 +791,7 @@ class PurchaseOrderController extends Controller
                 'supplier_phone' => $supplier->phone,
                 'supplier_email' => $supplier->email,
                 'expected_delivery_date' => $request->expected_delivery_date,
-                'status' => 'received',
+                'status' => $initialStatus,
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
                 'shipping_cost' => $shippingCost,
@@ -747,7 +833,7 @@ class PurchaseOrderController extends Controller
                 ]);
 
                 // Adjust stock for new item with WAC calculation & price history
-                $product = Product::where('id', $item['product_id'])->lockForUpdate()->first();
+                $product = Product::withoutGlobalScopes()->where('id', $item['product_id'])->lockForUpdate()->first();
                 if ($product) {
                     $product->refresh();
 
@@ -815,9 +901,55 @@ class PurchaseOrderController extends Controller
             $accountingService->createPurchaseInvoiceEntry($purchaseOrder->fresh());
 
             // 7. Process upfront payments for updated PO
-            $supplier = Supplier::find($purchaseOrder->supplier_id);
+            $supplier = Supplier::withoutGlobalScopes()->find($purchaseOrder->supplier_id);
             if ($supplier) {
                 $this->processPurchaseOrderPayments($purchaseOrder->fresh(), $request, $supplier);
+            }
+
+            // --- STATUS COMPUTATION FOR UPDATED PO ---
+            $paidPayments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder'])
+                ->where('reference_id', $purchaseOrder->id)
+                ->whereIn('status', ['paid', 'completed'])
+                ->get();
+
+            $totalPaymentsPaid = (float) $paidPayments->sum('amount');
+            $totalPaid = $totalPaymentsPaid;
+            $grandTotal = (float) $purchaseOrder->grand_total;
+
+            if ($totalPaid >= $grandTotal) {
+                $excess = $totalPaid - $grandTotal;
+                if ($excess > 0 && $supplier) {
+                    $alreadyCredited = 0;
+                    foreach ($paidPayments as $p) {
+                        $alloc = $p->additional_data['supplier_allocation'] ?? [];
+                        $alreadyCredited += (float) ($alloc['applied_advance'] ?? 0);
+                    }
+                    $uncreditedExcess = max(0, $excess - $alreadyCredited);
+                    if ($uncreditedExcess > 0) {
+                        $supplier->creditAdvance($uncreditedExcess);
+                    }
+                }
+                $purchaseOrder->update([
+                    'amount_paid' => $grandTotal,
+                    'advance_amount' => $excess,
+                    'due_amount' => 0,
+                    'status' => 'paid',
+                ]);
+            } elseif ($totalPaid > 0) {
+                $due = max(0, $grandTotal - $totalPaid);
+                $purchaseOrder->update([
+                    'amount_paid' => $totalPaid,
+                    'advance_amount' => 0,
+                    'due_amount' => $due,
+                    'status' => 'partial',
+                ]);
+            } else {
+                $purchaseOrder->update([
+                    'amount_paid' => 0,
+                    'advance_amount' => 0,
+                    'due_amount' => $grandTotal,
+                    'status' => 'due',
+                ]);
             }
 
             DB::commit();
@@ -842,8 +974,9 @@ class PurchaseOrderController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(PurchaseOrder $purchaseOrder): JsonResponse
+    public function destroy($purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         try {
             DB::beginTransaction();
 
@@ -855,19 +988,88 @@ class PurchaseOrderController extends Controller
             $accountingService = new DoubleEntryAccountingService();
             $paymentService = new PaymentService();
 
-            // Reverse GL accounting entries for this Purchase Order
-            $accountingService->reverseJournalEntryBySource('purchase_order', $purchaseOrder->id);
+            $supplier = $purchaseOrder->supplier_id ? Supplier::find($purchaseOrder->supplier_id) : null;
 
-            // Reverse attached payments, bank transactions, and payment GL entries
-            $payments = Payment::where('reference_type', PurchaseOrder::class)
+            // 1. Detect any utilized supplier advance on this Purchase Order
+            $usedAdvanceAmount = 0;
+            $advanceEntry = JournalEntry::where('source_type', 'purchase_order')
+                ->where('source_id', $purchaseOrder->id)
+                ->where(function ($q) {
+                    $q->where('entry_number', 'like', 'ADV%')
+                      ->orWhere('description', 'like', '%Vendor Credit%')
+                      ->orWhere('reference', 'like', '%Vendor Credit%');
+                })
+                ->first();
+
+            if ($advanceEntry) {
+                $line1310 = $advanceEntry->journalEntryLines()->whereHas('account', function($q) {
+                    $q->where('account_code', '1310')->orWhere('account_name', 'like', '%Advance to Suppliers%');
+                })->first();
+                $usedAdvanceAmount = $line1310 ? (float) ($line1310->credit_amount ?: $line1310->credit ?: 0) : (float) $advanceEntry->total_credit;
+            }
+
+            if ($usedAdvanceAmount <= 0) {
+                $advPayments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder', 'purchase_order'])
+                    ->where('reference_id', $purchaseOrder->id)
+                    ->where(function($q) {
+                        $q->where('payment_method', 'vendor_advance')
+                          ->orWhere('payment_method', 'advance')
+                          ->orWhere('payment_method', 'vendor_credit');
+                    })
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('amount');
+                $usedAdvanceAmount = (float) $advPayments;
+            }
+
+            if ($usedAdvanceAmount <= 0) {
+                $usedAdvanceAmount = (float) ($purchaseOrder->advance_applied ?? $purchaseOrder->additional_data['advance_applied'] ?? 0);
+            }
+
+            // 2. Restore Supplier Advance Balance
+            if ($usedAdvanceAmount > 0 && $supplier) {
+                $supplier->creditAdvance($usedAdvanceAmount);
+                $supplier->refresh();
+
+                try {
+                    $defaultBankAcc = BankAccount::where('company_id', $companyId)->first();
+                    \App\Models\Transaction::create([
+                        'company_id' => $companyId,
+                        'type' => 'income',
+                        'paid_at' => now()->toDateString(),
+                        'payment_method' => 'advance',
+                        'account_id' => $defaultBankAcc ? $defaultBankAcc->id : 1,
+                        'amount' => $usedAdvanceAmount,
+                        'description' => "Restored supplier advance balance due to deletion of PO #{$purchaseOrder->po_number}",
+                        'vendor_id' => $supplier->id,
+                        'reference' => $purchaseOrder->po_number,
+                    ]);
+                } catch (\Throwable $e) {
+                    // Optional ledger log
+                }
+            }
+
+            // 3. Reverse GL accounting entries for this Purchase Order
+            $accountingService->reversePurchaseOrderAccounting($purchaseOrder, $usedAdvanceAmount);
+
+            // 4. Reverse attached payments, bank transactions, and payment GL entries
+            $payments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder', 'purchase_order'])
                 ->where('reference_id', $purchaseOrder->id)
                 ->where('status', '!=', 'cancelled')
                 ->get();
+            $totalPaymentAdvanceReversed = 0;
             foreach ($payments as $payment) {
+                $alloc = $payment->additional_data['supplier_allocation'] ?? [];
+                $totalPaymentAdvanceReversed += (float) ($alloc['applied_advance'] ?? 0);
                 $paymentService->cancelPayment($payment);
             }
 
-            // Reverse stock and WAC for all received items before deletion
+            $poAdvanceAmount = (float) ($purchaseOrder->advance_amount ?? 0);
+            if ($poAdvanceAmount > $totalPaymentAdvanceReversed && $supplier) {
+                $unreversedAdvance = $poAdvanceAmount - $totalPaymentAdvanceReversed;
+                $supplier->debitAdvance($unreversedAdvance);
+            }
+
+            // 5. Reverse stock and WAC for all received items before deletion
             foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
                 if ($poItem->quantity_received > 0) {
                     $product = Product::find($poItem->product_id);
@@ -934,20 +1136,32 @@ class PurchaseOrderController extends Controller
     }
 
     /**
-     * Void a purchase order — cancels the PO and reverses inventory + WAC.
+     * Void a purchase order — cancels the PO, restores used advance, and reverses GL accounting + inventory.
      */
-    public function void(PurchaseOrder $purchaseOrder): JsonResponse
+    public function void($purchaseOrder): JsonResponse
     {
-        if ($purchaseOrder->status === 'voided') {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
+        if ($purchaseOrder->status === 'cancelled' || $purchaseOrder->status === 'voided' || $purchaseOrder->status === 'void') {
             return response()->json([
-                'message' => 'This purchase order has already been voided'
+                'message' => 'This purchase order has already been voided / cancelled'
+            ], 422);
+        }
+
+        // Hard validation: Block voiding of Purchase Orders with Active Purchase Returns
+        $hasActiveReturns = $purchaseOrder->returns()
+            ->whereIn('status', ['draft', 'pending', 'approved', 'completed'])
+            ->exists();
+
+        if ($hasActiveReturns) {
+            return response()->json([
+                'message' => 'Cannot void this Purchase Order because active Purchase Returns are linked to it. Please void the linked Purchase Returns first.'
             ], 422);
         }
 
         try {
             DB::beginTransaction();
 
-            $companyId = auth()->user()->current_company_id ?? 1;
+            $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
             $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
@@ -955,10 +1169,71 @@ class PurchaseOrderController extends Controller
             $accountingService = new DoubleEntryAccountingService();
             $paymentService = new PaymentService();
 
-            // 1. Reverse GL Accounting Entry (Storno mechanism) for Purchase Order
-            $accountingService->reverseJournalEntryBySource('purchase_order', $purchaseOrder->id);
+            $supplier = $purchaseOrder->supplier_id ? Supplier::withoutGlobalScopes()->find($purchaseOrder->supplier_id) : null;
 
-            // 2. Reverse physical stock and WAC for all received items & revert product purchase price
+            // 1. Detect any utilized supplier advance on this Purchase Order
+            $usedAdvanceAmount = 0;
+            $advanceEntry = JournalEntry::withoutGlobalScopes()
+                ->where('source_type', 'purchase_order')
+                ->where('source_id', $purchaseOrder->id)
+                ->where(function ($q) {
+                    $q->where('entry_number', 'like', 'ADV%')
+                      ->orWhere('description', 'like', '%Vendor Credit%')
+                      ->orWhere('reference', 'like', '%Vendor Credit%');
+                })
+                ->first();
+
+            if ($advanceEntry) {
+                $line1310 = $advanceEntry->journalEntryLines()->whereHas('account', function($q) {
+                    $q->where('account_code', '1310')->orWhere('account_name', 'like', '%Advance to Suppliers%');
+                })->first();
+                $usedAdvanceAmount = $line1310 ? (float) ($line1310->credit_amount ?: $line1310->credit ?: 0) : (float) $advanceEntry->total_credit;
+            }
+
+            if ($usedAdvanceAmount <= 0) {
+                $advPayments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder', 'purchase_order'])
+                    ->where('reference_id', $purchaseOrder->id)
+                    ->where(function($q) {
+                        $q->where('payment_method', 'vendor_advance')
+                          ->orWhere('payment_method', 'advance')
+                          ->orWhere('payment_method', 'vendor_credit');
+                    })
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('amount');
+                $usedAdvanceAmount = (float) $advPayments;
+            }
+
+            if ($usedAdvanceAmount <= 0) {
+                $usedAdvanceAmount = (float) ($purchaseOrder->advance_applied ?? $purchaseOrder->additional_data['advance_applied'] ?? 0);
+            }
+
+            // 2. Restore Supplier Advance Balance
+            if ($usedAdvanceAmount > 0 && $supplier) {
+                $supplier->creditAdvance($usedAdvanceAmount);
+                $supplier->refresh();
+
+                try {
+                    $defaultBankAcc = BankAccount::where('company_id', $companyId)->first();
+                    \App\Models\Transaction::create([
+                        'company_id' => $companyId,
+                        'type' => 'income',
+                        'paid_at' => now()->toDateString(),
+                        'payment_method' => 'advance',
+                        'account_id' => $defaultBankAcc ? $defaultBankAcc->id : 1,
+                        'amount' => $usedAdvanceAmount,
+                        'description' => "Restored supplier advance balance due to void of PO #{$purchaseOrder->po_number}",
+                        'vendor_id' => $supplier->id,
+                        'reference' => $purchaseOrder->po_number,
+                    ]);
+                } catch (\Throwable $e) {
+                    // Optional ledger log
+                }
+            }
+
+            // 3. Reverse GL Accounting Entries for Purchase Order (Storno & Reversal: Debit 1310, Credit 2010)
+            $accountingService->reversePurchaseOrderAccounting($purchaseOrder, $usedAdvanceAmount);
+
+            // 4. Reverse physical stock and WAC for all received items & revert product purchase price
             foreach ($purchaseOrder->purchaseOrderItems as $poItem) {
                 $product = Product::find($poItem->product_id);
                 if ($product) {
@@ -986,62 +1261,72 @@ class PurchaseOrderController extends Controller
                         $product->update(['cost_price' => round(max(0, $revertedCost), 2)]);
                     }
 
-                        // Deduct stock per warehouse allocation
-                        $oldAllocations = $poItem->warehouse_allocations;
-                        if (is_array($oldAllocations) && !empty($oldAllocations)) {
-                            foreach ($oldAllocations as $alloc) {
-                                $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
-                                $allocQty = (int) ($alloc['quantity'] ?? 0);
-                                if ($allocQty > 0) {
-                                    $inventoryService->adjustStock(
-                                        $allocWhId,
-                                        $product->id,
-                                        $poItem->product_variation_id ?? null,
-                                        -$allocQty,
-                                        $companyId,
-                                        'Purchase Order Voided',
-                                        $purchaseOrder->po_number
-                                    );
-                                }
+                    // Deduct stock per warehouse allocation
+                    $oldAllocations = $poItem->warehouse_allocations;
+                    if (is_array($oldAllocations) && !empty($oldAllocations)) {
+                        foreach ($oldAllocations as $alloc) {
+                            $allocWhId = $alloc['warehouse_id'] ?? $warehouseId;
+                            $allocQty = (int) ($alloc['quantity'] ?? 0);
+                            if ($allocQty > 0) {
+                                $inventoryService->adjustStock(
+                                    $allocWhId,
+                                    $product->id,
+                                    $poItem->product_variation_id ?? null,
+                                    -$allocQty,
+                                    $companyId,
+                                    'Purchase Order Voided',
+                                    $purchaseOrder->po_number
+                                );
                             }
-                        } else {
-                            $inventoryService->adjustStock(
-                                $poItem->warehouse_id ?? $warehouseId,
-                                $product->id,
-                                $poItem->product_variation_id ?? null,
-                                -$voidQty,
-                                $companyId,
-                                'Purchase Order Voided',
-                                $purchaseOrder->po_number
-                            );
                         }
+                    } else {
+                        $inventoryService->adjustStock(
+                            $poItem->warehouse_id ?? $warehouseId,
+                            $product->id,
+                            $poItem->product_variation_id ?? null,
+                            -$voidQty,
+                            $companyId,
+                            'Purchase Order Voided',
+                            $purchaseOrder->po_number
+                        );
                     }
                 }
+            }
 
-            // 3. Cancel attached payments & reverse bank transactions / accounting entries
+            // 5. Cancel attached payments & reverse bank transactions / accounting entries
             $payments = Payment::whereIn('reference_type', [PurchaseOrder::class, 'App\\Models\\PurchaseOrder', 'PurchaseOrder', 'purchase_order'])
                 ->where('reference_id', $purchaseOrder->id)
                 ->where('status', '!=', 'cancelled')
                 ->get();
+
+            $totalPaymentAdvanceReversed = 0;
             foreach ($payments as $payment) {
+                $alloc = $payment->additional_data['supplier_allocation'] ?? [];
+                $totalPaymentAdvanceReversed += (float) ($alloc['applied_advance'] ?? 0);
                 $paymentService->cancelPayment($payment);
             }
 
+            $poAdvanceAmount = (float) ($purchaseOrder->advance_amount ?? 0);
+            $unreversedAdvance = max(0, $poAdvanceAmount - $totalPaymentAdvanceReversed - $usedAdvanceAmount);
+            if ($unreversedAdvance > 0 && $supplier) {
+                $supplier->debitAdvance($unreversedAdvance);
+            }
 
-            // 4. Mark PO as voided/cancelled and reset paid / due amounts
-            $purchaseOrder->update([
+            // 6. Mark PO as voided/cancelled and reset paid / due amounts
+            PurchaseOrder::where('id', $purchaseOrder->id)->update([
                 'status' => 'cancelled',
                 'amount_paid' => 0,
                 'due_amount' => 0,
+                'advance_amount' => 0,
             ]);
-
+            $purchaseOrder->refresh();
 
             DB::commit();
 
             $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product']);
 
             return response()->json([
-                'message' => 'Purchase order voided, GL journal reversed, and inventory adjusted successfully',
+                'message' => 'Purchase order voided, supplier advance restored, GL journal reversed, and inventory adjusted successfully',
                 'purchase_order' => $purchaseOrder
             ]);
 
@@ -1057,8 +1342,9 @@ class PurchaseOrderController extends Controller
     /**
      * Receive items from purchase order
      */
-    public function receive(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    public function receive(Request $request, $purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         if (!in_array($purchaseOrder->status, ['sent', 'confirmed', 'partially_received'])) {
             return response()->json([
                 'message' => 'Purchase order must be sent or confirmed to receive items'
@@ -1100,7 +1386,7 @@ class PurchaseOrderController extends Controller
                 // Update product inventory
                 $product = Product::find($poItem->product_id);
                 if ($product->track_inventory) {
-                    $companyId = $purchaseOrder->company_id ?? auth()->user()->current_company_id ?? 1;
+                    $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
                     $warehouseId = $purchaseOrder->warehouse_id;
                     if (!$warehouseId) {
                         $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first();
@@ -1187,6 +1473,11 @@ class PurchaseOrderController extends Controller
         // 1. Process split payments if payment_details array is provided
         if ($request->has('payment_details') && is_array($request->payment_details)) {
             foreach ($request->payment_details as $payDetail) {
+                // Skip vendor_advance / advance / vendor_credit (handled directly via DoubleEntryAccountingService ADV journal entry)
+                if (in_array($payDetail['payment_method'] ?? '', ['vendor_advance', 'advance', 'vendor_credit'])) {
+                    continue;
+                }
+
                 $payAmt = (float) ($payDetail['amount'] ?? 0);
                 if ($payAmt <= 0) continue;
 
@@ -1203,8 +1494,10 @@ class PurchaseOrderController extends Controller
                 }
 
                 if ($bankAccId) {
+                    $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
                     $payment = Payment::create([
-                        'payment_number' => Payment::generatePaymentNumber(),
+                        'company_id' => $companyId,
+                        'payment_number' => Payment::generatePaymentNumber($companyId),
                         'payment_type' => 'supplier_payment',
                         'payee_type' => Supplier::class,
                         'payee_id' => $supplier->id,
@@ -1234,7 +1527,8 @@ class PurchaseOrderController extends Controller
                 ->where('status', 'paid')
                 ->sum('amount');
             $requestedPaid = (float) $request->get('amount_paid', 0);
-            $newPaymentAmount = max(0, $requestedPaid - $existingPaid);
+            $advanceApplied = (float) ($purchaseOrder->advance_applied ?? 0);
+            $newPaymentAmount = max(0, $requestedPaid - $existingPaid - $advanceApplied);
 
             if ($newPaymentAmount > 0) {
                 $bankAccId = $request->bank_account_id;
@@ -1250,8 +1544,10 @@ class PurchaseOrderController extends Controller
                 }
 
                 if ($bankAccId) {
+                    $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
                     $payment = Payment::create([
-                        'payment_number' => Payment::generatePaymentNumber(),
+                        'company_id' => $companyId,
+                        'payment_number' => Payment::generatePaymentNumber($companyId),
                         'payment_type' => 'supplier_payment',
                         'payee_type' => Supplier::class,
                         'payee_id' => $supplier->id,

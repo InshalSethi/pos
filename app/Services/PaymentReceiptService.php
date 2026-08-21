@@ -97,6 +97,9 @@ class PaymentReceiptService
             // Sync Customer Wallet Balance for unallocated customer payment or advance
             $this->syncCustomerWalletOnDeposit($receipt);
 
+            // Sync Supplier Advance Balance for supplier advance refund
+            $this->syncSupplierAdvanceOnDeposit($receipt);
+
             // Mark receipt as deposited
             $receipt->markAsDeposited($userId, $journalEntry->id, $bankTransaction->id);
             
@@ -144,6 +147,16 @@ class PaymentReceiptService
 
             // Create journal entry lines based on receipt type
             $this->createJournalEntryLines($journalEntry, $receipt);
+
+            // Recalculate COA ledger balances for affected accounts
+            foreach ($journalEntry->journalEntryLines as $line) {
+                if ($line->account_id) {
+                    $acc = Account::find($line->account_id);
+                    if ($acc) {
+                        $acc->updateCurrentBalance();
+                    }
+                }
+            }
 
             return $journalEntry;
         });
@@ -246,26 +259,84 @@ class PaymentReceiptService
     }
 
     /**
-     * Create supplier refund journal lines
+     * Create supplier refund journal lines (Advance Refund: Debit Bank/Cash, Credit 1310 Advance to Suppliers)
      */
     protected function createSupplierRefundLines(JournalEntry $journalEntry, PaymentReceipt $receipt): void
     {
-        // Debit: Bank Account
+        $companyId = $receipt->company_id ?? auth()->user()?->current_company_id ?? 1;
+
+        // 1. Advance to Suppliers Account (1310)
+        $advanceAcc = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '1310')
+                  ->orWhere('account_name', 'LIKE', '%Advance to Suppliers%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Prepayments%')
+                  ->orWhere('account_name', 'LIKE', '%Vendor Advance%');
+            })->first();
+
+        if (!$advanceAcc) {
+            $advanceAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $advanceAccountId = $advanceAcc->id;
+
+        // 2. Bank / Cash Chart Account
+        $bankChartAccountId = $receipt->bankAccount?->chart_account_id;
+        if (!$bankChartAccountId && $receipt->bankAccount) {
+            $bAccount = $receipt->bankAccount;
+            $bankChartAccount = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where('account_type', 'asset')
+                ->where(function ($q) use ($bAccount) {
+                    $q->where('account_name', 'LIKE', "%{$bAccount->bank_name}%")
+                      ->orWhere('account_name', 'LIKE', "%{$bAccount->account_name}%")
+                      ->orWhere('account_code', '1610')
+                      ->orWhere('account_code', '1600')
+                      ->orWhere('account_code', '1010')
+                      ->orWhere('account_code', '1020');
+                })->first();
+            if (!$bankChartAccount) {
+                $bankChartAccount = Account::create([
+                    'company_id' => $companyId,
+                    'account_code' => '1610',
+                    'account_name' => $bAccount->account_name,
+                    'account_type' => 'asset',
+                    'opening_balance' => $bAccount->opening_balance ?? 0,
+                    'current_balance' => $bAccount->current_balance ?? 0,
+                    'is_active' => true,
+                ]);
+            }
+            $bAccount->update(['chart_account_id' => $bankChartAccount->id]);
+            $bankChartAccountId = $bankChartAccount->id;
+        }
+
+        // DEBIT: Bank / Cash Account (Funds received back)
         JournalEntryLine::create([
             'journal_entry_id' => $journalEntry->id,
-            'account_id' => $receipt->bankAccount->chart_account_id,
-            'description' => "Refund from supplier: {$receipt->payer_name}",
+            'account_id' => $bankChartAccountId,
+            'description' => "Supplier refund deposited to " . ($receipt->bankAccount ? $receipt->bankAccount->account_name : 'Bank/Cash Account'),
             'debit_amount' => $receipt->amount,
             'credit_amount' => 0,
             'partner_type' => 'App\\Models\\Supplier',
             'partner_id' => $receipt->payer_id,
         ]);
 
-        // Credit: Purchase Returns or Accounts Payable
+        // CREDIT: Advance to Suppliers (1310) (Reducing the advance asset balance)
         JournalEntryLine::create([
             'journal_entry_id' => $journalEntry->id,
-            'account_id' => $this->accountingSettings->purchase_invoice_payable_account_id,
-            'description' => "Refund from supplier: {$receipt->payer_name}",
+            'account_id' => $advanceAccountId,
+            'description' => "Supplier Advance Refund: {$receipt->payer_name}",
             'debit_amount' => 0,
             'credit_amount' => $receipt->amount,
             'partner_type' => 'App\\Models\\Supplier',
@@ -550,6 +621,9 @@ class PaymentReceiptService
 
         // Revert Customer Wallet Balance if credited on deposit
         $this->syncCustomerWalletOnReversal($receipt);
+
+        // Revert Supplier Advance Balance if debited on deposit
+        $this->syncSupplierAdvanceOnReversal($receipt);
     }
 
     /**
@@ -673,6 +747,91 @@ class PaymentReceiptService
                 $unallocated = max(0, (float) $receipt->amount - $allocatedAmount);
                 if ($unallocated > 0) {
                     $customer->debitWallet($unallocated);
+                }
+            }
+        }
+    }
+
+    /**
+     * Deduct supplier's advance balance and create transaction record on supplier refund deposit.
+     */
+    protected function syncSupplierAdvanceOnDeposit(PaymentReceipt $receipt): void
+    {
+        if (in_array($receipt->receipt_type, ['supplier_refund', 'supplier_rebate'])) {
+            $companyId = $receipt->company_id ?? auth()->user()?->current_company_id ?? 1;
+            $supplier = null;
+            if ($receipt->payer_id) {
+                $supplier = Supplier::find($receipt->payer_id);
+            }
+            if (!$supplier && $receipt->payer_name) {
+                $supplier = Supplier::where('company_id', $companyId)
+                    ->where(function ($q) use ($receipt) {
+                        $q->where('name', $receipt->payer_name)
+                          ->orWhere('company_name', $receipt->payer_name);
+                    })->first();
+            }
+
+            if ($supplier) {
+                $refundAmount = (float) $receipt->amount;
+                if ($refundAmount > 0) {
+                    $supplier->debitAdvance($refundAmount);
+                    $supplier->refresh();
+
+                    // Create transaction record for supplier ledger & banking transactions
+                    try {
+                        \App\Models\Transaction::create([
+                            'company_id' => $companyId,
+                            'type' => 'income',
+                            'paid_at' => $receipt->receipt_date,
+                            'payment_method' => ucfirst($receipt->payment_method ?? 'cash'),
+                            'account_id' => $receipt->bank_account_id,
+                            'amount' => $refundAmount,
+                            'description' => $receipt->description ?: "Supplier Advance Refund: {$receipt->payer_name}",
+                            'vendor_id' => $supplier->id,
+                            'number' => $receipt->receipt_number,
+                            'reference' => $receipt->reference_number ?: $receipt->receipt_number,
+                        ]);
+                    } catch (\Throwable $e) {}
+                }
+            }
+        }
+    }
+
+    /**
+     * Restore supplier's advance balance on receipt cancellation / deletion.
+     */
+    protected function syncSupplierAdvanceOnReversal(PaymentReceipt $receipt): void
+    {
+        if (in_array($receipt->receipt_type, ['supplier_refund', 'supplier_rebate'])) {
+            $companyId = $receipt->company_id ?? auth()->user()?->current_company_id ?? 1;
+            $supplier = null;
+            if ($receipt->payer_id) {
+                $supplier = Supplier::find($receipt->payer_id);
+            }
+            if (!$supplier && $receipt->payer_name) {
+                $supplier = Supplier::where('company_id', $companyId)
+                    ->where(function ($q) use ($receipt) {
+                        $q->where('name', $receipt->payer_name)
+                          ->orWhere('company_name', $receipt->payer_name);
+                    })->first();
+            }
+
+            if ($supplier) {
+                $refundAmount = (float) $receipt->amount;
+                if ($refundAmount > 0) {
+                    $supplier->creditAdvance($refundAmount);
+                    $supplier->refresh();
+
+                    // Remove/cancel transaction record
+                    try {
+                        \App\Models\Transaction::where('company_id', $companyId)
+                            ->where('vendor_id', $supplier->id)
+                            ->where(function ($q) use ($receipt) {
+                                $q->where('number', $receipt->receipt_number)
+                                  ->orWhere('reference', $receipt->receipt_number)
+                                  ->orWhere('reference', $receipt->reference_number);
+                            })->delete();
+                    } catch (\Throwable $e) {}
                 }
             }
         }

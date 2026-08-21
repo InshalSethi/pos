@@ -41,9 +41,11 @@ class RegisterController extends Controller
 
         return DB::transaction(function () use ($request, $fullName) {
             $user = User::create([
-                'name' => $fullName,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name,
+                'name'       => $fullName,
+                'email'      => $request->email,
+                'password'   => Hash::make($request->password),
                 'onboarding_completed' => false,
             ]);
 

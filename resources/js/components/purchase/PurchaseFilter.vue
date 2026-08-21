@@ -600,6 +600,7 @@ const availableStatuses = [
   { id: 'approved', label: 'Approved', colorClass: 'text-blue-600 dark:text-blue-400' },
   { id: 'paid', label: 'Paid', colorClass: 'text-emerald-600 dark:text-emerald-400' },
   { id: 'partial', label: 'Partial', colorClass: 'text-orange-600 dark:text-orange-400' },
+  { id: 'due', label: 'Due', colorClass: 'text-rose-600 dark:text-rose-400' },
   { id: 'overdue', label: 'Overdue', colorClass: 'text-rose-600 dark:text-rose-400' },
   { id: 'void', label: 'Void', colorClass: 'text-slate-500 dark:text-zinc-500' },
 ];

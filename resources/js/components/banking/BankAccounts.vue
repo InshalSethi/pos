@@ -411,7 +411,8 @@ export default {
       return str.length > 4 ? `****${str.slice(-4)}` : str;
     };
 
-    onMounted(() => {
+    onMounted(async () => {
+      currencyStore.fetchCurrencies();
       fetchAccounts();
     });
 

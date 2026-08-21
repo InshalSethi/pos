@@ -1341,12 +1341,13 @@ class DoubleEntryAccountingService
             $payableAccountId = $apAcc->id;
         }
 
-        return DB::transaction(function () use ($purchaseOrder, $inventoryAssetAccountId, $payableAccountId) {
+        return DB::transaction(function () use ($purchaseOrder, $companyId, $inventoryAssetAccountId, $payableAccountId) {
             $journalEntry = JournalEntry::create([
-                'entry_number' => $this->generateEntryNumber('PI'),
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('PI', $companyId),
                 'entry_date' => $purchaseOrder->order_date,
                 'reference' => "Purchase Order #{$purchaseOrder->po_number}",
-                'description' => "Purchase Receipt from {$purchaseOrder->supplier->name}",
+                'description' => "Purchase Receipt from " . ($purchaseOrder->supplier_name ?: ($purchaseOrder->supplier?->name ?? 'Supplier')),
                 'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $purchaseOrder->total_amount,
@@ -1536,19 +1537,30 @@ class DoubleEntryAccountingService
         }
         $cashAccountId = $cashAcc->id;
 
-        // Vendor Advance / Prepaid Expenses (COA 10500)
-        $vendorAdvanceAcc = Account::where('company_id', $companyId)
+        // Advance to Suppliers Account (COA 1310)
+        $vendorAdvanceAcc = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
             ->where(function ($q) {
-                $q->where('account_code', '10500')
-                  ->orWhere('account_code', '1050')
-                  ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
-                  ->orWhere('account_name', 'LIKE', '%Vendor Credit%');
+                $q->where('account_code', '1310')
+                  ->orWhere('account_name', 'Advance to Suppliers');
             })->first();
+
+        if (!$vendorAdvanceAcc) {
+            $vendorAdvanceAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '10500')
+                      ->orWhere('account_name', 'LIKE', '%Advance to Suppliers%')
+                      ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
+                      ->orWhere('account_name', 'LIKE', '%Vendor Credit%');
+                })->first();
+        }
+
         if (!$vendorAdvanceAcc) {
             $vendorAdvanceAcc = Account::create([
                 'company_id' => $companyId,
-                'account_code' => '10500',
-                'account_name' => 'Vendor Advance',
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
                 'account_type' => 'asset',
                 'account_subtype' => 'current_asset',
                 'opening_balance' => 0,
@@ -2030,29 +2042,68 @@ class DoubleEntryAccountingService
 
         $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
 
-        $apAcc = Account::where('company_id', $companyId)
-            ->where(function ($q) {
-                $q->where('account_code', '20100')
-                  ->orWhere('account_code', '2010')
-                  ->orWhere('account_name', 'LIKE', '%Accounts Payable%')
-                  ->orWhere('account_name', 'LIKE', '%Payable%');
-            })->first();
-        $payableAccountId = $apAcc?->id;
+        // 1. Resolve Accounts Payable Account (Code 2010 / 20100)
+        $payableAccountId = $this->accountingSettings->purchase_invoice_payable_account_id;
+        $apAcc = null;
 
-        $vendorAdvanceAcc = Account::where('company_id', $companyId)
+        if ($payableAccountId) {
+            $apAcc = Account::withoutGlobalScopes()->find($payableAccountId);
+        }
+
+        if (!$apAcc) {
+            $apAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '2010')
+                      ->orWhere('account_code', '20100')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Payable%')
+                      ->orWhere('account_name', 'LIKE', '%Payable%');
+                })->first();
+        }
+
+        if (!$apAcc) {
+            $apAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '2010',
+                'account_name' => 'Accounts Payable',
+                'account_type' => 'liability',
+                'account_subtype' => 'current_liability',
+                'description' => 'Supplier accounts payable',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $payableAccountId = $apAcc->id;
+
+        // 2. Resolve Advance to Suppliers Account (Strict Priority: 1310 / Advance to Suppliers)
+        $vendorAdvanceAcc = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
             ->where(function ($q) {
-                $q->where('account_code', '10500')
-                  ->orWhere('account_code', '1050')
-                  ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
-                  ->orWhere('account_name', 'LIKE', '%Vendor Credit%');
+                $q->where('account_code', '1310')
+                  ->orWhere('account_name', 'Advance to Suppliers');
             })->first();
+
+        if (!$vendorAdvanceAcc) {
+            $vendorAdvanceAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '10500')
+                      ->orWhere('account_name', 'LIKE', '%Advance to Suppliers%')
+                      ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
+                      ->orWhere('account_name', 'LIKE', '%Vendor Prepayments%');
+                })->first();
+        }
+
         if (!$vendorAdvanceAcc) {
             $vendorAdvanceAcc = Account::create([
                 'company_id' => $companyId,
-                'account_code' => '10500',
-                'account_name' => 'Vendor Advance',
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
                 'account_type' => 'asset',
                 'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
                 'opening_balance' => 0,
                 'current_balance' => 0,
                 'is_active' => true,
@@ -2061,12 +2112,10 @@ class DoubleEntryAccountingService
         }
         $vendorAdvanceAccountId = $vendorAdvanceAcc->id;
 
-        if (!$payableAccountId || !$vendorAdvanceAccountId) return null;
-
-        return DB::transaction(function () use ($purchaseOrder, $companyId, $payableAccountId, $vendorAdvanceAccountId, $advanceApplied) {
+        return DB::transaction(function () use ($purchaseOrder, $companyId, $payableAccountId, $vendorAdvanceAccountId, $vendorAdvanceAcc, $apAcc, $advanceApplied) {
             $journalEntry = JournalEntry::create([
                 'company_id' => $companyId,
-                'entry_number' => $this->generateEntryNumber('ADV'),
+                'entry_number' => $this->generateEntryNumber('ADV', $companyId),
                 'entry_date' => $purchaseOrder->order_date ?? now()->toDateString(),
                 'reference' => "Vendor Credit Applied - PO #{$purchaseOrder->po_number}",
                 'description' => "Vendor Credit Application to PO #{$purchaseOrder->po_number}",
@@ -2081,7 +2130,7 @@ class DoubleEntryAccountingService
                 'source_id' => $purchaseOrder->id,
             ]);
 
-            // DEBIT: Accounts Payable (20100)
+            // DEBIT: Accounts Payable (2010 / 20100)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $payableAccountId,
@@ -2092,7 +2141,7 @@ class DoubleEntryAccountingService
                 'partner_id' => $purchaseOrder->supplier_id,
             ]);
 
-            // CREDIT: Vendor Advance (10500)
+            // CREDIT: Advance to Suppliers (1310)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
                 'account_id' => $vendorAdvanceAccountId,
@@ -2103,8 +2152,254 @@ class DoubleEntryAccountingService
                 'partner_id' => $purchaseOrder->supplier_id,
             ]);
 
-            $this->updateAccountBalances($journalEntry);
+            // Recalculate & synchronize account balances
+            $vendorAdvanceAcc->updateCurrentBalance();
+            $apAcc->updateCurrentBalance();
+
             return $journalEntry;
+        });
+    }
+
+    /**
+     * Create journal entry for reversing applied Vendor Advance when a Purchase Order is Voided / Cancelled.
+     * Debit: 1310 - Advance to Suppliers (Restores asset balance)
+     * Credit: 2010 - Accounts Payable (Reverses liability offset)
+     */
+    public function createVendorAdvanceApplicationReversalEntry(PurchaseOrder $purchaseOrder, float $usedAdvanceAmount): ?JournalEntry
+    {
+        if ($usedAdvanceAmount <= 0) return null;
+
+        $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
+
+        // 1. Resolve Accounts Payable Account (Code 2010 / 20100)
+        $payableAccountId = $this->accountingSettings->purchase_invoice_payable_account_id;
+        $apAcc = null;
+
+        if ($payableAccountId) {
+            $apAcc = Account::withoutGlobalScopes()->find($payableAccountId);
+        }
+
+        if (!$apAcc) {
+            $apAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '2010')
+                      ->orWhere('account_code', '20100')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Payable%')
+                      ->orWhere('account_name', 'LIKE', '%Payable%');
+                })->first();
+        }
+
+        if (!$apAcc) {
+            $apAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '2010',
+                'account_name' => 'Accounts Payable',
+                'account_type' => 'liability',
+                'account_subtype' => 'current_liability',
+                'description' => 'Supplier accounts payable',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $payableAccountId = $apAcc->id;
+
+        // 2. Resolve Advance to Suppliers Account (Code 1310)
+        $vendorAdvanceAcc = Account::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where(function ($q) {
+                $q->where('account_code', '1310')
+                  ->orWhere('account_name', 'Advance to Suppliers');
+            })->first();
+
+        if (!$vendorAdvanceAcc) {
+            $vendorAdvanceAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '10500')
+                      ->orWhere('account_name', 'LIKE', '%Advance to Suppliers%')
+                      ->orWhere('account_name', 'LIKE', '%Vendor Advance%')
+                      ->orWhere('account_name', 'LIKE', '%Vendor Prepayments%');
+                })->first();
+        }
+
+        if (!$vendorAdvanceAcc) {
+            $vendorAdvanceAcc = Account::create([
+                'company_id' => $companyId,
+                'account_code' => '1310',
+                'account_name' => 'Advance to Suppliers',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'description' => 'Advance payments and overpayments made to suppliers for future merchandise orders',
+                'opening_balance' => 0,
+                'current_balance' => 0,
+                'is_active' => true,
+                'is_system_account' => true,
+            ]);
+        }
+        $vendorAdvanceAccountId = $vendorAdvanceAcc->id;
+
+        return DB::transaction(function () use ($purchaseOrder, $companyId, $payableAccountId, $vendorAdvanceAccountId, $vendorAdvanceAcc, $apAcc, $usedAdvanceAmount) {
+            $journalEntry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('REV-ADV', $companyId),
+                'entry_date' => now()->toDateString(),
+                'reference' => "Vendor Credit Restored - PO #{$purchaseOrder->po_number}",
+                'description' => "Reversal of Vendor Credit Application for Voided PO #{$purchaseOrder->po_number}",
+                'entry_type' => 'adjustment',
+                'status' => 'posted',
+                'is_reversal' => true,
+                'total_debit' => $usedAdvanceAmount,
+                'total_credit' => $usedAdvanceAmount,
+                'created_by' => auth()->id() ?? $purchaseOrder->user_id ?? \App\Models\User::first()?->id ?? 1,
+                'posted_by' => auth()->id() ?? $purchaseOrder->user_id ?? \App\Models\User::first()?->id ?? 1,
+                'posted_at' => now(),
+                'source_type' => 'purchase_order',
+                'source_id' => $purchaseOrder->id,
+            ]);
+
+            // DEBIT: Advance to Suppliers (1310) -> Increases asset balance
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $vendorAdvanceAccountId,
+                'description' => "Restored Advance Balance - Voided PO #{$purchaseOrder->po_number}",
+                'debit' => $usedAdvanceAmount,
+                'credit' => 0,
+                'debit_amount' => $usedAdvanceAmount,
+                'credit_amount' => 0,
+                'partner_type' => Supplier::class,
+                'partner_id' => $purchaseOrder->supplier_id,
+            ]);
+
+            // CREDIT: Accounts Payable (2010) -> Offsets liability
+            JournalEntryLine::create([
+                'journal_entry_id' => $journalEntry->id,
+                'account_id' => $payableAccountId,
+                'description' => "Accounts Payable Offset - Voided PO #{$purchaseOrder->po_number}",
+                'debit' => 0,
+                'credit' => $usedAdvanceAmount,
+                'debit_amount' => 0,
+                'credit_amount' => $usedAdvanceAmount,
+                'partner_type' => Supplier::class,
+                'partner_id' => $purchaseOrder->supplier_id,
+            ]);
+
+            // Recalculate & synchronize account balances
+            $vendorAdvanceAcc->updateCurrentBalance();
+            $apAcc->updateCurrentBalance();
+
+            return $journalEntry;
+        });
+    }
+
+    /**
+     * Reverse all GL accounting entries for a Purchase Order (PO Void / Cancellation).
+     * Reverses Invoice Entry and creates explicit reversal for Utilized Advance (Debit 1310, Credit 2010).
+     */
+    public function reversePurchaseOrderAccounting(PurchaseOrder $purchaseOrder, float $usedAdvanceAmount = 0): void
+    {
+        DB::transaction(function () use ($purchaseOrder, $usedAdvanceAmount) {
+            $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
+
+            $existingEntries = JournalEntry::where('source_type', 'purchase_order')
+                ->where('source_id', $purchaseOrder->id)
+                ->where('status', 'posted')
+                ->get();
+
+            $affectedAccountIds = [];
+
+            foreach ($existingEntries as $entry) {
+                $cleanNumber = preg_replace('/^(REV-)+/i', '', $entry->entry_number);
+                $reversalNumber = 'REV-' . $cleanNumber;
+                $reversalDesc = 'REVERSAL: ' . preg_replace('/^(REVERSAL:\s*)+/i', '', $entry->description) . " (PO #{$purchaseOrder->po_number} Voided)";
+
+                $reversalEntry = JournalEntry::create([
+                    'company_id' => $entry->company_id,
+                    'entry_number' => $reversalNumber,
+                    'entry_date' => now()->toDateString(),
+                    'reference' => $entry->reference,
+                    'description' => $reversalDesc,
+                    'entry_type' => 'adjustment',
+                    'status' => 'posted',
+                    'is_reversal' => true,
+                    'total_debit' => $entry->total_credit,
+                    'total_credit' => $entry->total_debit,
+                    'created_by' => auth()->id() ?? $purchaseOrder->user_id ?? 1,
+                    'posted_by' => auth()->id() ?? $purchaseOrder->user_id ?? 1,
+                    'posted_at' => now(),
+                    'source_type' => 'purchase_order',
+                    'source_id' => $purchaseOrder->id,
+                ]);
+
+                foreach ($entry->journalEntryLines as $line) {
+                    $debit = (float) ($line->credit_amount ?: $line->credit ?: 0);
+                    $credit = (float) ($line->debit_amount ?: $line->debit ?: 0);
+
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $reversalEntry->id,
+                        'account_id' => $line->account_id,
+                        'description' => 'REVERSAL: ' . $line->description,
+                        'debit' => $debit,
+                        'credit' => $credit,
+                        'debit_amount' => $debit,
+                        'credit_amount' => $credit,
+                        'partner_type' => $line->partner_type,
+                        'partner_id' => $line->partner_id,
+                    ]);
+
+                    if ($line->account_id) {
+                        $affectedAccountIds[] = $line->account_id;
+                    }
+                }
+
+                $entry->update(['status' => 'reversed']);
+            }
+
+            // If usedAdvanceAmount > 0 and no advance journal entry was previously present in $existingEntries
+            $hasAdvanceReversal = false;
+            foreach ($existingEntries as $entry) {
+                if (str_starts_with($entry->entry_number, 'ADV') || str_contains($entry->description, 'Vendor Credit')) {
+                    $hasAdvanceReversal = true;
+                    break;
+                }
+            }
+
+            if (!$hasAdvanceReversal && $usedAdvanceAmount > 0) {
+                $this->createVendorAdvanceApplicationReversalEntry($purchaseOrder, $usedAdvanceAmount);
+            }
+
+            // Always resolve and recalculate 1310 and 2010
+            $vendorAdvanceAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '1310')
+                      ->orWhere('account_name', 'Advance to Suppliers');
+                })->first();
+
+            $apAcc = Account::withoutGlobalScopes()
+                ->where('company_id', $companyId)
+                ->where(function ($q) {
+                    $q->where('account_code', '2010')
+                      ->orWhere('account_code', '20100')
+                      ->orWhere('account_name', 'LIKE', '%Accounts Payable%');
+                })->first();
+
+            if ($vendorAdvanceAcc) {
+                $affectedAccountIds[] = $vendorAdvanceAcc->id;
+            }
+            if ($apAcc) {
+                $affectedAccountIds[] = $apAcc->id;
+            }
+
+            // Recalculate balances for all affected accounts
+            foreach (array_unique($affectedAccountIds) as $accId) {
+                $acc = Account::find($accId);
+                if ($acc) {
+                    $acc->updateCurrentBalance();
+                }
+            }
         });
     }
 

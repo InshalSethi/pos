@@ -357,6 +357,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::get('/bank-accounts/{bankAccount}/reconciliation-summary', [BankAccountController::class , 'reconciliationSummary']);
 
 
+        Route::get('/bank-transactions/export-pdf', [BankTransactionController::class, 'exportPDF']);
         Route::apiResource('bank-transactions', BankTransactionController::class);
         Route::post('/bank-transactions/{bankTransaction}/match', [BankTransactionController::class , 'match']);
         Route::post('/bank-transactions/import', [BankTransactionController::class , 'import']);

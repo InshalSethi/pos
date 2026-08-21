@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        if (Schema::hasTable('purchase_returns')) {
+            DB::statement("ALTER TABLE `purchase_returns` MODIFY COLUMN `status` ENUM('draft', 'pending', 'approved', 'completed', 'cancelled', 'rejected') NOT NULL DEFAULT 'draft'");
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        if (Schema::hasTable('purchase_returns')) {
+            DB::statement("ALTER TABLE `purchase_returns` MODIFY COLUMN `status` ENUM('pending', 'approved', 'rejected', 'processed') NOT NULL DEFAULT 'pending'");
+        }
+    }
+};

@@ -164,6 +164,7 @@
               <th class="py-3 px-4">Warehouse / Location</th>
               <th class="py-3 px-4 text-right">Total</th>
               <th class="py-3 px-4 text-right">Paid</th>
+              <th class="py-3 px-4 text-right">Advance</th>
               <th class="py-3 px-4 text-right">Due</th>
               <th class="py-3 px-4">Due Date</th>
               <th class="py-3 px-4 text-center">Status</th>
@@ -172,13 +173,13 @@
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
             <tr v-if="loading" class="bg-white dark:bg-zinc-900">
-              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
+              <td colspan="11" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 align-middle">
                 <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-800 mx-auto mb-2"></div>
                 Loading purchase orders...
               </td>
             </tr>
             <tr v-else-if="orders.length === 0" class="bg-white dark:bg-zinc-900">
-              <td colspan="10" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
+              <td colspan="11" class="h-[340px] text-center text-slate-400 dark:text-zinc-500 italic align-middle">
                 <svg class="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -254,6 +255,19 @@
                 {{ parseFloat(item.amount_paid || item.paid_amount || 0) > 0 ? formatCurrency(item.amount_paid || item.paid_amount) : '-' }}
               </td>
 
+              <!-- Advance Amount -->
+              <td class="py-4 px-4 text-right font-bold text-sm align-middle bg-white dark:bg-zinc-900">
+                <span
+                  v-if="parseFloat(item.advance_amount || 0) > 0"
+                  class="text-amber-600 dark:text-amber-400"
+                >
+                  {{ formatCurrency(item.advance_amount) }}
+                </span>
+                <span v-else class="text-slate-400 dark:text-zinc-500 font-medium">
+                  -
+                </span>
+              </td>
+
               <!-- Due Amount -->
               <td class="py-4 px-4 text-right text-xs align-middle bg-white dark:bg-zinc-900">
                 <span v-if="getBalanceState(item).type === 'due'" class="font-semibold text-rose-600 dark:text-rose-400">
@@ -304,16 +318,18 @@
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     <span>View</span>
                   </button>
-                  <button v-if="!isOrderVoided(item)" @click="editPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    <span>Edit</span>
-                  </button>
                   <button @click="printPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     <span>Print</span>
                   </button>
-                  <button v-if="!isOrderVoided(item)" @click="promptVoidPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center space-x-1.5 font-semibold">
-                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                  <button 
+                    v-if="!isOrderVoided(item)" 
+                    @click="promptVoidPurchaseOrder(item)" 
+                    class="w-full text-left px-3 py-1.5 text-xs flex items-center space-x-1.5 font-semibold"
+                    :class="(item.active_returns_count || 0) > 0 ? 'text-slate-400 dark:text-zinc-500 opacity-60 cursor-not-allowed hover:bg-transparent' : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'"
+                    :title="(item.active_returns_count || 0) > 0 ? 'Cannot void: Active Purchase Returns exist' : 'Void Purchase Order'"
+                  >
+                    <svg class="w-3.5 h-3.5" :class="(item.active_returns_count || 0) > 0 ? 'text-slate-400' : 'text-amber-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                     <span>Void</span>
                   </button>
                   <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
@@ -690,6 +706,7 @@ const allStatusTabs = [
   { id: 'approved', label: 'Approved' },
   { id: 'paid', label: 'Paid' },
   { id: 'partial', label: 'Partial' },
+  { id: 'due', label: 'Due' },
   { id: 'overdue', label: 'Overdue' },
   { id: 'void', label: 'Void' }
 ];
@@ -823,6 +840,7 @@ const counts = ref({
   approved: 0,
   paid: 0,
   partial: 0,
+  due: 0,
   overdue: 0,
   void: 0
 });
@@ -944,6 +962,10 @@ const isOrderVoided = (order) => {
 
 const promptVoidPurchaseOrder = (order) => {
   openActionDropdown.value = null;
+  if ((order.active_returns_count || 0) > 0 || order.has_active_returns) {
+    showToast('This Purchase Order cannot be voided because it has linked Purchase Returns. Void the Purchase Returns first.', 'error');
+    return;
+  }
   voidModalState.value = {
     isOpen: true,
     order
@@ -1062,21 +1084,48 @@ const isPartiallyReturned = (item) => {
 const getStatusBadgeClass = (item) => {
   if (isFullyReturned(item)) return 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300';
   const st = item.status;
-  if (st === 'received' || st === 'paid' || st === 'completed') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-  if (st === 'partially_received' || st === 'partial') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
   if (st === 'draft') return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
   if (st === 'approved' || st === 'confirmed' || st === 'sent') return 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
-  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+
+  const bal = getBalanceState(item);
+  if (bal.type === 'due') {
+    const paid = parseFloat(item.amount_paid || item.paid_amount || 0);
+    if (paid > 0) {
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+    }
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+  }
+
+  if (st === 'paid' || st === 'received' || st === 'completed' || bal.type === 'settled' || bal.type === 'return') {
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+  }
+  if (st === 'partially_received' || st === 'partial') return 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300';
+  if (st === 'due') return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
   return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
 };
 
 const getStatusLabel = (item) => {
   if (isFullyReturned(item)) return 'Returned';
   const st = item.status;
-  if (st === 'received') return 'Paid';
-  if (st === 'partially_received') return 'Partial';
-  if (st === 'confirmed' || st === 'sent') return 'Approved';
-  if (st === 'cancelled' || st === 'voided') return 'Void';
+  if (st === 'void' || st === 'voided' || st === 'cancelled') return 'Void';
+  if (st === 'draft') return 'Draft';
+  if (st === 'approved' || st === 'confirmed' || st === 'sent') return 'Approved';
+
+  const bal = getBalanceState(item);
+  if (bal.type === 'due') {
+    const paid = parseFloat(item.amount_paid || item.paid_amount || 0);
+    if (paid > 0) {
+      return 'Partial';
+    }
+    return 'Due';
+  }
+
+  if (st === 'paid' || st === 'received' || st === 'completed' || bal.type === 'settled' || bal.type === 'return') {
+    return 'Paid';
+  }
+  if (st === 'partially_received' || st === 'partial') return 'Partial';
+  if (st === 'due') return 'Due';
   return st ? st.charAt(0).toUpperCase() + st.slice(1) : '-';
 };
 

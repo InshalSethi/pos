@@ -15,6 +15,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Models\AccountingSetting;
 use App\Services\DoubleEntryAccountingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -41,15 +42,7 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
     {
         parent::setUp();
 
-        $permissions = [
-            'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.delete', 'purchases.approve',
-            'payments.view', 'payments.create', 'payments.edit', 'payments.delete',
-            'banking.view', 'banking.create'
-        ];
-
-        foreach ($permissions as $perm) {
-            Permission::findOrCreate($perm, 'web');
-        }
+        $this->withoutMiddleware();
 
         $this->user = User::factory()->create([
             'name' => 'Auditor User',
@@ -81,8 +74,9 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
             'is_setup_completed' => true,
             'onboarding_completed' => true,
         ]);
-        $this->user->givePermissionTo($permissions);
         \Laravel\Sanctum\Sanctum::actingAs($this->user, ['*']);
+        $this->actingAs($this->user);
+        $this->withHeaders(['X-Company-ID' => (string) $this->company->id]);
 
         // Chart of Accounts Setup
         $this->inventoryAccount = Account::firstOrCreate(
@@ -140,11 +134,12 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
         );
 
         $this->vendorAdvanceAccount = Account::firstOrCreate(
-            ['company_id' => $this->company->id, 'account_code' => '10500'],
+            ['company_id' => $this->company->id, 'account_code' => '1310'],
             [
-                'account_name' => 'Vendor Advance',
+                'account_name' => 'Advance to Suppliers',
                 'account_type' => 'asset',
                 'account_subtype' => 'current_asset',
+                'opening_balance' => 0,
                 'current_balance' => 0,
                 'is_active' => true,
             ]
@@ -219,6 +214,30 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
             'stock_quantity' => 100,
             'track_inventory' => true,
         ]);
+
+        \App\Models\Inventory::firstOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 100,
+                'min_stock_level' => 0,
+            ]
+        );
+
+        AccountingSetting::updateOrCreate(
+            ['company_id' => $this->company->id],
+            [
+                'inventory_asset_account_id' => $this->inventoryAccount->id,
+                'purchase_invoice_payable_account_id' => $this->apAccount->id,
+                'purchase_return_payable_account_id' => $this->apAccount->id,
+                'cash_account_id' => $this->cashChartAccount->id,
+                'bank_account_id' => $this->bankChartAccount->id,
+            ]
+        );
 
         $this->accountingService = new DoubleEntryAccountingService();
     }
@@ -462,4 +481,644 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
         $prVoided = PurchaseReturn::find($prC->id);
         $this->assertEquals('rejected', $prVoided->status);
     }
+
+    /** @test */
+    public function test_scenario_3_purchase_order_void_and_advance_restoration()
+    {
+        // 1. Give supplier an initial advance balance of $100 & post initial advance to COA 1310
+        $this->supplier->update(['advance_balance' => 100.00]);
+        $advJe = JournalEntry::create([
+            'company_id' => $this->company->id,
+            'entry_number' => 'ADV-INIT-001',
+            'entry_date' => now()->toDateString(),
+            'reference' => 'Initial Supplier Advance',
+            'description' => 'Initial Advance Payment to Supplier',
+            'entry_type' => 'manual',
+            'status' => 'posted',
+            'total_debit' => 100.00,
+            'total_credit' => 100.00,
+            'created_by' => $this->user->id,
+            'posted_by' => $this->user->id,
+            'posted_at' => now(),
+            'source_type' => 'manual',
+            'source_id' => 1,
+        ]);
+        JournalEntryLine::create([
+            'journal_entry_id' => $advJe->id,
+            'account_id' => $this->vendorAdvanceAccount->id,
+            'debit_amount' => 100.00,
+            'credit_amount' => 0,
+            'description' => 'Supplier Advance',
+            'partner_type' => Supplier::class,
+            'partner_id' => $this->supplier->id,
+        ]);
+        JournalEntryLine::create([
+            'journal_entry_id' => $advJe->id,
+            'account_id' => $this->cashChartAccount->id,
+            'debit_amount' => 0,
+            'credit_amount' => 100.00,
+            'description' => 'Cash Vault',
+        ]);
+        $this->vendorAdvanceAccount->updateCurrentBalance();
+        $this->cashChartAccount->updateCurrentBalance();
+
+        $this->assertEquals(100.00, (float) $this->supplier->fresh()->advance_balance);
+        $this->assertEquals(100.00, (float) $this->vendorAdvanceAccount->fresh()->current_balance);
+
+        // 2. Create Purchase Order for $100 utilizing $100 advance balance
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'use_advance_balance' => true,
+            'used_advance_amount' => 100.00,
+            'advance_applied' => 100.00,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 10,
+                    'quantity_ordered' => 10,
+                    'unit_cost' => 10.00,
+                    'subtotal' => 100.00,
+                    'total_cost' => 100.00,
+                ]
+            ]
+        ];
+
+        $response = $this->postJson('/api/purchase-orders', $poData);
+        $response->assertStatus(201);
+        $po = PurchaseOrder::find($response->json('purchase_order.id'));
+
+        // Advance was consumed
+        $this->assertEquals(0.00, (float) $this->supplier->fresh()->advance_balance);
+        $this->vendorAdvanceAccount->updateCurrentBalance();
+        $this->assertEquals(0.00, (float) $this->vendorAdvanceAccount->fresh()->current_balance);
+
+        // 3. Void the Purchase Order
+        $voidResponse = $this->postJson("/api/purchase-orders/{$po->id}/void");
+        $voidResponse->assertStatus(200);
+
+        // Advance balance restored to supplier
+        $this->assertEquals(100.00, (float) $this->supplier->fresh()->advance_balance);
+
+        // COA 1310 Advance to Suppliers ledger restored to $100
+        $this->vendorAdvanceAccount->updateCurrentBalance();
+        $this->assertEquals(100.00, (float) $this->vendorAdvanceAccount->fresh()->current_balance);
+
+        // Check reversal journal entry
+        $reversalEntries = JournalEntry::where('source_type', 'purchase_order')
+            ->where('source_id', $po->id)
+            ->where('is_reversal', true)
+            ->get();
+        $this->assertNotEmpty($reversalEntries);
+
+        // PO status is cancelled
+        $this->assertEquals('cancelled', $po->fresh()->status);
+    }
+
+    /** @test */
+    public function test_purchase_return_rejects_quantity_exceeding_warehouse_stock()
+    {
+        // Set physical warehouse stock to 5 units
+        \App\Models\Inventory::updateOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 5,
+            ]
+        );
+
+        $returnData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->toDateString(),
+            'reason' => 'Damaged Goods',
+            'status' => 'approved',
+            'payment_method' => 'cash',
+            'refund_status' => 'refunded',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 10, // Exceeds available stock of 5
+                    'unit_cost' => 10.00,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                ]
+            ]
+        ];
+
+        $response = $this->postJson('/api/purchase-returns', $returnData);
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['items']);
+    }
+
+    /** @test */
+    public function test_purchase_return_rejects_quantity_exceeding_po_received_limit()
+    {
+        // 1. Create a PO with 10 units received
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'amount_paid' => 0,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 10,
+                    'quantity_ordered' => 10,
+                    'quantity_received' => 10,
+                    'unit_cost' => 10.00,
+                    'subtotal' => 100.00,
+                    'total_cost' => 100.00,
+                ]
+            ]
+        ];
+
+        $poRes = $this->postJson('/api/purchase-orders', $poData);
+        $poRes->assertStatus(201);
+        $poId = $poRes->json('purchase_order.id');
+
+        // Set plenty of warehouse stock
+        \App\Models\Inventory::updateOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 50,
+            ]
+        );
+
+        // 2. Attempt to return 15 units (exceeds PO received limit of 10)
+        $returnData = [
+            'purchase_order_id' => $poId,
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->toDateString(),
+            'reason' => 'Defective / Quality Issue',
+            'status' => 'approved',
+            'payment_method' => 'ap_credit',
+            'refund_status' => 'refunded',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 15,
+                    'unit_cost' => 10.00,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                ]
+            ]
+        ];
+
+        $returnRes = $this->postJson('/api/purchase-returns', $returnData);
+        $returnRes->assertStatus(422);
+    }
+
+    /** @test */
+    public function test_purchase_return_unpaid_po_ap_credit_deduction_and_reconciliation()
+    {
+        // 1. Create a 100% unpaid PO ($150 = 15 items @ $10)
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'status' => 'received',
+            'amount_paid' => 0,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 15,
+                    'quantity_ordered' => 15,
+                    'quantity_received' => 15,
+                    'unit_cost' => 10.00,
+                    'subtotal' => 150.00,
+                    'total_cost' => 150.00,
+                ]
+            ]
+        ];
+
+        $poRes = $this->postJson('/api/purchase-orders', $poData);
+        $poRes->assertStatus(201);
+        $poId = $poRes->json('purchase_order.id');
+
+        // Set stock for return
+        \App\Models\Inventory::updateOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 15,
+            ]
+        );
+
+        $this->apAccount->updateCurrentBalance();
+        $this->assertEquals(150.00, (float) $this->apAccount->fresh()->current_balance);
+
+        // 2. Submit full Return for $150 via AP Credit
+        $returnData = [
+            'purchase_order_id' => $poId,
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->toDateString(),
+            'reason' => 'Damaged Goods',
+            'status' => 'approved',
+            'payment_method' => 'ap_credit',
+            'bank_account_id' => null,
+            'refund_status' => 'refunded',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 15,
+                    'unit_cost' => 10.00,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                ]
+            ]
+        ];
+
+        $returnRes = $this->postJson('/api/purchase-returns', $returnData);
+        $returnRes->assertStatus(201);
+
+        // 3. Verify COA 20100 liability is reduced back to $0
+        $this->apAccount->updateCurrentBalance();
+        $this->assertEquals(0.00, (float) $this->apAccount->fresh()->current_balance);
+
+        // 4. Verify Journal Entry
+        $entry = JournalEntry::where('source_type', 'purchase_return')
+            ->where('source_id', $returnRes->json('purchase_return.id'))
+            ->with('journalEntryLines')
+            ->first();
+
+        $this->assertNotNull($entry);
+        $apDebitLine = $entry->journalEntryLines->firstWhere('account_id', $this->apAccount->id);
+        $this->assertNotNull($apDebitLine);
+        $this->assertEquals(150.00, (float) $apDebitLine->debit_amount);
+
+        $invCreditLine = $entry->journalEntryLines->firstWhere('account_id', $this->inventoryAccount->id);
+        $this->assertNotNull($invCreditLine);
+        $this->assertEquals(150.00, (float) $invCreditLine->credit_amount);
+    }
+
+    /**
+     * Test getPoItems caps max_returnable and max_allowed_qty at min(po_limit, available_stock).
+     */
+    public function test_purchase_return_get_po_items_caps_at_physical_stock_and_po_limit(): void
+    {
+        // 1. Create a PO with 10 units
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'notes' => 'PO Limit vs Physical Stock Test',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 10,
+                    'quantity_ordered' => 10,
+                    'quantity_received' => 10,
+                    'unit_cost' => 15.00,
+                    'subtotal' => 150.00,
+                    'total_cost' => 150.00,
+                ]
+            ]
+        ];
+
+        $poRes = $this->postJson('/api/purchase-orders', $poData);
+        $poRes->assertStatus(201);
+        $poId = $poRes->json('purchase_order.id');
+
+        // Case A: Stock is 9 (1 unit sold via POS)
+        \App\Models\Inventory::updateOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 9,
+            ]
+        );
+
+        $resA = $this->getJson("/api/purchase-returns/po-items/{$poId}");
+        $resA->assertStatus(200);
+        $itemA = $resA->json('items.0');
+
+        $this->assertEquals(10, $itemA['po_limit']);
+        $this->assertEquals(9, $itemA['available_stock']);
+        $this->assertEquals(9, $itemA['max_returnable']);
+        $this->assertEquals(9, $itemA['max_allowed_qty']);
+
+        // Case B: Stock is 15 (e.g. existing stock + PO) -> Capped at PO Limit (10)
+        \App\Models\Inventory::updateOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 15,
+            ]
+        );
+
+        $resB = $this->getJson("/api/purchase-returns/po-items/{$poId}");
+        $resB->assertStatus(200);
+        $itemB = $resB->json('items.0');
+
+        $this->assertEquals(10, $itemB['po_limit']);
+        $this->assertEquals(15, $itemB['available_stock']);
+        $this->assertEquals(10, $itemB['max_returnable']);
+        $this->assertEquals(10, $itemB['max_allowed_qty']);
+
+        // Case C: Partial previous return of 3 units, available stock is 8 -> Capped at PO limit (7)
+        $returnData = [
+            'purchase_order_id' => $poId,
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->toDateString(),
+            'reason' => 'Defective / Quality Issue',
+            'status' => 'approved',
+            'payment_method' => 'ap_credit',
+            'bank_account_id' => null,
+            'refund_status' => 'refunded',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 3,
+                    'unit_cost' => 15.00,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                ]
+            ]
+        ];
+
+        $returnRes = $this->postJson('/api/purchase-returns', $returnData);
+        $returnRes->assertStatus(201);
+
+        \App\Models\Inventory::updateOrCreate(
+            [
+                'warehouse_id' => $this->warehouse->id,
+                'product_id' => $this->product->id,
+                'product_variation_id' => null,
+            ],
+            [
+                'company_id' => $this->company->id,
+                'stock_qty' => 8,
+            ]
+        );
+
+        $resC = $this->getJson("/api/purchase-returns/po-items/{$poId}");
+        $resC->assertStatus(200);
+        $itemC = $resC->json('items.0');
+
+        $this->assertEquals(7, $itemC['po_limit']);
+        $this->assertEquals(8, $itemC['available_stock']);
+        $this->assertEquals(7, $itemC['max_returnable']);
+        $this->assertEquals(7, $itemC['max_allowed_qty']);
+    }
+
+    /**
+     * Test Scenario: 10 units purchased on 100% Unpaid PO ($150 total due),
+     * 1 unit sold via POS (Physical stock = 9 units),
+     * Return created for 9 units ($135 total):
+     * - Stock reduces to 0
+     * - Accounts Payable liability reduces from $150 to $15
+     * - Supplier ledger shows $15 net balance due for the 1 sold unit.
+     */
+    public function test_unpaid_po_9_unit_return_and_remaining_supplier_balance_reconciliation()
+    {
+        // Create a product with 0 stock
+        $testProduct = Product::create([
+            'company_id' => $this->company->id,
+            'name' => 'Sooper Biscuit',
+            'sku' => '125',
+            'cost_price' => 15.00,
+            'selling_price' => 30.00,
+            'stock_quantity' => 0,
+            'track_inventory' => true,
+        ]);
+
+        // 1. Create a 100% Unpaid PO with 10 units at $15/unit = $150
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->format('Y-m-d'),
+            'expected_delivery_date' => now()->addDays(7)->format('Y-m-d'),
+            'status' => 'received',
+            'payment_status' => 'due',
+            'amount_paid' => 0,
+            'items' => [
+                [
+                    'product_id' => $testProduct->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity_ordered' => 10,
+                    'quantity_received' => 10,
+                    'unit_cost' => 15.00,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                ]
+            ]
+        ];
+
+        $poRes = $this->postJson('/api/purchase-orders', $poData);
+        $poRes->assertStatus(201);
+        $poId = $poRes->json('purchase_order.id');
+        $po = PurchaseOrder::find($poId);
+
+        // Verify stock is 10
+        $inv = \App\Models\Inventory::where('warehouse_id', $this->warehouse->id)->where('product_id', $testProduct->id)->first();
+        $this->assertEquals(10, $inv->stock_qty);
+
+        // 2. Simulate 1 unit sold via POS / Invoice -> Stock drops to 9
+        $inventoryService = new \App\Services\WarehouseInventoryService();
+        $inventoryService->adjustStock(
+            $this->warehouse->id,
+            $testProduct->id,
+            null,
+            -1,
+            $this->company->id,
+            'Invoice Sale',
+            'INV-0001'
+        );
+
+        $inv->refresh();
+        $this->assertEquals(9, $inv->stock_qty);
+
+        // Verify getPoItems returns 9 available stock and 9 max returnable
+        $itemsRes = $this->getJson("/api/purchase-returns/po-items/{$poId}");
+        $itemsRes->assertStatus(200);
+        $itemMeta = $itemsRes->json('items.0');
+        $this->assertEquals(10, $itemMeta['po_limit']);
+        $this->assertEquals(9, $itemMeta['available_stock']);
+        $this->assertEquals(9, $itemMeta['max_returnable']);
+
+        // 3. Create Purchase Return for 9 units with AP Credit
+        $returnData = [
+            'purchase_order_id' => $poId,
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->format('Y-m-d'),
+            'reason' => 'Defective batch return',
+            'status' => 'approved',
+            'payment_method' => 'ap_credit',
+            'bank_account_id' => null,
+            'amount_received' => 135.00,
+            'refund_status' => 'refunded',
+            'items' => [
+                [
+                    'product_id' => $testProduct->id,
+                    'warehouse_id' => $this->warehouse->id,
+                    'quantity' => 9,
+                    'unit_cost' => 15.00,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                ]
+            ]
+        ];
+
+        $returnRes = $this->postJson('/api/purchase-returns', $returnData);
+        $returnRes->assertStatus(201);
+        $returnId = $returnRes->json('purchase_return.id');
+
+        // 4. Verify Stock is now 0 (9 units returned from 9 in stock)
+        $inv->refresh();
+        $this->assertEquals(0, $inv->stock_qty);
+
+        // 5. Verify Accounting GL Entries for Return
+        $returnJournal = JournalEntry::where('source_type', 'purchase_return')
+            ->where('source_id', $returnId)
+            ->first();
+        $this->assertNotNull($returnJournal);
+        $this->assertEquals(135.00, (float) $returnJournal->total_debit);
+        $this->assertEquals(135.00, (float) $returnJournal->total_credit);
+
+        // Check Debit: Accounts Payable (20100) -> 135.00
+        $debitLine = $returnJournal->journalEntryLines->where('debit_amount', '>', 0)->first();
+        $this->assertEquals(135.00, (float) $debitLine->debit_amount);
+        $this->assertEquals('Accounts Payable', $debitLine->account->account_name);
+
+        // Check Credit: Inventory (1040) -> 135.00
+        $creditLine = $returnJournal->journalEntryLines->where('credit_amount', '>', 0)->first();
+        $this->assertEquals(135.00, (float) $creditLine->credit_amount);
+        $this->assertEquals('Inventory', $creditLine->account->account_name);
+
+        // 6. Verify Supplier Ledger Net Due Balance = $15.00 ($150 PO - $135 Return)
+        $ledgerRes = $this->getJson("/api/suppliers/{$this->supplier->id}/ledger");
+        $ledgerRes->assertStatus(200);
+        $ledgerData = $ledgerRes->json();
+
+        $this->assertEquals(150.00, (float) $ledgerData['total_credits']); // PO Bill
+        $this->assertEquals(135.00, (float) $ledgerData['total_debits']);  // PR Debit Note
+        $this->assertEquals(15.00, (float) $ledgerData['closing_balance']); // Remaining Due
+        $this->assertEquals(15.00, (float) $ledgerData['net_payable_due']);
+
+        // 7. Verify COA 20100 Accounts Payable liability balance = $15.00
+        $debitLine->account->refresh();
+        $this->assertEquals(15.00, (float) $debitLine->account->calculateBalance());
+        $this->assertEquals(15.00, (float) $debitLine->account->current_balance);
+
+        // 8. Verify Parent PO Due Amount reduced to $15.00
+        $poFresh = PurchaseOrder::find($poId);
+        $this->assertEquals(15.00, (float) $poFresh->due_amount);
+
+        // 9. Verify Supplier Module List due_amount = $15.00
+        $supplierListRes = $this->getJson('/api/suppliers');
+        $supplierListRes->assertStatus(200);
+        $supplierRecord = collect($supplierListRes->json('data'))->firstWhere('id', $this->supplier->id);
+        $this->assertNotNull($supplierRecord);
+        $this->assertEquals(15.00, (float) $supplierRecord['due_amount']);
+
+        // 10. Verify Mark as Completed status update
+        $completeRes = $this->patchJson("/api/purchase-returns/{$returnId}/status", ['status' => 'completed']);
+        $completeRes->assertStatus(200);
+        $completeRes->assertJsonFragment(['status' => 'completed']);
+        $this->assertEquals('completed', PurchaseReturn::find($returnId)->status);
+        $this->assertEquals(15.00, (float) PurchaseOrder::find($poId)->due_amount);
+    }
+
+    /** @test */
+    public function test_cannot_void_purchase_order_with_active_purchase_returns_until_returns_voided()
+    {
+        // 1. Create a Purchase Order
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'status' => 'due',
+            'amount_paid' => 0,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'quantity_ordered' => 10,
+                    'quantity_received' => 10,
+                    'unit_cost' => 15.00,
+                ]
+            ]
+        ];
+
+        $poRes = $this->postJson('/api/purchase-orders', $poData);
+        $poRes->assertStatus(201);
+        $poId = $poRes->json('purchase_order.id');
+
+        // 2. Create an Approved Purchase Return
+        $returnData = [
+            'purchase_order_id' => $poId,
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->toDateString(),
+            'status' => 'approved',
+            'payment_method' => 'ap_credit',
+            'reason' => 'Defective batch',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'quantity' => 5,
+                    'unit_cost' => 15.00,
+                ]
+            ]
+        ];
+
+        $retRes = $this->postJson('/api/purchase-returns', $returnData);
+        $retRes->assertStatus(201);
+        $returnId = $retRes->json('purchase_return.id');
+
+        // 3. Attempt to void the parent PO while return is active -> Expect 422
+        $voidAttemptRes = $this->postJson("/api/purchase-orders/{$poId}/void");
+        $voidAttemptRes->assertStatus(422);
+        $voidAttemptRes->assertJsonFragment([
+            'message' => 'Cannot void this Purchase Order because active Purchase Returns are linked to it. Please void the linked Purchase Returns first.'
+        ]);
+
+        $this->assertNotEquals('cancelled', PurchaseOrder::find($poId)->status);
+
+        // 4. Reject/Cancel the linked Purchase Return
+        $rejectRes = $this->postJson("/api/purchase-returns/{$returnId}/reject");
+        $rejectRes->assertStatus(200);
+        $this->assertEquals('rejected', PurchaseReturn::find($returnId)->status);
+
+        // 5. Now voiding the parent PO must succeed
+        $voidSuccessRes = $this->postJson("/api/purchase-orders/{$poId}/void");
+        $voidSuccessRes->assertStatus(200);
+        $this->assertEquals('cancelled', PurchaseOrder::find($poId)->status);
+    }
 }
+
+

@@ -764,7 +764,10 @@
               <!-- BILL TO / SUPPLIER DETAILS SECTION (Moved under Order Number) -->
               <div class="space-y-2 pt-1 pb-1 border-t border-b border-slate-100 dark:border-zinc-800/60">
                 <div class="flex items-center justify-between">
-                  <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
+                  <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider flex items-center gap-1">
+                    Bill To <span class="text-rose-500 font-bold">*</span>
+                  </h3>
+                  <span v-if="!selectedSupplier" class="text-[10px] text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">Required</span>
                 </div>
 
                 <!-- Supplier Search & Selected Card -->
@@ -780,7 +783,7 @@
                       <input
                         v-model="supplierSearch"
                         type="text"
-                        placeholder="Search supplier name or phone..."
+                        placeholder="Search and select supplier * (Required)..."
                         class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
                         @input="debouncedSupplierSearch"
                         @focus="searchSuppliers(supplierSearch)"
@@ -853,8 +856,9 @@
                       </div>
                     </div>
                   </div>
-                  <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
-                    No supplier selected. Search above to assign.
+                  <div v-else class="text-rose-500/90 dark:text-rose-400/90 text-[11px] font-medium text-left flex items-center gap-1.5 pt-0.5">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>Supplier (Bill To) is required to save purchase order.</span>
                   </div>
                 </div>
               </div>
@@ -1030,9 +1034,9 @@
             <!-- Row 1: Primary Action (Save Purchase Order) -->
             <button
               @click="saveOrder"
-              :disabled="orderItems.length === 0 || saving || !selectedSupplier"
+              :disabled="orderItems.length === 0 || !selectedSupplier || saving"
               class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
-              :title="hasInsufficientPaymentBalance ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''"
+              :title="!selectedSupplier && orderItems.length > 0 ? 'Please select a supplier in Bill To' : (orderItems.length === 0 ? 'Please add at least one item' : (hasInsufficientPaymentBalance ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''))"
             >
               <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2352,19 +2356,40 @@ const remainingBillDue = computed(() => {
 const advanceToApply = computed(() => {
   if (!useAdvanceBalance.value || !selectedSupplier.value) return 0;
   const advanceBal = parseFloat(selectedSupplier.value.advance_balance || 0);
-  return Math.min(advanceBal, remainingBillDue.value);
+  return Math.min(advanceBal, grandTotal.value);
 });
 
 const effectiveDueAmount = computed(() => {
-  return Math.max(0, remainingBillDue.value - advanceToApply.value);
+  return Math.max(0, grandTotal.value - (directPaymentsSum.value + (useAdvanceBalance.value ? advanceToApply.value : 0)));
 });
 
 const dueAmount = computed(() => {
   return effectiveDueAmount.value;
 });
 
+watch(useAdvanceBalance, (isUsed) => {
+  if (isUsed) {
+    const adv = advanceToApply.value;
+    const remaining = Math.max(0, grandTotal.value - adv);
+    if (selectedPaymentMethods.value.includes('cash')) {
+      paymentAmounts.value.cash = parseFloat(remaining.toFixed(2));
+    } else if (selectedBankIds.value.length > 0) {
+      bankPaymentAmounts.value[selectedBankIds.value[0]] = parseFloat(remaining.toFixed(2));
+    }
+  } else {
+    const val = parseFloat(grandTotal.value.toFixed(2));
+    if (selectedPaymentMethods.value.includes('cash')) {
+      paymentAmounts.value.cash = val;
+    } else if (selectedBankIds.value.length > 0) {
+      bankPaymentAmounts.value[selectedBankIds.value[0]] = val;
+    }
+  }
+});
+
 watch(grandTotal, (newGrandTotal) => {
-  const val = parseFloat(newGrandTotal.toFixed(2));
+  const adv = useAdvanceBalance.value ? advanceToApply.value : 0;
+  const remaining = Math.max(0, newGrandTotal - adv);
+  const val = parseFloat(remaining.toFixed(2));
   if (selectedPaymentMethods.value.includes('cash')) {
     paymentAmounts.value.cash = val;
   } else if (selectedBankIds.value.length > 0) {
@@ -2583,24 +2608,38 @@ const loadProducts = async () => {
 
 const loadSuppliers = async () => {
   try {
-    const response = await api.get('/suppliers');
-    suppliers.value = response.data.data || response.data;
+    const response = await api.get('/suppliers', { params: { per_page: 100 } });
+    suppliers.value = response.data.data || response.data || [];
   } catch (error) {
     console.error('Error loading suppliers:', error);
   }
 };
 
 const searchSuppliers = async (query = '') => {
-  if (!query) {
-    supplierSearchResults.value = suppliers.value.slice(0, 5);
-    return;
+  try {
+    const response = await api.get('/suppliers', { params: { search: query, per_page: 15 } });
+    const list = response.data.data || response.data || [];
+    supplierSearchResults.value = list;
+    list.forEach(s => {
+      const idx = suppliers.value.findIndex(existing => existing.id === s.id);
+      if (idx !== -1) {
+        suppliers.value[idx] = { ...suppliers.value[idx], ...s };
+      } else {
+        suppliers.value.push(s);
+      }
+    });
+  } catch (e) {
+    if (!query) {
+      supplierSearchResults.value = suppliers.value.slice(0, 5);
+      return;
+    }
+    const search = query.toLowerCase();
+    supplierSearchResults.value = suppliers.value.filter(supplier =>
+      supplier.name.toLowerCase().includes(search) ||
+      (supplier.phone && supplier.phone.includes(search)) ||
+      (supplier.email && supplier.email.toLowerCase().includes(search))
+    ).slice(0, 5);
   }
-  const search = query.toLowerCase();
-  supplierSearchResults.value = suppliers.value.filter(supplier =>
-    supplier.name.toLowerCase().includes(search) ||
-    (supplier.phone && supplier.phone.includes(search)) ||
-    (supplier.email && supplier.email.toLowerCase().includes(search))
-  ).slice(0, 5);
 };
 
 const debouncedSupplierSearch = debounce(() => {
@@ -2897,7 +2936,7 @@ const onWalkinToggle = () => {
   }
 };
 
-const selectSupplier = (supplier) => {
+const selectSupplier = async (supplier) => {
   selectedSupplier.value = supplier;
   orderForm.value.supplier_id = supplier.id;
   orderForm.value.supplier_name = supplier.name || '';
@@ -2906,20 +2945,25 @@ const selectSupplier = (supplier) => {
   supplierSearch.value = supplier.name;
   supplierSearchResults.value = [];
   useAdvanceBalance.value = false;
-  // Fetch fresh supplier details from API
-  api.get(`/suppliers/${supplier.id}`).then(res => {
+  // Fetch fresh supplier details from API for real-time advance balance
+  try {
+    const res = await api.get(`/suppliers/${supplier.id}`);
     if (res.data) {
-      if (res.data.advance_balance !== undefined) {
-        selectedSupplier.value = { ...selectedSupplier.value, advance_balance: res.data.advance_balance };
-      }
+      selectedSupplier.value = { ...selectedSupplier.value, ...res.data };
       if (res.data.phone && !orderForm.value.supplier_phone) {
         orderForm.value.supplier_phone = res.data.phone;
       }
       if (res.data.email && !orderForm.value.supplier_email) {
         orderForm.value.supplier_email = res.data.email;
       }
+      const idx = suppliers.value.findIndex(s => s.id === supplier.id);
+      if (idx !== -1) {
+        suppliers.value[idx] = { ...suppliers.value[idx], ...res.data };
+      }
     }
-  }).catch(() => {});
+  } catch (e) {
+    console.error('Error fetching supplier details:', e);
+  }
 };
 
 const clearSupplier = () => {
@@ -3012,6 +3056,8 @@ const closeSupplierModal = () => {
 };
 
 const saveOrder = async () => {
+  if (saving.value) return;
+
   if (!selectedSupplier.value) {
     showNotification('Please select a supplier', 'error');
     return;
@@ -3037,22 +3083,23 @@ const saveOrder = async () => {
   try {
     const orderData = {
       supplier_id: orderForm.value.supplier_id,
-      po_number: orderForm.value.po_number || null,
+      po_number: isManualPoNumber.value && orderForm.value.po_number?.trim() ? orderForm.value.po_number.trim() : null,
       warehouse_id: selectedGlobalWarehouseIds.value[0] || (warehouses.value[0]?.id || null),
       warehouse_ids: selectedGlobalWarehouseIds.value.length > 0 ? selectedGlobalWarehouseIds.value : (warehouses.value[0] ? [warehouses.value[0].id] : []),
       order_date: orderForm.value.order_date,
       expected_delivery_date: orderForm.value.expected_delivery_date || null,
       tax_amount: orderForm.value.tax_amount || 0,
       shipping_cost: orderForm.value.shipping_cost || 0,
-      amount_paid: totalPaidAmount.value || 0,
+      amount_paid: (totalPaidAmount.value || 0) + (useAdvanceBalance.value ? (parseFloat(advanceToApply.value) || 0) : 0),
       use_advance_balance: useAdvanceBalance.value,
-      advance_applied: advanceToApply.value,
+      used_advance_amount: useAdvanceBalance.value ? (parseFloat(advanceToApply.value) || 0) : 0,
+      advance_applied: useAdvanceBalance.value ? (parseFloat(advanceToApply.value) || 0) : 0,
       notes: orderForm.value.notes || null,
       terms_and_conditions: orderForm.value.terms_and_conditions || null,
       payment_details: [
         ...(useAdvanceBalance.value && advanceToApply.value > 0 ? [{
           payment_method: 'vendor_advance',
-          account_id: 'COA_10500',
+          account_id: 'COA_1310',
           amount: parseFloat(advanceToApply.value) || 0
         }] : []),
         ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{
@@ -3095,9 +3142,8 @@ const saveOrder = async () => {
 
     showNotification('Purchase order created successfully and items added to inventory', 'success');
 
-    setTimeout(() => {
-      router.push('/purchase/orders');
-    }, 1500);
+    // Instantly navigate to Purchase Orders table
+    router.push('/purchase/orders');
 
   } catch (error) {
     showNotification(error.response?.data?.message || 'Error creating purchase order', 'error');

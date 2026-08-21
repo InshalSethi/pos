@@ -42,6 +42,7 @@ class PurchaseOrder extends Model
         'grand_total',
         'amount_paid',
         'due_amount',
+        'advance_amount',
         'notes',
         'terms_and_conditions',
     ];
@@ -59,6 +60,7 @@ class PurchaseOrder extends Model
         'grand_total' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'due_amount' => 'decimal:2',
+        'advance_amount' => 'decimal:2',
     ];
 
     // Relationships
@@ -99,6 +101,11 @@ class PurchaseOrder extends Model
     }
 
     public function returns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class, 'purchase_order_id');
+    }
+
+    public function purchaseReturns(): HasMany
     {
         return $this->hasMany(PurchaseReturn::class, 'purchase_order_id');
     }

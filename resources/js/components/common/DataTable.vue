@@ -19,9 +19,20 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search..."
-            class="pl-9 pr-4 py-2 border border-gray-300 dark:border-zinc-700/80 rounded-xl bg-slate-50 dark:bg-zinc-800/80 text-xs font-semibold text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 dark:focus:border-zinc-500 w-full sm:w-64 transition-all shadow-xs"
+            class="pl-9 pr-8 py-2 border border-gray-300 dark:border-zinc-700/80 rounded-xl bg-slate-50 dark:bg-zinc-800/80 text-xs font-semibold text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 dark:focus:border-zinc-500 w-full sm:w-64 transition-all shadow-xs"
             @input="handleSearch"
           />
+          <button
+            v-if="searchQuery"
+            type="button"
+            @click="clearSearch"
+            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 cursor-pointer"
+            title="Clear search"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         
         <!-- Filters -->
@@ -33,10 +44,17 @@
     </div>
 
     <!-- Table -->
-    <div class="w-full overflow-x-auto custom-scrollbar">
+    <div
+      class="w-full overflow-x-auto custom-scrollbar"
+      :class="tableHeight ? 'overflow-y-auto' : ''"
+      :style="tableHeight ? { height: typeof tableHeight === 'number' ? tableHeight + 'px' : tableHeight, maxHeight: typeof tableHeight === 'number' ? tableHeight + 'px' : tableHeight } : {}"
+    >
       <table class="w-full min-w-max divide-y divide-slate-100 dark:divide-zinc-800/80 table-auto align-middle">
         <!-- Table Header -->
-        <thead class="bg-slate-50/80 dark:bg-zinc-800/40">
+        <thead
+          class="bg-slate-50/95 dark:bg-zinc-800/95"
+          :class="tableHeight ? 'sticky top-0 z-10 shadow-2xs backdrop-blur-xs' : ''"
+        >
           <tr>
             <th
               v-for="column in actualColumns"
@@ -176,20 +194,52 @@
           Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total || 0 }} results
         </div>
 
-        <!-- Items per page -->
+        <!-- Items per page (Custom Floating Dropdown) -->
         <div class="flex items-center space-x-3">
           <label class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Rows:</label>
-          <div class="relative group">
-            <select
-              v-model="perPage"
-              @change="handlePerPageChange"
-              class="pl-3.5 pr-8 py-1.5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 dark:focus:border-zinc-500 transition-all font-bold text-xs text-gray-800 dark:text-slate-100 shadow-xs appearance-none cursor-pointer"
+          <div class="relative" ref="rowsDropdownRef">
+            <button
+              type="button"
+              @click.stop="toggleRowsDropdown"
+              class="pl-3.5 pr-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700/80 rounded-xl hover:border-slate-400 dark:hover:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 dark:focus:border-zinc-500 transition-all font-bold text-xs text-gray-800 dark:text-slate-100 shadow-xs inline-flex items-center gap-2 cursor-pointer select-none"
             >
-              <option v-for="option in perPageOptions" :key="option" :value="option" class="bg-white text-slate-900 dark:bg-zinc-900 dark:text-slate-100">{{ option }}</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-gray-400 dark:text-zinc-500">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-            </div>
+              <span>{{ perPage }}</span>
+              <svg
+                :class="{ 'rotate-180 text-slate-700 dark:text-slate-200': isRowsOpen }"
+                class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            <!-- Floating Teleported Menu -->
+            <Teleport to="body">
+              <div
+                v-if="isRowsOpen"
+                ref="rowsMenuRef"
+                :style="rowsFloatingStyle"
+                class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl py-1 min-w-[76px] overflow-hidden transition-all animate-in fade-in zoom-in-95 z-[99999]"
+              >
+                <button
+                  v-for="option in perPageOptions"
+                  :key="option"
+                  type="button"
+                  @click.stop="selectPerPage(option)"
+                  class="w-full px-3.5 py-1.5 text-left text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer select-none"
+                  :class="option === perPage
+                    ? 'bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold'
+                    : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'"
+                >
+                  <span>{{ option }}</span>
+                  <svg v-if="option === perPage" class="w-3.5 h-3.5 ml-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+              </div>
+            </Teleport>
           </div>
         </div>
 
@@ -245,7 +295,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { debounce } from '@/utils/debounce';
 import { useCurrencyStore } from '@/stores/currency';
 
@@ -298,6 +348,10 @@ const props = defineProps({
   selectable: {
     type: Boolean,
     default: false
+  },
+  tableHeight: {
+    type: [String, Number],
+    default: null
   }
 });
 
@@ -361,6 +415,60 @@ const toggleAllSelection = (event) => {
       id => !props.data.some(item => item.id === id)
     );
   }
+};
+
+const isRowsOpen = ref(false);
+const rowsDropdownRef = ref(null);
+const rowsMenuRef = ref(null);
+const rowsFloatingStyle = ref({});
+
+const updateRowsPosition = () => {
+  if (!rowsDropdownRef.value) return;
+  const rect = rowsDropdownRef.value.getBoundingClientRect();
+  const optionCount = props.perPageOptions?.length || 4;
+  const menuHeight = optionCount * 34 + 10;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const showAbove = spaceBelow < menuHeight && rect.top > menuHeight;
+
+  rowsFloatingStyle.value = {
+    position: 'fixed',
+    left: `${rect.left}px`,
+    top: showAbove ? `${rect.top - menuHeight - 6}px` : `${rect.bottom + 6}px`,
+    minWidth: `${Math.max(rect.width, 76)}px`,
+    zIndex: 99999,
+  };
+};
+
+const toggleRowsDropdown = () => {
+  isRowsOpen.value = !isRowsOpen.value;
+  if (isRowsOpen.value) {
+    nextTick(() => {
+      updateRowsPosition();
+    });
+  }
+};
+
+const selectPerPage = (option) => {
+  perPage.value = option;
+  isRowsOpen.value = false;
+  handlePerPageChange();
+};
+
+const handleClickOutside = (e) => {
+  if (
+    isRowsOpen.value &&
+    rowsDropdownRef.value &&
+    !rowsDropdownRef.value.contains(e.target) &&
+    (!rowsMenuRef.value || !rowsMenuRef.value.contains(e.target))
+  ) {
+    isRowsOpen.value = false;
+  }
+};
+
+const clearSearch = () => {
+  searchQuery.value = '';
+  saveState();
+  emit('search', '');
 };
 
 const handleSearch = debounce(() => {
@@ -462,11 +570,17 @@ const loadState = () => {
 // Lifecycle
 onMounted(() => {
   loadState();
+  document.addEventListener('click', handleClickOutside);
+  window.addEventListener('resize', updateRowsPosition);
+  window.addEventListener('scroll', updateRowsPosition, true);
 });
 
 // Auto-save state on page unload
 onUnmounted(() => {
   saveState();
+  document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('resize', updateRowsPosition);
+  window.removeEventListener('scroll', updateRowsPosition, true);
 });
 
 // Watch for external changes

@@ -783,7 +783,10 @@
                 <!-- BILL TO / SUPPLIER DETAILS SECTION (Moved under Order Number) -->
                 <div class="space-y-2 pt-1 pb-1 border-t border-b border-slate-100 dark:border-zinc-800/60">
                   <div class="flex items-center justify-between">
-                    <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">Bill To</h3>
+                    <h3 class="text-[11px] font-extrabold uppercase text-slate-500 dark:text-zinc-400 tracking-wider flex items-center gap-1">
+                      Bill To <span class="text-rose-500 font-bold">*</span>
+                    </h3>
+                    <span v-if="!selectedSupplier" class="text-[10px] text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">Required</span>
                   </div>
 
                   <!-- Supplier Search & Selected Card -->
@@ -799,7 +802,7 @@
                         <input
                           v-model="supplierSearch"
                           type="text"
-                          placeholder="Search supplier name or phone..."
+                          placeholder="Search and select supplier * (Required)..."
                           class="flex-1 min-w-0 pl-1.5 pr-2 py-1.5 text-xs border-0 focus:outline-none focus:ring-0 bg-transparent text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 font-medium"
                           @input="debouncedSupplierSearch"
                           @focus="searchSuppliers(supplierSearch)"
@@ -872,8 +875,9 @@
                         </div>
                       </div>
                     </div>
-                    <div v-else class="text-slate-400 dark:text-zinc-500 text-[11px] italic text-left">
-                      No supplier selected. Search above to assign.
+                    <div v-else class="text-rose-500/90 dark:text-rose-400/90 text-[11px] font-medium text-left flex items-center gap-1.5 pt-0.5">
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                      <span>Supplier (Bill To) is required to update purchase order.</span>
                     </div>
                   </div>
                 </div>
@@ -1047,9 +1051,9 @@
               <!-- Row 1: Primary Action (Update Purchase Order) -->
               <button
                 @click="updateOrder"
-                :disabled="orderItems.length === 0 || saving || !selectedSupplier"
+                :disabled="orderItems.length === 0 || !selectedSupplier || saving"
                 class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
-                :title="isEditPaymentBalanceExceeded ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''"
+                :title="!selectedSupplier && orderItems.length > 0 ? 'Please select a supplier in Bill To' : (orderItems.length === 0 ? 'Please add at least one item' : (isEditPaymentBalanceExceeded ? 'Warning: Entered payment amount exceeds selected account\'s available balance' : ''))"
               >
                 <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2628,7 +2632,7 @@ const loadProducts = async () => {
 const loadSuppliers = async () => {
   try {
     const response = await api.get('/suppliers');
-    suppliers.value = response.data.data || response.data;
+    suppliers.value = response.data.data || response.data || [];
   } catch (error) {
     console.error('Error loading suppliers:', error);
   }
@@ -3127,7 +3131,7 @@ const updateOrder = async () => {
       payment_details: [
         ...(useAdvanceBalance.value && advanceToApply.value > 0 ? [{
           payment_method: 'vendor_advance',
-          account_id: 'COA_10500',
+          account_id: 'COA_1310',
           amount: parseFloat(advanceToApply.value) || 0
         }] : []),
         ...(selectedPaymentMethods.value.includes('cash') && (paymentAmounts.value.cash || 0) > 0 ? [{

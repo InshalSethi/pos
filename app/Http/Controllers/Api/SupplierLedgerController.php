@@ -8,6 +8,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
 use App\Models\Transaction;
 use App\Models\Payment;
+use App\Models\PaymentReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -56,8 +57,9 @@ class SupplierLedgerController extends Controller
     /**
      * Get supplier general ledger API (IAS 1 Accounts Payable Standard)
      */
-    public function getLedger(Request $request, Supplier $supplier): JsonResponse
+    public function getLedger(Request $request, $supplier): JsonResponse
     {
+        $supplier = $supplier instanceof Supplier ? $supplier : Supplier::withoutGlobalScopes()->findOrFail($supplier);
         $startDate = $request->input('start_date') ?? $request->input('date_from');
         $endDate = $request->input('end_date') ?? $request->input('date_to');
 
@@ -225,7 +227,11 @@ class SupplierLedgerController extends Controller
         $entries = [];
 
         // 2. Fetch Purchase Orders / Purchase Invoices (Credit = Purchases / Bills)
-        $poQuery = PurchaseOrder::where('supplier_id', $supplier->id)
+        $poQuery = PurchaseOrder::withoutGlobalScopes()
+            ->where(function ($q) use ($supplier) {
+                $q->where('supplier_id', $supplier->id)
+                  ->orWhere('supplier_name', $supplier->name);
+            })
             ->whereNotIn('status', ['cancelled', 'void'])
             ->with(['purchaseOrderItems.product', 'user']);
 
@@ -298,7 +304,8 @@ class SupplierLedgerController extends Controller
         }
 
         // 3. Fetch Purchase Returns (Debit = Decrease Liability)
-        $retQuery = PurchaseReturn::where('supplier_id', $supplier->id)
+        $retQuery = PurchaseReturn::withoutGlobalScopes()
+            ->where('supplier_id', $supplier->id)
             ->whereNotIn('status', ['cancelled', 'void']);
 
         if ($startDate) {
@@ -343,13 +350,15 @@ class SupplierLedgerController extends Controller
         }
 
         // 4. Fetch Payments Out (`Payment` table where payee is Supplier)
-        $paymentQuery = Payment::where(function ($q) use ($supplier) {
-            $q->where('payee_id', $supplier->id)
-              ->orWhere(function ($sub) use ($supplier) {
-                  $sub->where('payee_type', 'App\\Models\\Supplier')
-                      ->where('payee_id', $supplier->id);
-              });
-        });
+        $paymentQuery = Payment::withoutGlobalScopes()
+            ->whereNotIn('status', ['cancelled', 'void', 'failed'])
+            ->where(function ($q) use ($supplier) {
+                $q->where('payee_id', $supplier->id)
+                  ->orWhere(function ($sub) use ($supplier) {
+                      $sub->where('payee_type', 'App\\Models\\Supplier')
+                          ->where('payee_id', $supplier->id);
+                  });
+            });
 
         if ($startDate) {
             $paymentQuery->where(function ($q) use ($startDate) {
@@ -395,8 +404,66 @@ class SupplierLedgerController extends Controller
             ];
         }
 
-        // 5. Fetch Banking Transactions (`transactions` table) with deduplication
-        $bankingQuery = Transaction::where('vendor_id', $supplier->id);
+        // 5. Fetch Payment Receipts (Supplier Refund / Rebate `payment_receipts` table)
+        $receiptQuery = PaymentReceipt::withoutGlobalScopes()
+            ->whereNotIn('status', ['cancelled', 'void', 'rejected'])
+            ->whereIn('receipt_type', ['supplier_refund', 'supplier_rebate'])
+            ->where(function ($q) use ($supplier) {
+                $q->where('payer_id', $supplier->id)
+                  ->orWhere(function ($sub) use ($supplier) {
+                      $sub->where('payer_type', 'supplier')
+                          ->where('payer_id', $supplier->id);
+                  })
+                  ->orWhere('payer_name', $supplier->name);
+            });
+
+        if ($startDate) {
+            $receiptQuery->where(function ($q) use ($startDate) {
+                $q->whereDate('receipt_date', '>=', $startDate)
+                  ->orWhereDate('created_at', '>=', $startDate);
+            });
+        }
+        if ($endDate) {
+            $receiptQuery->where(function ($q) use ($endDate) {
+                $q->whereDate('receipt_date', '<=', $endDate)
+                  ->orWhereDate('created_at', '<=', $endDate);
+            });
+        }
+
+        $receipts = $receiptQuery->get();
+        foreach ($receipts as $rc) {
+            $entryDate = $rc->receipt_date ? Carbon::parse($rc->receipt_date)->format('Y-m-d') : ($rc->created_at ? $rc->created_at->format('Y-m-d') : date('Y-m-d'));
+            $amount = (float)$rc->amount;
+            $ref = $rc->receipt_number ?: "RC-{$rc->id}";
+            $trackedPaymentRefs[] = strtolower(trim($ref));
+            if ($rc->reference_number) {
+                $trackedPaymentRefs[] = strtolower(trim($rc->reference_number));
+            }
+
+            $entries[] = [
+                'id' => 'rc_' . $rc->id,
+                'date' => $entryDate,
+                'reference' => $ref,
+                'type' => 'Supplier Refund',
+                'description' => $rc->notes ?: $rc->description ?: "Supplier Advance Refund #{$ref}",
+                'particulars' => "Supplier Advance Refund Received (" . ucfirst($rc->payment_method ?: 'cash') . ")",
+                'items' => [],
+                'salesman' => '-',
+                'purchaser' => '-',
+                'status' => 'Refund Deposited',
+                'total_amount' => $amount,
+                'paid_amount' => $amount,
+                'due_amount' => 0.00,
+                'debit' => 0.00,
+                'credit' => $amount, // Supplier refund decreases supplier debit / restores liability balance
+                'created_at' => $rc->created_at ? $rc->created_at->toDateTimeString() : $entryDate . ' 00:00:00',
+                'source_type' => 'supplier_refund',
+                'source_id' => $rc->id
+            ];
+        }
+
+        // 6. Fetch Banking Transactions (`transactions` table) with deduplication
+        $bankingQuery = Transaction::withoutGlobalScopes()->where('vendor_id', $supplier->id);
         if ($startDate) {
             $bankingQuery->where(function ($q) use ($startDate) {
                 $q->whereDate('paid_at', '>=', $startDate)
@@ -521,7 +588,8 @@ class SupplierLedgerController extends Controller
             ->pluck('number')
             ->toArray();
 
-        $priorPayments = Payment::where(function ($q) use ($supplier) {
+        $priorPayments = Payment::whereNotIn('status', ['cancelled', 'void', 'failed'])
+            ->where(function ($q) use ($supplier) {
                 $q->where('payee_id', $supplier->id)
                   ->orWhere('payee_type', 'App\\Models\\Supplier');
             })
