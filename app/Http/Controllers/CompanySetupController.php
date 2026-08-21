@@ -111,22 +111,25 @@ class CompanySetupController extends Controller
         }
 
         // ── Context A: Resume a specific saved draft ──────────────────
-        if ($request->filled('continue_draft_id')) {
-            $company = Company::where('id', $request->query('continue_draft_id'))
+        $draftId = $request->query('continue_draft_id') ?: $request->query('draft_id');
+        if (!empty($draftId)) {
+            $company = Company::where('id', $draftId)
                 ->where('user_id', $user->id)
                 ->where('status', 'draft')
-                ->firstOrFail();
+                ->first();
 
-            session([
-                'creating_new_company' => true,
-                'creating_subsequent_company' => true
-            ]);
+            if ($company) {
+                session([
+                    'creating_new_company' => true,
+                    'creating_subsequent_company' => true
+                ]);
 
-            return view('company-setup', [
-                'company'                  => $company,
-                'currentStep'              => $company->draft_step ?? 1,
-                'hasExistingActiveCompany' => $hasExistingActiveCompany,
-            ]);
+                return view('company-setup', [
+                    'company'                  => $company,
+                    'currentStep'              => $company->draft_step ?? 1,
+                    'hasExistingActiveCompany' => $hasExistingActiveCompany,
+                ]);
+            }
         }
 
         // ── Context B: Start fresh flow for new company ────────────────
@@ -241,25 +244,151 @@ class CompanySetupController extends Controller
     {
         abort_unless(auth()->check(), 403);
 
-        $validated = $request->validate([
-            'company_id'   => ['required', 'integer', 'exists:companies,id'],
-            'current_step' => ['required', 'integer', 'between:1,3'],
-            'company_name' => ['required', 'string', 'max:255'],
-        ], [
-            'company_name.required' => 'Company Name is required to create or save a setup draft.',
-        ]);
+        $user = auth()->user();
+        $companyId = $request->input('company_id') ?: $request->input('draft_id');
+        $companyName = $request->input('company_name') ?: 'Draft Company';
 
-        Company::where('id', $validated['company_id'])
-            ->where('user_id', auth()->id())
-            ->update([
-                'company_name' => $validated['company_name'],
-                'status'     => 'draft',
-                'draft_step' => $validated['current_step'],
-            ]);
+        $updateData = [
+            'company_name'        => $companyName,
+            'company_email'       => $request->input('company_email') ?: $user->email,
+            'company_phone'       => $request->input('company_phone', ''),
+            'registration_number' => $request->input('registration_number', ''),
+            'owner_role'          => $request->input('owner_role', 'Owner/CEO'),
+            'team_size'           => $request->input('team_size', 'Just Me'),
+            'tax_number'          => $request->input('tax_number', ''),
+            'business_address'    => $request->input('business_address', ''),
+            'business_type'       => $request->input('business_type', ''),
+            'business_scale'      => $request->input('business_scale', 'Single Outlet'),
+            'country'             => $request->input('country', 'United States'),
+            'system_language'     => $request->input('system_language', 'en'),
+            'base_currency'       => $request->input('base_currency', 'USD'),
+            'timezone_offset'     => $request->input('timezone_offset', 'UTC'),
+            'fiscal_year_start'   => $request->input('fiscal_year_start', date('Y-01-01')),
+            'status'              => 'draft',
+            'draft_step'          => (int) ($request->input('current_step', 1)),
+        ];
+
+        if ($companyId) {
+            Company::where('id', $companyId)
+                ->where('user_id', $user->id)
+                ->update($updateData);
+        } else {
+            $updateData['user_id'] = $user->id;
+            Company::create($updateData);
+        }
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
         return redirect('/owner/companies')->with('status', 'Progress saved as draft.');
+    }
+
+    /**
+     * API: Get Draft Details
+     */
+    public function getDraftApi(Request $request, $id): \Illuminate\Http\JsonResponse
+    {
+        $user = auth()->user() ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $draft = Company::where('id', $id)
+            ->where('user_id', $user->id)
+            ->where('status', 'draft')
+            ->first();
+
+        if (!$draft) {
+            return response()->json(['message' => 'Draft not found.'], 404);
+        }
+
+        return response()->json([
+            'draft_id'     => $draft->id,
+            'current_step' => $draft->draft_step ?? 1,
+            'step_data'    => [
+                'company_name'        => $draft->company_name,
+                'registration_number' => $draft->registration_number,
+                'company_email'       => $draft->company_email,
+                'company_phone'       => $draft->company_phone,
+                'owner_role'          => $draft->owner_role ?? 'Owner/CEO',
+                'team_size'           => $draft->team_size ?? 'Just Me',
+                'tax_number'          => $draft->tax_number,
+                'business_address'    => $draft->business_address,
+                'business_type'       => $draft->business_type,
+                'business_scale'      => $draft->business_scale ?? 'Single Outlet',
+                'country'             => $draft->country ?? 'United States',
+                'country_code'        => $draft->country === 'Pakistan' ? 'PK' : ($draft->country === 'United Kingdom' ? 'GB' : 'US'),
+                'system_language'     => $draft->system_language ?? 'en',
+                'base_currency'       => $draft->base_currency ?? 'USD',
+                'currency'            => $draft->base_currency ?? 'USD',
+                'timezone_offset'     => $draft->timezone_offset ?? 'UTC',
+                'fiscal_year_start'   => $draft->fiscal_year_start ?? date('Y-01-01'),
+                'intended_tasks'      => is_string($draft->intended_tasks) ? json_decode($draft->intended_tasks, true) : ($draft->intended_tasks ?? []),
+                'logo_path'           => $draft->company_logo ?? $draft->logo_url,
+            ],
+        ]);
+    }
+
+    /**
+     * API: Save Draft Payload
+     */
+    public function saveDraftApi(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = auth()->user() ?? \Illuminate\Support\Facades\Auth::guard('sanctum')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $draftId = $request->input('draft_id') ?: $request->input('company_id');
+        $stepData = $request->input('step_data', []);
+        $currentStep = $request->input('current_step', $request->input('step', 1));
+
+        $companyName = $stepData['company_name'] ?? $request->input('company_name', 'Draft Company');
+
+        $payload = [
+            'company_name'        => $companyName ?: 'Draft Company',
+            'company_email'       => $stepData['company_email'] ?? $request->input('company_email', $user->email),
+            'company_phone'       => $stepData['company_phone'] ?? $request->input('company_phone', ''),
+            'registration_number' => $stepData['registration_number'] ?? $request->input('registration_number', ''),
+            'owner_role'          => $stepData['owner_role'] ?? $request->input('owner_role', 'Owner/CEO'),
+            'team_size'           => $stepData['team_size'] ?? $request->input('team_size', 'Just Me'),
+            'tax_number'          => $stepData['tax_number'] ?? $request->input('tax_number', ''),
+            'business_address'    => $stepData['business_address'] ?? $request->input('business_address', ''),
+            'business_type'       => $stepData['business_type'] ?? $request->input('business_type', ''),
+            'business_scale'      => $stepData['business_scale'] ?? $request->input('business_scale', 'Single Outlet'),
+            'country'             => $stepData['country'] ?? $request->input('country', 'United States'),
+            'system_language'     => $stepData['system_language'] ?? $request->input('system_language', 'en'),
+            'base_currency'       => $stepData['base_currency'] ?? $stepData['currency'] ?? $request->input('base_currency', 'USD'),
+            'timezone_offset'     => $stepData['timezone_offset'] ?? $request->input('timezone_offset', 'UTC'),
+            'fiscal_year_start'   => $stepData['fiscal_year_start'] ?? $request->input('fiscal_year_start', date('Y-01-01')),
+            'status'              => 'draft',
+            'draft_step'          => (int) $currentStep,
+        ];
+
+        if (isset($stepData['intended_tasks'])) {
+            $payload['intended_tasks'] = is_array($stepData['intended_tasks']) ? $stepData['intended_tasks'] : [];
+        }
+
+        if ($draftId) {
+            $draft = Company::where('id', $draftId)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($draft) {
+                $draft->update($payload);
+            } else {
+                $payload['user_id'] = $user->id;
+                $draft = Company::create($payload);
+            }
+        } else {
+            $payload['user_id'] = $user->id;
+            $draft = Company::create($payload);
+        }
+
+        return response()->json([
+            'message'  => 'Draft saved successfully.',
+            'draft_id' => $draft->id,
+            'draft'    => $draft,
+        ]);
     }
 
     /**

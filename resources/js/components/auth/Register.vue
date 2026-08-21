@@ -4,6 +4,41 @@
     <!-- Ambient Background Radial Glows -->
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-tr from-slate-200/50 via-gray-100/30 to-transparent blur-[120px] rounded-full pointer-events-none"></div>
 
+    <!-- Fixed Top-Right Toast Notification -->
+    <transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-[-20px] opacity-0 sm:translate-y-0 sm:translate-x-4"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="toast.show"
+        class="fixed top-5 right-5 z-50 max-w-sm w-full bg-white border shadow-2xl rounded-2xl p-4 flex items-start gap-3 pointer-events-auto"
+        :class="toast.type === 'error' ? 'border-red-200 shadow-red-500/10' : 'border-emerald-200 shadow-emerald-500/10'"
+      >
+        <div
+          class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          :class="toast.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'"
+        >
+          <svg v-if="toast.type === 'error'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div class="grow pr-2">
+          <h4 class="text-xs font-bold text-slate-900">{{ toast.type === 'error' ? 'Validation Alert' : 'Success' }}</h4>
+          <p class="text-[11px] text-slate-600 mt-0.5 leading-relaxed">{{ toast.message }}</p>
+        </div>
+        <button type="button" @click="toast.show = false" class="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </transition>
+
     <!-- Header / Top Navbar (Shared Component — Identical to Landing) -->
     <Navbar />
 
@@ -224,13 +259,15 @@
                 
                 <div>
                   <input
+                    id="card_number"
                     v-model="form.cardNumber"
-                    @input="form.cardNumber = $event.target.value = formatCardNumber($event.target.value)"
-                    maxlength="23"
+                    @input="handleCardNumberInput"
+                    @blur="handleCardNumberBlur"
+                    maxlength="19"
                     type="text"
                     required
-                    class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
-                    :class="errors.cardNumber ? 'border-red-500 bg-red-50/20' : 'border-slate-200'"
+                    class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white transition-all font-mono tracking-wider"
+                    :class="errors.cardNumber ? 'border-red-500 bg-red-50/20 ring-1 ring-red-500/30' : 'border-slate-200'"
                     placeholder="Card Number (e.g. 4242 4242 4242 4242)"
                   />
                   <p v-if="errors.cardNumber" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.cardNumber) ? errors.cardNumber[0] : errors.cardNumber }}</p>
@@ -238,27 +275,31 @@
                 <div class="grid grid-cols-2 gap-2.5">
                   <div>
                     <input
+                      id="card_expiry"
                       v-model="form.cardExpiry"
-                      @input="form.cardExpiry = $event.target.value = formatCardExpiry($event.target.value)"
+                      @input="handleCardExpiryInput"
+                      @blur="handleCardExpiryBlur"
                       maxlength="5"
                       type="text"
                       required
-                      class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
-                      :class="errors.cardExpiry ? 'border-red-500 bg-red-50/20' : 'border-slate-200'"
+                      class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white transition-all font-mono tracking-wider"
+                      :class="errors.cardExpiry ? 'border-red-500 bg-red-50/20 ring-1 ring-red-500/30' : 'border-slate-200'"
                       placeholder="MM/YY"
                     />
                     <p v-if="errors.cardExpiry" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.cardExpiry) ? errors.cardExpiry[0] : errors.cardExpiry }}</p>
                   </div>
                   <div>
                     <input
+                      id="card_cvc"
                       v-model="form.cardCvc"
-                      @input="form.cardCvc = $event.target.value = formatCardCvc($event.target.value)"
-                      maxlength="4"
+                      @input="handleCardCvcInput"
+                      @blur="handleCardCvcBlur"
+                      maxlength="3"
                       type="text"
                       required
-                      class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
-                      :class="errors.cardCvc ? 'border-red-500 bg-red-50/20' : 'border-slate-200'"
-                      placeholder="CVC"
+                      class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white transition-all font-mono tracking-widest"
+                      :class="errors.cardCvc ? 'border-red-500 bg-red-50/20 ring-1 ring-red-500/30' : 'border-slate-200'"
+                      placeholder="CVV"
                     />
                     <p v-if="errors.cardCvc" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.cardCvc) ? errors.cardCvc[0] : errors.cardCvc }}</p>
                   </div>
@@ -334,6 +375,25 @@ const form = ref({
   coupon_code: ''
 });
 
+const toast = ref({
+  show: false,
+  message: '',
+  type: 'error',
+  timer: null
+});
+
+const showToast = (message, type = 'error') => {
+  if (toast.value.timer) clearTimeout(toast.value.timer);
+  toast.value = {
+    show: true,
+    message,
+    type,
+    timer: setTimeout(() => {
+      toast.value.show = false;
+    }, 4500)
+  };
+};
+
 const loading = ref(false);
 const error = ref('');
 const errors = ref({});
@@ -341,6 +401,76 @@ const success = ref(false);
 const successMessage = ref('');
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+
+const handleCardNumberInput = (e) => {
+  const formatted = formatCardNumber(e.target.value);
+  form.value.cardNumber = formatted;
+  e.target.value = formatted;
+  const digits = formatted.replace(/\D/g, '');
+  if (digits.length === 16) {
+    delete errors.value.cardNumber;
+  }
+};
+
+const handleCardNumberBlur = () => {
+  if (form.value.plan !== 'starter' && form.value.plan !== 'standard') {
+    if (!form.value.cardNumber) return;
+    const res = validateCardNumber(form.value.cardNumber);
+    if (!res.valid) {
+      errors.value.cardNumber = [res.message];
+      showToast(res.message, 'error');
+    } else {
+      delete errors.value.cardNumber;
+    }
+  }
+};
+
+const handleCardExpiryInput = (e) => {
+  const formatted = formatCardExpiry(e.target.value);
+  form.value.cardExpiry = formatted;
+  e.target.value = formatted;
+  if (formatted.length === 5) {
+    const res = validateCardExpiry(formatted);
+    if (res.valid) {
+      delete errors.value.cardExpiry;
+    }
+  }
+};
+
+const handleCardExpiryBlur = () => {
+  if (form.value.plan !== 'starter' && form.value.plan !== 'standard') {
+    if (!form.value.cardExpiry) return;
+    const res = validateCardExpiry(form.value.cardExpiry);
+    if (!res.valid) {
+      errors.value.cardExpiry = [res.message];
+      showToast(res.message, 'error');
+    } else {
+      delete errors.value.cardExpiry;
+    }
+  }
+};
+
+const handleCardCvcInput = (e) => {
+  const formatted = formatCardCvc(e.target.value);
+  form.value.cardCvc = formatted;
+  e.target.value = formatted;
+  if (formatted.length === 3) {
+    delete errors.value.cardCvc;
+  }
+};
+
+const handleCardCvcBlur = () => {
+  if (form.value.plan !== 'starter' && form.value.plan !== 'standard') {
+    if (!form.value.cardCvc) return;
+    const res = validateCardCvc(form.value.cardCvc);
+    if (!res.valid) {
+      errors.value.cardCvc = [res.message];
+      showToast(res.message, 'error');
+    } else {
+      delete errors.value.cardCvc;
+    }
+  }
+};
 
 const couponInput = ref('');
 const couponLoading = ref(false);
@@ -435,6 +565,7 @@ const handleRegister = async () => {
   if (!form.value.first_name?.trim()) {
     errors.value.first_name = ['First name is required'];
     error.value = 'First name is required';
+    showToast('First name is required', 'error');
     loading.value = false;
     return;
   }
@@ -442,6 +573,7 @@ const handleRegister = async () => {
   if (!form.value.last_name?.trim()) {
     errors.value.last_name = ['Last name is required'];
     error.value = 'Last name is required';
+    showToast('Last name is required', 'error');
     loading.value = false;
     return;
   }
@@ -450,12 +582,14 @@ const handleRegister = async () => {
 
   if (form.value.password !== form.value.password_confirmation) {
     error.value = 'Passwords do not match';
+    showToast('Passwords do not match', 'error');
     loading.value = false;
     return;
   }
 
   if (!form.value.terms) {
     error.value = 'You must agree to the Terms of Service and Privacy Policy';
+    showToast('You must agree to the Terms of Service and Privacy Policy', 'error');
     loading.value = false;
     return;
   }
@@ -465,6 +599,7 @@ const handleRegister = async () => {
     if (!cardNumRes.valid) {
       errors.value.cardNumber = [cardNumRes.message];
       error.value = cardNumRes.message;
+      showToast(cardNumRes.message, 'error');
       loading.value = false;
       return;
     }
@@ -473,6 +608,7 @@ const handleRegister = async () => {
     if (!cardExpRes.valid) {
       errors.value.cardExpiry = [cardExpRes.message];
       error.value = cardExpRes.message;
+      showToast(cardExpRes.message, 'error');
       loading.value = false;
       return;
     }
@@ -481,6 +617,7 @@ const handleRegister = async () => {
     if (!cardCvcRes.valid) {
       errors.value.cardCvc = [cardCvcRes.message];
       error.value = cardCvcRes.message;
+      showToast(cardCvcRes.message, 'error');
       loading.value = false;
       return;
     }
@@ -492,6 +629,7 @@ const handleRegister = async () => {
     if (result.success) {
       success.value = true;
       successMessage.value = 'Account created successfully! Redirecting to company hub...';
+      showToast('Account created successfully! Redirecting to company hub...', 'success');
       
       setTimeout(() => {
         window.location.href = result.redirect_url || '/owner/companies';
@@ -499,9 +637,11 @@ const handleRegister = async () => {
     } else {
       error.value = result.message;
       errors.value = result.errors || {};
+      showToast(result.message || 'Registration failed', 'error');
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
+    showToast('An unexpected error occurred', 'error');
   } finally {
     loading.value = false;
   }

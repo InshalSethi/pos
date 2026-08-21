@@ -133,10 +133,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 import CompanyPhoneInput from './CompanyPhoneInput.vue';
 
+const route = useRoute();
+const router = useRouter();
+
 const currentStep = ref(1);
+const draftId = ref(null);
+const loading = ref(false);
 
 const form = ref({
   company_name: '',
@@ -153,7 +160,62 @@ const form = ref({
 
 const errors = ref({});
 
-const nextStep = () => {
+onMounted(async () => {
+  const queryDraftId = route.query.draft_id || route.query.continue_draft_id;
+  if (queryDraftId) {
+    draftId.value = queryDraftId;
+    loading.value = true;
+    try {
+      const { data } = await axios.get(`/api/company-setup/draft/${queryDraftId}`);
+      if (data && data.step_data) {
+        form.value = {
+          ...form.value,
+          company_name: data.step_data.company_name || '',
+          registration_number: data.step_data.registration_number || '',
+          company_email: data.step_data.company_email || '',
+          company_phone: data.step_data.company_phone || '',
+          owner_role: data.step_data.owner_role || 'Owner/CEO',
+          team_size: data.step_data.team_size || 'Just Me',
+          currency: data.step_data.base_currency || data.step_data.currency || 'USD',
+          tax_number: data.step_data.tax_number || '',
+          address: data.step_data.business_address || '',
+        };
+        currentStep.value = data.current_step || 1;
+      }
+    } catch (err) {
+      console.error('Failed to load draft data:', err);
+    } finally {
+      loading.value = false;
+    }
+  }
+});
+
+const saveDraftState = async (step) => {
+  try {
+    const res = await axios.post('/api/company-setup/draft', {
+      draft_id: draftId.value,
+      current_step: step,
+      step_data: {
+        company_name: form.value.company_name,
+        registration_number: form.value.registration_number,
+        company_email: form.value.company_email,
+        company_phone: form.value.company_phone,
+        owner_role: form.value.owner_role,
+        team_size: form.value.team_size,
+        currency: form.value.currency,
+        tax_number: form.value.tax_number,
+        business_address: form.value.address,
+      }
+    });
+    if (res.data?.draft_id) {
+      draftId.value = res.data.draft_id;
+    }
+  } catch (err) {
+    console.warn('Auto-save draft error:', err);
+  }
+};
+
+const nextStep = async () => {
   errors.value = {};
   if (!form.value.company_name || !form.value.company_name.trim()) {
     errors.value.company_name = 'Company Name is required.';
@@ -163,15 +225,12 @@ const nextStep = () => {
   }
   if (Object.keys(errors.value).length === 0) {
     currentStep.value = 2;
+    await saveDraftState(2);
   }
 };
 
-const submitStep = () => {
-  console.log('Setup Complete:', form.value);
-  window.location.href = '/dashboard';
-};
-
-const cancelSetup = () => {
+const submitStep = async () => {
+  await saveDraftState(2);
   window.location.href = '/dashboard';
 };
 </script>

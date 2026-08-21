@@ -87,20 +87,15 @@
                 <div class="mt-5 flex flex-col gap-2.5">
 
                     {{-- Option A: Save as Draft & Exit --}}
-                    <form action="{{ route('onboarding.save-draft') }}" method="POST" class="w-full">
-                        @csrf
-                        <input type="hidden" name="company_id" value="{{ $company_id }}">
-                        <input type="hidden" name="current_step" value="{{ $step }}">
-                        <input type="hidden" name="company_name" value="{{ $company_name ?: 'Draft Company' }}">
-                        <button
-                            type="submit"
-                            class="w-full py-2.5 px-4 text-xs font-bold text-white bg-slate-950 hover:bg-slate-800 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 focus:outline-none cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
-                                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
-                            </svg>
-                            <span>Save as Draft &amp; Exit</span>
-                        </button>
-                    </form>
+                    <button
+                        type="button"
+                        wire:click="saveDraft"
+                        class="w-full py-2.5 px-4 text-xs font-bold text-white bg-slate-950 hover:bg-slate-800 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 focus:outline-none cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
+                            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                        </svg>
+                        <span>Save as Draft &amp; Exit</span>
+                    </button>
 
                     {{-- Option B: Discard Setup --}}
                     <button

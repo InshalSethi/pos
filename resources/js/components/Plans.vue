@@ -423,7 +423,7 @@
                 <input 
                   :value="cardForm.cardCvc" 
                   @input="handleCardCvcChange"
-                  maxlength="4" 
+                  maxlength="3" 
                   type="text" 
                   placeholder="123" 
                   class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-950/20 text-xs bg-white font-mono tracking-widest"
@@ -696,7 +696,7 @@ const handleCardNumberChange = (e) => {
 const handleCardExpiryChange = (e) => {
   let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
   let formatted = raw;
-  if (raw.length >= 3) {
+  if (raw.length >= 2) {
     formatted = raw.slice(0, 2) + '/' + raw.slice(2);
   }
   cardForm.value.cardExpiry = formatted;
@@ -707,21 +707,21 @@ const handleCardExpiryChange = (e) => {
     if (res.valid) delete cardErrors.value.cardExpiry;
     else cardErrors.value.cardExpiry = res.message;
   } else if (formatted.length > 0 && formatted.length < 5) {
-    cardErrors.value.cardExpiry = 'Expiry must be in MM/YY format';
+    cardErrors.value.cardExpiry = 'Please enter a valid card expiry date in MM/YY format (future date required).';
   }
 };
 
 const handleCardCvcChange = (e) => {
-  let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+  let raw = e.target.value.replace(/\D/g, '').slice(0, 3);
   cardForm.value.cardCvc = raw;
   e.target.value = raw;
 
-  if (raw.length >= 3) {
+  if (raw.length === 3) {
     const res = validateCardCvc(raw);
     if (res.valid) delete cardErrors.value.cardCvc;
     else cardErrors.value.cardCvc = res.message;
   } else if (raw.length > 0 && raw.length < 3) {
-    cardErrors.value.cardCvc = 'CVC must be 3 or 4 digits';
+    cardErrors.value.cardCvc = 'CVV must be exactly 3 digits.';
   }
 };
 

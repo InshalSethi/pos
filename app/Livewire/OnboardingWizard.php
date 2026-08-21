@@ -95,26 +95,27 @@ class OnboardingWizard extends Component
 
         if ($company && $company->status === 'draft') {
             $this->company_id           = $company->id;
-            $this->company_id       = $company->id; // backward compat
             $this->company_name         = $company->company_name       ?? '';
-            $this->company_email        = $company->company_email      ?: Auth::user()->email ?? '';
+            $this->company_email        = $company->company_email      ?: (Auth::user()?->email ?? '');
             $this->company_phone        = $company->company_phone      ?? '';
-            $this->base_currency        = $company->base_currency      ?? '';
-            $this->system_language      = $company->system_language    ?? '';
-            $this->timezone_offset      = $company->timezone_offset    ?? '';
+            $this->base_currency        = $company->base_currency      ?: 'USD';
+            $this->system_language      = $company->system_language    ?: 'en';
+            $this->timezone_offset      = $company->timezone_offset    ?: 'UTC';
             $this->business_type        = $company->business_type      ?? '';
-            $this->country              = $company->country            ?? '';
+            $this->country              = $company->country            ?: 'United States';
             $this->business_address     = $company->business_address   ?? '';
             $this->registration_number  = $company->registration_number ?? '';
             $this->tax_number           = $company->tax_number         ?? '';
-            $this->owner_role           = $company->owner_role         ?? 'Owner/CEO';
-            $this->team_size            = $company->team_size          ?? 'Just Me';
+            $this->owner_role           = $company->owner_role         ?: 'Owner/CEO';
+            $this->team_size            = $company->team_size          ?: 'Just Me';
             $this->intended_tasks       = is_string($company->intended_tasks) ? json_decode($company->intended_tasks, true) : ($company->intended_tasks ?? []);
-            $this->business_scale       = $company->business_scale     ?? 'Single Outlet';
-            $this->fiscal_year_start    = $company->fiscal_year_start  ?? date('Y-01-01');
+            $this->business_scale       = $company->business_scale     ?: 'Single Outlet';
+            $this->fiscal_year_start    = $company->fiscal_year_start  ?: date('Y-01-01');
+            $this->step                 = $currentStep ?: ($company->draft_step ?: 1);
+            $this->currentStep          = $this->step;
         } else {
             $user = Auth::user();
-            $this->company_email        = $user->email ?? '';
+            $this->company_email        = $user?->email ?? '';
             $this->company_name         = '';
             $this->fiscal_year_start    = date('Y-01-01');
         }
@@ -144,7 +145,8 @@ class OnboardingWizard extends Component
             $this->timezone_offset = $draft->timezone_offset ?? 'UTC';
             $this->fiscal_year_start = $draft->fiscal_year_start;
 
-            $this->step = $this->resumeStep;
+            $this->step = $draft->draft_step ?: 1;
+            $this->currentStep = $this->step;
         }
         $this->promptResume = false;
     }
@@ -161,36 +163,45 @@ class OnboardingWizard extends Component
 
     public function saveDraft()
     {
-        $this->validate([
-            'company_name' => 'required|string|max:255',
-        ]);
-
         $user = Auth::user();
+        $companyName = !empty(trim($this->company_name ?? '')) ? trim($this->company_name) : 'Draft Company';
 
-        // Update or create draft company record
-        $company = Company::updateOrCreate(
-            ['id' => $this->company_id, 'user_id' => $user->id],
-            [
-                'company_name' => $this->company_name,
-                'company_email' => $this->company_email ?? '',
-                'company_phone' => $this->company_phone ?? '',
-                'tax_number' => $this->tax_number ?? '',
-                'business_address' => $this->business_address ?? '',
-                'registration_number' => $this->registration_number ?? '',
-                'owner_role' => $this->owner_role ?? 'Owner/CEO',
-                'team_size' => $this->team_size ?? 'Just Me',
-                'intended_tasks' => is_array($this->intended_tasks) ? $this->intended_tasks : [],
-                'business_type' => $this->business_type ?? '',
-                'business_scale' => $this->business_scale ?? 'Single Outlet',
-                'country' => $this->country ?? 'United States',
-                'system_language' => $this->system_language ?? 'en',
-                'base_currency' => $this->base_currency ?? 'USD',
-                'timezone_offset' => $this->timezone_offset ?? 'UTC',
-                'fiscal_year_start' => $this->fiscal_year_start ?? date('Y-01-01'),
-                'status' => 'draft',
-                'draft_step' => $this->step,
-            ]
-        );
+        $updateData = [
+            'company_name'        => $companyName,
+            'company_email'       => $this->company_email ?: ($user?->email ?? ''),
+            'company_phone'       => $this->company_phone ?? '',
+            'tax_number'          => $this->tax_number ?? '',
+            'business_address'    => $this->business_address ?? '',
+            'registration_number' => $this->registration_number ?? '',
+            'owner_role'          => $this->owner_role ?? 'Owner/CEO',
+            'team_size'           => $this->team_size ?? 'Just Me',
+            'intended_tasks'      => is_array($this->intended_tasks) ? $this->intended_tasks : (is_string($this->intended_tasks) ? json_decode($this->intended_tasks, true) : []),
+            'business_type'       => $this->business_type ?? '',
+            'business_scale'      => $this->business_scale ?? 'Single Outlet',
+            'country'             => $this->country ?? 'United States',
+            'system_language'     => $this->system_language ?? 'en',
+            'base_currency'       => $this->base_currency ?? 'USD',
+            'timezone_offset'     => $this->timezone_offset ?? 'UTC',
+            'fiscal_year_start'   => $this->fiscal_year_start ?? date('Y-01-01'),
+            'status'              => 'draft',
+            'draft_step'          => $this->step ?: 1,
+        ];
+
+        if ($this->company_logo instanceof \Illuminate\Http\UploadedFile) {
+            $logoPath = $this->company_logo->store('company_logos', 'public');
+            $updateData['company_logo'] = $logoPath;
+            $updateData['logo_url'] = $logoPath;
+        }
+
+        if ($this->company_id) {
+            Company::where('id', $this->company_id)
+                ->where('user_id', $user->id)
+                ->update($updateData);
+        } else {
+            $updateData['user_id'] = $user->id;
+            $company = Company::create($updateData);
+            $this->company_id = $company->id;
+        }
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
@@ -240,32 +251,33 @@ class OnboardingWizard extends Component
     {
         if (!$this->company_id) return;
 
-        $logoPath = $this->company_logo instanceof \Illuminate\Http\UploadedFile 
-            ? $this->company_logo->store('company_logos', 'public') 
-            : null;
+        $user = Auth::user();
+        $companyName = !empty(trim($this->company_name ?? '')) ? trim($this->company_name) : 'Draft Company';
 
         $updateData = [
-            'company_name' => $this->company_name ?? '',
-            'company_email' => $this->company_email,
-            'company_phone' => $this->company_phone,
-            'registration_number' => $this->registration_number,
-            'owner_role' => $this->owner_role ?? 'Owner/CEO',
-            'team_size' => $this->team_size ?? 'Just Me',
-            'tax_number' => $this->tax_number,
-            'business_address' => $this->business_address,
-            'intended_tasks' => json_encode($this->intended_tasks ?? []),
-            'business_type' => $this->business_type,
-            'business_scale' => $this->business_scale ?? 'Single Outlet',
-            'country' => $this->country ?? 'United States',
-            'system_language' => $this->system_language ?? 'en',
-            'base_currency' => $this->base_currency ?? 'USD',
-            'timezone_offset' => $this->timezone_offset ?? 'UTC',
-            'fiscal_year_start' => $this->fiscal_year_start ?? date('Y-01-01'),
-            'draft_step' => $this->step,
+            'company_name'        => $companyName,
+            'company_email'       => $this->company_email ?: ($user?->email ?? ''),
+            'company_phone'       => $this->company_phone ?? '',
+            'registration_number' => $this->registration_number ?? '',
+            'owner_role'          => $this->owner_role ?? 'Owner/CEO',
+            'team_size'           => $this->team_size ?? 'Just Me',
+            'tax_number'          => $this->tax_number ?? '',
+            'business_address'    => $this->business_address ?? '',
+            'intended_tasks'      => is_array($this->intended_tasks) ? $this->intended_tasks : (is_string($this->intended_tasks) ? json_decode($this->intended_tasks, true) : []),
+            'business_type'       => $this->business_type ?? '',
+            'business_scale'      => $this->business_scale ?? 'Single Outlet',
+            'country'             => $this->country ?? 'United States',
+            'system_language'     => $this->system_language ?? 'en',
+            'base_currency'       => $this->base_currency ?? 'USD',
+            'timezone_offset'     => $this->timezone_offset ?? 'UTC',
+            'fiscal_year_start'   => $this->fiscal_year_start ?? date('Y-01-01'),
+            'draft_step'          => $this->step ?: 1,
         ];
 
-        if ($logoPath) {
+        if ($this->company_logo instanceof \Illuminate\Http\UploadedFile) {
+            $logoPath = $this->company_logo->store('company_logos', 'public');
             $updateData['company_logo'] = $logoPath;
+            $updateData['logo_url'] = $logoPath;
         }
 
         Company::where('id', $this->company_id)
