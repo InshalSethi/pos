@@ -109,12 +109,11 @@
 
           <!-- Buttons -->
           <div class="flex flex-col-reverse sm:flex-row items-center justify-between pt-6 border-t border-slate-100 gap-3 w-full">
-            <button v-if="currentStep === 1" type="button" @click="cancelSetup" class="w-full sm:w-auto px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm">
-              Cancel Setup
-            </button>
-            <button v-if="currentStep === 2" type="button" @click="currentStep = 1" class="w-full sm:w-auto px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm">
-              Back
-            </button>
+            <div>
+              <button v-if="currentStep === 2" type="button" @click="currentStep = 1" class="w-full sm:w-auto px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm">
+                Back
+              </button>
+            </div>
             
             <button v-if="currentStep === 1" type="button" @click="nextStep" class="w-full sm:w-auto px-6 py-2.5 bg-slate-950 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors shadow-md flex justify-center items-center gap-2">
               <span>Next Step</span>
