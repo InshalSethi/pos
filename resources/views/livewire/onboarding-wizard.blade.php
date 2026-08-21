@@ -321,26 +321,27 @@
                                                  open: false,
                                                  search: '',
                                                  countries: [
-                                                     { code: 'PK', name: 'Pakistan', dialCode: '+92', flag: '🇵🇰', placeholder: '300 1234567', examplePattern: '300 1234567', digits: 10 },
-                                                     { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸', placeholder: '201-555-0123', examplePattern: '201-555-0123', digits: 10 },
-                                                     { code: 'UK', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧', placeholder: '7911 123456', examplePattern: '7911 123456', digits: 10 },
-                                                     { code: 'AE', name: 'United Arab Emirates', dialCode: '+971', flag: '🇦🇪', placeholder: '50 1234567', examplePattern: '50 1234567', digits: 9 },
-                                                     { code: 'SA', name: 'Saudi Arabia', dialCode: '+966', flag: '🇸🇦', placeholder: '50 1234567', examplePattern: '50 1234567', digits: 9 },
-                                                     { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦', placeholder: '416-555-0123', examplePattern: '416-555-0123', digits: 10 },
-                                                     { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳', placeholder: '98765 43210', examplePattern: '98765 43210', digits: 10 },
-                                                     { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪', placeholder: '151 12345678', examplePattern: '151 12345678', digits: 11 },
-                                                     { code: 'FR', name: 'France', dialCode: '+33', flag: '🇫🇷', placeholder: '6 12 34 56 78', examplePattern: '6 12 34 56 78', digits: 9 },
-                                                     { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺', placeholder: '412 345 678', examplePattern: '412 345 678', digits: 9 },
-                                                     { code: 'QA', name: 'Qatar', dialCode: '+974', flag: '🇶🇦', placeholder: '3312 3456', examplePattern: '3312 3456', digits: 8 },
-                                                     { code: 'OM', name: 'Oman', dialCode: '+968', flag: '🇴🇲', placeholder: '9123 4567', examplePattern: '9123 4567', digits: 8 },
-                                                     { code: 'KW', name: 'Kuwait', dialCode: '+965', flag: '🇰🇼', placeholder: '9123 4567', examplePattern: '9123 4567', digits: 8 },
-                                                     { code: 'BH', name: 'Bahrain', dialCode: '+973', flag: '🇧🇭', placeholder: '3912 3456', examplePattern: '3912 3456', digits: 8 },
-                                                     { code: 'MY', name: 'Malaysia', dialCode: '+60', flag: '🇲🇾', placeholder: '12-345 6789', examplePattern: '12-345 6789', digits: 9 },
-                                                     { code: 'SG', name: 'Singapore', dialCode: '+65', flag: '🇸🇬', placeholder: '8123 4567', examplePattern: '8123 4567', digits: 8 },
-                                                     { code: 'TR', name: 'Turkey', dialCode: '+90', flag: '🇹🇷', placeholder: '532 123 45 67', examplePattern: '532 123 45 67', digits: 10 },
-                                                     { code: 'CN', name: 'China', dialCode: '+86', flag: '🇨🇳', placeholder: '138 1234 5678', examplePattern: '138 1234 5678', digits: 11 }
+                                                     { code: 'PK', name: 'Pakistan', dialCode: '+92', flag: '🇵🇰', length: 10, placeholder: '300 1234567', format: 'XXX XXXXXXX' },
+                                                     { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸', length: 10, placeholder: '555 123 4567', format: 'XXX XXX XXXX' },
+                                                     { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧', length: 10, placeholder: '7911 123456', format: 'XXXX XXXXXX' },
+                                                     { code: 'AE', name: 'United Arab Emirates', dialCode: '+971', flag: '🇦🇪', length: 9, placeholder: '50 123 4567', format: 'XX XXX XXXX' },
+                                                     { code: 'SA', name: 'Saudi Arabia', dialCode: '+966', flag: '🇸🇦', length: 9, placeholder: '50 123 4567', format: 'XX XXX XXXX' },
+                                                     { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳', length: 10, placeholder: '98765 43210', format: 'XXXXX XXXXX' },
+                                                     { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦', length: 10, placeholder: '416 555 0123', format: 'XXX XXX XXXX' },
+                                                     { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪', length: 11, placeholder: '151 12345678', format: 'XXX XXXXXXXX' },
+                                                     { code: 'FR', name: 'France', dialCode: '+33', flag: '🇫🇷', length: 9, placeholder: '6 12 34 56 78', format: 'X XX XX XX XX' },
+                                                     { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺', length: 9, placeholder: '412 345 678', format: 'XXX XXX XXX' },
+                                                     { code: 'QA', name: 'Qatar', dialCode: '+974', flag: '🇶🇦', length: 8, placeholder: '3312 3456', format: 'XXXX XXXX' },
+                                                     { code: 'OM', name: 'Oman', dialCode: '+968', flag: '🇴🇲', length: 8, placeholder: '9123 4567', format: 'XXXX XXXX' },
+                                                     { code: 'KW', name: 'Kuwait', dialCode: '+965', flag: '🇰🇼', length: 8, placeholder: '9123 4567', format: 'XXXX XXXX' },
+                                                     { code: 'BH', name: 'Bahrain', dialCode: '+973', flag: '🇧🇭', length: 8, placeholder: '3912 3456', format: 'XXXX XXXX' },
+                                                     { code: 'MY', name: 'Malaysia', dialCode: '+60', flag: '🇲🇾', length: 9, placeholder: '12 345 6789', format: 'XX XXX XXXX' },
+                                                     { code: 'SG', name: 'Singapore', dialCode: '+65', flag: '🇸🇬', length: 8, placeholder: '8123 4567', format: 'XXXX XXXX' },
+                                                     { code: 'TR', name: 'Turkey', dialCode: '+90', flag: '🇹🇷', length: 10, placeholder: '532 123 4567', format: 'XXX XXX XXXX' },
+                                                     { code: 'CN', name: 'China', dialCode: '+86', flag: '🇨🇳', length: 11, placeholder: '138 1234 5678', format: 'XXX XXXX XXXX' }
                                                  ],
                                                  selectedCountry: null,
+                                                 rawDigits: '',
                                                  phoneNumber: '',
                                                  init() {
                                                      this.selectedCountry = this.countries[0]; // Default PK (+92)
@@ -352,11 +353,33 @@
                                                              let matched = sorted.find(c => clean.startsWith(c.dialCode));
                                                              if (matched) {
                                                                  this.selectedCountry = matched;
-                                                                 clean = clean.slice(matched.dialCode.length);
+                                                                 clean = clean.slice(matched.dialCode.length).trim();
                                                              }
                                                          }
-                                                         this.phoneNumber = clean.replace(/\D/g, '');
+                                                         let digits = clean.replace(/\D/g, '');
+                                                         if (digits.startsWith('0') && this.selectedCountry.code !== 'US' && this.selectedCountry.code !== 'CA') {
+                                                             digits = digits.slice(1);
+                                                         }
+                                                         digits = digits.slice(0, this.selectedCountry.length || 15);
+                                                         this.rawDigits = digits;
+                                                         this.phoneNumber = this.formatByPattern(digits, this.selectedCountry.format);
                                                      }
+                                                 },
+                                                 formatByPattern(digits, pattern) {
+                                                     if (!digits || !pattern) return digits || '';
+                                                     let formatted = '';
+                                                     let digitIdx = 0;
+                                                     for (let i = 0; i < pattern.length; i++) {
+                                                         if (digitIdx >= digits.length) break;
+                                                         let char = pattern[i];
+                                                         if (char === 'X') {
+                                                             formatted += digits[digitIdx];
+                                                             digitIdx++;
+                                                         } else {
+                                                             formatted += char;
+                                                         }
+                                                     }
+                                                     return formatted;
                                                  },
                                                  get filteredCountries() {
                                                      if (!this.search.trim()) return this.countries;
@@ -371,31 +394,60 @@
                                                      this.selectedCountry = c;
                                                      this.open = false;
                                                      this.search = '';
+
+                                                     let digits = this.rawDigits || '';
+                                                     if (digits.startsWith('0') && c.code !== 'US' && c.code !== 'CA') {
+                                                         digits = digits.slice(1);
+                                                     }
+                                                     digits = digits.slice(0, c.length || 15);
+                                                     this.rawDigits = digits;
+                                                     this.phoneNumber = this.formatByPattern(digits, c.format);
                                                      this.updateState();
                                                  },
-                                                 handlePhoneInput(event) {
-                                                     let val = event.target.value;
-                                                     if (val.startsWith('+')) {
-                                                         let clean = val.trim();
-                                                         let sorted = [...this.countries].sort((a, b) => b.dialCode.length - a.dialCode.length);
-                                                         let matched = sorted.find(c => clean.startsWith(c.dialCode));
-                                                         if (matched) {
-                                                             this.selectedCountry = matched;
-                                                             clean = clean.slice(matched.dialCode.length);
-                                                         }
-                                                         this.phoneNumber = clean.replace(/\D/g, '').slice(0, this.selectedCountry.digits);
-                                                     } else {
-                                                         this.phoneNumber = val.replace(/\D/g, '').slice(0, this.selectedCountry.digits);
+                                                 handleKeyDown(e) {
+                                                     const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+                                                     if (allowed.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) {
+                                                         return;
                                                      }
+                                                     if (!/^[0-9]$/.test(e.key)) {
+                                                         e.preventDefault();
+                                                         return;
+                                                     }
+                                                     const maxDigits = this.selectedCountry ? this.selectedCountry.length : 15;
+                                                     const selectedText = window.getSelection ? window.getSelection().toString() : '';
+                                                     if (this.rawDigits && this.rawDigits.length >= maxDigits && !selectedText) {
+                                                         e.preventDefault();
+                                                     }
+                                                 },
+                                                 handlePhoneInput(event) {
+                                                     let val = event.target.value || '';
+                                                     let digits = val.replace(/\D/g, '');
+
+                                                     let dialDigits = this.selectedCountry.dialCode.replace(/\D/g, '');
+                                                     if (digits.startsWith(dialDigits) && digits.length > this.selectedCountry.length) {
+                                                         digits = digits.slice(dialDigits.length);
+                                                     }
+
+                                                     if (digits.startsWith('0') && this.selectedCountry.code !== 'US' && this.selectedCountry.code !== 'CA') {
+                                                         digits = digits.slice(1);
+                                                     }
+
+                                                     let maxDigits = this.selectedCountry.length || 15;
+                                                     digits = digits.slice(0, maxDigits);
+
+                                                     let formatted = this.formatByPattern(digits, this.selectedCountry.format);
+                                                     this.rawDigits = digits;
+                                                     this.phoneNumber = formatted;
+                                                     event.target.value = formatted;
+
                                                      this.updateState();
                                                  },
                                                  updateState() {
-                                                     let rawDigits = this.phoneNumber;
-                                                     if (!rawDigits) {
+                                                     if (!this.rawDigits) {
                                                          $wire.set('company_phone', '', false);
                                                          return;
                                                      }
-                                                     let fullPhoneNumber = `${this.selectedCountry.dialCode}${rawDigits}`;
+                                                     let fullPhoneNumber = `${this.selectedCountry.dialCode} ${this.phoneNumber}`;
                                                      $wire.set('company_phone', fullPhoneNumber, false);
                                                  }
                                              }">
@@ -417,8 +469,10 @@
                                                  <input type="text"
                                                      :value="phoneNumber"
                                                      @input="handlePhoneInput"
+                                                     @keydown="handleKeyDown"
+                                                     :maxlength="selectedCountry ? selectedCountry.format.length : 15"
                                                      :placeholder="selectedCountry ? selectedCountry.placeholder : '300 1234567'"
-                                                     class="w-full border-0 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:outline-none focus:ring-0" />
+                                                     class="w-full border-0 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:outline-none focus:ring-0 font-mono tracking-wide" />
                                                  
                                                  <!-- Phone Icon -->
                                                  <div class="pr-3 text-slate-400 flex items-center shrink-0">
@@ -471,7 +525,7 @@
                                              <!-- Dynamic Helper Text (Example) -->
                                              <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
                                                  <span class="italic text-slate-400">Example:</span>
-                                                 <span class="font-mono text-indigo-600 font-semibold italic" x-text="selectedCountry ? (selectedCountry.dialCode + ' ' + selectedCountry.examplePattern) : '+92 300 1234567'"></span>
+                                                 <span class="font-mono text-indigo-600 font-semibold italic" x-text="selectedCountry ? (selectedCountry.dialCode + ' ' + selectedCountry.placeholder) : '+92 300 1234567'"></span>
                                              </p>
 
                                              @error('company_phone')

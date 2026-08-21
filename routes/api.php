@@ -143,6 +143,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/owner/companies/hub-data', [\App\Http\Controllers\Api\OwnerCompanyHubController::class, 'getHubData']);
     Route::delete('/owner/companies/draft/{id}', [\App\Http\Controllers\Api\OwnerCompanyHubController::class, 'discardDraft']);
 
+    // Subscription & Plan Upgrade routes
+    Route::get('/subscription/current', [\App\Http\Controllers\Api\SubscriptionController::class, 'getCurrentSubscription']);
+    Route::post('/subscription/upgrade', [\App\Http\Controllers\Api\SubscriptionController::class, 'upgrade']);
+
     // Company Switcher routes
     Route::get('/companies/active', [CompanySwitcherController::class, 'getActiveCompany']);
     Route::put('/companies/active', [CompanySwitcherController::class, 'updateActiveCompany']);

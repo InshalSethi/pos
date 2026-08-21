@@ -41,6 +41,7 @@ class EnsureCompanySetup
                     || $request->is('api/user')
                     || $request->is('api/user/*')
                     || $request->is('api/license/*')
+                    || $request->is('api/subscription/*')
                     || $request->is('api/subscription-plans*')
                     || $request->is('api/coupons/*')
                     || $request->is('api/currencies*')

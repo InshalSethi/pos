@@ -35,7 +35,7 @@ class OwnerCompanyHubController extends Controller
             'custom'     => ['name' => 'Custom Plan', 'max_companies' => 999, 'is_trial' => false],
         ];
 
-        $payment = SubscriptionPayment::where('user_id', $user->id)->latest()->first();
+        $payment = SubscriptionPayment::where('user_id', $user->id)->orderBy('id', 'desc')->first();
         $license = License::first();
 
         $planSlug = 'standard';

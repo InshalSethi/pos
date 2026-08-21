@@ -35,7 +35,7 @@ class CompanySetupController extends Controller
             'custom'     => 999,
         ];
 
-        $payment = \App\Models\SubscriptionPayment::where('user_id', $user->id)->latest()->first();
+        $payment = \App\Models\SubscriptionPayment::where('user_id', $user->id)->orderBy('id', 'desc')->first();
         $license = \App\Models\License::first();
 
         $planSlug = 'standard';
