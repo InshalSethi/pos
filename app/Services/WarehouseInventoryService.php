@@ -145,4 +145,17 @@ class WarehouseInventoryService
             \Illuminate\Support\Facades\Log::error("Failed to evaluate stock threshold for product {$productId}: " . $e->getMessage());
         }
     }
+
+    /**
+     * Get stock for a product/variation in a specific warehouse.
+     */
+    public function getStock(int $warehouseId, int $productId, ?int $variationId = null): float
+    {
+        $inventory = Inventory::where('warehouse_id', $warehouseId)
+            ->where('product_id', $productId)
+            ->where('product_variation_id', $variationId)
+            ->first();
+
+        return (float) ($inventory ? $inventory->stock_qty : 0);
+    }
 }

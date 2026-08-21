@@ -105,6 +105,15 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4 px-1">
           <!-- Left side: Active Filter summary pills if active -->
           <div class="flex flex-wrap items-center gap-2">
+            <span 
+              v-for="tVal in (Array.isArray(tableFilters.item_type) ? tableFilters.item_type : (tableFilters.item_type ? [tableFilters.item_type] : []))" 
+              :key="tVal"
+              class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 rounded-full text-xs font-medium"
+            >
+              Type: {{ getItemTypeName(tVal, true) }}
+              <button @click="toggleItemType(tVal)" class="hover:text-emerald-900 dark:hover:text-emerald-200 ml-0.5 cursor-pointer">&times;</button>
+            </span>
+
             <span v-if="tableFilters.category_id" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 rounded-full text-xs font-medium">
               Cat: {{ getCategoryName(tableFilters.category_id) }}
               <button @click="selectCategory('')" class="hover:text-emerald-900 dark:hover:text-emerald-200 ml-0.5 cursor-pointer">&times;</button>
@@ -384,6 +393,12 @@
                             class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-[#2E2E2E] uppercase shrink-0"
                           >
                             {{ item.brand.name }}
+                          </span>
+                          <span 
+                            class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md text-[9px] font-bold border uppercase shrink-0"
+                            :class="getItemTypeBadgeClass(item.item_type || 'standard')"
+                          >
+                            {{ getItemTypeName(item.item_type || 'standard', true) }}
                           </span>
                         </div>
                         <div v-if="parseItemTags(item).length > 0" class="flex items-center gap-1 mt-0.5 flex-wrap">
@@ -694,6 +709,14 @@
                         class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-[#252525] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#2E2E2E] uppercase"
                       >
                         🏷️ {{ item.brand.name }}
+                      </span>
+
+                      <!-- Item Type Badge -->
+                      <span 
+                        class="px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase shrink-0"
+                        :class="getItemTypeBadgeClass(item.item_type || 'standard')"
+                      >
+                        {{ getItemTypeName(item.item_type || 'standard', true) }}
                       </span>
 
                       <!-- Tag Badges -->
@@ -1487,6 +1510,86 @@
           <!-- Drawer Body -->
           <div class="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
 
+            <!-- Item Type Filter (Multi-Select Floating Dropdown) -->
+            <div class="space-y-1.5 relative" @click.stop>
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+                  Item Type
+                </label>
+                <button
+                  v-if="Array.isArray(tableFilters.item_type) && tableFilters.item_type.length > 0"
+                  type="button"
+                  @click="clearItemTypes"
+                  class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div class="relative">
+                <button
+                  type="button"
+                  @click="activeFilterPopover = activeFilterPopover === 'item_type' ? null : 'item_type'"
+                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-800 dark:text-zinc-100 flex items-center justify-between focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer"
+                  :class="{ 'border-emerald-500 ring-2 ring-emerald-500/20 bg-white dark:bg-zinc-800': activeFilterPopover === 'item_type' }"
+                >
+                  <span class="truncate pr-2" :class="{ 'text-slate-400 dark:text-zinc-500': !tableFilters.item_type || tableFilters.item_type.length === 0 }">
+                    {{ getItemTypeDropdownLabel() }}
+                  </span>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span 
+                      v-if="Array.isArray(tableFilters.item_type) && tableFilters.item_type.length > 0"
+                      class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                    >
+                      {{ tableFilters.item_type.length }}
+                    </span>
+                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                </button>
+
+                <!-- Floating Popover Menu with Multi-Select Checkboxes -->
+                <div
+                  v-if="activeFilterPopover === 'item_type'"
+                  class="absolute left-0 right-0 top-full mt-1 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-1.5 flex flex-col gap-0.5 animate-fade-in"
+                  @click.stop
+                >
+                  <button
+                    type="button"
+                    @click="clearItemTypes"
+                    class="w-full px-2.5 py-1.5 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between text-xs rounded-lg cursor-pointer"
+                    :class="{ 'bg-emerald-50/70 dark:bg-zinc-800 font-bold text-emerald-700 dark:text-emerald-400': !tableFilters.item_type || tableFilters.item_type.length === 0 }"
+                  >
+                    <span>All Item Types</span>
+                    <svg v-if="!tableFilters.item_type || tableFilters.item_type.length === 0" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  </button>
+
+                  <div class="h-px bg-slate-100 dark:bg-zinc-800 my-0.5"></div>
+
+                  <label
+                    v-for="tOpt in itemTypeOptions"
+                    :key="tOpt.value"
+                    class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors text-xs select-none"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      <input
+                        type="checkbox"
+                        :checked="isItemTypeSelected(tOpt.value)"
+                        @change="toggleItemType(tOpt.value)"
+                        class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-zinc-600 dark:bg-zinc-700 cursor-pointer shrink-0"
+                      />
+                      <span class="font-medium text-slate-800 dark:text-zinc-200 truncate">{{ tOpt.label }}</span>
+                    </div>
+                    <span
+                      class="px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase shrink-0 ml-1"
+                      :class="getItemTypeBadgeClass(tOpt.value)"
+                    >
+                      {{ getItemTypeName(tOpt.value, true) }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <!-- 1. Category (Floating Searchable Dropdown) -->
             <div class="space-y-1.5 relative" @click.stop>
               <label class="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
@@ -1785,8 +1888,21 @@ const activeFilterPopover = ref(null);
 const categorySearchQuery = ref('');
 const brandSearchQuery = ref('');
 
+const itemTypeOptions = [
+  { label: 'Standard Product', value: 'standard' },
+  { label: 'Raw Material', value: 'raw_material' },
+  { label: 'Finished Good (Manufactured)', value: 'finished_good' },
+  { label: 'Fixed Asset', value: 'fixed_asset' },
+  { label: 'Service', value: 'service' }
+];
+
 const totalActiveFilterCount = computed(() => {
   let count = 0;
+  if (Array.isArray(tableFilters.value.item_type)) {
+    count += tableFilters.value.item_type.length;
+  } else if (tableFilters.value.item_type) {
+    count++;
+  }
   if (tableFilters.value.category_id) count++;
   if (tableFilters.value.brand_id) count++;
   if (tableFilters.value.price_sort) count++;
@@ -2109,6 +2225,7 @@ const tableFilters = ref({
   search: '',
   sort_field: '',
   sort_order: '',
+  item_type: [],
   category_id: '',
   brand_id: '',
   price_sort: '',
@@ -2149,6 +2266,41 @@ const closeDropdowns = () => {
   activeFilterPopover.value = null;
 };
 
+const toggleItemType = (val) => {
+  if (!Array.isArray(tableFilters.value.item_type)) {
+    tableFilters.value.item_type = tableFilters.value.item_type ? [tableFilters.value.item_type] : [];
+  }
+  const index = tableFilters.value.item_type.indexOf(val);
+  if (index > -1) {
+    tableFilters.value.item_type.splice(index, 1);
+  } else {
+    tableFilters.value.item_type.push(val);
+  }
+  fetchProductsForTable(1);
+};
+
+const isItemTypeSelected = (val) => {
+  if (Array.isArray(tableFilters.value.item_type)) {
+    return tableFilters.value.item_type.includes(val);
+  }
+  return tableFilters.value.item_type === val;
+};
+
+const clearItemTypes = () => {
+  tableFilters.value.item_type = [];
+  fetchProductsForTable(1);
+};
+
+const getItemTypeDropdownLabel = () => {
+  if (!tableFilters.value.item_type || !Array.isArray(tableFilters.value.item_type) || tableFilters.value.item_type.length === 0) {
+    return 'All Item Types';
+  }
+  if (tableFilters.value.item_type.length === 1) {
+    return getItemTypeName(tableFilters.value.item_type[0]);
+  }
+  return `${tableFilters.value.item_type.length} Item Types Selected`;
+};
+
 const selectCategory = (id) => {
   tableFilters.value.category_id = id;
   dropdownOpen.value.category = false;
@@ -2165,6 +2317,32 @@ const selectPriceSort = (sort) => {
   tableFilters.value.price_sort = sort;
   dropdownOpen.value.price = false;
   handlePriceSortChange();
+};
+
+const getItemTypeName = (val, short = false) => {
+  if (!val) val = 'standard';
+  switch (val) {
+    case 'raw_material': return 'Raw Material';
+    case 'finished_good': return short ? 'Finished Good' : 'Finished Good (Manufactured)';
+    case 'fixed_asset': return 'Fixed Asset';
+    case 'service': return 'Service';
+    case 'standard': default: return short ? 'Standard' : 'Standard Product';
+  }
+};
+
+const getItemTypeBadgeClass = (itemType) => {
+  switch (itemType) {
+    case 'raw_material':
+      return 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-900/40';
+    case 'finished_good':
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/40';
+    case 'fixed_asset':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-900/40';
+    case 'service':
+      return 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-900/40';
+    default:
+      return 'bg-slate-100 text-slate-700 dark:bg-[#252525] dark:text-slate-300 border-slate-200/60 dark:border-[#2E2E2E]';
+  }
 };
 
 const getCategoryName = (id) => {
@@ -2211,7 +2389,11 @@ const handlePriceSortChange = () => {
 };
 
 const hasActiveFilters = computed(() => {
+  const hasItemType = Array.isArray(tableFilters.value.item_type)
+    ? tableFilters.value.item_type.length > 0
+    : tableFilters.value.item_type !== '';
   return tableFilters.value.search !== '' ||
+         hasItemType ||
          tableFilters.value.category_id !== '' ||
          tableFilters.value.brand_id !== '' ||
          tableFilters.value.price_sort !== '' ||
@@ -2221,6 +2403,7 @@ const hasActiveFilters = computed(() => {
 
 const clearFilters = () => {
   tableFilters.value.search = '';
+  tableFilters.value.item_type = [];
   tableFilters.value.category_id = '';
   tableFilters.value.brand_id = '';
   tableFilters.value.price_sort = '';
@@ -2532,6 +2715,14 @@ const fetchProductsForTable = async (page = 1) => {
       params.is_active = 0;
     } else {
       delete params.is_active;
+    }
+
+    if (Array.isArray(params.item_type)) {
+      if (params.item_type.length > 0) {
+        params.item_type = params.item_type.join(',');
+      } else {
+        delete params.item_type;
+      }
     }
 
     delete params.show_inactive;

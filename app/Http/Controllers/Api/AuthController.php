@@ -163,6 +163,14 @@ class AuthController extends Controller
             // Create token
             $token = $user->createToken('auth-token')->plainTextToken;
 
+            // Provision encrypted License key encoding user email, plan name, start date, and end date
+            \App\Models\License::provisionLicense(
+                $user->email,
+                'basic',
+                now()->toDateString(),
+                now()->addYear()->toDateString()
+            );
+
             // Invalidate stale session before establishing new one if session exists
             if ($request->hasSession()) {
                 $request->session()->invalidate();

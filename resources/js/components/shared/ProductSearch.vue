@@ -685,9 +685,15 @@ const productSearch = ref('');
 const highlightedProductIndex = ref(-1);
 const productItemRefs = ref({});
 
-// Product search and filtering
 const filteredProducts = computed(() => {
   let filtered = Array.isArray(props.products) ? props.products : [];
+  
+  if (isPurchaseContext.value) {
+    filtered = filtered.filter(product => product.can_be_purchased !== false && product.can_be_purchased !== 0 && product.can_be_purchased !== '0');
+  } else {
+    filtered = filtered.filter(product => product.can_be_sold !== false && product.can_be_sold !== 0 && product.can_be_sold !== '0');
+  }
+
   if (productSearch.value) {
     const search = productSearch.value.toLowerCase();
     filtered = filtered.filter(product => {
@@ -1095,6 +1101,12 @@ const searchItemsFromBackend = debounce(async () => {
     if (f.minPrice !== null && f.minPrice !== '' && !isNaN(f.minPrice)) params.min_price = f.minPrice;
     if (f.maxPrice !== null && f.maxPrice !== '' && !isNaN(f.maxPrice)) params.max_price = f.maxPrice;
 
+    if (isPurchaseContext.value) {
+      params.can_be_purchased = true;
+    } else {
+      params.can_be_sold = true;
+    }
+
     const res = await api.get('/items/advanced-search', { params });
     const remoteItems = res.data.items || res.data.data || [];
     if (remoteItems.length > 0) {
@@ -1119,6 +1131,12 @@ const advanceFilteredProducts = computed(() => {
   }
 
   let list = Array.isArray(props.products) ? props.products : [];
+
+  if (isPurchaseContext.value) {
+    list = list.filter(product => product.can_be_purchased !== false && product.can_be_purchased !== 0 && product.can_be_purchased !== '0');
+  } else {
+    list = list.filter(product => product.can_be_sold !== false && product.can_be_sold !== 0 && product.can_be_sold !== '0');
+  }
 
   const f = advanceFilters.value;
 

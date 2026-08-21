@@ -111,6 +111,10 @@ class Product extends Model
         'taxes',
         'status',
         'has_variations',
+        'item_type',
+        'can_be_sold',
+        'can_be_purchased',
+        'auto_deduct_ingredients',
     ];
 
     protected $casts = [
@@ -124,6 +128,9 @@ class Product extends Model
         'track_inventory' => 'boolean',
         'is_active' => 'boolean',
         'has_variations' => 'boolean',
+        'can_be_sold' => 'boolean',
+        'can_be_purchased' => 'boolean',
+        'auto_deduct_ingredients' => 'boolean',
         'images' => 'array',
         'tags' => 'array',
         'taxes' => 'array',
@@ -181,6 +188,26 @@ class Product extends Model
         return $this->hasMany(ProductAttribute::class);
     }
 
+    public function recipes(): HasMany
+    {
+        return $this->hasMany(ProductRecipe::class);
+    }
+
+    public function activeRecipe()
+    {
+        return $this->hasOne(ProductRecipe::class)->where('is_active', true);
+    }
+
+    public function ingredientIn(): HasMany
+    {
+        return $this->hasMany(RecipeIngredient::class, 'raw_material_id');
+    }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
     // Scopes
     public function scopeActive($query)
     {
@@ -190,6 +217,31 @@ class Product extends Model
     public function scopeLowStock($query)
     {
         return $query->whereColumn('stock_quantity', '<=', 'min_stock_level');
+    }
+
+    public function scopeRawMaterials($query)
+    {
+        return $query->where('item_type', 'raw_material');
+    }
+
+    public function scopeFinishedGoods($query)
+    {
+        return $query->where('item_type', 'finished_good');
+    }
+
+    public function scopeFixedAssets($query)
+    {
+        return $query->where('item_type', 'fixed_asset');
+    }
+
+    public function scopeSaleable($query)
+    {
+        return $query->where('can_be_sold', true);
+    }
+
+    public function scopePurchasable($query)
+    {
+        return $query->where('can_be_purchased', true);
     }
 
     // Accessors & Mutators

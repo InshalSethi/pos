@@ -171,6 +171,27 @@ class ProductController extends Controller
             $query->lowStock();
         }
 
+        // Filter by item_type (supports single or array / comma-separated string for multi-select)
+        if ($request->has('item_type')) {
+            $itemTypes = $request->get('item_type');
+            if (is_string($itemTypes)) {
+                $itemTypes = array_filter(explode(',', $itemTypes));
+            }
+            if (is_array($itemTypes) && count($itemTypes) > 0 && !in_array('all', $itemTypes)) {
+                $query->whereIn('item_type', $itemTypes);
+            }
+        }
+
+        // Filter by can_be_sold
+        if ($request->filled('can_be_sold')) {
+            $query->where('can_be_sold', $request->boolean('can_be_sold'));
+        }
+
+        // Filter by can_be_purchased
+        if ($request->filled('can_be_purchased')) {
+            $query->where('can_be_purchased', $request->boolean('can_be_purchased'));
+        }
+
         // Sorting
         $sortBy = $request->get('sort_by', 'name');
         $sortOrder = $request->get('sort_order', 'asc');
@@ -284,6 +305,10 @@ class ProductController extends Controller
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
+            'item_type' => 'nullable|string|in:standard,raw_material,finished_good,fixed_asset,service',
+            'can_be_sold' => 'boolean',
+            'can_be_purchased' => 'boolean',
+            'auto_deduct_ingredients' => 'boolean',
             'status' => 'nullable|string|in:active,inactive,draft',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'batch_number' => 'nullable|string|max:100',
@@ -301,8 +326,30 @@ class ProductController extends Controller
             'sku.regex' => 'The SKU cannot be a draft placeholder (starting with DRAFT-) when activating the product.',
         ]);
 
-        $validator->sometimes(['selling_price', 'cost_price'], 'required', function ($input) {
-            return ($input->status ?? 'active') !== 'draft' && !$input->has_variations;
+        $validator->sometimes('selling_price', 'required|numeric|min:0', function ($input) {
+            if (($input->status ?? 'active') === 'draft' || !empty($input->has_variations)) {
+                return false;
+            }
+            $canBeSold = filter_var($input->can_be_sold ?? true, FILTER_VALIDATE_BOOLEAN);
+            $enabledForSale = filter_var($input->enabled_for_sale ?? true, FILTER_VALIDATE_BOOLEAN);
+            $itemType = $input->item_type ?? 'standard';
+            if (in_array($itemType, ['raw_material', 'fixed_asset']) && !$canBeSold) {
+                return false;
+            }
+            return $canBeSold && $enabledForSale;
+        });
+
+        $validator->sometimes('cost_price', 'required|numeric|min:0', function ($input) {
+            if (($input->status ?? 'active') === 'draft' || !empty($input->has_variations)) {
+                return false;
+            }
+            $canBePurchased = filter_var($input->can_be_purchased ?? true, FILTER_VALIDATE_BOOLEAN);
+            $enabledForPurchase = filter_var($input->enabled_for_purchase ?? true, FILTER_VALIDATE_BOOLEAN);
+            $itemType = $input->item_type ?? 'standard';
+            if ($itemType === 'service' && !$canBePurchased) {
+                return false;
+            }
+            return $canBePurchased && $enabledForPurchase;
         });
 
         $validator->sometimes('wholesale_price', 'required', function ($input) {
@@ -776,6 +823,10 @@ class ProductController extends Controller
             'unit_of_measure' => 'nullable|string',
             'track_inventory' => 'boolean',
             'is_active' => 'boolean',
+            'item_type' => 'nullable|string|in:standard,raw_material,finished_good,fixed_asset,service',
+            'can_be_sold' => 'boolean',
+            'can_be_purchased' => 'boolean',
+            'auto_deduct_ingredients' => 'boolean',
             'status' => 'nullable|string|in:active,inactive,draft',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'batch_number' => 'nullable|string|max:100',
@@ -793,8 +844,30 @@ class ProductController extends Controller
             'sku.regex' => 'The SKU cannot be a draft placeholder (starting with DRAFT-) when activating the product.',
         ]);
 
-        $validator->sometimes(['selling_price', 'cost_price'], 'required', function ($input) {
-            return ($input->status ?? 'active') !== 'draft' && !$input->has_variations;
+        $validator->sometimes('selling_price', 'required|numeric|min:0', function ($input) {
+            if (($input->status ?? 'active') === 'draft' || !empty($input->has_variations)) {
+                return false;
+            }
+            $canBeSold = filter_var($input->can_be_sold ?? true, FILTER_VALIDATE_BOOLEAN);
+            $enabledForSale = filter_var($input->enabled_for_sale ?? true, FILTER_VALIDATE_BOOLEAN);
+            $itemType = $input->item_type ?? 'standard';
+            if (in_array($itemType, ['raw_material', 'fixed_asset']) && !$canBeSold) {
+                return false;
+            }
+            return $canBeSold && $enabledForSale;
+        });
+
+        $validator->sometimes('cost_price', 'required|numeric|min:0', function ($input) {
+            if (($input->status ?? 'active') === 'draft' || !empty($input->has_variations)) {
+                return false;
+            }
+            $canBePurchased = filter_var($input->can_be_purchased ?? true, FILTER_VALIDATE_BOOLEAN);
+            $enabledForPurchase = filter_var($input->enabled_for_purchase ?? true, FILTER_VALIDATE_BOOLEAN);
+            $itemType = $input->item_type ?? 'standard';
+            if ($itemType === 'service' && !$canBePurchased) {
+                return false;
+            }
+            return $canBePurchased && $enabledForPurchase;
         });
 
         $validator->sometimes('wholesale_price', 'required', function ($input) {
@@ -1330,6 +1403,13 @@ class ProductController extends Controller
             ->where('status', '!=', 'draft')
             ->where('is_active', true)
             ->with(['category.parent.parent', 'brand', 'unit', 'variations']);
+
+        if ($request->filled('can_be_sold')) {
+            $query->where('can_be_sold', $request->boolean('can_be_sold'));
+        }
+        if ($request->filled('can_be_purchased')) {
+            $query->where('can_be_purchased', $request->boolean('can_be_purchased'));
+        }
 
         // Search term (Name, Description, SKU, Barcode)
         $searchTerm = $request->input('search_term') ?? $request->input('search') ?? $request->input('query');

@@ -57,6 +57,9 @@ use App\Http\Controllers\Api\TimezoneController;
 use App\Http\Controllers\Api\CompanySwitcherController;
 use App\Http\Controllers\Api\AttributeController;
 use App\Http\Controllers\Api\FbrSettingsController;
+use App\Http\Controllers\Api\RecipeController;
+use App\Http\Controllers\Api\ProductionOrderController;
+use App\Http\Controllers\Api\AssetController;
 // Public routes
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
 Route::get('/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
@@ -76,6 +79,11 @@ Route::get('/auth/google/callback', [GoogleAuthController::class , 'handleGoogle
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working', 'time' => now()]);
 });
+
+// License & Subscription routes
+Route::get('/license/status', [\App\Http\Controllers\Api\LicenseController::class, 'checkStatus']);
+Route::post('/license/activate', [\App\Http\Controllers\Api\LicenseController::class, 'activate']);
+Route::post('/license/renew', [\App\Http\Controllers\Api\LicenseController::class, 'renew']);
 
 
 
@@ -152,6 +160,19 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::apiResource('tags', TagController::class);
     Route::apiResource('attributes', AttributeController::class);
     Route::get('/inventory/histories', [\App\Http\Controllers\Api\InventoryHistoryController::class, 'index']);
+
+    // Recipe & Bill of Materials (BOM) routes
+    Route::get('/recipes/product/{product}', [RecipeController::class, 'getByProduct']);
+    Route::apiResource('recipes', RecipeController::class);
+
+    // Production Orders (Batch Manufacturing) routes
+    Route::post('/production-orders/{productionOrder}/complete', [ProductionOrderController::class, 'complete']);
+    Route::post('/production-orders/{productionOrder}/cancel', [ProductionOrderController::class, 'cancel']);
+    Route::apiResource('production-orders', ProductionOrderController::class);
+
+    // Fixed Assets Management routes
+    Route::get('/assets/summary', [AssetController::class, 'summary']);
+    Route::apiResource('assets', AssetController::class);
 
     // Customer management routes
     Route::get('/customers/statistics', [CustomerController::class , 'getStatistics']);
@@ -397,6 +418,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
             Route::get('/inventory/low-stock', [ReportController::class , 'lowStockAlert']);
             Route::get('/inventory/valuation', [ReportController::class , 'inventoryValuation']);
             Route::get('/inventory/stock-movement', [ReportController::class , 'stockMovementHistory']);
+            Route::get('/business/valuation', [ReportController::class , 'businessValuation']);
         }
         );
 

@@ -900,7 +900,7 @@ const activeFilterCount = computed(() => {
 const fetchTopProducts = async () => {
   loadingTopProducts.value = true;
   try {
-    const res = await axios.get('/api/products?per_page=20&sort_by=created_at&sort_order=desc');
+    const res = await axios.get('/api/products?per_page=20&sort_by=created_at&sort_order=desc&can_be_purchased=true');
     let list = [];
     if (Array.isArray(res.data)) list = res.data;
     else if (res.data && Array.isArray(res.data.data)) list = res.data.data;

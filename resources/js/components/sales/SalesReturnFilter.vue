@@ -1192,7 +1192,7 @@ const fetchTopProducts = async () => {
   if (topProducts.value.length > 0) return;
   loadingTopProducts.value = true;
   try {
-    const res = await axios.get('/api/products', { params: { per_page: 20 } });
+    const res = await axios.get('/api/products', { params: { per_page: 20, can_be_sold: true } });
     topProducts.value = extractArray(res.data);
   } catch (err) {
     console.error('Failed fetching top products:', err);

@@ -8,20 +8,8 @@
           <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">Real-time database performance and inventory metrics</p>
         </div>
 
-        <!-- Right Controls: Customize Cards + Date Range Filter -->
-        <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
-          <!-- Customize Cards Button -->
-          <button 
-            @click="showCustomizeModal = true" 
-            class="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer shrink-0"
-            title="Show or hide dashboard cards"
-          >
-            <svg class="w-4 h-4 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-            </svg>
-            <span>Customize Cards</span>
-          </button>
-
+        <!-- Right Controls: Date Range Filter + Customize Cards -->
+        <div class="flex flex-wrap sm:flex-nowrap items-end gap-3 w-full sm:w-auto">
           <!-- Date Range Filter Container -->
           <div class="flex flex-col gap-1 w-full sm:w-auto">
             <!-- Top Row with Label and Presets -->
@@ -53,26 +41,27 @@
               </div>
             </div>
 
-            <!-- Date Input Button -->
-            <div ref="pickerRef" class="relative w-full">
-              <button 
-                @click="showPicker = !showPicker" 
-                class="w-full sm:w-72 flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-white shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer focus:outline-none"
-              >
-                <span class="truncate pr-2" :class="{ 'text-zinc-400 dark:text-zinc-500': !formattedDateRangeLabel }">
-                  {{ formattedDateRangeLabel || 'All Time / Select Custom Range' }}
-                </span>
-                <div class="flex items-center space-x-1.5">
-                  <button
-                    v-if="dateRange.from || dateRange.to"
-                    @click.stop="clearDateRange"
-                    class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 px-1 font-bold text-xs cursor-pointer focus:outline-none"
-                    title="Clear date range"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </button>
+            <!-- Date Input Button + Icon-Only Customize Button -->
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <div ref="pickerRef" class="relative w-full sm:w-72">
+                <button 
+                  @click="showPicker = !showPicker" 
+                  class="w-full flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-white shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer focus:outline-none h-9"
+                >
+                  <span class="truncate pr-2" :class="{ 'text-zinc-400 dark:text-zinc-500': !formattedDateRangeLabel }">
+                    {{ formattedDateRangeLabel || 'All Time / Select Custom Range' }}
+                  </span>
+                  <div class="flex items-center space-x-1.5">
+                    <button
+                      v-if="dateRange.from || dateRange.to"
+                      @click.stop="clearDateRange"
+                      class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 px-1 font-bold text-xs cursor-pointer focus:outline-none"
+                      title="Clear date range"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </button>
 
               <!-- Dropdown Calendar Card -->
               <transition
@@ -189,6 +178,18 @@
                   </div>
                 </div>
               </transition>
+            </div>
+
+              <!-- Customize Cards Icon-Only Button -->
+              <button 
+                @click="showCustomizeModal = true" 
+                class="h-9 w-9 flex items-center justify-center text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer shrink-0 focus:outline-none"
+                title="Customize Cards Layout"
+              >
+                <svg class="w-4 h-4 text-zinc-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -909,8 +910,7 @@ const cardDefinitions = {
     { key: 'total_expenses', label: 'Total Expenses Card' },
     { key: 'payments_in', label: 'Payments In Card' },
     { key: 'payments_out', label: 'Payments Out Card' },
-    { key: 'pending_receivables', label: 'Pending Receivables Card' },
-    { key: 'pending_payables', label: 'Pending Payables Card' },
+    { key: 'pending_payments', label: 'Pending Receivables / Payables Card' },
   ],
   inventory: [
     { key: 'inventory_valuation_cost', label: 'Inventory Cost Value' },

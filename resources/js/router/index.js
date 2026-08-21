@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useLicenseStore } from '@/stores/license';
 
 // Import components
 import Landing from '@/components/Landing.vue';
@@ -8,6 +9,8 @@ import Login from '@/components/auth/Login.vue';
 import Register from '@/components/auth/Register.vue';
 import ForgotPassword from '@/components/auth/ForgotPassword.vue';
 import ResetPassword from '@/components/auth/ResetPassword.vue';
+import Activation from '@/components/auth/Activation.vue';
+import SubscriptionPlan from '@/components/profile/SubscriptionPlan.vue';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import Dashboard from '@/components/Dashboard.vue';
 
@@ -177,6 +180,24 @@ const routes = [
         name: 'TransferOrders',
         component: () => import('@/components/inventory/TransferOrders.vue'),
         meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'manufacturing/recipes',
+        name: 'Recipes',
+        component: () => import('@/components/manufacturing/Recipes.vue'),
+        meta: { permission: 'products.view' }
+      },
+      {
+        path: 'manufacturing/production',
+        name: 'ProductionOrders',
+        component: () => import('@/components/manufacturing/ProductionOrders.vue'),
+        meta: { permission: 'inventory.view' }
+      },
+      {
+        path: 'assets',
+        name: 'Assets',
+        component: () => import('@/components/assets/Assets.vue'),
+        meta: { permission: 'accounting.view' }
       },
       {
         path: 'inventory/transfer-orders/create',
@@ -449,8 +470,18 @@ const routes = [
         redirect: '/hr/employees'
       },
       {
+        path: 'employees/create',
+        redirect: '/hr/employees/create'
+      },
+      {
         path: 'hr/employees',
         name: 'HREmployees',
+        component: Employees,
+        meta: { permission: 'employees.view' }
+      },
+      {
+        path: 'hr/employees/create',
+        name: 'CreateHREmployee',
         component: Employees,
         meta: { permission: 'employees.view' }
       },
@@ -538,8 +569,19 @@ const routes = [
         component: () => import('@/components/tasks/TaskBoardView.vue'),
         meta: { permission: 'tasks.view' }
       },
+      {
+        path: 'subscription',
+        name: 'SubscriptionPlan',
+        component: SubscriptionPlan,
+        meta: { requiresAuth: true }
+      }
 
     ]
+  },
+  {
+    path: '/activation',
+    name: 'Activation',
+    component: Activation
   },
   {
     path: '/debug/suppliers',
@@ -590,10 +632,21 @@ const router = createRouter({
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  const licenseStore = useLicenseStore();
 
   // Initialize auth if not already done
   if (!authStore.user && localStorage.getItem('auth_token')) {
     await authStore.initializeAuth();
+  }
+
+  // Check system activation status for authenticated routes
+  if (to.path !== '/activation' && authStore.isAuthenticated) {
+    if (!licenseStore.licenseData) {
+      await licenseStore.checkLicenseStatus();
+    }
+    if (!licenseStore.isLicenseActive) {
+      return next('/activation');
+    }
   }
 
   // Allow company setup and initiation routes to pass through cleanly

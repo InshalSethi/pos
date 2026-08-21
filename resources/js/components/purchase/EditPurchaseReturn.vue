@@ -1466,7 +1466,7 @@ const fetchWarehouses = async () => {
 
 const fetchProducts = async () => {
   try {
-    const res = await axios.get('/api/sales/products-with-stock');
+    const res = await axios.get('/api/sales/products-with-stock', { params: { can_be_purchased: true } });
     products.value = res.data.items || res.data.products || [];
   } catch (err) {
     console.error('Error fetching products:', err);
