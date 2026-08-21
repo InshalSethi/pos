@@ -322,8 +322,14 @@
                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     <span>Print</span>
                   </button>
-                  <button v-if="!isOrderVoided(item)" @click="promptVoidPurchaseOrder(item)" class="w-full text-left px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center space-x-1.5 font-semibold">
-                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                  <button 
+                    v-if="!isOrderVoided(item)" 
+                    @click="promptVoidPurchaseOrder(item)" 
+                    class="w-full text-left px-3 py-1.5 text-xs flex items-center space-x-1.5 font-semibold"
+                    :class="(item.active_returns_count || 0) > 0 ? 'text-slate-400 dark:text-zinc-500 opacity-60 cursor-not-allowed hover:bg-transparent' : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'"
+                    :title="(item.active_returns_count || 0) > 0 ? 'Cannot void: Active Purchase Returns exist' : 'Void Purchase Order'"
+                  >
+                    <svg class="w-3.5 h-3.5" :class="(item.active_returns_count || 0) > 0 ? 'text-slate-400' : 'text-amber-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                     <span>Void</span>
                   </button>
                   <div class="border-t border-slate-100 dark:border-zinc-800 my-1"></div>
@@ -956,6 +962,10 @@ const isOrderVoided = (order) => {
 
 const promptVoidPurchaseOrder = (order) => {
   openActionDropdown.value = null;
+  if ((order.active_returns_count || 0) > 0 || order.has_active_returns) {
+    showToast('This Purchase Order cannot be voided because it has linked Purchase Returns. Void the Purchase Returns first.', 'error');
+    return;
+  }
   voidModalState.value = {
     isOpen: true,
     order

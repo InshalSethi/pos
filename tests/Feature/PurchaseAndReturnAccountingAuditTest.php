@@ -1053,5 +1053,72 @@ class PurchaseAndReturnAccountingAuditTest extends TestCase
         $this->assertEquals('completed', PurchaseReturn::find($returnId)->status);
         $this->assertEquals(15.00, (float) PurchaseOrder::find($poId)->due_amount);
     }
+
+    /** @test */
+    public function test_cannot_void_purchase_order_with_active_purchase_returns_until_returns_voided()
+    {
+        // 1. Create a Purchase Order
+        $poData = [
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'order_date' => now()->toDateString(),
+            'status' => 'due',
+            'amount_paid' => 0,
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'quantity_ordered' => 10,
+                    'quantity_received' => 10,
+                    'unit_cost' => 15.00,
+                ]
+            ]
+        ];
+
+        $poRes = $this->postJson('/api/purchase-orders', $poData);
+        $poRes->assertStatus(201);
+        $poId = $poRes->json('purchase_order.id');
+
+        // 2. Create an Approved Purchase Return
+        $returnData = [
+            'purchase_order_id' => $poId,
+            'supplier_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'return_date' => now()->toDateString(),
+            'status' => 'approved',
+            'payment_method' => 'ap_credit',
+            'reason' => 'Defective batch',
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'quantity' => 5,
+                    'unit_cost' => 15.00,
+                ]
+            ]
+        ];
+
+        $retRes = $this->postJson('/api/purchase-returns', $returnData);
+        $retRes->assertStatus(201);
+        $returnId = $retRes->json('purchase_return.id');
+
+        // 3. Attempt to void the parent PO while return is active -> Expect 422
+        $voidAttemptRes = $this->postJson("/api/purchase-orders/{$poId}/void");
+        $voidAttemptRes->assertStatus(422);
+        $voidAttemptRes->assertJsonFragment([
+            'message' => 'Cannot void this Purchase Order because active Purchase Returns are linked to it. Please void the linked Purchase Returns first.'
+        ]);
+
+        $this->assertNotEquals('cancelled', PurchaseOrder::find($poId)->status);
+
+        // 4. Reject/Cancel the linked Purchase Return
+        $rejectRes = $this->postJson("/api/purchase-returns/{$returnId}/reject");
+        $rejectRes->assertStatus(200);
+        $this->assertEquals('rejected', PurchaseReturn::find($returnId)->status);
+
+        // 5. Now voiding the parent PO must succeed
+        $voidSuccessRes = $this->postJson("/api/purchase-orders/{$poId}/void");
+        $voidSuccessRes->assertStatus(200);
+        $this->assertEquals('cancelled', PurchaseOrder::find($poId)->status);
+    }
 }
+
 

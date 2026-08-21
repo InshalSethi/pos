@@ -150,7 +150,11 @@ class PurchaseOrderController extends Controller
             $withRelations[] = 'counter';
         }
 
-        $query = PurchaseOrder::with($withRelations)->withSum('returns', 'total_amount');
+        $query = PurchaseOrder::with($withRelations)
+            ->withSum('returns', 'total_amount')
+            ->withCount(['returns as active_returns_count' => function ($q) {
+                $q->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
+            }]);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -637,6 +641,10 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product', 'payments.bankAccount']);
+        $purchaseOrder->loadCount(['returns as active_returns_count' => function ($q) {
+            $q->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
+        }]);
+        $purchaseOrder->has_active_returns = ($purchaseOrder->active_returns_count > 0);
         return response()->json($purchaseOrder);
     }
 
@@ -1136,6 +1144,17 @@ class PurchaseOrderController extends Controller
         if ($purchaseOrder->status === 'cancelled' || $purchaseOrder->status === 'voided' || $purchaseOrder->status === 'void') {
             return response()->json([
                 'message' => 'This purchase order has already been voided / cancelled'
+            ], 422);
+        }
+
+        // Hard validation: Block voiding of Purchase Orders with Active Purchase Returns
+        $hasActiveReturns = $purchaseOrder->returns()
+            ->whereIn('status', ['draft', 'pending', 'approved', 'completed'])
+            ->exists();
+
+        if ($hasActiveReturns) {
+            return response()->json([
+                'message' => 'Cannot void this Purchase Order because active Purchase Returns are linked to it. Please void the linked Purchase Returns first.'
             ], 422);
         }
 
