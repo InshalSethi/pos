@@ -199,9 +199,24 @@ class OnboardingWizard extends Component
 
     public function discardSetup()
     {
+        $user = Auth::user();
+        $userId = $user ? $user->id : Auth::id();
+
         if ($this->company_id) {
-            Company::where('id', $this->company_id)->where('status', 'draft')->delete();
+            Company::withTrashed()
+                ->where('id', $this->company_id)
+                ->where('user_id', $userId)
+                ->where('status', 'draft')
+                ->forceDelete();
+        } elseif ($userId) {
+            Company::withTrashed()
+                ->where('user_id', $userId)
+                ->where('status', 'draft')
+                ->orderBy('id', 'desc')
+                ->first()
+                ?->forceDelete();
         }
+
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
         return redirect('/owner/companies')->with('status', 'Company setup discarded.');
     }

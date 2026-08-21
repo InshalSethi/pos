@@ -211,43 +211,26 @@ class CompanySetupController extends Controller
         abort_unless(auth()->check(), 302, redirect('/register'));
 
         $user = auth()->user();
+        $companyId = $request->input('company_id');
 
-        $hasActiveCompany = Company::where('user_id', $user->id)
-            ->where('status', 'active')
-            ->exists();
-
-        // ── PATH A: Fresh User — Discard Draft & Return to Hub ───────
-        if (!$hasActiveCompany) {
-            $validated = $request->validate([
-                'company_id' => ['nullable', 'integer', 'exists:companies,id'],
-            ]);
-
-            if (!empty($validated['company_id'])) {
-                Company::where('id', $validated['company_id'])
-                    ->where('user_id', $user->id)
-                    ->where('status', 'draft')
-                    ->delete();
-            }
-
-            session()->forget(['creating_new_company', 'creating_subsequent_company']);
-            return redirect('/owner/companies')->with('info', 'Setup discarded.');
-        }
-
-        // ── PATH B: Existing Tenant — Purge Single Draft Only ─────────
-        $validated = $request->validate([
-            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
-        ]);
-
-        if (!empty($validated['company_id'])) {
-            Company::where('id', $validated['company_id'])
+        if (!empty($companyId)) {
+            Company::withTrashed()
+                ->where('id', $companyId)
                 ->where('user_id', $user->id)
-                ->where('status', 'draft')  // Hard guard: active records are immutable
-                ->delete();
+                ->where('status', 'draft')
+                ->forceDelete();
+        } else {
+            Company::withTrashed()
+                ->where('user_id', $user->id)
+                ->where('status', 'draft')
+                ->orderBy('id', 'desc')
+                ->first()
+                ?->forceDelete();
         }
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/owner/companies')->with('info', 'Company setup discarded safely.');
+        return redirect('/owner/companies')->with('info', 'Company setup discarded.');
     }
 
     /**
