@@ -19,16 +19,29 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'terms' => 'accepted',
-        ]);
+        $rules = [
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'email'      => 'required|string|email|max:255|unique:users',
+            'password'   => 'required|string|min:8|confirmed',
+            'terms'      => 'accepted',
+        ];
 
-        return DB::transaction(function () use ($request) {
+        if ($request->has('name') && !$request->has('first_name') && !$request->has('last_name')) {
+            $rules['name'] = 'required|string|max:255';
+            unset($rules['first_name'], $rules['last_name']);
+        }
+
+        $request->validate($rules);
+
+        $fullName = trim($request->input('first_name', '') . ' ' . $request->input('last_name', ''));
+        if (empty($fullName)) {
+            $fullName = trim($request->input('name', ''));
+        }
+
+        return DB::transaction(function () use ($request, $fullName) {
             $user = User::create([
-                'name' => $request->name,
+                'name' => $fullName,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'onboarding_completed' => false,
@@ -58,7 +71,7 @@ class RegisterController extends Controller
 
             Auth::login($user);
 
-            return redirect()->route('company.setup');
+            return redirect('/owner/companies');
         });
     }
 }

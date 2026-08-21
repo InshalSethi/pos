@@ -108,7 +108,13 @@ const routes = [
     meta: { requiresGuest: true }
   },
   {
-    path: '/',
+    path: '/owner/companies',
+    name: 'CompanyWorkspaceHub',
+    component: () => import('@/components/companies/CompanyWorkspaceHub.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '',
     component: MainLayout,
     meta: { requiresAuth: true },
     children: [
@@ -640,59 +646,60 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const licenseStore = useLicenseStore();
 
-  // Initialize auth if not already done
+  // Initialize auth if token is stored and user not loaded
   if (!authStore.user && localStorage.getItem('auth_token')) {
     await authStore.initializeAuth();
   }
 
-  // Run License Verification for authenticated routes
-  if (to.meta.requiresAuth && to.path !== '/activation') {
-    if (authStore.isAuthenticated) {
-      licenseStore.isLicenseActive = true;
-      licenseStore.licenseData = licenseStore.licenseData || { status: 'active', plan: 'enterprise' };
-    } else if (!licenseStore.licenseData) {
-      const licenseCheck = await licenseStore.checkLicenseStatus();
-      if (!licenseCheck.valid && licenseCheck.status !== 'expired') {
-        return next('/activation');
-      }
-    }
-  }
-
-  // Allow company setup, initiation, and activation routes to pass through cleanly
-  if (to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company' || to.path === '/activation') {
+  // 1. Always allow public / marketing routes through without auth or license checks
+  if (to.path === '/' || to.name === 'Landing' || to.path === '/plans' || to.path === '/activation') {
     return next();
   }
 
-  // Redirect to company setup if setup is not complete
-  if (authStore.isAuthenticated && (authStore.user.company_id === null || !authStore.user.is_setup_completed)) {
-    if (to.path !== '/login' && to.path !== '/register' && to.path !== '/company-setup') {
-      window.location.href = '/company-setup';
-      return;
-    }
+  // 2. Allow company setup, initiation, and owner hub routes to pass through cleanly
+  if (to.path === '/owner/companies' || to.path.startsWith('/owner/companies') || to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company') {
+    return next();
   }
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    if (authStore.isDeactivated || !localStorage.getItem('auth_token')) {
+  // 3. Handle guest-only routes (login, register, forgot-password, reset-password, welcome)
+  if (to.meta.requiresGuest) {
+    if (authStore.isAuthenticated) {
+      if (authStore.user?.company_id === null || !authStore.user?.is_setup_completed) {
+        return next('/owner/companies');
+      }
+      return next('/dashboard');
+    }
+    return next();
+  }
+
+  // 4. Handle protected routes
+  if (to.meta.requiresAuth) {
+    if (!authStore.isAuthenticated) {
       if (window.electronAPI?.isElectron) {
         return next('/welcome');
       }
-      return next('/');
+      return next('/login');
     }
-    if (window.electronAPI?.isElectron) {
-      return next('/welcome');
+
+    // Redirect to owner hub if company setup is pending
+    if (authStore.user?.company_id === null || !authStore.user?.is_setup_completed) {
+      return next('/owner/companies');
     }
-    return next('/login');
-  } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next('/dashboard');
-  } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
-    next('/dashboard'); // Redirect to dashboard if no permission
-  } else {
-    // If electron and heading to standard landing/login, hijack it to welcome
-    if (window.electronAPI?.isElectron && (to.path === '/' || to.path === '/login' || to.path === '/register')) {
-      return next('/welcome');
+
+    // License verification for active tenant app
+    licenseStore.isLicenseActive = true;
+    licenseStore.licenseData = licenseStore.licenseData || { status: 'active', plan: 'enterprise' };
+
+    // Permission guard
+    if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
+      return next('/dashboard');
     }
-    next();
+
+    return next();
   }
+
+  // Default fallback
+  next();
 });
 
 export default router;

@@ -33,9 +33,17 @@ class EnsureCompanySetup
                 $exempt = $request->routeIs('company.setup')
                     || $request->is('company-setup')
                     || $request->is('company-setup/*')
+                    || $request->is('owner/companies')
+                    || $request->is('owner/companies/*')
+                    || $request->is('api/owner/*')
                     || $request->is('login')
                     || $request->is('logout')
                     || $request->is('api/user')
+                    || $request->is('api/user/*')
+                    || $request->is('api/license/*')
+                    || $request->is('api/subscription-plans*')
+                    || $request->is('api/coupons/*')
+                    || $request->is('api/currencies*')
                     || $request->is('api/logout')
                     || $request->is('livewire*')
                     || $request->is('admin*')
@@ -49,12 +57,12 @@ class EnsureCompanySetup
                     if ($request->expectsJson()) {
                         return response()->json([
                             'message' => 'Please complete your company profile setup to continue.',
-                            'redirect' => '/company-setup'
+                            'redirect' => '/owner/companies'
                         ], 403);
                     }
                     
                     session()->flash('error', 'Please complete your company profile setup to continue.');
-                    return redirect()->route('company.setup');
+                    return redirect('/owner/companies');
                 }
             }
         }

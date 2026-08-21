@@ -82,18 +82,33 @@
             <!-- Form Content (Compact space-y-2.5) -->
             <form class="space-y-2.5" @submit.prevent="handleRegister">
               
-              <!-- Full Name -->
-              <div>
-                <label for="name" class="block text-[11px] font-bold text-slate-700 mb-0.5">Full Name</label>
-                <input
-                  id="name"
-                  v-model="form.name"
-                  type="text"
-                  required
-                  class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out bg-white"
-                  placeholder="e.g. John Doe"
-                />
-                <p v-if="errors.name" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ errors.name[0] }}</p>
+              <!-- First Name & Last Name Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label for="first_name" class="block text-[11px] font-bold text-slate-700 mb-0.5">First Name</label>
+                  <input
+                    id="first_name"
+                    v-model="form.first_name"
+                    type="text"
+                    required
+                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out bg-white"
+                    placeholder="e.g. John"
+                  />
+                  <p v-if="errors.first_name" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.first_name) ? errors.first_name[0] : errors.first_name }}</p>
+                </div>
+
+                <div>
+                  <label for="last_name" class="block text-[11px] font-bold text-slate-700 mb-0.5">Last Name</label>
+                  <input
+                    id="last_name"
+                    v-model="form.last_name"
+                    type="text"
+                    required
+                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 transition-all duration-200 ease-in-out bg-white"
+                    placeholder="e.g. Doe"
+                  />
+                  <p v-if="errors.last_name" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.last_name) ? errors.last_name[0] : errors.last_name }}</p>
+                </div>
               </div>
 
               <!-- Email Address -->
@@ -304,6 +319,8 @@ const route = useRoute();
 const authStore = useAuthStore();
 
 const form = ref({
+  first_name: '',
+  last_name: '',
   name: '',
   email: '',
   password: '',
@@ -415,6 +432,22 @@ const handleRegister = async () => {
   error.value = '';
   errors.value = {};
 
+  if (!form.value.first_name?.trim()) {
+    errors.value.first_name = ['First name is required'];
+    error.value = 'First name is required';
+    loading.value = false;
+    return;
+  }
+
+  if (!form.value.last_name?.trim()) {
+    errors.value.last_name = ['Last name is required'];
+    error.value = 'Last name is required';
+    loading.value = false;
+    return;
+  }
+
+  form.value.name = `${form.value.first_name.trim()} ${form.value.last_name.trim()}`;
+
   if (form.value.password !== form.value.password_confirmation) {
     error.value = 'Passwords do not match';
     loading.value = false;
@@ -458,10 +491,10 @@ const handleRegister = async () => {
 
     if (result.success) {
       success.value = true;
-      successMessage.value = 'Account created successfully! Redirecting to setup...';
+      successMessage.value = 'Account created successfully! Redirecting to company hub...';
       
       setTimeout(() => {
-        window.location.href = result.redirect_url || '/';
+        window.location.href = result.redirect_url || '/owner/companies';
       }, 1000);
     } else {
       error.value = result.message;

@@ -56,13 +56,21 @@ Route::get('/register', function (\Illuminate\Http\Request $request) {
     if (Auth::check()) {
         $user = Auth::user();
         if (is_null($user->company_id) || !$user->is_setup_completed) {
-            return redirect()->route('company.setup');
+            return redirect('/owner/companies');
         }
         return redirect()->to('/dashboard');
     }
     return view('app');
 })->name('register');
 Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'register'])->middleware('guest');
+
+// Owner Company Workspace Hub
+Route::get('/owner/companies', function () {
+    return view('app');
+})->name('owner.companies');
+Route::get('/owner/companies/{any}', function () {
+    return view('app');
+})->where('any', '.*');
 
 // Company Setup Entry Points (Handles session, sanctum & token authentication internally)
 Route::get('/company-setup', [\App\Http\Controllers\CompanySetupController::class, 'index'])

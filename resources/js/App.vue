@@ -24,13 +24,15 @@ let heartbeatInterval = null;
 
 const checkStatusHeartbeat = async () => {
   if (!authStore.isAuthenticated || authStore.isDeactivated) return;
+  // If company setup is not yet completed (user is pending setup on owner hub), skip employee deactivation polling
+  if (authStore.user?.company_id === null || !authStore.user?.is_setup_completed) return;
   try {
     const res = await axios.get('/api/user/status-check');
     if (res.data?.error === 'ACCOUNT_INACTIVE') {
       authStore.triggerDeactivation();
     }
   } catch (err) {
-    if (err.response?.status === 403 || err.response?.data?.error === 'ACCOUNT_INACTIVE') {
+    if (err.response?.data?.error === 'ACCOUNT_INACTIVE') {
       authStore.triggerDeactivation();
     }
   }

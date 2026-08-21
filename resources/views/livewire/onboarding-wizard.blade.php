@@ -1,22 +1,15 @@
 <div x-data="{
-        hasActiveCompany:      {{ $hasExistingActiveCompany ? 'true' : 'false' }},
-        showFreshUserModal:    false,
-        showExistingUserModal: false,
-        activeCompanyId:       {{ $company_id ?? 'null' }},
-        currentStep:           {{ $step ?? 1 }},
+        showExitModal:        false,
+        activeCompanyId:      {{ $company_id ?? 'null' }},
+        currentStep:          {{ $step ?? 1 }},
         handleHomeNavigation() {
-            if (this.hasActiveCompany) {
-                this.showExistingUserModal = true;
-            } else {
-                this.showFreshUserModal = true;
-            }
+            this.showExitModal = true;
         }
     }"
     class="min-h-screen w-full bg-slate-50 flex flex-col justify-center items-center relative overflow-x-hidden font-sans selection:bg-slate-900 selection:text-white">
 
-    {{-- ═══ PERSISTENT TOP NAVBAR (Shown for Brand New Users only) ═══ --}}
-    @if(!$hasExistingActiveCompany)
-    <header class="sticky top-0 z-50 pt-4 px-4 sm:px-6 lg:px-8 transition-all">
+    {{-- ═══ PERSISTENT TOP NAVBAR ═══ --}}
+    <header class="sticky top-0 z-50 pt-4 px-4 sm:px-6 lg:px-8 transition-all w-full">
         <div class="max-w-6xl mx-auto bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-xl shadow-slate-200/40 rounded-full px-6 py-3 flex items-center justify-between">
             
             <!-- Logo -->
@@ -30,7 +23,7 @@
 
             <!-- Nav Links -->
             <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-                <a href="#" @click.prevent="handleHomeNavigation()" class="hover:text-slate-950 transition-colors">Home</a>
+                <a href="#" @click.prevent="handleHomeNavigation()" class="hover:text-slate-950 transition-colors">Owner Hub</a>
                 <div class="relative group cursor-pointer flex items-center gap-1.5 hover:text-slate-950 transition-colors">
                     <span>Features</span>
                     <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-950 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,95 +33,24 @@
                 <a href="/plans" class="hover:text-slate-950 transition-colors">Pricing</a>
             </nav>
 
-            <div class="flex items-center gap-3"></div>
-        </div>
-    </header>
-    @endif
-
-        {{-- ═══════════════════════════════════════════════════════════════ --}}
-        {{-- MODAL A — Path A: Fresh Registrant (Zero active companies)    --}}
-        {{-- Cancel triggers full atomic account teardown                  --}}
-        {{-- ═══════════════════════════════════════════════════════════════ --}}
-        <div
-            x-show="showFreshUserModal"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="fresh-modal-title"
-            @keydown.escape.window="showFreshUserModal = false"
-            style="display: none;"
-        >
-            <div
-                @click.outside="showFreshUserModal = false"
-                class="w-full max-w-md mx-4 p-6 bg-white
-                       border border-slate-200
-                       rounded-2xl shadow-2xl text-center"
-            >
-                {{-- Warning Icon --}}
-                <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center
-                            rounded-full bg-amber-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke-width="1.75" stroke="currentColor"
-                         class="w-6 h-6 text-amber-500" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71
-                                 c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378
-                                 c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-                    </svg>
-                </div>
-
-                <h3 id="fresh-modal-title"
-                    class="text-lg font-bold text-slate-900">
-                    Exit Account Onboarding?
-                </h3>
-                <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                    Your organization setup is not yet complete. Cancelling will
-                    <strong class="text-rose-500">permanently delete</strong>
-                    your account and all entered data. This cannot be undone.
-                </p>
-
-                <div class="mt-6 flex items-center gap-3">
-
-                    {{-- A1: Stay on wizard --}}
-                    <button
-                        @click="showFreshUserModal = false"
-                        type="button"
-                        class="flex-1 px-4 py-2.5 text-sm font-semibold
-                               text-slate-700
-                               bg-slate-100 hover:bg-slate-200
-                               rounded-xl transition-colors duration-150
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
-                        Continue Setup
-                    </button>
-
-                    {{-- A2: Full account teardown via GET route --}}
-                    <a
-                        href="{{ route('company.setup.cancel') }}"
-                        class="flex-1 px-4 py-2.5 text-sm font-semibold text-white text-center
-                               bg-rose-500 hover:bg-rose-600 active:bg-rose-700
-                               rounded-xl shadow-sm transition-colors duration-150
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
-                    >
-                        Cancel Setup
-                    </a>
-
-                </div>
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    @click="handleHomeNavigation()"
+                    class="px-4 py-1.5 text-xs font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+                >
+                    Back to Hub
+                </button>
             </div>
         </div>
-
+    </header>
 
         {{-- ═══════════════════════════════════════════════════════════════ --}}
-        {{-- MODAL B — Path B: Existing Tenant (Has active companies)      --}}
-        {{-- Discard or save the sub-company draft being built             --}}
+        {{-- UNIFIED EXIT MODAL: Discard vs Save as Draft                   --}}
+        {{-- Redirects cleanly to /owner/companies                           --}}
         {{-- ═══════════════════════════════════════════════════════════════ --}}
         <div
-            x-show="showExistingUserModal"
+            x-show="showExitModal"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
@@ -138,70 +60,70 @@
             class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="tenant-modal-title"
-            @keydown.escape.window="showExistingUserModal = false"
+            aria-labelledby="exit-modal-title"
+            @keydown.escape.window="showExitModal = false"
             style="display: none;"
         >
             <div
-                @click.outside="showExistingUserModal = false"
+                @click.outside="showExitModal = false"
                 class="w-full max-w-md mx-4 p-6 bg-white
                        border border-slate-200
                        rounded-2xl shadow-2xl"
             >
-                <h3 id="tenant-modal-title"
-                    class="text-lg font-bold text-slate-900">
-                    Save Sub-Company Progress?
-                </h3>
-                <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                    You are registering an additional business workspace. Choose how to
-                    handle this draft before returning to your main dashboard.
-                    Your active companies are never affected.
-                </p>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="exit-modal-title" class="text-base font-bold text-slate-900">
+                            Exit Company Setup?
+                        </h3>
+                        <p class="text-xs text-slate-500">Choose how to handle your setup progress before returning to your Owner Hub.</p>
+                    </div>
+                </div>
 
-                <div class="mt-6 flex flex-col gap-2.5">
+                <div class="mt-5 flex flex-col gap-2.5">
 
-                    {{-- B1: Discard this sub-company draft only --}}
-                    <form action="{{ route('onboarding.abort-registration') }}" method="POST" class="w-full">
-                        @csrf
-                        <input type="hidden" name="company_id" value="{{ $company_id }}">
-                        <button
-                            type="submit"
-                            class="w-full py-3 px-4 text-sm font-medium text-white bg-slate-900 hover:bg-black rounded-xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white opacity-80">
-                                <path d="M3 6h18"/>
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                                <line x1="10" x2="10" y1="11" y2="17"/>
-                                <line x1="14" x2="14" y1="11" y2="17"/>
-                            </svg>
-                            <span>Discard Current Setup</span>
-                        </button>
-                    </form>
-
-                    {{-- B2: Save as resumable draft --}}
+                    {{-- Option A: Save as Draft & Exit --}}
                     <form action="{{ route('onboarding.save-draft') }}" method="POST" class="w-full">
                         @csrf
                         <input type="hidden" name="company_id" value="{{ $company_id }}">
                         <input type="hidden" name="current_step" value="{{ $step }}">
+                        <input type="hidden" name="company_name" value="{{ $company_name ?: 'Draft Company' }}">
                         <button
                             type="submit"
-                            class="w-full py-3 px-4 text-sm font-medium text-white bg-slate-900 hover:bg-black rounded-xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white opacity-80">
+                            class="w-full py-2.5 px-4 text-xs font-bold text-white bg-slate-950 hover:bg-slate-800 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 focus:outline-none cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white">
                                 <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
                             </svg>
                             <span>Save as Draft &amp; Exit</span>
                         </button>
                     </form>
 
-                    {{-- B3: Dismiss and keep editing --}}
+                    {{-- Option B: Discard Setup --}}
+                    <form action="{{ route('onboarding.abort-registration') }}" method="POST" class="w-full">
+                        @csrf
+                        <input type="hidden" name="company_id" value="{{ $company_id }}">
+                        <button
+                            type="submit"
+                            class="w-full py-2.5 px-4 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-rose-600">
+                                <path d="M3 6h18"/>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            </svg>
+                            <span>Discard Setup</span>
+                        </button>
+                    </form>
+
+                    {{-- Option C: Keep Editing --}}
                     <button
-                        @click="showExistingUserModal = false"
+                        @click="showExitModal = false"
                         type="button"
-                        class="w-full px-4 py-2.5 text-sm font-medium
-                               text-slate-400 hover:text-slate-700
-                               transition-colors duration-150
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300">
-                        ← Keep Editing
+                        class="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors text-center cursor-pointer">
+                        ← Continue Setup
                     </button>
 
                 </div>

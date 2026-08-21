@@ -139,6 +139,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
     Route::get('/user/settings', [AuthController::class , 'getSettings']);
     Route::put('/user/settings', [AuthController::class , 'updateSettings']);
 
+    // Owner Company Hub routes
+    Route::get('/owner/companies/hub-data', [\App\Http\Controllers\Api\OwnerCompanyHubController::class, 'getHubData']);
+    Route::delete('/owner/companies/draft/{id}', [\App\Http\Controllers\Api\OwnerCompanyHubController::class, 'discardDraft']);
+
     // Company Switcher routes
     Route::get('/companies/active', [CompanySwitcherController::class, 'getActiveCompany']);
     Route::put('/companies/active', [CompanySwitcherController::class, 'updateActiveCompany']);

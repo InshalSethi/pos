@@ -45,6 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = response.data.user;
         permissions.value = response.data.permissions || [];
         roles.value = response.data.roles || [];
+        isDeactivated.value = false;
 
         if (response.data.user?.current_company_id) {
           localStorage.setItem('current_company_id', response.data.user.current_company_id);
@@ -176,6 +177,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = response.data.user;
         permissions.value = response.data.permissions || [];
         roles.value = response.data.roles || [];
+        isDeactivated.value = false;
 
         localStorage.setItem('auth_token', token.value);
 

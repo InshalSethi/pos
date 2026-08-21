@@ -354,7 +354,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useLicenseStore } from '@/stores/license';
 import { useAuthStore } from '@/stores/auth';

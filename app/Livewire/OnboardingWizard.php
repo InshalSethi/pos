@@ -192,9 +192,9 @@ class OnboardingWizard extends Component
             ]
         );
 
-        session()->forget('creating_subsequent_company');
+        session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/dashboard')->with('status', 'Progress saved as draft.');
+        return redirect('/owner/companies')->with('status', 'Progress saved as draft.');
     }
 
     public function discardSetup()
@@ -202,8 +202,8 @@ class OnboardingWizard extends Component
         if ($this->company_id) {
             Company::where('id', $this->company_id)->where('status', 'draft')->delete();
         }
-        session()->forget('creating_subsequent_company');
-        return redirect('/dashboard')->with('status', 'Company setup discarded.');
+        session()->forget(['creating_new_company', 'creating_subsequent_company']);
+        return redirect('/owner/companies')->with('status', 'Company setup discarded.');
     }
 
     public function nextStep()
@@ -265,6 +265,15 @@ class OnboardingWizard extends Component
 
     public function submit()
     {
+        $user = Auth::user();
+
+        // Enforce subscription plan limit before activating a company
+        $existingActiveCount = Company::where('user_id', $user->id)->where('status', 'active')->count();
+        if ($existingActiveCount > 0 && \App\Http\Controllers\CompanySetupController::hasReachedCompanyLimit($user)) {
+            session()->flash('error', 'Company limit reached for your active plan. Please upgrade to add more companies.');
+            return redirect('/owner/companies?limit_reached=1');
+        }
+
         // Validate all 3 steps
         $this->validate(array_merge($this->rules[1], $this->rules[2], $this->rules[3]));
 

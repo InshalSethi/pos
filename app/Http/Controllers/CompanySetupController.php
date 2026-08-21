@@ -18,6 +18,46 @@ class CompanySetupController extends Controller
      *   C) Fallback           → Block arbitrary manual URL access
      */
     /**
+     * Check if user reached their active subscription company limit
+     */
+    public static function hasReachedCompanyLimit($user): bool
+    {
+        if (!$user) return false;
+
+        $planLimits = [
+            'standard'   => 1,
+            'starter'    => 1,
+            'free'       => 1,
+            'basic'      => 1,
+            'advance'    => 2,
+            'enterprise' => 10,
+            'elite'      => 10,
+            'custom'     => 999,
+        ];
+
+        $payment = \App\Models\SubscriptionPayment::where('user_id', $user->id)->latest()->first();
+        $license = \App\Models\License::first();
+
+        $planSlug = 'standard';
+        if ($payment && $payment->plan_name) {
+            $planSlug = strtolower(trim($payment->plan_name));
+        } elseif ($license && $license->plan) {
+            $planSlug = strtolower(trim($license->plan));
+        }
+
+        $dbPlan = \App\Models\SubscriptionPlan::whereRaw('LOWER(slug) = ?', [$planSlug])
+            ->orWhereRaw('LOWER(name) = ?', [$planSlug])
+            ->first();
+
+        $maxCompanies = $dbPlan ? (int) $dbPlan->max_companies : (int) ($planLimits[$planSlug] ?? 1);
+        $activeCompaniesCount = Company::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->count();
+
+        return $activeCompaniesCount >= $maxCompanies;
+    }
+
+    /**
      * Wizard Entry Point
      * Routes to the correct context: resume draft, start fresh, or block access.
      */
@@ -50,9 +90,17 @@ class CompanySetupController extends Controller
             || session('creating_new_company')
             || session('creating_subsequent_company');
 
-        // Prevent already-onboarded users from accessing /company-setup directly unless explicitly adding a new company or resuming a draft
-        if ($hasExistingActiveCompany && !$isCreateMode && !$request->filled('continue_draft_id')) {
-            return redirect()->to('/dashboard');
+        // Prevent direct URL access if not creating a new company or resuming a draft
+        if (!$isCreateMode && !$request->filled('continue_draft_id')) {
+            return redirect()->to('/owner/companies');
+        }
+
+        // ── Check Plan Limit for fresh creations ───────────────────────
+        if ($isCreateMode && !$request->filled('continue_draft_id')) {
+            if (self::hasReachedCompanyLimit($user)) {
+                return redirect()->to('/owner/companies?limit_reached=1')
+                    ->with('error', 'Company limit reached for your current plan. Please upgrade your subscription.');
+            }
         }
 
         if ($isCreateMode) {
@@ -137,6 +185,12 @@ class CompanySetupController extends Controller
             \Illuminate\Support\Facades\Auth::guard('web')->login($user);
         }
 
+        // Enforce plan quota limit
+        if (self::hasReachedCompanyLimit($user)) {
+            return redirect()->to('/owner/companies?limit_reached=1')
+                ->with('error', 'Company limit reached for your current plan. Please upgrade your subscription.');
+        }
+
         session([
             'creating_new_company' => true,
             'creating_subsequent_company' => true
@@ -162,9 +216,21 @@ class CompanySetupController extends Controller
             ->where('status', 'active')
             ->exists();
 
-        // ── PATH A: Fresh User — Full Account Teardown ────────────────
+        // ── PATH A: Fresh User — Discard Draft & Return to Hub ───────
         if (!$hasActiveCompany) {
-            return redirect()->route('company.setup.cancel');
+            $validated = $request->validate([
+                'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+            ]);
+
+            if (!empty($validated['company_id'])) {
+                Company::where('id', $validated['company_id'])
+                    ->where('user_id', $user->id)
+                    ->where('status', 'draft')
+                    ->delete();
+            }
+
+            session()->forget(['creating_new_company', 'creating_subsequent_company']);
+            return redirect('/owner/companies')->with('info', 'Setup discarded.');
         }
 
         // ── PATH B: Existing Tenant — Purge Single Draft Only ─────────
@@ -181,7 +247,7 @@ class CompanySetupController extends Controller
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/dashboard')->with('info', 'Sub-company setup discarded safely.');
+        return redirect('/owner/companies')->with('info', 'Company setup discarded safely.');
     }
 
     /**
@@ -210,7 +276,7 @@ class CompanySetupController extends Controller
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/dashboard')->with('status', 'Progress saved as draft.');
+        return redirect('/owner/companies')->with('status', 'Progress saved as draft.');
     }
 
     /**
@@ -270,7 +336,7 @@ class CompanySetupController extends Controller
 
         session()->forget(['creating_new_company', 'creating_subsequent_company']);
 
-        return redirect('/dashboard')->with('status', 'Company setup discarded.');
+        return redirect('/owner/companies')->with('status', 'Company setup discarded.');
     }
 
     /**

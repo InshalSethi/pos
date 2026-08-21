@@ -224,7 +224,7 @@ const handleLogin = async () => {
   try {
     const result = await authStore.login(form.value);
     if (result.success) {
-      window.location.href = result.redirect_url || '/';
+      window.location.href = result.redirect_url || '/owner/companies';
     } else {
       error.value = result.message;
     }

@@ -64,13 +64,6 @@ class AuthController extends Controller
             ]);
         }
 
-        if (!$user->onboarding_completed || is_null($user->current_company_id)) {
-            $user->delete();
-            throw ValidationException::withMessages([
-                'email' => ['no account created'],
-            ]);
-        }
-
         // Create token
         $token = $user->createToken('auth-token')->plainTextToken;
 
@@ -105,7 +98,7 @@ class AuthController extends Controller
             ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
             : null;
 
-        $redirectUrl = $user->onboarding_completed ? '/dashboard' : '/company-setup';
+        $redirectUrl = ($user->onboarding_completed && $user->current_company_id) ? '/dashboard' : '/owner/companies';
         if (session('desktop_auth_pending') || $request->input('redirect') === '/desktop-login') {
             $redirectUrl = '/desktop-login';
         }
@@ -127,10 +120,16 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $rules = [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'email'      => 'required|string|email|max:255|unique:users',
+            'password'   => 'required|string|min:8|confirmed',
         ];
+
+        if ($request->has('name') && !$request->has('first_name') && !$request->has('last_name')) {
+            $rules['name'] = 'required|string|max:255';
+            unset($rules['first_name'], $rules['last_name']);
+        }
 
         $plan = strtolower($request->input('plan', 'basic'));
         if ($plan !== 'starter' && $plan !== 'standard' && $plan !== 'free') {
@@ -141,13 +140,19 @@ class AuthController extends Controller
 
         $request->validate($rules);
 
-        return DB::transaction(function () use ($request) {
+        $fullName = trim($request->input('first_name', '') . ' ' . $request->input('last_name', ''));
+        if (empty($fullName)) {
+            $fullName = trim($request->input('name', ''));
+        }
+
+        return DB::transaction(function () use ($request, $fullName) {
             // Create user
             $user = User::create([
-                'name' => $request->name,
+                'name' => $fullName,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'onboarding_completed' => false,
+                'is_active' => true,
             ]);
 
             // Assign default admin role with all permissions
@@ -240,7 +245,7 @@ class AuthController extends Controller
                 'user' => $user,
                 'permissions' => $permissions,
                 'roles' => $roles,
-                'redirect_url' => '/company-setup',
+                'redirect_url' => '/owner/companies',
             ], 201);
         });
     }
