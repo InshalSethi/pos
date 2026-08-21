@@ -29,6 +29,14 @@ class AdminSeeder extends Seeder
             'create roles',
             'edit roles',
             'delete roles',
+            'view subscription plans',
+            'create subscription plans',
+            'edit subscription plans',
+            'delete subscription plans',
+            'view coupons',
+            'create coupons',
+            'edit coupons',
+            'delete coupons',
         ];
 
         foreach ($permissions as $permission) {

@@ -10,6 +10,9 @@ import RolesIndex from '../views/roles/Index.vue';
 import RolesForm from '../views/roles/Form.vue';
 import BusinessTypesIndex from '../views/business-types/Index.vue';
 import FormBuilderIndex from '../views/form-builder/Index.vue';
+import SubscriptionPlansIndex from '../views/subscription-plans/Index.vue';
+import CouponsIndex from '../views/coupons/Index.vue';
+import SubscriptionPaymentsIndex from '../../components/admin/AdminSubscriptionPayments.vue';
 import ProfileIndex from '../views/profile/Index.vue';
 import SettingsIndex from '../views/settings/Index.vue';
 
@@ -41,6 +44,9 @@ const routes = [
 
             { path: 'business-types', name: 'admin.business-types.index', component: BusinessTypesIndex },
             { path: 'form-builder', name: 'admin.form-builder.index', component: FormBuilderIndex },
+            { path: 'subscription-plans', name: 'admin.subscription-plans.index', component: SubscriptionPlansIndex },
+            { path: 'coupons', name: 'admin.coupons.index', component: CouponsIndex },
+            { path: 'subscription-payments', name: 'admin.subscription-payments.index', component: SubscriptionPaymentsIndex },
 
             { path: 'profile', name: 'admin.profile', component: ProfileIndex },
             { path: 'settings', name: 'admin.settings', component: SettingsIndex },

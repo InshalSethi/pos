@@ -17,7 +17,7 @@
           Flexible Plans for Every Business
         </h1>
         <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
-          Select the tailored subscription plan designed for your retail store or multi-company enterprise operations.
+          Select the tailored subscription plan designed for your store or multi-company enterprise operations.
         </p>
       </div>
 
@@ -43,155 +43,120 @@
       <!-- Plans Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch max-w-full mx-auto">
         
-        <!-- STARTER PLAN -->
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-900 bg-slate-100 border border-slate-300 px-2 py-1 rounded-full">STARTER</span>
-            </div>
-            <div class="mb-4">
-              <span class="text-3xl font-black text-slate-950">Free</span>
-              <span class="text-slate-500 text-xs font-medium block mt-1">14-Day Trial</span>
-            </div>
-            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
-              Try the platform with no payment method required.
-            </p>
-            <div class="space-y-3 mb-8 text-xs text-slate-800">
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>1 Device</strong> Limit</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-slate-100 border border-slate-300 text-slate-950 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span>Full Feature Access</span>
-              </div>
-            </div>
-          </div>
-          <router-link to="/register?plan=starter" class="w-full block text-center bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold py-3 rounded-full border border-slate-300 transition-all text-xs tracking-wide uppercase">
-            Start Free Trial
-          </router-link>
-        </div>
-
-        <!-- BASIC PLAN -->
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-900 bg-blue-100 border border-blue-300 px-2 py-1 rounded-full">BASIC</span>
-            </div>
-            <div class="mb-4">
-              <span class="text-3xl font-black text-slate-950">{{ billingCycle === 'monthly' ? '$80' : '$768' }}</span>
-              <span class="text-slate-500 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
-            </div>
-            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
-              Essential POS solution for single-store setups.
-            </p>
-            <div class="space-y-3 mb-8 text-xs text-slate-800">
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>1 Device</strong> Limit</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span>Inventory & Sales</span>
-              </div>
-            </div>
-          </div>
-          <router-link :to="`/register?plan=basic&cycle=${billingCycle}`" class="w-full block text-center bg-white text-blue-700 hover:bg-blue-50 border-2 border-blue-600 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase">
-            Select Basic
-          </router-link>
-        </div>
-
-        <!-- MASTER PLAN -->
-        <div class="bg-slate-950 text-white border-2 border-slate-800 rounded-3xl p-6 flex flex-col justify-between shadow-2xl transform hover:scale-[1.015] transition-transform duration-300 relative group lg:-translate-y-2">
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+        <div 
+          v-for="plan in displayPlans" 
+          :key="plan.id || plan.slug"
+          class="rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group"
+          :class="[
+            plan.is_popular 
+              ? 'bg-slate-950 text-white border-2 border-slate-800 shadow-2xl lg:-translate-y-2' 
+              : plan.is_custom 
+                ? 'bg-slate-100 text-slate-900 border border-slate-300' 
+                : 'bg-white text-slate-900 border border-slate-200/90'
+          ]"
+        >
+          <!-- Most Popular Badge -->
+          <div 
+            v-if="plan.is_popular" 
+            class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg"
+          >
             Most Popular
           </div>
-          <div>
-            <div class="flex items-center justify-between mb-4 mt-2">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-white bg-white/10 border border-white/20 px-2 py-1 rounded-full">MASTER</span>
-            </div>
-            <div class="mb-4">
-              <span class="text-3xl font-black text-white">{{ billingCycle === 'monthly' ? '$200' : '$1,920' }}</span>
-              <span class="text-slate-400 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
-            </div>
-            <p class="text-slate-300 text-xs leading-relaxed mb-6 h-12">
-              Advanced accounting and multi-company features.
-            </p>
-            <div class="space-y-3 mb-8 text-xs text-slate-100">
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>3 Devices</strong> Limit</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span>Advanced Accounting</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span>Multi-Company</span>
-              </div>
-            </div>
-          </div>
-          <router-link :to="`/register?plan=master&cycle=${billingCycle}`" class="w-full block text-center bg-white text-slate-950 hover:bg-slate-100 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-            Select Master
-          </router-link>
-        </div>
 
-        <!-- ELITE PLAN -->
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between shadow-lg transform hover:scale-[1.015] transition-transform duration-300 relative group">
           <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-900 bg-purple-100 border border-purple-300 px-2 py-1 rounded-full">ELITE</span>
+            <!-- Header Tag -->
+            <div class="flex items-center justify-between mb-4" :class="plan.is_popular ? 'mt-2' : ''">
+              <span 
+                class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-full"
+                :class="[
+                  plan.is_popular 
+                    ? 'text-white bg-white/10 border border-white/20' 
+                    : plan.is_custom 
+                      ? 'text-slate-700 bg-slate-200 border border-slate-300' 
+                      : 'text-slate-900 bg-slate-100 border border-slate-300'
+                ]"
+              >
+                {{ plan.name }}
+              </span>
             </div>
-            <div class="mb-4">
-              <span class="text-3xl font-black text-slate-950">{{ billingCycle === 'monthly' ? '$650' : '$6,240' }}</span>
-              <span class="text-slate-500 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
-            </div>
-            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
-              For high-volume retail chains and large enterprises.
-            </p>
-            <div class="space-y-3 mb-8 text-xs text-slate-800">
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>10 Devices</strong> Limit</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span>Priority Support</span>
-              </div>
-            </div>
-          </div>
-          <router-link :to="`/register?plan=elite&cycle=${billingCycle}`" class="w-full block text-center bg-white text-purple-700 hover:bg-purple-50 border-2 border-purple-600 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase">
-            Select Elite
-          </router-link>
-        </div>
 
-        <!-- CUSTOM PLAN -->
-        <div class="bg-slate-100 border border-slate-300 rounded-3xl p-6 flex flex-col justify-between shadow-inner transform hover:scale-[1.015] transition-transform duration-300 relative group">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-700 bg-slate-200 border border-slate-300 px-2 py-1 rounded-full">CUSTOM</span>
-            </div>
+            <!-- Price -->
             <div class="mb-4">
-              <span class="text-2xl font-black text-slate-950">Starts $1,500</span>
-              <span class="text-slate-500 text-xs font-medium block mt-1">/ {{ billingCycle === 'monthly' ? 'month' : 'year' }}</span>
+              <template v-if="plan.is_custom">
+                <span class="text-2xl font-black" :class="plan.is_popular ? 'text-white' : 'text-slate-950'">Contact Sales</span>
+                <span class="text-xs font-medium block mt-1" :class="plan.is_popular ? 'text-slate-400' : 'text-slate-500'">Custom Pricing</span>
+              </template>
+              <template v-else-if="plan.monthly_price == 0">
+                <span class="text-3xl font-black" :class="plan.is_popular ? 'text-white' : 'text-slate-950'">Free</span>
+                <span class="text-xs font-medium block mt-1" :class="plan.is_popular ? 'text-slate-400' : 'text-slate-500'">{{ plan.trial_days || 14 }}-Day Free Trial</span>
+              </template>
+              <template v-else>
+                <span class="text-3xl font-black" :class="plan.is_popular ? 'text-white' : 'text-slate-950'">
+                  ${{ billingCycle === 'monthly' ? plan.monthly_price : plan.yearly_price }}
+                </span>
+                <span class="text-xs font-medium block mt-1" :class="plan.is_popular ? 'text-slate-400' : 'text-slate-500'">
+                  / {{ billingCycle === 'monthly' ? 'month' : 'year' }}
+                </span>
+              </template>
             </div>
-            <p class="text-slate-600 text-xs leading-relaxed mb-6 h-12">
-              Bespoke deployment for massive scale (20 to 50+ devices).
+
+            <!-- Description -->
+            <p class="text-xs leading-relaxed mb-6 h-12" :class="plan.is_popular ? 'text-slate-300' : 'text-slate-600'">
+              {{ plan.description }}
             </p>
-            <div class="space-y-3 mb-8 text-xs text-slate-800">
+
+            <!-- Features Bullet List -->
+            <div class="space-y-3 mb-8 text-xs" :class="plan.is_popular ? 'text-slate-100' : 'text-slate-800'">
+              <!-- Company Limit -->
               <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span><strong>20-50 Devices</strong></span>
+                <div 
+                  class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5"
+                  :class="plan.is_popular ? 'bg-white/10 border border-white/20 text-white' : 'bg-slate-100 border border-slate-300 text-slate-950'"
+                >✓</div>
+                <span>
+                  <strong>{{ plan.max_companies }}</strong> {{ plan.max_companies === 1 ? 'Company' : 'Companies' }} Allowed
+                </span>
               </div>
+
+              <!-- User Limit -->
               <div class="flex items-start gap-2">
-                <div class="w-4 h-4 rounded-full bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</div>
-                <span>Dedicated Account Manager</span>
+                <div 
+                  class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5"
+                  :class="plan.is_popular ? 'bg-white/10 border border-white/20 text-white' : 'bg-slate-100 border border-slate-300 text-slate-950'"
+                >✓</div>
+                <span>
+                  <strong>{{ plan.max_users_per_company }}</strong> {{ plan.max_users_per_company === 1 ? 'User' : 'Users' }} per Company
+                </span>
+              </div>
+
+              <!-- Custom Bullet Features -->
+              <div 
+                v-for="(feature, idx) in plan.features" 
+                :key="idx"
+                class="flex items-start gap-2"
+              >
+                <div 
+                  class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5"
+                  :class="plan.is_popular ? 'bg-white/10 border border-white/20 text-white' : 'bg-slate-100 border border-slate-300 text-slate-950'"
+                >✓</div>
+                <span>{{ feature }}</span>
               </div>
             </div>
           </div>
-          <router-link :to="`/register?plan=custom&cycle=${billingCycle}`" class="w-full block text-center bg-slate-800 text-white hover:bg-slate-950 font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase shadow-md">
-            Contact Sales
+
+          <!-- CTA Button -->
+          <router-link 
+            :to="`/register?plan=${plan.slug}&cycle=${billingCycle}`" 
+            class="w-full block text-center font-extrabold py-3 rounded-full transition-all text-xs tracking-wide uppercase shadow-md cursor-pointer"
+            :class="[
+              plan.is_popular 
+                ? 'bg-white text-slate-950 hover:bg-slate-100 shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
+                : plan.is_custom 
+                  ? 'bg-slate-800 text-white hover:bg-slate-950' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300'
+            ]"
+          >
+            {{ plan.is_custom ? 'Contact Sales' : (plan.monthly_price == 0 ? 'Start Free Trial' : `Select ${plan.name}`) }}
           </router-link>
         </div>
 
@@ -212,8 +177,98 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import axios from 'axios';
 import Navbar from '@/components/shared/Navbar.vue';
 
 const billingCycle = ref('monthly');
+const apiPlans = ref([]);
+
+const defaultFallbackPlans = [
+  {
+    id: 1,
+    name: 'Standard',
+    slug: 'standard',
+    description: 'Free trial 14 days. 1 user & 1 company allowed.',
+    monthly_price: 0,
+    yearly_price: 0,
+    trial_days: 14,
+    max_companies: 1,
+    max_users_per_company: 1,
+    is_popular: false,
+    is_custom: false,
+    features: ['Essential POS Features']
+  },
+  {
+    id: 2,
+    name: 'Basic',
+    slug: 'basic',
+    description: '$20/month. 1 user & 1 company allowed.',
+    monthly_price: 20,
+    yearly_price: 192,
+    trial_days: 0,
+    max_companies: 1,
+    max_users_per_company: 1,
+    is_popular: false,
+    is_custom: false,
+    features: ['Inventory & Sales', 'Standard Support']
+  },
+  {
+    id: 3,
+    name: 'Advance',
+    slug: 'advance',
+    description: '$50/month. 2 companies allowed (20 users each).',
+    monthly_price: 50,
+    yearly_price: 480,
+    trial_days: 0,
+    max_companies: 2,
+    max_users_per_company: 20,
+    is_popular: true,
+    is_custom: false,
+    features: ['Advanced Accounting', 'Multi-Warehouse']
+  },
+  {
+    id: 4,
+    name: 'Enterprise',
+    slug: 'enterprise',
+    description: '$100/month. 10 companies each allowing 100 users.',
+    monthly_price: 100,
+    yearly_price: 960,
+    trial_days: 0,
+    max_companies: 10,
+    max_users_per_company: 100,
+    is_popular: false,
+    is_custom: false,
+    features: ['Priority Support & SLA', 'Full System Access']
+  },
+  {
+    id: 5,
+    name: 'Custom',
+    slug: 'custom',
+    description: 'Contact sales team for better pricing.',
+    monthly_price: 0,
+    yearly_price: 0,
+    trial_days: 0,
+    max_companies: 999,
+    max_users_per_company: 999,
+    is_popular: false,
+    is_custom: true,
+    features: ['Dedicated Account Manager', 'Bespoke Integrations']
+  }
+];
+
+const displayPlans = computed(() => {
+  return apiPlans.value.length > 0 ? apiPlans.value : defaultFallbackPlans;
+});
+
+onMounted(async () => {
+  try {
+    const { data } = await axios.get('/api/subscription-plans');
+    if (Array.isArray(data) && data.length > 0) {
+      apiPlans.value = data;
+    }
+  } catch (e) {
+    console.error("Failed to load dynamic subscription plans", e);
+  }
+});
 </script>

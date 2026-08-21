@@ -70,6 +70,11 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
             Route::apiResource('roles', AdminRoleController::class);
             Route::apiResource('business-types', \App\Http\Controllers\Admin\AdminBusinessTypeController::class);
             Route::apiResource('custom-forms', \App\Http\Controllers\Admin\AdminCustomFormController::class);
+            Route::apiResource('subscription-plans', \App\Http\Controllers\Admin\AdminSubscriptionPlanController::class);
+            Route::apiResource('coupons', \App\Http\Controllers\Admin\AdminCouponController::class);
+            Route::post('/coupons/validate', [\App\Http\Controllers\Admin\AdminCouponController::class, 'validateCoupon']);
+            Route::get('/subscription-payments', [\App\Http\Controllers\Admin\AdminSubscriptionPaymentController::class, 'index']);
+            Route::get('/subscription-payments/{id}', [\App\Http\Controllers\Admin\AdminSubscriptionPaymentController::class, 'show']);
 
     // Profile Settings
     Route::get('/profile', [AdminProfileController::class, 'show']);

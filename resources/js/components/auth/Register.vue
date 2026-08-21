@@ -164,13 +164,44 @@
                   <div class="text-sm font-black text-slate-900">{{ selectedPlanName }}</div>
                 </div>
                 <div class="text-right">
-                  <div class="text-sm font-black text-slate-900">{{ selectedPlanPrice }}</div>
+                  <div class="text-sm font-black text-slate-900">
+                    <span v-if="appliedCoupon" class="line-through text-slate-400 text-xs mr-1">{{ selectedPlanPrice }}</span>
+                    <span>{{ appliedCoupon ? `$${appliedCoupon.final_amount}` : selectedPlanPrice }}</span>
+                  </div>
                   <router-link to="/plans" class="text-[10px] text-primary-600 hover:underline font-bold">Change Plan</router-link>
                 </div>
               </div>
 
+              <!-- Coupon Code Section -->
+              <div v-if="form.plan !== 'starter' && form.plan !== 'standard'" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 mt-2">
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Coupon Code</label>
+                <div class="flex gap-2">
+                  <input
+                    v-model="couponInput"
+                    type="text"
+                    placeholder="Enter Code (e.g. SAVE20)"
+                    class="grow px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs uppercase font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                  />
+                  <button
+                    type="button"
+                    @click="applyCoupon"
+                    :disabled="couponLoading || !couponInput.trim()"
+                    class="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    <span v-if="couponLoading">...</span>
+                    <span v-else>Apply</span>
+                  </button>
+                </div>
+                <p v-if="couponMessage" class="mt-1 text-[10px] font-bold text-emerald-600 flex items-center">
+                  ✓ {{ couponMessage }}
+                </p>
+                <p v-if="couponError" class="mt-1 text-[10px] font-bold text-rose-600 flex items-center">
+                  ✕ {{ couponError }}
+                </p>
+              </div>
+
               <!-- Payment Details (Mock Test Cards) -->
-              <div v-if="form.plan !== 'starter'" class="pt-2 border-t border-slate-100 space-y-2.5 mt-2">
+              <div v-if="form.plan !== 'starter' && form.plan !== 'standard'" class="pt-2 border-t border-slate-100 space-y-2.5 mt-2">
                 <div class="flex items-center gap-2 mb-1">
                   <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                   <span class="text-[11px] font-bold text-slate-700">Payment Details (Test Mode)</span>
@@ -179,27 +210,43 @@
                 <div>
                   <input
                     v-model="form.cardNumber"
+                    @input="form.cardNumber = $event.target.value = formatCardNumber($event.target.value)"
+                    maxlength="23"
                     type="text"
                     required
-                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                    class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                    :class="errors.cardNumber ? 'border-red-500 bg-red-50/20' : 'border-slate-200'"
                     placeholder="Card Number (e.g. 4242 4242 4242 4242)"
                   />
+                  <p v-if="errors.cardNumber" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.cardNumber) ? errors.cardNumber[0] : errors.cardNumber }}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5">
-                  <input
-                    v-model="form.cardExpiry"
-                    type="text"
-                    required
-                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
-                    placeholder="MM/YY"
-                  />
-                  <input
-                    v-model="form.cardCvc"
-                    type="text"
-                    required
-                    class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
-                    placeholder="CVC"
-                  />
+                  <div>
+                    <input
+                      v-model="form.cardExpiry"
+                      @input="form.cardExpiry = $event.target.value = formatCardExpiry($event.target.value)"
+                      maxlength="5"
+                      type="text"
+                      required
+                      class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                      :class="errors.cardExpiry ? 'border-red-500 bg-red-50/20' : 'border-slate-200'"
+                      placeholder="MM/YY"
+                    />
+                    <p v-if="errors.cardExpiry" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.cardExpiry) ? errors.cardExpiry[0] : errors.cardExpiry }}</p>
+                  </div>
+                  <div>
+                    <input
+                      v-model="form.cardCvc"
+                      @input="form.cardCvc = $event.target.value = formatCardCvc($event.target.value)"
+                      maxlength="4"
+                      type="text"
+                      required
+                      class="w-full px-3 py-1.5 border rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/60 focus:border-slate-400 bg-white"
+                      :class="errors.cardCvc ? 'border-red-500 bg-red-50/20' : 'border-slate-200'"
+                      placeholder="CVC"
+                    />
+                    <p v-if="errors.cardCvc" class="mt-0.5 text-[10px] text-red-600 font-medium">{{ Array.isArray(errors.cardCvc) ? errors.cardCvc[0] : errors.cardCvc }}</p>
+                  </div>
                 </div>
               </div>
 
@@ -247,8 +294,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import Navbar from '@/components/shared/Navbar.vue';
+import { formatCardNumber, formatCardExpiry, formatCardCvc, validateCardNumber, validateCardExpiry, validateCardCvc } from '@/composables/useCardValidation';
 
 const router = useRouter();
 const route = useRoute();
@@ -264,7 +313,8 @@ const form = ref({
   cycle: 'monthly',
   cardNumber: '',
   cardExpiry: '',
-  cardCvc: ''
+  cardCvc: '',
+  coupon_code: ''
 });
 
 const loading = ref(false);
@@ -275,12 +325,46 @@ const successMessage = ref('');
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
+const couponInput = ref('');
+const couponLoading = ref(false);
+const couponMessage = ref('');
+const couponError = ref('');
+const appliedCoupon = ref(null);
+
+const applyCoupon = async () => {
+  if (!couponInput.value.trim()) return;
+  couponLoading.value = true;
+  couponError.value = '';
+  couponMessage.value = '';
+  try {
+    const { data } = await axios.post('/api/coupons/validate', {
+      code: couponInput.value,
+      plan: form.value.plan,
+      billing_cycle: form.value.cycle,
+    });
+    if (data.valid) {
+      appliedCoupon.value = data;
+      form.value.coupon_code = data.coupon.code;
+      couponMessage.value = `Coupon "${data.coupon.code}" applied! Discount: $${data.discount_amount.toFixed(2)}`;
+    }
+  } catch (e) {
+    appliedCoupon.value = null;
+    form.value.coupon_code = '';
+    couponError.value = e.response?.data?.message || 'Invalid coupon code';
+  } finally {
+    couponLoading.value = false;
+  }
+};
+
 const plans = {
-  starter: { name: 'Starter Plan', monthlyPrice: 'Free / 14 Days', yearlyPrice: 'Free / 14 Days' },
-  basic: { name: 'Basic Plan', monthlyPrice: '$80 / month', yearlyPrice: '$768 / year' },
-  master: { name: 'Master Plan', monthlyPrice: '$200 / month', yearlyPrice: '$1,920 / year' },
-  elite: { name: 'Elite Plan', monthlyPrice: '$650 / month', yearlyPrice: '$6,240 / year' },
-  custom: { name: 'Custom Plan', monthlyPrice: '$1,500+ / month', yearlyPrice: '$14,400+ / year' }
+  standard: { name: 'Standard Plan', monthlyPrice: 'Free / 14 Days', yearlyPrice: 'Free / 14 Days' },
+  starter: { name: 'Standard Plan', monthlyPrice: 'Free / 14 Days', yearlyPrice: 'Free / 14 Days' },
+  basic: { name: 'Basic Plan', monthlyPrice: '$20 / month', yearlyPrice: '$192 / year' },
+  advance: { name: 'Advance Plan', monthlyPrice: '$50 / month', yearlyPrice: '$480 / year' },
+  master: { name: 'Advance Plan', monthlyPrice: '$50 / month', yearlyPrice: '$480 / year' },
+  enterprise: { name: 'Enterprise Plan', monthlyPrice: '$100 / month', yearlyPrice: '$960 / year' },
+  elite: { name: 'Enterprise Plan', monthlyPrice: '$100 / month', yearlyPrice: '$960 / year' },
+  custom: { name: 'Custom Plan', monthlyPrice: 'Contact Sales Team', yearlyPrice: 'Contact Sales Team' }
 };
 
 const selectedPlanName = computed(() => plans[form.value.plan]?.name || 'Starter Plan');
@@ -341,6 +425,32 @@ const handleRegister = async () => {
     error.value = 'You must agree to the Terms of Service and Privacy Policy';
     loading.value = false;
     return;
+  }
+
+  if (form.value.plan !== 'starter' && form.value.plan !== 'standard') {
+    const cardNumRes = validateCardNumber(form.value.cardNumber);
+    if (!cardNumRes.valid) {
+      errors.value.cardNumber = [cardNumRes.message];
+      error.value = cardNumRes.message;
+      loading.value = false;
+      return;
+    }
+
+    const cardExpRes = validateCardExpiry(form.value.cardExpiry);
+    if (!cardExpRes.valid) {
+      errors.value.cardExpiry = [cardExpRes.message];
+      error.value = cardExpRes.message;
+      loading.value = false;
+      return;
+    }
+
+    const cardCvcRes = validateCardCvc(form.value.cardCvc);
+    if (!cardCvcRes.valid) {
+      errors.value.cardCvc = [cardCvcRes.message];
+      error.value = cardCvcRes.message;
+      loading.value = false;
+      return;
+    }
   }
 
   try {

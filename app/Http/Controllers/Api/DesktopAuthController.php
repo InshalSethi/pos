@@ -25,6 +25,27 @@ class DesktopAuthController extends Controller
             // Fetch actual License details from central Cloud DB
             $license = \App\Models\License::first();
 
+            $startDate = $license && $license->start_date ? \Carbon\Carbon::parse($license->start_date)->toDateString() : now()->toDateString();
+            $expiresAt = $license && $license->expires_at ? \Carbon\Carbon::parse($license->expires_at)->toDateString() : now()->addYear()->toDateString();
+            $plan = $license->plan ?? 'elite';
+
+            if (!$license || !\App\Services\LicenseKeyService::decryptKey($license->license_key)) {
+                $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey($user->email, $plan, $startDate, $expiresAt);
+                $license = \App\Models\License::updateOrCreate(
+                    ['id' => 1],
+                    [
+                        'license_key' => $encryptedKey,
+                        'plan'        => $plan,
+                        'status'      => 'active',
+                        'start_date'  => $startDate,
+                        'expires_at'  => $expiresAt,
+                        'last_opened_at' => now(),
+                    ]
+                );
+            }
+
+            $decryptedPayload = \App\Services\LicenseKeyService::decryptKey($license->license_key);
+
             return view('desktop-auth-success', [
                 'token' => $token,
                 'user' => [
@@ -33,10 +54,11 @@ class DesktopAuthController extends Controller
                     'email' => $user->email,
                 ],
                 'license' => [
-                    'license_key' => $license->license_key ?? 'DEMO-ELITE-YEARLY',
+                    'license_key' => $license->license_key,
+                    'decrypted'   => $decryptedPayload,
                     'plan'        => $license->plan ?? 'elite',
-                    'start_date'  => $license->start_date ? \Carbon\Carbon::parse($license->start_date)->toDateString() : now()->toDateString(),
-                    'expires_at'  => $license->expires_at ? \Carbon\Carbon::parse($license->expires_at)->toDateString() : now()->addYear()->toDateString(),
+                    'start_date'  => $startDate,
+                    'expires_at'  => $expiresAt,
                 ]
             ]);
         }

@@ -126,11 +126,20 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+        $rules = [
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-        ]);
+        ];
+
+        $plan = strtolower($request->input('plan', 'basic'));
+        if ($plan !== 'starter' && $plan !== 'standard' && $plan !== 'free') {
+            $rules['cardNumber'] = ['required', new \App\Rules\ValidCardNumber()];
+            $rules['cardExpiry'] = ['required', new \App\Rules\ValidCardExpiry()];
+            $rules['cardCvc']    = ['required', new \App\Rules\ValidCardCvc()];
+        }
+
+        $request->validate($rules);
 
         return DB::transaction(function () use ($request) {
             // Create user
@@ -164,6 +173,38 @@ class AuthController extends Controller
                 'session_timeout' => 60,
                 'two_factor_auth' => false,
             ]);
+
+            // Create encrypted license key for new registered user storing email, plan, start date and end date
+            $plan = strtolower($request->input('plan', 'basic'));
+            $cycle = strtolower($request->input('cycle', 'monthly'));
+            $startDate = now()->toDateString();
+            $expiresAt = ($plan === 'starter') ? now()->addDays(14)->toDateString() : ($cycle === 'yearly' ? now()->addYear()->toDateString() : now()->addDays(30)->toDateString());
+            $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey($user->email, $plan, $startDate, $expiresAt);
+
+            \App\Models\License::updateOrCreate(
+                ['id' => 1],
+                [
+                    'license_key'    => $encryptedKey,
+                    'device_id'     => 'USER-' . $user->id,
+                    'plan'          => $plan,
+                    'status'        => 'active',
+                    'start_date'    => $startDate,
+                    'expires_at'    => $expiresAt,
+                    'last_opened_at' => now(),
+                ]
+            );
+
+            // Record Subscription Payment History
+            \App\Services\SubscriptionPaymentService::recordPayment(
+                $user->id,
+                $user->name,
+                $user->email,
+                $plan,
+                $cycle,
+                $request->input('cardNumber'),
+                'Credit Card',
+                $request->input('coupon_code', $request->input('couponCode'))
+            );
 
             // Create token
             $token = $user->createToken('auth-token')->plainTextToken;
@@ -663,27 +704,23 @@ class AuthController extends Controller
         }
 
         // Sync license details dynamically from incoming cloud authentication payload
-        $licenseKey = $request->input('license_key');
-        $plan       = $request->input('plan');
-        $startDate  = $request->input('start_date');
-        $expiresAt  = $request->input('expires_at');
+        $plan       = $request->input('plan', 'basic');
+        $startDate  = $request->input('start_date') ?: now()->toDateString();
+        $expiresAt  = $request->input('expires_at') ?: now()->addYear()->toDateString();
+        $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey($user->email, $plan, $startDate, $expiresAt);
 
-        if ($licenseKey || $plan || $expiresAt) {
-            $licenseFields = array_filter([
-                'license_key'    => $licenseKey,
+        \App\Models\License::updateOrCreate(
+            ['id' => 1],
+            [
+                'license_key'    => $encryptedKey,
                 'plan'          => $plan,
                 'status'        => 'active',
                 'start_date'    => $startDate,
                 'expires_at'    => $expiresAt,
                 'device_id'     => 'CLOUD-AUTHENTICATED',
                 'last_opened_at' => now(),
-            ], fn($val) => !is_null($val) && $val !== '');
-
-            \App\Models\License::updateOrCreate(
-                ['id' => 1],
-                $licenseFields
-            );
-        }
+            ]
+        );
 
         // Issue a local Sanctum token valid for this local Desktop installation
         $localToken = $user->createToken('desktop-local-session')->plainTextToken;

@@ -129,6 +129,57 @@
                     ]"></i>
                     <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Form Builder</span>
                 </router-link>
+
+                <router-link 
+                    :to="{ name: 'admin.subscription-plans.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('subscription-plans')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Subscription Plans' : ''"
+                >
+                    <i class="fas fa-tags w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('subscription-plans') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Subscription Plans</span>
+                </router-link>
+
+                <router-link 
+                    :to="{ name: 'admin.coupons.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('coupons')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Coupon Codes' : ''"
+                >
+                    <i class="fas fa-ticket-alt w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('coupons') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Coupon Codes</span>
+                </router-link>
+
+                <router-link 
+                    :to="{ name: 'admin.subscription-payments.index' }" 
+                    class="group flex items-center px-3 py-2.5 text-xs rounded-xl transition-all duration-200 relative cursor-pointer"
+                    :class="[
+                        $route.name?.includes('subscription-payments')
+                            ? 'bg-zinc-100 text-zinc-950 dark:bg-zinc-800/80 dark:text-white font-extrabold border-l-4 border-black dark:border-white rounded-l-none'
+                            : 'border-l-4 border-transparent text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100 font-semibold rounded-l-none'
+                    ]"
+                    :title="isSidebarCollapsed ? 'Payment History' : ''"
+                >
+                    <i class="fas fa-receipt w-5 text-center text-sm shrink-0" :class="[
+                        isSidebarCollapsed ? 'mx-auto' : 'mr-3',
+                        $route.name?.includes('subscription-payments') ? 'text-black dark:text-white' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300'
+                    ]"></i>
+                    <span v-if="!isSidebarCollapsed" class="whitespace-nowrap tracking-wide">Payment History</span>
+                </router-link>
             </nav>
         </aside>
 
@@ -272,6 +323,7 @@ const routeName = computed(() => {
     if (route.name?.includes('admins')) return 'System Admins';
     if (route.name?.includes('users')) return 'Users Management';
     if (route.name?.includes('roles')) return 'Roles & Permissions';
+    if (route.name?.includes('subscription-plans')) return 'Subscription Plans';
     if (route.name === 'admin.profile') return 'Account Profile';
     if (route.name === 'admin.settings') return 'System Settings';
     return 'Admin Panel';

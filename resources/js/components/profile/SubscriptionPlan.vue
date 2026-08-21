@@ -36,15 +36,15 @@
           </div>
           <div class="mt-5">
             <span class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-2">License Key</span>
-            <div class="flex items-center gap-4">
-              <div class="px-4 py-2 bg-slate-100 dark:bg-zinc-800/80 text-slate-800 dark:text-slate-200 text-sm font-mono font-bold rounded-lg border border-slate-200 dark:border-zinc-700 min-w-[240px] flex items-center justify-center shadow-inner relative overflow-hidden group">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div class="px-4 py-2.5 bg-slate-100 dark:bg-zinc-800/80 text-slate-800 dark:text-slate-200 text-xs font-mono font-bold rounded-xl border border-slate-200 dark:border-zinc-700 min-w-[280px] max-w-full flex items-center justify-between shadow-inner relative overflow-hidden group">
                 <div v-if="!showLicenseKey" class="absolute inset-0 backdrop-blur-md bg-slate-100/40 dark:bg-zinc-800/40 z-10"></div>
-                <span :class="{'blur-sm select-none': !showLicenseKey, 'tracking-widest opacity-30': !showLicenseKey, 'relative z-20': true}">
-                  {{ showLicenseKey ? (licenseData?.license_key || 'N/A') : '••••••••••••••••••••' }}
+                <span class="break-all text-[11px] leading-relaxed font-mono" :class="{'blur-sm select-none tracking-widest opacity-30': !showLicenseKey, 'relative z-20': true}">
+                  {{ showLicenseKey ? (licenseData?.license_key || 'N/A') : '••••••••••••••••••••••••••••••••••••••••••••••••••••••••' }}
                 </span>
               </div>
               
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-3 shrink-0">
                 <button @click="showLicenseKey = !showLicenseKey" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-bold flex items-center gap-1.5 transition-colors focus:outline-none">
                   <svg v-if="!showLicenseKey" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
@@ -64,10 +64,6 @@
           <button v-if="daysRemaining <= 0 || licenseData?.status !== 'active'" @click="showRenewModal = true" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition-all shadow-sm flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             Renew Plan
-          </button>
-          <button v-else @click="openChangePlanModal" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition-all shadow-sm flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-            Change Plan
           </button>
           
           <button @click="cancelSubscription" class="w-full bg-white dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-slate-200 dark:border-zinc-700 text-xs font-bold py-2 px-4 rounded-lg transition-all shadow-sm">
@@ -150,16 +146,19 @@
           <div v-if="paymentMethod === 'new'" class="space-y-3 pt-3 animate-fade-in">
             <div>
               <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Card Number</label>
-              <input type="text" placeholder="0000 0000 0000 0000" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" />
+              <input v-model="newCardNumber" @input="newCardNumber = $event.target.value = formatCardNumber($event.target.value)" maxlength="23" type="text" placeholder="0000 0000 0000 0000" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" :class="cardErrors.cardNumber ? 'border-rose-500' : 'border-slate-200 dark:border-zinc-700'" />
+              <p v-if="cardErrors.cardNumber" class="mt-0.5 text-[10px] text-rose-500 font-medium">{{ cardErrors.cardNumber }}</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Expiry (MM/YY)</label>
-                <input type="text" placeholder="MM/YY" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" />
+                <input v-model="newCardExpiry" @input="newCardExpiry = $event.target.value = formatCardExpiry($event.target.value)" maxlength="5" type="text" placeholder="MM/YY" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" :class="cardErrors.cardExpiry ? 'border-rose-500' : 'border-slate-200 dark:border-zinc-700'" />
+                <p v-if="cardErrors.cardExpiry" class="mt-0.5 text-[10px] text-rose-500 font-medium">{{ cardErrors.cardExpiry }}</p>
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">CVC</label>
-                <input type="text" placeholder="123" class="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" />
+                <input v-model="newCardCvc" @input="newCardCvc = $event.target.value = formatCardCvc($event.target.value)" maxlength="4" type="text" placeholder="123" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white dark:bg-zinc-950 text-slate-900 dark:text-white" :class="cardErrors.cardCvc ? 'border-rose-500' : 'border-slate-200 dark:border-zinc-700'" />
+                <p v-if="cardErrors.cardCvc" class="mt-0.5 text-[10px] text-rose-500 font-medium">{{ cardErrors.cardCvc }}</p>
               </div>
             </div>
           </div>
@@ -229,6 +228,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useLicenseStore } from '@/stores/license';
 import { useToast } from '@/composables/useToast';
+import { formatCardNumber, formatCardExpiry, formatCardCvc, validateCardNumber, validateCardExpiry, validateCardCvc } from '@/composables/useCardValidation';
 import axios from 'axios';
 
 const licenseStore = useLicenseStore();
@@ -238,6 +238,11 @@ const loading = ref(true);
 const showRenewModal = ref(false);
 const paymentMethod = ref('existing');
 const isProcessingRenew = ref(false);
+
+const newCardNumber = ref('');
+const newCardExpiry = ref('');
+const newCardCvc = ref('');
+const cardErrors = ref({});
 
 const showChangePlanModal = ref(false);
 const changePlanStep = ref(1);
@@ -291,10 +296,39 @@ onMounted(async () => {
   loading.value = false;
 });
 
+const validateCardDetails = () => {
+  cardErrors.value = {};
+  if (paymentMethod.value === 'new') {
+    const numRes = validateCardNumber(newCardNumber.value);
+    if (!numRes.valid) cardErrors.value.cardNumber = numRes.message;
+
+    const expRes = validateCardExpiry(newCardExpiry.value);
+    if (!expRes.valid) cardErrors.value.cardExpiry = expRes.message;
+
+    const cvcRes = validateCardCvc(newCardCvc.value);
+    if (!cvcRes.valid) cardErrors.value.cardCvc = cvcRes.message;
+
+    if (Object.keys(cardErrors.value).length > 0) {
+      showToast(cardErrors.value.cardNumber || cardErrors.value.cardExpiry || cardErrors.value.cardCvc, 'error');
+      return false;
+    }
+  }
+  return true;
+};
+
 const processRenewal = async () => {
+  if (!validateCardDetails()) return;
   isProcessingRenew.value = true;
   try {
-    const res = await axios.post('/api/license/renew');
+    const payload = {
+      payment_method: paymentMethod.value,
+    };
+    if (paymentMethod.value === 'new') {
+      payload.cardNumber = newCardNumber.value;
+      payload.cardExpiry = newCardExpiry.value;
+      payload.cardCvc = newCardCvc.value;
+    }
+    const res = await axios.post('/api/license/renew', payload);
     if (res.data.license && licenseStore.licenseData) {
       licenseStore.licenseData.status = res.data.license.status;
       licenseStore.licenseData.expires_at = res.data.license.expires_at;
@@ -302,7 +336,8 @@ const processRenewal = async () => {
     showRenewModal.value = false;
     showToast('Subscription renewed successfully!', 'success');
   } catch (error) {
-    showToast('Failed to renew subscription', 'error');
+    const errMsg = error.response?.data?.errors ? Object.values(error.response.data.errors)[0][0] : 'Failed to renew subscription';
+    showToast(errMsg, 'error');
   } finally {
     isProcessingRenew.value = false;
   }

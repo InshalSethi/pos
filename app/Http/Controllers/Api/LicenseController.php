@@ -16,27 +16,36 @@ class LicenseController extends Controller
     public function checkStatus(Request $request)
     {
         $user = $request->user() ?: \Illuminate\Support\Facades\Auth::user();
-        $license = License::first();
-
-        // Only create initial license if no record exists in database
-        if (!$license) {
-            $license = License::create([
-                'id'             => 1,
-                'license_key'    => 'DEMO-ELITE-YEARLY',
-                'device_id'     => 'DEFAULT-DEVICE',
-                'plan'          => 'elite',
-                'status'        => 'active',
-                'start_date'    => now()->toDateString(),
-                'expires_at'    => now()->addYear()->toDateString(),
-                'last_opened_at' => now(),
-            ]);
-        } else {
-            $license->update(['last_opened_at' => now()]);
-        }
-
         $admin = $user ?: \App\Models\User::whereHas('roles', function($q) {
             $q->where('name', 'owner')->orWhere('name', 'admin');
         })->first() ?: \App\Models\User::first();
+
+        $adminEmail = $admin ? $admin->email : ($user ? $user->email : 'admin@gmail.com');
+        $license = License::first();
+
+        // If license missing or key is not encrypted, generate encrypted key storing email, plan, start_date and end_date
+        if (!$license || !\App\Services\LicenseKeyService::decryptKey($license->license_key)) {
+            $startDate = $license && $license->start_date ? \Carbon\Carbon::parse($license->start_date)->toDateString() : now()->toDateString();
+            $expiresAt = $license && $license->expires_at ? \Carbon\Carbon::parse($license->expires_at)->toDateString() : now()->addYear()->toDateString();
+            $plan = $license && $license->plan ? $license->plan : 'enterprise';
+
+            $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey($adminEmail, $plan, $startDate, $expiresAt);
+
+            $license = License::updateOrCreate(
+                ['id' => 1],
+                [
+                    'license_key'    => $encryptedKey,
+                    'device_id'     => 'DEFAULT-DEVICE',
+                    'plan'          => $plan,
+                    'status'        => 'active',
+                    'start_date'    => $startDate,
+                    'expires_at'    => $expiresAt,
+                    'last_opened_at' => now(),
+                ]
+            );
+        } else {
+            $license->update(['last_opened_at' => now()]);
+        }
 
         $status = $license->status ?: 'active';
 
@@ -49,7 +58,7 @@ class LicenseController extends Controller
             'status'      => $status,
             'license'     => $license,
             'admin_name'  => $admin ? $admin->name : 'Administrator',
-            'admin_email' => $admin ? $admin->email : 'admin@example.com',
+            'admin_email' => $adminEmail,
         ]);
     }
 
@@ -62,18 +71,9 @@ class LicenseController extends Controller
         ]);
 
         try {
-            // Simulated call to Live Server (replace with actual URL)
-            // $response = Http::post('https://your-live-site.com/api/licenses/verify', [
-            //     'license_key' => $request->license_key,
-            //     'device_id' => $request->device_id,
-            // ]);
-            
-            // For now, we mock the Live Server response
-            // We assume the live server validates and sends back expiration info
             $mockLiveResponse = [
                 'status' => 'success',
                 'data' => [
-                    'license_key' => $request->license_key,
                     'plan' => 'basic',
                     'start_date' => now()->toDateString(),
                     'expires_at' => now()->addDays(30)->toDateString(),
@@ -84,17 +84,25 @@ class LicenseController extends Controller
                 return response()->json(['message' => 'Invalid License Key or Device Limit Reached.'], 400);
             }
 
-            // Wipe existing database and set up fresh for new license (optional, depending on business rules)
             if (!License::exists()) {
                 Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
             }
 
+            $user = $request->user() ?: \Illuminate\Support\Facades\Auth::user();
+            $email = $user ? $user->email : 'admin@gmail.com';
             $data = $mockLiveResponse['data'];
+
+            $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey(
+                $email,
+                $data['plan'],
+                $data['start_date'],
+                $data['expires_at']
+            );
 
             $license = License::updateOrCreate(
                 ['id' => 1], // Singleton license row
                 [
-                    'license_key' => $data['license_key'],
+                    'license_key' => $encryptedKey,
                     'device_id' => $request->device_id,
                     'plan' => $data['plan'],
                     'status' => 'active',
@@ -116,12 +124,50 @@ class LicenseController extends Controller
 
     public function renew(Request $request)
     {
+        if ($request->input('payment_method') === 'new' || $request->has('cardNumber') || $request->has('card_number')) {
+            $cardNumberKey = $request->has('cardNumber') ? 'cardNumber' : 'card_number';
+            $cardExpiryKey = $request->has('cardExpiry') ? 'cardExpiry' : 'card_expiry';
+            $cardCvcKey    = $request->has('cardCvc') ? 'cardCvc' : 'card_cvc';
+
+            $request->validate([
+                $cardNumberKey => ['required', new \App\Rules\ValidCardNumber()],
+                $cardExpiryKey => ['required', new \App\Rules\ValidCardExpiry()],
+                $cardCvcKey    => ['required', new \App\Rules\ValidCardCvc()],
+            ]);
+        }
+
         $license = License::first();
         if ($license) {
+            $user = $request->user() ?: \Illuminate\Support\Facades\Auth::user();
+            $email = $user ? $user->email : 'admin@gmail.com';
+            $plan = strtolower($request->input('plan', $license->plan ?: 'enterprise'));
+            $cycle = strtolower($request->input('billing_cycle', $request->input('cycle', 'monthly')));
+
+            $startDate = $license->start_date ? \Carbon\Carbon::parse($license->start_date)->toDateString() : now()->toDateString();
+            $expiresAt = ($cycle === 'yearly' || $cycle === 'annual') ? now()->addYear()->toDateString() : now()->addMonth()->toDateString();
+
+            $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey($email, $plan, $startDate, $expiresAt);
+
             $license->update([
-                'status' => 'active',
-                'expires_at' => now()->addYear()
+                'license_key' => $encryptedKey,
+                'plan'       => $plan,
+                'status'     => 'active',
+                'expires_at' => $expiresAt
             ]);
+
+            // Record Subscription Payment History
+            $cardNumber = $request->input('cardNumber', $request->input('card_number'));
+            \App\Services\SubscriptionPaymentService::recordPayment(
+                $user ? $user->id : null,
+                $user ? $user->name : 'Admin User',
+                $email,
+                $plan,
+                $cycle,
+                $cardNumber,
+                'Credit Card',
+                $request->input('coupon_code', $request->input('couponCode'))
+            );
+
             return response()->json(['message' => 'License renewed successfully', 'license' => $license]);
         }
         return response()->json(['message' => 'License not found'], 404);

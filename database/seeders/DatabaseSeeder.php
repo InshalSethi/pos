@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminSeeder::class);
         $this->call(BusinessTypeSeeder::class);
         $this->call(CustomFormSeeder::class);
+        $this->call(SubscriptionPlanSeeder::class);
 
         // 2. Create default admin user
         $this->command->info('Creating default admin user...');
@@ -58,16 +59,21 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeding categories...');
         $this->call(CategorySeeder::class);
 
-        // 8. Seed Elite License for Demo
-        $this->command->info('Allocating Elite Yearly License...');
+        // 8. Seed Enterprise License for Demo
+        $this->command->info('Allocating Enterprise Yearly License...');
+        $adminEmail = 'admin@gmail.com';
+        $startDate = now()->toDateString();
+        $expiresAt = now()->addYear()->toDateString();
+        $encryptedKey = \App\Services\LicenseKeyService::generateEncryptedKey($adminEmail, 'enterprise', $startDate, $expiresAt);
+
         \App\Models\License::updateOrCreate(
             ['id' => 1],
             [
-                'license_key' => 'DEMO-ELITE-YEARLY',
-                'plan' => 'elite',
+                'license_key' => $encryptedKey,
+                'plan' => 'enterprise',
                 'status' => 'active',
-                'start_date' => now()->toDateString(),
-                'expires_at' => now()->addYear()->toDateString(),
+                'start_date' => $startDate,
+                'expires_at' => $expiresAt,
                 'last_opened_at' => now(),
             ]
         );

@@ -64,6 +64,9 @@ use App\Http\Controllers\Api\AssetController;
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
 Route::get('/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
 Route::get('/custom-forms/get-fields', [\App\Http\Controllers\Admin\AdminCustomFormController::class, 'getFormForArea']);
+Route::get('/subscription-plans', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'publicPlans']);
+Route::get('/public/subscription-plans', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'publicPlans']);
+Route::post('/coupons/validate', [\App\Http\Controllers\Admin\AdminCouponController::class, 'validateCoupon']);
 
 // License Activation & Verification
 Route::get('/license/status', [\App\Http\Controllers\Api\LicenseController::class, 'checkStatus']);
