@@ -98,18 +98,30 @@ class AuthController extends Controller
             ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
             : null;
 
-        $redirectUrl = ($user->onboarding_completed && $user->current_company_id) ? '/dashboard' : '/owner/companies';
+        // Determine ownership and destination
+        $isOwner = (bool) (
+            $user->is_owner || 
+            $user->hasRole('owner') || 
+            $user->hasRole('admin') || 
+            $user->hasRole('Super Admin') || 
+            $user->ownedCompanies()->exists()
+        );
+
+        $redirectUrl = $isOwner ? '/owner/companies' : '/dashboard';
         if (session('desktop_auth_pending') || $request->input('redirect') === '/desktop-login') {
             $redirectUrl = '/desktop-login';
         }
 
         return response()->json([
-            'token'           => $token,
-            'user'            => $user,
-            'permissions'     => $permissions,
-            'roles'           => $roles,
-            'redirect_url'    => $redirectUrl,
-            'company_context' => $company ? [
+            'token'               => $token,
+            'user'                => $user,
+            'permissions'         => $permissions,
+            'roles'               => $roles,
+            'is_owner'            => $isOwner,
+            'assigned_company_id' => $user->current_company_id,
+            'redirect_to'         => $redirectUrl,
+            'redirect_url'        => $redirectUrl,
+            'company_context'     => $company ? [
                 'base_currency'   => $company->base_currency   ?? 'USD',
                 'system_language' => $company->system_language ?? 'en',
                 'timezone_offset' => $company->timezone_offset ?? 'UTC',
@@ -241,11 +253,14 @@ class AuthController extends Controller
             }
 
             return response()->json([
-                'token' => $token,
-                'user' => $user,
-                'permissions' => $permissions,
-                'roles' => $roles,
-                'redirect_url' => '/owner/companies',
+                'token'               => $token,
+                'user'                => $user,
+                'permissions'         => $permissions,
+                'roles'               => $roles,
+                'is_owner'            => true,
+                'assigned_company_id' => $user->current_company_id,
+                'redirect_to'         => '/owner/companies',
+                'redirect_url'        => '/owner/companies',
             ], 201);
         });
     }
@@ -268,16 +283,27 @@ class AuthController extends Controller
             }
         }
 
+        // Determine ownership
+        $isOwner = (bool) (
+            $user->is_owner || 
+            $user->hasRole('owner') || 
+            $user->hasRole('admin') || 
+            $user->hasRole('Super Admin') || 
+            $user->ownedCompanies()->exists()
+        );
+
         // Eagerly resolve the active company for localization context
         $company = $user->current_company_id
             ? $user->currentCompany()->select('id', 'base_currency', 'system_language', 'timezone_offset')->first()
             : null;
 
         return response()->json([
-            'user'            => $user,
-            'permissions'     => $permissions,
-            'roles'           => $roles,
-            'company_context' => $company ? [
+            'user'                => $user,
+            'permissions'         => $permissions,
+            'roles'               => $roles,
+            'is_owner'            => $isOwner,
+            'assigned_company_id' => $user->current_company_id,
+            'company_context'     => $company ? [
                 'base_currency'   => $company->base_currency   ?? 'USD',
                 'system_language' => $company->system_language ?? 'en',
                 'timezone_offset' => $company->timezone_offset ?? 'UTC',

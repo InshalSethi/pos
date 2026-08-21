@@ -31,6 +31,30 @@ export const useAuthStore = defineStore('auth', () => {
     return cid;
   });
 
+  const isOwner = computed(() => {
+    if (!user.value) return false;
+    if (user.value.is_owner !== undefined) return Boolean(user.value.is_owner);
+    const userRoles = roles.value.map(r => String(r).toLowerCase());
+    if (userRoles.includes('admin') || userRoles.includes('owner') || userRoles.includes('super admin')) {
+      return true;
+    }
+    if (user.value.type === 'employee' || userRoles.includes('employee')) {
+      return false;
+    }
+    return true;
+  });
+
+  const setCurrentCompany = (companyId) => {
+    if (companyId) {
+      if (user.value) {
+        user.value.current_company_id = companyId;
+        user.value.company_id = companyId;
+      }
+      localStorage.setItem('current_company_id', companyId);
+      localStorage.setItem('company_id', companyId);
+    }
+  };
+
   // Actions
   const login = async (credentials) => {
     try {
@@ -47,9 +71,10 @@ export const useAuthStore = defineStore('auth', () => {
         roles.value = response.data.roles || [];
         isDeactivated.value = false;
 
-        if (response.data.user?.current_company_id) {
-          localStorage.setItem('current_company_id', response.data.user.current_company_id);
-          localStorage.setItem('company_id', response.data.user.current_company_id);
+        const assignedCompanyId = response.data.assigned_company_id || response.data.user?.current_company_id;
+        if (assignedCompanyId) {
+          localStorage.setItem('current_company_id', assignedCompanyId);
+          localStorage.setItem('company_id', assignedCompanyId);
         }
 
         // Seed currency store from company context (instant, no extra API call)
@@ -75,7 +100,15 @@ export const useAuthStore = defineStore('auth', () => {
           localStorage.setItem('token_expiration', expirationDate.toISOString());
         }
 
-        return { success: true, redirect_url: response.data.redirect_url };
+        const isUserOwner = response.data.is_owner !== undefined ? Boolean(response.data.is_owner) : isOwner.value;
+        const destination = response.data.redirect_to || response.data.redirect_url || (isUserOwner ? '/owner/companies' : '/dashboard');
+
+        return { 
+          success: true, 
+          is_owner: isUserOwner,
+          assigned_company_id: assignedCompanyId,
+          redirect_url: destination 
+        };
       }
     } catch (error) {
       return {
@@ -259,6 +292,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Getters
     isAuthenticated,
+    isOwner,
     hasPermission,
     hasRole,
     currentCompanyId,
@@ -270,6 +304,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     setToken,
     register,
+    setCurrentCompany,
     forgotPassword,
     resetPassword,
     triggerDeactivation

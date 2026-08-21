@@ -89,7 +89,29 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['role_name', 'company_id', 'is_setup_completed', 'avatar_url', 'profile_photo_path', 'attachments_urls'];
+    protected $appends = ['role_name', 'company_id', 'is_setup_completed', 'avatar_url', 'profile_photo_path', 'attachments_urls', 'is_owner'];
+
+    public function ownedCompanies(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Company::class, 'user_id');
+    }
+
+    /**
+     * Determine if user is an account owner / admin or staff employee.
+     */
+    public function getIsOwnerAttribute(): bool
+    {
+        if ($this->hasRole('owner') || $this->hasRole('admin') || $this->hasRole('Super Admin')) {
+            return true;
+        }
+
+        if ($this->type === 'employee' || $this->hasRole('employee') || $this->employee()->exists()) {
+            // Only true if they actually created and own companies
+            return $this->ownedCompanies()->exists();
+        }
+
+        return $this->ownedCompanies()->exists() || $this->type === 'user';
+    }
 
     public function getAttachmentsUrlsAttribute(): array
     {

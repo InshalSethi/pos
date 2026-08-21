@@ -656,15 +656,33 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
-  // 2. Allow company setup, initiation, and owner hub routes to pass through cleanly
-  if (to.path === '/owner/companies' || to.path.startsWith('/owner/companies') || to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company') {
+  // 2. Owner Workspace Hub route protection
+  if (to.path === '/owner/companies' || to.path.startsWith('/owner/companies')) {
+    if (!authStore.isAuthenticated) {
+      return next('/login');
+    }
+    // Only account owners / admins can view the workspace hub
+    if (!authStore.isOwner) {
+      return next('/dashboard');
+    }
     return next();
   }
 
-  // 3. Handle guest-only routes (login, register, forgot-password, reset-password, welcome)
+  // 3. Allow company setup and initiation routes to pass through cleanly for authenticated owners
+  if (to.path === '/company-setup' || to.path.startsWith('/company-setup') || to.path === '/initiate-new-company') {
+    if (!authStore.isAuthenticated) {
+      return next('/login');
+    }
+    return next();
+  }
+
+  // 4. Handle guest-only routes (login, register, forgot-password, reset-password, welcome)
   if (to.meta.requiresGuest) {
     if (authStore.isAuthenticated) {
-      if (authStore.user?.company_id === null || !authStore.user?.is_setup_completed) {
+      if (authStore.isOwner) {
+        if (authStore.user?.company_id === null || !authStore.user?.is_setup_completed) {
+          return next('/owner/companies');
+        }
         return next('/owner/companies');
       }
       return next('/dashboard');
@@ -672,7 +690,7 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
-  // 4. Handle protected routes
+  // 5. Handle protected routes
   if (to.meta.requiresAuth) {
     if (!authStore.isAuthenticated) {
       if (window.electronAPI?.isElectron) {
@@ -681,8 +699,8 @@ router.beforeEach(async (to, from, next) => {
       return next('/login');
     }
 
-    // Redirect to owner hub if company setup is pending
-    if (authStore.user?.company_id === null || !authStore.user?.is_setup_completed) {
+    // Redirect to owner hub if company setup is pending (for owners)
+    if (authStore.isOwner && (authStore.user?.company_id === null || !authStore.user?.is_setup_completed)) {
       return next('/owner/companies');
     }
 

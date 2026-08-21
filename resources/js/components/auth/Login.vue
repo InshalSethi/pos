@@ -224,7 +224,15 @@ const handleLogin = async () => {
   try {
     const result = await authStore.login(form.value);
     if (result.success) {
-      window.location.href = result.redirect_url || '/owner/companies';
+      if (result.is_owner) {
+        window.location.href = result.redirect_url || '/owner/companies';
+      } else {
+        // Staff / Employee user
+        if (result.assigned_company_id) {
+          authStore.setCurrentCompany(result.assigned_company_id);
+        }
+        window.location.href = result.redirect_url || '/dashboard';
+      }
     } else {
       error.value = result.message;
     }

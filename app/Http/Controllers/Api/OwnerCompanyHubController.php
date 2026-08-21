@@ -23,6 +23,14 @@ class OwnerCompanyHubController extends Controller
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        // Only Account Owners / Subscription Admins can access the hub
+        if (!$user->is_owner && !$user->hasRole('owner') && !$user->hasRole('admin') && !$user->hasRole('Super Admin') && !$user->ownedCompanies()->exists()) {
+            return response()->json([
+                'message' => 'Unauthorized. Only account owners have access to the company workspace hub.',
+                'redirect_url' => '/dashboard',
+            ], 403);
+        }
+
         // 1. Resolve Subscription & Plan limits
         $planLimits = [
             'standard'   => ['name' => 'Standard (Free Trial)', 'max_companies' => 1, 'is_trial' => true],
