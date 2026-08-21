@@ -54,7 +54,6 @@ export const useLicenseStore = defineStore('license', () => {
     const checkStatus = checkLicenseStatus;
     const isLoaded = computed(() => licenseData.value !== null);
     const isActive = computed(() => isLicenseActive.value);
-
     return {
         isLicenseActive,
         licenseData,

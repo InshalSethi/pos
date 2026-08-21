@@ -16,7 +16,6 @@ class LicenseController extends Controller
     public function checkStatus(Request $request)
     {
         $user = $request->user() ?: \Illuminate\Support\Facades\Auth::user();
-
         $admin = $user ?: \App\Models\User::whereHas('roles', function($q) {
             $q->where('name', 'owner')->orWhere('name', 'admin');
         })->first() ?: \App\Models\User::first();
@@ -45,7 +44,6 @@ class LicenseController extends Controller
                 $license->update(['last_opened_at' => now()]);
             }
         }
-
         $status = $license->status ?: 'active';
 
         // Logged-in users are always active without mutating DB license plan/expiry

@@ -28,7 +28,6 @@ class License extends Model
         'last_opened_at' => 'datetime',
         'features' => 'array',
     ];
-
     /**
      * Generate a securely encrypted license key encoding user email, plan, start_date, and expires_at.
      */
