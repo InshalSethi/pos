@@ -2722,8 +2722,31 @@ watch(() => router.currentRoute.value.path, (newPath) => {
   }
 });
 
-// Favorites System
-const favorites = ref(JSON.parse(localStorage.getItem('pos_favorites') || '[]'));
+// Favorites System (Strictly Scoped by User ID & Company ID)
+const favorites = ref([]);
+
+const getFavoritesStorageKey = () => {
+  const userId = authStore.user?.id || 'guest';
+  const companyId = authStore.currentCompanyId || 'default';
+  return `pos_favorites_${userId}_${companyId}`;
+};
+
+const loadFavorites = () => {
+  try {
+    const key = getFavoritesStorageKey();
+    favorites.value = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch (e) {
+    favorites.value = [];
+  }
+};
+
+watch(
+  () => [authStore.user?.id, authStore.currentCompanyId],
+  () => {
+    loadFavorites();
+  },
+  { immediate: true }
+);
 
 const menuItems = [
   { path: '/dashboard', name: 'Dashboard', category: 'General', icon: 'home' },
@@ -2763,7 +2786,8 @@ const toggleFavorite = (item) => {
   } else {
     favorites.value.push(item);
   }
-  localStorage.setItem('pos_favorites', JSON.stringify(favorites.value));
+  const key = getFavoritesStorageKey();
+  localStorage.setItem(key, JSON.stringify(favorites.value));
 };
 
 const isCurrentRouteFavorited = computed(() => {
