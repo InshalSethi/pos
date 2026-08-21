@@ -80,6 +80,11 @@ Route::get('/test', function () {
     return response()->json(['message' => 'API is working', 'time' => now()]);
 });
 
+// License & Subscription routes
+Route::get('/license/status', [\App\Http\Controllers\Api\LicenseController::class, 'checkStatus']);
+Route::post('/license/activate', [\App\Http\Controllers\Api\LicenseController::class, 'activate']);
+Route::post('/license/renew', [\App\Http\Controllers\Api\LicenseController::class, 'renew']);
+
 
 
 // Test dropdown route (temporary fallback - remove in production)
