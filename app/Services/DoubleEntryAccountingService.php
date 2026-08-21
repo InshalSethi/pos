@@ -1341,12 +1341,13 @@ class DoubleEntryAccountingService
             $payableAccountId = $apAcc->id;
         }
 
-        return DB::transaction(function () use ($purchaseOrder, $inventoryAssetAccountId, $payableAccountId) {
+        return DB::transaction(function () use ($purchaseOrder, $companyId, $inventoryAssetAccountId, $payableAccountId) {
             $journalEntry = JournalEntry::create([
-                'entry_number' => $this->generateEntryNumber('PI'),
+                'company_id' => $companyId,
+                'entry_number' => $this->generateEntryNumber('PI', $companyId),
                 'entry_date' => $purchaseOrder->order_date,
                 'reference' => "Purchase Order #{$purchaseOrder->po_number}",
-                'description' => "Purchase Receipt from {$purchaseOrder->supplier->name}",
+                'description' => "Purchase Receipt from " . ($purchaseOrder->supplier_name ?: ($purchaseOrder->supplier?->name ?? 'Supplier')),
                 'entry_type' => 'automatic',
                 'status' => 'posted',
                 'total_debit' => $purchaseOrder->total_amount,

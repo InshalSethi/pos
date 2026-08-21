@@ -307,11 +307,21 @@
                     >
                       {{ item.category_path || (item.product && item.product.category_path) || (typeof item.product?.category === 'string' ? item.product?.category : item.product?.category?.name) }}
                     </div>
-                    <!-- Warehouse Badge -->
-                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                        <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        {{ getWarehouseNameForItem(item) }} ({{ item.quantity }} Qty)
+                    <!-- Badges for Limits & Stock -->
+                    <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                      <span v-if="item.max_returnable !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                        PO Limit: {{ item.max_returnable }}
+                      </span>
+                      <span v-if="item.available_stock !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold" :class="item.available_stock > 0 ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40' : 'bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40'">
+                        In Stock: {{ item.available_stock }}
+                      </span>
+                      <span v-if="getItemMaxAllowed(item) !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                        Max Returnable: {{ getItemMaxAllowed(item) }}
+                      </span>
+                      <!-- Warehouse Badge -->
+                      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
+                        <svg class="w-2.5 h-2.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        {{ getWarehouseNameForItem(item) }}
                       </span>
                     </div>
                   </td>
@@ -325,12 +335,19 @@
                     />
                   </td>
                   <td class="py-3 px-4 text-center">
-                    <input
-                      v-model.number="item.quantity"
-                      type="number"
-                      min="1"
-                      class="w-20 text-center px-2 py-1 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded text-xs font-bold focus:ring-1 focus:ring-blue-500"
-                    />
+                    <div class="flex flex-col items-center">
+                      <input
+                        v-model.number="item.quantity"
+                        type="number"
+                        min="1"
+                        :max="getItemMaxAllowed(item)"
+                        class="w-20 text-center px-2 py-1 bg-white dark:bg-zinc-800 border rounded text-xs font-bold focus:ring-1 transition-all"
+                        :class="isItemQtyExceeded(item) ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30 text-rose-600 focus:ring-rose-500' : 'border-slate-300 dark:border-zinc-700 focus:ring-blue-500'"
+                      />
+                      <span v-if="isItemQtyExceeded(item)" class="text-[9px] text-rose-600 dark:text-rose-400 font-bold mt-1 leading-tight text-center">
+                        Exceeds limit (Max: {{ getItemMaxAllowed(item) }})
+                      </span>
+                    </div>
                   </td>
                   <td class="py-3 px-4 text-center">
                     <input
@@ -390,53 +407,123 @@
               <span class="font-bold text-emerald-600">-{{ currencySymbol }}{{ formatCurrency(computedDiscount) }}</span>
             </div>
             <div class="border-t border-slate-200 dark:border-zinc-700 mt-4 pt-4 flex justify-between items-center font-black">
-              <span class="text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Grand Total</span>
+                  <span class="text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Grand Total</span>
               <span class="text-2xl text-emerald-500 dark:text-emerald-400 leading-none">{{ currencySymbol }}{{ formatCurrency(computedGrandTotal) }}</span>
             </div>
           </div>
 
-          <!-- Reason -->
-          <div>
+          <!-- Return Reason (Floating Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Reason for Return *</label>
-            <select
-              v-model="form.reason"
-              required
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
-            >
-              <option value="Damaged Goods">Damaged Goods</option>
-              <option value="Defective / Quality Issue">Defective / Quality Issue</option>
-              <option value="Wrong Item Shipped">Wrong Item Shipped</option>
-              <option value="Overstocked / Excess">Overstocked / Excess</option>
-              <option value="Expired Product">Expired Product</option>
-              <option value="Other">Other Reason</option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('reason')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer font-semibold"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'reason' }"
+              >
+                <span class="truncate font-semibold">{{ form.reason || 'Select Reason' }}</span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': activeDropdown === 'reason' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'reason'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 flex flex-col animate-fade-in"
+              >
+                <button
+                  v-for="r in reasonOptions"
+                  :key="r"
+                  type="button"
+                  @click="form.reason = r; activeDropdown = null"
+                  class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center last:border-b-0"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.reason === r }"
+                >
+                  <span>{{ r }}</span>
+                  <svg v-if="form.reason === r" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Status -->
-          <div>
+          <!-- Return Status (Floating Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
             <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Return Status</label>
-            <select
-              v-model="form.status"
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
-            >
-              <option value="draft">Draft</option>
-              <option value="pending">Pending Approval</option>
-              <option value="approved">Approved (Deduct Inventory &amp; Post Ledger)</option>
-              <option value="completed">Completed</option>
-            </select>
+            <div class="relative">
+              <button
+                type="button"
+                @click="toggleDropdown('return_status')"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all cursor-pointer font-semibold"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'return_status' }"
+              >
+                <span class="truncate font-semibold">{{ getReturnStatusLabel(form.status) }}</span>
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': activeDropdown === 'return_status' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'return_status'"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 flex flex-col animate-fade-in"
+              >
+                <button
+                  v-for="opt in returnStatusOptions"
+                  :key="opt.value"
+                  type="button"
+                  @click="form.status = opt.value; activeDropdown = null"
+                  class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center last:border-b-0"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.status === opt.value }"
+                >
+                  <div class="flex flex-col">
+                    <span class="font-semibold">{{ opt.label }}</span>
+                    <span v-if="opt.desc" class="text-[10px] text-slate-400 font-normal mt-0.5">{{ opt.desc }}</span>
+                  </div>
+                  <svg v-if="form.status === opt.value" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Refund Status -->
-          <div>
-            <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Refund Status</label>
-            <select
-              v-model="form.refund_status"
-              class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-zinc-100 font-semibold"
-            >
-              <option value="pending">Pending Refund</option>
-              <option value="partial">Partial Refund</option>
-              <option value="refunded">Refunded / Credited</option>
-            </select>
+          <!-- Refund Status (Floating Dropdown) -->
+          <div class="space-y-1 relative" @click.stop>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Refund Status</label>
+              <span v-if="isUnpaidPo" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">(Auto-locked)</span>
+            </div>
+            <div class="relative">
+              <button
+                type="button"
+                @click="!isUnpaidPo && toggleDropdown('refund_status')"
+                :disabled="isUnpaidPo"
+                class="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs flex items-center justify-between text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 dark:focus:border-zinc-600 transition-all disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed cursor-pointer font-semibold"
+                :class="{ 'border-slate-300 ring-2 ring-slate-100 dark:ring-zinc-800': activeDropdown === 'refund_status' }"
+              >
+                <span class="truncate font-semibold">{{ getRefundStatusLabel(form.refund_status) }}</span>
+                <svg v-if="!isUnpaidPo" class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1 transition-transform" :class="{ 'rotate-180': activeDropdown === 'refund_status' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <svg v-else class="w-3.5 h-3.5 text-amber-500 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              </button>
+
+              <div
+                v-if="activeDropdown === 'refund_status' && !isUnpaidPo"
+                class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl py-1 flex flex-col animate-fade-in"
+              >
+                <button
+                  v-for="opt in refundStatusOptions"
+                  :key="opt.value"
+                  type="button"
+                  @click="form.refund_status = opt.value; activeDropdown = null"
+                  class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs text-slate-800 dark:text-zinc-200 border-b border-slate-50 dark:border-zinc-800/40 cursor-pointer flex justify-between items-center last:border-b-0"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-700 dark:text-blue-400': form.refund_status === opt.value }"
+                >
+                  <div class="flex flex-col">
+                    <span class="font-semibold">{{ opt.label }}</span>
+                    <span v-if="opt.desc" class="text-[10px] text-slate-400 font-normal mt-0.5">{{ opt.desc }}</span>
+                  </div>
+                  <svg v-if="form.refund_status === opt.value" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+              </div>
+            </div>
+            <p v-if="isUnpaidPo" class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1 font-medium">
+              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Auto-set to Refunded / Credited (AP Credit adjustment is immediate)</span>
+            </p>
           </div>
 
           <!-- REFUND COLLECTION DETAILS (Directly below Refund Status) -->
@@ -750,7 +837,7 @@
         <div class="pt-6 border-t border-slate-200 dark:border-zinc-800 space-y-2 mt-6">
           <button
             @click="updateReturn"
-            :disabled="submitting || form.items.length === 0"
+            :disabled="submitting || form.items.length === 0 || hasStockValidationErrors || (isUnpaidPo ? false : !isRefundBalanced) || isLiquidRefundExceeded"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition-all disabled:opacity-50 flex items-center justify-center space-x-2 cursor-pointer"
           >
             <span>Update Purchase Return</span>
@@ -814,6 +901,38 @@ const toggleDropdown = (name) => {
 const closeAllDropdowns = () => {
   activeDropdown.value = null;
   openBankSplitDropdownIndex.value = null;
+};
+
+const reasonOptions = [
+  'Damaged Goods',
+  'Defective / Quality Issue',
+  'Wrong Item Shipped',
+  'Overstocked / Excess',
+  'Expired Product',
+  'Other',
+];
+
+const returnStatusOptions = [
+  { value: 'draft', label: 'Draft', desc: 'Save without deducting stock or posting GL entries' },
+  { value: 'pending', label: 'Pending Approval', desc: 'Awaiting manager approval' },
+  { value: 'approved', label: 'Approved (Deduct Inventory & Post Ledger)', desc: 'Immediately deducts stock & posts GL entries' },
+  { value: 'completed', label: 'Completed', desc: 'Fully processed and closed' },
+];
+
+const getReturnStatusLabel = (val) => {
+  const opt = returnStatusOptions.find(o => o.value === val);
+  return opt ? opt.label : 'Pending Approval';
+};
+
+const refundStatusOptions = [
+  { value: 'pending', label: 'Pending Refund', desc: 'Refund / credit note is in progress' },
+  { value: 'partial', label: 'Partial Refund', desc: 'Partially received / credited' },
+  { value: 'refunded', label: 'Refunded / Credited', desc: 'Fully settled / credited' },
+];
+
+const getRefundStatusLabel = (val) => {
+  const opt = refundStatusOptions.find(o => o.value === val);
+  return opt ? opt.label : 'Pending Refund';
 };
 
 const form = reactive({
@@ -1138,6 +1257,30 @@ const isApCreditExceeded = computed(() => {
   return val > (poDueAmount.value + 0.009);
 });
 
+const getItemMaxAllowed = (item) => {
+  let limits = [];
+  if (item.max_returnable !== undefined && item.max_returnable !== null) {
+    limits.push(Number(item.max_returnable));
+  }
+  if (item.available_stock !== undefined && item.available_stock !== null) {
+    limits.push(Number(item.available_stock));
+  }
+  if (item.max_allowed_qty !== undefined && item.max_allowed_qty !== null) {
+    limits.push(Number(item.max_allowed_qty));
+  }
+  return limits.length > 0 ? Math.min(...limits) : undefined;
+};
+
+const isItemQtyExceeded = (item) => {
+  const max = getItemMaxAllowed(item);
+  if (max === undefined) return false;
+  return (parseFloat(item.quantity) || 0) > max;
+};
+
+const hasStockValidationErrors = computed(() => {
+  return form.items.some(i => isItemQtyExceeded(i) || (parseFloat(i.quantity) || 0) <= 0);
+});
+
 watch(
   [() => form.payment_method, () => returnGrandTotal.value, () => selectedPoData.value],
   ([newMethod, newTotal]) => {
@@ -1145,6 +1288,7 @@ watch(
 
     if (isUnpaidPo.value) {
       form.payment_method = 'ap_credit';
+      form.refund_status = 'refunded';
       form.bank_account_id = 'COA_20100';
       form.ap_credit_amount = total;
       form.amount_received = total;
@@ -1325,16 +1469,24 @@ const onPoChange = async (poIdOverride = null) => {
         );
         const itemWhId = i.warehouse_id || i.warehouse?.id || poData?.warehouse_id || form.warehouse_id || 1;
         const itemWhObj = warehouses.value.find(w => w.id == itemWhId);
+        const maxReturnable = i.max_returnable !== undefined ? Number(i.max_returnable) : (qtyPurchased > 0 ? qtyPurchased : undefined);
+        const availableStock = i.available_stock !== undefined ? Number(i.available_stock) : undefined;
+        const maxAllowed = i.max_allowed_qty !== undefined ? Number(i.max_allowed_qty) : maxReturnable;
+        const initialQty = maxAllowed !== undefined && maxAllowed > 0 ? maxAllowed : (qtyPurchased > 0 ? qtyPurchased : 1);
+
         return {
           product_id: i.product_id,
+          product_variation_id: i.product_variation_id || null,
           product_name: i.product?.name || i.product_name || 'Unknown Product',
           product_sku: i.product?.sku || i.product_sku || '',
           warehouse_id: itemWhId,
           warehouse_name: i.warehouse_name || i.warehouse?.name || itemWhObj?.name || getWarehouseNameById(itemWhId),
           unit_cost: parseFloat(i.unit_cost || i.unit_price || 0),
-          quantity: qtyPurchased > 0 ? qtyPurchased : 1,
+          quantity: initialQty,
           qty_returned: qtyPurchased > 0 ? qtyPurchased : 1,
-          max_returnable: qtyPurchased > 0 ? qtyPurchased : undefined,
+          max_returnable: maxReturnable,
+          available_stock: availableStock,
+          max_allowed_qty: maxAllowed,
           tax_amount: parseFloat(i.tax_amount || 0),
           discount_amount: parseFloat(i.discount_amount || 0),
         };
@@ -1529,6 +1681,10 @@ const formatCurrency = (val) => {
 const updateReturn = async () => {
   if (form.items.length === 0) {
     alert('Please add at least one line item to return.');
+    return;
+  }
+  if (hasStockValidationErrors.value) {
+    alert('Please correct line item quantities that exceed available warehouse stock or PO return limits.');
     return;
   }
   if (isApCreditExceeded.value) {

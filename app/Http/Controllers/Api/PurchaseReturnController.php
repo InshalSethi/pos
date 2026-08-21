@@ -7,6 +7,7 @@ use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnItem;
 use App\Models\PurchaseOrder;
 use App\Models\Product;
+use App\Models\Inventory;
 use App\Services\DoubleEntryAccountingService;
 use App\Services\WarehouseInventoryService;
 use Illuminate\Http\Request;
@@ -211,6 +212,20 @@ class PurchaseReturnController extends Controller
             $alreadyReturned = $previousReturns[$item->product_id] ?? 0;
             $maxReturnable = max(0, $receivedQty - $alreadyReturned);
 
+            $targetWhId = $item->warehouse_id ?? $po->warehouse_id ?? 1;
+
+            // Physical available stock in warehouse
+            $invStock = Inventory::where('warehouse_id', $targetWhId)
+                ->where('product_id', $item->product_id)
+                ->where('product_variation_id', $item->product_variation_id ?? null)
+                ->value('stock_qty');
+
+            if ($invStock === null) {
+                $invStock = $item->product?->stock_quantity ?? 0;
+            }
+            $availableStock = max(0, (int) $invStock);
+            $maxAllowedQty = min($maxReturnable, $availableStock);
+
             $allocations = [];
             if (!empty($item->warehouse_allocations) && is_array($item->warehouse_allocations)) {
                 foreach ($item->warehouse_allocations as $alloc) {
@@ -237,6 +252,7 @@ class PurchaseReturnController extends Controller
 
             return [
                 'product_id'            => $item->product_id,
+                'product_variation_id'  => $item->product_variation_id ?? null,
                 'product_name'          => $item->product?->name ?? 'Unknown Product',
                 'product_sku'           => $item->product?->sku ?? '',
                 'unit_cost'             => (float) ($item->unit_cost ?? $item->unit_price ?? 0),
@@ -244,6 +260,8 @@ class PurchaseReturnController extends Controller
                 'quantity_received'     => (int) $receivedQty,
                 'already_returned'      => (int) $alreadyReturned,
                 'max_returnable'        => (int) $maxReturnable,
+                'available_stock'       => (int) $availableStock,
+                'max_allowed_qty'       => (int) $maxAllowedQty,
                 'tax_amount'            => (float) ($item->tax_amount ?? 0),
                 'discount_amount'       => (float) ($item->discount_amount ?? 0),
                 'warehouse_allocations' => $allocations,
@@ -344,6 +362,38 @@ class PurchaseReturnController extends Controller
                     return response()->json([
                         'message' => 'AP Credit amount exceeds the outstanding PO due amount.',
                         'errors'  => ['payment_method' => ["AP Credit ({$apCreditAmount}) cannot be greater than outstanding Udhaar ({$poDueAmount})."]]
+                    ], 422);
+                }
+            }
+        }
+
+        // Hard validation: Check physical available stock in warehouse
+        foreach ($request->items as $item) {
+            $whId = $item['warehouse_id'] ?? $request->warehouse_id ?? 1;
+            $productId = $item['product_id'];
+            $varId = $item['product_variation_id'] ?? null;
+            $product = Product::find($productId);
+
+            if ($product && $product->track_inventory) {
+                $invStock = Inventory::where('warehouse_id', $whId)
+                    ->where('product_id', $productId)
+                    ->where('product_variation_id', $varId)
+                    ->value('stock_qty');
+
+                if ($invStock === null) {
+                    $invStock = $product->stock_quantity ?? 0;
+                }
+
+                $availableStock = (int) $invStock;
+                $reqQty = (float) $item['quantity'];
+
+                if ($reqQty > $availableStock) {
+                    $productName = $product->name ?? 'Product';
+                    return response()->json([
+                        'message' => "Insufficient physical warehouse stock for '{$productName}'.",
+                        'errors'  => [
+                            'items' => ["Cannot return {$reqQty} units of {$productName}. Only {$availableStock} units currently available in stock in selected warehouse."]
+                        ]
                     ], 422);
                 }
             }
@@ -518,6 +568,84 @@ class PurchaseReturnController extends Controller
                 'message' => 'Validation failed',
                 'errors'  => $validator->errors()
             ], 422);
+        }
+
+        $newPoId = $request->input('purchase_order_id', $purchaseReturn->purchase_order_id);
+        $wasApproved = in_array($purchaseReturn->status, ['approved', 'completed']);
+        $oldItemsMap = $purchaseReturn->items->keyBy(function ($i) {
+            return $i->product_id . '_' . ($i->warehouse_id ?? 1) . '_' . ($i->product_variation_id ?? 0);
+        });
+
+        if ($request->has('items')) {
+            if ($newPoId) {
+                $po = PurchaseOrder::with(['purchaseOrderItems', 'items'])->find($newPoId);
+                if ($po) {
+                    $poItemsCollection = $po->purchaseOrderItems->isNotEmpty() ? $po->purchaseOrderItems : $po->items;
+                    $previousReturns = PurchaseReturnItem::whereHas('purchaseReturn', function ($q) use ($newPoId, $id) {
+                            $q->where('purchase_order_id', $newPoId)
+                              ->where('purchase_returns.id', '!=', $id)
+                              ->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
+                        })
+                        ->select('product_id', DB::raw('SUM(quantity) as returned_qty'))
+                        ->groupBy('product_id')
+                        ->pluck('returned_qty', 'product_id');
+
+                    foreach ($request->items as $item) {
+                        $poItem = $poItemsCollection ? $poItemsCollection->firstWhere('product_id', $item['product_id']) : null;
+                        if ($poItem) {
+                            $receivedQty = $poItem->quantity_received ?? $poItem->quantity;
+                            $alreadyReturned = $previousReturns[$item['product_id']] ?? 0;
+                            $maxReturnable = max(0, $receivedQty - $alreadyReturned);
+
+                            if ($item['quantity'] > $maxReturnable) {
+                                $productName = Product::find($item['product_id'])?->name ?? 'Product';
+                                return response()->json([
+                                    'message' => "Returned quantity for '{$productName}' ({$item['quantity']}) exceeds maximum returnable quantity ({$maxReturnable}).",
+                                    'errors'  => ['items' => ["Returned quantity exceeds PO received limit for {$productName}."]]
+                                ], 422);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Physical warehouse stock validation
+            foreach ($request->items as $item) {
+                $whId = $item['warehouse_id'] ?? $request->warehouse_id ?? $purchaseReturn->warehouse_id ?? 1;
+                $productId = $item['product_id'];
+                $varId = $item['product_variation_id'] ?? null;
+                $product = Product::find($productId);
+
+                if ($product && $product->track_inventory) {
+                    $invStock = Inventory::where('warehouse_id', $whId)
+                        ->where('product_id', $productId)
+                        ->where('product_variation_id', $varId)
+                        ->value('stock_qty');
+
+                    if ($invStock === null) {
+                        $invStock = $product->stock_quantity ?? 0;
+                    }
+
+                    $availableStock = (int) $invStock;
+                    if ($wasApproved) {
+                        $key = $productId . '_' . $whId . '_' . ($varId ?? 0);
+                        if (isset($oldItemsMap[$key])) {
+                            $availableStock += (int) $oldItemsMap[$key]->quantity;
+                        }
+                    }
+
+                    $reqQty = (float) $item['quantity'];
+                    if ($reqQty > $availableStock) {
+                        $productName = $product->name ?? 'Product';
+                        return response()->json([
+                            'message' => "Insufficient physical warehouse stock for '{$productName}'.",
+                            'errors'  => [
+                                'items' => ["Cannot return {$reqQty} units of {$productName}. Only {$availableStock} units currently available in stock in selected warehouse."]
+                            ]
+                        ], 422);
+                    }
+                }
+            }
         }
 
         try {

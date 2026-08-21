@@ -76,6 +76,7 @@ class SupplierOverpaymentAndRefundAccountingTest extends TestCase
         ]);
         \Laravel\Sanctum\Sanctum::actingAs($this->user, ['*']);
         $this->actingAs($this->user);
+        $this->withHeaders(['X-Company-ID' => (string) $this->company->id]);
 
         // Chart of accounts
         $this->inventoryAccount = Account::firstOrCreate(

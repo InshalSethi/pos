@@ -57,8 +57,9 @@ class SupplierLedgerController extends Controller
     /**
      * Get supplier general ledger API (IAS 1 Accounts Payable Standard)
      */
-    public function getLedger(Request $request, Supplier $supplier): JsonResponse
+    public function getLedger(Request $request, $supplier): JsonResponse
     {
+        $supplier = $supplier instanceof Supplier ? $supplier : Supplier::withoutGlobalScopes()->findOrFail($supplier);
         $startDate = $request->input('start_date') ?? $request->input('date_from');
         $endDate = $request->input('end_date') ?? $request->input('date_to');
 

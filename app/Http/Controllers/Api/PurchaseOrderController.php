@@ -428,7 +428,7 @@ class PurchaseOrderController extends Controller
                 'terms_and_conditions' => $request->terms_and_conditions,
             ]);
 
-            $companyId = auth()->user()->current_company_id ?? 1;
+            $companyId = auth()->user()?->current_company_id ?? 1;
             $warehouse = Warehouse::where('company_id', $companyId)->where('id', $request->warehouse_id)->first()
                 ?? Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $warehouse?->id;
@@ -633,8 +633,9 @@ class PurchaseOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(PurchaseOrder $purchaseOrder): JsonResponse
+    public function show($purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         $purchaseOrder->load(['supplier', 'user', 'purchaseOrderItems.product', 'payments.bankAccount']);
         return response()->json($purchaseOrder);
     }
@@ -642,8 +643,9 @@ class PurchaseOrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    public function update(Request $request, $purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'required|exists:suppliers,id',
             'expected_delivery_date' => 'nullable|date',
@@ -691,9 +693,9 @@ class PurchaseOrderController extends Controller
             DB::beginTransaction();
 
             // Lock Purchase Order record for update
-            $purchaseOrder = PurchaseOrder::where('id', $purchaseOrder->id)->lockForUpdate()->firstOrFail();
+            $purchaseOrder = PurchaseOrder::withoutGlobalScopes()->where('id', $purchaseOrder->id)->lockForUpdate()->firstOrFail();
 
-            $companyId = auth()->user()->current_company_id ?? 1;
+            $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
             $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $request->warehouse_id ?? ($purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1));
@@ -707,7 +709,7 @@ class PurchaseOrderController extends Controller
             // 2. Reverse previous physical stock adjustments and WAC if previously received
             foreach ($purchaseOrder->purchaseOrderItems as $oldItem) {
                 if ($oldItem->quantity_received > 0) {
-                    $product = Product::where('id', $oldItem->product_id)->lockForUpdate()->first();
+                    $product = Product::withoutGlobalScopes()->where('id', $oldItem->product_id)->lockForUpdate()->first();
                     if ($product && $product->track_inventory) {
                         // Reverse WAC: revert cost_price before deducting stock
                         $currentStock = (float) $product->stock_quantity;
@@ -770,7 +772,7 @@ class PurchaseOrderController extends Controller
             $amountPaid = $alreadyPaid; 
             $dueAmount = max(0, $grandTotal - $amountPaid);
 
-            $supplier = Supplier::findOrFail($request->supplier_id);
+            $supplier = Supplier::withoutGlobalScopes()->findOrFail($request->supplier_id);
 
             $initialStatus = ($amountPaid >= $grandTotal && $grandTotal > 0) ? 'paid' : (($amountPaid > 0) ? 'partial' : 'due');
 
@@ -823,7 +825,7 @@ class PurchaseOrderController extends Controller
                 ]);
 
                 // Adjust stock for new item with WAC calculation & price history
-                $product = Product::where('id', $item['product_id'])->lockForUpdate()->first();
+                $product = Product::withoutGlobalScopes()->where('id', $item['product_id'])->lockForUpdate()->first();
                 if ($product) {
                     $product->refresh();
 
@@ -891,7 +893,7 @@ class PurchaseOrderController extends Controller
             $accountingService->createPurchaseInvoiceEntry($purchaseOrder->fresh());
 
             // 7. Process upfront payments for updated PO
-            $supplier = Supplier::find($purchaseOrder->supplier_id);
+            $supplier = Supplier::withoutGlobalScopes()->find($purchaseOrder->supplier_id);
             if ($supplier) {
                 $this->processPurchaseOrderPayments($purchaseOrder->fresh(), $request, $supplier);
             }
@@ -964,8 +966,9 @@ class PurchaseOrderController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(PurchaseOrder $purchaseOrder): JsonResponse
+    public function destroy($purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         try {
             DB::beginTransaction();
 
@@ -1127,8 +1130,9 @@ class PurchaseOrderController extends Controller
     /**
      * Void a purchase order — cancels the PO, restores used advance, and reverses GL accounting + inventory.
      */
-    public function void(PurchaseOrder $purchaseOrder): JsonResponse
+    public function void($purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         if ($purchaseOrder->status === 'cancelled' || $purchaseOrder->status === 'voided' || $purchaseOrder->status === 'void') {
             return response()->json([
                 'message' => 'This purchase order has already been voided / cancelled'
@@ -1138,7 +1142,7 @@ class PurchaseOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            $companyId = auth()->user()->current_company_id ?? 1;
+            $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
             $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first()
                 ?? \App\Models\Warehouse::where('company_id', $companyId)->first();
             $warehouseId = $purchaseOrder->warehouse_id ?? ($defaultWh ? $defaultWh->id : 1);
@@ -1146,11 +1150,12 @@ class PurchaseOrderController extends Controller
             $accountingService = new DoubleEntryAccountingService();
             $paymentService = new PaymentService();
 
-            $supplier = $purchaseOrder->supplier_id ? Supplier::find($purchaseOrder->supplier_id) : null;
+            $supplier = $purchaseOrder->supplier_id ? Supplier::withoutGlobalScopes()->find($purchaseOrder->supplier_id) : null;
 
             // 1. Detect any utilized supplier advance on this Purchase Order
             $usedAdvanceAmount = 0;
-            $advanceEntry = JournalEntry::where('source_type', 'purchase_order')
+            $advanceEntry = JournalEntry::withoutGlobalScopes()
+                ->where('source_type', 'purchase_order')
                 ->where('source_id', $purchaseOrder->id)
                 ->where(function ($q) {
                     $q->where('entry_number', 'like', 'ADV%')
@@ -1283,8 +1288,8 @@ class PurchaseOrderController extends Controller
             }
 
             $poAdvanceAmount = (float) ($purchaseOrder->advance_amount ?? 0);
-            if ($poAdvanceAmount > $totalPaymentAdvanceReversed && $supplier) {
-                $unreversedAdvance = $poAdvanceAmount - $totalPaymentAdvanceReversed;
+            $unreversedAdvance = max(0, $poAdvanceAmount - $totalPaymentAdvanceReversed - $usedAdvanceAmount);
+            if ($unreversedAdvance > 0 && $supplier) {
                 $supplier->debitAdvance($unreversedAdvance);
             }
 
@@ -1318,8 +1323,9 @@ class PurchaseOrderController extends Controller
     /**
      * Receive items from purchase order
      */
-    public function receive(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    public function receive(Request $request, $purchaseOrder): JsonResponse
     {
+        $purchaseOrder = $purchaseOrder instanceof PurchaseOrder ? $purchaseOrder : PurchaseOrder::withoutGlobalScopes()->findOrFail($purchaseOrder);
         if (!in_array($purchaseOrder->status, ['sent', 'confirmed', 'partially_received'])) {
             return response()->json([
                 'message' => 'Purchase order must be sent or confirmed to receive items'
@@ -1361,7 +1367,7 @@ class PurchaseOrderController extends Controller
                 // Update product inventory
                 $product = Product::find($poItem->product_id);
                 if ($product->track_inventory) {
-                    $companyId = $purchaseOrder->company_id ?? auth()->user()->current_company_id ?? 1;
+                    $companyId = $purchaseOrder->company_id ?: (auth()->user()?->current_company_id ?? 1);
                     $warehouseId = $purchaseOrder->warehouse_id;
                     if (!$warehouseId) {
                         $defaultWh = \App\Models\Warehouse::where('company_id', $companyId)->where('is_default', true)->first();
