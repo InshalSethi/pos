@@ -119,6 +119,10 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+        path: '',
+        redirect: '/dashboard'
+      },
+      {
         path: 'dashboard',
         name: 'Dashboard',
         component: Dashboard
@@ -653,6 +657,9 @@ router.beforeEach(async (to, from, next) => {
 
   // 1. Always allow public / marketing routes through without auth or license checks
   if (to.path === '/' || to.name === 'Landing' || to.path === '/plans' || to.path === '/activation') {
+    if (to.path === '/' && authStore.isAuthenticated) {
+      return next('/dashboard');
+    }
     return next();
   }
 

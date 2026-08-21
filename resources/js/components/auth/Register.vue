@@ -541,7 +541,7 @@ onMounted(async () => {
     loading.value = true;
     try {
       await authStore.setToken(token);
-      window.location.href = redirectParam || '/';
+      window.location.href = redirectParam || '/dashboard';
     } catch (err) {
       error.value = 'Failed to sync Google session';
     } finally {

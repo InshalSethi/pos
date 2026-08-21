@@ -2967,7 +2967,7 @@ const switchCompany = async (companyId) => {
     if (authStore.user) {
       authStore.user.current_company_id = companyId;
     }
-    window.location.href = '/';
+    window.location.href = '/dashboard';
   } catch (error) {
     console.error('Failed to switch company', error);
   }
