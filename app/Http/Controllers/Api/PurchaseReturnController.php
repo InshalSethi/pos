@@ -196,35 +196,58 @@ class PurchaseReturnController extends Controller
         // return's own quantities are not counted as "previously returned")
         $excludeReturnId = $request->query('exclude_return_id');
 
-        // Calculate total previously returned quantities for each product on this PO
+        // Calculate total previously returned quantities for each product/variation on this PO
         $previousReturns = PurchaseReturnItem::whereHas('purchaseReturn', function ($q) use ($poId, $excludeReturnId) {
                 $q->where('purchase_order_id', $poId)->whereIn('status', ['draft', 'pending', 'approved', 'completed']);
                 if ($excludeReturnId) {
                     $q->where('purchase_returns.id', '!=', $excludeReturnId);
                 }
             })
-            ->select('product_id', DB::raw('SUM(quantity) as returned_qty'))
-            ->groupBy('product_id')
-            ->pluck('returned_qty', 'product_id');
+            ->select('product_id', 'product_variation_id', DB::raw('SUM(quantity) as returned_qty'))
+            ->groupBy('product_id', 'product_variation_id')
+            ->get()
+            ->keyBy(function ($row) {
+                return $row->product_id . '_' . ($row->product_variation_id ?? '0');
+            });
 
-        $poItems = $po->items->map(function ($item) use ($previousReturns, $po) {
+        $poItems = $po->items->map(function ($item) use ($previousReturns, $po, $companyId) {
             $receivedQty = $item->quantity_received ?? $item->quantity_ordered ?? $item->quantity;
-            $alreadyReturned = $previousReturns[$item->product_id] ?? 0;
-            $maxReturnable = max(0, $receivedQty - $alreadyReturned);
+            $retKey = $item->product_id . '_' . ($item->product_variation_id ?? '0');
+            $alreadyReturned = isset($previousReturns[$retKey]) ? (int) $previousReturns[$retKey]->returned_qty : 0;
+            $poLimit = max(0, $receivedQty - $alreadyReturned);
 
-            $targetWhId = $item->warehouse_id ?? $po->warehouse_id ?? 1;
+            $targetWhId = $item->warehouse_id ?: $po->warehouse_id;
+            if (!$targetWhId && !empty($po->warehouse_ids) && is_array($po->warehouse_ids)) {
+                $targetWhId = $po->warehouse_ids[0];
+            }
+            if (!$targetWhId) {
+                $targetWhId = \App\Models\Warehouse::where('company_id', $companyId)->value('id') ?? 1;
+            }
 
             // Physical available stock in warehouse
-            $invStock = Inventory::where('warehouse_id', $targetWhId)
-                ->where('product_id', $item->product_id)
-                ->where('product_variation_id', $item->product_variation_id ?? null)
-                ->value('stock_qty');
+            $invQuery = Inventory::where('warehouse_id', $targetWhId)
+                ->where('product_id', $item->product_id);
+
+            if (!empty($item->product_variation_id)) {
+                $invQuery->where('product_variation_id', $item->product_variation_id);
+            } else {
+                $invQuery->where(function ($q) {
+                    $q->whereNull('product_variation_id')->orWhere('product_variation_id', 0);
+                });
+            }
+
+            $invStock = $invQuery->value('stock_qty');
 
             if ($invStock === null) {
-                $invStock = $item->product?->stock_quantity ?? 0;
+                if (!empty($item->product_variation_id)) {
+                    $invStock = \App\Models\ProductVariation::where('id', $item->product_variation_id)->value('stock_qty') ?? 0;
+                } else {
+                    $invStock = $item->product?->stock_quantity ?? 0;
+                }
             }
-            $availableStock = max(0, (int) $invStock);
-            $maxAllowedQty = min($maxReturnable, $availableStock);
+            $availableStock = max(0, (float) $invStock);
+            $maxReturnable = max(0, min($poLimit, $availableStock));
+            $maxAllowedQty = $maxReturnable;
 
             $allocations = [];
             if (!empty($item->warehouse_allocations) && is_array($item->warehouse_allocations)) {
@@ -255,10 +278,13 @@ class PurchaseReturnController extends Controller
                 'product_variation_id'  => $item->product_variation_id ?? null,
                 'product_name'          => $item->product?->name ?? 'Unknown Product',
                 'product_sku'           => $item->product?->sku ?? '',
+                'warehouse_id'          => $targetWhId,
+                'warehouse_name'        => $item->warehouse?->name ?? $po->warehouse?->name ?? 'Main Warehouse',
                 'unit_cost'             => (float) ($item->unit_cost ?? $item->unit_price ?? 0),
                 'quantity_ordered'      => (int) ($item->quantity_ordered ?? $item->quantity),
                 'quantity_received'     => (int) $receivedQty,
                 'already_returned'      => (int) $alreadyReturned,
+                'po_limit'              => (int) $poLimit,
                 'max_returnable'        => (int) $maxReturnable,
                 'available_stock'       => (int) $availableStock,
                 'max_allowed_qty'       => (int) $maxAllowedQty,
@@ -275,7 +301,7 @@ class PurchaseReturnController extends Controller
     }
 
     /**
-     * Store a newly created Purchase Return.
+     * Store a newly created resource in storage.
      */
     public function store(Request $request): JsonResponse
     {
@@ -284,12 +310,13 @@ class PurchaseReturnController extends Controller
             'supplier_id'       => 'required|exists:suppliers,id',
             'warehouse_id'      => 'nullable|exists:warehouses,id',
             'return_date'       => 'required|date',
-            'reason'            => 'required|string|max:255',
+            'reason'            => 'nullable|string|max:255',
             'status'            => 'nullable|in:draft,pending,approved,completed',
             'refund_status'     => 'nullable|in:pending,partial,refunded',
             'payment_method'    => 'nullable|string',
-            'bank_account_id'   => 'nullable|exists:bank_accounts,id',
+            'bank_account_id'   => 'nullable',
             'reference_number'  => 'nullable|string',
+            'amount_received'   => 'nullable|numeric',
             'refund_splits'     => 'nullable|array',
             'notes'             => 'nullable|string',
             'items'             => 'required|array|min:1',
@@ -448,7 +475,7 @@ class PurchaseReturnController extends Controller
                 'warehouse_id'      => $request->warehouse_id,
                 'user_id'           => auth()->id(),
                 'return_date'       => $request->return_date,
-                'reason'            => $request->reason,
+                'reason'            => $request->input('reason') ?: ($request->input('notes') ?: 'Defective / Return items'),
                 'subtotal'          => $subtotal,
                 'tax_amount'        => $totalTax,
                 'discount_amount'   => $totalDiscount,
@@ -456,7 +483,7 @@ class PurchaseReturnController extends Controller
                 'status'            => $status,
                 'refund_status'     => $request->refund_status ?? 'pending',
                 'payment_method'    => $request->payment_method ?? 'cash',
-                'bank_account_id'   => $request->bank_account_id,
+                'bank_account_id'   => is_numeric($request->bank_account_id) ? (int)$request->bank_account_id : null,
                 'reference_number'  => $request->reference_number,
                 'refund_splits'     => $request->refund_splits,
                 'notes'             => $request->notes,
@@ -549,12 +576,13 @@ class PurchaseReturnController extends Controller
             'supplier_id'       => 'sometimes|exists:suppliers,id',
             'warehouse_id'      => 'nullable|exists:warehouses,id',
             'return_date'       => 'sometimes|date',
-            'reason'            => 'sometimes|string|max:255',
+            'reason'            => 'nullable|string|max:255',
             'status'            => 'nullable|in:draft,pending,approved,completed,cancelled',
             'refund_status'     => 'nullable|in:pending,partial,refunded',
             'payment_method'    => 'nullable|string',
-            'bank_account_id'   => 'nullable|exists:bank_accounts,id',
+            'bank_account_id'   => 'nullable',
             'reference_number'  => 'nullable|string',
+            'amount_received'   => 'nullable|numeric',
             'refund_splits'     => 'nullable|array',
             'notes'             => 'nullable|string',
             'items'             => 'sometimes|array|min:1',
@@ -691,21 +719,12 @@ class PurchaseReturnController extends Controller
                 $accountingService->reverseJournalEntryBySource('purchase_return', $purchaseReturn->id);
             }
 
-            // Update basic fields
-            $purchaseReturn->fill($request->only([
-                'purchase_order_id',
-                'supplier_id',
-                'warehouse_id',
-                'return_date',
-                'reason',
-                'status',
-                'refund_status',
-                'payment_method',
-                'bank_account_id',
-                'reference_number',
-                'refund_splits',
-                'notes',
-            ]));
+            if ($request->has('bank_account_id')) {
+                $purchaseReturn->bank_account_id = is_numeric($request->bank_account_id) ? (int)$request->bank_account_id : null;
+            }
+            if ($request->has('reason')) {
+                $purchaseReturn->reason = $request->input('reason') ?: ($request->input('notes') ?: 'Defective / Return items');
+            }
 
             // Update line items if provided
             if ($request->has('items')) {

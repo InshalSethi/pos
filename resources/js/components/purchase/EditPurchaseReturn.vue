@@ -309,14 +309,17 @@
                     </div>
                     <!-- Badges for Limits & Stock -->
                     <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                      <span v-if="item.max_returnable !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                      <span v-if="item.po_limit !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                        PO Limit: {{ item.po_limit }}
+                      </span>
+                      <span v-else-if="item.max_returnable !== undefined && item.po_limit === undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
                         PO Limit: {{ item.max_returnable }}
                       </span>
                       <span v-if="item.available_stock !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold" :class="item.available_stock > 0 ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40' : 'bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40'">
                         In Stock: {{ item.available_stock }}
                       </span>
-                      <span v-if="getItemMaxAllowed(item) !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                        Max Returnable: {{ getItemMaxAllowed(item) }}
+                      <span v-if="item.max_returnable !== undefined || getItemMaxAllowed(item) !== undefined" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                        Max Returnable: {{ item.max_returnable !== undefined ? item.max_returnable : getItemMaxAllowed(item) }}
                       </span>
                       <!-- Warehouse Badge -->
                       <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
@@ -340,12 +343,17 @@
                         v-model.number="item.quantity"
                         type="number"
                         min="1"
-                        :max="getItemMaxAllowed(item)"
+                        :max="item.max_returnable !== undefined ? item.max_returnable : getItemMaxAllowed(item)"
                         class="w-20 text-center px-2 py-1 bg-white dark:bg-zinc-800 border rounded text-xs font-bold focus:ring-1 transition-all"
                         :class="isItemQtyExceeded(item) ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30 text-rose-600 focus:ring-rose-500' : 'border-slate-300 dark:border-zinc-700 focus:ring-blue-500'"
                       />
                       <span v-if="isItemQtyExceeded(item)" class="text-[9px] text-rose-600 dark:text-rose-400 font-bold mt-1 leading-tight text-center">
-                        Exceeds limit (Max: {{ getItemMaxAllowed(item) }})
+                        <template v-if="item.available_stock !== undefined && (parseFloat(item.quantity) || 0) > item.available_stock && item.available_stock <= (item.po_limit ?? item.available_stock)">
+                          Only {{ item.available_stock }} units available in warehouse stock.
+                        </template>
+                        <template v-else>
+                          Exceeds limit (Max: {{ item.max_returnable !== undefined ? item.max_returnable : getItemMaxAllowed(item) }})
+                        </template>
                       </span>
                     </div>
                   </td>
@@ -666,17 +674,35 @@
                 </div>
               </div>
 
-              <!-- Amount Received Field -->
+              <!-- Amount Received / AP Credit Settled Field -->
               <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Amount Received:</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase">
+                    {{ (isUnpaidPo || form.payment_method === 'ap_credit') ? 'AP Credit Settled' : 'Amount Received' }}:
+                  </label>
+                  <span v-if="isUnpaidPo || form.payment_method === 'ap_credit'" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                    Auto-locked to Total
+                  </span>
+                </div>
                 <input
                   v-model.number="form.amount_received"
                   type="number"
                   step="0.01"
                   min="0"
-                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border rounded-lg text-xs font-bold text-slate-800 dark:text-zinc-100"
+                  :disabled="isUnpaidPo || form.payment_method === 'ap_credit'"
+                  :readonly="isUnpaidPo || form.payment_method === 'ap_credit'"
+                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border rounded-lg text-xs font-bold text-slate-800 dark:text-zinc-100 disabled:bg-slate-100 dark:disabled:bg-zinc-800/80 disabled:cursor-not-allowed disabled:text-slate-500"
                   :class="isLiquidRefundExceeded ? 'border-rose-500 ring-1 ring-rose-500 text-rose-600' : 'border-slate-300 dark:border-zinc-700'"
                 />
+                
+                <!-- Notice Alert when 100% Unpaid PO / AP Credit -->
+                <div v-if="isUnpaidPo || form.payment_method === 'ap_credit'" class="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl flex items-start gap-2 text-amber-800 dark:text-amber-300 text-[11px] leading-relaxed">
+                  <span class="text-sm shrink-0">⚠️</span>
+                  <span>
+                    <strong>This PO was 100% on credit (Unpaid).</strong> Amount is automatically locked to Return Grand Total (<strong>{{ currencySymbol }}{{ formatCurrency(returnGrandTotal) }}</strong>) and settled directly against Accounts Payable.
+                  </span>
+                </div>
+
                 <p v-if="isLiquidRefundExceeded" class="text-[10px] text-rose-500 font-semibold mt-1">
                   Cannot refund more cash/bank than originally paid (${{ formatCurrency(poAmountPaid) }}).
                 </p>
@@ -1259,14 +1285,17 @@ const isApCreditExceeded = computed(() => {
 
 const getItemMaxAllowed = (item) => {
   let limits = [];
-  if (item.max_returnable !== undefined && item.max_returnable !== null) {
-    limits.push(Number(item.max_returnable));
+  if (item.po_limit !== undefined && item.po_limit !== null) {
+    limits.push(Number(item.po_limit));
   }
   if (item.available_stock !== undefined && item.available_stock !== null) {
     limits.push(Number(item.available_stock));
   }
   if (item.max_allowed_qty !== undefined && item.max_allowed_qty !== null) {
     limits.push(Number(item.max_allowed_qty));
+  }
+  if (item.max_returnable !== undefined && item.max_returnable !== null) {
+    limits.push(Number(item.max_returnable));
   }
   return limits.length > 0 ? Math.min(...limits) : undefined;
 };
@@ -1282,16 +1311,19 @@ const hasStockValidationErrors = computed(() => {
 });
 
 watch(
-  [() => form.payment_method, () => returnGrandTotal.value, () => selectedPoData.value],
+  [() => form.payment_method, () => returnGrandTotal.value, () => selectedPoData.value, () => isUnpaidPo.value],
   ([newMethod, newTotal]) => {
     const total = newTotal || 0;
 
-    if (isUnpaidPo.value) {
+    if (isUnpaidPo.value || newMethod === 'ap_credit') {
       form.payment_method = 'ap_credit';
       form.refund_status = 'refunded';
       form.bank_account_id = 'COA_20100';
       form.ap_credit_amount = total;
       form.amount_received = total;
+      form.cash_amount = 0;
+      form.vendor_credit_amount = 0;
+      form.bank_splits = [];
     } else if (isPartiallyPaidPo.value) {
       form.payment_method = 'mixed';
       const apCap = Math.min(total, poDueAmount.value);
@@ -1418,6 +1450,7 @@ const onPoChange = async (poIdOverride = null) => {
     selectedPoNumber.value = '';
     selectedPoData.value = null;
     originalPoData.value = null;
+    form.items = [];
     return;
   }
 
@@ -1426,13 +1459,15 @@ const onPoChange = async (poIdOverride = null) => {
     let rawItems = [];
 
     try {
+      const res = await axios.get(`/api/purchase-returns/po-items/${poId}`, {
+        params: { exclude_return_id: returnId }
+      });
+      poData = res.data.purchase_order || res.data;
+      rawItems = res.data.items || [];
+    } catch (e) {
       const res = await axios.get(`/api/purchase-orders/${poId}`);
       poData = res.data;
       rawItems = poData.purchase_order_items || poData.purchaseOrderItems || poData.items || [];
-    } catch (e) {
-      const res = await axios.get(`/api/purchase-returns/po-items/${poId}`);
-      poData = res.data.purchase_order || res.data;
-      rawItems = res.data.items || poData.purchase_order_items || [];
     }
 
     if (poData) {
@@ -1442,7 +1477,6 @@ const onPoChange = async (poIdOverride = null) => {
       }
       selectedPoNumber.value = poData.po_number || '';
 
-      // Auto-extract unique warehouse IDs from PO items / PO header
       const itemWhIds = rawItems.map(i => i.warehouse_id || i.warehouse?.id || poData.warehouse_id).filter(Boolean);
       const uniqueWhIds = Array.from(new Set([...itemWhIds, ...(poData.warehouse_id ? [poData.warehouse_id] : [])]));
       if (uniqueWhIds.length > 0) {
@@ -1465,25 +1499,34 @@ const onPoChange = async (poIdOverride = null) => {
     if (rawItems.length > 0) {
       form.items = rawItems.map(i => {
         const qtyPurchased = Number(
-          i.qty_purchased ?? i.quantity_received ?? i.quantity_ordered ?? i.quantity ?? 0
+          i.quantity_received ?? i.quantity_ordered ?? i.qty_purchased ?? i.quantity ?? 0
         );
+        const poLimit = i.po_limit !== undefined ? Number(i.po_limit) : (qtyPurchased > 0 ? qtyPurchased : undefined);
+        const availableStock = i.available_stock !== undefined ? Number(i.available_stock) : undefined;
+        const maxReturnable = i.max_returnable !== undefined 
+          ? Number(i.max_returnable) 
+          : (poLimit !== undefined && availableStock !== undefined ? Math.min(poLimit, availableStock) : poLimit);
+        const maxAllowed = i.max_allowed_qty !== undefined 
+          ? Number(i.max_allowed_qty) 
+          : maxReturnable;
+        const initialQty = maxAllowed !== undefined ? maxAllowed : (qtyPurchased > 0 ? qtyPurchased : 1);
         const itemWhId = i.warehouse_id || i.warehouse?.id || poData?.warehouse_id || form.warehouse_id || 1;
         const itemWhObj = warehouses.value.find(w => w.id == itemWhId);
-        const maxReturnable = i.max_returnable !== undefined ? Number(i.max_returnable) : (qtyPurchased > 0 ? qtyPurchased : undefined);
-        const availableStock = i.available_stock !== undefined ? Number(i.available_stock) : undefined;
-        const maxAllowed = i.max_allowed_qty !== undefined ? Number(i.max_allowed_qty) : maxReturnable;
-        const initialQty = maxAllowed !== undefined && maxAllowed > 0 ? maxAllowed : (qtyPurchased > 0 ? qtyPurchased : 1);
 
         return {
           product_id: i.product_id,
           product_variation_id: i.product_variation_id || null,
           product_name: i.product?.name || i.product_name || 'Unknown Product',
           product_sku: i.product?.sku || i.product_sku || '',
+          brand_name: i.brand_name || i.product?.brand_name || (typeof i.product?.brand === 'string' ? i.product?.brand : i.product?.brand?.name),
+          category_path: i.category_path || i.product?.category_path || (typeof i.product?.category === 'string' ? i.product?.category : i.product?.category?.name),
+          product: i.product || null,
           warehouse_id: itemWhId,
           warehouse_name: i.warehouse_name || i.warehouse?.name || itemWhObj?.name || getWarehouseNameById(itemWhId),
           unit_cost: parseFloat(i.unit_cost || i.unit_price || 0),
           quantity: initialQty,
-          qty_returned: qtyPurchased > 0 ? qtyPurchased : 1,
+          qty_returned: initialQty,
+          po_limit: poLimit,
           max_returnable: maxReturnable,
           available_stock: availableStock,
           max_allowed_qty: maxAllowed,
@@ -1700,7 +1743,17 @@ const updateReturn = async () => {
     return;
   }
 
-  if (form.payment_method === 'mixed') {
+  if (isUnpaidPo.value || form.payment_method === 'ap_credit') {
+    form.payment_method = 'ap_credit';
+    form.refund_status = 'refunded';
+    form.bank_account_id = 'COA_20100';
+    form.amount_received = returnGrandTotal.value;
+    form.ap_credit_amount = returnGrandTotal.value;
+    form.cash_amount = 0;
+    form.vendor_credit_amount = 0;
+    form.bank_splits = [];
+    form.refund_splits = [];
+  } else if (form.payment_method === 'mixed') {
     const splits = [];
     if ((form.ap_credit_amount || 0) > 0) {
       splits.push({ type: 'ap_credit', account_id: 'COA_20100', amount: form.ap_credit_amount });
@@ -1721,12 +1774,32 @@ const updateReturn = async () => {
     form.refund_splits = splits;
   }
 
+  const cleanBankAccountId = (form.bank_account_id && !String(form.bank_account_id).startsWith('COA_') && !isNaN(Number(form.bank_account_id)))
+    ? Number(form.bank_account_id)
+    : null;
+
+  const payload = {
+    ...form,
+    amount_received: returnGrandTotal.value,
+    bank_account_id: cleanBankAccountId,
+    reason: form.reason || 'Defective / Return items',
+  };
+
   submitting.value = true;
   try {
-    await axios.put(`/api/purchase-returns/${route.params.id}`, form);
+    await axios.put(`/api/purchase-returns/${route.params.id}`, payload);
     router.push('/purchase/returns');
   } catch (err) {
-    alert(err.response?.data?.message || 'Failed to update purchase return');
+    let errorMsg = err.response?.data?.message || 'Failed to update purchase return';
+    if (err.response?.data?.errors) {
+      const errList = Object.entries(err.response.data.errors)
+        .map(([field, msgs]) => `• ${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+        .join('\n');
+      if (errList) {
+        errorMsg += `:\n\n${errList}`;
+      }
+    }
+    alert(errorMsg);
   } finally {
     submitting.value = false;
   }
