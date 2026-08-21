@@ -854,8 +854,10 @@ import { onClickOutside } from '@vueuse/core';
 import SalesPurchasesChart from '@/components/charts/SalesPurchasesChart.vue';
 import DevicesPieChart from '@/components/charts/DevicesPieChart.vue';
 import { useCurrencyStore } from '@/stores/currency';
+import { useAuthStore } from '@/stores/auth';
 
 const currencyStore = useCurrencyStore();
+const authStore = useAuthStore();
 
 import {
   Chart,
@@ -930,31 +932,58 @@ const cardDefinitions = {
   ]
 };
 
+const getStorageKey = () => {
+  const userId = authStore.user?.id || localStorage.getItem('user_id') || 'guest';
+  const companyId = authStore.currentCompanyId || localStorage.getItem('current_company_id') || 'default';
+  return `dashboard_layout_u${userId}_c${companyId}`;
+};
+
 const loadCardVisibility = () => {
   try {
-    const saved = localStorage.getItem('pos_dashboard_card_visibility');
+    const key = getStorageKey();
+    const saved = localStorage.getItem(key);
     if (saved) {
       cardVisibility.value = { ...defaultCardVisibility, ...JSON.parse(saved) };
+    } else {
+      // Default to all widgets selected (true)
+      cardVisibility.value = { ...defaultCardVisibility };
     }
   } catch (e) {
     console.error('Error loading dashboard visibility settings:', e);
+    cardVisibility.value = { ...defaultCardVisibility };
   }
 };
 
 watch(cardVisibility, (newVal) => {
   try {
-    localStorage.setItem('pos_dashboard_card_visibility', JSON.stringify(newVal));
+    const key = getStorageKey();
+    localStorage.setItem(key, JSON.stringify(newVal));
   } catch (e) {}
 }, { deep: true });
 
+// Reactively reload visibility when switching user or company
+watch([() => authStore.user?.id, () => authStore.currentCompanyId], () => {
+  loadCardVisibility();
+});
+
 const showAllCards = () => {
-  Object.keys(cardVisibility.value).forEach(k => {
-    cardVisibility.value[k] = true;
+  const allTrue = {};
+  Object.keys(defaultCardVisibility).forEach(k => {
+    allTrue[k] = true;
   });
+  cardVisibility.value = allTrue;
+  try {
+    const key = getStorageKey();
+    localStorage.setItem(key, JSON.stringify(allTrue));
+  } catch (e) {}
 };
 
 const resetCardDefaults = () => {
   cardVisibility.value = { ...defaultCardVisibility };
+  try {
+    const key = getStorageKey();
+    localStorage.setItem(key, JSON.stringify(defaultCardVisibility));
+  } catch (e) {}
 };
 
 // Reactive data
