@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\LogsActivity;
 
 class Sale extends Model
 {
@@ -20,6 +21,9 @@ class Sale extends Model
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'sales';
 
     protected $fillable = [
         'company_id',

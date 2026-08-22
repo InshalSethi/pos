@@ -346,6 +346,12 @@ const routes = [
         component: () => import('@/components/settings/TaxTags.vue')
       },
       {
+        path: 'settings/activity-logs',
+        name: 'ActivityLogs',
+        component: () => import('@/components/settings/ActivityLogs.vue'),
+        meta: { permission: 'settings.view' }
+      },
+      {
         path: 'sales',
         redirect: '/sales/invoices'
       },

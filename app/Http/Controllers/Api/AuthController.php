@@ -80,6 +80,20 @@ class AuthController extends Controller
             $request->session()->regenerate();
         }
 
+        // Log authentication activity explicitly
+        try {
+            $actorType = (method_exists($user, 'isEmployee') && $user->isEmployee()) ? 'Employee' : 'User';
+            \App\Services\ActivityLogger::logAuth(
+                event: 'login',
+                description: "{$actorType} {$user->name} logged in successfully.",
+                user: $user,
+                properties: [
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]
+            );
+        } catch (\Throwable $th) {}
+
         // Get user permissions and roles
         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
         $roles = $user->getRoleNames()->toArray();

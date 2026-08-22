@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use App\Services\EmployeeUserService;
+use App\Traits\LogsActivity;
 
 use Illuminate\Support\Facades\Storage;
 
@@ -24,6 +25,9 @@ class Employee extends Model
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'team';
 
     protected $fillable = [
         'employee_number',

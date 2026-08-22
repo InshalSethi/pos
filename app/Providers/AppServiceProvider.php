@@ -66,5 +66,11 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\PurchaseOrder::observe(\App\Observers\PurchaseOrderObserver::class);
         \App\Models\Transaction::observe(\App\Observers\TransactionObserver::class);
         \App\Models\PaymentReceipt::observe(\App\Observers\PaymentReceiptObserver::class);
+
+        // Register Auth Event Listeners for User & Employee Activity Logging
+        Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\ActivityLogAuthListener::class);
+        Event::listen(\Illuminate\Auth\Events\Logout::class, \App\Listeners\ActivityLogAuthListener::class);
+        Event::listen(\Illuminate\Auth\Events\Failed::class, \App\Listeners\ActivityLogAuthListener::class);
+        Event::listen(\Illuminate\Auth\Events\Registered::class, \App\Listeners\ActivityLogAuthListener::class);
     }
 }

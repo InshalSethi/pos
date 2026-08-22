@@ -60,6 +60,7 @@ use App\Http\Controllers\Api\FbrSettingsController;
 use App\Http\Controllers\Api\RecipeController;
 use App\Http\Controllers\Api\ProductionOrderController;
 use App\Http\Controllers\Api\AssetController;
+use App\Http\Controllers\Api\ActivityLogController;
 // Public routes
 Route::get('/currencies/active', [CurrencyController::class, 'getActive']);
 Route::get('/business-types', [\App\Http\Controllers\Admin\AdminBusinessTypeController::class, 'options']);
@@ -402,6 +403,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         Route::get('/fbr-entries', [FbrSettingsController::class, 'getEntries']);
         Route::post('/fbr-entries/{fbrEntry}/sync', [FbrSettingsController::class, 'syncEntry']);
         Route::post('/fbr-entries/sync-all', [FbrSettingsController::class, 'syncAllPending']);
+
+        // Activity Logging & Audit Trail routes
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+        Route::get('/activity-logs/types', [ActivityLogController::class, 'types']);
+        Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
 
         // Currency management routes
         Route::get('/currencies', [CurrencyController::class, 'index']);
