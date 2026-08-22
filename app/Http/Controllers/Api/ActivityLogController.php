@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ActivityLogController extends Controller
 {
@@ -160,5 +161,93 @@ class ActivityLogController extends Controller
             'success' => true,
             'data' => $types,
         ]);
+    }
+
+    /**
+     * Export activity audit logs as PDF.
+     */
+    public function exportPdf(Request $request)
+    {
+        $user = Auth::user();
+        $companyId = $user->current_company_id ?? $user->company_id;
+        if (!$companyId && $user->employee) {
+            $companyId = $user->employee->company_id;
+        }
+        if (!$companyId && method_exists($user, 'companies')) {
+            $companyId = $user->companies()->first()?->id;
+        }
+
+        $query = ActivityLog::with(['user', 'employee', 'company'])
+            ->where(function ($q) use ($companyId, $user) {
+                if ($companyId) {
+                    $q->where('company_id', $companyId)
+                      ->orWhereHas('employee', function ($eq) use ($companyId) {
+                          $eq->where('company_id', $companyId);
+                      })
+                      ->orWhere(function ($sq) use ($user) {
+                          $sq->whereNull('company_id')->where('user_id', $user->id);
+                      });
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            });
+
+        // Filter by Log Type
+        if ($request->filled('log_type') && $request->log_type !== 'all') {
+            $query->where('log_type', $request->log_type);
+        }
+
+        // Filter by Event
+        if ($request->filled('event')) {
+            $query->where('event', $request->event);
+        }
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('subject_title', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%");
+            });
+        }
+
+        // Date range filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Dynamic Sorting
+        $allowedSorts = ['created_at', 'log_type', 'event', 'description', 'ip_address', 'id'];
+        $sortBy = in_array($request->get('sort_by'), $allowedSorts, true) ? $request->get('sort_by') : 'created_at';
+        $sortOrder = strtolower($request->get('sort_order')) === 'asc' ? 'asc' : 'desc';
+
+        $logs = $query->orderBy($sortBy, $sortOrder)->limit(500)->get();
+
+        $companyName = $user->company?->name ?? 'System Multi-Tenant POS';
+
+        $dateRangeLabel = 'All Time';
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $dateRangeLabel = "From {$request->date_from} to {$request->date_to}";
+        } elseif ($request->filled('date_from')) {
+            $dateRangeLabel = "From {$request->date_from}";
+        } elseif ($request->filled('date_to')) {
+            $dateRangeLabel = "Until {$request->date_to}";
+        }
+
+        $pdf = Pdf::loadView('pdf.activity_logs', [
+            'companyName' => $companyName,
+            'logs' => $logs,
+            'dateRangeLabel' => $dateRangeLabel,
+            'category' => $request->get('log_type', 'all'),
+        ]);
+
+        $pdf->setPaper('a4', 'portrait');
+        $fileName = 'activity_audit_logs_' . now()->format('Y-m-d') . '.pdf';
+        return $pdf->download($fileName);
     }
 }

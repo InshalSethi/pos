@@ -48,20 +48,38 @@
     <!-- Filters & Search Section -->
     <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-slate-200/80 dark:border-zinc-800 shadow-xs space-y-4">
       
-      <!-- Category Filter Pills -->
-      <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
+      <!-- Category Filter Pills & Download PDF Button -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
+          <button
+            v-for="cat in categories"
+            :key="cat.key"
+            @click="selectCategory(cat.key)"
+            :class="[
+              'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
+              filters.log_type === cat.key
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
+            ]"
+          >
+            {{ cat.label }}
+          </button>
+        </div>
+
+        <!-- Download PDF Button -->
         <button
-          v-for="cat in categories"
-          :key="cat.key"
-          @click="selectCategory(cat.key)"
-          :class="[
-            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
-            filters.log_type === cat.key
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-              : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
-          ]"
+          @click="downloadPdf"
+          :disabled="downloadingPdf"
+          class="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer disabled:opacity-50"
         >
-          {{ cat.label }}
+          <svg v-if="!downloadingPdf" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <svg v-else class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <span>{{ downloadingPdf ? 'Exporting PDF...' : 'Download PDF' }}</span>
         </button>
       </div>
 
@@ -345,6 +363,7 @@ import ActivityDiffModal from './ActivityDiffModal.vue';
 import FloatingDateRangePicker from '../common/FloatingDateRangePicker.vue';
 
 const loading = ref(false);
+const downloadingPdf = ref(false);
 const logs = ref({ data: [], total: 0, current_page: 1, last_page: 1, per_page: 15 });
 const stats = ref({});
 const showModal = ref(false);
@@ -420,6 +439,38 @@ const fetchLogs = async (page = 1) => {
     console.error('Failed to fetch activity logs:', error);
   } finally {
     loading.value = false;
+  }
+};
+
+const downloadPdf = async () => {
+  downloadingPdf.value = true;
+  try {
+    const params = new URLSearchParams({
+      log_type: filters.value.log_type,
+      search: filters.value.search,
+      date_from: filters.value.date_from,
+      date_to: filters.value.date_to,
+      sort_by: filters.value.sort_by,
+      sort_order: filters.value.sort_order,
+    });
+
+    const response = await axios.get(`/api/activity-logs/export-pdf?${params.toString()}`, {
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `activity_audit_logs_${new Date().toISOString().slice(0, 10)}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Failed to download activity logs PDF:', error);
+  } finally {
+    downloadingPdf.value = false;
   }
 };
 

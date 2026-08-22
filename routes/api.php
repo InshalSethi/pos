@@ -407,7 +407,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCompanySetup::clas
         // Activity Logging & Audit Trail routes
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
         Route::get('/activity-logs/types', [ActivityLogController::class, 'types']);
-        Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
+        Route::get('/activity-logs/export-pdf', [ActivityLogController::class, 'exportPdf']);
+        Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show'])->where('id', '[0-9]+');
 
         // Currency management routes
         Route::get('/currencies', [CurrencyController::class, 'index']);
