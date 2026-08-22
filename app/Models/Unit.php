@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToCompany;
 use App\Traits\HasUtcDatabaseTimezones;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -17,6 +18,9 @@ class Unit extends Model
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'inventory';
 
     protected $fillable = [
         'company_id',

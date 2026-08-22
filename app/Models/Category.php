@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToCompany;
 
 use App\Traits\HasUtcDatabaseTimezones;
+use App\Traits\LogsActivity;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -18,6 +19,18 @@ class Category extends Model
     use HasUtcDatabaseTimezones;
     use HasFactory;
     use SoftDeletes;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'inventory';
+
+    protected static function booted()
+    {
+        static::creating(function ($category) {
+            if (empty($category->slug) && !empty($category->name)) {
+                $category->slug = \Illuminate\Support\Str::slug($category->name) . '-' . \Illuminate\Support\Str::random(4);
+            }
+        });
+    }
 
     protected $fillable = [
         'name',

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToCompany;
 
 use App\Traits\HasUtcDatabaseTimezones;
+use App\Traits\LogsActivity;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,6 +20,9 @@ class BankTransaction extends Model
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'finance';
 
     protected $fillable = [
         'bank_account_id',

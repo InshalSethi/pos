@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Traits\BelongsToCompany;
 use App\Traits\HasUtcDatabaseTimezones;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Tax extends Model
@@ -17,6 +18,9 @@ class Tax extends Model
     use BelongsToCompany;
     use HasUtcDatabaseTimezones;
     use HasFactory;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'inventory';
 
     protected $fillable = [
         'name',

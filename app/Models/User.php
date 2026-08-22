@@ -25,6 +25,9 @@ class User extends Authenticatable
     use HasUtcDatabaseTimezones;
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens, HasRoles;
+    use \App\Traits\LogsActivity;
+
+    protected static string $activityLogType = 'team';
 
     /**
      * The attributes that are mass assignable.

@@ -132,7 +132,12 @@ class ActivityLogger
      */
     public static function resolveSubjectTitle(Model $subject): string
     {
-        foreach (['name', 'title', 'invoice_number', 'reference_no', 'code', 'email'] as $field) {
+        if (isset($subject->first_name) || isset($subject->last_name)) {
+            $name = trim(($subject->first_name ?? '') . ' ' . ($subject->last_name ?? ''));
+            if (!empty($name)) return $name;
+        }
+
+        foreach (['name', 'title', 'sku', 'po_number', 'invoice_number', 'sale_number', 'receipt_number', 'reference_number', 'reference_no', 'reference', 'code', 'account_name', 'email'] as $field) {
             if (!empty($subject->{$field})) {
                 return (string) $subject->{$field};
             }

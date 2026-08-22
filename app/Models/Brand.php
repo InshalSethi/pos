@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToCompany;
 use App\Traits\HasUtcDatabaseTimezones;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,18 @@ class Brand extends Model
     use HasUtcDatabaseTimezones;
     use HasFactory;
     use SoftDeletes;
+    use LogsActivity;
+
+    protected static string $activityLogType = 'inventory';
+
+    protected static function booted()
+    {
+        static::creating(function ($brand) {
+            if (empty($brand->slug) && !empty($brand->name)) {
+                $brand->slug = \Illuminate\Support\Str::slug($brand->name) . '-' . \Illuminate\Support\Str::random(4);
+            }
+        });
+    }
 
     protected $fillable = [
         'company_id',
