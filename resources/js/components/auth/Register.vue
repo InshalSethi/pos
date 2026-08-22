@@ -634,7 +634,13 @@ const handleRegister = async () => {
       email: form.value.email.trim(),
       password: form.value.password,
       password_confirmation: form.value.password_confirmation,
-      terms: form.value.terms
+      terms: form.value.terms,
+      plan: form.value.plan,
+      cycle: form.value.cycle,
+      cardNumber: form.value.cardNumber,
+      cardExpiry: form.value.cardExpiry,
+      cardCvc: form.value.cardCvc,
+      coupon_code: form.value.coupon_code
     };
 
     const result = await authStore.register(payload);
